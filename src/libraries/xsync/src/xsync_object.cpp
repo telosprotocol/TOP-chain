@@ -124,16 +124,16 @@ void xtop_sync_object::display_init(std::map<common::xenum_node_type, xsync_tabl
     table_display[common::xnode_type_t::evm] = table_data;
     table_display[common::xnode_type_t::relay] = table_data;
 }
-common::xenum_node_type xtop_sync_object::get_table_type(const vnetwork::xaccount_address_t& account) const {
-    if (account.base_address() == rec_table_address.base_address()) {
+common::xenum_node_type xtop_sync_object::get_table_type(const common::xtable_address_t& account) const {
+    if (account.base_address() == common::rec_table_base_address) {
         return common::xnode_type_t::rec;
-    } else if (account.base_address() == zec_table_address.base_address()) {
+    } else if (account.base_address() == common::zec_table_base_address) {
         return common::xnode_type_t::zec;
-    } else if (account.base_address() == sharding_table_address.base_address()) {
+    } else if (account.base_address() == common::con_table_base_address) {
         return common::xnode_type_t::consensus;
-    } else if (account.base_address() == eth_table_address.base_address()) {
+    } else if (account.base_address() == common::eth_table_base_address) {
         return common::xnode_type_t::evm;
-    } else if (account.base_address() == relay_table_address.base_address()) {
+    } else if (account.base_address() == common::relay_table_base_address) {
         return common::xnode_type_t::relay;
     }
     xdbg("unknown table type: %s", account.to_string().c_str());
@@ -215,9 +215,9 @@ std::string xtop_sync_object::status() const {
                     info.rate = (double)info.cur_height*100/(double)info.max_height;
                 }
 
-                tables_progress[get_table_type(_account)].insert(std::make_pair(table_id, info));
-                table_display[get_table_type(_account)].total_cur_height += info.cur_height;
-                table_display[get_table_type(_account)].total_max_height += info.max_height;
+                tables_progress[get_table_type(_account.table_address())].insert(std::make_pair(table_id, info));
+                table_display[get_table_type(_account.table_address())].total_cur_height += info.cur_height;
+                table_display[get_table_type(_account.table_address())].total_max_height += info.max_height;
             }
         }
         for (auto it : table_display) {

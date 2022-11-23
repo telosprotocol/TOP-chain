@@ -53,8 +53,8 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         auto block_owner = block->get_block_owner();
         // table fulltable block process
         bool is_sharding_statistic =
-            (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos);
-        bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(sys_contract_eth_table_block_addr) != std::string::npos);
+            (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(common::con_table_base_address.to_string()) != std::string::npos);
+        bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(common::eth_table_base_address.to_string()) != std::string::npos);
 
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();

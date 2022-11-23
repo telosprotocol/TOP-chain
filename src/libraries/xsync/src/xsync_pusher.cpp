@@ -96,15 +96,15 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     if (!data::xdatautil::extract_parts(address, address_prefix, table_id))
         return;
 
-    if (address_prefix == sys_contract_beacon_table_block_addr) {
+    if (address_prefix == common::rec_table_base_address.to_string()) {
         node_type = common::xnode_type_t::rec;
-    } else if (address_prefix == sys_contract_zec_table_block_addr) {
+    } else if (address_prefix == common::zec_table_base_address.to_string()) {
         node_type = common::xnode_type_t::zec;
-    } else if (address_prefix == sys_contract_sharding_table_block_addr) {
+    } else if (address_prefix == common::con_table_base_address.to_string()) {
         node_type = common::xnode_type_t::consensus;
-    } else if (address_prefix == sys_contract_eth_table_block_addr) {
+    } else if (address_prefix == common::eth_table_base_address.to_string()) {
         node_type = common::xnode_type_t::evm;
-    } else if (address_prefix == sys_contract_relay_table_block_base_addr) {
+    } else if (address_prefix == common::relay_table_base_address.to_string()) {
         node_type = common::xnode_type_t::relay;
     } else {
         assert(0);

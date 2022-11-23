@@ -109,7 +109,7 @@ public:
     void remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver, const common::xminer_type_t miner_type, const bool genesis);
 private:
     void display_init(std::map<common::xenum_node_type, xsync_table_data>& table_display) const;
-    common::xenum_node_type get_table_type(const vnetwork::xaccount_address_t& account) const;
+    common::xenum_node_type get_table_type(const common::xtable_address_t& account) const;
     std::string get_title(common::xenum_node_type type) const;
 };
 using xsync_object_t = xtop_sync_object;

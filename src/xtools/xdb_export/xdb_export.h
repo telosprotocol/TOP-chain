@@ -92,7 +92,7 @@ public:
     void   prune_db();
     void   query_all_table_performance(std::vector<std::string> const & accounts_vec);
 
-    std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> get_unit_accounts(common::xaccount_address_t const & table_address,
+    std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> get_unit_accounts(common::xtable_address_t const & table_address,
                                                                                              std::uint64_t table_height,
                                                                                              std::vector<common::xaccount_address_t> const & designated,
                                                                                              std::error_code & ec) const;

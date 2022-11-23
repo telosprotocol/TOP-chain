@@ -35,27 +35,27 @@ xrole_chains_t::xrole_chains_t(const vnetwork::xvnode_address_t & role, const st
 
 void xrole_chains_t::init_chains() {
 
-    add_tables(nt::frozen, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
-    add_tables(nt::frozen, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::frozen, common::rec_table_base_address.to_string(), enum_chain_sync_policy_full);
+    add_tables(nt::frozen, common::zec_table_base_address.to_string(), enum_chain_sync_policy_full);
     //add_chain(nt::frozen, std::string(sys_contract_eth_table_block_addr)+"@0", enum_chain_sync_policy_full);
     //add_chain(nt::frozen, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::consensus_auditor | nt::consensus_validator, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_fast);
+    add_tables(nt::consensus_auditor | nt::consensus_validator, common::con_table_base_address.to_string(), enum_chain_sync_policy_fast);
     add_chain(nt::evm_auditor | nt::evm_validator, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
 
-    add_tables(nt::storage_archive, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_archive, common::con_table_base_address.to_string(), enum_chain_sync_policy_full);
     add_chain(nt::storage_archive, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
     add_chain(nt::storage_archive, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
     add_chain(nt::storage_archive, sys_drand_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::storage_exchange, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_exchange, common::con_table_base_address.to_string(), enum_chain_sync_policy_full);
     add_chain(nt::storage_exchange, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
     add_chain(nt::storage_exchange, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
     add_chain(nt::storage, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
     add_chain(nt::storage, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
     
     add_chain(nt::fullnode, sys_drand_addr, enum_chain_sync_policy_checkpoint);
-    add_tables(nt::fullnode, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_checkpoint);
+    add_tables(nt::fullnode, common::con_table_base_address.to_string(), enum_chain_sync_policy_checkpoint);
     add_chain(nt::fullnode, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
     add_chain(nt::fullnode, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
 }
@@ -75,7 +75,7 @@ void xrole_chains_t::add_tables(common::xnode_type_t allow_types,
             add_rec_or_zec(allow_types, address, sync_policy);
             return;
         } else if (common::has<common::xnode_type_t::storage>(m_type) || common::has<common::xnode_type_t::fullnode>(m_type)) {
-            if (address == sys_contract_beacon_table_block_addr || address == sys_contract_zec_table_block_addr) {
+            if (address == common::rec_table_base_address.to_string() || address == common::zec_table_base_address.to_string()) {
                 add_rec_or_zec(allow_types, address, sync_policy);
                 return;
             }
@@ -92,11 +92,11 @@ void xrole_chains_t::add_rec_or_zec(common::xnode_type_t allow_types, const std:
 
     std::set<uint16_t> table_ids;
 
-    if (address == sys_contract_beacon_table_block_addr) {
+    if (address == common::rec_table_base_address.to_string()) {
         for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
             table_ids.insert(i);
         }
-    } else if (address == sys_contract_zec_table_block_addr) {
+    } else if (address == common::zec_table_base_address.to_string()) {
         for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
             table_ids.insert(i);
         }

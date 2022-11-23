@@ -25,7 +25,7 @@ bool is_beacon_table(const std::string &address) {
         return false;
     }
 
-    if (account_prefix != sys_contract_beacon_table_block_addr)
+    if (account_prefix != common::rec_table_base_address.to_string())
         return false;
 
     return true;

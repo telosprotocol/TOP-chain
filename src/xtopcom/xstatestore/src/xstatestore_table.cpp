@@ -16,7 +16,7 @@
 #include "xvledger/xvledger.h"
 
 NS_BEG2(top, statestore)
-xstatestore_table_t::xstatestore_table_t(common::xaccount_address_t const&  table_addr, std::shared_ptr<xstatestore_resources_t> para)
+xstatestore_table_t::xstatestore_table_t(common::xtable_address_t const&  table_addr, std::shared_ptr<xstatestore_resources_t> para)
 : m_table_addr(table_addr), m_table_executor(table_addr, this) {
     m_prune = std::make_shared<xstatestore_prune_t>(table_addr, para);
     m_table_executor.init();

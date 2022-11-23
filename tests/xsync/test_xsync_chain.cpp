@@ -37,7 +37,7 @@ public:
 
 TEST(xsync_account, no_response) {
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
+    std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), 0);
 
 
     mock::xvchain_creator creator;

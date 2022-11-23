@@ -31,7 +31,7 @@ using json = unordered_json;
 
 namespace top {
 
-#define TABLE_ADDRESS common::xaccount_address_t{"Ta0000@0"}
+auto const TABLE_ADDRESS = common::xtable_address_t::build_from(std::string{"Ta0000@0"});
 
 class test_state_mpt_fixture : public testing::Test {
 public:

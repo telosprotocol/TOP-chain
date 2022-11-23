@@ -678,7 +678,7 @@ void xdb_export_tools_t::query_table_unit_info(std::string const & account) {
         return;
     }
     for (auto const & v: table_accounts) {
-        json root_unit; 
+        json root_unit;
         base::xaccount_index_t const& index = v.second;
         std::string unit = v.first.to_string();
         auto const h_unit = index.get_latest_unit_height();
@@ -833,16 +833,16 @@ void xdb_export_tools_t::query_archive_db(std::map<common::xtable_address_t, uin
         pool.join();
     }
     auto t2 = base::xtime_utl::time_now_ms();
-    std::cout << "total_tables:" << _archive_info->total_tables 
-    << " total_units:" << _archive_info->total_units 
-    << " total_txindexs:" << _archive_info->total_txindexs 
+    std::cout << "total_tables:" << _archive_info->total_tables
+    << " total_units:" << _archive_info->total_units
+    << " total_txindexs:" << _archive_info->total_txindexs
     << " time_s:" << (t2 - t1) / 1000 << std::endl;
     file.close();
 }
 
 void xdb_export_tools_t::query_archive_db_internal(common::xtable_address_t const & table_address, uint64_t check_height, std::ofstream & file, std::shared_ptr<xdb_archive_check_info_t> archive_info) {
     base::xvaccount_t table_vaddr = table_address.vaccount();
-    
+
     uint32_t error_num = 0;
 
     do {
@@ -883,13 +883,13 @@ void xdb_export_tools_t::query_archive_db_internal(common::xtable_address_t cons
             << ",span:" << span_genesis_height
             << ",check:" << check_height << ",hash:" << base::xstring_utl::to_hex(check_end_block->get_block_hash())
             << ",units:" << unit_accounts.size()
-            << std::endl;            
+            << std::endl;
         }
 
         auto last_hash = check_end_block->get_block_hash();
         auto h = check_end_block->get_height();
         uint64_t txs_count = 0;
-        
+
         do {
             auto const block = m_blockstore->load_block_object(table_vaddr, h, last_hash, true);
             if (block == nullptr) {
@@ -1677,16 +1677,16 @@ std::string xdb_export_tools_t::get_account_key_string(const std::string& key)
         }
         assert(0);
     } else if (type_str == "Ta") {
-        std::string::size_type idx = key.find(sys_contract_zec_table_block_addr);
+        std::string::size_type idx = key.find(common::zec_table_base_address.to_string());
         if (idx == std::string::npos) {
-            idx = key.find(sys_contract_sharding_table_block_addr);
+            idx = key.find(common::con_table_base_address.to_string());
             if (idx == std::string::npos) {
-                return sys_contract_beacon_table_block_addr;
+                return common::rec_table_base_address.to_string();
             } else {
-                return sys_contract_sharding_table_block_addr;
+                return common::con_table_base_address.to_string();
             }
         } else {
-            return sys_contract_zec_table_block_addr;
+            return common::zec_table_base_address.to_string();
         }
         assert(0);
     } else if (type_str == "T0") {
@@ -2084,7 +2084,7 @@ std::string xdb_check_data_func_off_data_t::data_type() const {
     return "off_data";
 }
 
-std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> xdb_export_tools_t::get_unit_accounts(common::xaccount_address_t const & table_address,
+std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> xdb_export_tools_t::get_unit_accounts(common::xtable_address_t const & table_address,
                                                                                                              std::uint64_t const table_height,
                                                                                                              std::vector<common::xaccount_address_t> const & designated,
                                                                                                              std::error_code & ec) const {
@@ -2110,7 +2110,7 @@ std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> xdb_expor
         return result;
     }
 
-    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(table_block.get(), ec);        
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(table_block.get(), ec);
     if (ec) {
         std::cerr << "table block at address " << table_address.to_string() << ":" << table_height << " table state not found" << std::endl;
         return result;

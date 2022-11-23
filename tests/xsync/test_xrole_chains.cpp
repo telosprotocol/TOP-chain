@@ -517,7 +517,7 @@ TEST(xrole_chains, archive) {
         }
 
         for (auto &table_id: table_ids) {
-            std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, table_id);
+            std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), table_id);
             auto it = chains.find(address);
             ASSERT_NE(it, chains.end());
             ASSERT_EQ(it->second.address, address);
@@ -666,7 +666,7 @@ TEST(xrole_chains, frozen) {
 
     // beacon table
     for (auto table_id : table_ids) {
-        std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, table_id);
+        std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), table_id);
 
         auto it = chains.find(address);
         ASSERT_NE(it, chains.end());
