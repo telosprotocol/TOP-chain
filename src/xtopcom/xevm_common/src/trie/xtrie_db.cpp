@@ -252,7 +252,7 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
 void xtop_trie_db::clear_cleans() {
     std::lock_guard<std::mutex> lck(mutex);
     for(;;) {
-        xhash256_t k;
+        xh256_t k;
         xbytes_t _;
         if (false == cleans_.back(k, _)) {
             break;

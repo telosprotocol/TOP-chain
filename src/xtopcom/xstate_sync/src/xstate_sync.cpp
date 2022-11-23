@@ -307,7 +307,7 @@ common::xnode_address_t xtop_state_sync::send_message(const sync_peers & peers, 
     return random_fullnode;
 }
 
-void xtop_state_sync::fill_tasks(uint32_t total_n, uint32_t unit_n, state_req & req, std::vector<xhash256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
+void xtop_state_sync::fill_tasks(uint32_t total_n, uint32_t unit_n, state_req & req, std::vector<evm_common::xh256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
     if (total_n > m_trie_tasks.size() + m_unit_tasks.size()) {
         auto fill = total_n - m_trie_tasks.size() - m_unit_tasks.size();
         auto const res = m_sched->Missing(fill);
