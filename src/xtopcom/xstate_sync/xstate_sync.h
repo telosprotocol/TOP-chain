@@ -48,8 +48,10 @@ private:
     std::condition_variable m_condition;
     std::mutex m_mutex;
     uint32_t m_items_per_task{0};
+    uint32_t m_units_per_task{0};
     uint32_t m_req_sequence_id{0};
     uint32_t m_unit_bytes_uncommitted{0};
+    uint32_t m_req_nums{0};
 
 public:
     xtop_state_sync();
@@ -80,7 +82,7 @@ private:
     void loop(std::function<bool()> condition, std::function<void(sync_peers const &)> add_task, std::function<void(state_req &, std::error_code &)> process, std::error_code & ec);
     void assign_table_tasks(const sync_peers & sync_peers);
     void assign_trie_tasks(const sync_peers & sync_peers);
-    void fill_tasks(uint32_t n, state_req & req, std::vector<evm_common::xh256_t> & nodes, std::vector<xbytes_t> & units);
+    void fill_tasks(uint32_t total_n, uint32_t unit_n, state_req & req, std::vector<evm_common::xh256_t> & nodes, std::vector<xbytes_t> & units);
     void process_table(state_req & req, std::error_code & ec);
     void process_trie(state_req & req, std::error_code & ec);
     evm_common::xh256_t process_node_data(const xbytes_t & blob, std::error_code & ec);

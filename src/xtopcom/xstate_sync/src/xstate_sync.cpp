@@ -19,7 +19,9 @@ namespace top {
 namespace state_sync {
 
 constexpr uint32_t ideal_batch_size = 100 * 1024;
-constexpr uint32_t fetch_num = 64;
+constexpr uint32_t total_fetch_num = 64;
+constexpr uint32_t unit_fetch_num = 4;
+constexpr uint32_t max_req_num = 8;
 
 xtop_state_sync::xtop_state_sync() {
     XMETRICS_COUNTER_INCREMENT("statesync_syncers", 1);
@@ -50,7 +52,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_track_func = track_req;
     sync->m_db = db;
     sync->m_kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
-    sync->m_items_per_task = fetch_num;
+    sync->m_items_per_task = total_fetch_num;
     xinfo("xtop_state_sync::new_state_sync {%s}", sync->symbol().c_str());
     return sync;
 }
@@ -250,11 +252,11 @@ void xtop_state_sync::assign_table_tasks(const sync_peers & peers) {
 }
 
 void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
-    for (;;) {
+    for (auto i = 0; i < 2; ++i) {
         state_req req;
         std::vector<evm_common::xh256_t> nodes;
         std::vector<xbytes_t> units;
-        fill_tasks(m_items_per_task, req, nodes, units);
+        fill_tasks(m_items_per_task, m_units_per_task, req, nodes, units);
         if (nodes.size() + units.size() == 0) {
             return;
         }
@@ -283,6 +285,10 @@ void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
         req.id = m_req_sequence_id++;
         req.type = state_req_type::enum_state_req_trie;
         m_track_func(req);
+        m_req_nums++;
+        if (m_req_nums > max_req_num) {
+            return;
+        }
     }
 }
 
@@ -299,9 +305,9 @@ common::xnode_address_t xtop_state_sync::send_message(const sync_peers & peers, 
     return random_fullnode;
 }
 
-void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<evm_common::xh256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
-    if (n > m_trie_tasks.size() + m_unit_tasks.size()) {
-        auto fill = n - m_trie_tasks.size() - m_unit_tasks.size();
+void xtop_state_sync::fill_tasks(uint32_t total_n, uint32_t unit_n, state_req & req, std::vector<xhash256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
+    if (total_n > m_trie_tasks.size() + m_unit_tasks.size()) {
+        auto fill = total_n - m_trie_tasks.size() - m_unit_tasks.size();
         auto const res = m_sched->Missing(fill);
         auto const & nodes = std::get<0>(res);
         auto const & unit_hashes = std::get<1>(res);
@@ -317,7 +323,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<evm_co
         }
     }
     for (auto it = m_trie_tasks.begin(); it != m_trie_tasks.end(); ) {
-        if (nodes_out.size() + units_out.size() >= n) {
+        if ((nodes_out.size() + units_out.size() >= total_n) || (units_out.size() >= unit_n)) {
             break;
         }
         xdbg("xtop_state_sync::fill_tasks push left node: %s", (*it).hex().c_str());
@@ -326,7 +332,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<evm_co
         m_trie_tasks.erase(it++);
     }
     for (auto it = m_unit_tasks.begin(); it != m_unit_tasks.end(); ) {
-        if (nodes_out.size() + units_out.size() >= n) {
+        if ((nodes_out.size() + units_out.size() >= total_n) || (units_out.size() >= unit_n)) {
             break;
         }
         xdbg("xtop_state_sync::fill_tasks push left unit: %s", to_hex(it->first).c_str());
@@ -376,6 +382,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
     if (req.type != state_req_type::enum_state_req_trie) {
         return;
     }
+    m_req_nums--;
     std::error_code ec_internal;
     for (auto const & blob : req.nodes_response) {
         xinfo("xtop_state_sync::process_trie node id: %u, blob: %s, {%s}", req.id, to_hex(blob).c_str(), symbol().c_str());
