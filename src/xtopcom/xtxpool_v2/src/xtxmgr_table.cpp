@@ -120,7 +120,9 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
                                                                                  confirm_tx_num);
     recv_tx_num = ready_txs.size() - confirm_tx_num;
 
-    auto send_txs = m_send_tx_queue.get_txs(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_cert_block());
+    uint32_t expired_num = 0;
+    uint32_t unconituous_num = 0;
+    auto send_txs = m_send_tx_queue.get_txs(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_cert_block(), expired_num, unconituous_num);
     uint32_t send_tx_num = send_txs.size();
     ready_txs.insert(ready_txs.end(), send_txs.begin(), send_txs.end());
 
@@ -128,7 +130,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
 
-    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u",
+    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u,expired_num:%u,unconituous_num:%u",
                  m_xtable_info->get_table_addr().c_str(),
                  ready_txs.size(),
                  send_tx_num,
@@ -136,7 +138,9 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
                  confirm_tx_num,
                  m_send_tx_queue.size(),
                  m_xtable_info->get_recv_tx_count(),
-                 m_xtable_info->get_conf_tx_count());
+                 m_xtable_info->get_conf_tx_count(),
+                 expired_num,
+                 unconituous_num);
     if (ready_txs.size() > pack_para.get_all_txs_max_num()) {
         xtxpool_error("xtxmgr_table_t::get_ready_txs-txs num too much table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u",
                  m_xtable_info->get_table_addr().c_str(),
@@ -215,6 +219,11 @@ void xtxmgr_table_t::clear_expired_txs() {
 void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     m_new_receipt_queue.update_receiptid_state(receiptid_state);
 }
+
+uint32_t xtxmgr_table_t::get_tx_cache_size() const {
+    return m_send_tx_queue.size() + m_new_receipt_queue.size();
+}
+
 
 }  // namespace xtxpool_v2
 }  // namespace top

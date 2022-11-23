@@ -13,12 +13,12 @@ public:
 };
 
 TEST_F(xbatch_packer_test, pack_strategy) {
-    uint32_t high_tps_num = 30;
-    uint32_t middle_tps_num = 20;
-    uint32_t low_tps_num = 10;
+    uint32_t high_tps_num = 180;
+    uint32_t middle_tps_num = 100;
+    uint32_t low_tps_num = 50;
     xpack_strategy_t pack_strategy;
 
-    ASSERT_EQ(pack_strategy.get_timer_interval(), 30);
+    ASSERT_EQ(pack_strategy.get_timer_interval(), 50);
 
     for (uint32_t i = 0; i < 5; i++) {
         pack_strategy.clear();

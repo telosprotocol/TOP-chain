@@ -34,9 +34,9 @@ NS_BEG2(top, xunit_service)
 #define MIN_TRANSACTION_NUM_FOR_LOW_TPS (50)
 
 #define TRY_MAKE_BLOCK_TIMER_INTERVAL (50)
-#define TRY_HIGH_TPS_TIME_WINDOW (250)
-#define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (500)
-#define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (750)
+#define TRY_HIGH_TPS_TIME_WINDOW (400)
+#define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (700)
+#define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (1000)
 
 xbatch_packer::xbatch_packer(base::xtable_index_t                             &tableid,
                              const std::string &                              account_id,
@@ -137,6 +137,13 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
         xassert(false);
         return false;
     }
+
+    auto cache_size = get_resources()->get_txpool()->get_tx_cache_size(get_account());
+    if (cache_size < min_tx_num) {
+        xdbg("xbatch_packer::start_proposal table %s cache size not enough cache_size:%d min_tx_num:%d", get_account().c_str(), cache_size, min_tx_num);
+        return false;
+    }
+
     data::xblock_consensus_para_t & proposal_para = *m_leader_cs_para;
     proposal_para.set_clock(m_para->get_resources()->get_chain_timer()->logic_time());
     xunit_dbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s", proposal_para.dump().c_str());

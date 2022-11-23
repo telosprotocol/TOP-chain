@@ -126,6 +126,7 @@ public:
     void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
 
     void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block);
+    uint32_t get_tx_cache_size() const;
 
 private:
     // bool is_account_need_update(const std::string & account_addr) const;
