@@ -48,7 +48,7 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
     {
         auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, table);
         if (evm_common::trie::HasTrieNode(kv_db, root_hash)) {
-            xwarn("xtop_state_downloader::sync_state table: %s root: %s already in db", table.to_string().c_str(), root_hash.as_hex_str().c_str());
+            xwarn("xtop_state_downloader::sync_state table: %s root: %s already in db", table.to_string().c_str(), root_hash.hex().c_str());
             return;
         }
     }
