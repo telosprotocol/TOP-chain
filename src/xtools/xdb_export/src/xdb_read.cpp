@@ -3,6 +3,7 @@
 #include "xdbstore/xstore.h"
 #include "json/json.h"
 #include "xdata/xblockextract.h"
+#include "xdata/xblocktool.h"
 #include "xbasic/xhex.h"
 
 NS_BEG2(top, db_export)
@@ -34,6 +35,7 @@ bool xdb_read_tools_t::is_match_function_name(std::string const & func_name) {
         "db_read_txindex",
         "db_read_meta",
         "db_data_parse",
+        "db_read_all_table_height_lists",
     };
 
     for (auto & v : names) {
@@ -58,6 +60,9 @@ bool xdb_read_tools_t::process_function(std::string const & func_name, int argc,
     } else if (func_name == "db_read_txindex") {
         if (argc != 4) return false;
         db_read_txindex(argv[3]);
+    } else if (func_name == "db_read_all_table_height_lists") {
+        if (argc != 5) return false;
+        db_read_all_table_height_lists(argv[3], std::stoi(argv[4]));
     } else {
         xassert(false);
         return false;
@@ -157,23 +162,43 @@ void xdb_read_tools_t::db_read_txindex(std::string const & hex_txhash) {
     db_read_txindex(hex_txhash, base::enum_txindex_type_confirm);
 }
 
-void xdb_read_tools_t::db_read_meta(std::string const & address) {
-    std::cout << "db_read_meta start: " << std::endl;
-    if (m_xvdb_ptr != nullptr) {
-        base::xvaccount_t _vaddr{address};
-        std::string new_meta_key = base::xvdbkey_t::create_account_meta_key(_vaddr);
-        std::string value = m_xvdb_ptr->get_value(new_meta_key);
-        base::xvactmeta_t* _meta = new base::xvactmeta_t(_vaddr);  // create empty meta default
-        if (!value.empty()) {
-            if (_meta->serialize_from_string(value) <= 0) {
-                std::cerr << "meta serialize_from_string fail !!!" << std::endl;
-            } else {
-                std::cout << "meta serialize_from_string succ,meta=" << _meta->clone_block_meta().ddump() << std::endl;
-            }
+base::xauto_ptr<base::xvactmeta_t> xdb_read_tools_t::db_read_meta(std::string const & address) {
+    base::xvaccount_t _vaddr{address};
+    std::string new_meta_key = base::xvdbkey_t::create_account_meta_key(_vaddr);
+    std::string value = m_xvdb_ptr->get_value(new_meta_key);
+    base::xauto_ptr<base::xvactmeta_t> _meta = new base::xvactmeta_t(_vaddr);  // create empty meta default
+    if (!value.empty()) {
+        if (_meta->serialize_from_string(value) <= 0) {
+            std::cerr << "address=" << address << " meta serialize_from_string fail !!!" << std::endl;
         } else {
-            std::cerr << "meta value empty !!!" << std::endl;
-        }    
+            std::cout << "address=" << address << " meta=" << _meta->clone_block_meta().ddump() << std::endl;
+            return _meta;
+        }
+    } else {
+        std::cerr << "address=" << address << " meta value empty !!!" << std::endl;
     }
+    return nullptr;
+}
+
+void xdb_read_tools_t::db_read_all_table_height_lists(std::string const & mode, uint64_t redundancy) {
+    auto tables = data::xblocktool_t::make_all_table_addresses();
+    std::string table_height_lists;
+    for (auto & table : tables) {
+        base::xauto_ptr<base::xvactmeta_t> _meta = db_read_meta(table);
+        uint64_t height = 0;
+        if (nullptr != _meta) {            
+            if (mode == "commit_mode" || mode.empty()) {
+                uint64_t commit_height = _meta->clone_block_meta()._highest_commit_block_height;
+                height = commit_height > redundancy ? commit_height - redundancy : commit_height;
+            } else {
+                xassert(false);
+            }
+        }
+        std::string table_height = table + ":" + std::to_string(height) + ",";
+        table_height_lists += table_height;
+    }
+    std::cout << std::endl;
+    std::cout << "table_height_lists:" << table_height_lists << std::endl;
 }
 
 void xdb_read_data_parse_t::add_key_value(std::string const& key, std::string const& value) {

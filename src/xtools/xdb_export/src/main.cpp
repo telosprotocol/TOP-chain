@@ -2,6 +2,7 @@
 #include "../xdb_reset.h"
 #include "../xdb_read.h"
 #include "../xdb_write.h"
+#include "../xdbtool_util.h"
 #include "xbase/xhash.h"
 #include "xmigrate/xvmigrate.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -52,15 +53,16 @@ void usage() {
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
-    std::cout << "        - check_archive_db [redundancy]" << std::endl;
+    std::cout << "        - check_archive_db [table_address0:height0,table_address1:height1,...]" << std::endl;
     std::cout << "        - check_performance" << std::endl;
     std::cout << "        - parse_checkpoint <height>" << std::endl;
     std::cout << "        - parse_db" << std::endl;
-    std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;
+    std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;  // account can be "all_tables"
     std::cout << "        - db_data_parse [db_path] " << std::endl; // ./xdb_export ./db_v3/ db_data_parse
     std::cout << "        - db_compact_db [db_path]" << std::endl;
     std::cout << "        - db_parse_type_size [db_path] " << std::endl;
     std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
+    std::cout << "        - [db_path] db_read_all_table_height_lists <mode> <redundancy> " << std::endl; // ./xdb_export ./db_v3/ db_read_all_table_height_lists commit_mode 10
     std::cout << "        - db_read_txindex [db_path] <hex_txhash> " << std::endl;  // ./xdb_export ./db_v3/ db_read_txindex txhash send/recv/confirm
     std::cout << "        - correct_all_txindex [db_path] " << std::endl;// ./xdb_export ./db_v3/ correct_all_txindex
     std::cout << "        - correct_one_txindex [db_path] <hex_txhash> " << std::endl; // ./xdb_export ./db_v3/ correct_one_txindex   txhash
@@ -352,16 +354,18 @@ int main(int argc, char ** argv) {
     } else if (function_name == "check_balance") {
         tools.query_balance();
     } else if (function_name == "check_archive_db") {
-        if (argc != 3 && argc != 4) {
+        if (argc != 4) {
             usage();
             return -1;
         }
-        uint32_t redundancy = 0;
-        if (argc == 4) {
-            redundancy = std::stoi(argv[3]);
+        std::map<common::xtable_address_t, uint64_t> table_query_criteria = xdbtool_util_t::parse_table_addr_height_list(argv[3]);
+        if (table_query_criteria.empty()) {
+            usage();
+            return -1;            
         }
+
         auto t1 = base::xtime_utl::time_now_ms();
-        tools.query_archive_db(redundancy);
+        tools.query_archive_db(table_query_criteria, 0);
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "check_archive_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
     } else if (function_name == "parse_checkpoint") {
