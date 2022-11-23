@@ -18,13 +18,13 @@ public:
     template <std::size_t len>
     static xbytes_t EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t, len> nodes);
 
-    //static xtrie_node_face_ptr_t decodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec);
+    //static xtrie_node_face_ptr_t decodeNode(xh256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec);
     //static xtrie_node_face_ptr_t decodeNode(std::shared_ptr<xtrie_hash_node_t> hash, xbytes_t const & buf, std::error_code & ec);
-    //static xtrie_node_face_ptr_t mustDecodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf);
+    //static xtrie_node_face_ptr_t mustDecodeNode(xh256_t const & hash_bytes, xbytes_t const & buf);
 
-    static xtrie_node_face_ptr_t decode_node(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec);
+    static xtrie_node_face_ptr_t decode_node(xh256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec);
     static xtrie_node_face_ptr_t decode_node(std::shared_ptr<xtrie_hash_node_t> hash, gsl::span<xbyte_t const>  buf, std::error_code & ec);
-    static xtrie_node_face_ptr_t must_decode_node(xhash256_t const & hash_bytes, xbytes_t const & buf);
+    static xtrie_node_face_ptr_t must_decode_node(xh256_t const & hash_bytes, xbytes_t const & buf);
 
 private:
     //static xtrie_node_face_ptr_t decodeShort(std::shared_ptr<xtrie_hash_node_t> hash, xbytes_t const & elems, std::error_code & ec);

@@ -14,7 +14,7 @@ TEST_F(xtest_trie_fixture, test_insert1) {
     UpdateString(trie, "dog", "puppy");
     UpdateString(trie, "dogglesworth", "cat");
 
-    auto exp = xhash256_t{top::from_hex("8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3", ec)};
+    auto exp = evm_common::xh256_t{top::from_hex("8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3", ec)};
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, trie->hash());
@@ -26,7 +26,7 @@ TEST_F(xtest_trie_fixture, test_insert2) {
 
     UpdateString(trie, "A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    auto exp = xhash256_t{top::from_hex("d23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab", ec)};
+    auto exp = evm_common::xh256_t{top::from_hex("d23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab", ec)};
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, trie->hash());
@@ -38,7 +38,7 @@ TEST_F(xtest_trie_fixture, test_insert3) {
 
     UpdateString(trie, "A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    auto exp = xhash256_t{top::from_hex("d23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab", ec)};
+    auto exp = evm_common::xh256_t{top::from_hex("d23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab", ec)};
 
     auto res = trie->commit(ec);
 
@@ -74,7 +74,7 @@ TEST_F(xtest_trie_fixture, test_delete) {
     UpdateString(trie, "dog", "puppy");
     trie->Delete(top::to_bytes(std::string{"shaman"}));
 
-    auto exp = xhash256_t{top::from_hex("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84", ec)};
+    auto exp = evm_common::xh256_t{top::from_hex("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84", ec)};
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, trie->hash());
@@ -93,7 +93,7 @@ TEST_F(xtest_trie_fixture, test_empty_value_as_delete) {
     UpdateString(trie, "dog", "puppy");
     UpdateString(trie, "shaman", "");
 
-    auto exp = xhash256_t{top::from_hex("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84", ec)};
+    auto exp = evm_common::xh256_t{top::from_hex("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84", ec)};
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, trie->hash());
@@ -137,7 +137,7 @@ TEST_F(xtest_trie_fixture, test_large_value) {
     trie->update(top::to_bytes(std::string{"key1"}), xbytes_t(4, 99));  //{99,99,99,99}
     trie->update(top::to_bytes(std::string{"key2"}), xbytes_t(32, 1));  //{1,1,1,...,1}
 
-    auto exp = xhash256_t{top::from_hex("afebee6cfce72f9d2a7a4f5926ac11f2a79bd75f3a9ae6358a08252ba5dce3be", ec)};
+    auto exp = evm_common::xh256_t{top::from_hex("afebee6cfce72f9d2a7a4f5926ac11f2a79bd75f3a9ae6358a08252ba5dce3be", ec)};
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, trie->hash());
@@ -206,7 +206,7 @@ TEST_F(xtest_trie_fixture, test_commit_to_disk) {
 
     // havn't get anything from disk db for now
     ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 0);
-    xdbg("trie->Commit() res: %s", res.as_hex_str().c_str());
+    xdbg("trie->Commit() res: %s", res.hex().c_str());
     test_trie_db_ptr->Commit(res, nullptr, ec);
 
     // still zero

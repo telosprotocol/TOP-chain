@@ -62,9 +62,6 @@ protected:
     xtablestate_ext_ptr_t  make_state_from_current_table(base::xvblock_t* current_block, std::error_code & ec) const;
     xtablestate_ext_ptr_t  make_state_from_prev_state_and_table(base::xvblock_t* current_block, xtablestate_ext_ptr_t const& prev_state, std::error_code & ec) const;
     xtablestate_ext_ptr_t  execute_block_recursive(base::xvblock_t* current_block, uint32_t & limit, std::error_code & ec) const;
-    xtablestate_ext_ptr_t  create_tablestate_ext(base::xvblock_t* current_block, std::shared_ptr<state_mpt::xstate_mpt_t> const& current_prev_mpt, xhash256_t const& block_state_root,
-                                                xobject_ptr_t<base::xvbstate_t> const& current_state,
-                                                std::error_code & ec) const;
     xtablestate_ext_ptr_t execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, std::error_code & ec) const;
 
 protected:

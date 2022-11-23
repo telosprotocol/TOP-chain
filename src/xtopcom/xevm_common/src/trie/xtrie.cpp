@@ -16,7 +16,7 @@
 
 NS_BEG3(top, evm_common, trie)
 
-xhash256_t const empty_root{empty_root_bytes};
+xh256_t const empty_root{empty_root_bytes};
 
 xtop_trie::~xtop_trie() = default;
 
@@ -27,8 +27,9 @@ xtrie_db_ptr_t const & xtop_trie::trie_db() const noexcept {
     return trie_db_;
 }
 
-std::shared_ptr<xtop_trie> xtop_trie::build_from(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec) {
-    xassert(!ec);
+std::shared_ptr<xtop_trie> xtop_trie::build_from(xh256_t const & hash, xtrie_db_ptr_t db, std::error_code & ec) {
+    assert(!ec);
+
     if (db == nullptr) {
         xerror("build trie from null db");
     }
@@ -54,20 +55,18 @@ void xtop_trie::reset() {
 
 // Hash returns the root hash of the trie. It does not write to the
 // database and can be used even if the trie doesn't have one.
-xhash256_t xtop_trie::hash() {
+xh256_t xtop_trie::hash() {
     auto result = hash_root();
     if (trie_root_.owner_before(result.second) || result.second.owner_before(trie_root_)) {
         trie_root_ = std::move(result.second);
     }
+
     if (result.first->type() == xtrie_node_type_t::hashnode) {
         assert(dynamic_cast<xtrie_hash_node_t *>(result.first.get()) != nullptr);
         return std::dynamic_pointer_cast<xtrie_hash_node_t>(result.first)->data();
-    } else {
-        // geth: trie.go:522 hash.(hashNode)  what if hash.type() was not hashNode...
-        // ??? normal won't happen. but it do leave the possibility in code...
-        assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
-        return {};
     }
+
+    unreachable();
 }
 
 // Get returns the value for key stored in the trie.
@@ -192,7 +191,7 @@ void xtop_trie::try_delete(xbytes_t const & key, std::error_code & ec) {
 
 // Commit writes all nodes to the trie's memory database, tracking the internal
 // and external (for account tries) references.
-std::pair<xhash256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
+std::pair<xh256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
     assert(!ec);
     // todo leaf_callback
     if (trie_db_ == nullptr) {
@@ -213,7 +212,7 @@ std::pair<xhash256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
     int32_t committed;
     std::tie(new_root, committed) = h.Commit(trie_root_, trie_db_, ec);
     if (ec) {
-        return std::make_pair(xhash256_t{}, 0);
+        return std::make_pair(xh256_t{}, 0);
     }
 
     if (trie_root_.owner_before(new_root) || new_root.owner_before(trie_root_)) {
@@ -745,12 +744,13 @@ xtrie_node_face_ptr_t xtop_trie::resolve_hash(xtrie_hash_node_ptr_t const & n, /
     return resolve_hash(n->data(), ec);
 }
 
-xtrie_node_face_ptr_t xtop_trie::resolve_hash(xhash256_t const & hash, std::error_code & ec) const {
+xtrie_node_face_ptr_t xtop_trie::resolve_hash(xh256_t const & hash, std::error_code & ec) const {
     assert(!ec);
 
     auto node = trie_db_->node(hash);
     if (!node) {
         ec = error::xerrc_t::trie_db_missing_node_error;
+        xwarn("xtrie_t::resolve_hash failed %s", hash.hex().c_str());
         return nullptr;
     }
     return node;
@@ -778,7 +778,7 @@ xnode_flag_t xtop_trie::node_dirty() {
     return xnode_flag_t{true};
 }
 
-void xtop_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) {
+void xtop_trie::prune(xh256_t const & old_trie_root_hash, std::error_code & ec) {
     assert(!ec);
 
     if (pruner_ == nullptr) {

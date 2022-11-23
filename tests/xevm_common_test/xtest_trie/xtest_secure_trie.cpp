@@ -20,7 +20,7 @@ TEST_F(xtest_trie_fixture, test_secure_trie_delete) {
     UpdateString(strie, "dog", "puppy");
     strie->Delete(top::to_bytes(std::string{"shaman"}));
 
-    auto exp = xhash256_t{top::from_hex("29b235a58c3c25ab83010c327d5932bcf05324b7d6b1185e650798034783ca9d", ec)};
+    auto exp = evm_common::xh256_t{top::from_hex("29b235a58c3c25ab83010c327d5932bcf05324b7d6b1185e650798034783ca9d", ec)};
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, strie->hash());

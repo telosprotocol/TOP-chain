@@ -32,8 +32,8 @@ class xblockextract_t {
     static xobject_ptr_t<base::xvblock_t>           unpack_wrap_relayblock_from_relay_table(base::xvblock_t* _block, std::error_code & ec);
 
     static void     unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec);
-    static bool     get_state_root(base::xvblock_t* _block, evm_common::xh256_t & state_root);
-    static xhash256_t get_state_root_from_block(base::xvblock_t * block);
+    static evm_common::xh256_t get_state_root(base::xvblock_t * block, std::error_code & ec);
+    static evm_common::xh256_t get_state_root_from_block(base::xvblock_t * block);
     static void     unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec);
     static void     unpack_subblocks(base::xvblock_t* _block, std::vector<xobject_ptr_t<base::xvblock_t>> & sublocks, std::error_code & ec);
     static cross_chain_contract_info get_cross_chain_config();

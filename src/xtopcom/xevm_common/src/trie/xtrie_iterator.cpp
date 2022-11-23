@@ -8,11 +8,9 @@
 #include "xevm_common/trie/xtrie_db.h"
 #include "xevm_common/trie/xtrie_encoding.h"
 
-#include <utility>
-
 NS_BEG3(top, evm_common, trie)
 
-std::vector<xbytes_t> xtop_trie_simple_iterator::trie_leafs(xhash256_t const & trie_root_hash, observer_ptr<xtrie_db_t> const & trie_db) {
+std::vector<xbytes_t> xtop_trie_simple_iterator::trie_leafs(xh256_t const & trie_root_hash, observer_ptr<xtrie_db_t> const & trie_db) {
     std::vector<xbytes_t> leafs;
 
     get_trie_leafs(std::make_shared<xtrie_hash_node_t>(trie_root_hash), trie_db, leafs);
@@ -54,7 +52,7 @@ void xtop_trie_simple_iterator::get_trie_leafs(std::shared_ptr<xtrie_node_face_t
 }
 
 void xtop_trie_simple_iterator::get_hash_node_leafs(std::shared_ptr<xtrie_hash_node_t> const & hash_node, observer_ptr<xtrie_db_t> const & trie_db, std::vector<xbytes_t> & leafs) {
-    auto const trie_node = trie_db->node(xhash256_t{hash_node->data()});
+    auto const trie_node = trie_db->node(hash_node->data());
     if (trie_node == nullptr) {
         return;
     }

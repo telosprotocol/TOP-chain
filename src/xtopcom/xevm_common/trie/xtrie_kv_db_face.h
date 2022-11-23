@@ -5,8 +5,8 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
-#include "xbasic/xhash.hpp"
 #include "xevm_common/trie/xtrie_node.h"
+#include "xevm_common/xfixed_hash.h"
 
 #include <gsl/span>
 
@@ -93,17 +93,17 @@ inline void DeleteUnitBatch(xkv_db_face_ptr_t db, std::vector<xbytes_t> const & 
 
 /// Trie Node operations
 
-inline xbytes_t ReadTrieNode(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+inline xbytes_t ReadTrieNode(xkv_db_face_ptr_t db, xh256_t const & hash) {
     std::error_code _;
     return db->Get(hash.to_bytes(), _);
 }
 
-inline bool HasTrieNode(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+inline bool HasTrieNode(xkv_db_face_ptr_t db, xh256_t const & hash) {
     std::error_code _;
     return db->Has(hash.to_bytes(), _);
 }
 
-inline void WriteTrieNode(xkv_db_face_ptr_t db, xhash256_t const & hash, xbytes_t const & node) {
+inline void WriteTrieNode(xkv_db_face_ptr_t db, xh256_t const & hash, xbytes_t const & node) {
     std::error_code ec;
     db->Put(hash.to_bytes(), node, ec);
     if (ec) {
@@ -119,7 +119,7 @@ inline void WriteTrieNodeBatch(xkv_db_face_ptr_t db, std::map<xbytes_t, xbytes_t
     }
 }
 
-inline void DeleteTrieNode(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+inline void DeleteTrieNode(xkv_db_face_ptr_t db, xh256_t const & hash) {
     std::error_code ec;
     db->Delete(hash.to_bytes(), ec);
     if (ec) {
