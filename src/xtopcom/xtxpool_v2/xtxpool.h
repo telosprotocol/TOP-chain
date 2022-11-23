@@ -75,6 +75,7 @@ public:
     std::map<std::string, uint64_t> get_min_keep_heights() const override;
     xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const override;
     const std::set<base::xtable_shortid_t> & get_all_table_sids() const override;
+    uint32_t get_tx_cache_size(const std::string & table_addr) const override;
 
 private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;

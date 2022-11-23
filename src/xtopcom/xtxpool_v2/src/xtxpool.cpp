@@ -337,6 +337,14 @@ const std::set<base::xtable_shortid_t> & xtxpool_t::get_all_table_sids() const {
     return m_all_table_sids;
 }
 
+uint32_t xtxpool_t::get_tx_cache_size(const std::string & table_addr) const {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return 0;
+    }
+    return table->get_tx_cache_size();
+}
+
 void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,
                               base::xtable_shortid_t to_table_sid,
                               std::vector<uint64_t> receiptids,

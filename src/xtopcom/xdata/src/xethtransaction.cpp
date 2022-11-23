@@ -9,6 +9,7 @@
 #include "xbase/xutl.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top {
 namespace data {
@@ -315,6 +316,7 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
         std::string _str = top::to_string(_bytes);
         // std::cout << "unsign_bytes=" << top::to_hex(_bytes) << std::endl;
         uint256_t m_unsign_hash = utl::xkeccak256_t::digest(_str);
+        XMETRICS_GAUGE(metrics::ethtx_get_from, 1);
         // std::cout << "unsign_hash=" << to_hex_str(m_unsign_hash) << std::endl;
 
         char szSign[65] = {0};

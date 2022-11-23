@@ -346,14 +346,16 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
     blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
 
-    auto get_txs = send_tx_queue.get_txs(100, table_genesis_block.get());
+    uint32_t expired_num;
+    uint32_t unconituous_num;
+    auto get_txs = send_tx_queue.get_txs(100, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(get_txs.size(), 1);
 
     // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
 
     send_tx_queue.updata_latest_nonce(tx->get_transaction()->get_source_addr(), tx->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_queue.get_txs(100, table_genesis_block.get());
+    get_txs = send_tx_queue.get_txs(100, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(get_txs.size(), 0);
 
     // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
@@ -388,7 +390,9 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
     blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
 
-    auto tx_ents = send_tx_queue.get_txs(txs_num, table_genesis_block.get());
+    uint32_t expired_num;
+    uint32_t unconituous_num;
+    auto tx_ents = send_tx_queue.get_txs(txs_num, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents.size(), txs_num);
     for (uint32_t i = 0; i < tx_ents.size(); i++) {
         ASSERT_EQ(tx_ents[i]->get_transaction()->get_last_nonce(), i);
@@ -403,11 +407,11 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
 
     // pop one tx, that will pop txs those nonce are less than the poped tx, and no continuos tx
     auto tx_tmp = send_tx_queue.pop_tx(txs[3]->get_tx_hash(), false);
-    auto tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get());
+    auto tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents2.size(), 3);
 
     send_tx_queue.updata_latest_nonce(txs[3]->get_transaction()->get_source_addr(), txs[3]->get_transaction()->get_tx_nonce());
-    tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get());
+    tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents2.size(), txs_num - 4);
 }
 
@@ -459,14 +463,16 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
 
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
     blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
-    auto tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
+    uint32_t expired_num;
+    uint32_t unconituous_num;
+    auto tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents.size(), 1);
 
     tx_ent = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
 
-    tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
+    tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents.size(), 7);
 }
 
@@ -637,13 +643,15 @@ TEST_F(test_send_tx_queue, send_tx_queue_too_many_uncontinuous_send_txs) {
 
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
     blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
-    auto tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
+    uint32_t expired_num;
+    uint32_t unconituous_num;
+    auto tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents.size(), 0);
 
     std::shared_ptr<xtx_entry> tx_ent1_0 = std::make_shared<xtx_entry>(txs_1_0[0], para);
     send_tx_queue.push_tx(tx_ent1_0, 0);
 
-    tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
+    tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents.size(), 1);
 }
 

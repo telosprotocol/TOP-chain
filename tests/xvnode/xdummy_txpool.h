@@ -75,6 +75,10 @@ public:
         return m_all_table_sids;
     }
 
+    uint32_t get_tx_cache_size(const std::string & table_addr) const override {
+        return 0;
+    }
+
 private:
     std::set<base::xtable_shortid_t> m_all_table_sids;
 };

@@ -273,6 +273,7 @@ public:
     virtual std::map<std::string, uint64_t> get_min_keep_heights() const = 0;
     virtual xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const = 0;
     virtual const std::set<base::xtable_shortid_t> & get_all_table_sids() const = 0;
+    virtual uint32_t get_tx_cache_size(const std::string & table_addr) const = 0;
 };
 
 class xtxpool_instance {

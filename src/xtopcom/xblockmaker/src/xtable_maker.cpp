@@ -356,7 +356,7 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtablemaker_para_t & 
     return make_light_table_v2(false, table_para, cs_para, table_result);
 }
 
-xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
+xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, bool is_leader, int32_t & error_code) {
     // XMETRICS_TIMER(metrics::cons_make_fulltable_tick);
     XMETRICS_TIME_RECORD("cons_make_fulltable_cost");
     std::vector<xblock_ptr_t> blocks_from_last_full;
@@ -385,11 +385,11 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
         xwarn("xtable_maker_t::make_full_table fail-build block.%s", cs_para.dump().c_str());
         return nullptr;
     }
-    xinfo("xtable_maker_t::make_full_table succ.block=%s", proposal_block->dump().c_str());
+    xinfo("xtable_maker_t::make_full_table succ.block=%s,is_leader:%d", proposal_block->dump().c_str(), is_leader);
     return proposal_block;
 }
 
-xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
+xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, bool is_leader, int32_t & error_code) {
     // TODO(jimmy)
     XMETRICS_TIME_RECORD("cons_make_emptytable_cost");
 
@@ -407,6 +407,7 @@ xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_p
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, last_state_root));
 
     xblock_ptr_t proposal_block = m_emptytable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, m_default_builder_para);
+    xinfo("xtable_maker_t::make_empty_table succ.block=%s,is_leader:%d", proposal_block->dump().c_str(), is_leader);
     return proposal_block;
 }
 
@@ -452,7 +453,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
 
     xblock_ptr_t proposal_block = nullptr;
     if (can_make_next_full_block(cs_para)) {
-        proposal_block = make_full_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
+        proposal_block = make_full_table(table_para, cs_para, true, tablemaker_result.m_make_block_error_code);
     } else {
         proposal_block = leader_make_light_table(table_para, cs_para, tablemaker_result);
     }
@@ -464,7 +465,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
             return nullptr;
         } else {
             if (can_make_empty_table_block) {
-                proposal_block = make_empty_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
+                proposal_block = make_empty_table(table_para, cs_para, true, tablemaker_result.m_make_block_error_code);
                 if (proposal_block == nullptr) {
                     return nullptr;
                 }
@@ -513,10 +514,10 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     xblock_ptr_t local_block = nullptr;
     xtablemaker_result_t table_result;
     if (can_make_next_full_block(cs_para)) {
-        local_block = make_full_table(table_para, cs_para, table_result.m_make_block_error_code);
+        local_block = make_full_table(table_para, cs_para, false, table_result.m_make_block_error_code);
     } else if (proposal_block->get_block_class() == base::enum_xvblock_class_nil) {
         if (can_make_next_empty_block(cs_para)) {
-            local_block = make_empty_table(table_para, cs_para, table_result.m_make_block_error_code);
+            local_block = make_empty_table(table_para, cs_para, false, table_result.m_make_block_error_code);
         }
     } else {
         local_block = backup_make_light_table(table_para, cs_para, table_result);

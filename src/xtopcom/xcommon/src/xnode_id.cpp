@@ -31,8 +31,6 @@ metrics_xtop_node_id::~metrics_xtop_node_id() {
 }
 
 xtop_node_id::xtop_node_id(std::string const & value) {
-    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
-
     if (!value.empty()) {
         parse(value);
     }
