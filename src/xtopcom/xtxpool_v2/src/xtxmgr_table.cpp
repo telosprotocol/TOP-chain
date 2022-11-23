@@ -216,5 +216,10 @@ void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t &
     m_new_receipt_queue.update_receiptid_state(receiptid_state);
 }
 
+uint32_t xtxmgr_table_t::get_tx_cache_size() const {
+    return m_send_tx_queue.size() + m_new_receipt_queue.size();
+}
+
+
 }  // namespace xtxpool_v2
 }  // namespace top

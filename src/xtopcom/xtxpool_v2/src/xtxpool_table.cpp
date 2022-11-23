@@ -209,13 +209,16 @@ xpack_resource xtxpool_table_t::get_pack_resource(const xtxs_pack_para_t & pack_
         return {};
     }
 
-    // check sendtx validation again after getting from pool
-    for (auto iter = txs.begin(); iter != txs.end(); ) {
-        if (false == verify_send_tx_after_get_txs(*iter)) {
-            iter = txs.erase(iter);
-        } else {
-            iter++;
-        }
+    {
+        XMETRICS_TIME_RECORD("txpool_verify_sendtx_after_get_txs_cost");
+        // check sendtx validation again after getting from pool
+        for (auto iter = txs.begin(); iter != txs.end(); ) {
+            if (false == verify_send_tx_after_get_txs(*iter)) {
+                iter = txs.erase(iter);
+            } else {
+                iter++;
+            }
+        }        
     }
 
     auto self_sid = m_xtable_info.get_short_table_id();
@@ -839,6 +842,11 @@ void xtxpool_table_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::x
 
 xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
     return m_unconfirm_raw_txs.get_raw_tx(peer_table_sid, receipt_id);
+}
+
+uint32_t xtxpool_table_t::get_tx_cache_size() const {
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    return m_txmgr_table.get_tx_cache_size();
 }
 
 }  // namespace xtxpool_v2

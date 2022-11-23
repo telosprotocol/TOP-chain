@@ -38,6 +38,7 @@ public:
                                                                                                uint32_t & total_num) const;
     void clear_expired_txs();
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    uint32_t get_tx_cache_size() const;
 
 private:
     xtxpool_table_info_t * m_xtable_info;
