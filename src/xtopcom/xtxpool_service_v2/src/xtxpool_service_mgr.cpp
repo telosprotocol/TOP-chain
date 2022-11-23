@@ -189,11 +189,7 @@ bool xtxpool_service_mgr::unreg(const xvip2_t & xip) {
 }
 
 data::xcons_transaction_ptr_t xtxpool_service_mgr::query_tx(const std::string & account, const uint256_t & hash) const {
-    auto & tx_ent = m_para->get_txpool()->query_tx(account, hash);
-    if (tx_ent == nullptr) {
-        return nullptr;
-    }
-    return tx_ent->get_tx();
+    return m_para->get_txpool()->query_tx(account, hash);
 }
 
 void xtxpool_service_mgr::start() {
