@@ -102,8 +102,6 @@ public:
     // concurrently with other mutators.
     void Commit(xh256_t hash, AfterCommitCallback cb, std::error_code & ec);
 
-    void commit(xh256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec);
-
     void prune(xh256_t const & hash, std::error_code & ec);
 
     void commit_pruned(std::error_code & ec);

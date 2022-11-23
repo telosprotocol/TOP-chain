@@ -26,7 +26,7 @@ std::shared_ptr<evm_common::trie::xtrie_db_t> xtop_state_mpt_caching_db::trie_db
     return trie_db;
 }
 
-std::shared_ptr<evm_common::trie::xtrie_face_t> xtop_state_mpt_caching_db::open_trie(common::xtable_address_t const & table, xhash256_t const & hash, std::error_code & ec) {
+std::shared_ptr<evm_common::trie::xtrie_face_t> xtop_state_mpt_caching_db::open_trie(common::xtable_address_t const & table, evm_common::xh256_t const & hash, std::error_code & ec) {
     return evm_common::trie::xsecure_trie_t::build_from(hash, trie_db(table), ec);
 }
 
