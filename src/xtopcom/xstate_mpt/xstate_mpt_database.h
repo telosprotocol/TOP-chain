@@ -21,7 +21,7 @@ public:
     explicit xtop_state_mpt_caching_db(base::xvdbstore_t * db);
     ~xtop_state_mpt_caching_db() = default;
 
-    std::shared_ptr<evm_common::trie::xtrie_face_t> open_trie(common::xtable_address_t const & table, xhash256_t const & hash, std::error_code & ec);
+    std::shared_ptr<evm_common::trie::xtrie_face_t> open_trie(common::xtable_address_t const & table, evm_common::xh256_t const & hash, std::error_code & ec);
     std::shared_ptr<evm_common::trie::xtrie_db_t> trie_db(common::xtable_address_t const & table);
 
 private:
