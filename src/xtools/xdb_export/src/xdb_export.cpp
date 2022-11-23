@@ -2216,7 +2216,7 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
 
 std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_account_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts,
                                                                                             std::vector<common::xtoken_id_t> const & queried_tokens,
-                                                                                            std::vector<std::string> const & queried_properties,
+                                                                                            std::unordered_map<std::string, bool> const & queried_properties,
                                                                                             std::error_code & ec) const {
     assert(!ec);
     assert(m_blockstore != nullptr);
@@ -2277,9 +2277,28 @@ std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_a
             }
         }
 
-        for (auto const & property_name : queried_properties) {
-            auto bytes = unit_bstate->get_bstate()->get_property_value_in_bytes(property_name);
-            data.properties.emplace(property_name, std::move(bytes));
+        for (auto const & property_data : queried_properties) {
+            auto const & property_name = top::get<std::string const>(property_data);
+            auto const binary = top::get<bool>(property_data);
+
+            if (binary) {
+                auto bytes = unit_bstate->get_bstate()->get_property_value_in_bytes(property_name);
+                data.binary_properties.emplace(property_name, std::move(bytes));
+            } else {
+                auto const & bstate = unit_bstate->get_bstate();
+
+                if (!bstate->find_property(property_name)) {
+                    data.text_properties.emplace(property_name, std::string{});
+                } else {
+                    auto propobj = bstate->load_string_var(property_name);
+                    if (nullptr == propobj) {
+                        data.text_properties.emplace(property_name, std::string{});
+                    } else {
+                        auto text = propobj->query();
+                        data.text_properties.emplace(property_name, std::move(text));
+                    }
+                }
+            }
         }
 
         result.emplace_back(std::move(data));
@@ -2299,34 +2318,66 @@ void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_a
     auto & table_json = root[table_address.to_string()];
     table_json["account_count"] = data.size();
 
+    std::array<std::unordered_map<std::string, evm_common::u256>, 2> total_asset;
+
     for (auto const & account_datum : data) {
         auto const & account_address = account_datum.account_address;
         auto const & top_asset = account_datum.assets[0];
         auto const & tep1_asset = account_datum.assets[1];
-        auto const & properties = account_datum.properties;
+        auto const & binary_properties = account_datum.binary_properties;
+        auto const & string_properties = account_datum.text_properties;
 
         assert(account_address.table_address() == table_address);
 
         nlohmann::json account_json;
 
-        account_json["table_height"] = table_height;
+        account_json["associated_table_height"] = table_height;
 
         for (auto const & top_balance_datum : top_asset) {
-            account_json["TOP"][top::get<std::string const>(top_balance_datum)] = top::get<evm_common::u256>(top_balance_datum).str();
+            auto const & asset_name = top::get<std::string const>(top_balance_datum);
+            auto const & asset = top::get<evm_common::u256>(top_balance_datum);
+
+            account_json["TOP"][asset_name] = asset.str();
+            total_asset[0][asset_name] += asset;
         }
 
         for (auto const & tep1_balance_datum : tep1_asset) {
-            account_json["TEP1"][top::get<std::string const>(tep1_balance_datum)] = top::get<evm_common::u256>(tep1_balance_datum).str();
+            auto const & asset_name = top::get<std::string const>(tep1_balance_datum);
+            auto const & asset = top::get<evm_common::u256>(tep1_balance_datum);
+
+            account_json["TEP1"][asset_name] = asset.str();
+            total_asset[1][asset_name] += asset;
         }
 
-        for (auto const & property_datum : properties) {
+        for (auto const & property_datum : binary_properties) {
             auto const & property_name = top::get<std::string const>(property_datum);
             auto const & property_value = top::get<xbytes_t>(property_datum);
 
-            account_json["properties"][property_name] = to_hex(std::begin(property_value), std::end(property_value), "0x");
+            account_json["binary_properties"][property_name] = to_hex(std::begin(property_value), std::end(property_value), "0x");
+        }
+
+        for (auto const & property_datum : string_properties) {
+            auto const & property_name = std::get<0>(property_datum);
+            auto const & property_value = std::get<1>(property_datum);
+
+            account_json["string_properties"][property_name] = property_value;
         }
 
         table_json[account_address.to_string()] = account_json;
+    }
+
+    for (auto const & top_balance_datum : total_asset[0]) {
+        auto const & asset_name = top::get<std::string const>(top_balance_datum);
+        auto const & asset = top::get<evm_common::u256>(top_balance_datum);
+
+        table_json["TOP"][asset_name] = asset.str();
+    }
+
+    for (auto const & tep1_balance_datum : total_asset[1]) {
+        auto const & asset_name = top::get<std::string const>(tep1_balance_datum);
+        auto const & asset = top::get<evm_common::u256>(tep1_balance_datum);
+
+        table_json["TEP1"][asset_name] = asset.str();
     }
 
     out << std::setw(4) << root;
