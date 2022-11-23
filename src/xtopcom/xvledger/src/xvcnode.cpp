@@ -23,12 +23,12 @@ namespace top
             m_node_address.high_addr  = xip2_addr.high_addr;
             m_node_address.low_addr   = xip2_addr.low_addr;
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvnode_t, 1);
-#ifdef DEBUG  // double check whether public key matched the account addresss
-            if (!sign_pub_key.empty()) { // unit test might to use empty keys.
-                utl::xecpubkey_t pub_key((uint8_t *)sign_pub_key.data(), (int)sign_pub_key.size());
-                xassert(account == pub_key.to_address(get_addr_type(), get_ledger_id()));
-            }
-#endif
+// #ifdef DEBUG  // double check whether public key matched the account addresss
+//             if (!sign_pub_key.empty()) { // unit test might to use empty keys.
+//                 utl::xecpubkey_t pub_key((uint8_t *)sign_pub_key.data(), (int)sign_pub_key.size());
+//                 xassert(account == pub_key.to_address(get_addr_type(), get_ledger_id()));
+//             }
+// #endif
         }
         
         xvnode_t::xvnode_t(const xvnode_t & obj)
