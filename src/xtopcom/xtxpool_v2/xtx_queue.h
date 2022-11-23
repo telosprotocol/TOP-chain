@@ -67,7 +67,7 @@ public:
     }
     void insert_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void erase_tx(const uint256_t & hash);
-    const std::shared_ptr<xtx_entry> find(const uint256_t & hash) const;
+    const std::shared_ptr<xtx_entry> find(const std::string & hash) const;
     const std::shared_ptr<xtx_entry> pick_to_be_droped_tx() const;
     const std::vector<std::shared_ptr<xtx_entry>> get_expired_txs() const;
     const xsend_tx_set_t & get_queue() const {
@@ -118,8 +118,8 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t max_num, base::xvblock_t * cert_block) const;
-    const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
-    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
+    const std::shared_ptr<xtx_entry> pop_tx(const std::string & tx_hash, bool clear_follower);
+    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const std::string & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void clear_expired_txs();
     uint32_t size() const {
