@@ -41,6 +41,7 @@
 #include "../xerror.h"
 #include "xbasic/xutility.h"
 #include "xdata/xunit_bstate.h"
+#include "xstatestore/xstatestore_face.h"
 
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
@@ -2129,13 +2130,13 @@ std::string xdb_check_data_func_off_data_t::data_type() const {
     return "off_data";
 }
 
-std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get_unit_accounts(common::xaccount_address_t const & table_address,
-                                                                                               std::uint64_t const table_height,
-                                                                                               std::vector<common::xaccount_address_t> const & designated,
-                                                                                               std::error_code & ec) const {
+std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> xdb_export_tools_t::get_unit_accounts(common::xaccount_address_t const & table_address,
+                                                                                                             std::uint64_t const table_height,
+                                                                                                             std::vector<common::xaccount_address_t> const & designated,
+                                                                                                             std::error_code & ec) const {
     assert(!ec);
 
-    std::unordered_map<common::xaccount_address_t, uint64_t> result;
+    std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> result;
 
     if (table_address.base_address().type() != top::base::enum_vaccount_addr_type_block_contract) {
         ec = top::db_export::xerrc_t::invalid_table_address;
@@ -2175,15 +2176,15 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
                            std::end(account_data),
                            std::inserter(result, std::end(result)),
                            [](std::pair<common::xaccount_address_t, base::xaccount_index_t> const & account_datum) {
-                    return std::make_pair(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum).get_latest_unit_height());
-                });
+                               return std::make_pair(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum));
+                           });
         } else {
             std::for_each(
                 std::begin(account_data), std::end(account_data), [&qualified, &result](std::pair<common::xaccount_address_t, base::xaccount_index_t> const & account_datum) {
                     if (std::find_if(std::begin(qualified), std::end(qualified), [&account_datum](common::xaccount_address_t const & allowed) {
                             return allowed == top::get<common::xaccount_address_t>(account_datum);
                         }) != std::end(qualified)) {
-                        result.emplace(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum).get_latest_unit_height());
+                        result.emplace(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum));
                     }
                 });
         }
@@ -2196,7 +2197,7 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
                 state_mpt::xaccount_info_t info;
                 info.decode({std::begin(bytes), std::end(bytes)});
 
-                result.emplace(info.m_account, info.m_index.get_latest_unit_height());
+                result.emplace(info.m_account, info.m_index);
             });
         } else {
             std::for_each(std::begin(leafs), std::end(leafs), [&qualified, &result](xbytes_t const & bytes) {
@@ -2205,7 +2206,7 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
 
                 if (std::find_if(std::begin(qualified), std::end(qualified), [&info](common::xaccount_address_t const & acc) { return acc == info.m_account; }) !=
                     std::end(qualified)) {
-                    result.emplace(info.m_account, info.m_index.get_latest_unit_height());
+                    result.emplace(info.m_account, info.m_index);
                 }
             });
         }
@@ -2214,7 +2215,7 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
     return result;
 }
 
-std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_account_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts,
+std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_account_data(std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> const & accounts,
                                                                                             std::vector<common::xtoken_id_t> const & queried_tokens,
                                                                                             std::unordered_map<std::string, bool> const & queried_properties,
                                                                                             std::error_code & ec) const {
@@ -2224,25 +2225,28 @@ std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_a
     std::vector<exported_account_data> result;
     for (auto const & account_datum : accounts) {
         auto const & account_address = top::get<common::xaccount_address_t const>(account_datum);
-        auto const account_height = top::get<uint64_t>(account_datum);
+        auto const account_index = top::get<base::xaccount_index_t>(account_datum);
 
-        auto unit_vblock = m_blockstore->load_block_object(account_address.vaccount(), account_height, base::enum_xvblock_flag_committed, true);
-        if (unit_vblock == nullptr) {
+        auto unit_bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, account_index);
+        if (unit_bstate == nullptr) {
             ec = xerrc_t::account_data_not_found;
-            xwarn("account %s at height %" PRIu64 " with committed state not found. xdb_export_tools_t::get_account_data returns {}",
+            xwarn("account %s at %s with committed state not found. xdb_export_tools_t::get_account_data returns {}",
                   account_address.to_string().c_str(),
-                  account_height);
+                  account_index.dump().c_str());
+
+            std::cout << "account " << account_address.to_string() << " at " << account_index.dump()
+                      << " with committed state not found. xdb_export_tools_t::get_account_data returns {}" << std::endl;
             return {};
         }
 
-        auto unit_vbstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        if (unit_vbstate == nullptr) {
-            ec = xerrc_t::account_data_not_found;
-            xwarn("account %s at height %" PRIu64 " state not found. xdb_export_tools_t::get_account_data returns {}", account_address.to_string().c_str(), account_height);
-            return {};
-        }
+        //auto unit_vbstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
+        //if (unit_vbstate == nullptr) {
+        //    ec = xerrc_t::account_data_not_found;
+        //    xwarn("account %s at height %" PRIu64 " state not found. xdb_export_tools_t::get_account_data returns {}", account_address.to_string().c_str(), account_height);
+        //    return {};
+        //}
 
-        auto const unit_bstate = top::make_unique<data::xunit_bstate_t>(unit_vbstate.get());
+        //auto const unit_bstate = top::make_unique<data::xunit_bstate_t>(unit_vbstate.get());
 
         exported_account_data data;
         data.account_address = account_address;
