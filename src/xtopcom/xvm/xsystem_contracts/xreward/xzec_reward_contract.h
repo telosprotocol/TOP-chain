@@ -350,7 +350,7 @@ private:
      * @param map_nodes nodes to count
      * @return count resualt
      */
-    std::vector<std::vector<uint32_t>> calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes, bool fullnode_enabled);
+    std::vector<std::vector<uint32_t>> calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes);
 
     /**
      * @brief set votes_detail into map_nodes and calculate total valid auditor votes

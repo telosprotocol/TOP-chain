@@ -30,7 +30,6 @@ using namespace top::data;
 #define XREWARD_CONTRACT XZEC_MODULE XCONTRACT_PREFIX
 
 #define VALID_EDGER(node) (node.deposit() > 0)
-#define VALID_ARCHIVER(node) (node.deposit() > 0 && node.can_be_archive())
 #define VALID_AUDITOR(node) (node.deposit() > 0 && node.can_be_auditor())
 #define VALID_VALIDATOR(node) (node.deposit() > 0)
 
@@ -881,8 +880,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     return calc_issuance_internal(time, record.last_issuance_time, minimum_issuance, additional_issue_year_ratio, record.issued_until_last_year_end);
 }
 
-std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
-                                                                        bool fullnode_enabled) {
+std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes) {
     std::vector<std::vector<uint32_t>> role_nums;
     // vector init
     role_nums.resize(role_type_idx_num);
@@ -898,21 +896,6 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
         auto const & account = entity.first;
         auto const & node = entity.second;
 
-#if 0
-        // old statistical method
-        if (node.get_deposit() > 0 && node.could_be_edge()) {
-            role_nums[edger_idx][valid_idx]++;
-        }
-        if (node.get_deposit() > 0 && node.can_be_archive()) {
-            role_nums[archiver_idx][valid_idx]++;
-        }
-        if (node.get_deposit() > 0 && node.can_be_auditor()) {
-            role_nums[auditor_idx][valid_idx]++;
-        }
-        if (node.get_deposit() > 0 && node.could_be_validator()) {
-            role_nums[validator_idx][valid_idx]++;
-        }
-#else
         // now statistical method
         if (node.could_be_edge()) {
             // total edger nums
@@ -924,33 +907,6 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
             // deposit zero edger nums
             if (node.deposit() == 0) {
                 role_nums[edger_idx][deposit_zero_num]++;
-            }
-        }
-        if (fullnode_enabled) {
-            if (node.could_be_archive()) {
-                // total archiver nums
-                role_nums[archiver_idx][total_idx]++;
-                // valid archiver nums
-                if (node.deposit() > 0 && node.can_be_archive()) {
-                    role_nums[archiver_idx][valid_idx]++;
-                }
-                // deposit zero archiver nums
-                if (node.deposit() == 0) {
-                    role_nums[archiver_idx][deposit_zero_num]++;
-                }
-            }
-        } else {
-            if (node.legacy_could_be_archive()) {
-                // total archiver nums
-                role_nums[archiver_idx][total_idx]++;
-                // valid archiver nums
-                if (node.deposit() > 0 && node.legacy_can_be_archive()) {
-                    role_nums[archiver_idx][valid_idx]++;
-                }
-                // deposit zero archiver nums
-                if (node.deposit() == 0) {
-                    role_nums[archiver_idx][deposit_zero_num]++;
-                }
             }
         }
         if (node.could_be_auditor()) {
@@ -997,7 +953,6 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
                 role_nums[evm_validator_idx][deposit_zero_num]++;
             }
         }
-#endif
     }
 
     return role_nums;
@@ -1215,40 +1170,6 @@ void xzec_reward_contract::calc_edge_workload_rewards(data::system_contract::xre
     }
     reward_to_self = edge_workload_rewards / divide_num;
     xdbg("[xzec_reward_contract::calc_edge_worklaod_rewards] account: %s, edge reward: [%llu, %u]",
-         node.m_account.to_string().c_str(),
-         static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
-         static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
-
-    return;
-}
-
-void xzec_reward_contract::calc_archive_workload_rewards(data::system_contract::xreg_node_info const & node,
-                                                         std::vector<uint32_t> const & archive_num,
-                                                         const ::uint128_t archive_workload_rewards,
-                                                         bool const fullnode_enabled,
-                                                         ::uint128_t & reward_to_self) {
-    XCONTRACT_ENSURE(archive_num.size() == num_type_idx_num, "archive_num not 3");
-    auto divide_num = archive_num[valid_idx];
-    reward_to_self = 0;
-    if (0 == divide_num) {
-        return;
-    }
-
-    if (node.deposit() == 0) {
-        return;
-    }
-
-    if (!fullnode_enabled) {
-        if (!node.legacy_can_be_archive()) {
-            return;
-        }
-    } else {
-        if (!node.can_be_archive()) {
-            return;
-        }
-    }
-    reward_to_self = archive_workload_rewards / divide_num;
-    xdbg("[xzec_reward_contract::calc_archive_worklaod_rewards] account: %s, archive reward: [%llu, %u]",
          node.m_account.to_string().c_str(),
          static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
@@ -1562,7 +1483,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     // step 2: calculate different votes and role nums
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     auto auditor_total_votes = calc_votes(property_param.votes_detail, property_param.map_nodes, account_votes);
-    std::vector<std::vector<uint32_t>> role_nums = calc_role_nums(property_param.map_nodes, true);
+    std::vector<std::vector<uint32_t>> role_nums = calc_role_nums(property_param.map_nodes);
 
     xinfo(
         "[xzec_reward_contract::calc_nodes_rewards] issue_time_length: %llu, "
@@ -1622,9 +1543,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     if (0 == role_nums[edger_idx][valid_idx]) {
         community_reward += edge_workload_rewards;
     }
-    if (0 == role_nums[archiver_idx][valid_idx]) {
-        community_reward += archive_workload_rewards;
-    }
+    community_reward += archive_workload_rewards;
     if (0 == role_nums[auditor_idx][valid_idx]) {
         community_reward += vote_rewards;
     }
@@ -1667,15 +1586,6 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
             calc_edge_workload_rewards(node, role_nums[edger_idx], edge_workload_rewards, reward_to_self);
             if (reward_to_self != 0) {
                 issue_detail.m_node_rewards[account.to_string()].m_edge_reward = reward_to_self;
-                self_reward += reward_to_self;
-            }
-        }
-
-        if (node.could_be_archive()) {
-            ::uint128_t reward_to_self = 0;
-            calc_archive_workload_rewards(node, role_nums[archiver_idx], archive_workload_rewards, true, reward_to_self);
-            if (reward_to_self != 0) {
-                issue_detail.m_node_rewards[account.to_string()].m_archive_reward = reward_to_self;
                 self_reward += reward_to_self;
             }
         }
