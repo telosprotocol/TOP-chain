@@ -34,6 +34,7 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
                                        const evm_common::xh256_t & root_hash,
                                        bool sync_unit,
                                        std::error_code & ec) {
+    // verify hash
     if (block_hash.empty() || state_hash.empty()) {
         xwarn("xtop_state_downloader::sync_state table %s param invalid: %s, %s, %s",
               table.to_string().c_str(),
@@ -42,6 +43,14 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
               root_hash.hex().c_str());
         ec = error::xerrc_t::downloader_param_invalid;
         return;
+    }
+    // verify if exist already
+    {
+        auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, table);
+        if (evm_common::trie::HasTrieNode(kv_db, root_hash)) {
+            xwarn("xtop_state_downloader::sync_state table: %s root: %s already in db", table.to_string().c_str(), root_hash.as_hex_str().c_str());
+            return;
+        }
     }
     std::lock_guard<std::mutex> lock(m_table_dispatch);
     if (m_running_tables.count(table)) {
