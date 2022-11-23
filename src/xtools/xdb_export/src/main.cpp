@@ -9,6 +9,8 @@
 #include "xdata/xrootblock.h"
 #include "xcrypto/xckey.h"
 
+#include <omp.h>
+
 using namespace top;
 using namespace top::db_export;
 
@@ -411,13 +413,18 @@ int main(int argc, char ** argv) {
             });
         }
 
-        std::unordered_map<common::xaccount_address_t, uint64_t> accounts_info;
-        std::error_code ec;
-        for (auto const & tbl : table_query_criteria) {
-            ec.clear();
+#pragma omp parallel for
+        for (uint i = 0; i < table_query_criteria.size(); ++i) {
+            auto it = std::next(std::begin(table_query_criteria), i);
+            auto const & tbl = *it;
+
+            std::error_code ec;
 
             auto const & table_address = top::get<common::xtable_address_t const>(tbl);
             auto const table_height = top::get<uint64_t>(tbl);
+
+            std::string json_file_name = table_address.to_string() + '_' + std::to_string(table_height) + ".json";
+
             auto units = tools.get_unit_accounts(table_address, table_height, queried_accounts, ec);
             if (ec) {
                 std::cerr << "get_unit_accounts on table " << table_address.to_string() << " at height " << table_height << " failed with error code " << ec.value() << " msg "
@@ -426,8 +433,8 @@ int main(int argc, char ** argv) {
             }
 
             auto const result = tools.get_account_data(
-                units, {common::xtoken_id_t::top, common::xtoken_id_t::eth, common::xtoken_id_t::usdt, common::xtoken_id_t::usdc}, {"$06"}, ec);
-            tools.append_to_json(table_address, table_height, result, exported_file_path, ec);
+                units, {common::xtoken_id_t::top, common::xtoken_id_t::eth, common::xtoken_id_t::usdt, common::xtoken_id_t::usdc}, std::unordered_map<std::string, bool>{}, ec);
+            tools.append_to_json(table_address, table_height, result, json_file_name, ec);
         }
     } else {
         usage();
