@@ -75,7 +75,7 @@ public:
     // query balance info
     void query_balance();
     // query archive db integrity and continuity
-    void query_archive_db(const uint32_t redundancy);
+    void query_archive_db(std::map<common::xtable_address_t, uint64_t> const& table_query_criteria, const uint32_t redundancy);
     // query checkpoint
     void query_checkpoint(const uint64_t clock);
     // set folder
@@ -362,7 +362,7 @@ private:
     void query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
     void query_balance(std::string const & table, json & j_unit, json & j_table);
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data);
-    void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors);
+    void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors, uint64_t _check_height);
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);
