@@ -352,7 +352,7 @@ TEST_F(test_state_sync_fixture, test_fill_tasks_use_left_node_task) {
     std::vector<evm_common::xh256_t> nodes;
     std::vector<xbytes_t> units;
     m_syncer->m_trie_tasks.emplace(evm_common::xh256_t(xbytes_t(32, 1)));
-    m_syncer->fill_tasks(2, req, nodes, units);
+    m_syncer->fill_tasks(2, 2, req, nodes, units);
 
     EXPECT_EQ(nodes.size(), 2);
     EXPECT_EQ(nodes[0], evm_common::xh256_t(xbytes_t(32, 1)));
@@ -366,7 +366,7 @@ TEST_F(test_state_sync_fixture, test_fill_tasks_use_left_unit_task) {
     std::vector<evm_common::xh256_t> nodes;
     std::vector<xbytes_t> units;
     m_syncer->m_unit_tasks.emplace(std::make_pair(evm_common::xh256_t(xbytes_t(32, 1)), xbytes_t(32, 2)));
-    m_syncer->fill_tasks(2, req, nodes, units);
+    m_syncer->fill_tasks(2, 2, req, nodes, units);
 
     EXPECT_EQ(nodes.size(), 1);
     EXPECT_EQ(units.size(), 1);
@@ -381,7 +381,7 @@ TEST_F(test_state_sync_fixture, test_fill_tasks_not_use_left_task) {
     std::vector<xbytes_t> units;
     m_syncer->m_trie_tasks.emplace(evm_common::xh256_t(xbytes_t(32, 1)));
     m_syncer->m_unit_tasks.emplace(std::make_pair(evm_common::xh256_t(xbytes_t(32, 2)), xbytes_t(32, 3)));
-    m_syncer->fill_tasks(1, req, nodes, units);
+    m_syncer->fill_tasks(1, 1, req, nodes, units);
 
     EXPECT_EQ(nodes.size(), 1);
     EXPECT_EQ(nodes[0], evm_common::xh256_t(xbytes_t(32, 1)));
@@ -422,7 +422,7 @@ TEST_F(test_state_sync_fixture, test_assign_trie_tasks_empty) {
     state_sync::state_req req;
     std::vector<evm_common::xh256_t> nodes;
     std::vector<xbytes_t> units;
-    m_syncer->fill_tasks(1, req, nodes, units);
+    m_syncer->fill_tasks(1, 1, req, nodes, units);
     m_syncer->assign_trie_tasks(m_peers);
     EXPECT_TRUE(m_track_reqs.empty());
     auto mock_net = std::dynamic_pointer_cast<xmock_vnetwork_driver_t>(m_peers.network);

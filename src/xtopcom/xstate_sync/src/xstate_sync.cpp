@@ -53,6 +53,8 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_db = db;
     sync->m_kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
     sync->m_items_per_task = total_fetch_num;
+    sync->m_units_per_task = unit_fetch_num;
+    sync->m_max_req_nums = max_req_num;
     xinfo("xtop_state_sync::new_state_sync {%s}", sync->symbol().c_str());
     return sync;
 }
@@ -286,7 +288,7 @@ void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
         req.type = state_req_type::enum_state_req_trie;
         m_track_func(req);
         m_req_nums++;
-        if (m_req_nums > max_req_num) {
+        if (m_req_nums >= m_max_req_nums) {
             return;
         }
     }

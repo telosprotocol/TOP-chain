@@ -32,7 +32,7 @@ void xaccount_info_t::decode(const std::string & str) {
     return;
 }
 
-static xstate_mpt_caching_db_t get_caching_db(base::xvdbstore_t * db) {
+static xstate_mpt_caching_db_t & get_caching_db(base::xvdbstore_t * db) {
     static xstate_mpt_caching_db_t container(db);
     return container;
 }
