@@ -8,6 +8,7 @@
 #include "xevm_common/trie/xtrie_kv_db.h"
 #include "xmetrics/xmetrics.h"
 #include "xstate_mpt/xerror.h"
+#include "xstate_mpt/xstate_mpt_database.h"
 #include "xstate_mpt/xstate_mpt_store.h"
 
 namespace top {
@@ -31,6 +32,11 @@ void xaccount_info_t::decode(const std::string & str) {
     return;
 }
 
+static xstate_mpt_caching_db_t get_caching_db(base::xvdbstore_t * db) {
+    static xstate_mpt_caching_db_t container(db);
+    return container;
+}
+
 std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_address_t & table,
                                                        const evm_common::xh256_t & root,
                                                        base::xvdbstore_t * db,
@@ -50,9 +56,8 @@ void xtop_state_mpt::init(const common::xaccount_address_t & table, const evm_co
     assert(!ec);
 
     m_table_address = table;
-    auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
-    m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
-    m_trie = evm_common::trie::xsecure_trie_t::build_from(root, m_db, ec);
+    m_trie_db = get_caching_db(db).trie_db(table);
+    m_trie = evm_common::trie::xsecure_trie_t::build_from(root, m_trie_db, ec);
     if (ec) {
         xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.to_string().c_str(), root.hex().c_str());
         return;
@@ -80,7 +85,7 @@ xbytes_t xtop_state_mpt::get_unit(common::xaccount_address_t const & account, st
         return {};
     }
     if (obj != nullptr) {
-        return obj->get_unit(m_db->DiskDB());
+        return obj->get_unit(m_trie_db->DiskDB());
     }
     return {};
 }
@@ -225,7 +230,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     info.decode({index_bytes.begin(), index_bytes.end()});
     auto hash = info.m_index.get_latest_unit_hash();
     auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.to_string()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
-    m_db->DiskDB()->DeleteDirect({key.begin(), key.end()}, ec);
+    m_trie_db->DiskDB()->DeleteDirect({key.begin(), key.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
         return;
@@ -275,7 +280,7 @@ evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
                 base::xvaccount_t{obj->account.to_string()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
             batch.emplace(std::make_pair(xbytes_t{unit_key.begin(), unit_key.end()}, obj->unit_bytes));
             if (batch.size() >= 1024) {
-                WriteUnitBatch(m_db->DiskDB(), batch);
+                WriteUnitBatch(m_trie_db->DiskDB(), batch);
                 batch.clear();
             }
             obj->dirty_unit = false;
@@ -300,7 +305,7 @@ evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
         return {};
     }
     // TODO: should call outside with roles of node
-    m_db->Commit(res.first, nullptr, ec);
+    m_trie_db->Commit(res.first, nullptr, ec);
     if (ec) {
         xwarn("xtop_state_mpt::commit db commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
