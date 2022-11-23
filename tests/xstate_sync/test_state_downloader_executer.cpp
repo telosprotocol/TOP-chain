@@ -30,7 +30,7 @@ public:
 
         m_thread = make_object_ptr<base::xiothread_t>();
         m_executer = std::make_shared<state_sync::xdownload_executer_t>(make_observer(m_thread), 0);
-        m_peers = peers_func(table_account_address.table_id());
+        m_peers = peers_func(table_account_address.table_id(), 15);
         auto peers_func_impl = [&](const common::xtable_id_t &) -> state_sync::sync_peers { return m_peers; };
         auto track_func = [this](state_sync::state_req const & sr) { m_executer->push_track_req(sr); };
         m_syncer = state_sync::xstate_sync_t::new_state_sync(table_account_address, table_height, block_hash, state_hash, root_hash, peers_func_impl, track_func, m_db, true);
@@ -48,6 +48,9 @@ public:
                 continue;
             }
             cnt++;
+            if (type == 4) {
+                EXPECT_TRUE(mock_net->m_msg.size() <= 1);
+            }
             auto m = mock_net->m_msg.front();
             mock_net->m_msg.pop();
             if (type == 1) {
@@ -103,6 +106,7 @@ public:
                         res.nodes.emplace_back(from_hex(node_map.at(to_hex((*it)))));
                         node_cnt++;
                     }
+                    EXPECT_TRUE(units_bytes.size() <= m_max_unit_num);
                     for (auto it = units_bytes.begin(); it != units_bytes.end(); ++it) {
                         res.units.emplace_back(from_hex(unit_sync_map.at(to_hex((*it)))));
                         node_cnt++;
@@ -131,6 +135,8 @@ public:
     std::shared_ptr<state_sync::xdownload_executer_t> m_executer{nullptr};
     std::shared_ptr<state_sync::xstate_sync_t> m_syncer{nullptr};
     state_sync::sync_peers m_peers;
+
+    int m_max_unit_num = 4;
 };
 
 TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_success) {
@@ -269,6 +275,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_task_flooding
     };
     std::thread th(&test_state_downloader_executer_fixture::run_helper, this, 3);
     m_syncer->m_items_per_task = 4;
+    m_syncer->m_units_per_task = 4;
     m_executer->run_state_sync(m_syncer, callback);
     th.join();
     EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
@@ -351,6 +358,39 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_no_response) 
         mock_net->m_msg.pop();
     }
     EXPECT_EQ(m_syncer->m_req_sequence_id, test_peer_cnt);
+}
+
+TEST_F(test_state_downloader_executer_fixture, test_run_state_req_limit) {
+    state_sync::sync_result res;
+    auto callback = [&](state_sync::sync_result result) {
+        res = result;
+    };
+    m_syncer->m_max_req_nums = 1;
+    std::thread th(&test_state_downloader_executer_fixture::run_helper, this, 4);
+    m_executer->run_state_sync(m_syncer, callback);
+    th.join();
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
+    EXPECT_EQ(res.height, table_height);
+    EXPECT_EQ(res.block_hash, block_hash);
+    EXPECT_EQ(res.state_hash, state_hash);
+    EXPECT_EQ(res.root_hash, root_hash);
+    EXPECT_FALSE(res.ec);
+    EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
+    std::error_code ec;
+    for (auto & k : node_map) {
+        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        EXPECT_EQ(v, from_hex(k.second, ec));
+        EXPECT_FALSE(ec);
+    }
+    for (auto & k : unit_sync_map) {
+        state_mpt::xaccount_info_t info;
+        info.decode(to_string(from_hex(k.first)));
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto v = m_db->get_value(dbkey);
+        EXPECT_EQ(to_bytes(v), from_hex(k.second));
+        EXPECT_FALSE(ec);
+    }
 }
 
 // TEST_F(test_state_downloader_executer_fixture, test_downloader) {

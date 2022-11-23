@@ -1,18 +1,15 @@
+#include "nlohmann/fifo_map.hpp"
+#include "nlohmann/json.hpp"
+#include "test_state_mpt_cache_data.inc"
+#include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xdbstore/xstore_face.h"
-#include "xevm_common/trie/xsecure_trie.h"
-#include "xevm_common/trie/xtrie_kv_db.h"
-#include "xevm_common/trie/xtrie_sync.h"
 #include "xevm_common/xerror/xerror.h"
 #include "xstate_mpt/xerror.h"
-#include "xstate_mpt/xstate_sync.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvdbstore.h"
 #include "xvledger/xvledger.h"
-#include "xcrypto/xckey.h"
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include <fstream>
 
 template <class K, class V, class dummy_compare, class A>
@@ -22,9 +19,13 @@ using unordered_json = nlohmann::basic_json<my_workaround_fifo_map>;
 using json = unordered_json;
 
 #define private public
-#include "xstate_mpt/xstate_mpt.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
+#include "xevm_common/trie/xsecure_trie.h"
+#include "xevm_common/trie/xtrie_kv_db.h"
+#include "xevm_common/trie/xtrie_sync.h"
+#include "xstate_mpt/xstate_mpt.h"
+#include "xstate_mpt/xstate_sync.h"
 
 #include <gtest/gtest.h>
 
@@ -184,7 +185,6 @@ TEST_F(test_state_mpt_fixture, test_get_unknown) {
     EXPECT_EQ(ec.value(), 0);
 }
 
-// TODO: should fix cache
 TEST_F(test_state_mpt_fixture, test_basic) {
     std::error_code ec;
     auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
@@ -295,31 +295,8 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     for (auto obj : s->m_state_objects) {
         EXPECT_FALSE(obj.second->dirty_unit);
     }
-    // // check code
-    // for (auto i = 2; i < 5; i++) {
-    //     std::string state_str{"state_str" + std::to_string(i)};
-    //     auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-    //     xbytes_t b{hash.begin(), hash.end()};
-    //     auto state_key = base::xvdbkey_t::create_prunable_unit_state_key(
-    //             base::xvaccount_t{info.m_account.value()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
-    //     auto v = ReadUnitWithPrefix(s->m_db->DiskDB(), b);
-    //     EXPECT_EQ(to_string(v), state_str);
-    // }
-
-    // EXPECT_EQ(state_mpt::xstate_mpt_cache_t::instance()->m_cache.size(), 1);
-    // EXPECT_TRUE(state_mpt::xstate_mpt_cache_t::instance()->m_cache.count(TABLE_ADDRESS));
-    // auto & cache = state_mpt::xstate_mpt_cache_t::instance()->m_cache[TABLE_ADDRESS];
-
-    // for (auto i = 1; i < 10; i++) {
-    //     std::string str;
-    //     cache->get(data[i].first + "@" + hash.as_hex_str().substr(0, 8), str);
-    //     std::string str2;
-    //     data[i].second.serialize_to(str2);
-    //     EXPECT_EQ(str, str2);
-    // }
 }
 
-// TODO: nedd to fix double commit
 TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     std::error_code ec;
     evm_common::xh256_t root_hash(random_bytes(32));
@@ -606,8 +583,8 @@ std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, std::stri
     return data;
 }
 
-void generate_state_mpt_data_file() {
-    auto data = create_mpt_data(1000000);
+void generate_state_mpt_data_file(int num) {
+    auto data = create_mpt_data(num);
     json j;
     int i{0};
     for (auto & d : data) {
@@ -618,6 +595,27 @@ void generate_state_mpt_data_file() {
     }
     std::ofstream f("state_mpt_data.json");
     f << std::setw(4) << j;
+}
+
+std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, xbytes_t>> parse_state_mpt_data_file(const char * data) {
+    std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, xbytes_t>> m;
+    auto j = json::parse(data);
+    std::error_code ec;
+    for (auto it = j.begin(); it != j.end(); it++) {
+        auto addr = it.key();
+        auto index_str = from_hex(it->at("index").get<std::string>(), ec);
+        auto state_str = from_hex(it->at("state").get<std::string>(), ec);
+        EXPECT_FALSE(ec);
+        base::xaccount_index_t index;
+        index.serialize_from({index_str.begin(), index_str.end()});
+        auto p = std::make_pair(index, xbytes_t{state_str.begin(), state_str.end()});
+        m.emplace(std::make_pair(common::xaccount_address_t{addr}, p));
+    }
+    return m;
+}
+
+TEST_F(test_state_mpt_bench_fixture, test_geterate_state_mpt_file_BENCH) {
+    generate_state_mpt_data_file(10000);
 }
 
 TEST_F(test_state_mpt_bench_fixture, test_cache_node_key_BENCH) {
@@ -715,6 +713,86 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_commit_memory_leak_BENCH) {
     m_db->close();
     while (!m_db->is_close());
     raw_db->close();
+}
+
+TEST_F(test_state_mpt_fixture, test_state_mpt_cache_optimize_BENCH) {
+    auto data = parse_state_mpt_data_file(data_10000);
+    std::vector<common::xaccount_address_t> accs;
+
+    std::error_code ec;
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
+    EXPECT_FALSE(ec);
+    for (auto & d : data) {
+        s->set_account_index_with_unit(d.first, d.second.first, d.second.second, ec);
+        EXPECT_FALSE(ec);
+        accs.emplace_back(d.first);
+    }
+    s->commit(ec);
+    EXPECT_FALSE(ec);
+
+    // need insert missing_num/visit_num in trie_db
+    // s->m_trie_db->missing_num = 0;
+    // s->m_trie_db->visit_num = 0;
+    srand(time(0));
+    for (auto i = 0; i < 512; ++i) {
+        std::set<size_t> changed;
+        for (auto j = 0; j < 200; j++) {
+            size_t index{0};
+            do {
+                index = rand() % 10000;
+            } while (changed.count(index));
+            changed.insert(index);
+            auto acc = accs[index];
+            auto & v = data[acc];
+            v.first.m_latest_unit_height += 1;
+            v.first.m_latest_unit_viewid += 1;
+            s->set_account_index(acc, v.first, ec);
+            EXPECT_FALSE(ec);
+        }
+        s->commit(ec);
+        EXPECT_FALSE(ec);
+    }
+    uint32_t total_size = 0;
+    for (auto const & p : s->m_trie_db->cleans_.item_list_) {
+        total_size += p.first.size();
+        total_size += p.second.size();
+    }
+    // printf("test finish cache num: %zu, total memory: %lu, total_visit: %u, missing: %u, percent: %u%\n",
+    //        s->m_trie_db->cleans_.item_list_.size(),
+    //        total_size,
+    //        s->m_trie_db->visit_num,
+    //        s->m_trie_db->missing_num,
+    //        (s->m_trie_db->visit_num - s->m_trie_db->missing_num) * 100 / s->m_trie_db->visit_num);
+}
+
+void multi_helper(std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, xbytes_t>> const & data, std::vector<common::xaccount_address_t> const & accs, base::xvdbstore_t * db, int n) {
+    std::error_code ec;
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, db, ec);
+    EXPECT_FALSE(ec);
+    for (auto i = n * 1000; i < (n+1) * 1000; i++) {
+        auto acc = accs[i]; 
+        s->set_account_index_with_unit(acc, data.at(acc).first, data.at(acc).second, ec);
+        EXPECT_FALSE(ec);
+    }
+    auto hash = s->commit(ec);
+    EXPECT_FALSE(ec);
+    printf("hash[%d]: %s\n", n, to_hex(hash).c_str());
+}
+
+TEST_F(test_state_mpt_fixture, test_state_mpt_multi_thread) {
+    auto data = parse_state_mpt_data_file(data_10000);
+    std::vector<common::xaccount_address_t> accs;
+    for (auto & d : data) {
+        accs.emplace_back(d.first);
+    }
+    std::vector<std::thread> ths;
+    for (auto i = 0; i < 5; i++) {
+        auto th = std::thread(multi_helper, std::ref(data), std::ref(accs), m_db, i);
+        ths.emplace_back(std::move(th));
+    }
+    for (auto i = 0; i < 5; i++) {
+        ths[i].join();
+    }
 }
 
 }  // namespace top
