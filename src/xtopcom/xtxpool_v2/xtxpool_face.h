@@ -246,7 +246,7 @@ public:
     virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) = 0;
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
     virtual xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para) = 0;
-    virtual const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash) const = 0;
+    virtual data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const = 0;
     virtual void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) = 0;
     virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;
     virtual void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;
@@ -254,7 +254,10 @@ public:
     virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) = 0;
     virtual void refresh_table(uint8_t zone, uint16_t subaddr) = 0;
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
-    virtual void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) = 0;
+    virtual void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr,
+                                    const data::xtablestate_ptr_t & table_state,
+                                    base::xvblock_t * _lock_block,
+                                    base::xvblock_t * _cert_block) = 0;
     virtual void build_recv_tx(base::xtable_shortid_t from_table_sid,
                                base::xtable_shortid_t to_table_sid,
                                std::vector<uint64_t> receiptids,

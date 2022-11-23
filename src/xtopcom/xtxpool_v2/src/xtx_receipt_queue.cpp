@@ -26,8 +26,7 @@ void xreceipt_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_
     xtxpool_info("xreceipt_queue_internal_t::insert_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
-void xreceipt_queue_internal_t::erase_tx(const uint256_t & hash) {
-    std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+void xreceipt_queue_internal_t::erase_tx(const std::string & hash_str) {
     auto it_tx_map = m_tx_map.find(hash_str);
     if (it_tx_map != m_tx_map.end()) {
         auto & tx_ent = *it_tx_map->second;
@@ -46,8 +45,7 @@ void xreceipt_queue_internal_t::erase_tx(const uint256_t & hash) {
     }
 }
 
-const std::shared_ptr<xtx_entry> xreceipt_queue_internal_t::find(const uint256_t & hash) const {
-    std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+const std::shared_ptr<xtx_entry> xreceipt_queue_internal_t::find(const std::string & hash_str) const {
     auto it_tx_map = m_tx_map.find(hash_str);
     if (it_tx_map != m_tx_map.end()) {
         return *it_tx_map->second;
@@ -78,7 +76,7 @@ void xpeer_table_receipts_t::update_latest_receipt_id(uint64_t latest_receipt_id
     }
     for (auto it = m_txs.begin(); it != m_txs.end();) {
         if (it->first <= latest_receipt_id) {
-            m_receipt_queue_internal->erase_tx(it->second->get_tx()->get_tx_hash_256());
+            m_receipt_queue_internal->erase_tx(it->second->get_tx()->get_tx_hash());
             it = m_txs.erase(it);
         } else {
             break;
@@ -113,7 +111,7 @@ const std::vector<xcons_transaction_ptr_t> xpeer_table_receipts_t::get_txs(uint6
 void xpeer_table_receipts_t::erase(uint64_t receipt_id) {
     auto it = m_txs.find(receipt_id);
     if (it != m_txs.end()) {
-        m_receipt_queue_internal->erase_tx(it->second->get_tx()->get_tx_hash_256());
+        m_receipt_queue_internal->erase_tx(it->second->get_tx()->get_tx_hash());
         m_txs.erase(it);
     }
 }
@@ -294,9 +292,9 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
     return ret_txs;
 }
 
-const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::pop_tx(const tx_info_t & txinfo) {
-    auto tx_ent = m_receipt_queue_internal.find(txinfo.get_hash());
-    if (tx_ent == nullptr || tx_ent->get_tx()->get_tx_subtype() != txinfo.get_subtype()) {
+const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::pop_tx(const std::string & tx_hash, base::enum_transaction_subtype subtype) {
+    auto tx_ent = m_receipt_queue_internal.find(tx_hash);
+    if (tx_ent == nullptr || tx_ent->get_tx()->get_tx_subtype() != subtype) {
         return nullptr;
     }
 
@@ -310,8 +308,8 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::pop_tx(const tx_info_t & 
     return tx_ent;
 }
 
-const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & account_addr, const uint256_t & hash) const {
-    return m_receipt_queue_internal.find(hash);
+const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & account_addr, const std::string & hash_str) const {
+    return m_receipt_queue_internal.find(hash_str);
 }
 
 void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {

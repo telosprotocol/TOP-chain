@@ -556,9 +556,6 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     std::cout << "before prune.time:" << t1 << std::endl;
 #endif
 
-
-
-
     for (uint32_t l = 0; l < mpt_prune_num; l++) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
         last_keep_mpt->prune(mpt_root_vec[l], ec);
@@ -611,7 +608,14 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 #else
     std::cout << "commit prune cost:" << (t3 - t2) << std::endl;
 #endif
+}
+
+//-----------------first test result------------------//
+// before prune. db_read 54647
+// prune:0 time cost(ms) 292, db_read 24825
 // prune:1 time cost(ms) 99, db_read 10906
+// prune:2 time cost(ms) 98, db_read 10893
+// prune:3 time cost(ms) 101, db_read 10879
 // prune:4 time cost(ms) 101, db_read 10861
 // prune:5 time cost(ms) 97, db_read 10845
 // prune:6 time cost(ms) 108, db_read 10834

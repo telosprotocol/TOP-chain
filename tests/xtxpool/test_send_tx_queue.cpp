@@ -324,7 +324,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     // push first time
     int32_t ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    auto tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    auto tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
     ASSERT_NE(tx_tmp, nullptr);
 
     // duplicate push
@@ -332,16 +332,15 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     ASSERT_EQ(xtxpool_error_tx_nonce_duplicate, ret);
 
     // pop out
-    tx_info_t txinfo(tx);
-    auto tx_ent_tmp = send_tx_queue.pop_tx(txinfo, false);
+    auto tx_ent_tmp = send_tx_queue.pop_tx(tx->get_tx_hash(), false);
     ASSERT_NE(tx_ent_tmp, nullptr);
-    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
     ASSERT_EQ(tx_tmp, nullptr);
 
     // push again
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
     ASSERT_NE(tx_tmp, nullptr);
 
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
@@ -403,8 +402,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     }
 
     // pop one tx, that will pop txs those nonce are less than the poped tx, and no continuos tx
-    tx_info_t txinfo(txs[3]);
-    auto tx_tmp = send_tx_queue.pop_tx(txinfo, false);
+    auto tx_tmp = send_tx_queue.pop_tx(txs[3]->get_tx_hash(), false);
     auto tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get());
     ASSERT_EQ(tx_ents2.size(), 3);
 
@@ -451,7 +449,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     ASSERT_EQ(0, ret);
 
     for (uint32_t i = 2; i < 5; i++) {
-        auto tx_tmp = send_tx_queue.find(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_transaction()->digest());
+        auto tx_tmp = send_tx_queue.find(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_tx_hash());
         ASSERT_NE(tx_tmp, nullptr);
     }
 
@@ -604,7 +602,7 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
     ret = send_tx_queue.push_tx(tx_ent1, 0);
     ASSERT_EQ(0, ret);
 
-    auto find_tx = send_tx_queue.find(txs[2]->get_account_addr(), txs[2]->get_transaction()->digest());
+    auto find_tx = send_tx_queue.find(txs[2]->get_account_addr(), txs[2]->get_tx_hash());
     ASSERT_EQ(find_tx, nullptr);
 
     std::shared_ptr<xtx_entry> tx_ent3 = std::make_shared<xtx_entry>(txs[3], para);

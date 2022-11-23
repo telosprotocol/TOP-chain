@@ -138,6 +138,7 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
         return false;
     }
     data::xblock_consensus_para_t & proposal_para = *m_leader_cs_para;
+    proposal_para.set_clock(m_para->get_resources()->get_chain_timer()->logic_time());
     xunit_dbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s", proposal_para.dump().c_str());
     data::xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num);
     if (proposal_block == nullptr) {

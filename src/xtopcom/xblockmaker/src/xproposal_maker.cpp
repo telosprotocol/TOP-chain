@@ -93,7 +93,7 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
     cs_para->set_table_state(tablestate, tablestate_commit);
 
     // TODO(jimmy) keep for help txpool clear cache
-    update_txpool_table_state(latest_blocks.get_latest_committed_block(), tablestate_commit);
+    update_txpool_table_state(latest_blocks.get_latest_committed_block(), latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block(), tablestate_commit);
     return cs_para;
 }
 
@@ -199,7 +199,7 @@ int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consens
     cs_para.set_table_state(tablestate, commit_tablestate);
 
     // TODO(jimmy) keep for help txpool clear cache
-    update_txpool_table_state(commit_block.get(), commit_tablestate);
+    update_txpool_table_state(commit_block.get(), prev_lock_block.get(), proposal_prev_block.get(), commit_tablestate);
     return xsuccess;
 }
 
@@ -468,7 +468,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
     return true;
 }
 
-void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block, data::xtablestate_ptr_t const& commit_tablestate) {
+void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block, base::xvblock_t* _lock_block, base::xvblock_t* _cert_block, data::xtablestate_ptr_t const& commit_tablestate) {
     // TODO(jimmy) update txpool table state
     if (_commit_block->get_height() > 0) {
         base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
@@ -477,7 +477,7 @@ void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), _commit_block->get_height());
         }
-        get_txpool()->update_table_state(property_prove_ptr, commit_tablestate);
+        get_txpool()->update_table_state(property_prove_ptr, commit_tablestate, _lock_block, _cert_block);
     }
 }
 

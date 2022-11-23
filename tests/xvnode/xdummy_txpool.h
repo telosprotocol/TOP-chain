@@ -23,7 +23,7 @@ public:
         return {};
     }
     std::vector<xcons_transaction_ptr_t> get_pack_resource(const xtxs_pack_para_t & pack_para) = 0;
-    const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash) const override {
+    data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     }
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) override {
@@ -40,7 +40,10 @@ public:
     void refresh_table(uint8_t zone, uint16_t subaddr) override {
     }
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override {}
-    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) override {
+    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr,
+                            const data::xtablestate_ptr_t & table_state,
+                            base::xvblock_t * _lock_block,
+                            base::xvblock_t * _cert_block) override {
     }
     void build_recv_tx(base::xtable_shortid_t from_table_sid,
                        base::xtable_shortid_t to_table_sid,
