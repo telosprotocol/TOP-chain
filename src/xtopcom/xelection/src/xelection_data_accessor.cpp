@@ -56,10 +56,10 @@ elect_result_t xtop_election_data_accessor::get_elect_result(const data::electio
 }
 
 std::string xtop_election_data_accessor::get_elec_blockchain_addr(std::string const & owner) {
-    if (owner.find(sys_contract_beacon_table_block_addr) == 0) {
+    if (owner.find(common::rec_table_base_address.to_string()) == 0) {
         return sys_contract_rec_elect_rec_addr;
     }
-    if (owner.find(sys_contract_zec_table_block_addr) == 0) {
+    if (owner.find(common::zec_table_base_address.to_string()) == 0) {
         return sys_contract_rec_elect_zec_addr;
     }
     return sys_contract_zec_elect_consensus_addr;

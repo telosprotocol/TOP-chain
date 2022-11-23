@@ -24,7 +24,7 @@ private:
     xobject_ptr_t<base::xiothread_t> m_syncer_thread{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
 
-    std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running_tables;
+    std::map<common::xtable_address_t, std::shared_ptr<xdownload_executer_t>> m_running_tables;
     std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running_units;
     sync_networks m_networks;
 
@@ -49,8 +49,8 @@ public:
                     bool sync_unit,
                     std::error_code & ec);
     void sync_unit_state(const common::xaccount_address_t & account, const base::xaccount_index_t & index, std::error_code & ec);
-    bool is_syncing(const common::xaccount_address_t & table) const;
-    void sync_cancel(const common::xaccount_address_t & table) const;
+    bool is_syncing(const common::xtable_address_t & table) const;
+    void sync_cancel(const common::xtable_address_t & table) const;
     void handle_message(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) const;
 
     // peer actions

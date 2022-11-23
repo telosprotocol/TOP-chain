@@ -187,8 +187,8 @@ bool xchain_downloader_t::is_elect_chain() {
     uint32_t table_id = 0;
     data::xdatautil::extract_parts(m_address, account_prefix, table_id);
 
-    if (account_prefix == sys_contract_beacon_table_block_addr || account_prefix == sys_contract_zec_table_block_addr ||
-        account_prefix == sys_contract_relay_table_block_base_addr) {
+    if (account_prefix == common::rec_table_base_address.to_string() || account_prefix == common::zec_table_base_address.to_string() ||
+        account_prefix == common::relay_table_base_address.to_string()) {
         is_elect_chain = true;
     }
     return is_elect_chain;
@@ -575,20 +575,20 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
             xsync_dbg("xchain_downloader_t::execute_download check fail : %s", m_address.c_str());
             return abort;
         }
-        if (account_prefix == sys_contract_beacon_table_block_addr) {
+        if (account_prefix == common::rec_table_base_address.to_string()) {
             // ignore
-        } else if (account_prefix == sys_contract_zec_table_block_addr) {
+        } else if (account_prefix == common::zec_table_base_address.to_string()) {
             if (!check_behind(end_height, sys_contract_rec_elect_zec_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
             }
-        } else if (account_prefix == sys_contract_sharding_table_block_addr) {
+        } else if (account_prefix == common::con_table_base_address.to_string()) {
             if (!check_behind(end_height, sys_contract_zec_elect_consensus_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
             }
-        } else if (account_prefix == sys_contract_eth_table_block_addr) {
-        } else if (account_prefix == sys_contract_relay_table_block_base_addr) {
+        } else if (account_prefix == common::eth_table_base_address.to_string()) {
+        } else if (account_prefix == common::relay_table_base_address.to_string()) {
         } else {
             xsync_dbg("xchain_downloader_t::execute_download check fail: %s", m_address.c_str());
             return abort;

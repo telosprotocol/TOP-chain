@@ -14,7 +14,7 @@ namespace trie {
 
 class xtop_kv_db : public xkv_db_face_t {
 public:
-    xtop_kv_db(base::xvdbstore_t * db, common::xaccount_address_t table);
+    xtop_kv_db(base::xvdbstore_t * db, common::xtable_address_t table);
     ~xtop_kv_db() = default;
 
     xbytes_t get(gsl::span<xbyte_t const>  key, std::error_code & ec) const override;
@@ -38,7 +38,7 @@ private:
 
     base::xvdbstore_t * m_db{nullptr};
     mutable std::mutex m_mutex;
-    common::xaccount_address_t m_table;  // store key with table address
+    common::xtable_address_t m_table;  // store key with table address
     std::string m_node_key_prefix;
 };
 using xkv_db_t = xtop_kv_db;

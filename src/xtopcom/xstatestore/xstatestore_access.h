@@ -44,11 +44,11 @@ private:
 
 class xstatestore_dbaccess_t {
  public:
-    void    write_table_bstate(common::xaccount_address_t const& address, data::xtablestate_ptr_t const& tablestate, const std::string & block_hash, std::error_code & ec) const;
+    void    write_table_bstate(common::xtable_address_t const& address, data::xtablestate_ptr_t const& tablestate, const std::string & block_hash, std::error_code & ec) const;
     void    write_unit_bstate(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const;
 
  public:
-    data::xtablestate_ptr_t     read_table_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
+    data::xtablestate_ptr_t     read_table_bstate(common::xtable_address_t const& address, uint64_t height, const std::string & block_hash) const;
     data::xunitstate_ptr_t      read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
 
  private:
@@ -62,18 +62,18 @@ class xstatestore_accessor_t {
     xstatestore_accessor_t();
 public:
     xtablestate_ext_ptr_t       get_latest_connectted_table_state() const;
-    xtablestate_ext_ptr_t       read_table_bstate_from_cache(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
-    xtablestate_ext_ptr_t       read_table_bstate_from_db(common::xaccount_address_t const& address, base::xvblock_t* block) const;
-    xtablestate_ext_ptr_t       read_table_bstate(common::xaccount_address_t const& address, base::xvblock_t* block) const;
-    xtablestate_ext_ptr_t       read_table_bstate_for_account_index(common::xaccount_address_t const& address, base::xvblock_t* block) const;
+    xtablestate_ext_ptr_t       read_table_bstate_from_cache(common::xtable_address_t const& address, uint64_t height, const std::string & block_hash) const;
+    xtablestate_ext_ptr_t       read_table_bstate_from_db(common::xtable_address_t const& address, base::xvblock_t* block) const;
+    xtablestate_ext_ptr_t       read_table_bstate(common::xtable_address_t const& address, base::xvblock_t* block) const;
+    xtablestate_ext_ptr_t       read_table_bstate_for_account_index(common::xtable_address_t const& address, base::xvblock_t* block) const;
     data::xunitstate_ptr_t      read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
 
-    void    write_table_bstate_to_db(common::xaccount_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& tablestate, std::error_code & ec);
-    void    write_table_bstate_to_cache(common::xaccount_address_t const& address, uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& state, bool is_commit);
+    void    write_table_bstate_to_db(common::xtable_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& tablestate, std::error_code & ec);
+    void    write_table_bstate_to_cache(common::xtable_address_t const& address, uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& state, bool is_commit);
     void    write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec);
     void    write_unitstate_to_cache(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash);
 private:
-    xtablestate_ext_ptr_t read_table_bstate_from_db_inner(common::xaccount_address_t const& address, base::xvblock_t* block, bool bstate_must) const;
+    xtablestate_ext_ptr_t read_table_bstate_from_db_inner(common::xtable_address_t const& address, base::xvblock_t* block, bool bstate_must) const;
 private:
     xstatestore_cache_t         m_state_cache;
     xstatestore_dbaccess_t      m_dbaccess;

@@ -21,10 +21,10 @@ NS_BEG2(top, statestore)
 
 class xstatestore_table_t : public xexecute_listener_face_t {
 public:
-    xstatestore_table_t(common::xaccount_address_t const&  table_addr, std::shared_ptr<xstatestore_resources_t> para);
+    xstatestore_table_t(common::xtable_address_t const&  table_addr, std::shared_ptr<xstatestore_resources_t> para);
 
 public:
-    common::xaccount_address_t const &  get_table_address() const {return m_table_addr;}
+    common::xtable_address_t const &  get_table_address() const {return m_table_addr;}
 
     xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t* target_block, bool bstate_must) const;
     bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const;
@@ -46,7 +46,7 @@ public:
 private:
 
 private:
-    common::xaccount_address_t  m_table_addr;
+    common::xtable_address_t  m_table_addr;
     xstatestore_executor_t      m_table_executor;
     std::shared_ptr<xstatestore_prune_t> m_prune;
 };

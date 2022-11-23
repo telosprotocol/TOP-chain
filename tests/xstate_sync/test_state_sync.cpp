@@ -28,7 +28,7 @@ public:
         m_peers = peers_func(table_account_address.table_id());
         auto peers_func_impl = [&](const common::xtable_id_t &) -> state_sync::sync_peers { return m_peers; };
         auto track_func = [this](const state_sync::state_req & req) { m_track_reqs.emplace(std::make_pair(req.id, req)); };
-        m_syncer = state_sync::xstate_sync_t::new_state_sync(table_account_address, table_height, block_hash, state_hash, root_hash, peers_func_impl, track_func, m_db, true);
+        m_syncer = state_sync::xstate_sync_t::new_state_sync(common::xaccount_address_t::build_from(table_account_address.to_string()), table_height, block_hash, state_hash, root_hash, peers_func_impl, track_func, m_db, true);
     }
     void TearDown() override {
     }
@@ -343,6 +343,7 @@ TEST_F(test_state_sync_fixture, test_process_table_sucess) {
 
     EXPECT_FALSE(ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     auto v = m_db->get_value(state_key);
     EXPECT_EQ(to_bytes(v), state_bytes);
 }
@@ -446,6 +447,7 @@ TEST_F(test_state_sync_fixture, test_process_table_type_mismatch) {
 
     EXPECT_FALSE(ec);
     EXPECT_FALSE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     auto v = m_db->get_value(state_key);
     EXPECT_TRUE(v.empty());
 }
@@ -460,6 +462,7 @@ TEST_F(test_state_sync_fixture, test_process_table_already_finish) {
 
     EXPECT_FALSE(ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     auto v = m_db->get_value(state_key);
     EXPECT_TRUE(v.empty());
 }
@@ -472,6 +475,7 @@ TEST_F(test_state_sync_fixture, test_process_table_empty_response) {
 
     EXPECT_FALSE(ec);
     EXPECT_FALSE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     auto v = m_db->get_value(state_key);
     EXPECT_TRUE(v.empty());
 }
@@ -485,6 +489,7 @@ TEST_F(test_state_sync_fixture, test_process_table_hash_mismatch) {
 
     EXPECT_FALSE(ec);
     EXPECT_FALSE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     auto v = m_db->get_value(state_key);
     EXPECT_TRUE(v.empty());
 }
@@ -650,7 +655,7 @@ TEST_F(test_state_sync_fixture, test_sync_table_success) {
     req.type = state_sync::state_req_type::enum_state_req_table;
     req.nodes_response.emplace_back(state_bytes);
     m_syncer->deliver_req(req);
-
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), std::string());
     EXPECT_FALSE(m_syncer->m_sync_table_finish);
 #if !defined(NDEBUG)
@@ -670,6 +675,7 @@ TEST_F(test_state_sync_fixture, test_sync_table_existed) {
 #if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
 #endif
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     m_db->set_value(state_key, to_string(state_bytes));
 
     std::error_code ec;
@@ -744,6 +750,7 @@ TEST_F(test_state_sync_fixture, test_run_success) {
     EXPECT_EQ(res.root_hash, root_hash);
     EXPECT_FALSE(res.ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {

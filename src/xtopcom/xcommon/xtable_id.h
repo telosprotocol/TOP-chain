@@ -31,7 +31,7 @@ public:
     xtop_table_id & operator=(xtop_table_id &&) = default;
     ~xtop_table_id() = default;
 
-    explicit xtop_table_id(uint16_t const value);
+    explicit xtop_table_id(uint16_t value);
 
 private:
     explicit xtop_table_id(xaccount_id_t const & account_id);

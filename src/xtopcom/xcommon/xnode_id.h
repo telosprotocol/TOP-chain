@@ -125,6 +125,7 @@ public:
     base::xvaccount_t vaccount() const;
 
     xtable_address_t table_address() const;
+    xtable_address_t table_address(std::error_code & ec) const;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);

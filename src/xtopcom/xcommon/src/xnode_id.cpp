@@ -8,9 +8,10 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xerror/xerror.h"
 #include "xcommon/xeth_address.h"
+#include "xcommon/xtable_base_address.h"
+#include "xmetrics/xmetrics.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
-#include "xmetrics/xmetrics.h"
 
 #include <cassert>
 #include <vector>
@@ -212,8 +213,35 @@ base::xvaccount_t xtop_node_id::vaccount() const {
 }
 
 xtable_address_t xtop_node_id::table_address() const {
-    return xtable_address_t::build_from(base::xvaccount_t::make_table_account_address(vaccount()));
+    std::error_code ec;
+    auto const r = table_address(ec);
+    top::error::throw_error(ec);
+    return r;
 }
+
+xtable_address_t xtop_node_id::table_address(std::error_code & ec) const {
+    switch (type()) {  // NOLINT(clang-diagnostic-switch-enum)
+    case base::enum_vaccount_addr_type_secp256k1_user_account:
+    case base::enum_vaccount_addr_type_secp256k1_eth_user_account:
+    case base::enum_vaccount_addr_type_secp256k1_evm_user_account:
+    case base::enum_vaccount_addr_type_native_contract: {
+        auto const table_base_address = xtable_base_address_t::build_from(base::enum_vaccount_addr_type_block_contract, ledger_id().zone_id(), ec);
+        return !ec ? xtable_address_t::build_from(table_base_address, table_id(), ec) : xtable_address_t{};
+    }
+
+    case base::enum_vaccount_addr_type_block_contract:
+    case base::enum_vaccount_addr_type_relay_block: {
+        auto const table_base_address = xtable_base_address_t::build_from(type(), ledger_id().zone_id(), ec);
+        return !ec ? xtable_address_t::build_from(table_base_address, table_id(), ec) : xtable_address_t{};
+    }
+
+    default: {
+        ec = error::xerrc_t::invalid_account_type;
+        return xtable_address_t{};
+    }
+    }
+}
+
 
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
     return do_write(stream);

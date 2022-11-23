@@ -28,7 +28,7 @@ public:
     static std::mutex   m_global_execute_lock;
 
 public:
-    xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener);
+    xstatestore_executor_t(common::xtable_address_t const& table_addr, xexecute_listener_face_t * execute_listener);
     void    init();
 
 public:
@@ -74,7 +74,7 @@ protected:
     mutable uint64_t            m_executed_height{0};
     mutable uint64_t            m_need_all_state_sync_height{0};
     mutable uint32_t            m_force_push_execute_count{0};
-    common::xaccount_address_t  m_table_addr;
+    common::xtable_address_t  m_table_addr;
     base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
     xstatestore_base_t          m_statestore_base;
     mutable xstatestore_accessor_t m_state_accessor;

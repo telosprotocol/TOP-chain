@@ -37,12 +37,6 @@ common::xaccount_address_t const eth_statistic_info_contract_address{sys_contrac
 common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address{sys_contract_eth_table_cross_chain_txs_collection_addr};
 
 common::xaccount_address_t const eth_zero_address{"T600040000000000000000000000000000000000000000"};
-
-common::xaccount_address_t const rec_table_address{sys_contract_beacon_table_block_addr};
-common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_addr};
-common::xaccount_address_t const sharding_table_address{sys_contract_sharding_table_block_addr};
-common::xaccount_address_t const eth_table_address{sys_contract_eth_table_block_addr};
-common::xaccount_base_address_t const relay_table_base_address{common::xaccount_base_address_t::build_from(sys_contract_relay_table_block_base_addr)};
 common::xaccount_address_t const relay_table_address{sys_contract_relay_table_block_addr};
 
 // common::xaccount_address_t const evm_erc20_contract_address{"T60004ff00000000000000000000000000000000000001"};
