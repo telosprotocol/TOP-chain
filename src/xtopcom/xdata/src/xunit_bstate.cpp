@@ -640,6 +640,7 @@ void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid
 
         auto const & controller_account = common::xaccount_address_t::build_from(controller_account_string, ec);
         if (ec) {
+            xerror("controller account read from property invalid: %s", controller_account_string.c_str());
             break;
         }
 
@@ -650,6 +651,12 @@ void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid
         if (new_controller == eth_zero_address) {
             break;
         }
+
+#if defined(XBUILD_CI) && !defined(XENABLE_TESTS)
+        if (new_controller != controller_account) {
+            break;
+        }
+#endif
 
         ec = error::xerrc_t::erc20_controller_already_set;
         xwarn("set TEP token controller failed: controller already set for chain uuid %" PRIu16 ". input controller account %s",

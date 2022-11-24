@@ -187,6 +187,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXUSE_JEMALLOC=ON"
         echo "BUILD WITH XUSE_JEMALLOC"
     ;;
+    eth2_sepolia)
+        CMAKE_EXTRA_OPTIONS+=" -DETH2_SEPOLIA=ON"
+        echo "BUILD WITH ETH2_SEPOLIA"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;

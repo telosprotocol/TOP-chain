@@ -27,6 +27,25 @@
 
 NS_BEG2(top, evm_common)
 
+bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
+    return (this->parent_hash == rhs.parent_hash)
+    && (this->uncle_hash == rhs.uncle_hash)
+    && (this->miner == rhs.miner)
+    && (this->state_merkleroot == rhs.state_merkleroot)
+    && (this->tx_merkleroot == rhs.tx_merkleroot)
+    && (this->receipt_merkleroot == rhs.receipt_merkleroot)
+    && (this->bloom == rhs.bloom)
+    && (this->difficulty == rhs.difficulty)
+    && (this->number == rhs.number)
+    && (this->gas_limit == rhs.gas_limit)
+    && (this->gas_used == rhs.gas_used)
+    && (this->time == rhs.time)
+    && (this->extra == rhs.extra)
+    && (this->mix_digest == rhs.mix_digest)
+    && (this->nonce == rhs.nonce)
+    && (this->base_fee.value() == rhs.base_fee.value());
+}
+
 Hash xeth_header_t::hash() const {
     auto value = encode_rlp();
     auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size());

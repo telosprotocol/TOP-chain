@@ -23,10 +23,12 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v1.h"
+#include "xevm_common/xcrosschain/xeth2.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
+#include "xstatestore/xstatestore_face.h"
 #include "xvledger/xvblock.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xmessage_ids.h"
@@ -44,10 +46,11 @@
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract.h"
-#include "xvm/xsystem_contracts/xfork/xsharding_fork_info_contract.h"
+#include "xvm/xsystem_contracts/xevm/xtable_cross_chain_txs_collection_contract.h"
 #include "xvm/xsystem_contracts/xfork/xeth_fork_info_contract.h"
-#include "xvm/xsystem_contracts/xrelay/xrelay_make_block_contract.h"
+#include "xvm/xsystem_contracts/xfork/xsharding_fork_info_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
+#include "xvm/xsystem_contracts/xrelay/xrelay_make_block_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_reward_claiming_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_vote_contract.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract.h"
@@ -55,9 +58,7 @@
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract.h"
 #include "xvm/xsystem_contracts/xworkload/xzec_workload_contract_v2.h"
-#include "xvm/xsystem_contracts/xevm/xtable_cross_chain_txs_collection_contract.h"
 #include "xvm/xvm_service.h"
-#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 
@@ -2337,6 +2338,127 @@ static void get_chain_headers_summary(common::xaccount_address_t const & contrac
     }
 }
 
+static void get_finalized_execution_blocks(common::xaccount_address_t const & contract_address,
+                                           std::string const & property_name,
+                                           const data::xunitstate_ptr_t unitstate,
+                                           const xjson_format_t json_format,
+                                           xJson::Value & json) {
+    auto blocks = unitstate->map_get(property_name);
+    if (blocks.empty()) {
+        xwarn("[get_finalized_execution_blocks] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto & pair : blocks) {
+        json[pair.first] = to_hex(pair.second);
+    }
+}
+
+static void get_unfinalized_headers(common::xaccount_address_t const & contract_address,
+                                    std::string const & property_name,
+                                    const data::xunitstate_ptr_t unitstate,
+                                    const xjson_format_t json_format,
+                                    xJson::Value & json) {
+    auto headers = unitstate->map_get(property_name);
+    if (headers.empty()) {
+        xwarn("[get_unfinalized_headers] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto & h : headers) {
+        auto key = to_hex(h.first);
+        evm_common::eth2::xexecution_header_info_t info;
+        if (info.decode_rlp({std::begin(h.second), std::end(h.second)}) == false) {
+            xwarn("[get_unfinalized_headers] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
+            return;
+        }
+        json[key]["parent_hash"] = to_hex(info.parent_hash);
+        json[key]["block_number"] = static_cast<xJson::UInt64>(info.block_number);
+    }
+}
+
+static void get_finalized_beacon_header(common::xaccount_address_t const & contract_address,
+                                         std::string const & property_name,
+                                         const data::xunitstate_ptr_t unitstate,
+                                         const xjson_format_t json_format,
+                                         xJson::Value & json) {
+    auto const & v = unitstate->string_get(property_name);
+    if (v.empty()) {
+        xwarn("[get_finalized_beacon_header] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    evm_common::eth2::xextended_beacon_block_header_t beacon;
+    if (beacon.decode_rlp({v.begin(), v.end()}) == false) {
+        xwarn("[get_finalized_beacon_header] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    json["header"]["slot"] = static_cast<xJson::UInt64>(beacon.header.slot);
+    json["header"]["proposer_index"] = static_cast<xJson::UInt64>(beacon.header.proposer_index);
+    json["header"]["parent_root"] = to_hex(beacon.header.parent_root);
+    json["header"]["state_root"] = to_hex(beacon.header.state_root);
+    json["beacon_block_root"] = to_hex(beacon.beacon_block_root);
+    json["execution_block_hash"] = to_hex(beacon.execution_block_hash);
+}
+
+static void get_finalized_execution_header(common::xaccount_address_t const & contract_address,
+                                            std::string const & property_name,
+                                            const data::xunitstate_ptr_t unitstate,
+                                            const xjson_format_t json_format,
+                                            xJson::Value & json) {
+    auto const & v = unitstate->string_get(property_name);
+    if (v.empty()) {
+        xwarn("[get_finalized_execution_header] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    evm_common::eth2::xexecution_header_info_t info;
+    if (info.decode_rlp({v.begin(), v.end()}) == false) {
+        xwarn("[get_finalized_execution_header] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    json["block_number"] = static_cast<xJson::UInt64>(info.block_number);
+    json["parent_hash"] = to_hex(info.parent_hash);
+}
+
+static void get_current_sync_committee(common::xaccount_address_t const & contract_address,
+                                       std::string const & property_name,
+                                       const data::xunitstate_ptr_t unitstate,
+                                       const xjson_format_t json_format,
+                                       xJson::Value & json) {
+    auto const & v = unitstate->string_get(property_name);
+    if (v.empty()) {
+        xwarn("[get_current_sync_committee] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    evm_common::eth2::xsync_committee_t committee;
+    if (committee.decode_rlp({v.begin(), v.end()}) == false) {
+        xwarn("[get_current_sync_committee] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto p : committee.pubkeys) {
+        json["pubkeys"].append(to_hex(p));
+    }
+    json["aggregate_pubkey"] = to_hex(committee.aggregate_pubkey);
+}
+
+static void get_next_sync_committee(common::xaccount_address_t const & contract_address,
+                                    std::string const & property_name,
+                                    const data::xunitstate_ptr_t unitstate,
+                                    const xjson_format_t json_format,
+                                    xJson::Value & json) {
+    auto const & v = unitstate->string_get(property_name);
+    if (v.empty()) {
+        xwarn("[get_next_sync_committee] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    evm_common::eth2::xsync_committee_t committee;
+    if (committee.decode_rlp({v.begin(), v.end()}) == false) {
+        xwarn("[get_next_sync_committee] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto p : committee.pubkeys) {
+        json["pubkeys"].append(to_hex(p));
+    }
+    json["aggregate_pubkey"] = to_hex(committee.aggregate_pubkey);
+}
+
 static void get_chain_last_hash(common::xaccount_address_t const & contract_address,
                                 std::string const & property_name,
                                 const data::xunitstate_ptr_t unitstate,
@@ -2467,6 +2589,18 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_chain_headers(contract_address, property_name, unitstate, json_format, json);
     } else if (property_name == data::system_contract::XPROPERTY_HEADERS_SUMMARY) {
         return get_chain_headers_summary(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS) {
+        return get_finalized_execution_blocks(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_UNFINALIZED_HEADERS) {
+        return get_unfinalized_headers(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER) {
+        return get_finalized_beacon_header(contract_address, property_name, unitstate, json_format, json); 
+    } else if (property_name == data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER) {
+        return get_finalized_execution_header(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE) {
+        return get_current_sync_committee(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE) {
+        return get_next_sync_committee(contract_address, property_name, unitstate, json_format, json);
     }
 }
 

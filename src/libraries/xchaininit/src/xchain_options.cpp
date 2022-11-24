@@ -1,7 +1,14 @@
 #include "xchaininit/xchain_options.h"
 
 #if defined(ENABLE_TCMALLOC)
-#include <thread>
+#    include <thread>
+#endif
+
+#if defined(ENABLE_GHPERF)
+#    include <unistd.h>
+
+#    include <iostream>
+#    include <thread>
 #endif
 
 namespace top
