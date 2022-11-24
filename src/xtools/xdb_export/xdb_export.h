@@ -88,23 +88,32 @@ public:
     void   prune_db();
     void   query_all_table_performance(std::vector<std::string> const & accounts_vec);
 
-    std::unordered_map<common::xaccount_address_t, uint64_t> get_unit_accounts(common::xaccount_address_t const & table_address,
-                                                                               std::uint64_t table_height,
-                                                                               std::vector<common::xaccount_address_t> const & designated,
-                                                                               std::error_code & ec) const;
+    std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> get_unit_accounts(common::xaccount_address_t const & table_address,
+                                                                                             std::uint64_t table_height,
+                                                                                             std::vector<common::xaccount_address_t> const & designated,
+                                                                                             std::error_code & ec) const;
 
     struct exported_account_data {
         common::xaccount_address_t account_address;
         std::array<std::unordered_map<std::string, evm_common::u256>, 2> assets;    // index 0: TOP, index 1: TEP1
-        std::unordered_map<std::string, xbytes_t> properties;
+        std::unordered_map<std::string, xbytes_t> binary_properties;
+        std::unordered_map<std::string, std::string> text_properties;
+        uint64_t unit_height;
     };
 
-    std::vector<exported_account_data> get_account_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts,
+    std::vector<exported_account_data> get_account_data(std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> const & accounts,
+                                                        std::unordered_map<common::xaccount_address_t, evm_common::u256> const & genesis_account_data,
                                                         std::vector<common::xtoken_id_t> const & queried_tokens,
-                                                        std::vector<std::string> const & queried_properties,
+                                                        std::unordered_map<std::string, bool> const & queried_properties,
+                                                        common::xtable_address_t const & table_address,
                                                         std::error_code & ec) const;
 
-    void append_to_json(common::xtable_address_t const & table_address, uint64_t table_height, std::vector<exported_account_data> const & data, std::string const & file_path, std::error_code & ec) const;
+    void export_to_json(common::xtable_address_t const & table_address,
+                        uint64_t table_height,
+                        std::vector<exported_account_data> const & data,
+                        std::string const & file_path,
+                        std::ios_base::openmode open_mode,
+                        std::error_code & ec) const;
 
 private:
     struct tx_ext_t {
