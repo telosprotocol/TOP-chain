@@ -36,6 +36,7 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
 }
 
 void xtop_trie_db::insert(xh256_t hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
+    std::lock_guard<std::mutex> lck(mutex);
     // If the node's already cached, skip
     if (dirties_.find(hash) != dirties_.end()) {
         return;
@@ -63,11 +64,14 @@ void xtop_trie_db::insert(xh256_t hash, int32_t const size, xtrie_node_face_ptr_
 }
 
 void xtop_trie_db::insertPreimage(xh256_t hash, xbytes_t const & preimage) {
+    std::lock_guard<std::mutex> lck(mutex);
     preimages_.insert({hash, preimage});
     // todo cal preimage size metrics.
 }
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t hash) {
+    std::lock_guard<std::mutex> lck(mutex);
+    XMETRICS_COUNTER_INCREMENT("trie_cache_visit", 1);
     // todo:
     if (cleans_.contains(hash)) {
         // todo clean mark hit
@@ -78,7 +82,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t hash) {
         return dirties_.at(hash).obj(hash);
     }
     // todo mark miss hit
-
+    XMETRICS_COUNTER_INCREMENT("trie_cache_miss", 1);
     // retrieve from disk db
     auto enc = ReadTrieNode(diskdb_, hash);
     if (enc.empty()) {
@@ -90,6 +94,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t hash) {
 }
 
 xbytes_t xtop_trie_db::Node(xh256_t hash, std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
     // It doesn't make sense to retrieve the metaroot
     if (hash.empty()) {
         ec = error::xerrc_t::trie_db_not_found;
@@ -118,6 +123,7 @@ xbytes_t xtop_trie_db::Node(xh256_t hash, std::error_code & ec) {
 }
 
 xbytes_t xtop_trie_db::preimage(xh256_t hash) const {
+    std::lock_guard<std::mutex> lck(mutex);
     if (preimages_.find(hash) != preimages_.end()) {
         return preimages_.at(hash);
     }
@@ -131,6 +137,8 @@ xbytes_t xtop_trie_db::preimage(xh256_t hash) const {
 }
 
 void xtop_trie_db::Commit(xh256_t hash, AfterCommitCallback cb, std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
+
     // what we can optimize here:
     // 1. use batch writer to sum all <k,v> into db with once writeDB operation
     // 2. db.preimages for secure trie
@@ -204,6 +212,7 @@ void xtop_trie_db::commit(xh256_t hash, std::map<xbytes_t, xbytes_t> & data, Aft
 }
 
 void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
     if (pruned_hashes_.find(hash) != std::end(pruned_hashes_)) {
         return;
     }
@@ -218,6 +227,7 @@ void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
 }
 
 void xtop_trie_db::commit_pruned(std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
     assert(!ec);
 
     std::vector<xbytes_t> pruned_keys;
@@ -234,6 +244,19 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
     XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, -static_cast<int32_t>(pruned_hashes_.size()));
 
     pruned_hashes_.clear();
+}
+
+
+void xtop_trie_db::clear_cleans() {
+    std::lock_guard<std::mutex> lck(mutex);
+    for(;;) {
+        xh256_t k;
+        xbytes_t _;
+        if (false == cleans_.back(k, _)) {
+            break;
+        }
+        cleans_.erase(k);
+    }
 }
 
 xbytes_t xtop_trie_db::preimage_key(xh256_t const & hash_key) const {

@@ -37,8 +37,7 @@ private:
     friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
-    // std::map<xh256_t, xbytes_t> cleans_;
-    basic::xlru_cache_specialize<xh256_t, xbytes_t> cleans_{2000}; // TODO(jimmy) 10000
+    basic::xlru_cache_specialize<xh256_t, xbytes_t> cleans_{10000};
     std::map<xh256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xh256_t> pruned_hashes_;
 
@@ -46,6 +45,8 @@ private:
     xh256_t newest_;
 
     std::map<xh256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
+
+    mutable std::mutex mutex;
 
 public:
     explicit xtop_trie_db(xkv_db_face_ptr_t diskdb) : diskdb_(std::move(diskdb)) {
@@ -63,7 +64,7 @@ public:
     static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config);
 
 public:
-    xkv_db_face_ptr_t DiskDB() {
+    xkv_db_face_ptr_t DiskDB() const {
         return diskdb_;
     }
 
@@ -101,15 +102,15 @@ public:
     // concurrently with other mutators.
     void Commit(xh256_t hash, AfterCommitCallback cb, std::error_code & ec);
 
-    void commit(xh256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec);
-
     void prune(xh256_t const & hash, std::error_code & ec);
 
     void commit_pruned(std::error_code & ec);
 
+    void clear_cleans();
+
 private:
     // commit is the private locked version of Commit.
-    // void commit(xh256_t hash, AfterCommitCallback cb, std::error_code & ec);
+    void commit(xh256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec);
 
     xbytes_t preimage_key(xh256_t const & hash_key) const;
 };
