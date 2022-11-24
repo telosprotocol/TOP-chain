@@ -21,4 +21,17 @@ void xdbtool_util_t::generate_common_file(std::string const & filename, std::str
     std::cout << "===> " << name << " generated data success!" << std::endl;
 }
 
+std::map<common::xtable_address_t, uint64_t> xdbtool_util_t::parse_table_addr_height_list(std::string const & para) {
+    std::vector<std::string> table_info;
+    top::base::xstring_utl::split_string(para, ',', table_info);
+    std::map<common::xtable_address_t, uint64_t> table_query_criteria;
+    for (auto const & t : table_info) {
+        std::vector<std::string> pair;
+        top::base::xstring_utl::split_string(t, ':', pair);
+
+        table_query_criteria.emplace(common::xtable_address_t::build_from(pair[0]), std::stoull(pair[1]));
+    }
+    return table_query_criteria;
+}
+
 NS_END2

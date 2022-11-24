@@ -40,10 +40,14 @@ class xdb_check_data_func_off_data_t : public xdb_check_data_func_face_t {
     virtual std::string data_type() const override;
 };
 
+struct xdb_archive_check_info_t {
+    uint64_t total_tables{0};
+    uint64_t total_units{0};
+    uint64_t total_txindexs{0};
+};
+
 class xdb_export_tools_t {
 public:
-    enum enum_query_account_type { query_account_table = 0, query_account_unit, query_account_system};
-
     xdb_export_tools_t(std::string const & db_path);
     ~xdb_export_tools_t();
     static std::vector<std::string> get_system_contract_accounts();
@@ -75,7 +79,7 @@ public:
     // query balance info
     void query_balance();
     // query archive db integrity and continuity
-    void query_archive_db(const uint32_t redundancy);
+    void query_archive_db(std::map<common::xtable_address_t, uint64_t> const& table_query_criteria);
     // query checkpoint
     void query_checkpoint(const uint64_t clock);
     // set folder
@@ -370,7 +374,7 @@ private:
     void query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
     void query_balance(std::string const & table, json & j_unit, json & j_table);
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data);
-    void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors);
+    void query_archive_db_internal(common::xtable_address_t const & table_address, uint64_t check_height, std::ofstream & file, std::shared_ptr<xdb_archive_check_info_t> archive_info);
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);

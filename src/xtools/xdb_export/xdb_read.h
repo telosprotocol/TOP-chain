@@ -43,14 +43,16 @@ public:
 
 protected:
     void db_read_block(std::string const & address, const uint64_t height);
-    void db_read_meta(std::string const & address);
+    base::xauto_ptr<base::xvactmeta_t> db_read_meta(std::string const & address);    
     void db_data_parse();
     void db_read_txindex(std::string const & hex_txhash);
     void db_read_txindex(std::string const & hex_txhash, base::enum_txindex_type txindex_type);
+    void db_read_all_table_height_lists(std::string const & mode, uint64_t redundancy);
 
 private:
     bool db_scan_key_callback(const std::string& key, const std::string& value);
     static bool db_scan_key_callback(const std::string& key, const std::string& value,void *cookie);
+    
 private:
     xobject_ptr_t<store::xstore_face_t> m_store { nullptr };
     base::xvdbstore_t*  m_xvdb_ptr { nullptr };
