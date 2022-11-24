@@ -31,7 +31,7 @@ public:
     void    init();
 
 public:
-    xtablestate_ext_ptr_t   execute_and_get_tablestate_ext(base::xvblock_t* target_block, std::error_code & ec) const;
+    xtablestate_ext_ptr_t   execute_and_get_tablestate_ext(base::xvblock_t* target_block, bool bstate_must, std::error_code & ec) const;
     xtablestate_ext_ptr_t   get_latest_executed_tablestate_ext() const;
     xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
     void                    on_table_block_committed(base::xvblock_t* block) const;
@@ -65,7 +65,7 @@ protected:
     xtablestate_ext_ptr_t  create_tablestate_ext(base::xvblock_t* current_block, std::shared_ptr<state_mpt::xstate_mpt_t> const& current_prev_mpt, xhash256_t const& block_state_root,
                                                 xobject_ptr_t<base::xvbstate_t> const& current_state,
                                                 std::error_code & ec) const;
-    xtablestate_ext_ptr_t execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, std::error_code & ec) const;
+    xtablestate_ext_ptr_t execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, bool bstate_must, std::error_code & ec) const;
 
 protected:
     mutable std::mutex          m_execute_lock;  // protect the whole execution

@@ -5,6 +5,7 @@
 #include <string>
 #include "xbasic/xmemory.hpp"
 #include "xstatestore/xtablestate_ext.h"
+#include "xstatestore/xerror.h"
 
 NS_BEG2(top, statestore)
 
@@ -21,7 +22,10 @@ void xtablestate_ext_t::get_accountindex(std::string const & unit_addr, base::xa
         return;
     }
     // old version block state
-    xassert(nullptr != m_table_state);
+    if (m_table_state == nullptr) {
+        ec = error::xenum_errc::statestore_load_tablestate_err;
+        return;
+    }
     m_table_state->get_account_index(unit_addr, account_index);
 }
 
