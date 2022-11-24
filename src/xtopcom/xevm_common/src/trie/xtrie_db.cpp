@@ -69,9 +69,10 @@ void xtop_trie_db::insertPreimage(xhash256_t hash, xbytes_t const & preimage) {
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     // todo:
-    if (cleans_.contains(hash)) {
+    xbytes_t value;
+    if (cleans_.get(hash, value)) {
         // todo clean mark hit
-        return xtrie_node_rlp::mustDecodeNode(hash, cleans_.at(hash));
+        return xtrie_node_rlp::mustDecodeNode(hash, value);
     }
     if (dirties_.find(hash) != dirties_.end()) {
         // todo dirty mark hit
@@ -97,8 +98,9 @@ xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
     }
 
     // Retrieve the node from the clean cache if available
-    if (cleans_.contains(hash)) {
-        return cleans_.at(hash);
+    xbytes_t value;
+    if (cleans_.get(hash, value)) {
+        return value;
     }
 
     // Retrieve the node from the dirty cache if available
