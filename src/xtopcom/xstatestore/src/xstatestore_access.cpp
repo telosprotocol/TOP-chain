@@ -155,7 +155,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_cache(commo
     return tablestate;
 }
 
-xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db(common::xaccount_address_t const& address, base::xvblock_t* block) const {
+xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db_inner(common::xaccount_address_t const& address, base::xvblock_t* block, bool bstate_must) const {
     xhash256_t stateroot = m_store_base.get_state_root_from_block(block);
     std::error_code ec;
     std::shared_ptr<state_mpt::xstate_mpt_t> mpt = state_mpt::xstate_mpt_t::create(address, stateroot, m_store_base.get_dbstore(), ec);
@@ -166,12 +166,18 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db(common::
 
     data::xtablestate_ptr_t table_bstate = m_dbaccess.read_table_bstate(address, block->get_height(), block->get_block_hash());
     if (nullptr == table_bstate) {
-        xwarn("xstatestore_accessor_t::read_table_bstate_from_db fail-read table bstate.block=%s", block->dump().c_str());
-        return nullptr;
+        if (stateroot.empty() || true == bstate_must) {
+            xwarn("xstatestore_accessor_t::read_table_bstate_from_db fail-read table bstate.block=%s", block->dump().c_str());
+            return nullptr;            
+        }
     }
 
     xtablestate_ext_ptr_t tablestate = std::make_shared<xtablestate_ext_t>(table_bstate, mpt);
     return tablestate;
+}
+
+xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db(common::xaccount_address_t const& address, base::xvblock_t* block) const {
+    return read_table_bstate_from_db_inner(address, block, true);
 }
 
 xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate(common::xaccount_address_t const& address, base::xvblock_t* block) const {
@@ -180,6 +186,14 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate(common::xaccount
         return tablestate;
     }
     return read_table_bstate_from_db(address, block);
+}
+
+xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_for_account_index(common::xaccount_address_t const& address, base::xvblock_t* block) const {
+    xtablestate_ext_ptr_t tablestate = m_state_cache.get_tablestate(block->get_block_hash());
+    if (nullptr != tablestate) {
+        return tablestate;
+    }    
+    return read_table_bstate_from_db_inner(address, block, false);
 }
 
 data::xunitstate_ptr_t xstatestore_accessor_t::read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {

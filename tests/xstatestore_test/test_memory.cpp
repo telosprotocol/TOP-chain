@@ -137,7 +137,7 @@ TEST_F(test_memory, first_mpt_block_execute_one_table_BENCH) {
     }
 
     std::error_code ec;
-    xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), ec);    
+    xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), true, ec);    
     if (nullptr == prev_state) {
         std::cout << "fail fist_mpt_prev_block get state " << fist_mpt_prev_block->dump() << std::endl;
         return;        
@@ -235,7 +235,7 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
         }
 
         std::error_code ec;
-        xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), ec);        
+        xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), true, ec);        
         if (nullptr == prev_state) {
             std::cout << "table=" << table_addr.to_string() << " fail fist_mpt_prev_block get state " << fist_mpt_prev_block->dump() << std::endl;
             return;        

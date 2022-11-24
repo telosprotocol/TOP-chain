@@ -229,15 +229,11 @@ bool xstatestore_impl_t::get_accountindex_from_latest_connected_table(common::xa
 }
 
 bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
-    xtablestate_ext_ptr_t tablestate_ext = get_tablestate_ext_from_block(table_block);
-    if (nullptr != tablestate_ext) {
-        std::error_code ec;
-        tablestate_ext->get_accountindex(account_address.to_string(), account_index, ec);
-        if (ec) {
-            return false;
-        }
-        return true;
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_block->get_account());
+    if (tablestore != nullptr) {
+        return tablestore->get_accountindex_from_table_block(account_address, table_block, account_index);
     }
+    xwarn("xstatestore_impl_t::get_accountindex_from_table_block fail.block=%s", table_block->dump().c_str());
     return false;
 }
 
