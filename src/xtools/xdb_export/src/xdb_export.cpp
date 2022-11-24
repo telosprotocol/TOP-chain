@@ -2210,8 +2210,10 @@ std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> xdb_expor
 }
 
 std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_account_data(std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> const & accounts,
+                                                                                            std::unordered_map<common::xaccount_address_t, evm_common::u256> const & genesis_account_data,
                                                                                             std::vector<common::xtoken_id_t> const & queried_tokens,
                                                                                             std::unordered_map<std::string, bool> const & queried_properties,
+                                                                                            common::xtable_address_t const & table_address,
                                                                                             std::error_code & ec) const {
     assert(!ec);
     assert(m_blockstore != nullptr);
@@ -2221,6 +2223,8 @@ std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_a
         auto const & account_address = top::get<common::xaccount_address_t const>(account_datum);
         auto const account_index = top::get<base::xaccount_index_t>(account_datum);
 
+        assert(account_address.table_address() == table_address);
+
         auto unit_bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, account_index);
         if (unit_bstate == nullptr) {
             ec = xerrc_t::account_data_not_found;
@@ -2228,22 +2232,14 @@ std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_a
                   account_address.to_string().c_str(),
                   account_index.dump().c_str());
 
-            std::cout << "account " << account_address.to_string() << " at " << account_index.dump()
-                      << " with committed state not found. xdb_export_tools_t::get_account_data returns {}" << std::endl;
+            std::cout << "account " << account_address.to_string()
+                      << " state not found. xdb_export_tools_t::get_account_data returns NONE. account index data: " << account_index.dump() << std::endl;
             return {};
         }
 
-        //auto unit_vbstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        //if (unit_vbstate == nullptr) {
-        //    ec = xerrc_t::account_data_not_found;
-        //    xwarn("account %s at height %" PRIu64 " state not found. xdb_export_tools_t::get_account_data returns {}", account_address.to_string().c_str(), account_height);
-        //    return {};
-        //}
-
-        //auto const unit_bstate = top::make_unique<data::xunit_bstate_t>(unit_vbstate.get());
-
         exported_account_data data;
         data.account_address = account_address;
+        data.unit_height = account_index.get_latest_unit_height();
 
         for (auto const token_id : queried_tokens) {
             switch (token_id) {  // NOLINT(clang-diagnostic-switch-enum)
@@ -2302,19 +2298,43 @@ std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_a
         result.emplace_back(std::move(data));
     }
 
+    {
+        for (auto const & genesis_account_datum : genesis_account_data) {
+            auto const & genesis_account_address = top::get<common::xaccount_address_t const>(genesis_account_datum);
+
+            if (genesis_account_address.table_address() != table_address) {
+                continue;
+            }
+
+            if (std::find_if(std::begin(result), std::end(result), [&genesis_account_address](exported_account_data const & exported_account_datum) {
+                    return genesis_account_address == exported_account_datum.account_address;
+                }) == std::end(result)) {
+
+                exported_account_data genesis_datum;
+                genesis_datum.account_address = genesis_account_address;
+                genesis_datum.unit_height = 0;
+                genesis_datum.assets[0][data::XPROPERTY_BALANCE_AVAILABLE] = top::get<evm_common::u256>(genesis_account_datum);
+
+                result.push_back(std::move(genesis_datum));
+            }
+        }
+    }
+
     return result;
 }
 
-void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_address,
+void xdb_export_tools_t::export_to_json(common::xtable_address_t const & table_address,
                                         uint64_t const table_height,
                                         std::vector<exported_account_data> const & data,
                                         std::string const & file_path,
+                                        std::ios_base::openmode const open_mode,
                                         std::error_code & /*ec*/) const {
     nlohmann::json root;
-    std::ofstream out{file_path, std::ios::out | std::ios::app};
+    std::ofstream out{file_path, std::ios_base::out | open_mode };
 
     auto & table_json = root[table_address.to_string()];
     table_json["account_count"] = data.size();
+    table_json["table_height"] = table_height;
 
     std::array<std::unordered_map<std::string, evm_common::u256>, 2> total_asset;
 
@@ -2324,12 +2344,12 @@ void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_a
         auto const & tep1_asset = account_datum.assets[1];
         auto const & binary_properties = account_datum.binary_properties;
         auto const & string_properties = account_datum.text_properties;
+        auto const unit_height = account_datum.unit_height;
 
         assert(account_address.table_address() == table_address);
 
         nlohmann::json account_json;
-
-        account_json["associated_table_height"] = table_height;
+        account_json["unit_height"] = unit_height;
 
         for (auto const & top_balance_datum : top_asset) {
             auto const & asset_name = top::get<std::string const>(top_balance_datum);
