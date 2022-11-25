@@ -8,7 +8,6 @@
 #include <memory>
 #include <chrono>
 
-#include "xbasic/xhash.hpp"
 #include "xkad/routing_table/routing_utils.h"
 #include "xtransport/transport_fwd.h"
 

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xhash.hpp"
 #include "xcommon/xnode_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"

@@ -4,6 +4,7 @@
 
 #include "xevm_common/trie/xtrie_node_coding.h"
 
+#include "xbasic/xutility.h"
 #include "xevm_common/rlp/xrlp_raw.h"
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/xerror/xerror.h"

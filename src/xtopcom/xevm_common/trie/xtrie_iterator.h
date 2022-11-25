@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-#include "xbasic/xhash.hpp"
 #include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/xfixed_hash.h"
