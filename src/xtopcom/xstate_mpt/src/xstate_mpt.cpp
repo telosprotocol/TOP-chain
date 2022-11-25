@@ -252,7 +252,7 @@ evm_common::xh256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
             return {};
         }
     }
-    if (m_state_objects_pending.size() > 0) {
+    if (!m_state_objects_pending.empty()) {
         m_state_objects_pending.clear();
     }
     return m_trie->hash();

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_face.h"
 
@@ -42,7 +43,7 @@ public:
     // Loaded nodes are kept around until their 'cache generation' expires.
     // A new cache generation is created by each call to Commit.
     // cachelimit sets the number of past cache generations to keep.
-    static std::shared_ptr<xtop_secure_trie> build_from(xh256_t const & root, xtrie_db_ptr_t db, std::error_code & ec);
+    static std::shared_ptr<xtop_secure_trie> build_from(xh256_t const & root, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // Get returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.

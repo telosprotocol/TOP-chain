@@ -35,7 +35,7 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
     return std::make_shared<xtop_trie_db>(std::move(diskdb));
 }
 
-void xtop_trie_db::insert(xh256_t hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
+void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
     std::lock_guard<std::mutex> lck(mutex);
     // If the node's already cached, skip
     if (dirties_.find(hash) != dirties_.end()) {
@@ -44,7 +44,7 @@ void xtop_trie_db::insert(xh256_t hash, int32_t const size, xtrie_node_face_ptr_
 
     // todo mark size.
 
-    auto entry = xtrie_cache_node_t{simplify_node(node), static_cast<uint16_t>(size), newest_};
+    auto entry = xtrie_cache_node_t{simplify_node(node), static_cast<uint16_t>(size)/*, newest_*/};
     entry.forChilds([&](xh256_t const & child) {
         if (this->dirties_.find(child) != this->dirties_.end()) {
             this->dirties_.at(child).parents_++;
@@ -53,25 +53,25 @@ void xtop_trie_db::insert(xh256_t hash, int32_t const size, xtrie_node_face_ptr_
     xdbg("xtop_trie_db::insert %s size:%d", hash.hex().c_str(), size);
     dirties_.insert({hash, entry});
 
-    if (oldest_.empty()) {
-        oldest_ = hash;
-    } else {
-        dirties_.at(newest_).flush_next_ = hash;
-    }
-    newest_ = hash;
+    //if (oldest_.empty()) {
+    //    oldest_ = hash;
+    //} else {
+    //    dirties_.at(newest_).flush_next_ = hash;
+    //}
+    //newest_ = hash;
 
     // todo dirties size;
 }
 
-void xtop_trie_db::insertPreimage(xh256_t hash, xbytes_t const & preimage) {
+void xtop_trie_db::insertPreimage(xh256_t const & hash, xbytes_t const & preimage) {
     std::lock_guard<std::mutex> lck(mutex);
     preimages_.insert({hash, preimage});
     // todo cal preimage size metrics.
 }
 
-xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t hash) {
+xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
     std::lock_guard<std::mutex> lck(mutex);
-    XMETRICS_COUNTER_INCREMENT("trie_cache_visit", 1);
+    XMETRICS_GAUGE(metrics::mpt_trie_cache_visit, 1);
     // todo:
     xbytes_t value;
     if (cleans_.get(hash, value)) {
@@ -83,18 +83,18 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t hash) {
         return dirties_.at(hash).obj(hash);
     }
     // todo mark miss hit
-    XMETRICS_COUNTER_INCREMENT("trie_cache_miss", 1);
+    XMETRICS_GAUGE(metrics::mpt_trie_cache_miss, 1);
     // retrieve from disk db
-    auto enc = ReadTrieNode(diskdb_, hash);
+    auto const & enc = ReadTrieNode(diskdb_, hash);
     if (enc.empty()) {
         return nullptr;
     }
     // put into clean cache
-    cleans_.insert({hash, enc});
+    cleans_.put(hash, enc);
     return xtrie_node_rlp::must_decode_node(hash, enc);
 }
 
-xbytes_t xtop_trie_db::Node(xh256_t hash, std::error_code & ec) {
+xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
     std::lock_guard<std::mutex> lck(mutex);
     // It doesn't make sense to retrieve the metaroot
     if (hash.empty()) {
@@ -120,11 +120,11 @@ xbytes_t xtop_trie_db::Node(xh256_t hash, std::error_code & ec) {
         return xbytes_t{};
     }
     // put into clean cache
-    cleans_.insert({hash, enc});
+    cleans_.put(hash, enc);
     return enc;
 }
 
-xbytes_t xtop_trie_db::preimage(xh256_t hash) const {
+xbytes_t xtop_trie_db::preimage(xh256_t const & hash) const {
     std::lock_guard<std::mutex> lck(mutex);
     if (preimages_.find(hash) != preimages_.end()) {
         return preimages_.at(hash);
@@ -138,7 +138,7 @@ xbytes_t xtop_trie_db::preimage(xh256_t hash) const {
     return result;
 }
 
-void xtop_trie_db::Commit(xh256_t hash, AfterCommitCallback cb, std::error_code & ec) {
+void xtop_trie_db::Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec) {
     std::lock_guard<std::mutex> lck(mutex);
 
     // what we can optimize here:
@@ -168,21 +168,21 @@ void xtop_trie_db::Commit(xh256_t hash, AfterCommitCallback cb, std::error_code 
     // todos: noted to remove size of dirty cache.
     // todos: change link-list of flush-list Next/Prev Node ptr
     // for now : we can simplily erase it:
-    newest_ = {};
-    oldest_ = {};
+    //newest_ = {};
+    //oldest_ = {};
 
     // clean preimages:
     preimages_.clear();
 }
 
-void xtop_trie_db::commit(xh256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec) {
+void xtop_trie_db::commit(xh256_t const & hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec) {
     // If the node does not exist, it's a previously committed node
     if (dirties_.find(hash) == dirties_.end()) {
         return;
     }
 
     auto node = dirties_.at(hash);
-    node.forChilds([&](xh256_t child) {
+    node.forChilds([&](xh256_t const & child) {
         if (!ec) {
             this->commit(child, data, cb, ec);
         }
@@ -209,7 +209,7 @@ void xtop_trie_db::commit(xh256_t hash, std::map<xbytes_t, xbytes_t> & data, Aft
     dirties_.erase(hash);
 
     // and move it to cleans:
-    cleans_.insert({hash, enc});
+    cleans_.put(hash, enc);
     // todo mark size everywhere with cleans/dirties' insert/erase/...
 }
 
@@ -282,7 +282,7 @@ xbytes_t xtrie_cache_node_t::rlp() {
     return xtrie_node_rlp::EncodeToBytes(node_);
 }
 
-xtrie_node_face_ptr_t xtrie_cache_node_t::obj(xh256_t hash) {
+xtrie_node_face_ptr_t xtrie_cache_node_t::obj(xh256_t const & hash) {
     if (node_ == nullptr) {
         return node_;
     }
@@ -382,7 +382,7 @@ xtrie_node_face_ptr_t simplify_node(xtrie_node_face_ptr_t const & n) {
     }
 }
 
-xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> hash, xtrie_node_face_ptr_t n) {
+xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> const & hash, xtrie_node_face_ptr_t n) {
     switch (n->type()) {
     case xtrie_node_type_t::rawshortnode: {
         auto node = std::dynamic_pointer_cast<xtrie_raw_short_node_t>(n);

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie_db.h"
 #include "xevm_common/trie/xtrie_node.h"
 
@@ -12,19 +13,19 @@ NS_BEG3(top, evm_common, trie)
 class xtop_trie_committer {
 public:
     // Commit collapses a node down into a hash node and inserts it into the database
-    std::pair<xtrie_hash_node_ptr_t, int32_t> Commit(xtrie_node_face_ptr_t const & n, xtrie_db_ptr_t db, std::error_code & ec);
+    std::pair<xtrie_hash_node_ptr_t, int32_t> Commit(xtrie_node_face_ptr_t const & n, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
 private:
     // commit collapses a node down into a hash node and inserts it into the database
-    std::pair<xtrie_node_face_ptr_t, int32_t> commit(xtrie_node_face_ptr_t const & n, xtrie_db_ptr_t db, std::error_code & ec);
+    std::pair<xtrie_node_face_ptr_t, int32_t> commit(xtrie_node_face_ptr_t const & n, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // commitChildren commits the children of the given fullnode
-    std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> commitChildren(xtrie_full_node_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec);
+    std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> commitChildren(xtrie_full_node_ptr_t n, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // store hashes the node n and if we have a storage layer specified, it writes
     // the key/value pair to it and tracks any node->child references as well as any
     // node->external trie references.
-    xtrie_node_face_ptr_t store(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db);
+    xtrie_node_face_ptr_t store(xtrie_node_face_ptr_t n, observer_ptr<xtrie_db_t> db);
 
 private:
     // estimateSize estimates the size of an rlp-encoded node, without actually
