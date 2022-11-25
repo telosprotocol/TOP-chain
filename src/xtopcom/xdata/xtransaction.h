@@ -4,7 +4,6 @@
 #pragma once
 
 #include "xdata/xproperty.h"
-#include "xbasic/xhash.hpp"
 #include "xbasic/xcrypto_key.h"
 #include "xdata/xaction.h"
 #include "xdata/xethtransaction.h"

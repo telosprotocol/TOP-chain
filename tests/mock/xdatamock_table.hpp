@@ -10,7 +10,6 @@
 #include "xdata/xblockbuild.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xethbuild.h"
-#include "xbasic/xhash.hpp"
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblock_builder.h"
 #include "xtxexecutor/xbatchtx_executor.h"

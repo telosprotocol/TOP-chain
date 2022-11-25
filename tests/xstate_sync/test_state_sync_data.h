@@ -1,6 +1,5 @@
 #pragma once
 
-#include "xbasic/xhash.hpp"
 #include "xbasic/xhex.h"
 #include "xcommon/xnode_id.h"
 #include "xevm_common/xfixed_hash.h"
