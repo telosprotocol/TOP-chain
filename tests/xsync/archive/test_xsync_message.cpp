@@ -3,24 +3,38 @@
 #include "xsync/xsync_message.h"
 #include "common_func.h"
 #include "xsync/xsync_util.h"
+#include "xsync/xsync_store_shadow.h"
+#include "xblockstore/xblockstore_face.h"
+#include "tests/mock/xvchain_creator.hpp"
+#include "tests/mock/xdatamock_table.hpp"
+#include "xblockstore/src/xvblockhub.h"
 
 using namespace top;
 using namespace top::sync;
 
-TEST(test_xsync_message, test_xsync_msg_t) {
-  
+using namespace top::base;
+using namespace top::mbus;
+using namespace top::store;
+using namespace top::data;
+using namespace top::mock;
+
+
+TEST(test_xsync_message, test_xsync_msg_t)
+{
+
     sync::xsync_msg_t msg;
     base::xstream_t stream(base::xcontext_t::instance());
     msg.serialize_to(stream);
 
     auto ptr = make_object_ptr<sync::xsync_msg_t>();
     ptr->serialize_from(stream);
-    ASSERT_TRUE(msg.get_sessionID()== ptr->get_sessionID());
+    ASSERT_TRUE(msg.get_sessionID() == ptr->get_sessionID());
 }
 
-TEST(test_xsync_message, test_xsync_msg_block_t) {
-  
-    std::string address{"T600044dce5c8961e283786cb31ad7fc072347227d7ea2"};
+TEST(test_xsync_message, test_xsync_msg_block_t)
+{
+
+    std::string address { "T600044dce5c8961e283786cb31ad7fc072347227d7ea2" };
     uint32_t _request_option = RandomInt32();
     sync::xsync_msg_block_t msg_block(address, _request_option);
 
@@ -136,6 +150,73 @@ TEST(test_xsync_message, test_xsync_msg_block_push_t) {
     std::vector<data::xblock_ptr_t> block_vec_out = ptr->get_all_xblock_ptr();
     for(size_t i=0; i< block_vec_out.size(); i++) {
        ASSERT_TRUE( block_vec_out[i]->get_block_hash() == block_vec[i]->get_block_hash());
+    }
+
+}
+
+TEST(test_xsync_message, test_xsync_connect_test)
+{
+    mock::xvchain_creator creator(true);
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    //create block
+    uint64_t count = 100;
+    mock::xdatamock_table mocktable;
+    mocktable.genrate_table_chain(count, blockstore);
+    const std::vector<xblock_ptr_t>& tables = mocktable.get_history_tables();
+    mocktable.store_genesis_units(blockstore);
+    xassert(tables.size() == count + 1);
+
+    std::string address = mocktable.get_account();
+    xvaccount_t account(address);
+
+
+    //test connect,0-20
+    {
+        uint64_t connect_height = 20;
+        for (uint64_t i = 1; i < connect_height; i++) {
+            auto curr_block = tables[i].get();
+            ASSERT_TRUE(blockstore->store_block(account, curr_block));
+        }
+        
+        std::unique_ptr<xsync_store_shadow_t> store_shadow(top::make_unique<sync::xsync_store_shadow_t>());
+        xsync_store_t sync_store("", make_observer(blockstore), store_shadow.get());
+
+        std::shared_ptr<xsync_chain_spans_t> chain_spans_new = std::make_shared<xsync_chain_spans_t>(2, &sync_store, address);
+        chain_spans_new->initialize();
+        uint64_t cp_height = sync_store.get_latest_end_block_height(address, enum_chain_sync_policy_checkpoint);
+        ASSERT_TRUE((connect_height-1) == cp_height);
+        // ASSERT_TRUE( == cp_height);
+        std::pair<uint64_t, uint64_t> height_interval(cp_height, cp_height);
+        auto pair_result = chain_spans_new->get_continuous_unused_interval(height_interval);
+        ASSERT_TRUE(pair_result.first == pair_result.second);
+        ASSERT_TRUE(pair_result.first == cp_height);
+    }
+
+     //test disconnect,[0-20], [30-40],
+    {
+        uint64_t disconnect_height = 30, max_height = 40;
+        for (uint64_t i = disconnect_height; i < max_height; i++) {
+            auto curr_block = tables[i].get();
+            ASSERT_TRUE(blockstore->store_block(account, curr_block));
+        }
+        
+        std::unique_ptr<xsync_store_shadow_t> store_shadow(top::make_unique<sync::xsync_store_shadow_t>());
+        xsync_store_t sync_store("", make_observer(blockstore), store_shadow.get());
+
+        std::shared_ptr<xsync_chain_spans_t> chain_spans_new = std::make_shared<xsync_chain_spans_t>(2, &sync_store, address);
+        chain_spans_new->initialize();
+        //mock store event
+        for (uint64_t i = disconnect_height; i < max_height; i++) {
+           chain_spans_new->set(i);
+        }
+
+        uint64_t cp_height = sync_store.get_latest_end_block_height(address, enum_chain_sync_policy_checkpoint);
+        std::pair<uint64_t, uint64_t> height_interval(cp_height, max_height);
+        auto pair_result = chain_spans_new->get_continuous_unused_interval(height_interval);
+        ASSERT_TRUE(pair_result.first == cp_height);
+        ASSERT_TRUE(pair_result.second == (disconnect_height-1));
     }
 
 }

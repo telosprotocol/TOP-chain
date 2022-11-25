@@ -282,8 +282,8 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
     }
     m_chain_objects[sync_policy].set_picked_height(picked_height);
 
-    xsync_info("chain_downloader on_behind expect start_height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s",
-                start_height, end_height, target_addr.to_string().c_str(), sync_policy, m_address.c_str());
+    xsync_info("chain_downloader on_behind expect start_height=%lu,height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s",
+                start_height,height, end_height, target_addr.to_string().c_str(), sync_policy, m_address.c_str());
 }
 
 void xchain_downloader_t::on_block_committed_event(uint64_t height) {
@@ -606,7 +606,7 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
         return finish;
     }
 
-    xsync_info("chain_downloader on_behind %s,local(height=%lu,) peer(height=%lu,) reason=%s %s -> %s, sync policy %d",
+    xsync_info("chain_downloader execute_download %s,local(height=%lu,) peer(height=%lu,) reason=%s %s -> %s, sync policy %d",
             m_address.c_str(),
             start_height,
             end_height,
