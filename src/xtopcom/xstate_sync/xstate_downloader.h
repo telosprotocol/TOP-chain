@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xhash.hpp"
 #include "xmbus/xmessage_bus.h"
 #include "xstate_sync/xstate_downloader_executer.h"
 #include "xstate_sync/xstate_sync.h"

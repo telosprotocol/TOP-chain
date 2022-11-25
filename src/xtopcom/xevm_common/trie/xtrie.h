@@ -4,12 +4,13 @@
 
 #pragma once
 
+#include "xbasic/xhex.h"
+#include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
 #include "xevm_common/trie/xtrie_pruner_fwd.h"
 #include "xevm_common/xfixed_hash.h"
 #include "xtrie_kv_db_face.h"
-#include "xbasic/xmemory.hpp"
 
 #include <tuple>
 
