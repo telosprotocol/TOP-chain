@@ -9,13 +9,13 @@
 
 NS_BEG3(top, evm_common, trie)
 
-std::shared_ptr<xtop_secure_trie> xtop_secure_trie::build_from(xh256_t const & root, xtrie_db_ptr_t db, std::error_code & ec) {
+std::shared_ptr<xtop_secure_trie> xtop_secure_trie::build_from(xh256_t const & root, observer_ptr<xtrie_db_t> const db, std::error_code & ec) {
     assert(!ec);
 
     if (db == nullptr) {
         xerror("build secure trie from null db");
     }
-    auto trie = xtrie_t::build_from(root, std::move(db), ec);
+    auto trie = xtrie_t::build_from(root, db, ec);
     if (ec) {
         xwarn("secure trie new failed: %s", ec.message().c_str());
         return nullptr;

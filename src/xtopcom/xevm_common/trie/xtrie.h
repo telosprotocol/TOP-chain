@@ -9,6 +9,7 @@
 #include "xevm_common/trie/xtrie_pruner_fwd.h"
 #include "xevm_common/xfixed_hash.h"
 #include "xtrie_kv_db_face.h"
+#include "xbasic/xmemory.hpp"
 
 #include <tuple>
 
@@ -23,7 +24,7 @@ using leaf_callback = std::function<void(std::vector<xbytes_t> const &, xbytes_t
 
 class xtop_trie {
 private:
-    std::shared_ptr<xtrie_db_t> trie_db_;
+    observer_ptr<xtrie_db_t> trie_db_;
     xtrie_node_face_ptr_t trie_root_;
     std::unique_ptr<xtrie_pruner_t> pruner_;
 
@@ -37,12 +38,12 @@ public:
     ~xtop_trie();
 
 protected:
-    explicit xtop_trie(std::shared_ptr<xtrie_db_t> db);
+    explicit xtop_trie(observer_ptr<xtrie_db_t> db);
 
 public:
-    std::shared_ptr<xtrie_db_t> const & trie_db() const noexcept;
+    observer_ptr<xtrie_db_t> trie_db() const noexcept;
 
-    static std::shared_ptr<xtop_trie> build_from(xh256_t const & hash, std::shared_ptr<xtrie_db_t> db, std::error_code & ec);
+    static std::shared_ptr<xtop_trie> build_from(xh256_t const & hash, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // Reset drops the referenced root node and cleans all internal state.
     void reset();
