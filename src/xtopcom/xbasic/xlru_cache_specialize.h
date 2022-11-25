@@ -119,4 +119,99 @@ private:
     }
 };
 
+template <typename KeyT, typename ValueT, typename MutexT>
+class xtop_lru_cache {
+private:
+    std::list<std::pair<KeyT, ValueT>> item_list_;
+    std::unordered_map<KeyT, typename std::list<std::pair<KeyT, ValueT>>::iterator> item_map_;
+    size_t const max_size_;
+    mutable MutexT mutex_;
+
+public:
+    xtop_lru_cache(size_t const max_size) : max_size_{max_size} {
+    }
+
+    void put(const KeyT & key, const ValueT & value) {
+        std::lock_guard<MutexT> lock(mutex_);
+
+        auto it = item_map_.find(key);
+        if (it != item_map_.end()) {
+            item_list_.erase(it->second);
+            item_map_.erase(it);
+        }
+        item_list_.push_front({key, value});
+        item_map_.insert({key, item_list_.begin()});
+        clean_with_lock_hold();
+    }
+
+    void put(const KeyT & key, ValueT && value) {
+        std::lock_guard<MutexT> lock(mutex_);
+
+        auto it = item_map_.find(key);
+        if (it != item_map_.end()) {
+            item_list_.erase(it->second);
+            item_map_.erase(it);
+        }
+        item_list_.push_front({key, std::move(value)});
+        item_map_.insert({key, item_list_.begin()});
+        clean_with_lock_hold();
+    }
+
+
+    bool get(const KeyT & key, ValueT & value) const {
+        std::lock_guard<MutexT> lock(mutex_);
+
+        auto it = item_map_.find(key);
+        if (it == item_map_.end()) {
+            return false;
+        }
+
+        assert(key == it->second->first);
+
+        value = it->second->second;
+        return true;
+    }
+
+    bool back(KeyT & key, ValueT & value) const {
+        std::lock_guard<MutexT> lock{mutex_};
+
+        if (item_list_.empty()) {
+            return false;
+        }
+
+        const auto & item = item_list_.back();
+        key = item.first;
+        value = item.second;
+
+        return true;
+    }
+
+    void erase(const KeyT & key) {
+        std::lock_guard<MutexT> lock{mutex_};
+        auto it = item_map_.find(key);
+        if (it != item_map_.end()) {
+            item_list_.erase(it->second);
+            item_map_.erase(it);
+        }
+    }
+
+    bool contains(KeyT const & key) const {
+        std::lock_guard<MutexT> lock{mutex_};
+        return item_map_.find(key) != std::end(item_map_);
+    }
+
+private:
+    void clean_with_lock_hold() {
+        while (item_map_.size() > max_size_) {
+            auto last_it = item_list_.end();
+            --last_it;
+            item_map_.erase(last_it->first);
+            item_list_.pop_back();
+        }
+    }
+};
+
+template <typename KeyT, typename ValueT = KeyT, typename MutexT = std::mutex>
+using xlru_cache_t = xtop_lru_cache<KeyT, ValueT, MutexT>;
+
 NS_END2

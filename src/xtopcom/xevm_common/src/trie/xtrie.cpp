@@ -20,20 +20,20 @@ xh256_t const empty_root{empty_root_bytes};
 
 xtop_trie::~xtop_trie() = default;
 
-xtop_trie::xtop_trie(xtrie_db_ptr_t db) : trie_db_{std::move(db)} {
+xtop_trie::xtop_trie(observer_ptr<xtrie_db_t> const db) : trie_db_{db} {
 }
 
-xtrie_db_ptr_t const & xtop_trie::trie_db() const noexcept {
+observer_ptr<xtrie_db_t> xtop_trie::trie_db() const noexcept {
     return trie_db_;
 }
 
-std::shared_ptr<xtop_trie> xtop_trie::build_from(xh256_t const & hash, xtrie_db_ptr_t db, std::error_code & ec) {
+std::shared_ptr<xtop_trie> xtop_trie::build_from(xh256_t const & hash, observer_ptr<xtrie_db_t> const db, std::error_code & ec) {
     assert(!ec);
 
     if (db == nullptr) {
         xerror("build trie from null db");
     }
-    auto trie = std::shared_ptr<xtop_trie>(new xtop_trie{std::move(db)});
+    auto trie = std::shared_ptr<xtop_trie>(new xtop_trie{db});
     if (hash != empty_root && !hash.empty()) {
         // resolve Hash
         auto const root_hash = std::make_shared<xtrie_hash_node_t>(hash);
