@@ -121,6 +121,7 @@ void xrpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, 
             xkinfo("m_arc_vhost send:%s,%" PRIu64, item.second.address.to_string().c_str(), message.hash());
 
             xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_request_t>::encode(edge_msg), rpc_msg_request);
+            // todo: 对于 evm table， 获取evm validator group 地址，填consensus_validator是有问题的。
             auto cluster_addr =
                 m_router_ptr->sharding_address_from_account(common::xaccount_address_t{edge_msg.m_account}, edge_sender.network_id(), common::xnode_type_t::consensus_validator);
             assert(common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()));

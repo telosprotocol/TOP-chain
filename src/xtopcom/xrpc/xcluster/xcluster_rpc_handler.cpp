@@ -117,8 +117,10 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                   edge_sender.to_string().c_str(),
                   m_cluster_vhost->address().to_string().c_str(),
                   message.hash());
-            // return;
+            return;
         }
+        // for test 
+        return;
     } else {
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;
