@@ -1,12 +1,17 @@
 #include "../xdb_export.h"
 #include "../xdb_reset.h"
 #include "../xdb_read.h"
+#include "../xdb_write.h"
+#include "../xdbtool_util.h"
 #include "xbase/xhash.h"
 #include "xmigrate/xvmigrate.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xrootblock.h"
 #include "xcrypto/xckey.h"
+#include "xloader/xconfig_genesis_loader.h"
+
+#include <omp.h>
 
 using namespace top;
 using namespace top::db_export;
@@ -49,16 +54,21 @@ void usage() {
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
-    std::cout << "        - check_archive_db [redundancy]" << std::endl;
+    std::cout << "        - check_archive_db [table_address0:height0,table_address1:height1,...]" << std::endl;
     std::cout << "        - check_performance" << std::endl;
     std::cout << "        - parse_checkpoint <height>" << std::endl;
     std::cout << "        - parse_db" << std::endl;
-    std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;
+    std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;  // account can be "all_tables"
     std::cout << "        - db_data_parse [db_path] " << std::endl; // ./xdb_export ./db_v3/ db_data_parse
     std::cout << "        - db_compact_db [db_path]" << std::endl;
     std::cout << "        - db_parse_type_size [db_path] " << std::endl;
     std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
+    std::cout << "        - [db_path] db_read_all_table_height_lists <mode> <redundancy> " << std::endl; // ./xdb_export ./db_v3/ db_read_all_table_height_lists commit_mode 10
+    std::cout << "        - db_read_txindex [db_path] <hex_txhash> " << std::endl;  // ./xdb_export ./db_v3/ db_read_txindex txhash send/recv/confirm
+    std::cout << "        - correct_all_txindex [db_path] " << std::endl;// ./xdb_export ./db_v3/ correct_all_txindex
+    std::cout << "        - correct_one_txindex [db_path] <hex_txhash> " << std::endl; // ./xdb_export ./db_v3/ correct_one_txindex   txhash
     std::cout << "        - db_prune [db_path] " << std::endl;
+    std::cout << "        - export <exported.json> <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -116,27 +126,19 @@ int main(int argc, char ** argv) {
 
     std::string function_name{argv[2]};
 
+    if (xdb_read_tools_t::is_match_function_name(function_name)) {
+        xdb_read_tools_t read_tools{db_path};
+        read_tools.process_function(function_name, argc, argv);
+        return 0;
+    }
 
-    if (function_name == "db_read_meta") {
-        if (argc != 4) {
-            xassert(false);
-            usage();
-            return -1;
-        }
-        std::string address = argv[3];
-        xdb_read_tools_t read_tools{db_path};
-        read_tools.db_read_meta(address);
+    if (xdb_write_tools_t::is_match_function_name(function_name)) {
+        xdb_write_tools_t write_tools{db_path};
+        write_tools.process_function(function_name, argc, argv);
         return 0;
-    } else if (function_name == "db_data_parse") {
-        if (argc != 3) {
-            xassert(false);
-            usage();
-            return -1;
-        }
-        xdb_read_tools_t read_tools{db_path};
-        read_tools.db_data_parse();
-        return 0;
-    } else if (function_name == "db_compact_db") {
+    }
+
+    if (function_name == "db_compact_db") {
         if (argc != 4) {
             usage();
             return -1;
@@ -145,7 +147,9 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         tools_v3.compact_db();
         return 0;
-    } else if (function_name == "db_prune") {
+    }
+
+    if (function_name == "db_prune") {
         if (argc != 4) {
             usage();
             return -1;
@@ -154,14 +158,6 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         std::cout << "db_prune start" << std::endl;
         tools_v3.prune_db();
-        return 0;
-    } else if (function_name == "db_read_block") {
-        if (argc != 5) {
-            usage();
-            return -1;
-        }
-        xdb_read_tools_t read_tools{db_path};
-        read_tools.db_read_block(argv[3], std::stoi(argv[4]));
         return 0;
     }
 
@@ -176,6 +172,7 @@ int main(int argc, char ** argv) {
         base::db_migrate_v2_to_v3(v2_db_path, v3_db_path);
         return 0;
     }
+
     if(function_name == "db_parse_type_size") {
         if (argc != 4) {
             xassert(false);
@@ -358,18 +355,17 @@ int main(int argc, char ** argv) {
     } else if (function_name == "check_balance") {
         tools.query_balance();
     } else if (function_name == "check_archive_db") {
-        if (argc != 3 && argc != 4) {
+        if (argc != 4) {
             usage();
             return -1;
         }
-        uint32_t redundancy = 0;
-        if (argc == 4) {
-            redundancy = std::stoi(argv[3]);
+        std::map<common::xtable_address_t, uint64_t> table_query_criteria = xdbtool_util_t::parse_table_addr_height_list(argv[3]);
+        if (table_query_criteria.empty()) {
+            usage();
+            return -1;            
         }
-        auto t1 = base::xtime_utl::time_now_ms();
-        tools.query_archive_db(redundancy);
-        auto t2 = base::xtime_utl::time_now_ms();
-        std::cout << "check_archive_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
+
+        tools.query_archive_db(table_query_criteria);
     } else if (function_name == "parse_checkpoint") {
         if (argc != 4) {
             usage();
@@ -386,6 +382,75 @@ int main(int argc, char ** argv) {
         tools.query_table_unit_info(table_account_vec);
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
+    } else if (function_name == "export") {
+        // xdb_export db_path export exported.json table0:height0,table1:height1,... [account0,[account1,...]]
+
+        if (argc < 4) {
+            usage();
+            return -1;
+        }
+
+        auto const & table_query = argv[3];
+        std::string account_string;
+        if (argc == 5) {
+            account_string = argv[4];
+        }
+
+        std::vector<std::string> table_info;
+        top::base::xstring_utl::split_string(table_query, ',', table_info);
+        std::map<common::xtable_address_t, uint64_t> table_query_criteria;
+        for (auto const & t : table_info) {
+            std::vector<std::string> pair;
+            top::base::xstring_utl::split_string(t, ':', pair);
+
+            table_query_criteria.emplace(common::xtable_address_t::build_from(pair[0]), std::stoull(pair[1]));
+        }
+
+        std::vector<common::xaccount_address_t> queried_accounts;
+        if (!account_string.empty()) {
+            std::vector<std::string> accounts;
+            base::xstring_utl::split_string(account_string, ',', accounts);
+            std::transform(std::begin(accounts), std::end(accounts), std::back_inserter(queried_accounts), [](std::string const & acc) { return common::xaccount_address_t::build_from(acc);
+            });
+        }
+
+        auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>("");
+        data::xrootblock_para_t rootblock_para;
+        genesis_loader->extract_genesis_para(rootblock_para);
+        data::xrootblock_t::init(rootblock_para);
+        auto const & genesis_data = rootblock_para.m_account_balances;
+        std::unordered_map<common::xaccount_address_t, evm_common::u256> genesis_accounts_data;
+        for (auto const & genesis_account_datum : genesis_data) {
+            genesis_accounts_data.emplace(common::xaccount_address_t::build_from(top::get<std::string const>(genesis_account_datum)), top::get<uint64_t>(genesis_account_datum));
+        }
+
+#pragma omp parallel for
+        for (uint i = 0; i < table_query_criteria.size(); ++i) {
+            auto it = std::next(std::begin(table_query_criteria), i);
+            auto const & tbl = *it;
+
+            std::error_code ec;
+
+            auto const & table_address = top::get<common::xtable_address_t const>(tbl);
+            auto const table_height = top::get<uint64_t>(tbl);
+
+            std::string json_file_name = table_address.to_string() + '_' + std::to_string(table_height) + ".json";
+
+            auto units = tools.get_unit_accounts(table_address, table_height, queried_accounts, ec);
+            if (ec) {
+                std::cerr << "get_unit_accounts on table " << table_address.to_string() << " at height " << table_height << " failed with error code " << ec.value() << " msg "
+                          << ec.message() << std::endl;
+                continue;
+            }
+
+            auto const result = tools.get_account_data(units,
+                                                       genesis_accounts_data,
+                                                       {common::xtoken_id_t::top, common::xtoken_id_t::eth, common::xtoken_id_t::usdt, common::xtoken_id_t::usdc},
+                                                       std::unordered_map<std::string, bool>{},
+                                                       table_address,
+                                                       ec);
+            tools.export_to_json(table_address, table_height, result, json_file_name, account_string.empty() ? std::ios_base::trunc : std::ios_base::app, ec);
+        }
     } else {
         usage();
     }

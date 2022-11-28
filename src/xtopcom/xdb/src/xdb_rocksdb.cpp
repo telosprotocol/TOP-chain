@@ -977,7 +977,10 @@ xdb::xdb(const int db_kinds,const std::string& db_root_dir,std::vector<xdb_path_
 : m_db_impl(new xdb_impl(db_kinds,db_root_dir,db_paths)) {
 }
 
-xdb::~xdb() noexcept = default;
+xdb::~xdb()
+{
+    close();
+}
 
 bool xdb::open() {
     return m_db_impl->open();

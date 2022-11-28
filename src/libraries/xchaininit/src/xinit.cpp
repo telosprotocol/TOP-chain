@@ -13,6 +13,7 @@
 #include "xchaininit/xconfig.h"
 #include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
+#include "xchaininit/xchain_command_http_server.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_utils.h"
@@ -23,7 +24,6 @@
 #include "xloader/xconfig_genesis_loader.h"
 #include "xmetrics/xmetrics.h"
 #include "xapplication/xapplication.h"
-#include "xchaininit/admin_http.h"
 #include "xtopcl/include/global_definition.h"
 #include "xtopcl/include/topcl.h"
 #include "xverifier/xverifier_utl.h"
@@ -216,10 +216,35 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     std::string v3_db_path = XGET_CONFIG(db_path) + DB_PATH;
     config_center.set(config::xdb_path_configuration_t::name, v3_db_path);
 
-    return topchain_start(config_file);
+    return topchain_start("", config_file);
 }
 
-int topchain_start(const std::string& config_file) {
+void load_bwlist_config(const std::string& datadir, config::xconfig_register_t& config_center) {
+    std::string bwlist_path;
+    std::string dirpath;
+    if (datadir.empty()) {
+        dirpath = ".";  //current dir
+    } else {
+        dirpath = datadir;
+    }
+#ifdef _WIN32
+    bwlist_path = dirpath + "\\bwlist.json"
+#else
+    bwlist_path = dirpath + "/bwlist.json";
+#endif
+    std::map<std::string, std::string> bwlist;
+    auto ret = top::xverifier::xtx_utl::load_bwlist_content(bwlist_path, bwlist);
+    if (ret) {
+        for (auto const& item: bwlist) {
+            xinfo("load_bwlist_config load: key %s, value %s", item.first.c_str(), item.second.c_str());
+            config_center.set(item.first, item.second);
+        }
+    } else {
+        xwarn("load_bwlist_config failed! path=%s", bwlist_path.c_str());  // maybe has no file, it is ok.
+    }
+}
+
+int topchain_start(const std::string& datadir, const std::string& config_file) {
     auto hash_plugin = new xtop_hash_t();
     if (false == create_rootblock(config_file)) {
         return 1;
@@ -231,13 +256,21 @@ int topchain_start(const std::string& config_file) {
     // attention: put chain_params.initconfig_using_configcenter behind config_center
     chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
-    global_node_id = user_params.account.value();
-    global_node_signkey = DecodePrivateString(user_params.signkey);
+    global_node_id = user_params.account.to_string();
+    global_node_pubkey = base::xstring_utl::base64_decode(user_params.publickey);
 
-#ifdef CONFIG_CHECK
-    // config check
-    if (!user_params.is_valid()) return 1;
-#endif
+    std::string sign_key;
+    if (!config_center.get("sign_key", sign_key)) {
+        assert(false);
+    }
+
+    auto node_signkey = DecodePrivateString(sign_key);  // will be moved
+
+    // clear cache.
+    sign_key.clear();
+    if (!config_center.set("sign_key", std::string{"***"})) {
+        assert(false);
+    }
 
     config_center.dump();
 
@@ -249,6 +282,10 @@ int topchain_start(const std::string& config_file) {
     auto xbase_info = base::xcontext_t::get_xbase_info();
     xwarn("=== topio start here ===");
     xwarn("=== xbase info: %s ===", xbase_info.c_str());
+
+    // load bwlist
+    load_bwlist_config(datadir, config_center);
+
     config_center.log_dump();
     std::cout << "=== topio start here ===" << std::endl;
     std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
@@ -266,33 +303,20 @@ int topchain_start(const std::string& config_file) {
 
     MEMCHECK_INIT();
 
-    // start admin http service
+    // start chain command http server
     {
         uint16_t admin_http_port = 0;
         std::string admin_http_local_ip = "127.0.0.1";
         config_center.get("admin_http_addr", admin_http_local_ip);
         config_center.get<uint16_t>("admin_http_port", admin_http_port);
 
-        std::string webroot;
-#ifdef _WIN32
-        webroot = "C:\\";
-#elif __APPLE__
-        webroot = "/var";
-#elif __linux__
-        webroot = "/var";
-#elif __unix__
-        webroot = "/var";
-#else
-#error  "Unknown compiler"
-#endif
-
-        std::cout << "will start admin http, local_ip:" << admin_http_local_ip << " port:" << admin_http_port << " webroot:" << webroot << std::endl;
-        xinfo("will start admin http, local_ip:%s  port:%d webroot:%s", admin_http_local_ip.c_str(), admin_http_port, webroot.c_str());
-        auto admin_http = std::make_shared<admin::AdminHttpServer>(admin_http_local_ip, admin_http_port, webroot);
-        admin_http->Start();
+        std::cout << "will start chain command http server, local_ip:" << admin_http_local_ip << " port:" << admin_http_port << std::endl;
+        xinfo("will start chain command http server, local_ip:%s port:%d", admin_http_local_ip.c_str(), admin_http_port);
+        auto chain_command_server = std::make_shared<chain_command::ChainCommandServer>(admin_http_local_ip, admin_http_port);
+        chain_command_server->Start();
     }
 
-    application::xapplication_t app{user_params.account, xpublic_key_t{user_params.publickey}, user_params.signkey};
+    application::xapplication_t app{user_params.account, xpublic_key_t{global_node_pubkey}, std::move(node_signkey)};
     std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
     if (false == db_migrate(v2_db_path)) {
         return 1;
@@ -344,67 +368,6 @@ int topchain_start(const std::string& config_file) {
 //     auto& user_params = data::xuser_params::get_instance();
 //     user_params.node_role_type = static_cast<top::common::xminer_type_t>(role_type);
 // }
-
-bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result) {
-    if (config_file.empty()) {
-        xwarn("load local black/white list error!");
-        return false;
-    }
-
-    std::ifstream in(config_file);
-    if (!in.is_open()) {
-        xwarn("open local black/white list file %s error", config_file.c_str());
-        return false;
-    }
-    std::ostringstream oss;
-    oss << in.rdbuf();
-    in.close();
-    auto json_content = std::move(oss.str());
-    if (json_content.empty()) {
-        xwarn("black/white list config file %s empty", config_file.c_str());
-        return false;
-    }
-
-
-    xJson::Value  json_root;
-    xJson::Reader  reader;
-    bool ret = reader.parse(json_content, json_root);
-    if (!ret) {
-        xwarn("parse config file %s failed", config_file.c_str());
-        return false;
-    }
-
-
-    auto const members = json_root.getMemberNames();
-    for(auto const& member: members) {
-        if (json_root[member].isArray()) {
-            for (unsigned int i = 0; i < json_root[member].size(); ++i) {
-                try {
-                    auto const& addr = json_root[member][i].asString();
-                    if (addr.size() <= top::base::xvaccount_t::enum_vaccount_address_prefix_size) return false;
-                    top::base::xvaccount_t _vaccount(addr);
-                    if (!_vaccount.is_unit_address()) {
-                        return false;
-                    }
-                    if ( top::xverifier::xverifier_success != top::xverifier::xtx_utl::address_is_valid(addr)) return false;
-                } catch (...) {
-                    xwarn("parse config file %s failed", config_file.c_str());
-                    return false;
-                }
-
-                result[member] += json_root[member][i].asString() + ",";
-            }
-        } else {
-            xwarn("parse config file %s failed", config_file.c_str());
-            return false;
-        }
-
-    }
-
-    xdbg("load black/whitelist successfully!");
-    return true;
-
-}
 
 bool check_miner_info(const std::string &pub_key, const std::string &node_id, std::string& miner_type) {
     g_userinfo.account = node_id;
@@ -477,14 +440,12 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
 
     std::string chain_db_path = datadir + DB_PATH;
     std::string log_path;
-    std::string bwlist_path;
+    
 #ifdef _WIN32
     log_path = datadir + "\\log";
-    bwlist_path = datadir + "\\bwlist.json"
     // TODO(smaug) mkdir in windows
 #else
     log_path = datadir + "/log";
-    bwlist_path = datadir + "/bwlist.json";
 
     std::string mk_cmd("mkdir -m 0755 -p ");
     mk_cmd += log_path;
@@ -541,19 +502,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     //init data_path into xvchain instance
     base::xvchain_t::instance().set_data_dir_path(datadir);
 
-    // load bwlist
-    std::map<std::string, std::string> bwlist;
-    auto ret = load_bwlist_content(bwlist_path, bwlist);
-    if (ret) {
-        for (auto const& item: bwlist) {
-            xdbg("key %s, value %s", item.first.c_str(), item.second.c_str());
-            config_center.set(item.first, item.second);
-        }
-    } else {
-        xdbg("load_bwlist_content failed!");
-    }
-
-    return topchain_start("");
+    return topchain_start(datadir, "");
 }
 
 }

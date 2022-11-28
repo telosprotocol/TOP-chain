@@ -17,8 +17,8 @@ NS_BEG2(top, election)
 
 class xvnode_wrap_t : public base::xvnode_t {
 public:
-    xvnode_wrap_t(const std::string & account, const xvip2_t & xip2_addr,const std::string & sign_pub_key,const std::string & sign_pri_key):
-    base::xvnode_t(account, xip2_addr, sign_pub_key, sign_pri_key) {
+    xvnode_wrap_t(const std::string & account, const xvip2_t & xip2_addr,const std::string & sign_pub_key):
+    base::xvnode_t(account, xip2_addr, sign_pub_key) {
         XMETRICS_COUNTER_INCREMENT("election_house_vnode_count", 1);
     }
 
@@ -46,12 +46,10 @@ public:
      * @brief Construct a new xvnode house t object
      *
      * @param node_id node id
-     * @param sign_key sign key
      * @param blockstore block store
      * @param bus message bus
      */
     xvnode_house_t(common::xnode_id_t const & node_id,
-                   std::string const & sign_key,
                    xobject_ptr_t<base::xvblockstore_t> const & blockstore,
                    observer_ptr<mbus::xmessage_bus_face_t> const & bus);
     /**
@@ -141,7 +139,6 @@ private:
 
 private:
     common::xnode_id_t m_node_id;
-    std::string m_sign_key;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     mutable std::mutex                         m_lock;

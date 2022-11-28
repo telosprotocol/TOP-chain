@@ -169,7 +169,7 @@ namespace top
             return value;
         }
 
-        bool xvaccount_t::is_unit_address_type(enum_vaccount_addr_type addr_type) {
+        bool xvaccount_t::is_user_address_type(enum_vaccount_addr_type addr_type) {
             return (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == enum_vaccount_addr_type_secp256k1_user_account ||
                     addr_type == enum_vaccount_addr_type_secp256k1_evm_user_account);
         }
@@ -182,6 +182,9 @@ namespace top
         bool xvaccount_t::is_contract_address_type(enum_vaccount_addr_type addr_type) {
             return (addr_type == enum_vaccount_addr_type_native_contract);
         }
+        bool xvaccount_t::is_unit_address_type(enum_vaccount_addr_type addr_type) {
+            return is_user_address_type(addr_type) || is_contract_address_type(addr_type);
+        }        
         bool xvaccount_t::is_drand_address_type(enum_vaccount_addr_type addr_type) {
             return (addr_type == enum_vaccount_addr_type_drand);
         }
@@ -365,7 +368,7 @@ namespace top
     
         bool  xvaccount_t::is_unit_address() const
         {
-            return is_unit_address_type(get_addr_type());
+            return is_user_address_type(get_addr_type());
         }
 
         bool xvaccount_t::is_eth_address() const

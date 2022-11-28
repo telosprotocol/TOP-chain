@@ -186,8 +186,13 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
 #define rec_standby_on_timer_update rec_standby_contract.update_standby_result_store(m_registration_data, standby_result_store, record)
 #define EXPECT_HAS(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) != standby_node_info.stake_container.end())
 #define EXPECT_HAS_NOT(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) == standby_node_info.stake_container.end())
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    EXPECT_TRUE(node_info.can_be_auditor()); // ticket check pass.
+    EXPECT_HAS(common::xnode_type_t::consensus_auditor);
+#else
     EXPECT_FALSE(node_info.can_be_auditor());
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
+#endif
     EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS(common::xnode_type_t::rec);

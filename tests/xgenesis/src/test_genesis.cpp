@@ -433,7 +433,7 @@ TEST_F(test_genesis, test_load_accounts) {
     m_genesis_manager->load_accounts();
     m_genesis_manager->m_user_accounts_data = get_all_user_data();
 
-    EXPECT_EQ(m_genesis_manager->m_contract_accounts.size(), 20 + 64 * 3);
+    EXPECT_EQ(m_genesis_manager->m_contract_accounts.size(), 20 + 64 * 4 + 1);
     for (auto const & account : contract_accounts) {
         if (data::is_sys_sharding_contract_address(common::xaccount_address_t{account})) {
             for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
@@ -532,13 +532,13 @@ TEST_F(test_genesis, test_init_genesis_block_before) {
     m_genesis_manager->m_user_accounts_data = get_all_user_data();
 
     for (auto const & account : m_genesis_manager->m_contract_accounts) {
-        EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{account.value()}), false);
+        EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{account.to_string()}), false);
     }
     for (auto const & pair : m_genesis_manager->m_user_accounts_data) {
-        if (pair.first.value() == "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp") {
-            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.value()), true);
+        if (pair.first.to_string() == "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp") {
+            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.to_string()), true);
         } else {
-            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.value()), false);
+            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.to_string()), false);
         }
     }
     

@@ -119,6 +119,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(fulltable_interval_block_num);
     XADD_OFFCHAIN_PARAMETER(local_blacklist);
     XADD_OFFCHAIN_PARAMETER(local_whitelist);
+    XADD_OFFCHAIN_PARAMETER(local_toggle_whitelist);
 
     XADD_OFFCHAIN_PARAMETER(slash_fulltable_interval);
     XADD_OFFCHAIN_PARAMETER(slash_table_split_num);
@@ -129,6 +130,9 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(sync_table_state_height_gap);
     XADD_OFFCHAIN_PARAMETER(keep_table_states_max_num);
     XADD_OFFCHAIN_PARAMETER(prune_table_state_diff);
+    XADD_OFFCHAIN_PARAMETER(prune_table_state_max);
+
+    XADD_OFFCHAIN_PARAMETER(table_fork_info_interval);
 
     m_param_lock.release_write();
 }

@@ -18,12 +18,13 @@
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xgasfee/xgas_estimate.h"
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xstatectx/xstatectx.h"
 #include "xverifier/xtx_verifier.h"
 #include "xstatestore/xstatestore_face.h"
+#include "xstate_reset/xstate_reseter.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -154,10 +155,13 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
     }
 
     for (auto & unitctx : unitctxs) {
-        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->account_address().value());
+        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->account_address().to_string());
         if (txkeys.get_txkeys().empty()) {
             // will support state change without txkeys for evm tx
-            xinfo("xtable_maker_t::make_units xkeys empty.is_leader=%d,%s,addr=%s", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->account_address().c_str());
+            xinfo("xtable_maker_t::make_units xkeys empty.is_leader=%d,%s,addr=%s",
+                  is_leader,
+                  cs_para.dump().c_str(),
+                  unitctx->get_unitstate()->account_address().to_string().c_str());
         }
         xunitbuilder_para_t unit_para(txkeys);
         data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), unit_para, cs_para);
@@ -272,8 +276,7 @@ void xtable_maker_t::rerource_plugin_make_resource(bool is_leader, const data::x
 }
 
 xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, cs_para.get_clock());
+    auto const new_version = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_block_fork_point, cs_para.get_clock());
 
     uint64_t now = cs_para.get_gettimeofday_s();
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
@@ -315,7 +318,13 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     if (input_txs.empty()) {
         return nullptr;
     }
- 
+
+    {
+        state_reset::xstate_reseter reseter{
+            statectx_ptr, std::make_shared<std::vector<xcons_transaction_ptr_t>>(input_txs), cs_para.get_clock()};
+        reseter.exec_reset();
+    }
+
     execute_txs(is_leader, cs_para, statectx_ptr, input_txs, execute_output, ec);
     for (auto & txout : execute_output.drop_outputs) {  // drop tx from txpool
         xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
@@ -385,9 +394,10 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
                                                                         cs_para,
                                                                         lighttable_para);
     if (nullptr != tableblock) {
-        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu", 
+        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu,txnum=%u", 
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(), 
-            lighttable_para.get_batch_unit_and_index().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),tableblock->get_output_offdata().size());
+            lighttable_para.get_batch_unit_and_index().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),tableblock->get_output_offdata().size(),
+            lighttable_para.get_txs().size());
     }
 
     if (new_version) {
@@ -843,12 +853,7 @@ std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xh
     return mpt;
 }
 
-const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (!top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, cs_para.get_clock())) {
-        return {};
-    }
-    
+const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {   
     std::error_code ec;
     uint64_t gas_used = 0;
     data::xeth_receipts_t eth_receipts;
@@ -1076,11 +1081,13 @@ bool xaccount_index_upgrade_tool_t::update_new_indexes_by_block(std::map<std::st
         base::xaccount_index_t _new_account_index(unit->get_height(), unithash, statehash, nonce);
         // should write unitstate with new db key
         if (false == write_unitstate_with_new_dbkey(unitstate->account_address().vaccount(), unitstate, unit->get_block_hash())) {
-            xerror("xtable_maker_t::update_new_indexes_by_block fail-upgrade for write db unitstate account=%s,index=%s", unitstate->account_address().value().c_str(), _new_account_index.dump().c_str());
+            xerror("xtable_maker_t::update_new_indexes_by_block fail-upgrade for write db unitstate account=%s,index=%s",
+                   unitstate->account_address().to_string().c_str(),
+                   _new_account_index.dump().c_str());
             return false;        
         }
 
-        xinfo("xtable_maker_t::update_new_indexes_by_block succ.account:%s,new:%s", unitstate->account_address().value().c_str(), _new_account_index.dump().c_str());
+        xinfo("xtable_maker_t::update_new_indexes_by_block succ.account:%s,new:%s", unitstate->account_address().to_string().c_str(), _new_account_index.dump().c_str());
         new_indexes[addr] = _new_account_index;
     }
     return true;

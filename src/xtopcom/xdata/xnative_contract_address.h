@@ -38,17 +38,13 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_elect_relay_addr{"T2000200000000
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
+XINLINE_CONSTEXPR char const * sys_contract_sharding_fork_info_addr{ "T200000000000000000000000000000000000010" };
 
+XINLINE_CONSTEXPR char const * sys_contract_eth_fork_info_addr{"T200040000000000000000000000000000000010@0"};
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001@0" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_cross_chain_txs_collection_addr{"T200040000000000000000000000000000000002@0"};
 
 XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T200050000000000000000000000000000000001@0"};
-
-// user contracts addresses for solidity
-// XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{"T60004ff00000000000000000000000000000000000001"};
-XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
-XINLINE_CONSTEXPR char const * sys_contract_evm_bsc_client_addr{"T60004ff00000000000000000000000000000000000003"};
-XINLINE_CONSTEXPR char const * sys_contract_evm_heco_client_addr{"T60004ff00000000000000000000000000000000000004"};
 
 // Table addresses
 XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
@@ -90,6 +86,9 @@ extern common::xaccount_address_t const zec_elect_relay_contract_address;
 extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
+extern common::xaccount_address_t const sharding_fork_info_contract_address;
+
+extern common::xaccount_address_t const eth_fork_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address;
 
@@ -104,6 +103,7 @@ extern common::xaccount_address_t const relay_table_address;
 
 // extern common::xaccount_address_t const evm_erc20_contract_address;
 extern common::xaccount_address_t const evm_eth_bridge_contract_address;
+extern common::xaccount_address_t const evm_eth2_client_contract_address;
 extern common::xaccount_address_t const evm_bsc_client_contract_address;
 extern common::xaccount_address_t const evm_heco_client_contract_address;
 extern common::xaccount_address_t const evm_top_contract_address;

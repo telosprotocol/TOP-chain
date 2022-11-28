@@ -321,13 +321,13 @@ private:
 
             xvip2_t node_xip = it->m_xip;
             vnetwork::xvnode_address_t &addr = it->m_addr;
-            std::string node_account = addr.account_address().c_str();
+            std::string node_account = addr.account_address().to_string();
 
             uint64_t group_key = get_group_key(node_xip);
             std::string pri_key{""};
             if (it->m_addr == node_ptr->m_addr)
                 pri_key = node_ptr->m_private_key;
-            base::xvnode_t *n = new base::xvnode_t{node_account, node_xip, it->m_public_key, pri_key};
+            base::xvnode_t *n = new base::xvnode_t{node_account, node_xip, it->m_public_key};
 
             //const uint32_t node_index = get_node_id_from_xip2(n->get_xip2_addr());
             //printf("node=%s %s %s nodeidx=%u\n", it->m_node_name.c_str(), it->m_vnode_id.c_str(), it->m_addr.to_string().c_str(), node_index);

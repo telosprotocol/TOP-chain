@@ -5,7 +5,7 @@
 
 #include "xbase/xutl.h"
 #include "xbasic/xmodule_type.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
@@ -126,9 +126,10 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
 
 data::system_contract::xreg_node_info get_reg_info(common::xaccount_address_t const & node_addr) {
     std::string value_str;
-    int ret = statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
+    int ret =
+        statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr.to_string(), value_str);
     if (ret != xsuccess || value_str.empty()) {
-        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
+        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.to_string().c_str());
         return data::system_contract::xreg_node_info{};
     }
 
@@ -334,12 +335,12 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
         xwarn("xtx_verifier::verify_send_tx_validation, tx:%s digest check invalid", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_hash_invalid;
     }
-    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
+    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr(), trx_ptr->get_target_addr())) {
         xwarn("[xtx_verifier::verify_send_tx_validation] in black address,tx:%s", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_blacklist_invalid;
     }
 
-    if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
+    if (xverifier::xwhitelist_utl::is_white_address_limit(trx_ptr->get_source_addr())) {
         xwarn("[xtx_verifier::verify_send_tx_validation] whitelist limit address,tx:%s", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_whitelist_invalid;
     }

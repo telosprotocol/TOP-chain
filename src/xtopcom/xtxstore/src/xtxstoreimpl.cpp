@@ -263,7 +263,8 @@ std::vector<base::xvblock_ptr_t> xtxstoreimpl::load_block_objects(const std::str
     auto blocks = top::base::xvchain_t::instance().get_xblockstore()->load_block_object(tx_hash, type, metrics::blockstore_access_from_sync_load_tx);
     for (auto & block : blocks) {
         if (false == top::base::xvchain_t::instance().get_xblockstore()->load_block_output(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_output)
-            || false == top::base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_input)) {
+            || false == top::base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_input)
+            || false == top::base::xvchain_t::instance().get_xblockstore()->load_block_output_offdata(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_output)) {
             xerror("xtxstoreimpl::load_block_objects for txhash fail-load block input or output. block=%s", block->dump().c_str());
             return {};
         }

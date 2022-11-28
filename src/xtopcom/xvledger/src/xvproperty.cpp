@@ -7,6 +7,8 @@
 #include "../xvproperty.h"
 #include "xmetrics/xmetrics.h"
 
+#include <cassert>
+
 namespace top
 {
     namespace base
@@ -355,6 +357,21 @@ namespace top
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_deposit_token,param);
             return (vtoken_t)execute(instruction,canvas).get_token();
         }
+
+        vtoken_t xtokenvar_t::set(vtoken_t const token_amount, xvcanvas_t * canvas) {
+            assert(dynamic_cast<xvexegroup_t *>(get_parent_unit()) != nullptr);
+            std::lock_guard<std::recursive_mutex> locker(dynamic_cast<xvexegroup_t *>(get_parent_unit())->get_mutex());
+
+            xassert(token_amount >= 0);
+            if (static_cast<int64_t>(token_amount) < 0) {
+                return get_balance();
+            }
+
+            xvalue_t param(token_amount);
+            xvmethod_t const instruction(get_execute_uri(), enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_set_balance_token, param);
+            return execute(instruction, canvas).get_token();
+        }
+
         
         const vtoken_t xtokenvar_t::withdraw(const vtoken_t sub_token,xvcanvas_t * canvas)
         {
@@ -418,6 +435,27 @@ namespace top
 
             return xvalue_t(new_balance);
         }
+
+        xvalue_t xtokenvar_t::do_set(xvmethod_t const & op, xvcanvas_t * canvas) {
+            if (op.get_method_id() != enum_xvinstruct_state_method_set_balance_token) {
+                return xvalue_t(enum_xerror_code_bad_method);
+            }
+
+            if (op.get_params_count() != 1 || (op.get_method_params().size() != 1)) {
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            }
+
+            xvalue_t const & new_token_amount = op.get_method_params().at(0);
+            if (new_token_amount.get_type() != xvalue_t::enum_xvalue_type_token) {
+                return xvalue_t(enum_xerror_code_invalid_param_type);
+            }
+
+            xvalue_t copy = new_token_amount;
+            move_from_value(copy);
+
+            return new_token_amount;
+        }
+
         
         //---------------------------------xtokenvar_t---------------------------------//
         IMPL_REGISTER_OBJECT(xnoncevar_t);

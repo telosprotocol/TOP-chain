@@ -1,10 +1,10 @@
 
-#include "task_dispatcher.h"
+#include "xtopcl/include/task/task_dispatcher.h"
 
-#include "network/trans_http.h"
-#include "network/trans_ws.h"
-#include "protocol.h"
-#include "user_info.h"
+#include "xtopcl/include/network/trans_http.h"
+// #include "xtopcl/include/network/trans_ws.h"
+#include "xtopcl/include/protocol.h"
+#include "xtopcl/include/user_info.h"
 #include "xrpc/xuint_format.h"
 
 #include <assert.h>
@@ -21,9 +21,9 @@ std::vector<std::string> task_dispatcher::seeds;
 std::uint16_t task_dispatcher::index = 0;
 std::once_flag task_dispatcher::m_once_init_flag;
 
-task_dispatcher::task_dispatcher() : seed_client(g_edge_domain) {
+task_dispatcher::task_dispatcher() : seed_fetcher(g_edge_domain) {
     seeds.push_back(g_server_host_port);
-    auto rtn = seed_client.GetEdgeSeeds(seeds);
+    auto rtn = seed_fetcher.GetEdgeSeeds(seeds);
 #ifdef DEBUG
     if (!rtn) {
         std::cout << "[debug]get seeds from " << SEED_URL << " failed" << std::endl;
@@ -67,7 +67,7 @@ void task_dispatcher::init_thread() {
 void task_dispatcher::regist_transmode() {
     trans_base::regist_create_function(TransMode::HTTP, [](const std::string & host) { return std::make_shared<trans_http>(host); });
 
-    trans_base::regist_create_function(TransMode::WS, [this](const std::string & host) { return get_ws_trans(host); });
+    // trans_base::regist_create_function(TransMode::WS, [this](const std::string & host) { return get_ws_trans(host); });
 }
 
 int task_dispatcher::add_task(request_task::TaskInfoPtr info) {
@@ -211,12 +211,12 @@ void task_dispatcher::handle_get_property_result(GetPropertyResultPtr result) {
     }
 }
 
-std::shared_ptr<trans_ws> task_dispatcher::get_ws_trans(const std::string & host) {
-    if (ws_trans_ == nullptr) {
-        ws_trans_ = std::make_shared<trans_ws>(host);
-    }
-    return ws_trans_->get_ptr();
-}
+// std::shared_ptr<trans_ws> task_dispatcher::get_ws_trans(const std::string & host) {
+//     if (ws_trans_ == nullptr) {
+//         ws_trans_ = std::make_shared<trans_ws>(host);
+//     }
+//     return ws_trans_->get_ptr();
+// }
 
 void task_dispatcher::thread_func() {
     Msg msg;

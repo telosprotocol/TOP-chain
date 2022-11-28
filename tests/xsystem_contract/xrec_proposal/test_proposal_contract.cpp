@@ -16,7 +16,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xconfig/xconfig_update_parameter_action.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdbstore/xstore_face.h"
 #define private public
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
@@ -38,8 +38,7 @@ class test_proposal_contract: public testing::Test {
 public:
 
     static void SetUpTestCase() {
-        chain_fork::xtop_chain_fork_config_center::init();
-        base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
+        base::xvblock_fork_t::instance().init(chain_fork::xutility_t::is_block_forked);
 
         top::data::xrootblock_para_t para;
         para.m_tcc_accounts = {"T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB", "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy", "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo"};
@@ -322,19 +321,35 @@ TEST_F(test_proposal_contract, test_check_bwlist) {
     xrec_proposal_contract api{common::xnetwork_id_t{1}};
 
     {
-        auto addr_list = "T00000LMcqLyTzsk3HB8dhF51i6xEcVEuyX1Vx6p,T00000LRoHe2yUmmv5mkpcBhpeeypr24ZmSVVDfw,T80000bf73b170b3a14ec992e4c7a05625008e31b04161";
+        auto addr_list = "T00000LMcqLyTzsk3HB8dhF51i6xEcVEuyX1Vx6p,T00000LRoHe2yUmmv5mkpcBhpeeypr24ZmSVVDfw,T80000bf73b170b3a14ec992e4c7a05625008e31b04161,T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh@0";
         EXPECT_NO_THROW(api.check_bwlist_proposal(addr_list));
     }
 
-    // {
-    //     auto addr_list = "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh";
-    //     EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
-    // }
-    // {
-    //     auto addr_list = "Ta0001";
-    //     EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
-    // }
-
+    {
+        // should be full address
+        auto addr_list = "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh";
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
+    {
+        auto addr_list = "Ta0001@0";
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
+    {
+        auto addr_list = black_hole_addr;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
+    {
+        auto addr_list = genesis_root_addr_main_chain;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }    
+    {
+        auto addr_list = sys_contract_beacon_timer_addr;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }        
+    {
+        auto addr_list = sys_drand_addr;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }            
 }
 
 

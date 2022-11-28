@@ -17,6 +17,7 @@ pub mod erc20;
 pub mod eth_bridge;
 pub mod heco_client;
 pub mod bsc_client;
+pub mod eth2_client;
 
 use crate::blake2::Blake2F;
 use crate::bn128::{Bn128Add, Bn128Mul, Bn128Pair};
@@ -31,6 +32,7 @@ use crate::erc20::EthPrecompile;
 use crate::eth_bridge::EthBridgePrecompile;
 use crate::heco_client::HecoClientPrecompile;
 use crate::bsc_client::BscClientPrecompile;
+use crate::eth2_client::Eth2ClientPrecompile;
 use crate::secp256k1::ECRecover;
 use engine_types::{types::Address, types::EthGas, vec, BTreeMap, Borrowed, Box, Vec, H160, H256};
 use evm::executor::stack::PrecompileFailure;
@@ -105,6 +107,7 @@ impl Precompiles {
             EthBridgePrecompile::ADDRESS,
             HecoClientPrecompile::ADDRESS,
             BscClientPrecompile::ADDRESS,
+            Eth2ClientPrecompile::ADDRESS,
         ];
         let fun: Vec<Box<dyn Precompile>> = vec![
             Box::new(ECRecover),
@@ -123,6 +126,7 @@ impl Precompiles {
             Box::new(EthBridgePrecompile),
             Box::new(HecoClientPrecompile),
             Box::new(BscClientPrecompile),
+            Box::new(Eth2ClientPrecompile),
         ];
         let map: BTreeMap<Address, Box<dyn Precompile>> = addresses.into_iter().zip(fun).collect();
 

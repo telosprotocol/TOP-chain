@@ -1,3 +1,4 @@
+#if 0
 #include "gtest/gtest.h"
 #include "xvledger/xvblock.h"
 #include "xBFT/xconsaccount.h"
@@ -114,4 +115,4 @@ TEST(test_mem_leak, test_timer_pick_BENCH) {
     m_picker->release_ref();
     sleep(20);
 }
-
+#endif

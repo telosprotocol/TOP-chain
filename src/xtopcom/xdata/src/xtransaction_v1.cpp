@@ -167,7 +167,7 @@ int32_t xtransaction_v1_t::release_ref() {
 
 void xtransaction_v1_t::adjust_target_address(uint32_t table_id) {
     if (m_target_addr.empty()) {
-        m_target_addr = make_address_by_prefix_and_subaddr(m_target_action.get_account_addr(), table_id).value();
+        m_target_addr = make_address_by_prefix_and_subaddr(m_target_action.get_account_addr(), table_id).to_string();
         xdbg("xtransaction_v1_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
             get_digest_hex_str().c_str(), m_target_action.get_account_addr().c_str(), m_target_addr.c_str());        
     }

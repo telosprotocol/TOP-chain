@@ -206,6 +206,7 @@ XDEFINE_CONFIGURATION(fulltable_interval_block_num);
 
 XDEFINE_CONFIGURATION(local_blacklist);
 XDEFINE_CONFIGURATION(local_whitelist);
+XDEFINE_CONFIGURATION(local_toggle_whitelist);
 
 XDEFINE_CONFIGURATION(slash_fulltable_interval);
 XDEFINE_CONFIGURATION(slash_table_split_num);
@@ -242,6 +243,9 @@ XDEFINE_CONFIGURATION(platform_url_endpoints);
 XDEFINE_CONFIGURATION(sync_table_state_height_gap);
 XDEFINE_CONFIGURATION(keep_table_states_max_num);
 XDEFINE_CONFIGURATION(prune_table_state_diff);
+XDEFINE_CONFIGURATION(prune_table_state_max);
+
+XDEFINE_CONFIGURATION(table_fork_info_interval);
 
 #    undef XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER
 #    undef XDEFINE_CONFIGURATION

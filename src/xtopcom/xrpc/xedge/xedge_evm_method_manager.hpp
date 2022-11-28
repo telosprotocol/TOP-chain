@@ -7,7 +7,7 @@
 
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xnative_contract_address.h"

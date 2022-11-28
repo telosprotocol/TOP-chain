@@ -12,6 +12,7 @@
 #include "xevm_contract_runtime/sys_contract/xdelegate_usdc_contract.h"
 #include "xevm_contract_runtime/sys_contract/xdelegate_usdt_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_bsc_client_contract.h"
+#include "xevm_contract_runtime/sys_contract/xevm_eth2_client_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_heco_client_contract.h"
 #include "xevm_runner/proto/proto_precompile.pb.h"
@@ -28,6 +29,11 @@ xtop_evm_contract_manager::xtop_evm_contract_manager() {
     add_sys_contract(evm_eth_bridge_contract_address, top::make_unique<sys_contract::xtop_evm_eth_bridge_contract>());
     add_sys_contract(evm_bsc_client_contract_address, top::make_unique<sys_contract::xtop_evm_bsc_client_contract>());
     add_sys_contract(evm_heco_client_contract_address, top::make_unique<sys_contract::xtop_evm_heco_client_contract>());
+#ifdef ETH2_SEPOLIA
+    add_sys_contract(evm_eth2_client_contract_address, top::make_unique<sys_contract::xtop_evm_eth2_client_contract>(contract_runtime::evm::sys_contract::xeth2_client_net_t::eth2_net_sepolia));
+#else
+    add_sys_contract(evm_eth2_client_contract_address, top::make_unique<sys_contract::xtop_evm_eth2_client_contract>());
+#endif
 }
 
 void xtop_evm_contract_manager::add_sys_contract(common::xaccount_address_t const & contract_address, std::unique_ptr<xevm_syscontract_face_t> contract) {
@@ -52,7 +58,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
     common::xaccount_address_t sys_contract_address{contract_address_str};
     if (m_sys_contract.find(sys_contract_address) == m_sys_contract.end()) {
         // todo need to add return err into output;
-        xwarn("[xtop_evm_contract_manager::execute_sys_contract] cannot find sys_contract: %s", sys_contract_address.value().c_str());
+        xwarn("[xtop_evm_contract_manager::execute_sys_contract] cannot find sys_contract: %s", sys_contract_address.to_string().c_str());
         return false;
     }
 
@@ -87,7 +93,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
                 }
             }
             output = top::to_bytes(return_output.SerializeAsString());
-            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute success", sys_contract_address.value().c_str());
+            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute success", sys_contract_address.to_string().c_str());
             return true;
         } else {
             top::evm_engine::precompile::PrecompileFailure return_error;
@@ -96,7 +102,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
             return_error.set_cost(contract_err.cost);
             return_error.set_output(top::to_string(contract_err.output));
             output = top::to_bytes(return_error.SerializeAsString());
-            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute error", sys_contract_address.value().c_str());
+            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute error", sys_contract_address.to_string().c_str());
             return false;
         }
     } catch (top::error::xtop_error_t const & eh) {

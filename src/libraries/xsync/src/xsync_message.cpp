@@ -119,7 +119,9 @@ int32_t xsync_msg_block_request_t::do_read(base::xstream_t& stream)
 std::string xsync_msg_block_request_t::dump() const
 {
     std::stringstream ss;
-    ss << "{msg_block_request: type:";
+    ss << "{msg_block_request: address: ";
+    ss << get_address();
+    ss << ", type:";
     ss << get_request_type();
     ss << ", param:";
     ss << get_requeset_param_type();

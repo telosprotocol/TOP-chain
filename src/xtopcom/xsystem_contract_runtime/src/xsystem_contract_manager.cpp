@@ -200,7 +200,7 @@ std::unique_ptr<contract_common::xbasic_contract_t> xtop_system_contract_manager
     }
 
     ec = error::xerrc_t::contract_not_found;
-    xerror("system_contract_manager: contract %s not found", address.c_str());
+    xerror("system_contract_manager: contract %s not found", address.to_string().c_str());
     return nullptr;
 }
 
@@ -217,21 +217,21 @@ std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> cons
 }
 
 void xtop_system_contract_manager::init_system_contract(common::xaccount_address_t const & contract_address, observer_ptr<base::xvblockstore_t> const & blockstore) {
-    if (blockstore->exist_genesis_block(contract_address.value())) {
-        xwarn("xtop_system_contract_manager::init_contract_chain contract account %s genesis block exist", contract_address.c_str());
+    if (blockstore->exist_genesis_block(contract_address.to_string())) {
+        xwarn("xtop_system_contract_manager::init_contract_chain contract account %s genesis block exist", contract_address.to_string().c_str());
         return;
     }
-    xwarn("xtop_system_contract_manager::init_contract_chain contract account %s genesis block not exist", contract_address.c_str());
+    xwarn("xtop_system_contract_manager::init_contract_chain contract account %s genesis block not exist", contract_address.to_string().c_str());
 
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xproperty_asset asset_out{0};
     tx->make_tx_run_contract(asset_out, "setup", "");
-    tx->set_same_source_target_address(contract_address.value());
+    tx->set_same_source_target_address(contract_address.to_string());
     tx->set_digest();
     tx->set_len();
 
     xobject_ptr_t<base::xvbstate_t> bstate =
-        make_object_ptr<base::xvbstate_t>(contract_address.value(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+        make_object_ptr<base::xvbstate_t>(contract_address.to_string(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     state_accessor::xstate_accessor_t sa{top::make_observer(bstate.get()), state_accessor::xstate_access_control_data_t{}};
     auto contract_state =
         top::make_unique<contract_common::xcontract_state_t>(contract_address, top::make_observer(std::addressof(sa)), contract_common::xcontract_execution_param_t{});
@@ -251,16 +251,16 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     assert(!result.output.binlog.empty());
     assert(!result.output.contract_state_snapshot.empty());
 
-    base::xauto_ptr<base::xvblock_t> block(data::xblocktool_t::create_genesis_lightunit(contract_address.value(), tx, consensus_result));
+    base::xauto_ptr<base::xvblock_t> block(data::xblocktool_t::create_genesis_lightunit(contract_address.to_string(), tx, consensus_result));
     xassert(block);
 
     base::xvaccount_t _vaddr(block->get_account());
     auto ret = blockstore->store_block(_vaddr, block.get());
     if (!ret) {
-        xerror("xtop_system_contract_manager::init_contract_chain %s genesis block fail", contract_address.c_str());
+        xerror("xtop_system_contract_manager::init_contract_chain %s genesis block fail", contract_address.to_string().c_str());
         return;
     }
-    xwarn("xtop_system_contract_manager::init_contract_chain contract_adress: %s, %s", contract_address.c_str(), ret ? "SUCC" : "FAIL");
+    xwarn("xtop_system_contract_manager::init_contract_chain contract_adress: %s, %s", contract_address.to_string().c_str(), ret ? "SUCC" : "FAIL");
 }
 
 NS_END3

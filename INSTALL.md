@@ -81,7 +81,7 @@ Or, if you preffer to use **cmake** manually:
 ```
 mkdir cbuild
 cd cbuild
-cmake3 .. -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF 
+cmake3 .. -DXBUILD_TEST=OFF -DXENABLE_CODE_COVERAGE=OFF 
 make -j4
 sudo make install
 ```
@@ -103,7 +103,7 @@ if you want to use metrics which collect some important run-time infomation, suc
 if you want to set noratelimit on topio:
 
 ```
--DXDISABLE_RATELIMIT=ON
+-DDISABLE_RATELIMIT=ON
 ```
 
 TODO, other cmake options.

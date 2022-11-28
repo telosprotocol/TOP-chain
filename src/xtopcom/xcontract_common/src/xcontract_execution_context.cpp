@@ -610,13 +610,13 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
 
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_source_action(std::error_code & ec) {
     xassert(sender() == contract_state()->state_account_address());
-    xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().value().c_str(), recver().value().c_str());
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
-    if (sender().value() == sys_contract_zec_reward_addr) {
+    if (sender().to_string() == sys_contract_zec_reward_addr) {
         xdbg("[xtop_contract_execution_context::execute_default_source_action] reward contract issue, ignore");
         return {};
     }
-    if (base::xvaccount_t::is_contract_address_type(sender().type()) && base::xvaccount_t::is_unit_address_type(recver().type())) {
+    if (base::xvaccount_t::is_contract_address_type(sender().type()) && base::xvaccount_t::is_user_address_type(recver().type())) {
         xdbg("[xtop_contract_execution_context::execute_default_source_action] contract to user, ignore");
         return {};
     }
@@ -650,7 +650,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     xdbg("[xtop_contract_execution_context::execute_default_source_action] deposit: %" PRIu64, tx_deposit);
     auto const asset_ = asset();
     xdbg("[xtop_contract_execution_context::execute_default_source_action] asset: %" PRIu64, asset_.m_amount);
-    auto const balance = contract_state()->balance(balance_prop, common::SYMBOL_TOP_TOKEN);
+    auto const balance = contract_state()->balance(balance_prop);
     xdbg("[xtop_contract_execution_context::execute_default_source_action] balance: %s", evm_common::toBigEndianString(balance).c_str());
     if (balance < asset_.m_amount + tx_deposit) {
         xwarn("[xtop_contract_execution_context::execute_default_source_action] balance not enough, balance: %s, asset: %" PRIu64 ", deposit: %" PRIu64,
@@ -682,7 +682,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_target_action(std::error_code & ec) {
     xassert((recver() == m_contract_state->state_account_address()) ||
             (consensus_action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})));
-    xdbg("[xtop_contract_execution_context::execute_default_target_action] %s to %s", sender().value().c_str(), recver().value().c_str());
+    xdbg("[xtop_contract_execution_context::execute_default_target_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
     xcontract_execution_fee_t fee_change;
     // step1: fee
@@ -716,7 +716,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_targe
 
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confirm_action(std::error_code & ec) {
     xassert(sender() == contract_state()->state_account_address());
-    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] %s to %s", sender().value().c_str(), recver().value().c_str());
+    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
     xcontract_execution_fee_t fee_change;
     if (consensus_action_stage() == data::xconsensus_action_stage_t::self) {
@@ -776,8 +776,8 @@ void xtop_contract_execution_context::update_tgas_disk_sender(bool is_contract, 
     auto const min_tx_deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
     if (!data::is_sys_contract_address(sender()) && tx_deposit < min_tx_deposit) {
         xwarn("[xtop_contract_execution_context::update_tgas_disk_sender] not_enough_deposit, sender: %s, recver: %s, deposit: %" PRIu64 ", min_deposit %" PRIu64,
-              sender().value().c_str(),
-              recver().value().c_str(),
+              sender().to_string().c_str(),
+              recver().to_string().c_str(),
               tx_deposit,
               min_tx_deposit);
         ec = error::xenum_errc::transaction_not_enough_deposit;
@@ -863,11 +863,11 @@ uint64_t xtop_contract_execution_context::calc_available_tgas() const {
 
 uint64_t xtop_contract_execution_context::calc_total_tgas() const {
     uint64_t max_tgas{0};
-    auto const pledge_token = contract_state()->balance(
-        state_accessor::properties::xproperty_identifier_t{
-            data::XPROPERTY_BALANCE_PLEDGE_TGAS, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system},
-                                            common::SYMBOL_TOP_TOKEN)
-                                  .convert_to<std::uint64_t>();
+    auto const pledge_token =
+        contract_state()
+            ->balance(state_accessor::properties::xproperty_identifier_t{
+                data::XPROPERTY_BALANCE_PLEDGE_TGAS, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system})
+            .convert_to<std::uint64_t>();
     auto token_price = calc_token_price();
     auto total_tgas = pledge_token * token_price / TOP_UNIT + calc_free_tgas();
     // contract account, max tgas is different
@@ -880,22 +880,14 @@ uint64_t xtop_contract_execution_context::calc_total_tgas() const {
 }
 
 uint64_t xtop_contract_execution_context::calc_free_tgas() const {
-    auto const balance = contract_state()->balance(
-        state_accessor::properties::xproperty_identifier_t{
-            data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system},
-        common::SYMBOL_TOP_TOKEN);
-    auto const lock_balance = contract_state()->balance(
-        state_accessor::properties::xproperty_identifier_t{
-            data::XPROPERTY_BALANCE_LOCK, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system},
-        common::SYMBOL_TOP_TOKEN);
-    auto const tgas_balance = contract_state()->balance(
-        state_accessor::properties::xproperty_identifier_t{
-            data::XPROPERTY_BALANCE_PLEDGE_TGAS, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system},
-        common::SYMBOL_TOP_TOKEN);
-    auto const vote_balance = contract_state()->balance(
-        state_accessor::properties::xproperty_identifier_t{
-            data::XPROPERTY_BALANCE_PLEDGE_VOTE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system},
-        common::SYMBOL_TOP_TOKEN);
+    auto const balance = contract_state()->balance(state_accessor::properties::xproperty_identifier_t{
+        data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system});
+    auto const lock_balance = contract_state()->balance(state_accessor::properties::xproperty_identifier_t{
+        data::XPROPERTY_BALANCE_LOCK, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system});
+    auto const tgas_balance = contract_state()->balance(state_accessor::properties::xproperty_identifier_t{
+        data::XPROPERTY_BALANCE_PLEDGE_TGAS, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system});
+    auto const vote_balance = contract_state()->balance(state_accessor::properties::xproperty_identifier_t{
+        data::XPROPERTY_BALANCE_PLEDGE_VOTE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system});
     uint64_t disk_balance = 0;  // disk is 0
     auto total_asset = balance + lock_balance + tgas_balance + disk_balance + vote_balance;
     auto min_free_tgas_asset = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset);

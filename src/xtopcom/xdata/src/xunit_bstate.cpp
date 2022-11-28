@@ -546,15 +546,15 @@ void xunit_bstate_t::tep_token_owner(common::xchain_uuid_t const chain_uuid, com
         }
 
         ec = error::xerrc_t::erc20_owner_already_set;
-        xwarn("set TEP token owner failed: owner already set for chain uuid %" PRIu16 ". input owner account %s", static_cast<uint16_t>(chain_uuid), new_owner.c_str());
+        xwarn("set TEP token owner failed: owner already set for chain uuid %" PRIu16 ". input owner account %s", static_cast<uint16_t>(chain_uuid), new_owner.to_string().c_str());
         return;
     } while (false);
 
-    if (owner->insert(key, new_owner.value(), m_canvas.get()) == false) {
+    if (owner->insert(key, new_owner.to_string(), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
         xerror("update XPROPERTY_PRECOMPILED_ERC20_OWNER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(owner->query(key) == new_owner.value());
+    assert(owner->query(key) == new_owner.to_string());
 }
 
 xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_owner(std::error_code & ec) const {
@@ -640,6 +640,7 @@ void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid
 
         auto const & controller_account = common::xaccount_address_t::build_from(controller_account_string, ec);
         if (ec) {
+            xerror("controller account read from property invalid: %s", controller_account_string.c_str());
             break;
         }
 
@@ -651,16 +652,24 @@ void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid
             break;
         }
 
+#if defined(XBUILD_CI) && !defined(XENABLE_TESTS)
+        if (new_controller != controller_account) {
+            break;
+        }
+#endif
+
         ec = error::xerrc_t::erc20_controller_already_set;
-        xwarn("set TEP token controller failed: controller already set for chain uuid %" PRIu16 ". input controller account %s", static_cast<uint16_t>(chain_uuid), new_controller.c_str());
+        xwarn("set TEP token controller failed: controller already set for chain uuid %" PRIu16 ". input controller account %s",
+              static_cast<uint16_t>(chain_uuid),
+              new_controller.to_string().c_str());
         return;
     } while (false);
 
-    if (controller->insert(key, new_controller.value(), m_canvas.get()) == false) {
+    if (controller->insert(key, new_controller.to_string(), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
         xerror("update XPROPERTY_PRECOMPILED_ERC20_CONTROLLER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(controller->query(key) == new_controller.value());
+    assert(controller->query(key) == new_controller.to_string());
 }
 
 xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_controller(std::error_code & ec) const {
@@ -693,6 +702,26 @@ xbytes_t xunit_bstate_t::raw_controller(common::xchain_uuid_t const chain_uuid, 
 
     assert(raw_data != nullptr);
     return top::to_bytes(raw_data->query(top::to_string(chain_uuid)));
+}
+
+int32_t xunit_bstate_t::balance(uint64_t new_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_AVAILABLE, static_cast<base::vtoken_t>(new_balance));
+}
+
+int32_t xunit_bstate_t::burn_balance(uint64_t new_burn_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_BURN, static_cast<base::vtoken_t>(new_burn_balance));
+}
+
+int32_t xunit_bstate_t::tgas_balance(uint64_t new_tgas_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, static_cast<base::vtoken_t>(new_tgas_balance));
+}
+
+int32_t xunit_bstate_t::vote_balance(uint64_t new_vote_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_PLEDGE_VOTE, static_cast<base::vtoken_t>(new_vote_balance));
+}
+
+int32_t xunit_bstate_t::lock_balance(uint64_t new_lock_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_LOCK, static_cast<base::vtoken_t>(new_lock_balance));
 }
 
 }  // namespace data

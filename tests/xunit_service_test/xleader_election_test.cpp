@@ -1,10 +1,11 @@
-#include "../mock/xnetwork_mock.h"
-#include "gtest/gtest.h"
-#include "xunit_service/xleader_election.h"
 
-#include <functional>
-namespace top {
-using namespace xunit_service;
+// #include "../mock/xnetwork_mock.h"
+// #include "gtest/gtest.h"
+// #include "xunit_service/xleader_election.h"
+
+// #include <functional>
+// namespace top {
+// using namespace xunit_service;
 
 // class xelection_mock: public xelection {
 // public:
@@ -39,4 +40,4 @@ using namespace xunit_service;
 //     // election.is_leader(1, "T_xxxx", )
 //     // EXPECT_TRUE(false);
 // }
-}  // namespace top
+// }  // namespace top

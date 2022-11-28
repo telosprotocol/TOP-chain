@@ -21,7 +21,7 @@ xtop_eth_address xtop_eth_address::build_from(xaccount_address_t const & account
         return {};
     }
 
-    auto const account_string = account_address.value().substr(6);
+    auto const account_string = account_address.to_string().substr(6);
     assert(account_string.size() == 40);
     return xeth_address_t{account_string, ec};
 }

@@ -7,7 +7,7 @@
 #include "xbase/xutl.h"
 #include "xbasic/xuint.hpp"
 #include "xbasic/xutility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
@@ -97,7 +97,7 @@ void xzec_reward_contract::on_timer(const common::xlogic_time_t onchain_timer_ro
     XMETRICS_CPU_TIME_RECORD(XREWARD_CONTRACT "on_timer_cpu_time");
 
     std::string source_address = SOURCE_ADDRESS();
-    if (SELF_ADDRESS().value() != source_address) {
+    if (SELF_ADDRESS().to_string() != source_address) {
         xwarn("[xzec_reward_contract::on_timer] invalid call from %s", source_address.c_str());
         return;
     }
@@ -698,13 +698,7 @@ void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_
             issue_detail.m_vote_reward_ratio,
             issue_detail.m_governance_reward_ratio);
     std::string issue_detail_str;
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
-        issue_detail_str = issue_detail.to_string();
-    } else {
-        auto issue_detail_old = static_cast<data::system_contract::xissue_detail_v1>(issue_detail);
-        issue_detail_str = issue_detail_old.to_string();
-    }
+    issue_detail_str = issue_detail.to_string();
     try {
         STRING_SET(data::system_contract::XPROPERTY_REWARD_DETAIL, issue_detail_str);
     } catch (std::runtime_error & e) {
@@ -737,18 +731,12 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     onchain_param.governance_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(governance_reward_ratio);
     onchain_param.auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
     onchain_param.validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
-        onchain_param.evm_auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
-        onchain_param.evm_validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
-        onchain_param.evm_auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
-        onchain_param.evm_validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
-    } else {
-        onchain_param.evm_auditor_reward_ratio = 0;
-        onchain_param.evm_validator_reward_ratio = 0;
-        onchain_param.evm_auditor_group_zero_workload = 0;
-        onchain_param.evm_validator_group_zero_workload = 0;
-    }
+
+    onchain_param.evm_auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
+    onchain_param.evm_validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
+    onchain_param.evm_auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
+    onchain_param.evm_validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
+
     auto total_ratio = onchain_param.edge_reward_ratio + onchain_param.archive_reward_ratio + onchain_param.validator_reward_ratio + onchain_param.auditor_reward_ratio +
                        onchain_param.vote_reward_ratio + onchain_param.governance_reward_ratio;
     xinfo(
@@ -1033,7 +1021,7 @@ uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, s
         }
         node.m_vote_amount = node_total_votes;
         xdbg("[xzec_reward_contract::calc_votes] map_nodes: account: %s, deposit: %llu, node_type: %s, votes: %llu",
-             node.m_account.c_str(),
+             node.m_account.to_string().c_str(),
              node.deposit(),
              node.genesis() ? "advance,validator,edge" : common::to_string(node.miner_type()).c_str(),
              node.m_vote_amount);
@@ -1047,7 +1035,7 @@ uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, s
             data::system_contract::xreg_node_info node;
             auto it = map_nodes.find(common::xaccount_address_t{entity2.first});
             if (it == map_nodes.end()) {
-                xwarn("[xzec_reward_contract::calc_votes] account %s not in map_nodes", entity2.first.c_str());
+                xwarn("[xzec_reward_contract::calc_votes] account %s not in map_nodes", entity2.first.to_string().c_str());
                 continue;
             } else {
                 node = it->second;
@@ -1227,7 +1215,7 @@ void xzec_reward_contract::calc_edge_workload_rewards(data::system_contract::xre
     }
     reward_to_self = edge_workload_rewards / divide_num;
     xdbg("[xzec_reward_contract::calc_edge_worklaod_rewards] account: %s, edge reward: [%llu, %u]",
-         node.m_account.c_str(),
+         node.m_account.to_string().c_str(),
          static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
 
@@ -1261,7 +1249,7 @@ void xzec_reward_contract::calc_archive_workload_rewards(data::system_contract::
     }
     reward_to_self = archive_workload_rewards / divide_num;
     xdbg("[xzec_reward_contract::calc_archive_worklaod_rewards] account: %s, archive reward: [%llu, %u]",
-         node.m_account.c_str(),
+         node.m_account.to_string().c_str(),
          static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
 
@@ -1274,7 +1262,7 @@ void xzec_reward_contract::calc_auditor_workload_rewards(data::system_contract::
                                                          const ::uint128_t auditor_group_workload_rewards,
                                                          ::uint128_t & reward_to_self) {
     xdbg("[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
-         node.m_account.c_str(),
+         node.m_account.to_string().c_str(),
          auditor_workloads_detail.size(),
          static_cast<uint64_t>(auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION));
@@ -1289,18 +1277,18 @@ void xzec_reward_contract::calc_auditor_workload_rewards(data::system_contract::
     }
     for (auto & workload : auditor_workloads_detail) {
         xdbg("[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, group: %s, group size: %d, group_total_workload: %u\n",
-             node.m_account.c_str(),
+             node.m_account.to_string().c_str(),
              workload.first.to_string().c_str(),
              workload.second.m_leader_count.size(),
              workload.second.group_total_workload);
-        auto it = workload.second.m_leader_count.find(node.m_account.value());
+        auto it = workload.second.m_leader_count.find(node.m_account.to_string());
         if (it != workload.second.m_leader_count.end()) {
             auto const & work = it->second;
             reward_to_self += auditor_group_workload_rewards * work / workload.second.group_total_workload;
             xdbg(
                 "[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, group: %s, work: %d, total_workload: %u, group_total_rewards: [%lu, %u], reward: [%lu, "
-                "%u]\n",
-                node.m_account.c_str(),
+                "%u]",
+                node.m_account.to_string().c_str(),
                 workload.first.to_string().c_str(),
                 work,
                 workload.second.group_total_workload,
@@ -1320,7 +1308,7 @@ void xzec_reward_contract::calc_validator_workload_rewards(data::system_contract
                                                            const ::uint128_t validator_group_workload_rewards,
                                                            ::uint128_t & reward_to_self) {
     xdbg("[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
-         node.m_account.c_str(),
+         node.m_account.to_string().c_str(),
          validator_workloads_detail.size(),
          static_cast<uint64_t>(validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(validator_group_workload_rewards % data::system_contract::REWARD_PRECISION));
@@ -1335,18 +1323,18 @@ void xzec_reward_contract::calc_validator_workload_rewards(data::system_contract
     }
     for (auto & workload : validator_workloads_detail) {
         xdbg("[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, group: %s, group size: %d, group_total_workload: %u\n",
-             node.m_account.c_str(),
+             node.m_account.to_string().c_str(),
              workload.first.to_string().c_str(),
              workload.second.m_leader_count.size(),
              workload.second.group_total_workload);
-        auto it = workload.second.m_leader_count.find(node.m_account.value());
+        auto it = workload.second.m_leader_count.find(node.m_account.to_string());
         if (it != workload.second.m_leader_count.end()) {
             auto const & work = it->second;
             reward_to_self += validator_group_workload_rewards * work / workload.second.group_total_workload;
             xdbg(
                 "[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, group: %s, work: %d, total_workload: %d, group_total_rewards: [%llu, %u], reward: "
                 "[%llu, %u]\n",
-                node.m_account.c_str(),
+                node.m_account.to_string().c_str(),
                 workload.first.to_string().c_str(),
                 work,
                 workload.second.group_total_workload,
@@ -1366,7 +1354,7 @@ void xzec_reward_contract::calc_eth_auditor_workload_rewards(data::system_contra
                                                              const ::uint128_t eth_group_workload_rewards,
                                                              ::uint128_t & reward_to_self) {
     xdbg("[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
-         node.m_account.c_str(),
+         node.m_account.to_string().c_str(),
          eth_workloads_detail.size(),
          static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION));
@@ -1381,18 +1369,18 @@ void xzec_reward_contract::calc_eth_auditor_workload_rewards(data::system_contra
     }
     for (auto & workload : eth_workloads_detail) {
         xdbg("[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
-             node.m_account.c_str(),
+             node.m_account.to_string().c_str(),
              workload.first.to_string().c_str(),
              workload.second.m_leader_count.size(),
              workload.second.group_total_workload);
-        auto it = workload.second.m_leader_count.find(node.m_account.value());
+        auto it = workload.second.m_leader_count.find(node.m_account.to_string());
         if (it != workload.second.m_leader_count.end()) {
             auto const & work = it->second;
             reward_to_self += eth_group_workload_rewards * work / workload.second.group_total_workload;
             xdbg(
                 "[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, group id: %s, work: %d, total_workload: %d, group_total_workload: [%llu, %u], reward: "
                 "[%llu, %u]\n",
-                node.m_account.c_str(),
+                node.m_account.to_string().c_str(),
                 workload.first.to_string().c_str(),
                 work,
                 workload.second.group_total_workload,
@@ -1412,7 +1400,7 @@ void xzec_reward_contract::calc_eth_validator_workload_rewards(data::system_cont
                                                                const ::uint128_t eth_group_workload_rewards,
                                                                ::uint128_t & reward_to_self) {
     xdbg("[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
-         node.m_account.c_str(),
+         node.m_account.to_string().c_str(),
          eth_workloads_detail.size(),
          static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION));
@@ -1427,18 +1415,18 @@ void xzec_reward_contract::calc_eth_validator_workload_rewards(data::system_cont
     }
     for (auto & workload : eth_workloads_detail) {
         xdbg("[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
-             node.m_account.c_str(),
+             node.m_account.to_string().c_str(),
              workload.first.to_string().c_str(),
              workload.second.m_leader_count.size(),
              workload.second.group_total_workload);
-        auto it = workload.second.m_leader_count.find(node.m_account.value());
+        auto it = workload.second.m_leader_count.find(node.m_account.to_string());
         if (it != workload.second.m_leader_count.end()) {
             auto const & work = it->second;
             reward_to_self += eth_group_workload_rewards * work / workload.second.group_total_workload;
             xdbg(
                 "[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, group id: %s, work: %d, total_workload: %d, group_total_workload: [%llu, %u], reward: "
                 "[%llu, %u]\n",
-                node.m_account.c_str(),
+                node.m_account.to_string().c_str(),
                 workload.first.to_string().c_str(),
                 work,
                 workload.second.group_total_workload,
@@ -1461,7 +1449,7 @@ void xzec_reward_contract::calc_vote_reward(data::system_contract::xreg_node_inf
         XCONTRACT_ENSURE(auditor_total_votes > 0, "total_votes = 0 while valid auditor num > 0");
         reward_to_self = vote_rewards * node.m_vote_amount / auditor_total_votes;
         xdbg("[xzec_reward_contract::calc_nodes_rewards_v4] account: %s, node_vote_reward: [%llu, %u], node deposit: %llu, auditor_total_votes: %llu, node_votes: %llu",
-             node.m_account.c_str(),
+             node.m_account.to_string().c_str(),
              static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
              static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION),
              node.deposit(),
@@ -1484,8 +1472,8 @@ void xzec_reward_contract::calc_table_node_dividend_detail(common::xaccount_addr
         xdbg(
             "[calc_table_node_dividend_detail] account: %s, contract: %s, table votes: %llu, adv_total_votes: %llu, adv_reward_to_voters: [%llu, %u], adv_reward_to_contract: "
             "[%llu, %u]\n",
-            account.c_str(),
-            iter->first.c_str(),
+            account.to_string().c_str(),
+            iter->first.to_string().c_str(),
             iter->second,
             node_total_votes,
             static_cast<uint64_t>(reward / data::system_contract::REWARD_PRECISION),
@@ -1508,8 +1496,8 @@ void xzec_reward_contract::calc_table_node_reward_detail(common::xaccount_addres
     table_node_reward_detail[table_address][account] = node_reward;
     xdbg("[xzec_reward_contract::calc_table_node_reward_detail] node reward, pid:%d, reward_contract: %s, account: %s, reward: [%llu, %u]\n",
          getpid(),
-         table_address.c_str(),
-         account.c_str(),
+         table_address.to_string().c_str(),
+         account.to_string().c_str(),
          static_cast<uint64_t>(node_reward / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(node_reward % data::system_contract::REWARD_PRECISION));
 }
@@ -1518,8 +1506,7 @@ common::xaccount_address_t xzec_reward_contract::calc_table_contract_address(com
     uint32_t table_id = 0;
     if (!EXTRACT_TABLE_ID(account, table_id)) {
         xwarn("[xzec_reward_contract::calc_table_contract_address] EXTRACT_TABLE_ID failed, node reward pid: %d, account: %s\n",
-              getpid(),
-              account.c_str());
+              getpid(), account.to_string().c_str());
         return {};
     }
     auto const & table_address = CALC_CONTRACT_ADDRESS(sys_contract_sharding_reward_claiming_addr, table_id);
@@ -1744,7 +1731,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         issue_detail.m_node_rewards[account.to_string()].m_self_reward = self_reward;
         // 3.5 calc table reward
         if (self_reward > 0) {
-            xinfo("[node_reward_detail] acocunt: %s", account.c_str());
+            xinfo("[node_reward_detail] acocunt: %s", account.to_string().c_str());
             node_reward_detail[account] = self_reward;
         }
         if (dividend_reward > 0) {
@@ -1763,7 +1750,7 @@ void xzec_reward_contract::calc_table_rewards(xreward_property_param_t & propert
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     calc_votes(property_param.votes_detail, property_param.map_nodes, account_votes);
     for(auto reward : node_reward_detail){
-        xinfo("[xzec_reward_contract::calc_table_rewards] acocunt: %s", reward.first.c_str());
+        xinfo("[xzec_reward_contract::calc_table_rewards] acocunt: %s", reward.first.to_string().c_str());
         common::xaccount_address_t table_address = calc_table_contract_address(common::xaccount_address_t{reward.first});
         if(table_address.empty()){
             continue;

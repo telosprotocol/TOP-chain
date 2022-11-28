@@ -129,14 +129,14 @@ void EcVHost::send_to_through_root(common::xip2_t const & src, common::xnode_id_
     base::KadmliaKeyPtr send_kad_key = kroot_rt->get_local_node_info()->kadmlia_key();
     base::KadmliaKeyPtr recv_kad_key = nullptr;
     if (dst_node_id.length()) {
-        recv_kad_key = base::GetRootKadmliaKey(dst_node_id.value());
+        recv_kad_key = base::GetRootKadmliaKey(dst_node_id.to_string());
     } else {
         auto recv_node = kroot_rt->GetRandomNode();
         recv_kad_key = base::GetKadmliaKey(recv_node->node_id);
     }
     xinfo("[EcVHost][send_to_through_root] src_xip2:%s dst_node_id:%s src_key:%s recv_key:%s",
           src.to_string().c_str(),
-          dst_node_id.value().c_str(),
+          dst_node_id.to_string().c_str(),
           send_kad_key->Get().c_str(),
           recv_kad_key->Get().c_str());
     ec_netcard_->send_to(send_kad_key, recv_kad_key, byte_message, ec);
@@ -168,7 +168,7 @@ void EcVHost::broadcast(common::xip2_t const & src, xbyte_buffer_t const & byte_
     ec_netcard_->broadcast(send_kad_key, recv_kad_key, byte_message, ec);
 }
 #if 0
-void EcVHost::send_to(common::xnode_id_t const & node_id, xbyte_buffer_t const & bytes_message, network::xtransmission_property_t const & transmission_property) const {
+void EcVHost::send_to(common::xnode_id_t const & node_id, xbyte_buffer_t const & bytes_message) const {
     auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes_message.data(), bytes_message.size()));
     auto vnetwork_message = top::codec::msgpack_decode<vnetwork::xvnetwork_message_t>(bytes_message);
 
@@ -293,10 +293,6 @@ bool EcVHost::p2p_bootstrap(std::vector<network::xdht_node_t> const & seeds) con
     return true;
 }
 
-void EcVHost::direct_send_to(network::xnode_t const & to, xbyte_buffer_t verification_data, network::xtransmission_property_t const & transmission_property) {
-    xdbg("[kadbridge] direct_send_to");
-}
-
 std::vector<common::xnode_id_t> EcVHost::neighbors() const {
     std::vector<common::xnode_id_t> empty;
     return empty;
@@ -306,10 +302,6 @@ std::size_t EcVHost::neighbor_size_upper_limit() const noexcept {
     return 256;
 }
 
-network::p2p::xdht_host_face_t const & EcVHost::dht_host() const noexcept {
-    static network::p2p::xdht_host_t shost(m_node_id_, nullptr, nullptr);
-    return shost;
-}
 #endif
 void EcVHost::register_message_ready_notify(network::xnetwork_message_ready_callback_t cb) noexcept {
     assert(cb != nullptr);

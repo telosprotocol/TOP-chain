@@ -1,0 +1,29 @@
+[package]
+name = "engine-eth2-utility"
+version = "0.1.0"
+authors = []
+edition = "2021"
+description = ""
+documentation = ""
+readme = false
+homepage = ""
+repository = ""
+license = ""
+publish = false
+autobenches = false
+
+[dependencies]
+ethereum-types = "0.9.2"
+engine-eth2-types =  { path = "../engine-eth2-types" }
+tree_hash = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec" }
+merkle_proof = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec" }
+borsh = "0.9.3"
+bitvec = "1.0.0"
+
+[dev-dependencies]
+lazy_static = "1.4.0"
+serde_json = "1.0"
+hex = "0.4.0"
+
+[features]
+default = []

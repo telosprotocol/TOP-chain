@@ -33,8 +33,9 @@ void xtable_cross_chain_txs_collection_contract::setup() {
 }
 
 void xtable_cross_chain_txs_collection_contract::on_timer(common::xlogic_time_t const current_time) {
-    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xtable_cross_chain_txs_collection_contract instance is triggled by " + SOURCE_ADDRESS());
-    XCONTRACT_ENSURE(SELF_ADDRESS().value() == sys_contract_eth_table_cross_chain_txs_collection_addr, "xtable_cross_chain_txs_collection_contract instance is not triggled by sys_contract_eth_table_cross_chain_txs_collection_addr");
+    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xtable_cross_chain_txs_collection_contract instance is triggled by " + SOURCE_ADDRESS());
+    XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_eth_table_cross_chain_txs_collection_addr,
+                     "xtable_cross_chain_txs_collection_contract instance is not triggled by sys_contract_eth_table_cross_chain_txs_collection_addr");
 
     auto latest_height = get_blockchain_height(sys_contract_eth_table_block_addr_with_suffix);
     auto latest_time = TIME();

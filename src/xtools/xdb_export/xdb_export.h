@@ -10,6 +10,7 @@
 #include "xvledger/xvtxindex.h"
 #include "xdata/xlightunit_info.h"
 #include "xdata/xblock.h"
+#include "xcommon/xtoken_metadata.h"
 
 NS_BEG2(top, db_export)
 
@@ -39,12 +40,16 @@ class xdb_check_data_func_off_data_t : public xdb_check_data_func_face_t {
     virtual std::string data_type() const override;
 };
 
+struct xdb_archive_check_info_t {
+    uint64_t total_tables{0};
+    uint64_t total_units{0};
+    uint64_t total_txindexs{0};
+};
+
 class xdb_export_tools_t {
 public:
-    enum enum_query_account_type { query_account_table = 0, query_account_unit, query_account_system};
-
     xdb_export_tools_t(std::string const & db_path);
-
+    ~xdb_export_tools_t();
     static std::vector<std::string> get_system_contract_accounts();
     static std::vector<std::string> get_table_accounts();
     std::vector<std::string> get_db_unit_accounts();
@@ -74,7 +79,7 @@ public:
     // query balance info
     void query_balance();
     // query archive db integrity and continuity
-    void query_archive_db(const uint32_t redundancy);
+    void query_archive_db(std::map<common::xtable_address_t, uint64_t> const& table_query_criteria);
     // query checkpoint
     void query_checkpoint(const uint64_t clock);
     // set folder
@@ -86,6 +91,34 @@ public:
     std::string get_account_key_string(const std::string & key);
     void   prune_db();
     void   query_all_table_performance(std::vector<std::string> const & accounts_vec);
+
+    std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> get_unit_accounts(common::xaccount_address_t const & table_address,
+                                                                                             std::uint64_t table_height,
+                                                                                             std::vector<common::xaccount_address_t> const & designated,
+                                                                                             std::error_code & ec) const;
+
+    struct exported_account_data {
+        common::xaccount_address_t account_address;
+        std::array<std::unordered_map<std::string, evm_common::u256>, 2> assets;    // index 0: TOP, index 1: TEP1
+        std::unordered_map<std::string, xbytes_t> binary_properties;
+        std::unordered_map<std::string, std::string> text_properties;
+        uint64_t unit_height;
+    };
+
+    std::vector<exported_account_data> get_account_data(std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> const & accounts,
+                                                        std::unordered_map<common::xaccount_address_t, evm_common::u256> const & genesis_account_data,
+                                                        std::vector<common::xtoken_id_t> const & queried_tokens,
+                                                        std::unordered_map<std::string, bool> const & queried_properties,
+                                                        common::xtable_address_t const & table_address,
+                                                        std::error_code & ec) const;
+
+    void export_to_json(common::xtable_address_t const & table_address,
+                        uint64_t table_height,
+                        std::vector<exported_account_data> const & data,
+                        std::string const & file_path,
+                        std::ios_base::openmode open_mode,
+                        std::error_code & ec) const;
+
 private:
     struct tx_ext_t {
         base::xtable_shortid_t  sendtableid;
@@ -341,7 +374,7 @@ private:
     void query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j);
     void query_balance(std::string const & table, json & j_unit, json & j_table);
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data);
-    void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors);
+    void query_archive_db_internal(common::xtable_address_t const & table_address, uint64_t check_height, std::ofstream & file, std::shared_ptr<xdb_archive_check_info_t> archive_info);
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);
@@ -405,4 +438,5 @@ private:
     xdbtool_all_table_info_t m_all_table_info[TOTAL_TABLE_NUM];
     std::map<std::string, uint64_t> m_txs_fire_timestamp;
 };
+
 NS_END2

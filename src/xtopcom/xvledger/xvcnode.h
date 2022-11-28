@@ -26,7 +26,6 @@ namespace top
             //sign_pub_key must = 33 bytes of the compressed public key of ECC(secp256k1 or ed25519 curve)
             //sign_pri_key must = 32bytes of raw private key of ECC(secp256k1 or ed25519 curve, decied by account address)
             xvnode_t(const std::string & account,const xvip2_t & xip2_addr,const std::string & sign_pub_key);
-            xvnode_t(const std::string & account,const xvip2_t & xip2_addr,const std::string & sign_pub_key,const std::string & sign_pri_key);
         protected:
             virtual ~xvnode_t();
         private:
@@ -36,11 +35,9 @@ namespace top
         public:
             inline const xvip2_t &      get_xip2_addr()     const {return m_node_address;}
             inline const std::string&   get_sign_pubkey()   const {return m_sign_pubkey;}//public  key for signing by node 'account
-            inline const std::string&   get_sign_prikey()   const {return m_sign_prikey;}//private key for signing by node 'account
         private:
             xvip2_t             m_node_address;
             std::string         m_sign_pubkey;  //33 bytes of the compressed public key of ECC(secp256k1 or ed25519 curve)
-            std::string         m_sign_prikey;  //32bytes of raw private key of ECC(secp256k1 or ed25519 curve decide by account)
         };
         
         //note: once construction,xvgroup_t never to allow modify until destroy

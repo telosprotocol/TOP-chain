@@ -118,17 +118,20 @@ namespace top
         public: //write interface
             const vtoken_t  deposit(const vtoken_t add_token,xvcanvas_t * canvas);//return the updated balance
             const vtoken_t  withdraw(const vtoken_t sub_token,xvcanvas_t * canvas);//return the updated balance
-    
+            vtoken_t set(vtoken_t token_amount, xvcanvas_t * canvas);
+
         private: //internal instruction functions
             const xvalue_t  do_deposit(const xvmethod_t & op,xvcanvas_t * canvas);
             const xvalue_t  do_withdraw(const xvmethod_t & op,xvcanvas_t * canvas);
             const xvalue_t  do_query(const xvmethod_t & op,xvcanvas_t * canvas);
-            
+            xvalue_t do_set(xvmethod_t const & op, xvcanvas_t * canvas);
+
         private:
             BEGIN_DECLARE_XVIFUNC_ID_API(enum_xvinstruct_class_state_function)
                 IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_query_token,do_query)
                 IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_deposit_token,do_deposit)
                 IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_withdraw_token,do_withdraw)
+                IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_set_balance_token, do_set)
             END_DECLARE_XVIFUNC_ID_API(enum_xvinstruct_class_state_function)
         };
  

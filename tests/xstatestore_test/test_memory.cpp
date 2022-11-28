@@ -101,7 +101,7 @@ TEST_F(test_memory, first_mpt_block_execute_one_table_BENCH) {
         return;
     }        
     xobject_ptr_t<base::xvblock_t> cert_block = blockstore->get_latest_cert_block(table_addr.vaccount());
-    std::cout << "7 Table="  << table_addr.value() << 
+    std::cout << "7 Table="  << table_addr.to_string() << 
     " latest_state_height=" << tablestate->get_table_state()->height() << 
     " cert_block_height=" << cert_block->get_height() 
     << std::endl;
@@ -137,7 +137,7 @@ TEST_F(test_memory, first_mpt_block_execute_one_table_BENCH) {
     }
 
     std::error_code ec;
-    xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), ec);    
+    xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), true, ec);    
     if (nullptr == prev_state) {
         std::cout << "fail fist_mpt_prev_block get state " << fist_mpt_prev_block->dump() << std::endl;
         return;        
@@ -200,7 +200,7 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
 
         xtablestate_ext_ptr_t tablestate = table_executor.get_latest_executed_tablestate_ext();
         if (nullptr == db) {
-            std::cout << "table=" << table_addr.value() << " fail no latest tablestate" << std::endl;
+            std::cout << "table=" << table_addr.to_string() << " fail no latest tablestate" << std::endl;
             continue;
         }
         xobject_ptr_t<base::xvblock_t> cert_block = blockstore->get_latest_cert_block(table_addr.vaccount());        
@@ -210,14 +210,14 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
         xobject_ptr_t<base::xvblock_t> fist_mpt_block = nullptr;
         xobject_ptr_t<base::xvblock_t> fist_mpt_prev_block = nullptr;
         if (current_state_root.empty()) {
-            std::cout << "table=" << table_addr.value() << " fail cert block state root empty" << " cert_height=" << cert_block->get_height() << std::endl;
+            std::cout << "table=" << table_addr.to_string() << " fail cert block state root empty" << " cert_height=" << cert_block->get_height() << std::endl;
             continue;
         } 
 
         while (current_block->get_height() > 1) {
             xobject_ptr_t<base::xvblock_t> prev_block = blockstore->load_block_object(table_addr.vaccount(), current_block->get_height()-1, current_block->get_last_block_hash(), false);
             if (nullptr == prev_block) {
-                std::cout << "table=" << table_addr.value() << " fail prev_block is nullptr" << std::endl;
+                std::cout << "table=" << table_addr.to_string() << " fail prev_block is nullptr" << std::endl;
                 return;
             }
             auto prev_state_root = data::xblockextract_t::get_state_root_from_block(prev_block.get());
@@ -230,14 +230,14 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
         }
 
         if (fist_mpt_block == nullptr) {
-            std::cout << "table=" << table_addr.value() << " fail can't find first mpt block" << std::endl;
+            std::cout << "table=" << table_addr.to_string() << " fail can't find first mpt block" << std::endl;
             return;        
         }
 
         std::error_code ec;
-        xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), ec);        
+        xtablestate_ext_ptr_t prev_state = table_executor.execute_and_get_tablestate_ext(fist_mpt_prev_block.get(), true, ec);        
         if (nullptr == prev_state) {
-            std::cout << "table=" << table_addr.value() << " fail fist_mpt_prev_block get state " << fist_mpt_prev_block->dump() << std::endl;
+            std::cout << "table=" << table_addr.to_string() << " fail fist_mpt_prev_block get state " << fist_mpt_prev_block->dump() << std::endl;
             return;        
         }
      
@@ -246,7 +246,7 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
             int64_t free_memory  = 0;
             int percent = base::xsys_utl::get_memory_load(free_memory);
             base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
-            std::cout << "table="  << table_addr.value() 
+            std::cout << "table=" << table_addr.to_string() 
             << " state=" << tablestate->get_table_state()->height() 
             << " cert=" << cert_block->get_height() 
             << " fisrt=" << fist_mpt_block->get_height() 
@@ -266,7 +266,7 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
         for (uint32_t i = 0; i < 1; i++) {
             xtablestate_ext_ptr_t cur_state = table_executor.force_do_make_state_from_prev_state_and_table(fist_mpt_block.get(), prev_state, ec);
             if (nullptr == cur_state) {
-                std::cout << "table=" << table_addr.value() << " fail fist_mpt_block get state " << fist_mpt_block->dump() << std::endl;
+                std::cout << "table=" << table_addr.to_string() << " fail fist_mpt_block get state " << fist_mpt_block->dump() << std::endl;
                 break;        
             }
         }

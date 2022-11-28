@@ -30,15 +30,17 @@ metrics_xtop_node_id::~metrics_xtop_node_id() {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, -1);
 }
 
-xtop_node_id::xtop_node_id(std::string value) : m_account_string{std::move(value)} {
-    if (!empty()) {
-        parse();
+xtop_node_id::xtop_node_id(std::string const & value) {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
+
+    if (!value.empty()) {
+        parse(value);
     }
 }
 
-xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_base_address{std::move(base_address)}, m_account_string{m_account_base_address.to_string()} {
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_base_address{std::move(base_address)} {
     if (!empty()) {
-        parse();
+        parse(m_account_base_address.to_string());
     }
 }
 
@@ -46,7 +48,7 @@ xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const 
 }
 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, xtable_id_t const table_id)
-  : m_account_base_address{std::move(base_address)}, m_account_string{m_account_base_address.to_string() + "@" + top::to_string(table_id)}, m_assigned_table_id{table_id} {
+  : m_account_base_address{std::move(base_address)}, m_assigned_table_id{table_id} {
 }
 
 xtop_node_id xtop_node_id::build_from(std::string const & account_string, std::error_code & ec) {
@@ -85,15 +87,11 @@ xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::
 }
 
 bool xtop_node_id::empty() const noexcept {
-    return m_account_string.empty();
+    return m_account_base_address.empty();
 }
 
 bool xtop_node_id::has_value() const noexcept {
     return !empty();
-}
-
-std::string const & xtop_node_id::value() const noexcept {
-    return m_account_string;
 }
 
 xaccount_base_address_t const & xtop_node_id::base_address() const noexcept {
@@ -102,36 +100,44 @@ xaccount_base_address_t const & xtop_node_id::base_address() const noexcept {
 
 uint64_t xtop_node_id::hash() const {
     if (has_value()) {
-        return utl::xxh64_t::digest(m_account_string.data(), m_account_string.size());
+        auto const & account_string = to_string();
+        return utl::xxh64_t::digest(account_string.data(), account_string.size());
     }
 
     return 0;
 }
 
-std::string const & xtop_node_id::to_string() const noexcept {
-    return m_account_string;
+std::string xtop_node_id::to_string() const {
+    if (m_assigned_table_id.empty()) {
+        return m_account_base_address.to_string();
+    }
+
+    return m_account_base_address.to_string() + '@' + top::to_string(m_assigned_table_id);
 }
 
 void xtop_node_id::clear() {
     m_assigned_table_id.clear();
     m_account_base_address.clear();
-    m_account_string.clear();
 }
 
 void
 xtop_node_id::swap(xtop_node_id & other) noexcept {
-    std::swap(m_account_string, other.m_account_string);
+    // std::swap(m_account_string, other.m_account_string);
     std::swap(m_account_base_address, other.m_account_base_address);
     std::swap(m_assigned_table_id, other.m_assigned_table_id);
 }
 
 bool
 xtop_node_id::operator==(xtop_node_id const & other) const noexcept {
-    return m_account_string == other.m_account_string;
+    return m_account_base_address == other.m_account_base_address && m_assigned_table_id == other.m_assigned_table_id;
 }
 
 bool xtop_node_id::operator<(xtop_node_id const & other) const noexcept {
-    return m_account_string < other.m_account_string;
+    if (m_account_base_address != other.m_account_base_address) {
+        return m_account_base_address < other.m_account_base_address;
+    }
+
+    return m_assigned_table_id < other.m_assigned_table_id;
 }
 
 bool xtop_node_id::operator>(xtop_node_id const & other) const noexcept {
@@ -151,25 +157,29 @@ bool xtop_node_id::operator<=(xtop_node_id const & other) const noexcept {
     return !(*this > other);
 }
 
-void xtop_node_id::random() {
-    auto ranbytes = random_base58_bytes(40);
-    m_account_string = "T80000" + std::string{std::begin(ranbytes), std::end(ranbytes)};
-    parse();
-}
+//void xtop_node_id::random() {
+//    auto ranbytes = random_base58_bytes(40);
+//    auto account_string = "T80000" + std::string{std::begin(ranbytes), std::end(ranbytes)};
+//    parse(account_string);
+//}
 
 std::size_t xtop_node_id::length() const noexcept {
-    return m_account_string.length();
+    if (m_assigned_table_id.empty()) {
+        return m_account_base_address.size();
+    }
+
+    return m_account_base_address.size() + 1 + top::to_string(m_assigned_table_id).size();
 }
 
 std::size_t
 xtop_node_id::size() const noexcept {
-    return m_account_string.size();
+    return length();
 }
 
-char const *
-xtop_node_id::c_str() const noexcept {
-    return m_account_string.c_str();
-}
+//char const *
+//xtop_node_id::c_str() const noexcept {
+//    return m_account_string.c_str();
+//}
 
 base::enum_vaccount_addr_type xtop_node_id::type() const {
     return m_account_base_address.type();
@@ -200,7 +210,11 @@ bool xtop_node_id::has_assigned_table_id() const noexcept {
 }
 
 base::xvaccount_t xtop_node_id::vaccount() const {
-    return base::xvaccount_t{m_account_string};
+    return base::xvaccount_t{to_string()};
+}
+
+xtable_address_t xtop_node_id::table_address() const {
+    return xtable_address_t::build_from(base::xvaccount_t::make_table_account_address(vaccount()));
 }
 
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
@@ -212,23 +226,24 @@ int32_t xtop_node_id::serialize_from(base::xstream_t & stream) {
 }
 
 int32_t xtop_node_id::serialize_to(base::xbuffer_t & buffer) const {
-    return buffer << m_account_string;
+    return buffer << to_string();
 }
 
 int32_t xtop_node_id::serialize_from(base::xbuffer_t & buffer) {
-    auto const r = buffer >> m_account_string;
-    parse();
+    std::string account_string;
+    auto const r = buffer >> account_string;
+    parse(account_string);
     return r;
 }
 
-void xtop_node_id::parse() {
-    if (m_account_string.length() < static_cast<size_t>(base::xvaccount_t::enum_vaccount_address_prefix_size) ||
-        m_account_string.length() > static_cast<size_t>(static_cast<int>(base::xvaccount_t::enum_vaccount_address_max_size))) {
+void xtop_node_id::parse(std::string const & account_string) {
+    if (account_string.length() < static_cast<size_t>(base::xvaccount_t::enum_vaccount_address_prefix_size) ||
+        account_string.length() > static_cast<size_t>(static_cast<int>(base::xvaccount_t::enum_vaccount_address_max_size))) {
         top::error::throw_error(error::xerrc_t::invalid_account_address);
     }
 
     std::vector<std::string> parts;
-    if (base::xstring_utl::split_string(m_account_string, '@', parts) > 2) {
+    if (base::xstring_utl::split_string(account_string, '@', parts) > 2) {
         top::error::throw_error(error::xerrc_t::invalid_account_address);
     }
 
@@ -253,26 +268,27 @@ void xtop_node_id::parse() {
         }
         assert(m_assigned_table_id == xtable_id_t{assigned_table_id});
     } else {
-        if (m_account_string.find('@') != std::string::npos) {
+        if (account_string.find('@') != std::string::npos) {
             top::error::throw_error(error::xerrc_t::invalid_account_address);
         }
     }
 
-    m_account_id = xaccount_id_t{m_account_string};
+    m_account_id = xaccount_id_t{account_string};
 }
 
 std::int32_t
 xtop_node_id::do_read(base::xstream_t & stream) {
     auto const begin_size = stream.size();
-    stream >> m_account_string;
-    parse();
+    std::string account_string;
+    stream >> account_string;
+    parse(account_string);
     return begin_size - stream.size();
 }
 
 std::int32_t
 xtop_node_id::do_write(base::xstream_t & stream) const {
     auto const begin_size = stream.size();
-    stream << m_account_string;
+    stream << to_string();
     return stream.size() - begin_size;
 }
 
@@ -300,7 +316,7 @@ NS_BEG1(std)
 
 std::size_t
 hash<top::common::xnode_id_t>::operator()(top::common::xnode_id_t const & id) const noexcept {
-    return std::hash<std::string>{}(id.value());
+    return std::hash<std::string>{}(id.to_string());
 }
 
 NS_END1
@@ -309,12 +325,13 @@ NS_BEG1(top)
 
 template <>
 xbytes_t to_bytes<common::xnode_id_t>(common::xnode_id_t const & input) {
-    return { input.value().begin(), input.value().end() };
+    auto const & string = input.to_string();
+    return {string.begin(), string.end()};
 }
 
 template <>
 std::string to_string<common::xnode_id_t>(common::xnode_id_t const & input) {
-    return input.value();
+    return input.to_string();
 }
 
 NS_END1

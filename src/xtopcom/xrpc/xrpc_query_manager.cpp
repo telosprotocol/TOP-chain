@@ -227,14 +227,14 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
             std::map<std::string, std::string> workloads;
             if (statestore::xstatestore_hub_t::instance()->get_map_property(contract_address, height - 1, property_name, workloads) != 0) {
                 xwarn("[grpc::getIssuanceDetail] get_zec_workload_map contract_address: %s, height: %llu, property_name: %s",
-                      contract_address.value().c_str(),
+                      contract_address.to_string().c_str(),
                       height,
                       property_name.c_str());
                 return;
             }
 
             xdbg("[grpc::getIssuanceDetail] get_zec_workload_map contract_address: %s, height: %llu, property_name: %s, workloads size: %d",
-                 contract_address.value().c_str(),
+                 contract_address.to_string().c_str(),
                  height,
                  property_name.c_str(),
                  workloads.size());
@@ -1202,7 +1202,41 @@ void xrpc_query_manager::getChainId(xJson::Value & js_req, xJson::Value & js_rsp
     std::string addr = sys_contract_rec_elect_rec_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_0";
     m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+
     js_rsp["chain_id"] = j["chain_id"];
+}
+
+void xrpc_query_manager::getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {  
+    xJson::Value jv_tables_height;
+    base::xreceiptid_all_table_states all_states;
+    std::vector<std::string> addrs = data::xblocktool_t::make_all_table_addresses();
+    for (auto & addr : addrs) {
+        common::xaccount_address_t table_addr(addr);
+        xtablestate_ptr_t tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(table_addr);
+        if (tablestate != nullptr) {
+            base::xreceiptid_state_ptr_t receipt_state = tablestate->get_receiptid_state();
+            if (nullptr != receipt_state) {
+                all_states.add_table_receiptid_state(table_addr.vaccount().get_short_table_id(), receipt_state);
+            }
+            jv_tables_height[table_addr.to_string()] = static_cast<unsigned long long>(tablestate->height());
+        } else {
+            xerror("xrpc_query_manager::getCrossReceiptIds fail-get tablestate.%s", addr.c_str());
+        }
+    }
+    
+    xJson::Value jv_unfinish_info; 
+    auto unfinish_infos = all_states.get_unfinish_info();
+    for (auto & info : unfinish_infos) {
+        xJson::Value v;
+        v["src_tableid"]        = info.source_id;
+        v["dst_tableid"]        = info.target_id;
+        v["unrecv"]             = info.unrecv_num;
+        v["unconfirm"]          = info.unconfirm_num;
+        jv_unfinish_info.append(v);
+    }
+
+    js_rsp["tables_height"] = jv_tables_height;
+    js_rsp["unfinish_infos"] = jv_unfinish_info;
 }
 
 void xrpc_query_manager::getStandbys(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
@@ -1247,8 +1281,8 @@ void xrpc_query_manager::set_sharding_vote_prop(xJson::Value & js_req, xJson::Va
 
     auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
     auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_vote_addr}, table_id);
-    xdbg("account: %s, target: %s, addr: %s, prop: %s", owner.c_str(), target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-    m_xrpc_query_func.query_account_property(jv, shard_reward_addr.value(), prop_name, xrpc::xfull_node_compatible_mode_t::incompatible);
+    xdbg("account: %s, target: %s, addr: %s, prop: %s", owner.c_str(), target.c_str(), shard_reward_addr.to_string().c_str(), prop_name.c_str());
+    m_xrpc_query_func.query_account_property(jv, shard_reward_addr.to_string(), prop_name, xrpc::xfull_node_compatible_mode_t::incompatible);
 
     if (target == "") {
         js_rsp = jv[prop_name];
@@ -1293,10 +1327,10 @@ xJson::Value xrpc_query_manager::parse_sharding_reward(const std::string & targe
         if (prop_name == data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY) {
             for (size_t i = 0; i < enum_vbucket_has_tables_count; ++i) {
                 auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, i);
-                xdbg("target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
+                xdbg("target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.to_string().c_str(), prop_name.c_str());
                 xJson::Value j;
 
-                m_xrpc_query_func.query_account_property(j, shard_reward_addr.value(), prop_name, xfull_node_compatible_mode_t::incompatible);
+                m_xrpc_query_func.query_account_property(j, shard_reward_addr.to_string(), prop_name, xfull_node_compatible_mode_t::incompatible);
                 auto tmp = j[prop_name];
                 for (auto i : tmp.getMemberNames()) {
                     if (version == RPC_VERSION_V3) {
@@ -1313,8 +1347,8 @@ xJson::Value xrpc_query_manager::parse_sharding_reward(const std::string & targe
                 xJson::Value j;
                 for (int sub_map_no = 1; sub_map_no <= 4; sub_map_no++) {
                     std::string prop_name = std::string(data::system_contract::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY_BASE) + "-" + std::to_string(sub_map_no);
-                    xdbg("[xrpc_query_manager::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-                    m_xrpc_query_func.query_account_property(j, shard_reward_addr.value(), prop_name, xfull_node_compatible_mode_t::incompatible);
+                    xdbg("[xrpc_query_manager::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.to_string().c_str(), prop_name.c_str());
+                    m_xrpc_query_func.query_account_property(j, shard_reward_addr.to_string(), prop_name, xfull_node_compatible_mode_t::incompatible);
                     auto tmp = j[prop_name];
                     for (auto i : tmp.getMemberNames()) {
                         xdbg("[xrpc_query_manager::parse_sharding_reward] --- %s", i.c_str());
@@ -1326,8 +1360,8 @@ xJson::Value xrpc_query_manager::parse_sharding_reward(const std::string & targe
     } else {
         auto const & table_id = data::account_map_to_table_id(common::xaccount_address_t{target}).get_subaddr();
         auto const & shard_reward_addr = contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, table_id);
-        xdbg("[xrpc_query_manager::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.c_str(), prop_name.c_str());
-        m_xrpc_query_func.query_account_property(jv, shard_reward_addr.value(), prop_name, xfull_node_compatible_mode_t::incompatible);
+        xdbg("[xrpc_query_manager::parse_sharding_reward] target: %s, addr: %s, prop: %s", target.c_str(), shard_reward_addr.to_string().c_str(), prop_name.c_str());
+        m_xrpc_query_func.query_account_property(jv, shard_reward_addr.to_string(), prop_name, xfull_node_compatible_mode_t::incompatible);
         jv = jv[prop_name][target];
     }
 
@@ -1619,7 +1653,7 @@ void xrpc_query_manager::set_unqualified_node_map(xJson::Value & j, std::map<std
             xJson::Value auditor_info;
             auditor_info["vote_num"] = v.second.block_count;
             auditor_info["subset_num"] = v.second.subset_count;
-            jvn_auditor[v.first.value()] = auditor_info;
+            jvn_auditor[v.first.to_string()] = auditor_info;
         }
 
         xJson::Value jvn_validator;
@@ -1627,7 +1661,7 @@ void xrpc_query_manager::set_unqualified_node_map(xJson::Value & j, std::map<std
             xJson::Value validator_info;
             validator_info["vote_num"] = v.second.block_count;
             validator_info["subset_num"] = v.second.subset_count;
-            jvn_validator[v.first.value()] = validator_info;
+            jvn_validator[v.first.to_string()] = validator_info;
         }
 
         jvn["auditor"] = jvn_auditor;

@@ -34,6 +34,8 @@ struct xeth_header_t {
     // base_fee was added by EIP-1559 and is ignored in legacy headers.
     optional<bigint> base_fee;
 
+    bool operator==(xeth_header_t const & rhs) const;
+
     // hash
     Hash hash() const;
     Hash hash_without_seal() const;

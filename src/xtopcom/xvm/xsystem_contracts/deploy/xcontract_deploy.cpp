@@ -116,6 +116,18 @@ void xtop_contract_deploy::deploy_sys_contracts() {
 
     deploy(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, xnode_type_t::consensus_validator, "", enum_broadcast_policy_t::normal);
 
+    deploy(sharding_fork_info_contract_address,
+           xnode_type_t::consensus_validator,
+           "",
+           enum_broadcast_policy_t::normal,
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xtable_fork_info_interval_configuration_t::name);
+
+    deploy(eth_fork_info_contract_address,
+           xnode_type_t::evm_validator,
+           "",
+           enum_broadcast_policy_t::normal,
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xtable_fork_info_interval_configuration_t::name);
+
     deploy(zec_elect_eth_contract_address,
            xnode_type_t::zec,
            "all",
@@ -146,7 +158,7 @@ bool xtop_contract_deploy::deploy(common::xaccount_address_t const & address,
 
     xcontract_info_t * info = new xcontract_info_t(address, _roles);  // force : no broadcast allowed
     if (is_sys_contract_address(common::xaccount_address_t{address})) {
-        xdbg("[xtop_contract_deploy::deploy] add monitor for %s", address.c_str());
+        xdbg("[xtop_contract_deploy::deploy] add monitor for %s", address.to_string().c_str());
         // boradcast policy
         info->broadcast_policy = _broadcast_policy;
         info->broadcast_types = str_to_broadcast_types(_broadcast_types);
@@ -178,14 +190,14 @@ bool xtop_contract_deploy::deploy(common::xaccount_address_t const & address,
                                         time_interval,
                                         conf_interval);
                 xdbg("[xtop_contract_deploy::deploy] add timer monitor for %s, %s, interval %d, config interval %s",
-                     address.c_str(),
+                     address.to_string().c_str(),
                      monitor_info[0].c_str(),
                      time_interval,
                      conf_interval.c_str());
             }
         }
     }
-    xdbg("[xtop_contract_deploy::deploy] add done for %s", address.c_str());
+    xdbg("[xtop_contract_deploy::deploy] add done for %s", address.to_string().c_str());
     m_info_map[address] = info;
     return true;
 }

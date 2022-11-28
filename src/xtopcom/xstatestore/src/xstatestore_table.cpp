@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
 #include "xdata/xblockextract.h"
@@ -20,7 +20,7 @@ xstatestore_table_t::xstatestore_table_t(common::xaccount_address_t const&  tabl
 : m_table_addr(table_addr), m_table_executor(table_addr, this) {
     m_prune = std::make_shared<xstatestore_prune_t>(table_addr, para);
     m_table_executor.init();
-    xdbg("xstatestore_table_t::xstatestore_table_t table=%s,this=%p", table_addr.value().c_str(), this);
+    xdbg("xstatestore_table_t::xstatestore_table_t table=%s,this=%p", table_addr.to_string().c_str(), this);
 }
 
 xtablestate_ext_ptr_t xstatestore_table_t::get_latest_connectted_table_state() const {
@@ -51,7 +51,7 @@ xtablestate_ext_ptr_t xstatestore_table_t::do_commit_table_all_states(base::xvbl
 
 xtablestate_ext_ptr_t xstatestore_table_t::get_tablestate_ext_from_block(base::xvblock_t* target_block) const {
     std::error_code ec;
-    xtablestate_ext_ptr_t tablestate = m_table_executor.execute_and_get_tablestate_ext(target_block, ec);
+    xtablestate_ext_ptr_t tablestate = m_table_executor.execute_and_get_tablestate_ext(target_block, true, ec);
     return tablestate;
 }
 
@@ -67,7 +67,7 @@ bool xstatestore_table_t::get_accountindex_from_table_block(common::xaccount_add
 data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block) const {
     base::xaccount_index_t account_index;
     if (false == get_accountindex_from_table_block(account_address, table_block, account_index)) {
-        xwarn("xstatestore_table_t::get_unit_state_from_table_block fail-get accountindex.%s,block=%s",account_address.value().c_str(), table_block->dump().c_str());
+        xwarn("xstatestore_table_t::get_unit_state_from_table_block fail-get accountindex.%s,block=%s", account_address.to_string().c_str(), table_block->dump().c_str());
         return nullptr;        
     }
     return get_unit_state_from_accountindex(account_address, account_index);

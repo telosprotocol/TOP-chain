@@ -27,6 +27,8 @@ public:
     std::string ciphertext;
 };
 
+std::string get_account_address_from_json_keystore(xJson::Value const & keystore_json);
+
 // decrypt:
 int get_top_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::byte * key);
 int get_eth_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::byte * key);

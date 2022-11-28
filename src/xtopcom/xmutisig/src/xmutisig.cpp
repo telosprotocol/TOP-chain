@@ -18,45 +18,6 @@ using top::xmutisig::xschnorr;
 using top::xmutisig::xsignature;
 // using top::xmutisig::bn_ptr_t;
 
-uint32_t xmutisig::sign(const std::string & msg,
-                        const xprikey & prikey,
-                        std::string & sign,
-                        // std::string &point,
-                        xsecret_rand & rand,
-                        xrand_point & point,
-                        xschnorr * _schnorr) {
-#ifdef DEBUG
-    xassert(!BN_is_zero(prikey.bn_value()));
-    xassert((BN_cmp(prikey.bn_value(), _schnorr->curve()->bn_order()) == -1));
-#endif
-
-    BIGNUM * bn = generate_object_bn(msg, _schnorr);
-    xassert(nullptr != bn);
-
-    // xsignature tmp_sign;
-
-    for (uint32_t i = 0;; i++) {
-        xsignature tmp_sign(rand, bn, prikey, _schnorr);
-        // sign_base(rand,bn,prikey,tmp_sign,_schnorr);
-
-        sign = tmp_sign.get_serialize_str();
-        if (i > 3) {
-#ifdef DEBUG
-            std::cout << "sign time beyond 3" << std::endl;
-#endif
-        }
-        if (BN_is_zero(tmp_sign.bn_value())) {
-            rand = xsecret_rand();
-            point = xrand_point(rand);
-        } else {
-            break;
-        }
-    }
-
-    BN_free(bn);
-    return 0;
-}
-
 bool xmutisig::verify_sign(const std::string & msg, const xpubkey & pubkey, const std::string & sign_str, const std::string & point_str, xschnorr * _schnorr) {
     xsignature sign(sign_str);
     xrand_point point(point_str);

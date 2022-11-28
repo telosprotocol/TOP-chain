@@ -116,6 +116,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_tableblock_backup_succ,
     cons_tableblock_total_succ,
     cons_pacemaker_tc_discontinuity,
+    cons_round_changed_keep_leadership,
 
     cons_table_leader_make_proposal_succ,
     cons_fail_make_proposal_table_state,
@@ -344,6 +345,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_recv_archive_blocks_size,
     xsync_recv_query_archive_height,
     xsync_recv_archive_height_list,
+    xsync_block_send_request,
+    xsync_block_recv_response,
+    xsync_block_request_count,
+    xsync_sender_net_succ,
 
     // txpool
     txpool_received_self_send_receipt_num,

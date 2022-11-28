@@ -8,10 +8,8 @@
 #include "xstore/xstore_error.h"
 #include "xstore/xaccount_context.h"
 
-#include "xbase/xlog.h"
 #include "xbase/xobject_ptr.h"
-#include "xbasic/xutility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -68,8 +66,7 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate,
     m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = unitstate->get_canvas();
     m_statectx = statectx;
-    xinfo("create context, address:%s,height:%ld,uri=%s",
-        unitstate->account_address().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate) {
@@ -80,7 +77,8 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate)
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = make_object_ptr<base::xvcanvas_t>();
-    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xinfo(
+        "create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::~xaccount_context_t() {
@@ -103,61 +101,42 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
         return ret;
     }
 
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_6_0_version_point, get_timer_height())) {
-        evm_common::u256 eth_token = 10000000000000000000ULL;
-        evm_common::u256 usd_token{"1000000000000000000000"};
-        auto old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::eth);
-        if (old_token_256 != 0) {
-            xerror("xaccount_context_t::create_user_account fail-eth token not zero");
-            return -1;
-        }
-        old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::usdt);
-        if (old_token_256 != 0) {
-            xerror("xaccount_context_t::create_user_account fail-usdt token not zero");
-            return -1;
-        }
-        old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::usdc);
-        if (old_token_256 != 0) {
-            xerror("xaccount_context_t::create_user_account fail-usdc token not zero");
-            return -1;
-        }
-
-        do {
-            // just for test debug
-            ret = m_account->tep_token_deposit(common::xtoken_id_t::eth, eth_token);
-            if (ret) {
-                xerror("mint eth for new account failed. %s", m_account->account_address().c_str());
-                break;
-            }
-            ret = m_account->tep_token_deposit(common::xtoken_id_t::usdt, usd_token);
-            if (ret) {
-                xerror("mint usdt for new account failed. %s", m_account->account_address().c_str());
-                break;
-            }
-            ret = m_account->tep_token_deposit(common::xtoken_id_t::usdc, usd_token);
-            if (ret) {
-                xerror("mint usdc for new account failed. %s", m_account->account_address().c_str());
-                break;
-            }
-        } while (false);
-    } else {
-        evm_common::u256 eth_token = 10000000000000000000ULL;
-        auto old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::eth);
-        if (old_token_256 != 0) {
-            xerror("xaccount_context_t::create_user_account fail-eth token not zero");
-            return -1;
-        }
-
-        do {
-            // just for test debug
-            ret = m_account->tep_token_deposit(common::xtoken_id_t::eth, eth_token);
-            if (ret) {
-                xerror("mint eth for new account failed. %s", m_account->account_address().c_str());
-                break;
-            }
-        } while (false);
+    evm_common::u256 eth_token = 10000000000000000000ULL;
+    evm_common::u256 usd_token{"1000000000000000000000"};
+    auto old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::eth);
+    if (old_token_256 != 0) {
+        xerror("xaccount_context_t::create_user_account fail-eth token not zero");
+        return -1;
     }
+    old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::usdt);
+    if (old_token_256 != 0) {
+        xerror("xaccount_context_t::create_user_account fail-usdt token not zero");
+        return -1;
+    }
+    old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::usdc);
+    if (old_token_256 != 0) {
+        xerror("xaccount_context_t::create_user_account fail-usdc token not zero");
+        return -1;
+    }
+
+    do {
+        // just for test debug
+        ret = m_account->tep_token_deposit(common::xtoken_id_t::eth, eth_token);
+        if (ret) {
+            xerror("mint eth for new account failed. %s", m_account->account_address().to_string().c_str());
+            break;
+        }
+        ret = m_account->tep_token_deposit(common::xtoken_id_t::usdt, usd_token);
+        if (ret) {
+            xerror("mint usdt for new account failed. %s", m_account->account_address().to_string().c_str());
+            break;
+        }
+        ret = m_account->tep_token_deposit(common::xtoken_id_t::usdc, usd_token);
+        if (ret) {
+            xerror("mint usdc for new account failed. %s", m_account->account_address().to_string().c_str());
+            break;
+        }
+    } while (false);
 
     return ret;
 }

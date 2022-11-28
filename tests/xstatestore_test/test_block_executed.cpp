@@ -5,7 +5,8 @@
 #include "xbase/xobject.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
-
+#define private public
+#define protected public
 #include "xdata/xdatautil.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xblocktool.h"
@@ -19,7 +20,9 @@
 #include "xblockstore/src/xvblockhub.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstatestore/xstatestore_exec.h"
+#include "xstatestore/xstatestore_prune.h"
 #include "test_common.hpp"
+
 
 using namespace top;
 using namespace top::base;
@@ -411,7 +414,57 @@ TEST_F(test_block_executed, get_unit_state_by_table_1) {
     }
 }
 
+TEST_F(test_block_executed, xstatestore_get_state_before_prune) {
+    char buffer[200];
+    getcwd(buffer, 200);
+    std::string dir = buffer;
+    std::string cmd = "rm -rf " + dir + "/test_xstatestore_get_state_before_prune";
+    system(cmd.data());
+    std::cout << cmd << std::endl;
 
+    xdbg("xstatestore_get_state_before_prune begin");
+
+    mock::xvchain_creator creator(true, "test_xstatestore_get_state_before_prune");
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 150;
+    mock::xdatamock_table mocktable(63, 4);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+
+    base::xvchain_t::instance().set_node_type(true, true);
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));        
+    }
+    for (uint32_t i=1;i<max_count-2;i++) {
+        // tableblocks[i]->set_block_flag(base::enum_xvblock_flag_committed);
+        // statestore::xstatestore_hub_t::instance()->on_table_block_committed(tableblocks[i].get());
+    }
+
+    common::xaccount_address_t unit_addr(mockunits[0].get_account());
+    base::xaccount_index_t accountindex;
+    
+
+    for (uint32_t i=1;i<max_count-2;i++) {
+        // tableblocks[i]->set_block_flag(base::enum_xvblock_flag_committed);
+        // statestore::xstatestore_hub_t::instance()->on_table_block_committed(tableblocks[i].get());
+        ASSERT_TRUE(statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(unit_addr, tableblocks[i].get(), accountindex));
+    }
+
+    base::xaccount_index_t accountindex1;
+    ASSERT_TRUE(statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(unit_addr, tableblocks[1].get(), accountindex1));
+
+    std::shared_ptr<xstatestore_resources_t> para;
+    xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
+    pruner.prune_imp(60);
+
+    xdbg("xstatestore_get_state_before_prune 2222");
+    base::xaccount_index_t accountindex2;
+    ASSERT_TRUE(statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(unit_addr, tableblocks[1].get(), accountindex2));
+    ASSERT_EQ(accountindex1, accountindex2);
+
+}
 
 TEST_F(test_block_executed, xstatestore_execute_BENCH) {
 // test result in release

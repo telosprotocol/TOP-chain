@@ -37,12 +37,6 @@ public:
     void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override {
     }
 
-    void send(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &, top::network::xtransmission_property_t const &) override { m_counter++; }
-
-    //void forward_broadcast_message(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &) override { m_counter++; }
-
-    //void broadcast(xmessage_t const &, xvnode_address_t const &) override { m_counter++; }
-
     common::xnetwork_id_t const & network_id() const noexcept override { return net_id; }
 
     common::xnode_id_t const & host_node_id() const noexcept override { return node_id; }

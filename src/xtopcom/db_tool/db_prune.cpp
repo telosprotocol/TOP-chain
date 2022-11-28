@@ -270,7 +270,7 @@ std::vector<std::string> DbPrune::get_table_accounts() {
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {
-            v.emplace_back(data::make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).value());
+            v.emplace_back(data::make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).to_string());
         }
     }
     return v;

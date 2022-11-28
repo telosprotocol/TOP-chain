@@ -65,12 +65,6 @@ public:
 
     common::xnode_id_t const & host_node_id() const noexcept override final;
 
-    // [Deprecated]
-    void send(xmessage_t const & message,
-              xvnode_address_t const & src,
-              xvnode_address_t const & dst,
-              network::xtransmission_property_t const & transmission_property = {}) override;
-
     //void broadcast(xmessage_t const & message, xvnode_address_t const & src) override;
 
     // void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override;

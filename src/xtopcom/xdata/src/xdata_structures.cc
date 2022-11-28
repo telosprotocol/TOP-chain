@@ -28,7 +28,7 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         reg_node_info.serialize_from(stream);
 
         xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, votes: %llu",
-             reg_node_info.m_account.c_str(),
+             reg_node_info.m_account.to_string().c_str(),
              reg_node_info.can_be_auditor(),
              reg_node_info.can_be_validator(),
              reg_node_info.can_be_archive(),
@@ -518,7 +518,7 @@ void xreg_node_info::miner_type(common::xminer_type_t new_miner_type) noexcept {
 
 int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
-    stream << m_account.value();
+    stream << m_account.to_string();
     stream << m_account_mortgage;
     ENUM_SERIALIZE(stream, m_registered_miner_type);
     stream << m_vote_amount;

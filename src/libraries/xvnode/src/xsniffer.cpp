@@ -106,7 +106,7 @@ bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock
             block.attach(static_cast<data::xblock_t *>(vblock.get()));
             xsniffer_action_t::broadcast(m_vnode, block, static_cast<common::xnode_type_t>(config.broadcast_config.zone));
             xinfo("[xtop_vnode::sniff_broadcast] contract: %s, block: %s, height: %llu, broadcast success, block=%s!",
-                  contract_address.c_str(),
+                  contract_address.to_string().c_str(),
                   block_address.c_str(),
                   height,
                   vblock->dump().c_str());
@@ -127,11 +127,11 @@ bool xtop_sniffer::sniff_timer(xobject_ptr_t<base::xvblock_t> const & vblock) co
         auto const & config = top::get<xrole_config_t>(role_data_pair).role_data;
 
         if (!contract_runtime::has<contract_runtime::xsniff_type_t::timer>(config.sniff_type)) {
-            xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s but contract not sniff timer", logic_time, contract_address.c_str());
+            xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s but contract not sniff timer", logic_time, contract_address.to_string().c_str());
             continue;
         }
 
-        xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s", logic_time, contract_address.c_str());
+        xdbg("xtop_sniffer::sniff_timer: logic time: %" PRIu64 " sees %s", logic_time, contract_address.to_string().c_str());
         auto const valid = is_valid_timer_call(contract_address, top::get<xrole_config_t>(role_data_pair), logic_time);
         // xdbg("xtop_sniffer::sniff_timer: contract address %s, interval: %u, valid: %d", contract_address.c_str(), config.timer_config.timer_config_data.get_timer_interval(), valid);
         if (!valid) {
@@ -173,11 +173,11 @@ bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) co
         if (!contract_runtime::has<contract_runtime::xsniff_type_t::block>(config.sniff_type)) {
             continue;
         }
-        xdbg("[xtop_vnode::sniff_block] contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);
+        xdbg("[xtop_vnode::sniff_block] contract: %s, block: %s, height: %llu", contract_address.to_string().c_str(), block_address.c_str(), height);
 
         // table upload contract sniff sharding table addr
-        if ((block_address.find(config.block_config.sniff_address.value()) != std::string::npos) && (contract_address == config.block_config.action_address)) {
-            xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);
+        if ((block_address.find(config.block_config.sniff_address.to_string()) != std::string::npos) && (contract_address == config.block_config.action_address)) {
+            xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %llu", contract_address.to_string().c_str(), block_address.c_str(), height);
             auto const full_tableblock = (dynamic_cast<data::xfull_tableblock_t *>(vblock.get()));
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
             auto const statistic_accounts = components::xfulltableblock_process_t::fulltableblock_statistic_accounts(fulltable_statisitc_data, m_nodesvr.get());
@@ -239,7 +239,7 @@ bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & addres
         round[address] = height;
         return true;
     } else {
-        xwarn("[xtop_sniffer::is_valid_timer_call] address %s height check error, last height: %llu, this height : %llu", address.c_str(), round[address], height);
+        xwarn("[xtop_sniffer::is_valid_timer_call] address %s height check error, last height: %llu, this height : %llu", address.to_string().c_str(), round[address], height);
         return false;
     }
 }
@@ -254,12 +254,12 @@ bool xtop_sniffer::trigger_first_timer_call(common::xaccount_address_t const & a
                                                                        common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}};
 
     if (std::find(std::begin(sys_addr_list), std::end(sys_addr_list), address) == std::end(sys_addr_list)) {
-        xdbg("xtop_vnode_sniff::trigger_first_timer_call: not monitored address %s", address.c_str());
+        xdbg("xtop_vnode_sniff::trigger_first_timer_call: not monitored address %s", address.to_string().c_str());
         return false;
     }
 
     auto const account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
-    xdbg("xtop_vnode_sniff::trigger_first_timer_call: monitored address %s height %" PRIu64, address.c_str(), account->height());
+    xdbg("xtop_vnode_sniff::trigger_first_timer_call: monitored address %s height %" PRIu64, address.to_string().c_str(), account->height());
     return 0 == account->height();
 }
 
@@ -277,13 +277,23 @@ void xtop_sniffer::table_timer_func(common::xaccount_address_t const& contract_a
         auto& schedule_info = m_table_contract_schedule[contract_address];
         schedule_info.cur_table = m_vnode->vnetwork_driver()->table_ids().at(0) + static_cast<uint16_t>((height / clock_interval) % table_num);
         xinfo("[xtop_vnode_sniff::table_timer_func] table contract schedule, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
-            contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
+              contract_address.to_string().c_str(),
+              height,
+              schedule_info.cur_interval,
+              schedule_info.target_interval,
+              schedule_info.clock_or_table,
+              schedule_info.cur_table);
         call(contract_address, timer_config.action, action_params, timestamp, schedule_info.cur_table);
 
     } else { // have not schedule yet
         xtable_schedule_info_t schedule_info(clock_interval, m_vnode->vnetwork_driver()->table_ids().at(0) + static_cast<uint16_t>((height / clock_interval) % table_num));
         xinfo("[xtop_vnode_sniff::table_timer_func] table contract schedule initial, contract address %s, timer %lu, schedule info:[%hu, %hu, %hu %hu]",
-                contract_address.c_str(), height, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
+              contract_address.to_string().c_str(),
+              height,
+              schedule_info.cur_interval,
+              schedule_info.target_interval,
+              schedule_info.clock_or_table,
+              schedule_info.cur_table);
         call(contract_address, timer_config.action, action_params, timestamp, schedule_info.cur_table);
         m_table_contract_schedule[contract_address] = schedule_info;
     }
@@ -309,7 +319,7 @@ void xtop_sniffer::call(common::xaccount_address_t const & address, std::string 
     xinfo("[xtop_sniffer] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
           r,
           tx->get_digest_hex_str().c_str(),
-          address.value().c_str(),
+          address.to_string().c_str(),
           data::to_hex_str(account->account_send_trans_hash()).c_str(),
           account->account_send_trans_number(),
           timestamp,
@@ -321,7 +331,7 @@ void xtop_sniffer::call(common::xaccount_address_t const & address,
                         std::string const & action_params,
                         uint64_t timestamp,
                         uint64_t table_id) const {
-    auto const specific_addr = data::make_address_by_prefix_and_subaddr(address.value(), table_id);
+    auto const specific_addr = data::make_address_by_prefix_and_subaddr(address.to_string(), table_id);
     call(specific_addr, action_name, action_params, timestamp);
 }
 
@@ -344,7 +354,7 @@ void xtop_sniffer::call(common::xaccount_address_t const & source_address,
     xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
             r,
             tx->get_digest_hex_str().c_str(),
-            source_address.c_str(),
+          source_address.to_string().c_str(),
             data::to_hex_str(account->account_send_trans_hash()).c_str(),
             account->account_send_trans_number(),
             timestamp,

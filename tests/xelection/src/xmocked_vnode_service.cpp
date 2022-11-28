@@ -35,7 +35,7 @@ std::pair<xobject_ptr_t<base::xvnode_t>, common::xslot_id_t> xtop_mocked_vnode_g
         group_xip2.height()
     };
 
-    base::xvnode_t * node = new base::xvnode_t(account_address.value(), node_xip2.value(), "", "");
+    base::xvnode_t * node = new base::xvnode_t(account_address.to_string(), node_xip2.value(), "");
     m_nodes.push_back(node);
 
     node->add_ref();
@@ -53,7 +53,7 @@ xtop_mocked_vnode_service::xtop_mocked_vnode_service(common::xaccount_address_t 
                                                      std::string const & sign_key,
                                                      xobject_ptr_t<base::xvblockstore_t> const & blockstore,
                                                      observer_ptr<top::mbus::xmessage_bus_face_t> const & bus)
-    : xvnode_house_t(account_address, sign_key, blockstore, bus) {
+    : xvnode_house_t(account_address, blockstore, bus) {
 }
 
 

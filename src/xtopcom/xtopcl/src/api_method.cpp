@@ -1,28 +1,27 @@
-#include "api_method.h"
+#include "xtopcl/include/api_method.h"
 
-#include "base/utility.h"
-#include "base/config_file.h"
-#include "task/request_task.h"
-#include "task/task_dispatcher.h"
 #include "xbase/xutl.h"
+#include "xtopcl/include/base/config_file.h"
+#include "xtopcl/include/base/utility.h"
+#include "xtopcl/include/task/task_dispatcher.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xcrypto.h"
 #include "xcrypto/xckey.h"
-#include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
 #include "xpbase/base/top_utils.h"
-
-#include "console_log.h"
+#include "xsafebox/safebox_http_client.h"
+#include "xtopcl/include/console_log.h"
+#include "xtopcl/include/xtop/xcrypto_util.h"
 
 #include <dirent.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <cmath>
 
 namespace xChainSDK {
 using namespace xcrypto;
@@ -55,47 +54,32 @@ bool check_account_address(const std::string& account)
     return _vaccount.is_unit_address();
 }
 
-xJson::Value ApiMethod::get_response_from_daemon() {
-    std::string daemon_host = "127.0.0.1:7000";
-    auto safebox_endpoint = getenv(SAFEBOX_ENDPOINT_ENV.c_str());
-    if (safebox_endpoint != NULL) {
-        daemon_host = safebox_endpoint;
-    }
-    HttpClient client(daemon_host);
-    xJson::Value j;
-    j["method"] = "get";
-    std::string token_request = j.toStyledString();
-    string token_response_str;
-    try {
-        SimpleWeb::CaseInsensitiveMultimap header;
-        header.insert({"Content-Type", "application/json"});
-        auto token_response = client.request("POST", "/api/safebox", token_request, header);
-        token_response_str = token_response->content.string();
-    } catch (std::exception & e) {
-        cout << e.what() << endl;
-        return "";
-    }
-    xJson::Reader reader;
-    xJson::Value token_response_json;
-    if (!reader.parse(token_response_str, token_response_json)) {
-        cout << "json parse error" << endl;
-    } else if (token_response_json["status"].asString() != "ok") {
-#ifdef DEBUG
-        cout << "[debug]" << token_response_json["error"].asString() << endl;
-#endif
-    }
-
-    return token_response_json;
-}
-
 string ApiMethod::get_account_from_daemon() {
-    auto token_response_json = get_response_from_daemon();
-    try {
-        return token_response_json["account"].asString();
-    } catch (...) {
-        return "";
-    }
+    std::string daemon_host = "127.0.0.1:7000";
+    top::safebox::SafeBoxHttpClient safebox_client{daemon_host};
+    return safebox_client.request_account();
 }
+string ApiMethod::get_prikey_from_daemon() {
+    std::string daemon_host = "127.0.0.1:7000";
+
+    top::safebox::SafeBoxHttpClient safebox_client{daemon_host};
+    auto res = safebox_client.request_account_prikey();
+
+    auto account = res.first;
+    auto hex_ed_key = res.second;
+    std::string pri_key;
+    if (!hex_ed_key.empty()) {
+        top::base::xvaccount_t _vaccount(account);
+        if (_vaccount.is_eth_address())
+            get_eth_file(account);
+        std::string path = g_keystore_dir + '/' + account;
+        if (!decrypt_keystore_file_by_kdf_key(hex_ed_key, path, pri_key)) {
+            return "";
+        }
+    }
+    return pri_key;
+}
+
 int ApiMethod::get_eth_file(std::string& account) {
     top::base::xvaccount_t _vaccount(account);
     if (_vaccount.is_eth_address())
@@ -113,24 +97,6 @@ int ApiMethod::get_eth_file(std::string& account) {
     }
     return 0;
 }
-string ApiMethod::get_prikey_from_daemon(std::ostringstream & out_str) {
-    auto token_response_json = get_response_from_daemon();
-    try {
-        auto hex_ed_key = token_response_json["private_key"].asString();
-        auto account = token_response_json["account"].asString();
-        string pri_key;
-        if (!hex_ed_key.empty()) {
-            top::base::xvaccount_t _vaccount(account);
-            if (_vaccount.is_eth_address())
-                get_eth_file(account);
-            std::string path = g_keystore_dir + '/' + account;
-            decrypt_keystore_file_by_kdf_key(hex_ed_key, path, pri_key);
-        }
-        return pri_key;
-    } catch (...) {
-        return "";
-    }
-}
 
 int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_key, std::ostringstream & out_str, uint32_t expired_time) {
     std::string daemon_host = "127.0.0.1:7000";
@@ -143,30 +109,9 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
     if (_vaccount.is_eth_address())
         std::transform(account_temp.begin() + 1, account_temp.end(), account_temp.begin() + 1, ::tolower);
 
-    HttpClient client(daemon_host);
-    xJson::Value j;
-    j["method"] = "set";
-    j["account"] = account_temp;
-    j["private_key"] = pri_key;
-    j["expired_time"] = expired_time;
-    std::string token_request = j.toStyledString();
-    string token_response_str;
-    try {
-        SimpleWeb::CaseInsensitiveMultimap header;
-        header.insert({"Content-Type", "application/json"});
-        auto token_response = client.request("POST", "/api/safebox", token_request, header);
-        token_response_str = token_response->content.string();
-    } catch (std::exception & e) {
-        out_str << e.what() << endl;
-        return 1;
-    }
-    xJson::Reader reader;
-    xJson::Value token_response_json;
-    if (!reader.parse(token_response_str, token_response_json)) {
-        out_str << "connection error" << endl;
-        return 1;
-    } else if (token_response_json["status"].asString() == "fail") {
-        out_str << token_response_json["error"].asString() << endl;
+    top::safebox::SafeBoxHttpClient safebox_client{daemon_host};
+    auto result = safebox_client.set_prikey(account, pri_key, out_str, expired_time);
+    if (result == false) {
         return 1;
     }
     return 0;
@@ -175,7 +120,7 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
 bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
     if (g_userinfo.account.empty()) {
         // if daemon already have default account. get prikey:
-        std::string str_pri = get_prikey_from_daemon(out_str);
+        std::string str_pri = get_prikey_from_daemon();
         if (!str_pri.empty()) {
             set_g_userinfo(str_pri);
             return true;
@@ -363,9 +308,7 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
     for (size_t i = 0; i < keys.size(); ++i) {
         auto path = g_keystore_dir + "/" + keys[i];
         auto key_info = attach_parse_keystore(path, out_str);
-        std::string account = key_info["account_address"].asString();
-        if (account.empty())
-            account = key_info["account address"].asString();
+        std::string account = xcrypto::get_account_address_from_json_keystore(key_info);
         top::base::xvaccount_t _vaccount(account);
         if (_vaccount.is_eth_address())
             std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
@@ -685,7 +628,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
                     target_kf = kf_path;
                 }
             }
-            if (name == "account address" || name == "account_address") {
+            if (target_node_id.empty() && (name == "account address" || name == "account_address")) {
                 target_node_id = key_info_js[name].asString();
                 top::base::xvaccount_t _vaccount(target_node_id);
                 if (_vaccount.is_eth_address())
@@ -824,12 +767,9 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     // key_info_js["default_miner_private_key"] = base64_pri_key;
     // key_info_js["default_miner_private_key"] = hex_pri_token;
 
-    // expired_time = 0 meaning nerver expired
-    // if (set_prikey_to_daemon(target_node_id, base64_pri_key, out_str, 0) != 0) {
-    // if (set_prikey_to_daemon(target_node_id, hex_pri_token, out_str, 0) != 0) {
     if (set_prikey_to_daemon(pub_key, kdf_key, out_str, 0) != 0) {
         // if set worker key target_node_id, will confilict with topcl(account)
-        out_str << "keep default miner nfo in cache failed" << std::endl;
+        out_str << "keep default miner info in cache failed" << std::endl;
         out_str << "Set miner key failed." << std::endl;
         return -1;
     }
@@ -1022,9 +962,7 @@ void ApiMethod::register_node(const std::string & mortgage_d,
             auto public_key = key_info["public_key"].asString();
             if (public_key == signing_key) {
                 found = true;
-                std::string account = key_info["account_address"].asString();
-                if (account.empty())
-                    account = key_info["account address"].asString();
+                std::string account = xcrypto::get_account_address_from_json_keystore(key_info);
                 top::base::xvaccount_t _vaccount(account);
                 if (_vaccount.is_eth_address())
                     std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
@@ -1180,9 +1118,7 @@ void ApiMethod::update_miner_info(const std::string & role,
         auto key_info = parse_keystore(path);
         if (key_info["public_key"] == node_sign_key) {
             found = true;
-            std::string account = key_info["account_address"].asString();
-            if (account.empty())
-                account = key_info["account address"].asString();
+            std::string account = xcrypto::get_account_address_from_json_keystore(key_info);
 
             if (account == g_userinfo.account) {
                 break;
@@ -1679,6 +1615,7 @@ void ApiMethod::set_keystore_path(const std::string & data_dir) {
 }
 
 void ApiMethod::change_trans_mode(bool use_http) {
+    assert(use_http == true); // we only use http for now
     if (use_http) {
         g_server_host_port = config_file::instance()->get_string(net_setting, http_host);
         if (g_server_host_port.empty()) {
@@ -1687,11 +1624,11 @@ void ApiMethod::change_trans_mode(bool use_http) {
         trans_base::s_defaule_mode = TransMode::HTTP;
         // std::cout << "Using trans mode - HTTP: " << g_server_host_port << std::endl;
     } else {
-        g_server_host_port = config_file::instance()->get_string(net_setting, ws_host);
-        if (g_server_host_port.empty()) {
-            g_server_host_port = SERVER_HOST_PORT_WS;
-        }
-        trans_base::s_defaule_mode = TransMode::WS;
+        // g_server_host_port = config_file::instance()->get_string(net_setting, ws_host);
+        // if (g_server_host_port.empty()) {
+        //     g_server_host_port = SERVER_HOST_PORT_WS;
+        // }
+        // trans_base::s_defaule_mode = TransMode::WS;
         // std::cout << "Using trans mode - WS: " << g_server_host_port  << std::endl;
     }
 #if  defined(DEBUG) || defined(RELEASEDEBINFO)

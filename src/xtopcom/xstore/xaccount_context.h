@@ -41,7 +41,7 @@ class xaccount_context_t {
     const data::xunitstate_ptr_t & get_blockchain() const {
         return m_account;
     }
-    std::string get_address() const {return m_account->account_address().value();}
+    std::string get_address() const {return m_account->account_address().to_string();}
     bool    get_transaction_result(xtransaction_result_t& result);
     bool finish_exec_all_txs(const std::vector<data::xcons_transaction_ptr_t> & txs);
     size_t  get_op_records_size() const;

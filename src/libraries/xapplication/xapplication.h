@@ -96,7 +96,6 @@ public:
 private:
     common::xnode_id_t m_node_id;
     xpublic_key_t m_public_key;
-    std::string m_sign_key;
 
     common::xnetwork_id_t m_network_id;
 
@@ -139,7 +138,7 @@ public:
     xtop_application & operator=(xtop_application &&) = default;
     ~xtop_application() = default;
 
-    xtop_application(common::xnode_id_t const & node_id, xpublic_key_t const & public_key, std::string const & sign_key);
+    xtop_application(common::xnode_id_t const & node_id, xpublic_key_t const & public_key, std::string && sign_key);
 
 public:
     void start() override;
