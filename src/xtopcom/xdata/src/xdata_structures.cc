@@ -385,10 +385,6 @@ bool xreg_node_info::can_be_archive() const noexcept {
     return could_be_archive();
 }
 
-bool xreg_node_info::legacy_can_be_archive() const noexcept {
-    return can_be_auditor() || can_be_archive();
-}
-
 bool xreg_node_info::can_be_auditor() const noexcept {
     return could_be_auditor() && has_enough_tickets();
 }

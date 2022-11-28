@@ -16,12 +16,12 @@ TEST(xcommon, miner_type_simple) {
         EXPECT_EQ(common::XMINER_TYPE_ADVANCE, common::to_string(miner_type));
     }
 
-#if defined(XENABLE_MOCK_ZEC_STAKE)
+// #if defined(XENABLE_MOCK_ZEC_STAKE)
     {
         common::xminer_type_t const miner_type{common::xminer_type_t::archive};
         EXPECT_EQ(common::XMINER_TYPE_ARCHIVE, common::to_string(miner_type));
     }
-#endif
+// #endif
 
     {
         common::xminer_type_t const miner_type{common::xminer_type_t::edge};
@@ -49,7 +49,7 @@ TEST(xcommon, miner_type_compound) {
         EXPECT_TRUE(miner_string.find(common::XMINER_TYPE_EDGE) != std::string::npos);
     }
 
-#if defined(XENABLE_MOCK_ZEC_STAKE)
+// #if defined(XENABLE_MOCK_ZEC_STAKE)
     {
         common::xminer_type_t const miner_type{common::xminer_type_t::archive | common::xminer_type_t::advance};
         auto const miner_string = common::to_string(miner_type);
@@ -58,7 +58,7 @@ TEST(xcommon, miner_type_compound) {
         EXPECT_TRUE(miner_string.find(common::XMINER_TYPE_ADVANCE) != std::string::npos);
         EXPECT_TRUE(miner_string.find(common::XMINER_TYPE_ARCHIVE) != std::string::npos);
     }
-#endif
+// #endif
 
     {
         common::xminer_type_t const miner_type{common::xminer_type_t::edge | common::xminer_type_t::exchange};

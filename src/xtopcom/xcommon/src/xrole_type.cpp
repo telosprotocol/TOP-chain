@@ -38,11 +38,11 @@ std::string to_string(xminer_type_t const miner_type) {
         miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_VALIDATOR;
     }
 
-#if defined(XENABLE_MOCK_ZEC_STAKE)
+// #if defined(XENABLE_MOCK_ZEC_STAKE)
     if (common::has<xminer_type_t::archive>(miner_type)) {
         miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_ARCHIVE;
     }
-#endif
+// #endif
 
     if (common::has<xminer_type_t::edge>(miner_type)) {
         miner_string += diliminator[static_cast<size_t>(miner_string.empty())] + XMINER_TYPE_EDGE;
@@ -78,10 +78,10 @@ common::xminer_type_t to_miner_type(std::string const & node_type) {
         role_type = common::xminer_type_t::advance;
     } else if (node_type == XMINER_TYPE_VALIDATOR) {
         role_type = common::xminer_type_t::validator;
-#if defined(XENABLE_MOCK_ZEC_STAKE)
+// #if defined(XENABLE_MOCK_ZEC_STAKE)
     } else if (node_type == XMINER_TYPE_ARCHIVE) {
         role_type = common::xminer_type_t::archive;
-#endif
+// #endif
     } else if (node_type == XMINER_TYPE_EXCHANGE) {
         role_type = common::xminer_type_t::exchange;
     }
