@@ -43,9 +43,9 @@ XINLINE_CONSTEXPR char const * XMINER_TYPE_INVALID   = "invalid";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_EDGE      = "edge";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_ADVANCE   = "advance";
 XINLINE_CONSTEXPR char const * XMINER_TYPE_VALIDATOR = "validator";
-#if defined(XENABLE_MOCK_ZEC_STAKE)
+// #if defined(XENABLE_MOCK_ZEC_STAKE)
 XINLINE_CONSTEXPR char const * XMINER_TYPE_ARCHIVE   = "archive";
-#endif
+// #endif
 XINLINE_CONSTEXPR char const * XMINER_TYPE_EXCHANGE  = "exchange";
 
 std::int32_t

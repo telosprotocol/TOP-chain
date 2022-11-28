@@ -435,9 +435,6 @@ public:
     /// @brief Check to see if this node can be an archive based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_archive() const noexcept;
 
-    /// @brief Check to see if this node can be an archive based on miner type and other information (e.g. deposit, amount of received tickets).
-    bool legacy_can_be_archive() const noexcept;
-
     /// @brief Check to see if this node can be an edge based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_edge() const noexcept;
 
