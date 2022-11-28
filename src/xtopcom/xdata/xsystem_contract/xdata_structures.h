@@ -42,6 +42,7 @@ XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY1 = "@112-1";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY2 = "@112-2";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY3 = "@112-3";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY4 = "@112-4";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY = "@113";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_MAX_TIME_KEY = "@115";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_AWARD_KEY = "@118";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VALIDATOR_KEY = "@120";
@@ -830,6 +831,22 @@ private:
      * @param stream
      * @return int32_t
      */
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xineffective_vote_t final : public xserializable_based_on<void> {
+    uint64_t timestamp{0};
+    std::map<std::string, uint64_t> vote_info;
+
+public:
+    xineffective_vote_t() = default;
+    xineffective_vote_t(uint64_t const t, std::map<std::string, uint64_t> const & info) : timestamp(t), vote_info(info) {
+    }
+    std::string to_string() const;
+    int32_t from_string(std::string const & s);
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
     int32_t do_read(base::xstream_t & stream) override;
 };
 

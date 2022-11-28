@@ -926,6 +926,42 @@ xissue_detail_v2::operator xissue_detail_v1() const {
     return v1;
 }
 
+std::string xineffective_vote_t::to_string() const {
+    base::xstream_t stream(base::xcontext_t::instance());
+    serialize_to(stream);
+    return std::string((const char *)stream.data(), stream.size());
+}
+
+int32_t xineffective_vote_t::from_string(std::string const & s) {
+    if (s.empty()) {
+        xwarn("xineffective_vote_t::from_string invalid input");
+        return -1;
+    }
+
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)s.data(), (int32_t)s.size());
+    int32_t ret = serialize_from(_stream);
+    if (ret <= 0) {
+        xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, s.size());
+    }
+    return ret;
+}
+
+int32_t xineffective_vote_t::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << timestamp;
+    stream << vote_info;
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t xineffective_vote_t::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> timestamp;
+    stream >> vote_info;
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
+
 xtop_allowance::xtop_allowance(data_type d) noexcept(std::is_nothrow_move_constructible<data_type>::value) : data_{std::move(d)} {
 }
 

@@ -1520,9 +1520,12 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                                                  std::map<common::xaccount_address_t, ::uint128_t> & node_dividend_detail,
                                                  ::uint128_t & community_reward) {
     // step 1: calculate issuance
-    ::uint128_t total_issuance =
+    auto const total_issuance =
         calc_total_issuance(issue_time_length, onchain_param.min_ratio_annual_total_reward, onchain_param.additional_issue_year_ratio, property_param.accumulated_reward_record);
+    auto const limit_issuance =
+        static_cast<::uint128_t>(data::system_contract::TOTAL_RESERVE) * data::system_contract::REWARD_PRECISION * onchain_param.additional_issue_year_ratio / 100;
     XCONTRACT_ENSURE(total_issuance > 0, "total issuance = 0");
+    XCONTRACT_ENSURE(total_issuance < limit_issuance, "total over limit");
     auto edge_workload_rewards = total_issuance * onchain_param.edge_reward_ratio / 100;
     auto archive_workload_rewards = total_issuance * onchain_param.archive_reward_ratio / 100;
     auto total_auditor_total_workload_rewards = total_issuance * onchain_param.auditor_reward_ratio / 100;
@@ -1813,7 +1816,7 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
     }
     // generate tasks
     const int task_limit = 1000;
-    xinfo("[xzec_reward_contract::dispatch_all_reward] table_node_reward_detail size: %d", table_node_reward_detail.size());
+    xinfo("[xzec_reward_contract::dispatch_all_reward] table_node_reward_detail size: %zu", table_node_reward_detail.size());
     for (auto & entity : table_node_reward_detail) {
         auto const & contract = entity.first;
         auto const & account_awards = entity.second;
@@ -1849,7 +1852,7 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
         }
         xinfo("[xzec_reward_contract::dispatch_all_reward] add table_node_reward_detail task to %s", contract.to_string().c_str());
     }
-    xinfo("[xzec_reward_contract::dispatch_all_reward] table_node_dividend_detail size: %d", table_node_dividend_detail.size());
+    xinfo("[xzec_reward_contract::dispatch_all_reward] table_node_dividend_detail size: %zu", table_node_dividend_detail.size());
     for (auto const & entity : table_node_dividend_detail) {
         auto const & contract = entity.first;
         auto const & auditor_vote_rewards = entity.second;
