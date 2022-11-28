@@ -38,6 +38,7 @@ public:
     BEGIN_CONTRACT_WITH_PARAM(xtable_vote_contract)
     CONTRACT_FUNCTION_PARAM(xtable_vote_contract, voteNode);
     CONTRACT_FUNCTION_PARAM(xtable_vote_contract, unvoteNode);
+    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
 private:
@@ -54,6 +55,13 @@ private:
      */
     void unvoteNode(vote_info_map_t const & vote_info);
 
+    /**
+     * @brief schedule
+     *
+     * @param timestamp time
+     */
+    void on_timer(common::xlogic_time_t const timestamp);
+
     // vote related
     /**
      * @brief Set the vote info
@@ -63,6 +71,7 @@ private:
      * @param b_vote true - vote, false - unvote
      */
     void set_vote_info(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
+    void set_vote_info_v2(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
 
     /**
      * @brief report the stakes to the zec
@@ -170,6 +179,11 @@ private:
      */
     std::vector<std::map<std::string, std::string>> trx_split_helper(std::map<std::string, std::string> const& report_content, std::size_t limit = XVOTE_TRX_LIMIT);
 
+    std::map<common::xaccount_address_t, xtable_vote_contract::vote_info_map_t> get_and_update_all_effective_votes_of_all_account(uint64_t const timestamp);
+    std::map<std::uint64_t, vote_info_map_t> get_all_time_ineffective_votes(common::xaccount_address_t const & account);
+    void set_all_time_ineffective_votes(common::xaccount_address_t const & account, std::map<std::uint64_t, vote_info_map_t> const & all_time_ineffective_votes);
+    void add_all_time_ineffective_votes(uint64_t const timestamp, vote_info_map_t const & vote_info, std::map<std::uint64_t, vote_info_map_t> & all_time_ineffective_votes);
+    void del_all_time_ineffective_votes(vote_info_map_t & vote_info_to_del, std::map<std::uint64_t, vote_info_map_t> & all_time_ineffective_votes);
 };
 
 NS_END2

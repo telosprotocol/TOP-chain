@@ -208,6 +208,11 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
 #endif
 
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10900)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_report_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_ineffective_period);
+#endif
+
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
         for (auto & v : committee_addrs) {
             m_initial_committee.push_back(v);
