@@ -27,7 +27,7 @@ xmpt_node_cache_imp_t* xmpt_node_cache_t::instance() {
 xmpt_node_cache_imp_t::xmpt_node_cache_imp_t() {
     auto all_tables = data::xblocktool_t::make_all_table_addresses();
     for (auto & table : all_tables) {
-        m_node_cache_map[table] = std::make_shared<evm_common::trie::xnode_cache_t>(20000);
+        m_node_cache_map[table] = std::make_shared<evm_common::trie::xnode_cache_t>(10000);
     }
 }
 

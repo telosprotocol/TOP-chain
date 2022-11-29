@@ -365,7 +365,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_edge(xvnetwork_
     }
 
     // we don't allow edge to send message to validator directly.
-    ec = xvnetwork_errc2_t::invalid_src_address;
+    // ec = xvnetwork_errc2_t::invalid_src_address;
     xinfo("[vnetwork][message_filter] hash: %" PRIx64 " node %s receives msg sent to %s from %s. ignored. error: %s",
             vnetwork_message.hash(),
           m_vhost->host_node_id().to_string().c_str(),

@@ -274,7 +274,8 @@ int topchain_start(const std::string& datadir, const std::string& config_file) {
 
     config_center.dump();
 
-    auto const log_level = XGET_CONFIG(log_level);
+    // auto const log_level = XGET_CONFIG(log_level);
+    enum_xlog_level log_level = enum_xlog_level_key_info;
     auto const log_path = XGET_CONFIG(log_path);
     std::cout << "account: " << global_node_id << std::endl;
     xinit_log(log_path.c_str(), true, true);
