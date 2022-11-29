@@ -622,20 +622,13 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
             continue;
         }
 
-        for (const auto & name : key_info_js.getMemberNames()) {
-            if (name == "public_key") {
-                if (pub_key == key_info_js[name].asString()) {
-                    target_kf = kf_path;
-                }
+        if (key_info_js.isMember("public_key") && key_info_js["public_key"].asString() == pub_key) {
+            target_kf = kf_path;
+            target_node_id = get_account_address_from_json_keystore(key_info_js);
+            top::base::xvaccount_t _vaccount(target_node_id);
+            if (_vaccount.is_eth_address()) {
+                std::transform(target_node_id.begin() + 1, target_node_id.end(), target_node_id.begin() + 1, ::tolower);
             }
-            if (target_node_id.empty() && (name == "account address" || name == "account_address")) {
-                target_node_id = key_info_js[name].asString();
-                top::base::xvaccount_t _vaccount(target_node_id);
-                if (_vaccount.is_eth_address())
-                    std::transform(target_node_id.begin() + 1, target_node_id.end(), target_node_id.begin() + 1, ::tolower);
-            }
-        }  // end for (const auto & name...
-        if (!target_kf.empty()) {
             break;
         }
     }  // end for (const auto &kf...
