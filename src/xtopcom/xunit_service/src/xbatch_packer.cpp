@@ -34,9 +34,12 @@ NS_BEG2(top, xunit_service)
 #define MIN_TRANSACTION_NUM_FOR_LOW_TPS (50)
 
 #define TRY_MAKE_BLOCK_TIMER_INTERVAL (50)
-#define TRY_HIGH_TPS_TIME_WINDOW (250)
-#define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (500)
-#define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (750)
+// #define TRY_HIGH_TPS_TIME_WINDOW (250)
+// #define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (500)
+// #define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (750)
+#define TRY_HIGH_TPS_TIME_WINDOW (500)
+#define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (1000)
+#define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (1500)
 
 xbatch_packer::xbatch_packer(base::xtable_index_t                             &tableid,
                              const std::string &                              account_id,
