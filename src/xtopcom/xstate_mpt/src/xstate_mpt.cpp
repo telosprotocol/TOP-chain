@@ -27,7 +27,7 @@ xmpt_node_cache_imp_t* xmpt_node_cache_t::instance() {
 xmpt_node_cache_imp_t::xmpt_node_cache_imp_t() {
     auto all_tables = data::xblocktool_t::make_all_table_addresses();
     for (auto & table : all_tables) {
-        m_node_cache_map[table] = std::make_shared<evm_common::trie::xnode_cache_t>(100000);
+        m_node_cache_map[table] = std::make_shared<evm_common::trie::xnode_cache_t>(20000);
     }
 }
 
@@ -38,6 +38,18 @@ std::shared_ptr<evm_common::trie::xnode_cache_t> xmpt_node_cache_imp_t::get_node
         return nullptr;
     }
     return iter->second;
+}
+
+void xmpt_node_cache_imp_t::update_metrics() {
+    if (use_num % 100 != 0) {
+        return;
+    }
+    use_num++;
+    uint32_t total_size = 0;
+    for (auto & node_cache : m_node_cache_map) {
+        total_size += node_cache.second->size();
+    }
+    XMETRICS_COUNTER_SET("state_mpt_node_cache_total", total_size);
 }
 
 std::string xaccount_info_t::encode() {
@@ -290,6 +302,7 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         xwarn("xtop_state_mpt::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
+    xmpt_node_cache_t::instance()->update_metrics();
 
     for (auto & acc : m_state_objects_dirty) {
         auto obj = query_state_object(acc);

@@ -30,9 +30,11 @@ class xmpt_node_cache_imp_t {
 public:
     xmpt_node_cache_imp_t();
     std::shared_ptr<evm_common::trie::xnode_cache_t> get_node_cache(const std::string & table);
+    void update_metrics();
 private:
     std::map<std::string, std::shared_ptr<evm_common::trie::xnode_cache_t>> m_node_cache_map;
     evm_common::trie::xnode_cache_t m_node_cache_empty;
+    uint32_t use_num{0};
 };
 
 class xmpt_node_cache_t {

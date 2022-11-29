@@ -109,6 +109,11 @@ public:
         return it->second->second;
     }
 
+    uint32_t size() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return item_map_.size();
+    }
+
 private:
     void clean_with_lock_hold() {
         while (item_map_.size() > max_size_) {
