@@ -94,6 +94,8 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     if (ret != xsuccess) {
         return ret;
     }
+    
+    XMETRICS_COUNTER_INCREMENT(m_push_send_tx_metrics_name, 1);
 
     return push_send_tx_real(tx);
 }

@@ -96,7 +96,8 @@ public:
       , m_txmgr_table(&m_xtable_info, para)
       , m_unconfirm_id_height(m_xtable_info.get_short_table_id())
       , m_unconfirm_raw_txs(m_xtable_info.get_short_table_id())
-      , m_uncommit_txs(table_addr) {
+      , m_uncommit_txs(table_addr)
+      , m_push_send_tx_metrics_name("txpool_push_send_tx" + table_addr) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send);
@@ -156,6 +157,8 @@ private:
     xunconfirm_raw_txs m_unconfirm_raw_txs;
 
     xuncommit_txs_t m_uncommit_txs;
+    // for test
+    std::string m_push_send_tx_metrics_name;
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
