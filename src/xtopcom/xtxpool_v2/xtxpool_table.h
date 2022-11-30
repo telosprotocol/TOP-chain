@@ -133,7 +133,7 @@ private:
     // bool is_account_need_update(const std::string & account_addr) const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx, bool is_first_time_push_tx) const;
-    bool    verify_send_tx_after_get_txs(const xcons_transaction_ptr_t & tx);
+    void filter_txs_by_black_white_list(std::vector<xcons_transaction_ptr_t> & txs);
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
     bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce);

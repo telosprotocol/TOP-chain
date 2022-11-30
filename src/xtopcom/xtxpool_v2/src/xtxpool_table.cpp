@@ -212,18 +212,10 @@ xpack_resource xtxpool_table_t::get_pack_resource(const xtxs_pack_para_t & pack_
         return {};
     }
 
-    {
-        XMETRICS_TIME_RECORD("txpool_verify_sendtx_after_get_txs_cost");
-        // check sendtx validation again after getting from pool
-        for (auto iter = txs.begin(); iter != txs.end(); ) {
-            if (false == verify_send_tx_after_get_txs(*iter)) {
-                iter = txs.erase(iter);
-            } else {
-                iter++;
-            }
-        }        
+    filter_txs_by_black_white_list(txs);
+    if (txs.empty()) {
+        return {};
     }
-
     auto self_sid = m_xtable_info.get_short_table_id();
 
     // if a peer table already have confirm tx tobe packed, do not use receipt id state to modify coressponding confirm id.
@@ -565,21 +557,45 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool
     return xsuccess;
 }
 
-bool xtxpool_table_t::verify_send_tx_after_get_txs(const xcons_transaction_ptr_t & tx) {
-    if (tx->is_send_or_self_tx()) {
-        if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr(), tx->get_target_addr())) {
-            tx_info_t info(tx);
-            pop_tx(info, true);
-            xwarn("xtxpool_table_t::verify_send_tx_after_get_txs fail-pop black addr tx,tx:%s", tx->dump().c_str());
-            return false;
-        }
-
-        if (xverifier::xwhitelist_utl::is_white_address_limit(tx->get_source_addr())) {
-            xwarn("xtxpool_table_t::verify_send_tx_after_get_txs fail-whitelist limit address,tx:%s", tx->dump().c_str());
-            return false;
+void xtxpool_table_t::filter_txs_by_black_white_list(std::vector<xcons_transaction_ptr_t> & txs) {
+    auto whitelist_enable = xverifier::xwhitelist_utl::is_whitelist_enable();
+    std::set<std::string> write_addrs;
+    auto black_addrs = xverifier::xblacklist_utl_t::black_config();
+    if (whitelist_enable) {
+        write_addrs = xverifier::xwhitelist_utl::whitelist_config();
+        if (write_addrs.empty()) {
+            txs.clear();
+            xwarn("xtxpool_table_t::filter_txs_by_black_white_list fail-whitelist empty,all txs filted.");
+            return;
         }
     }
-    return true;
+    if (write_addrs.empty() && black_addrs.empty()) {
+        return;
+    }
+
+    auto iter = txs.begin();
+    for (; iter != txs.end();) {
+        if (!(*iter)->is_send_or_self_tx()) {
+            iter++;
+            continue;
+        }
+        auto & source_addr = (*iter)->get_source_addr();
+        auto & target_addr = (*iter)->get_target_addr();
+        if (!write_addrs.empty() && std::find(write_addrs.begin(), write_addrs.end(), source_addr) == std::end(write_addrs)) {
+            xwarn("xtxpool_table_t::filter_txs_by_black_white_list fail-whitelist limit address,tx:%s", (*iter)->dump().c_str());
+            iter = txs.erase(iter);
+            continue;
+        }
+        if (std::find(black_addrs.begin(), black_addrs.end(), source_addr) != std::end(black_addrs) ||
+            std::find(black_addrs.begin(), black_addrs.end(), target_addr) != std::end(black_addrs)) {
+            xwarn("xtxpool_table_t::filter_txs_by_black_white_list fail-pop black addr tx,tx:%s", (*iter)->dump().c_str());
+            tx_info_t info(*iter);
+            pop_tx(info, true);
+            iter = txs.erase(iter);
+            continue;
+        }
+        iter++;
+    }
 }
 
 int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) const {
