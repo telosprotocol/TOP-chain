@@ -452,16 +452,16 @@ int main(int argc, char ** argv) {
             tools.export_to_json(table_address, table_height, result, json_file_name, account_string.empty() ? std::ios_base::trunc : std::ios_base::app, ec);
         }
     } else if (function_name == "export_bstate") {
+        // xdb_export db_path export_bstate table0:height0,table1:height1,... [account0,[account1,...]]
         if (argc < 5) {
             usage();
             return -1;
         }
 
-        auto const & exported_file_path = argv[3];
-        auto const & table_query = argv[4];
+        auto const & table_query = argv[3];
         std::string account_string;
-        if (argc == 6) {
-            account_string = argv[5];
+        if (argc == 5) {
+            account_string = argv[4];
         }
 
         std::vector<std::string> table_info;
@@ -483,13 +483,28 @@ int main(int argc, char ** argv) {
             });
         }
 
-        std::unordered_map<common::xaccount_address_t, uint64_t> accounts_info;
-        std::error_code ec;
-        for (auto const & tbl : table_query_criteria) {
-            ec.clear();
+        auto genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>("");
+        data::xrootblock_para_t rootblock_para;
+        genesis_loader->extract_genesis_para(rootblock_para);
+        data::xrootblock_t::init(rootblock_para);
+        auto const & genesis_data = rootblock_para.m_account_balances;
+        std::unordered_set<common::xaccount_address_t> genesis_accounts;
+        for (auto const & genesis_account_datum : genesis_data) {
+            genesis_accounts.insert(common::xaccount_address_t::build_from(top::get<std::string const>(genesis_account_datum)));
+        }
+
+        #pragma omp parallel for
+        for (uint i = 0; i < table_query_criteria.size(); ++i) {
+            auto it = std::next(std::begin(table_query_criteria), i);
+            auto const & tbl = *it;
+
+            std::error_code ec;
 
             auto const & table_address = top::get<common::xtable_address_t const>(tbl);
             auto const table_height = top::get<uint64_t>(tbl);
+
+            std::string json_file_name = table_address.to_string() + '_' + std::to_string(table_height) + ".json";
+
             auto units = tools.get_unit_accounts(table_address, table_height, queried_accounts, ec);
             if (ec) {
                 std::cerr << "get_unit_accounts on table " << table_address.to_string() << " at height " << table_height << " failed with error code " << ec.value() << " msg "
@@ -497,8 +512,8 @@ int main(int argc, char ** argv) {
                 continue;
             }
 
-            auto const result = tools.get_account_bstate_data(units, ec);
-            tools.append_to_json(table_address, table_height, result, exported_file_path, ec);
+            auto const result = tools.get_account_bstate_data(units, genesis_accounts, table_address, ec);
+            tools.export_to_json(table_address, table_height, result, json_file_name, account_string.empty() ? std::ios_base::trunc : std::ios_base::app, ec);
         }
     } else {
         usage();

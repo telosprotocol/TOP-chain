@@ -126,12 +126,15 @@ public:
     };
 
     std::vector<exported_account_bstate_data> get_account_bstate_data(std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> const & accounts,
+                                                                      std::unordered_set<common::xaccount_address_t> const & genesis_accounts,
+                                                                      common::xtable_address_t const & table_address,
                                                                       std::error_code & ec) const;
 
-    void append_to_json(common::xtable_address_t const & table_address,
+    void export_to_json(common::xtable_address_t const & table_address,
                         uint64_t table_height,
                         std::vector<exported_account_bstate_data> const & data,
                         std::string const & file_path,
+                        std::ios_base::openmode const open_mode,
                         std::error_code & ec) const;
 
 private:
