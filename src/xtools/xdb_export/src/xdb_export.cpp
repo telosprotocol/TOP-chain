@@ -2396,6 +2396,8 @@ void xdb_export_tools_t::export_to_json(common::xtable_address_t const & table_a
 }
 
 std::vector<xdb_export_tools_t::exported_account_bstate_data> xdb_export_tools_t::get_account_bstate_data(std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> const & accounts,
+                                                                                                          std::unordered_set<common::xaccount_address_t> const & genesis_accounts,
+                                                                                                          common::xtable_address_t const & table_address,
                                                                                                           std::error_code & ec) const {
     assert(!ec);
     assert(m_blockstore != nullptr);
@@ -2414,7 +2416,7 @@ std::vector<xdb_export_tools_t::exported_account_bstate_data> xdb_export_tools_t
             return {};
         }
 
-        std::string bytes_data = unit_bstate->take_snapshot();
+        std::string bytes_data = unit_bstate->get_bstate()->export_state();
         if (bytes_data.empty()) {
             ec = xerrc_t::unit_state_not_found;
             xwarn("account %s a height %" PRIu64 " state not found. xdb_export_tools_t::get_account_bstate_data returns {}", account_address.to_string().c_str(), account_index.get_latest_unit_height());
@@ -2430,19 +2432,72 @@ std::vector<xdb_export_tools_t::exported_account_bstate_data> xdb_export_tools_t
         result.emplace_back(std::move(data));
     }
 
+    {
+        for (auto const & genesis_account_address : genesis_accounts) {
+            if (genesis_account_address.table_address() != table_address) {
+                continue;
+            }
+
+            if (std::find_if(std::begin(result), std::end(result), [&genesis_account_address](exported_account_bstate_data const & exported_account_datum) {
+                    return genesis_account_address == exported_account_datum.account_address;
+                }) == std::end(result)) {
+
+                base::xaccount_index_t genesis_account_index;
+                if (!statestore::xstatestore_hub_t::instance()->get_accountindex(0, genesis_account_address, genesis_account_index)) {
+                    ec = xerrc_t::account_data_not_found;
+                    xerror("genesis account %s index not found. xdb_export_tools_t::get_account_bstate_data returns {}", genesis_account_address.to_string().c_str());
+                    return {};
+                }
+
+                if (genesis_account_index.get_latest_unit_height() > 0) {
+                    xinfo("genesis account %s don't need to be exported", genesis_account_address.to_string().c_str());
+                    continue;
+                }
+
+                auto unit_bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(genesis_account_address, genesis_account_index);
+                if (unit_bstate == nullptr) {
+                    ec = xerrc_t::account_data_not_found;
+                    xwarn("genesis account %s state not found. xdb_export_tools_t::get_account_bstate_data returns {}",
+                          genesis_account_address.to_string().c_str(),
+                          genesis_account_index.get_latest_unit_height());
+                    return {};
+                }
+
+                std::string bytes_data = unit_bstate->get_bstate()->export_state();
+                if (bytes_data.empty()) {
+                    ec = xerrc_t::unit_state_not_found;
+                    xwarn("genesis_account %s a height %" PRIu64 " state not found. xdb_export_tools_t::get_account_bstate_data returns {}",
+                          genesis_account_address.to_string().c_str(),
+                          genesis_account_index.get_latest_unit_height());
+                    assert(false);
+                    return {};
+                }
+
+                exported_account_bstate_data genesis_datum;
+                genesis_datum.account_address = genesis_account_address;
+                genesis_datum.unit_height = genesis_account_index.get_latest_unit_height();
+                genesis_datum.serialized_bstate = xbytes_t{std::begin(bytes_data), std::end(bytes_data)};
+
+                result.push_back(std::move(genesis_datum));
+            }
+        }
+    }
+
     return result;
 }
 
-void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_address,
+void xdb_export_tools_t::export_to_json(common::xtable_address_t const & table_address,
                                         uint64_t const table_height,
                                         std::vector<exported_account_bstate_data> const & data,
                                         std::string const & file_path,
+                                        std::ios_base::openmode const open_mode,
                                         std::error_code & /*ec*/) const {
     nlohmann::json root;
-    std::ofstream out{file_path, std::ios::out | std::ios::app};
+    std::ofstream out{file_path, std::ios::out | open_mode};
 
     auto & table_json = root[table_address.to_string()];
     table_json["account_count"] = data.size();
+    table_json["table_height"] = table_height;
 
     for (auto const & account_datum : data) {
         auto const & account_address = account_datum.account_address;
@@ -2454,7 +2509,6 @@ void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_a
         nlohmann::json account_json;
 
         account_json["unit_height"] = unit_height;
-        account_json["associated_table_height"] = table_height;
         account_json["bstate"] = to_hex(std::begin(bstate_bytes), std::end(bstate_bytes), "0x");
 
         table_json[account_address.to_string()] = account_json;
