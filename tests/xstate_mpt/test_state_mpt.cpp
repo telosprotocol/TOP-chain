@@ -83,11 +83,11 @@ TEST_F(test_state_mpt_fixture, test_db) {
     std::string v3{"value3"};
 
     std::error_code ec;
-    EXPECT_FALSE(mpt_db.Has({k1.begin(), k1.end()}, ec));
+    EXPECT_FALSE(mpt_db.has(k1, ec));
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    EXPECT_EQ(mpt_db.Get({k1.begin(), k1.end()}, ec), xbytes_t{});
+    EXPECT_EQ(mpt_db.get(k1, ec), xbytes_t{});
     EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 
     ec.clear();
@@ -103,15 +103,15 @@ TEST_F(test_state_mpt_fixture, test_db) {
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    EXPECT_EQ(mpt_db.Get({k1.begin(), k1.end()}, ec), top::to_bytes(v1));
+    EXPECT_EQ(mpt_db.get(k1, ec), top::to_bytes(v1));
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    EXPECT_EQ(mpt_db.Get({k2.begin(), k2.end()}, ec), top::to_bytes(v2));
+    EXPECT_EQ(mpt_db.get(k2, ec), top::to_bytes(v2));
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    EXPECT_EQ(mpt_db.Get({k3.begin(), k3.end()}, ec), top::to_bytes(v3));
+    EXPECT_EQ(mpt_db.get(k3, ec), top::to_bytes(v3));
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
@@ -131,15 +131,15 @@ TEST_F(test_state_mpt_fixture, test_db) {
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    EXPECT_EQ(mpt_db.Get({k1.begin(), k1.end()}, ec), xbytes_t{});
+    EXPECT_EQ(mpt_db.get(k1, ec), xbytes_t{});
     EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 
     ec.clear();
-    EXPECT_EQ(mpt_db.Get({k2.begin(), k2.end()}, ec), xbytes_t{});
+    EXPECT_EQ(mpt_db.get(k2, ec), xbytes_t{});
     EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 
     ec.clear();
-    EXPECT_EQ(mpt_db.Get({k3.begin(), k3.end()}, ec), xbytes_t{});
+    EXPECT_EQ(mpt_db.get(k3, ec), xbytes_t{});
     EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 }
 
@@ -531,12 +531,12 @@ std::map<evm_common::xh256_t, xbytes_t> create_node_hash_data(size_t count) {
     return data;
 }
 
-std::map<xbytes_t, xbytes_t> create_node_bytes_data(size_t count) {
+std::map<evm_common::xh256_t, xbytes_t> create_node_bytes_data(size_t count) {
     top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
     top::base::enum_vaccount_addr_type account_address_type{top::base::enum_vaccount_addr_type_secp256k1_user_account};
     top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
 
-    std::map<xbytes_t, xbytes_t> data;
+    std::map<evm_common::xh256_t, xbytes_t> data;
     uint16_t ledger_id = top::base::xvaccount_t::make_ledger_id(static_cast<top::base::enum_xchain_id>(network_id.value()), zone_index);
     for (size_t i = 0; i < count; i++) {
         top::utl::xecprikey_t private_key;
@@ -551,7 +551,7 @@ std::map<xbytes_t, xbytes_t> create_node_bytes_data(size_t count) {
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
         // xhash256_t key{to_bytes(hashvalue)};
-        data[to_bytes(hashvalue)] = {str.begin(), str.end()};
+        data[evm_common::xh256_t{hashvalue}] = {str.begin(), str.end()};
     }
     return data;
 }
@@ -631,7 +631,7 @@ TEST_F(test_state_mpt_bench_fixture, test_cache_node_key_BENCH) {
 }
 
 TEST_F(test_state_mpt_bench_fixture, test_batch_node_BENCH) {
-    std::vector<std::map<xbytes_t, xbytes_t>> data;
+    std::vector<std::map<evm_common::xh256_t, xbytes_t>> data;
     for (auto i = 0; i < 1000000 / 1000; i++) {
         data.emplace_back(create_node_bytes_data(1000));
     }

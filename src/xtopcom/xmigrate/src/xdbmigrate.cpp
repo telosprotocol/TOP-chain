@@ -45,7 +45,7 @@ namespace top
 
         bool xmigratedb_t::set_values(const std::map<std::string, std::string> & batch)
         {
-            return m_db_face_ptr->batch_change(batch, {});
+            return m_db_face_ptr->batch_change(batch, std::vector<gsl::span<char const>>{});
         }
         
         bool xmigratedb_t::delete_value(const std::string &key)
@@ -53,7 +53,7 @@ namespace top
             return m_db_face_ptr->erase(key);
         }
         
-        const std::string xmigratedb_t::get_value(const std::string &key) const
+        std::string xmigratedb_t::get_value(const std::string &key) const
         {
             std::string value;
             bool success = m_db_face_ptr->read(key, value);
@@ -69,7 +69,12 @@ namespace top
             std::map<std::string, std::string> empty_put;
             return m_db_face_ptr->batch_change(empty_put, to_deleted_keys);
         }
-        
+
+        bool xmigratedb_t::delete_values(std::vector<gsl::span<char const >> const & to_deleted_keys) {
+            std::map<std::string, std::string> empty_put;
+            return m_db_face_ptr->batch_change(empty_put, to_deleted_keys);
+        }
+
         //prefix must start from first char of key
         bool   xmigratedb_t::read_range(const std::string& prefix, std::vector<std::string>& values)
         {

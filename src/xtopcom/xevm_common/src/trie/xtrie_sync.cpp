@@ -60,7 +60,7 @@ void Sync::AddSubTrie(xh256_t const & root, xbytes_t const & path, xh256_t const
         return;
     }
 
-    if (membatch.hasNode(root.to_bytes())) {
+    if (membatch.hasNode(root)) {
         xdbg("Sync::AddSubTrie already hash root: %s in membatch", root.hex().c_str());
         return;
     }
@@ -207,7 +207,7 @@ void Sync::ProcessUnit(SyncResult const & result, std::error_code & ec) {
 
 void Sync::Commit(xkv_db_face_ptr_t const & db) {
     // make sure last write syncRoot, should call once
-    assert(membatch.nodes.count(syncRoot.to_bytes()));
+    assert(membatch.nodes.count(syncRoot));
 
     WriteTrieNodeBatch(db, membatch.nodes);
     WriteUnitBatch(db, membatch.units);
@@ -331,7 +331,7 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
             assert(node != nullptr);
 
             auto const & hash = node->data();
-            if (membatch.hasNode(hash.to_bytes())) {
+            if (membatch.hasNode(hash)) {
                 continue;
             }
 
@@ -352,7 +352,7 @@ void Sync::commit(std::shared_ptr<request> req, std::error_code & ec) {
         unitKeys.erase(req->unit_sync_key);
         fetches[req->path.size()]--;
     } else {
-        membatch.nodes[req->hash.to_bytes()] = req->data;
+        membatch.nodes[req->hash] = req->data;
         nodeReqs.erase(req->hash);
         fetches[req->path.size()]--;
     }

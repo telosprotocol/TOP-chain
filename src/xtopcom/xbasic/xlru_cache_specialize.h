@@ -172,19 +172,19 @@ public:
         return true;
     }
 
-    bool back(KeyT & key, ValueT & value) const {
-        std::lock_guard<MutexT> lock{mutex_};
+    //bool back(KeyT & key, ValueT & value) const {
+    //    std::lock_guard<MutexT> lock{mutex_};
 
-        if (item_list_.empty()) {
-            return false;
-        }
+    //    if (item_list_.empty()) {
+    //        return false;
+    //    }
 
-        const auto & item = item_list_.back();
-        key = item.first;
-        value = item.second;
+    //    const auto & item = item_list_.back();
+    //    key = item.first;
+    //    value = item.second;
 
-        return true;
-    }
+    //    return true;
+    //}
 
     void erase(const KeyT & key) {
         std::lock_guard<MutexT> lock{mutex_};
@@ -198,6 +198,12 @@ public:
     bool contains(KeyT const & key) const {
         std::lock_guard<MutexT> lock{mutex_};
         return item_map_.find(key) != std::end(item_map_);
+    }
+
+    void clear() {
+        std::lock_guard<MutexT> lock{mutex_};
+        item_map_.clear();
+        item_list_.clear();
     }
 
 private:

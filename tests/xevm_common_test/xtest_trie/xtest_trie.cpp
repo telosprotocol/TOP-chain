@@ -235,7 +235,7 @@ commit:  9a53de09e43869f9ee8bea0535c15924a9f5f5f98c6ec81b4b3f2fc8c7090f8c  >  f8
 #endif
 
 #define ASSERT_DISK_DB_HAS(key, value)                                                                                                                                             \
-    ASSERT_TRUE(test_disk_db_ptr->Get(top::from_hex(std::string{key}, ec), ec) == top::from_hex(std::string{value}, ec));                                                          \
+    ASSERT_TRUE(test_disk_db_ptr->get(top::from_hex(std::string{key}, ec), ec) == top::from_hex(std::string{value}, ec));                                                          \
     ASSERT_TRUE(!ec);
 
     // clang-format off
