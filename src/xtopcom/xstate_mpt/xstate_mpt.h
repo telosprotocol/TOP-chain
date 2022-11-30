@@ -93,9 +93,10 @@ public:
     void load_into(std::unique_ptr<xstate_mpt_store_t> const & state_mpt_store, std::error_code & ec);
 
     void prune(evm_common::xh256_t const & old_trie_root_hash, std::error_code & ec) const;
+    void prune(evm_common::xh256_t const & old_trie_root_hash, std::unordered_set<evm_common::xh256_t> & pruned_hashes, std::error_code & ec) const;
 
     void commit_pruned(std::error_code & ec) const;
-
+    void commit_pruned(std::unordered_set<evm_common::xh256_t> const & pruned_hashes, std::error_code & ec) const;
     /// @brief Update modifies to trie and calculate root hash.
     /// @param ec Log the error code.
     /// @return New root hash.

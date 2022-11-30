@@ -37,7 +37,7 @@ namespace top
         public://key-value manage
             virtual bool                set_value(const std::string & key, const std::string& value) override;
             virtual bool                delete_value(const std::string & key) override;
-            virtual const std::string   get_value(const std::string & key) const override;
+            virtual std::string   get_value(const std::string & key) const override;
 
         public:
             virtual std::string         get_store_path() const  override {return m_store_path;}

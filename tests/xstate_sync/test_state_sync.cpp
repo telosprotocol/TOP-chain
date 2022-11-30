@@ -704,7 +704,7 @@ TEST_F(test_state_sync_fixture, test_sync_trie_success) {
     EXPECT_FALSE(m_syncer->error());
 
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second));
         EXPECT_FALSE(ec);
     }
@@ -747,7 +747,7 @@ TEST_F(test_state_sync_fixture, test_run_success) {
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second, ec));
         EXPECT_FALSE(ec);
     }

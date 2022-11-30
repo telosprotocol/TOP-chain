@@ -802,6 +802,30 @@ void xtop_trie::commit_pruned(std::error_code & ec) {
     pruner_.reset();
 }
 
+void xtop_trie::prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashed, std::error_code & ec) {
+    assert(!ec);
+
+    if (pruner_ == nullptr) {
+        pruner_ = make_unique<xtrie_pruner_t>();
+        pruner_->init(trie_root_, trie_db_, ec);
+    }
+
+    pruner_->prune(old_trie_root_hash, trie_db_, pruned_hashed, ec);
+}
+
+void xtop_trie::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashed, std::error_code & ec) {
+    assert(!ec);
+    assert(pruner_);
+
+    trie_db_->commit_pruned(pruned_hashed, ec);
+    if (ec) {
+        xwarn("commit prune failed");
+        return;
+    }
+
+    pruner_.reset();
+}
+
 std::string xtop_trie::to_string() const {
     if (trie_root_ != nullptr) {
         return trie_root_->fstring("");

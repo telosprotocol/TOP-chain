@@ -132,5 +132,18 @@ void xtop_secure_trie::commit_pruned(std::error_code & ec) {
     m_trie->commit_pruned(ec);
 }
 
+void xtop_secure_trie::prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
+    assert(!ec);
+    assert(m_trie != nullptr);
+
+    m_trie->prune(old_trie_root_hash, pruned_hashes, ec);
+}
+
+void xtop_secure_trie::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) {
+    assert(!ec);
+    assert(m_trie != nullptr);
+
+    m_trie->commit_pruned(pruned_hashes, ec);
+}
 
 NS_END3

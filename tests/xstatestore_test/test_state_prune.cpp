@@ -554,10 +554,11 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 #endif
 
 
-
-    for (uint32_t l = 0; l < mpt_prune_num; l++) {
+    std::unordered_set<evm_common::xh256_t> pruned_hashes;
+    t1 = base::xtime_utl::time_now_ms();
+    for (auto const & hash : mpt_root_vec) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
-        last_keep_mpt->prune(mpt_root_vec[l], ec);
+        last_keep_mpt->prune(hash, ec);
         // auto t_now = base::xtime_utl::time_now_ms();
         // uint32_t db_read_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
         // uint32_t db_write_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_write);
@@ -585,9 +586,10 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
               << ", total db delete range:" << (db_delete_range_after_prune - db_delete_range_before_prune)
               << ", ave:" << ((db_delete_range_after_prune - db_delete_range_before_prune) / mpt_prune_num) << std::endl;
 #else
-    std::cout << "prune total time cost(ms):" << (t2 - t1) << ", ave:" << ((t2 - t1) / mpt_prune_num) << std::endl;
+    std::cout << "prune total time cost(ms):" << (t2 - t1) << ", ave:" << ((t2 - t1) / mpt_prune_num) << ", prune called " << mpt_prune_num << std::endl;
 #endif
 
+    t2 = base::xtime_utl::time_now_ms();
     last_keep_mpt->commit_pruned(ec);
     if (ec) {
         assert(false);

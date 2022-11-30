@@ -28,6 +28,8 @@ public:
     void init(std::shared_ptr<xtrie_node_face_t> const & trie_root, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
 
     void prune(xh256_t const & old_trie_root_hash, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
+    void prune(xh256_t const & old_trie_root_hash, observer_ptr<xtrie_db_t> trie_db, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
+    void commit_pruned(observer_ptr<xtrie_db_t> trie_db, std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
 private:
     std::shared_ptr<xtrie_node_face_t> load_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
@@ -40,6 +42,23 @@ private:
     void try_prune_hash_node(std::shared_ptr<xtrie_hash_node_t> const & hash_node, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
     void try_prune_short_node(std::shared_ptr<xtrie_short_node_t> const & short_node, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
     void try_prune_full_node(std::shared_ptr<xtrie_full_node_t> const & full_node, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
+
+    void try_prune_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node,
+                             observer_ptr<xtrie_db_t> trie_db,
+                             std::unordered_set<xh256_t> & pruned_hashes,
+                             std::error_code & ec);
+    void try_prune_hash_node(std::shared_ptr<xtrie_hash_node_t> const & hash_node,
+                             observer_ptr<xtrie_db_t> trie_db,
+                             std::unordered_set<xh256_t> & pruned_hashes,
+                             std::error_code & ec);
+    void try_prune_short_node(std::shared_ptr<xtrie_short_node_t> const & short_node,
+                              observer_ptr<xtrie_db_t> trie_db,
+                              std::unordered_set<xh256_t> & pruned_hashes,
+                              std::error_code & ec);
+    void try_prune_full_node(std::shared_ptr<xtrie_full_node_t> const & full_node,
+                             observer_ptr<xtrie_db_t> trie_db,
+                             std::unordered_set<xh256_t> & pruned_hashes,
+                             std::error_code & ec);
 };
 using xtrie_pruner_t = xtop_trie_pruner;
 

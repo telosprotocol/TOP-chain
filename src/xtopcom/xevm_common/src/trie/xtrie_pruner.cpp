@@ -141,7 +141,7 @@ void xtop_trie_pruner::prune(xh256_t const & old_trie_root_hash, observer_ptr<xt
     assert(!ec);
 
     auto const trie_root = std::make_shared<xtrie_hash_node_t>(old_trie_root_hash);
-    try_prune_trie_node(trie_root, trie_db, ec);
+    try_prune_hash_node(trie_root, trie_db, ec);
 }
 
 void xtop_trie_pruner::try_prune_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, observer_ptr<xtrie_db_t> const trie_db, std::error_code & ec) {
@@ -256,6 +256,146 @@ void xtop_trie_pruner::try_prune_full_node(std::shared_ptr<xtrie_full_node_t> co
         }
 
         trie_db->prune(hash, ec);
+    }
+}
+
+void xtop_trie_pruner::prune(xh256_t const & old_trie_root_hash, observer_ptr<xtrie_db_t> const trie_db, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
+    assert(!ec);
+
+    auto const trie_root = std::make_shared<xtrie_hash_node_t>(old_trie_root_hash);
+    try_prune_hash_node(trie_root, trie_db, pruned_hashes, ec);
+}
+
+void xtop_trie_pruner::try_prune_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, observer_ptr<xtrie_db_t> const trie_db, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
+    assert(!ec);
+
+    if (trie_node == nullptr) {
+        ec = error::xerrc_t::trie_node_unexpected;
+        xwarn("empty trie node");
+        return;
+    }
+
+    switch (trie_node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
+    case xtrie_node_type_t::hashnode: {
+        auto const hash_node = std::dynamic_pointer_cast<xtrie_hash_node_t>(trie_node);
+        assert(hash_node != nullptr);
+
+        try_prune_hash_node(hash_node, trie_db, pruned_hashes, ec);
+
+        break;
+    }
+
+    case xtrie_node_type_t::valuenode: {
+        break;
+    }
+
+    case xtrie_node_type_t::shortnode: {
+        auto const short_node = std::dynamic_pointer_cast<xtrie_short_node_t>(trie_node);
+        assert(short_node != nullptr);
+
+        try_prune_short_node(short_node, trie_db, pruned_hashes, ec);
+
+        break;
+    }
+
+    case xtrie_node_type_t::fullnode: {
+        auto const full_node = std::dynamic_pointer_cast<xtrie_full_node_t>(trie_node);
+        assert(full_node != nullptr);
+
+        try_prune_full_node(full_node, trie_db, pruned_hashes, ec);
+
+        break;
+    }
+
+    default: {
+        assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
+        ec = error::xerrc_t::trie_node_unexpected;
+        xerror("unknown type(%d) of trie node", static_cast<int>(trie_node->type()));
+        break;
+    }
+    }
+}
+
+void xtop_trie_pruner::try_prune_hash_node(std::shared_ptr<xtrie_hash_node_t> const & hash_node,
+                                           observer_ptr<xtrie_db_t> const trie_db,
+                                           std::unordered_set<xh256_t> & pruned_hashes,
+                                           std::error_code & ec) {
+    assert(!ec);
+
+    auto const & hash = hash_node->data();
+    assert(hash_node->data().size() == 32);
+
+    if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
+        auto const node = trie_db->node(hash);
+        if (node != nullptr) {
+            try_prune_trie_node(node, trie_db, pruned_hashes, ec);
+        }
+
+        if (pruned_hashes.find(hash) == std::end(pruned_hashes)) {
+            pruned_hashes.insert(hash);
+        }
+        // trie_db->prune(hash, ec);
+    }
+}
+
+void xtop_trie_pruner::try_prune_short_node(std::shared_ptr<xtrie_short_node_t> const & short_node,
+                                            observer_ptr<xtrie_db_t> const trie_db,
+                                            std::unordered_set<xh256_t> & pruned_hashes,
+                                            std::error_code & ec) {
+    assert(!ec);
+
+    auto new_short_node = short_node;
+
+    if (short_node->cache().hash_node() == nullptr) {
+        auto hasher = xtrie_hasher_t::newHasher(false);
+
+        auto const hash_result = hasher.hash(short_node, true);
+        new_short_node = std::dynamic_pointer_cast<xtrie_short_node_t>(hash_result.second);
+        assert(new_short_node != nullptr);
+    }
+
+    auto const & hash = new_short_node->cache().hash_node()->data();
+    assert(!hash.empty());
+
+    if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
+        try_prune_trie_node(new_short_node->val, trie_db, pruned_hashes, ec);
+
+        if (pruned_hashes.find(hash) == std::end(pruned_hashes)) {
+            pruned_hashes.insert(hash);
+        }
+        // trie_db->prune(hash, ec);
+    }
+}
+
+void xtop_trie_pruner::try_prune_full_node(std::shared_ptr<xtrie_full_node_t> const & full_node,
+                                           observer_ptr<xtrie_db_t> const trie_db,
+                                           std::unordered_set<xh256_t> & pruned_hashes,
+                                           std::error_code & ec) {
+    assert(!ec);
+    auto new_full_node = full_node;
+
+    if (full_node->cache().hash_node() == nullptr) {
+        auto hasher = xtrie_hasher_t::newHasher(false);
+
+        auto const hash_result = hasher.hash(full_node, true);
+        new_full_node = std::dynamic_pointer_cast<xtrie_full_node_t>(hash_result.second);
+        assert(new_full_node != nullptr);
+    }
+
+    auto const & hash = full_node->cache().hash_node()->data();
+    assert(!hash.empty());
+
+    if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
+        for (auto const & child : new_full_node->children) {
+            if (child != nullptr) {
+                try_prune_trie_node(child, trie_db, pruned_hashes, ec);
+            }
+        }
+
+        if (pruned_hashes.find(hash) == std::end(pruned_hashes)) {
+            pruned_hashes.insert(hash);
+        }
+        // trie_db->prune(hash, ec);
     }
 }
 

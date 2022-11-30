@@ -157,7 +157,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_success) {
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second, ec));
         EXPECT_FALSE(ec);
     }
@@ -189,7 +189,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_in_bad_connec
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second, ec));
         EXPECT_FALSE(ec);
     }
@@ -221,7 +221,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_wrong_da
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second, ec));
         EXPECT_FALSE(ec);
     }
@@ -253,7 +253,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_empty_da
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second, ec));
         EXPECT_FALSE(ec);
     }
@@ -288,7 +288,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_task_flooding
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second, ec));
         EXPECT_FALSE(ec);
     }
@@ -379,7 +379,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_req_limit) {
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
-        auto v = m_syncer->m_kv_db->Get(from_hex(k.first), ec);
+        auto v = m_syncer->m_kv_db->get(from_hex(k.first), ec);
         EXPECT_EQ(v, from_hex(k.second, ec));
         EXPECT_FALSE(ec);
     }

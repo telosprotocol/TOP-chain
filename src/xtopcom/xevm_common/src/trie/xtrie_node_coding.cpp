@@ -239,7 +239,20 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::must_decode_node(xh256_t const & hash_
     return n;
 }
 
+xtrie_node_face_ptr_t xtop_trie_node_rlp::must_decode_node(xh256_t const & hash_bytes, gsl::span<xbyte_t const> const buf) {
+    std::error_code ec;
+    auto n = decode_node(hash_bytes, buf, ec);
+    if (ec) {
+        xerror("decode error: %s", ec.message().c_str());
+    }
+    return n;
+}
+
 xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_node(xh256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec) {
+    return decode_node(std::make_shared<xtrie_hash_node_t>(hash_bytes), buf, ec);
+}
+
+xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_node(xh256_t const & hash_bytes, gsl::span<xbyte_t const> const buf, std::error_code & ec) {
     return decode_node(std::make_shared<xtrie_hash_node_t>(hash_bytes), buf, ec);
 }
 
