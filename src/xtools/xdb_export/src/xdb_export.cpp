@@ -2399,7 +2399,7 @@ void xdb_export_tools_t::export_to_json(common::xtable_address_t const & table_a
     out.close();
 }
 
-std::vector<xdb_export_tools_t::exported_account_bstate_data> xdb_export_tools_t::get_account_bstate_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts,
+std::vector<xdb_export_tools_t::exported_account_bstate_data> xdb_export_tools_t::get_account_bstate_data(std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> const & accounts,
                                                                                                           std::error_code & ec) const {
     assert(!ec);
     assert(m_blockstore != nullptr);
@@ -2407,39 +2407,29 @@ std::vector<xdb_export_tools_t::exported_account_bstate_data> xdb_export_tools_t
     std::vector<exported_account_bstate_data> result;
     for (auto const & account_datum : accounts) {
         auto const & account_address = top::get<common::xaccount_address_t const>(account_datum);
-        auto const account_height = top::get<uint64_t>(account_datum);
+        auto const account_index = top::get<base::xaccount_index_t>(account_datum);
 
-        auto unit_vblock = m_blockstore->load_block_object(account_address.vaccount(), account_height, base::enum_xvblock_flag_committed, true);
-        if (unit_vblock == nullptr) {
+        // assert(account_address.table_address() == table_address);
+
+        auto unit_bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, account_index);
+        if (unit_bstate == nullptr) {
             ec = xerrc_t::account_data_not_found;
-            xwarn("account %s at height %" PRIu64 " with committed state not found. xdb_export_tools_t::get_account_bstate_data returns {}",
-                  account_address.to_string().c_str(),
-                  account_height);
+            xwarn("account %s at height %" PRIu64 " state not found. xdb_export_tools_t::get_account_bstate_data returns {}", account_address.to_string().c_str(), account_index.get_latest_unit_height());
             return {};
         }
 
-        auto unit_vbstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        if (unit_vbstate == nullptr) {
-            ec = xerrc_t::account_data_not_found;
-            xwarn("account %s at height %" PRIu64 " state not found. xdb_export_tools_t::get_account_bstate_data returns {}", account_address.to_string().c_str(), account_height);
-            return {};
-        }
-
-        std::string bytes_data;
-        unit_vbstate->take_snapshot(bytes_data);
+        std::string bytes_data = unit_bstate->take_snapshot();
         if (bytes_data.empty()) {
             ec = xerrc_t::unit_state_not_found;
-            xwarn("account %s a height %" PRIu64 " state not found. xdb_export_tools_t::get_account_bstate_data returns {}", account_address.to_string().c_str(), account_height);
+            xwarn("account %s a height %" PRIu64 " state not found. xdb_export_tools_t::get_account_bstate_data returns {}", account_address.to_string().c_str(), account_index.get_latest_unit_height());
             assert(false);
             return {};
         }
 
-        auto const unit_bstate = top::make_unique<data::xunit_bstate_t>(unit_vbstate.get());
-
         exported_account_bstate_data data;
         data.account_address = account_address;
         data.serialized_bstate = xbytes_t{std::begin(bytes_data), std::end(bytes_data)};
-        data.unit_height = account_height;
+        data.unit_height = account_index.get_latest_unit_height();
 
         result.emplace_back(std::move(data));
     }
