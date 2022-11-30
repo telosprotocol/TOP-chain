@@ -33,7 +33,7 @@ const uint64_t EXP_BASE = 104 * 1e4;
 
 class xaccount_context_t {
  public:
-    xaccount_context_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx);
+    xaccount_context_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx, uint64_t tx_nonce);
     xaccount_context_t(const data::xunitstate_ptr_t & unitstate);
 
     virtual ~xaccount_context_t();
@@ -43,7 +43,6 @@ class xaccount_context_t {
     }
     std::string get_address() const {return m_account->account_address().to_string();}
     bool    get_transaction_result(xtransaction_result_t& result);
-    bool finish_exec_all_txs(const std::vector<data::xcons_transaction_ptr_t> & txs);
     size_t  get_op_records_size() const;
     const std::vector<data::xcons_transaction_ptr_t> & get_create_txs() const {
         return m_contract_txs;
@@ -169,11 +168,7 @@ class xaccount_context_t {
     base::xauto_ptr<base::xdequevar_t<std::string>> load_deque_for_write(base::xvbstate_t* bstate, const std::string & key);
     base::xauto_ptr<base::xmapvar_t<std::string>>   load_map_for_write(base::xvbstate_t* bstate, const std::string & key);
 
-    void    set_tx_info_unconfirm_tx_num(uint32_t num);
-    void    set_tx_info_latest_sendtx_num(uint64_t num);
-    void    set_tx_info_latest_sendtx_hash(const std::string & hash);
-    void    set_tx_info_recvtx_num(uint64_t num);
-    void    get_latest_create_nonce_hash(uint64_t & nonce, uint256_t & hash);
+    void    get_latest_create_nonce_hash(uint64_t & nonce);
     void update_latest_create_nonce_hash(const data::xcons_transaction_ptr_t & tx);
     void    set_account_create_time();
 
@@ -186,17 +181,13 @@ class xaccount_context_t {
  private:
     data::xunitstate_ptr_t m_account{nullptr};
     uint64_t            m_latest_exec_sendtx_nonce{0};  // for exec tx
-    uint256_t           m_latest_exec_sendtx_hash;
     uint64_t            m_latest_create_sendtx_nonce{0};  // for contract create tx
-    uint256_t           m_latest_create_sendtx_hash;
 
     xobject_ptr_t<base::xvcanvas_t>     m_canvas{nullptr};
     statectx::xstatectx_face_ptr_t     m_statectx{nullptr};
     data::xcons_transaction_ptr_t m_currect_transaction{nullptr};
     std::vector<data::xcons_transaction_ptr_t> m_contract_txs;
 
-    std::string         m_origin_state_bin;
-    std::string         m_succ_property_binlog;
     std::vector<data::xcons_transaction_ptr_t> m_succ_contract_txs;
 
     data::xaction_asset_out m_source_pay_info;
