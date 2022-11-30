@@ -13,8 +13,8 @@
 
 NS_BEG2(top, txexecutor)
 
-xaccount_vm_t::xaccount_vm_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx) {
-    m_account_context = std::make_shared<store::xaccount_context_t>(unitstate, statectx);
+xaccount_vm_t::xaccount_vm_t(const data::xaccountstate_ptr_t & accountstate, const statectx::xstatectx_face_ptr_t & statectx) {
+    m_account_context = std::make_shared<store::xaccount_context_t>(accountstate->get_unitstate(), statectx, accountstate->get_tx_nonce());
 }
 
 int32_t xaccount_vm_t::exec_one_tx(store::xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx) {

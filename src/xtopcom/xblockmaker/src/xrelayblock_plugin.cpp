@@ -25,22 +25,22 @@ NS_BEG2(top, blockmaker)
 const uint16_t EXPIRE_DURATION = 300;
 
 void xrelayblock_plugin_t::init(statectx::xstatectx_ptr_t const& statectx_ptr, std::error_code & ec) {
-    base::xvaccount_t _vaddr(sys_contract_relay_make_block_addr);
-    m_relay_make_block_contract_state = statectx_ptr->load_unit_state(_vaddr);    
+    common::xaccount_address_t const& address = relay_make_block_contract_address;
+    m_relay_make_block_contract_state = statectx_ptr->load_account_state(address);    
     if (nullptr == m_relay_make_block_contract_state) {
         ec = blockmaker::error::xerrc_t::blockmaker_load_unitstate;
-        xerror("xrelayblock_plugin_t::init fail-load unitstate.%s", _vaddr.get_account().c_str());
+        xerror("xrelayblock_plugin_t::init fail-load unitstate.%s", address.to_string().c_str());
         return;
     }
-    m_last_phase = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
+    m_last_phase = m_relay_make_block_contract_state->get_unitstate()->string_get(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
     if (m_last_phase.empty()) {
         ec = blockmaker::error::xerrc_t::blockmaker_property_invalid;
         xerror("xrelayblock_plugin_t::init fail-invalid property.%s", 
-            _vaddr.get_account().c_str());
+            address.to_string().c_str());
         return;
     }
     xdbg("xrelayblock_plugin_t::init prop_phase=%s,accountnonce=%ld", 
-        m_last_phase.c_str(),m_relay_make_block_contract_state->account_send_trans_number());
+        m_last_phase.c_str(),m_relay_make_block_contract_state->get_tx_nonce());
 }
 
 std::vector<data::xcons_transaction_ptr_t>  xrelayblock_plugin_t::make_contract_txs(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {
@@ -70,8 +70,8 @@ data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_make_block_contra
         std::string call_params = get_new_relay_election_data(statectx_ptr, timestamp);
         base::xstream_t stream(base::xcontext_t::instance());
         stream << call_params;
-        data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(m_relay_make_block_contract_state->account_address().to_string(),
-                                                        m_relay_make_block_contract_state->account_send_trans_number(), m_relay_make_block_contract_state->account_send_trans_hash(),
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(relay_make_block_contract_address.to_string(),
+                                                        m_relay_make_block_contract_state->get_tx_nonce(),
                                                         func_name, std::string((char *)stream.data(), stream.size()), timestamp, EXPIRE_DURATION); 
         data::xcons_transaction_ptr_t contx = make_object_ptr<data::xcons_transaction_t>(tx.get());
         xdbg_info("xrelayblock_plugin_t::make_relay_make_block_contract_tx tx=%s", contx->dump().c_str());
@@ -167,9 +167,9 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
 }
 
 xblock_resource_description_t xrelayblock_plugin_t::make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const {
-    std::string after_prop_phase = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
+    std::string after_prop_phase = m_relay_make_block_contract_state->get_unitstate()->string_get(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
     if (after_prop_phase != m_last_phase && after_prop_phase == "2") {
-        std::string prop_relayblock = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_BLOCK_STR);
+        std::string prop_relayblock = m_relay_make_block_contract_state->get_unitstate()->string_get(data::system_contract::XPROPERTY_RELAY_BLOCK_STR);
         if (prop_relayblock.empty()) {
             ec = blockmaker::error::xerrc_t::blockmaker_property_invalid;
             xerror("xrelayblock_plugin_t::make_resource fail-relayblock property empty.");

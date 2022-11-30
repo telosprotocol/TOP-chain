@@ -54,7 +54,7 @@ bool xstate_reseter::exec_reset() {
 
     // 2 && 3 fork time && contract properties should be linked.
     assert(!m_corresponse_contract_address.empty());
-    auto fork_info_contract_unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{m_corresponse_contract_address});
+    auto fork_info_contract_unit_state = m_statectx_ptr->load_unit_state(common::xaccount_address_t{m_corresponse_contract_address});
     if (fork_info_contract_unit_state == nullptr) {
         return false;
     }

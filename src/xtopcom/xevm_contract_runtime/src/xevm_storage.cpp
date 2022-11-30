@@ -19,25 +19,22 @@ const state_accessor::properties::xproperty_type_t evm_property_type_map = state
 xbytes_t xtop_evm_storage::storage_get(xbytes_t const & key) {
     xassert(m_statectx != nullptr);
     auto storage_key = decode_key_type(key);
+    common::xaccount_address_t address(storage_key.address);
 
     try {
-        auto unit_state = m_statectx->load_unit_state(storage_key.address);
-        assert(unit_state);
-        if (!unit_state) {
+        auto account_state = m_statectx->load_account_state(address);        
+        if (nullptr == account_state) {
+            xassert(false);
             return {};
         }
+        auto unit_state = account_state->get_unitstate();
         auto state_observer = make_observer(unit_state->get_bstate().get());
         auto canvas = unit_state->get_canvas();
         state_accessor::xstate_accessor_t sa{state_observer, canvas};
         std::error_code ec;
 
         if (storage_key.key_type == storage_key_type::Nonce) {
-            auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
-            auto value = sa.get_property_cell_value<evm_property_type_map>(property, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, ec);  // uint64_t in string
-            auto value_uint64 = base::xstring_utl::touint64(top::to_string(value));
-            assert(!ec);
-            top::error::throw_error(ec);
-
+            uint64_t value_uint64 = account_state->get_tx_nonce();
             xdbg("storage_get get nonce account:%s, nonce:%llu", storage_key.address.c_str(), value_uint64);
             xbytes_t result(8);
             evm_common::toBigEndian(value_uint64, result);
@@ -87,30 +84,24 @@ xbytes_t xtop_evm_storage::storage_get(xbytes_t const & key) {
 void xtop_evm_storage::storage_set(xbytes_t const & key, xbytes_t const & value) {
     xassert(m_statectx != nullptr);
     auto storage_key = decode_key_type(key);
-
+    common::xaccount_address_t address(storage_key.address);
+            
     try {
-        auto unit_state = m_statectx->load_unit_state(storage_key.address);
-        assert(unit_state);
-        if (!unit_state) {
+        auto account_state = m_statectx->load_account_state(address); 
+        if (nullptr == account_state) {
             return;
         }
+        auto unit_state = account_state->get_unitstate();
         auto state_observer = make_observer(unit_state->get_bstate().get());
         auto canvas = unit_state->get_canvas();
         state_accessor::xstate_accessor_t sa{state_observer, canvas};
         std::error_code ec;
 
         if (storage_key.key_type == storage_key_type::Nonce) {
-            auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
-
-            assert(value.size() == 8);
             uint64_t nonce_u64 = 0;
             nonce_u64 = evm_common::fromBigEndian<uint64_t>(value);
-
-            auto nonce_bytes = top::to_bytes(nonce_u64);
-            xdbg("storage_set set nonce account:%s, nonce:%llu", storage_key.address.c_str(), nonce_u64);
-            sa.set_property_cell_value<evm_property_type_map>(property, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, nonce_bytes, ec);
-            assert(!ec);
-            top::error::throw_error(ec);
+            xdbg("storage_set set nonce account:%s, nonce:%ld->%ld", storage_key.address.c_str(), account_state->get_tx_nonce(), nonce_u64);
+            account_state->set_tx_nonce(nonce_u64);
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
 #ifdef DEBUG
@@ -157,27 +148,22 @@ void xtop_evm_storage::storage_set(xbytes_t const & key, xbytes_t const & value)
 void xtop_evm_storage::storage_remove(xbytes_t const & key) {
     xassert(m_statectx != nullptr);
     auto storage_key = decode_key_type(key);
-
+    common::xaccount_address_t address(storage_key.address);
+            
     try {
-        auto unit_state = m_statectx->load_unit_state(storage_key.address);
-        assert(unit_state);
-        if (!unit_state) {
+        auto account_state = m_statectx->load_account_state(address); 
+        if (nullptr == account_state) {
             return;
         }
+        auto unit_state = account_state->get_unitstate();
         auto state_observer = make_observer(unit_state->get_bstate().get());
         auto canvas = unit_state->get_canvas();
         state_accessor::xstate_accessor_t sa{state_observer, canvas};
         std::error_code ec;
 
         if (storage_key.key_type == storage_key_type::Nonce) {
-            auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
-
             uint64_t nonce_uint64 = 0;
-            auto nonce = base::xstring_utl::tostring(nonce_uint64);
-            auto nonce_bytes = top::to_bytes(nonce_uint64);
-            sa.set_property_cell_value<evm_property_type_map>(property, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, nonce_bytes, ec);
-            assert(!ec);
-            top::error::throw_error(ec);
+            account_state->set_tx_nonce(nonce_uint64);
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
             evm_common::u256 value{0};

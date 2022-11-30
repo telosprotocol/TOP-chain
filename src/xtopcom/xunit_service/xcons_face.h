@@ -146,7 +146,6 @@ public:
     virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
     virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {}
-    virtual bool                        account_index_upgrade() = 0;
 };
 
 // block maker face

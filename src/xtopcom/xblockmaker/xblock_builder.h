@@ -49,9 +49,6 @@ class xunitbuilder_t {
 class xtablebuilder_t {
  public:
     static void     make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs);
-    static bool     update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
-                                                  const xblock_ptr_t & unit,
-                                                  const data::xunitstate_ptr_t & unit_state);
     static bool     update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
                                                   const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
 

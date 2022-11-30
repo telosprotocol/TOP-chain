@@ -13,6 +13,7 @@
 #include "xgasfee/xgas_estimate.h"
 #include "xtxexecutor/xtvm.h"
 #include "xtxexecutor/xtvm_v2.h"
+#include "xchain_fork/xutility.h"
 
 #include <string>
 #include <vector>
@@ -32,19 +33,26 @@ xatomictx_executor_t::xatomictx_executor_t(const statectx::xstatectx_face_ptr_t 
 
 }
 
-bool xatomictx_executor_t::update_nonce_and_hash(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
+bool xatomictx_executor_t::update_nonce_and_hash(const data::xaccountstate_ptr_t & accountstate, const xcons_transaction_ptr_t & tx) {
     if (tx->is_send_or_self_tx()) {
         uint64_t tx_nonce = tx->get_tx_nonce();
         uint256_t tx_hash = tx->get_tx_hash_256();
-        uint64_t account_nonce = unitstate->get_latest_send_trans_number();
+        uint64_t account_nonce = accountstate->get_tx_nonce();
         if (account_nonce + 1 != tx_nonce) {
             xerror("xatomictx_executor_t::update_nonce_and_hash fail-set nonce.tx=%s,account_nonce=%ld,nonce=%ld", tx->dump().c_str(), account_nonce, tx_nonce);
             return false;
         }
-        unitstate->set_tx_info_latest_sendtx_num(tx_nonce);
-        std::string transaction_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
-        unitstate->set_tx_info_latest_sendtx_hash(transaction_hash_str); // XTODO(jimmy)?
-        xdbg("xatomictx_executor_t::update_nonce_and_hash set nonce.tx=%s,nonce=%ld", tx->dump().c_str(), tx_nonce);
+
+        accountstate->increase_tx_nonce();  // set to account index
+        xdbg("xatomictx_executor_t::update_nonce_and_hash succ-nonce increase.tx=%s", tx->dump().c_str());
+        // TODO(jimmy) add fork to not set
+        bool forked = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_sync_point, m_para.get_clock());
+        if (!forked) {
+            accountstate->get_unitstate()->set_tx_info_latest_sendtx_num(tx_nonce);
+            std::string transaction_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
+            accountstate->get_unitstate()->set_tx_info_latest_sendtx_hash(transaction_hash_str); // XTODO(jimmy)?
+            xdbg("xatomictx_executor_t::update_nonce_and_hash set nonce.tx=%s,nonce=%ld", tx->dump().c_str(), tx_nonce);
+        }
     }
     return true;
 }
@@ -83,19 +91,12 @@ bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const
     return true;
 }
 
-bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
+bool xatomictx_executor_t::set_tx_account_state(const data::xaccountstate_ptr_t & accountstate, const xcons_transaction_ptr_t & tx) {
     // update account create time propertys
-    if (unitstate->height() < 2) {
-        unitstate->set_account_create_time(m_para.get_clock());
+    if (accountstate->get_unitstate()->height() < 2) {
+        accountstate->get_unitstate()->set_account_create_time(m_para.get_clock());
     }
-    return update_nonce_and_hash(unitstate, tx);
-
-    // TODO(jimmy) recvtx num has no value but will cause to state change
-    // if (tx->is_recv_tx()) {
-    //     uint64_t recv_num = unitstate->account_recv_trans_number();
-    //     unitstate->set_tx_info_recvtx_num(recv_num + 1);
-    // }
-    // return true;
+    return update_nonce_and_hash(accountstate, tx);
 }
 
 bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx) {
@@ -117,10 +118,10 @@ bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & ta
     return true;
 }
 
-bool xatomictx_executor_t::update_tx_related_state(const data::xunitstate_ptr_t & tx_unitstate, const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput) {
+bool xatomictx_executor_t::update_tx_related_state(const data::xaccountstate_ptr_t & tx_accountstate, const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput) {
     bool ret = false;
     for (auto & subtx : vmoutput.m_contract_create_txs) {
-        ret = set_tx_account_state(tx_unitstate, subtx);
+        ret = set_tx_account_state(tx_accountstate, subtx);
         if (!ret) {
             return ret;
         }
@@ -144,18 +145,18 @@ bool xatomictx_executor_t::update_tx_related_state(const data::xunitstate_ptr_t 
 bool xatomictx_executor_t::check_account_order(const xcons_transaction_ptr_t & tx) {
     // check account nonce order
     if (tx->is_send_or_self_tx()) {
-        std::string address = tx->get_source_addr();
-        base::xvaccount_t vaddr(address);
-        data::xunitstate_ptr_t unitstate = m_statectx->load_unit_state(vaddr);
-        if (nullptr == unitstate) {
+        common::xaccount_address_t address(tx->get_source_addr());
+        data::xaccountstate_ptr_t accountstate = m_statectx->load_account_state(address);
+        if (nullptr == accountstate) {
             xwarn("xatomictx_executor_t::check_account_order fail-load unit state.tx=%s", tx->dump().c_str());
             return false;
         }
-        uint64_t accountnonce = unitstate->get_latest_send_trans_number();
+        uint64_t accountnonce = accountstate->get_tx_nonce();
         if (tx->get_tx_nonce() != accountnonce+1) {
             xwarn("xatomictx_executor_t::check_account_order fail-nonce unmatch.tx=%s,account_nonce=%ld", tx->dump().c_str(), accountnonce);
             return false;
         }
+        xdbg("xatomictx_executor_t::check_account_order succ-nonce match.tx=%s,account_nonce=%ld", tx->dump().c_str(), accountnonce);
     }
     return true;
 }
@@ -242,7 +243,9 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
     tx->set_not_need_confirm();
     tx->set_inner_table_flag();
 
-    data::xunitstate_ptr_t unitstate = m_statectx->load_unit_state(tx->get_account_addr());
+    common::xaccount_address_t address(tx->get_account_addr());
+    data::xaccountstate_ptr_t accountstate = m_statectx->load_account_state(address);
+    data::xunitstate_ptr_t unitstate = accountstate->get_unitstate();
     gasfee::xgasfee_t gasfee{unitstate, tx, m_para.get_clock(), m_para.get_lock_tgas_token()};
     std::error_code ec;
 
@@ -287,7 +290,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 ret = tvm.execute(vminput, vmoutput);
             }
             if (ret == enum_exec_success) {
-                set_tx_account_state(unitstate, tx);
+                set_tx_account_state(accountstate, tx);
             }
         } else {
 #ifdef TXEXECUTOR_ENABLE_EVM
@@ -352,7 +355,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute_before_process(const x
     return enum_exec_success;
 }
 
-void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t & tx_unitstate,
+void xatomictx_executor_t::vm_execute_after_process(const data::xaccountstate_ptr_t & tx_accountstate,
                                                     const xcons_transaction_ptr_t & tx,
                                                     enum_execute_result_type vm_result,
                                                     xatomictx_output_t & output,
@@ -361,12 +364,12 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
     bool is_state_dirty = false;
     if (enum_exec_success != vm_result) {
         m_statectx->do_rollback();
-        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx);
+        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_accountstate->get_unitstate(), tx);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_fail);
-        set_tx_account_state(tx_unitstate, tx);
+        set_tx_account_state(tx_accountstate, tx);
     } else {
-        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx);
+        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_accountstate->get_unitstate(), tx);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
     }
@@ -398,7 +401,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
 
     if (is_pack_tx) {  // tx packed should update tx related state
         set_evm_receipt_info(tx, output.m_vm_output, gas_used);
-        bool tx_related_update = update_tx_related_state(tx_unitstate, tx, output.m_vm_output);
+        bool tx_related_update = update_tx_related_state(tx_accountstate, tx, output.m_vm_output);
         if (false == tx_related_update) {
             xassert(false);
             is_pack_tx = false;
@@ -423,10 +426,9 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
 enum_execute_result_type xatomictx_executor_t::execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output, uint64_t gas_used) {
     tx->clear_modified_state(); // TODO(jimmy)
 
-    std::string address = tx->get_account_addr();
-    base::xvaccount_t vaddr(address);
-    data::xunitstate_ptr_t tx_unitstate = m_statectx->load_unit_state(vaddr);
-    if (nullptr == tx_unitstate) {
+    common::xaccount_address_t address(tx->get_account_addr());
+    data::xaccountstate_ptr_t tx_accountstate = m_statectx->load_account_state(address);
+    if (nullptr == tx_accountstate) {
         xwarn("xatomictx_executor_t::execute fail-load unit state.tx=%s", tx->dump().c_str());
         return enum_exec_error_load_state;
     }
@@ -437,7 +439,7 @@ enum_execute_result_type xatomictx_executor_t::execute(const xcons_transaction_p
     }
 
     result = vm_execute(tx, output);
-    vm_execute_after_process(tx_unitstate, tx, result, output, gas_used);
+    vm_execute_after_process(tx_accountstate, tx, result, output, gas_used);
     return result;
 }
 

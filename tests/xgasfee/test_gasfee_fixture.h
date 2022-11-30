@@ -247,22 +247,30 @@ public:
 
     void build_default() {
         make_default();
-        sender = std::make_shared<data::xunit_bstate_t>(default_bstate.get(), false);
+        auto _sender = std::make_shared<data::xunit_bstate_t>(default_bstate.get(), false);
+        base::xaccount_index_t accountindex;
+        sender = std::make_shared<data::xaccount_state_t>(_sender, accountindex);
         recver_bstate = make_object_ptr<base::xvbstate_t>(default_recver, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-        recver = std::make_shared<data::xunit_bstate_t>(recver_bstate.get(), false);
+        auto _recver = std::make_shared<data::xunit_bstate_t>(recver_bstate.get(), false);
+        recver = std::make_shared<data::xaccount_state_t>(_recver, accountindex);
     }
 
     const data::xtablestate_ptr_t & get_table_state() const override {
         return table_state;
     }
 
-    data::xunitstate_ptr_t load_unit_state(const base::xvaccount_t & addr) override {
-        if (addr.get_account() == default_recver) {
+    data::xunitstate_ptr_t load_unit_state(common::xaccount_address_t const& address) override {
+        if (address.to_string() == default_recver) {
+            return recver->get_unitstate();
+        }
+        return sender->get_unitstate();
+    }
+    data::xaccountstate_ptr_t           load_account_state(common::xaccount_address_t const& address) override {
+        if (address.to_string() == default_recver) {
             return recver;
         }
         return sender;
     }
-
     bool do_rollback() override {
         return false;
     }
@@ -280,8 +288,8 @@ public:
     }
 
     data::xtablestate_ptr_t table_state{nullptr};
-    data::xunitstate_ptr_t sender{nullptr};
-    data::xunitstate_ptr_t recver{nullptr};
+    data::xaccountstate_ptr_t sender{nullptr};
+    data::xaccountstate_ptr_t recver{nullptr};
     xobject_ptr_t<base::xvbstate_t> sender_bstate{nullptr};
     xobject_ptr_t<base::xvbstate_t> recver_bstate{nullptr};
     std::string table_address{eth_table_address.to_string()};

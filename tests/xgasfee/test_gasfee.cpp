@@ -827,8 +827,8 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     p_statectx->default_sender = p_statectx->default_T6_sender;
     p_statectx->default_recver = p_statectx->default_T6_recver;
     p_statectx->build_default();
-    base::xvaccount_t sender_vaccount{p_statectx->default_sender};
-    base::xvaccount_t recver_vaccount{p_statectx->default_recver};
+    common::xaccount_address_t sender_vaccount{p_statectx->default_sender};
+    common::xaccount_address_t recver_vaccount{p_statectx->default_recver};
     auto sender_unitstate = statectx->load_unit_state(sender_vaccount);
     auto recver_unitstate = statectx->load_unit_state(recver_vaccount);
     sender_unitstate->tep_token_deposit(common::xtoken_id_t::eth, 20000);
