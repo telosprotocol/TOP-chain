@@ -306,24 +306,25 @@ void xtop_sniffer::normal_timer_func(common::xaccount_address_t const& contract_
 }
 
 void xtop_sniffer::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
-    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
-    assert(account != nullptr);
+    base::xaccount_index_t accountindex;
+    int32_t ret_pushtx = xsuccess;
+    bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, address, accountindex);
+    if (ret) {
+        auto tx = data::xtx_factory::create_v2_run_contract_tx(address,
+                                                        accountindex.get_latest_tx_nonce(),
+                                                        action_name,
+                                                        action_params,
+                                                        timestamp);
 
-    auto tx = data::xtx_factory::create_v2_run_contract_tx(address,
-                                                      account->account_send_trans_number(),
-                                                      action_name,
-                                                      action_params,
-                                                      timestamp);
-
-    int32_t r = m_vnode->txpool_proxy()->request_transaction_consensus(tx, true);
-    xinfo("[xtop_sniffer] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
-          r,
-          tx->get_digest_hex_str().c_str(),
-          address.to_string().c_str(),
-          data::to_hex_str(account->account_send_trans_hash()).c_str(),
-          account->account_send_trans_number(),
-          timestamp,
-          action_name.c_str());
+        int32_t r = m_vnode->txpool_proxy()->request_transaction_consensus(tx, true);
+        xinfo("[xtop_sniffer] call_contract in consensus mode with return code : %d, %s, %s %ld, %lld, %s",
+            r,
+            tx->get_digest_hex_str().c_str(),
+            address.to_string().c_str(),
+            accountindex.get_latest_tx_nonce(),
+            timestamp,
+            action_name.c_str());
+    }
 }
 
 void xtop_sniffer::call(common::xaccount_address_t const & address,
@@ -340,25 +341,26 @@ void xtop_sniffer::call(common::xaccount_address_t const & source_address,
                             std::string const & action_name,
                             std::string const & action_params,
                             uint64_t timestamp) const {
-    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(source_address);
-    assert(account != nullptr);
+    base::xaccount_index_t accountindex;
+    int32_t ret_pushtx = xsuccess;
+    bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, source_address, accountindex);
+    if (ret) {
+        auto tx = data::xtx_factory::create_v2_run_contract_tx(source_address,
+                                                        target_address,
+                                                        accountindex.get_latest_tx_nonce(),
+                                                        action_name,
+                                                        action_params,
+                                                        timestamp);
 
-    auto tx = data::xtx_factory::create_v2_run_contract_tx(source_address,
-                                                      target_address,
-                                                      account->account_send_trans_number(),
-                                                      action_name,
-                                                      action_params,
-                                                      timestamp);
-
-    int32_t r = m_vnode->txpool_proxy()->request_transaction_consensus(tx, true);
-    xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld, %s",
-            r,
-            tx->get_digest_hex_str().c_str(),
-          source_address.to_string().c_str(),
-            data::to_hex_str(account->account_send_trans_hash()).c_str(),
-            account->account_send_trans_number(),
-            timestamp,
-            action_name.c_str());
+        int32_t r = m_vnode->txpool_proxy()->request_transaction_consensus(tx, true);
+        xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %ld, %lld, %s",
+                r,
+                tx->get_digest_hex_str().c_str(),
+                source_address.to_string().c_str(),
+                accountindex.get_latest_tx_nonce(),
+                timestamp,
+                action_name.c_str());
+    }
 }
 
 NS_END4

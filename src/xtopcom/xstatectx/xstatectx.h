@@ -25,9 +25,10 @@ class xstatectx_t : public xstatectx_face_t {
     xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablestate_ext_ptr_t & prev_table_state, base::xvblock_t* commit_block, const statestore::xtablestate_ext_ptr_t & commit_table_state, const xstatectx_para_t & para);
  public:// APIs for vm & tx executor
     const data::xtablestate_ptr_t &     get_table_state() const override;
-    data::xunitstate_ptr_t              load_unit_state(const base::xvaccount_t & addr) override;
-    data::xunitstate_ptr_t              load_commit_unit_state(const base::xvaccount_t & addr) override;
-    data::xunitstate_ptr_t              load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) override;
+    data::xaccountstate_ptr_t           load_account_state(common::xaccount_address_t const& address) override;
+    data::xunitstate_ptr_t              load_unit_state(common::xaccount_address_t const& address) override;
+    data::xunitstate_ptr_t              load_commit_unit_state(common::xaccount_address_t const& address) override;
+    data::xunitstate_ptr_t              load_commit_unit_state(common::xaccount_address_t const& address, uint64_t height) override;
     bool                                do_rollback() override;
     size_t                              do_snapshot() override;
     void                                do_commit(base::xvblock_t* current_blockc) override;
@@ -38,12 +39,13 @@ class xstatectx_t : public xstatectx_face_t {
     statestore::xtablestate_ext_ptr_t const&   get_prev_tablestate_ext() const {return m_prev_tablestate_ext;}
 
  private:
-    xunitstate_ctx_ptr_t    load_unit_ctx(const base::xvaccount_t & addr);
+    xunitstate_ctx_ptr_t    load_unit_ctx(common::xaccount_address_t const& address);
     xunitstate_ctx_ptr_t    find_unit_ctx(const std::string & addr, bool is_same_table);
     void                    add_unit_ctx(const std::string & addr, bool is_same_table, const xunitstate_ctx_ptr_t & unit_ctx);
-    bool                    is_same_table(const base::xvaccount_t & addr) const;
+    bool                    is_same_table(common::xaccount_address_t const& address) const;
     const xstatectx_para_t & get_ctx_para() const {return m_statectx_para;}
  private:
+    common::xaccount_address_t          m_table_address;
     statestore::xtablestate_ext_ptr_t   m_prev_tablestate_ext{nullptr};
     xstatectx_base_t        m_statectx_base;
     xstatectx_para_t        m_statectx_para;

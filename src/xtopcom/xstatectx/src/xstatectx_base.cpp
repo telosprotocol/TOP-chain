@@ -43,10 +43,10 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_unit_bstate(st
 }
 
 xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::change_to_proposal_block_state(base::xaccount_index_t const& account_index, base::xvbstate_t* prev_bstate) const {
-    if (account_index.get_latest_unit_hash().empty()) {
-        xassert(false);
-        return nullptr;
-    }
+    // if (account_index.get_latest_unit_hash().empty()) {
+    //     xassert(false);
+    //     return nullptr;
+    // }
     return create_proposal_unit_bstate(prev_bstate->get_account(), account_index.get_latest_unit_height()+1, account_index.get_latest_unit_hash(), prev_bstate, m_clock);
 }
 
@@ -125,8 +125,8 @@ base::xvblkstatestore_t* xstatectx_base_t::get_xblkstatestore() const {
     return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
 }
 
-bool xstatectx_base_t::load_account_index(const base::xvaccount_t & account, base::xaccount_index_t & account_index) const {
-    return get_account_index(m_table_state, account.get_account(), account_index);                                            
+bool xstatectx_base_t::load_account_index(common::xaccount_address_t const& address, base::xaccount_index_t & account_index) const {
+    return get_account_index(m_table_state, address.to_string(), account_index);                                            
 }
 
 bool xstatectx_base_t::get_account_index(const statestore::xtablestate_ext_ptr_t & table_state,

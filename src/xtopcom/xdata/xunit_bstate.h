@@ -46,11 +46,6 @@ class xunit_bstate_t : public xbstate_ctx_t {
     inline uint64_t     lock_tgas() const {return uint64_property_get(XPROPERTY_LOCK_TGAS);}
     inline uint64_t     unvote_num() const {return uint64_property_get(XPROPERTY_UNVOTE_NUM);}
     uint64_t            get_account_create_time() const;
-    uint32_t            get_unconfirm_sendtx_num() const;
-    uint64_t            get_latest_send_trans_number() const;
-    uint64_t            account_recv_trans_number() const;
-    uint256_t           account_send_trans_hash() const;
-    uint64_t            account_send_trans_number() const;
     uint64_t            get_free_tgas() const ;
     uint64_t            get_total_tgas(uint32_t token_price) const ;
     uint64_t            get_last_tx_hour() const ;
@@ -72,7 +67,6 @@ class xunit_bstate_t : public xbstate_ctx_t {
     int32_t     set_account_create_time(uint64_t clock);
     int32_t     set_tx_info_latest_sendtx_num(uint64_t num);
     int32_t     set_tx_info_latest_sendtx_hash(const std::string & hash);
-    int32_t     set_tx_info_recvtx_num(uint64_t num);
 
     void transfer(common::xtoken_id_t const token_id, observer_ptr<xunit_bstate_t> const & recver_state, evm_common::u256 const & value, std::error_code & ec);
 
@@ -105,8 +99,36 @@ private:
     xbytes_t raw_owner(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_controller(std::error_code & ec) const;
     xbytes_t raw_controller(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
+
+private:  // TODO(jimmy) this apis will be droped in future
+    uint32_t            get_unconfirm_sendtx_num() const;
+    int32_t             set_tx_info_recvtx_num(uint64_t num);
+    uint64_t            account_recv_trans_number() const;
+    uint256_t           account_send_trans_hash() const;
+    uint64_t            account_send_trans_number() const;  
+    uint64_t            get_latest_send_trans_number() const; // XTODO not to use tx infos from unitstate      
 };
 
 using xunitstate_ptr_t = std::shared_ptr<xunit_bstate_t>;
+
+class xaccount_state_t {
+public:
+    xaccount_state_t(xunitstate_ptr_t const& unitstate, base::xaccount_index_t const& accoutindex);
+    xunitstate_ptr_t const&     get_unitstate() const {return m_unitstate;}
+    uint64_t                    get_tx_nonce() const {return m_accountindex.get_latest_tx_nonce();}
+    std::string const&          get_unit_hash() const {return m_accountindex.get_latest_unit_hash();}
+public:  // set in consensus
+    void                increase_tx_nonce();
+    void                set_tx_nonce(uint64_t txnonce);
+    void                update_account_index(base::xaccount_index_t const& accoutindex);
+    bool                do_rollback();
+    size_t              do_snapshot();
+
+private:
+    xunitstate_ptr_t            m_unitstate{nullptr};
+    base::xaccount_index_t      m_accountindex;
+    uint64_t                    m_nonce_snapshot{0};    
+};
+using xaccountstate_ptr_t = std::shared_ptr<xaccount_state_t>;
 
 NS_END2

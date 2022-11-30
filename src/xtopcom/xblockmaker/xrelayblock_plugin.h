@@ -25,7 +25,7 @@ class xrelayblock_plugin_t : public xblock_resource_plugin_face_t {  // TODO(jim
     data::xcons_transaction_ptr_t   make_relay_make_block_contract_tx(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec);
 
  private:   
-   data::xunitstate_ptr_t  m_relay_make_block_contract_state{nullptr};
+   data::xaccountstate_ptr_t  m_relay_make_block_contract_state{nullptr};
    std::string             m_last_phase;
    mutable bool            m_time_to_check_election{false};
 };

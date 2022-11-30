@@ -184,7 +184,6 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const std::string & get_ext() const = 0;
     virtual void set_memo(const std::string & memo) = 0;
     virtual const std::string & get_memo() const = 0;
-    virtual const std::string & get_target_address() const = 0;
     virtual bool is_evm_tx() const = 0;
     virtual xbytes_t const& get_data() const { static xbytes_t strNull; return strNull; }
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }

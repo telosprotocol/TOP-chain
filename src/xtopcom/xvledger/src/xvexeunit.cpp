@@ -316,7 +316,19 @@ namespace top
             }
             return false;
         }
-    
+
+        bool  xvexegroup_t::remove_all_child_unit()
+        {
+            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            for(auto it = m_child_units.begin(); it != m_child_units.end(); it++)
+            {
+                it->second->set_parent_unit(NULL);
+                it->second->release_ref();
+                m_child_units.erase(it);
+            }
+            return true;
+        }
+
         xvexeunit_t *   xvexegroup_t::find_child_unit(const std::string & unit_name) const
         {
             std::lock_guard<std::recursive_mutex> locker(m_lock);
@@ -371,7 +383,7 @@ namespace top
             
             return not_impl(op);
         }
-    
+
         //subclass extend behavior and load more information instead of a raw one
         //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
         int32_t    xvexegroup_t::do_write(xstream_t & stream)  //allow subclass extend behavior

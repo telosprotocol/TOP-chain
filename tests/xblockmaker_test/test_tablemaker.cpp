@@ -1161,7 +1161,7 @@ bool convert_func_random_true(const base::xvaccount_t & account, const base::xac
     }
     return convert_func_all_true(account, old_account_index, new_account_index);
 }
-
+#if 0
 TEST_F(test_tablemaker, account_index_upgrade) {
     uint32_t account_num = 1000;
     uint64_t height = 10000;
@@ -1209,7 +1209,8 @@ TEST_F(test_tablemaker, account_index_upgrade) {
         account_index_upgrade.clear();
     }
 }
-
+#endif
+#if 0
 TEST_F(test_tablemaker, account_index_upgrade_tool) {
     mock::xvchain_creator creator(true);
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -1279,3 +1280,4 @@ TEST_F(test_tablemaker, account_index_upgrade_tool) {
         EXPECT_EQ(account_index.get_latest_tx_nonce(), nonce);
     }
 }
+#endif

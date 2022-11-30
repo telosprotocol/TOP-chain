@@ -370,25 +370,24 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
             continue;
         }
 
-        data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
-        if (nullptr == account) {
+        base::xaccount_index_t accountindex;
+        bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, address, accountindex);
+        if (!ret) {
             xerror("xrole_context_t::call_contract fail-query account.address=%s", address.to_string().c_str());
-            xassert(nullptr != account);
-            return;
+            return;            
         }
         xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
             address.to_string(),
-                                                         account->account_send_trans_number(), account->account_send_trans_hash(),
+                                                         accountindex.get_latest_tx_nonce(),
                                                          info->action, action_params, timestamp, EXPIRE_DURATION);
 
         if (info->call_way == enum_call_action_way_t::consensus) {
             int32_t r = m_unit_service->request_transaction_consensus(tx, true);
-            xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
+            xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %ld, %lld",
                   r,
                   tx->get_digest_hex_str().c_str(),
                   address.to_string().c_str(),
-                  data::to_hex_str(account->account_send_trans_hash()).c_str(),
-                  account->account_send_trans_number(),
+                  accountindex.get_latest_tx_nonce(),
                   timestamp);
         } else {
             // TODO(jimmy) now support
@@ -409,25 +408,25 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
         return;
     }
 
-    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
-    if (nullptr == account) {
+    base::xaccount_index_t accountindex;
+    bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, address, accountindex);
+    if (!ret) {
         xerror("xrole_context_t::call_contract fail-query account.address=%s", address.to_string().c_str());
-        xassert(nullptr != account);
-        return;
+        return;            
     }
+
     xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
         address.to_string(),
-                                                     account->account_send_trans_number(), account->account_send_trans_hash(),
+                                                     accountindex.get_latest_tx_nonce(),
                                                      info->action, action_params, timestamp, EXPIRE_DURATION);
 
     if (info->call_way == enum_call_action_way_t::consensus) {
         int32_t r = m_unit_service->request_transaction_consensus(tx, true);
-        xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
+        xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %ld, %lld",
               r,
               tx->get_digest_hex_str().c_str(),
               address.to_string().c_str(),
-              data::to_hex_str(account->account_send_trans_hash()).c_str(),
-              account->account_send_trans_number(),
+              accountindex.get_latest_tx_nonce(),
               timestamp);
     } else {
         // TODO(jimmy) now support
@@ -441,14 +440,15 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
 
 void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& contract_name, std::string const& action_name, std::string const& action_params, uint64_t timestamp, uint16_t table_id) {
     auto const address = xcontract_address_map_t::calc_cluster_address(contract_name, table_id);
-    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
-    if (nullptr == account) {
+    base::xaccount_index_t accountindex;
+    bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, address, accountindex);
+    if (!ret) {
         xerror("xrole_context_t::on_fulltableblock_event fail-query account.address=%s", address.to_string().c_str());
-        xassert(nullptr != account);
-        return;
+        return;            
     }
+
     xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
-        address.to_string(), account->account_send_trans_number(), account->account_send_trans_hash(), action_name, action_params, timestamp, EXPIRE_DURATION);
+        address.to_string(), accountindex.get_latest_tx_nonce(), action_name, action_params, timestamp, EXPIRE_DURATION);
 
     auto const & driver_ids = m_driver->table_ids();
     auto result = find(driver_ids.begin(), driver_ids.end(), table_id);
@@ -456,12 +456,11 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
         return;
     }
     int32_t r = m_unit_service->request_transaction_consensus(tx, true);
-    xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
+    xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %ld, %lld",
             r,
             tx->get_digest_hex_str().c_str(),
           address.to_string().c_str(),
-            data::to_hex_str(account->account_send_trans_hash()).c_str(),
-            account->account_send_trans_number(),
+            accountindex.get_latest_tx_nonce(),
             timestamp);
 }
 
