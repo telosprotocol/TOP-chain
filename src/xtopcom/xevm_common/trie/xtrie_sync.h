@@ -73,11 +73,11 @@ private:
     // persisted data items.
     class syncMemBatch {
     public:
-        std::map<xbytes_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
+        std::map<xh256_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
         std::map<xbytes_t, xbytes_t> units;  // In-memory membatch of recently completed codes
 
     public:
-        inline bool hasNode(xbytes_t const & hash) const {
+        inline bool hasNode(xh256_t const & hash) const {
             return nodes.find(hash) != nodes.end();
         }
         inline bool hasUnit(xbytes_t const & hash) const {

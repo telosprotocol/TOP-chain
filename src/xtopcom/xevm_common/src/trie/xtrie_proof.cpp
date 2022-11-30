@@ -14,7 +14,7 @@ xbytes_t VerifyProof(xh256_t rootHash, xbytes_t const & _key, xkv_db_face_ptr_t 
     xdbg("[VerifyProof]: roothash: %s", rootHash.hex().c_str());
     xh256_t wantHash = rootHash;
     for (std::size_t index = 0;; index++) {
-        auto buf = proofDB->Get(to_bytes(wantHash), ec);
+        auto const & buf = proofDB->get(wantHash, ec);
         if (buf.empty()) {
             xwarn("proof node %zu (hash: %s) missing", index, wantHash.hex().c_str());
             ec = error::xerrc_t::trie_proof_missing;

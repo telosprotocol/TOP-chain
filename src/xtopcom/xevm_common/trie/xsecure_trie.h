@@ -115,8 +115,10 @@ public:
     }
 
     void prune(xh256_t const & old_trie_root_hash, std::error_code & ec) override;
+    void prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) override;
 
     void commit_pruned(std::error_code & ec) override;
+    void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) override;
 
 private:
     // hashKey returns the hash of key as an ephemeral buffer.

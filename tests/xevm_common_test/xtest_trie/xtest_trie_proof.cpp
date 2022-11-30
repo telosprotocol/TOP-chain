@@ -30,7 +30,7 @@ TEST_F(xtest_trie_fixture, test_prove_sample) {
     trie->prove(top::to_bytes(std::string{"doe"}), 0, test_proof_db_ptr, ec);
 
 #define ASSERT_PROOF_DB_HAS(key, value)                                                                                                                                            \
-    ASSERT_TRUE(test_proof_db_ptr->Get(top::from_hex(std::string{key}, ec), ec) == top::from_hex(std::string{value}, ec));                                                         \
+    ASSERT_TRUE(test_proof_db_ptr->get(top::from_hex(std::string{key}, ec), ec) == top::from_hex(std::string{value}, ec));                                                         \
     ASSERT_TRUE(!ec);
 
     // clang-format off
