@@ -258,17 +258,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
 
-    auto const new_version = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_block_fork_point, view_ev->get_clock());
-    if (new_version) {
-        auto ret = m_proposal_maker->account_index_upgrade();
-        if (!ret) {
-            xunit_warn("xbatch_packer::on_view_fire fail-account index upgrade,account=%s,viewid=%ld,clock=%ld,cert_height=%ld",
-                get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(),_cert_block->get_height());        
-            XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);            
-            return false;
-        }
-    }
-
     std::error_code ec;
     check_latest_cert_block(_cert_block.get(), view_ev, ec);
     if (ec) {

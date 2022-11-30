@@ -11,14 +11,18 @@ class xmock_statectx_t : public statectx::xstatectx_face_t {
     const data::xtablestate_ptr_t & get_table_state() const override {
         return m_tablestate_ptr;
     }
-    data::xunitstate_ptr_t load_unit_state(const base::xvaccount_t & addr) override {
-        if (m_mock_bstate.find(addr.get_account()) == m_mock_bstate.end()) {
-            top::base::xauto_ptr<top::base::xvbstate_t> bstate(new top::base::xvbstate_t(addr.get_account(), 1, 1, "", "", 0, 0, 0));
+    data::xunitstate_ptr_t load_unit_state(common::xaccount_address_t const& address) override {
+        if (m_mock_bstate.find(address.to_string()) == m_mock_bstate.end()) {
+            top::base::xauto_ptr<top::base::xvbstate_t> bstate(new top::base::xvbstate_t(address.to_string(), 1, 1, "", "", 0, 0, 0));
             auto unitstate_ptr = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
-            m_mock_bstate[addr.get_account()] = unitstate_ptr;
+            m_mock_bstate[address.to_string()] = unitstate_ptr;
         }
-        return m_mock_bstate.at(addr.get_account());
+        return m_mock_bstate.at(address.to_string());
     }
+    data::xaccountstate_ptr_t           load_account_state(common::xaccount_address_t const& address) override {
+        xassert(false);
+        return nullptr;
+    }    
     data::xunitstate_ptr_t load_commit_unit_state(const base::xvaccount_t & addr) {
         return nullptr;
     }

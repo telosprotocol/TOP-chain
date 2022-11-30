@@ -622,24 +622,11 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
     common::xaccount_address_t  account_address(account_addr);  // TODO(jimmy)  common::xaccount_address_t include xvaccount_t for performance
 
     base::xaccount_index_t account_index;
-    if (false == statestore::xstatestore_hub_t::instance()->get_accountindex_from_latest_connected_table(m_table_address, account_address, account_index)) {
+    if (false == statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, account_address, account_index)) {
         xtxpool_warn("xtxpool_table_t::get_account_latest_nonce fail-get account index.account:%s", account_addr.c_str());
         return false;        
     }
-    
-    if (account_index.get_latest_tx_nonce() == 0) {
-        // TODO(jimmy) for old version account index, should read nonce from unitstate
-        data::xunitstate_ptr_t account_state = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, account_index);
-        if (account_state == nullptr) {
-            uint64_t latest_connect_height = m_para->get_vblockstore()->get_latest_connected_block_height(account_address.vaccount());
-            xblocktool_t::check_lacking_unit_and_try_sync(account_address.vaccount(), account_index, latest_connect_height, m_para->get_vblockstore(), "txpool");
-            xtxpool_warn("xtxpool_table_t::get_account_latest_nonce fail-get unitstate. account_index=%s", account_index.dump().c_str());
-            return false;
-        }
-        latest_nonce = account_state->account_send_trans_number();
-    } else {
-        latest_nonce = account_index.get_latest_tx_nonce();
-    }
+    latest_nonce = account_index.get_latest_tx_nonce();
 
     xtxpool_dbg("xtxpool_table_t::get_account_latest_nonce table:%s,height:%llu,account:%s,index:%s",
                 m_xtable_info.get_account().c_str(),

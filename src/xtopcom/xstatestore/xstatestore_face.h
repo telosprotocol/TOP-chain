@@ -11,6 +11,7 @@
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xvpropertyprove.h"
 #include "xcommon/xaccount_address.h"
+#include "xcommon/xcommon.h"
 #include "xstate_mpt/xstate_mpt.h"
 #include "xstatestore/xtablestate_ext.h"
 
@@ -56,6 +57,9 @@ class xstatestore_face_t {
     // query accountindex
     virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const = 0;
+    virtual bool                    get_accountindex(const std::string& table_height, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
+    virtual bool                        get_accountindex(xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
+    virtual data::xaccountstate_ptr_t   get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
 
     // query unitstate
     virtual data::xunitstate_ptr_t  get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const = 0;
