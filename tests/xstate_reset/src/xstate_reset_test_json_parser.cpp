@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 #include "xstate_reset/xstate_tablestate_reseter_sample.h"
 #include "xstate_reset/xstate_tablestate_reseter_continuous_sample.h"
+#include "xstate_reset/xstate_tablestate_reseter_account_state_sample.h"
 #include "xstatectx/xstatectx_face.h"
 #include "xstatectx/xunitstate_ctx.h"
 
@@ -74,6 +75,24 @@ TEST(test_state_reset_continuous, json_parser) {
     // reseter.exec_reset_tablestate(1);
     // reseter.exec_reset_tablestate(9);
     // EXPECT_FALSE(mock_state->is_state_dirty());
+}
+
+TEST(_, 1) {
+    top::base::xauto_ptr<top::base::xvbstate_t> bstate(new top::base::xvbstate_t("T00000LKKvgzCQ2EBXftSdkGiBbMB4i5YLqrd8gF", 1, 1, "", "", 0, 0, 0));
+    auto unitstate_ptr = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
+    unitstate_ptr->set_tep_balance(static_cast<common::xtoken_id_t>(1), evm_common::u256{100});
+    unitstate_ptr->set_token_balance("$0", (base::vtoken_t)((uint64_t)1234567));
+    auto r = unitstate_ptr->get_bstate()->export_state();
+    std::cout << r.size() << ":" << to_hex(r) << std::endl;
+    // 00000000000000010100285430303030304c4b4b76677a435132454258667453646b476942624d42346935594c71726438674600000200bfff000010000000022430088eda96019fff0000110000000224313f0101010164
+
+    top::base::xauto_ptr<top::base::xvbstate_t> bstate2(new top::base::xvbstate_t("T00000LKKvgzCQ2EBXftSdkGiBbMB4i5YLqrd8gF", 1, 1, "", "", 0, 0, 0));
+    auto unitstate_ptr2 = std::make_shared<data::xunit_bstate_t>(bstate2.get(), false);
+    unitstate_ptr2->reset_state(r);
+    auto r2 = unitstate_ptr2->get_bstate()->export_state();
+    std::cout << r2.size() << ":" << to_hex(r2) << std::endl;
+
+    ASSERT_EQ(r, r2);
 }
 
 NS_END3

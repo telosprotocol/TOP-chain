@@ -27,6 +27,7 @@ protected:
     void account_set_tep1_token(std::string const & account_address, common::xtoken_id_t const & token_id, evm_common::u256 const & token_value);
     void account_set_top_balance(std::string const & account_address, std::string const & property_name, uint64_t property_value);
     void account_set_property(std::string const & account_address, std::string const & property_name, std::string const & property_type, std::string const & property_value);
+    void account_set_state(std::string const & account_address, std::string const & hex_state_data);
 
 private:
     statectx::xstatectx_face_ptr_t m_statectx_ptr;
