@@ -464,7 +464,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
 
     set_latest_executed_info(current_block->check_block_flag(base::enum_xvblock_flag_committed), current_block->get_height());
     xinfo("xstatestore_executor_t::write_table_all_states succ,block:%s,execute_height=%ld,unitstates=%zu,state_root=%s", 
-        current_block->dump().c_str(), get_commit_executed_height_inner(),tablestate_store->get_unitstates().size(),tablestate_store->get_state_root().as_hex_str().c_str());
+        current_block->dump().c_str(), get_commit_executed_height_inner(),tablestate_store->get_unitstates().size(),tablestate_store->get_state_root().hex().c_str());
     return tablestate;
 }
 
@@ -749,7 +749,7 @@ void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & syn
         }
     }
 
-    xinfo("xstatestore_executor_t::raise_execute_height succ.table=%s,height=%ld,hash=%s,root:%s",m_table_addr.to_string().c_str(), sync_info.get_height(), base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str(),sync_info.get_root_hash().as_hex_str().c_str());
+    xinfo("xstatestore_executor_t::raise_execute_height succ.table=%s,height=%ld,hash=%s,root:%s",m_table_addr.to_string().c_str(), sync_info.get_height(), base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str(),sync_info.get_root_hash().hex().c_str());
     set_latest_executed_info(true, sync_info.get_height()); // XTODO sync must be commit block
 }
 

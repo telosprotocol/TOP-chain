@@ -303,12 +303,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     evm_common::xh256_t state_root;
     std::shared_ptr<state_mpt::xstate_mpt_t> table_mpt = nullptr;
 
-    evm_common::xh256_t last_state_root;
-    auto ret = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), last_state_root);
-    if (!ret) {
-        return nullptr;
-    }
-    table_mpt = create_new_mpt(xhash256_t(last_state_root.to_bytes()), cs_para, statectx_ptr, batch_unit_and_index);
+    table_mpt = create_new_mpt(cs_para, statectx_ptr, batch_unit_and_index);
     if (table_mpt == nullptr) {
         return nullptr;
     }
@@ -317,7 +312,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         xwarn("xtable_maker_t::make_light_table_v2 get mpt root hash fail.");
         return nullptr;
     }
-    xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), root_hash.as_hex_str().c_str());
+    xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), root_hash.hex().c_str());
     state_root = evm_common::xh256_t(root_hash.to_bytes());
 
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, state_root, execute_output.pack_outputs));
@@ -664,8 +659,7 @@ bool xtable_maker_t::is_make_relay_chain() const {
     return get_zone_index() == base::enum_chain_zone_relay_index;
 }
 
-std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xhash256_t & last_mpt_root,
-                                                                          const data::xblock_consensus_para_t & cs_para,
+std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const data::xblock_consensus_para_t & cs_para,
                                                                           const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                           const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
