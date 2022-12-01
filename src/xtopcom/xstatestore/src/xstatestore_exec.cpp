@@ -359,7 +359,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_current_table(base
     
     data::xtablestate_ptr_t table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
     
-    xhash256_t block_state_root = m_statestore_base.get_state_root_from_block(current_block);
+    auto const & block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     std::shared_ptr<state_mpt::xstate_mpt_t> cur_mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{current_block->get_account()}, block_state_root, m_statestore_base.get_dbstore(), ec);
     if (ec) {
         xwarn("xstatestore_executor_t::make_state_from_current_table fail-create mpt.block=%s", current_block->dump().c_str());
@@ -392,7 +392,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     auto block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     if (block_state_root != tablestate_store->get_state_root()) {
         ec = error::xerrc_t::statestore_block_invalid_err;
-        xerror("xstatestore_executor_t::write_table_all_states fail-invalid state root.block=%s,state_root=%s:%s",current_block->dump().c_str(), block_state_root.as_hex_str().c_str(), tablestate_store->get_state_root().as_hex_str().c_str());
+        xerror("xstatestore_executor_t::write_table_all_states fail-invalid state root.block=%s,state_root=%s:%s",current_block->dump().c_str(), block_state_root.hex().c_str(), tablestate_store->get_state_root().hex().c_str());
         return nullptr;        
     }
 
@@ -429,13 +429,13 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     xdbg("xstatestore_executor_t::write_table_all_states tablestate=%s.block=%s", tablestate_store->get_table_state()->get_bstate()->dump().c_str(), current_block->dump().c_str());
     
     if (current_block->get_block_class() != base::enum_xvblock_class_nil) {
-        if (tablestate_store->get_state_root() != xhash256_t()) {
+        if (!tablestate_store->get_state_root().empty()) {
             tablestate_store->get_state_mpt()->commit(ec);
             if (ec) {
                 xerror("xstatestore_executor_t::write_table_all_states fail-write mpt,block:%s.ec=%s", current_block->dump().c_str(),ec.message().c_str());
                 return nullptr;
             }
-            xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().as_hex_str().c_str(), current_block->dump().c_str());
+            xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().hex().c_str(), current_block->dump().c_str());
         }
     }
     
@@ -453,7 +453,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     // update execute height
     update_latest_executed_info(current_block);
     xinfo("xstatestore_executor_t::write_table_all_states succ,block:%s,execute_height=%ld,unitstates=%zu,state_root=%s", 
-        current_block->dump().c_str(), get_latest_executed_block_height(),tablestate_store->get_unitstates().size(),tablestate_store->get_state_root().as_hex_str().c_str());
+        current_block->dump().c_str(), get_latest_executed_block_height(),tablestate_store->get_unitstates().size(),tablestate_store->get_state_root().hex().c_str());
     return tablestate;
 }
 
@@ -503,12 +503,12 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
     // should clone a new state for execute
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *prev_state->get_table_state()->get_bstate());
     std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(m_table_addr, prev_state->get_state_mpt()->get_original_root_hash(), m_statestore_base.get_dbstore(), ec);        
-    xhash256_t block_state_root = m_statestore_base.get_state_root_from_block(current_block);
+    auto const & block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     base::xaccount_indexs_t account_indexs;
     bool is_first_mpt = false;
     if (current_block->get_height() > 1
-        && current_prev_mpt->get_original_root_hash() == xhash256_t{}
-        && block_state_root != xhash256_t{}) {
+        && current_prev_mpt->get_original_root_hash().empty()
+        && !block_state_root.empty()) {
         is_first_mpt = true;
     }
     alocker global_lock(m_global_execute_lock, is_first_mpt); // XTODO first mpt will use too much memory, so add global lock
@@ -594,8 +594,8 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
             if (cur_root_hash != block_state_root) {
                 ec = error::xerrc_t::statestore_block_root_unmatch_mpt_root_err;
                 xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-root not match cur_root_hash:%s,state_root_hash:%s,block:%s",
-                    cur_root_hash.as_hex_str().c_str(),
-                    block_state_root.as_hex_str().c_str(),
+                    cur_root_hash.hex().c_str(),
+                    block_state_root.hex().c_str(),
                     current_block->dump().c_str());
                 return nullptr;
             }
@@ -729,7 +729,7 @@ void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & syn
                    m_table_addr.to_string().c_str(),
                    sync_info.get_height(),
                    base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str(),
-                   sync_info.get_root_hash().as_hex_str().c_str());
+                   sync_info.get_root_hash().hex().c_str());
             return;
         }
     }
@@ -738,7 +738,7 @@ void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & syn
           m_table_addr.to_string().c_str(),
           sync_info.get_height(),
           base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str(),
-          sync_info.get_root_hash().as_hex_str().c_str());
+          sync_info.get_root_hash().hex().c_str());
     set_latest_executed_info(sync_info.get_height(), sync_info.get_blockhash());
 }
 

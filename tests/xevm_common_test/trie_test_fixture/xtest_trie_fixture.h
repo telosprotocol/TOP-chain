@@ -4,30 +4,36 @@
 
 #include <gtest/gtest.h>
 
+#include <gsl/span>
+
 #include <atomic>
 
 NS_BEG4(top, evm_common, trie, tests)
 
 class xmock_disk_db : public xkv_db_face_t {
 public:
-    void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+    void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
         xdbg("xmock_disk_db Put key: %s", top::to_hex(key).c_str());
-        m[key] = value;
+        m[xbytes_t{std::begin(key), std::end(key)}] = value;
     }
+
     void Delete(xbytes_t const & key, std::error_code & ec) {
         m.erase(key);
     }
-    bool Has(xbytes_t const & key, std::error_code & ec) {
-        return m.find(key) != m.end();
+
+    bool has(gsl::span<xbyte_t const> const key, std::error_code & ec) const {
+        return m.find(xbytes_t{key.begin(), key.end()}) != m.end();
     }
-    xbytes_t Get(xbytes_t const & key, std::error_code & ec) {
-        if (!Has(key, ec)) {
+
+    xbytes_t get(gsl::span<xbyte_t const> const key, std::error_code & ec) const override {
+        if (!has(key, ec)) {
             ec = error::xerrc_t::trie_proof_missing;
             return xbytes_t{};
         }
         Counter_Get++;
-        return m[key];
+        return m[xbytes_t{key.begin(), key.end()}];
     }
+
     void debug() {
         for (auto const & p : m) {
             xdbg("%s : %s", top::to_hex(p.first).c_str(), top::to_hex(p.second).c_str());
@@ -35,39 +41,40 @@ public:
     }
 
     void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override {
-
     }
+
     void PutDirectBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override {
-
     }
+
     void DeleteDirect(xbytes_t const & key, std::error_code & ec) override {
-
     }
+
     void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override {
-
     }
-    bool HasDirect(xbytes_t const & key, std::error_code & ec) override {
+
+    bool HasDirect(xbytes_t const &, std::error_code &) const override {
         return false;
     }
-    xbytes_t GetDirect(xbytes_t const & key, std::error_code & ec) override {
+
+    xbytes_t GetDirect(xbytes_t const &, std::error_code &) const override {
         return {};
     }
 
-    void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override {
+    void PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_code & ec) override {
         for (auto & p : batch) {
-            m[p.first] = p.second;
+            m[p.first.to_bytes()] = p.second;
         }
     }
 
-    void DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override {
+    void DeleteBatch(std::vector<gsl::span<xbyte_t const>> const & batch, std::error_code &) override {
         for (auto const & key : batch) {
-            m.erase(key);
+            m.erase(xbytes_t{std::begin(key), std::end(key)});
         }
     }
 
-    std::map<xbytes_t, xbytes_t> m;
+    mutable std::map<xbytes_t, xbytes_t> m;
 
-    std::atomic<uint64_t> Counter_Get{0};
+    mutable std::atomic<uint64_t> Counter_Get{0};
 
     bool empty() const noexcept {
         return m.empty();
@@ -81,22 +88,24 @@ using xmock_disk_db_ptr = std::shared_ptr<xmock_disk_db>;
 
 class xmock_prove_db : public xkv_db_face_t {
 public:
-    void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+    void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
         xdbg("xmock_prove_db Put key: %s", top::to_hex(key).c_str());
-        m[key] = value;
+        m[xbytes_t{std::begin(key), std::end(key)}] = value;
     }
     void Delete(xbytes_t const & key, std::error_code & ec) {
         m.erase(key);
     }
-    bool Has(xbytes_t const & key, std::error_code & ec) {
-        return m.find(key) != m.end();
+
+    bool has(gsl::span<xbyte_t const> const key, std::error_code & ec) const override {
+        return m.find(xbytes_t{std::begin(key), std::end(key)}) != m.end();
     }
-    xbytes_t Get(xbytes_t const & key, std::error_code & ec) {
-        if (!Has(key, ec)) {
+
+    xbytes_t get(gsl::span<xbyte_t const> const key, std::error_code & ec) const override {
+        if (!has(key, ec)) {
             ec = error::xerrc_t::trie_proof_missing;
             return xbytes_t{};
         }
-        return m[key];
+        return m.at(xbytes_t{std::begin(key), std::end(key)});
     }
 
     void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override {
@@ -111,19 +120,19 @@ public:
     void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override {
 
     }
-    bool HasDirect(xbytes_t const & key, std::error_code & ec) override {
+    bool HasDirect(xbytes_t const &, std::error_code &) const override {
         return false;
     }
 
-    xbytes_t GetDirect(xbytes_t const & key, std::error_code & ec) override {
+    xbytes_t GetDirect(xbytes_t const &, std::error_code &) const override {
         return {};
     }
-    void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override {
+    void PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_code & ec) override {
     }
 
-    void DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override {
+    void DeleteBatch(std::vector<gsl::span<xbyte_t const>> const & batch, std::error_code & ec) override {
         for (auto const & key : batch) {
-            m.erase(key);
+            m.erase(xbytes_t{std::begin(key), std::end(key)});
         }
     }
 

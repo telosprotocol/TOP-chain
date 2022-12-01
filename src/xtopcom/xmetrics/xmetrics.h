@@ -185,7 +185,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_invoke_sync_state_count,
     cons_invoke_sync_block_count,
 
-
     clock_aggregate_height,
     clock_leader_broadcast_height,
     clock_received_height,
@@ -714,6 +713,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     mpt_total_pruned_trie_node_cnt,
     mpt_cached_pruned_trie_node_cnt,
+    mpt_trie_cache_visit,
+    mpt_trie_cache_miss,
+
     //prune
     prune_block_table,
     prune_block_unit,

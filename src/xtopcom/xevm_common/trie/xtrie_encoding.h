@@ -6,6 +6,8 @@
 
 #include "xbasic/xbyte_buffer.h"
 
+#include <gsl/span>
+
 NS_BEG3(top, evm_common, trie)
 
 xbytes_t hexToCompact(xbytes_t hex);
@@ -18,5 +20,8 @@ xbytes_t hexToKeybytes(xbytes_t hex);
 void decodeNibbles(xbytes_t const & nibbles, xbytes_t::iterator bytes_begin);
 std::size_t prefixLen(xbytes_t const & a, xbytes_t const & b);
 bool hasTerm(xbytes_t const & s);
+
+xbytes_t compact_to_hex(gsl::span<xbyte_t const> compact);
+xbytes_t key_bytes_to_hex(gsl::span<xbyte_t const> bytes);
 
 NS_END3

@@ -30,7 +30,7 @@ void xeth_header_t::set_transactions_root(const evm_common::xh256_t & root) {
 void xeth_header_t::set_receipts_root(const evm_common::xh256_t & root) {
     m_receipts_root = root;
 }
-void xeth_header_t::set_state_root(const evm_common::xh256_t & root) {
+void xeth_header_t::set_state_root(evm_common::xh256_t const & root) {
     m_state_root = root;
 }
 void xeth_header_t::set_extra_data(xbytes_t const& _data) {
@@ -49,6 +49,8 @@ xbytes_t xeth_header_t::encodeBytes() const {
     return _bytes;
 }
 void xeth_header_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
+    assert(!ec);
+
     if (_d.size() < 2) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xeth_header_t::decodeBytes fail bytes,%zu", _d.size());
@@ -179,6 +181,8 @@ std::string xeth_header_t::serialize_to_string() const {
     return top::to_string(_bs);
 }
 void xeth_header_t::serialize_from_string(const std::string & bin_data, std::error_code & ec) {
+    assert(!ec);
+
     xbytes_t _bs = top::to_bytes(bin_data);
     decodeBytes(_bs, ec);
 }

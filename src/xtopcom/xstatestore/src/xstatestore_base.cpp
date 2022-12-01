@@ -13,28 +13,27 @@
 
 NS_BEG2(top, statestore)
 
-xhash256_t xstatestore_base_t::get_state_root_from_block(base::xvblock_t * block) const {
-    evm_common::xh256_t state_root;
-    auto ret = data::xblockextract_t::get_state_root(block, state_root);
-    if (!ret) {  // should not happen
+evm_common::xh256_t xstatestore_base_t::get_state_root_from_block(base::xvblock_t * block) const {
+    std::error_code ec;
+    auto state_root = data::xblockextract_t::get_state_root(block, ec);
+    if (ec) {  // should not happen
         xerror("xstatestore_base_t::get_mpt_from_block get state root fail. block:%s", block->dump().c_str());
-        return xhash256_t{};
+        return evm_common::xh256_t{};
     }
-    xhash256_t root_hash = xhash256_t(state_root.to_bytes());
-    return root_hash;
+
+    return state_root;
 }
 
 void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xstate_mpt_t> & mpt, std::error_code & ec) const {
     xassert(!ec);
-    evm_common::xh256_t state_root;
-    auto ret = data::xblockextract_t::get_state_root(block, state_root);
-    if (!ret) {
-        ec = error::xerrc_t::statestore_extract_state_root_err;
+    auto const & state_root = data::xblockextract_t::get_state_root(block, ec);
+    if (ec) {
+        // ec = error::xerrc_t::statestore_extract_state_root_err;
         xerror("xstatestore_base_t::get_mpt_from_block get state root fail. block:%s", block->dump().c_str());
         return;
     }
-    xhash256_t root_hash = xhash256_t(state_root.to_bytes());
-    mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{block->get_account()}, root_hash, base::xvchain_t::instance().get_xdbstore(), ec);
+
+    mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{block->get_account()}, state_root, base::xvchain_t::instance().get_xdbstore(), ec);
 }
 
 void xstatestore_base_t::set_latest_executed_info(common::xaccount_address_t const& table_addr, uint64_t height,const std::string & blockhash) const {

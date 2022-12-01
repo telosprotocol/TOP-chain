@@ -6,7 +6,6 @@
 
 #include "xbasic/uint128_t.h"
 #include "xbasic/xbyte.h"
-#include "xbasic/xhash.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

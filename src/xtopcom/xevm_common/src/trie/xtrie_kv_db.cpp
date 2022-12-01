@@ -19,11 +19,11 @@ xtop_kv_db::xtop_kv_db(base::xvdbstore_t * db, common::xaccount_address_t table)
     m_node_key_prefix = base::xvdbkey_t::create_prunable_mpt_node_key_prefix(m_table.vaccount());
 }
 
-std::string xtop_kv_db::convert_key(xbytes_t const & key) const {
+std::string xtop_kv_db::convert_key(gsl::span<xbyte_t const> const key) const {
     return base::xvdbkey_t::create_prunable_mpt_node_key(m_node_key_prefix, std::string{key.begin(), key.end()});
 }
 
-void xtop_kv_db::Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+void xtop_kv_db::Put(gsl::span<xbyte_t const> const key, xbytes_t const & value, std::error_code & ec) {
     XMETRICS_COUNTER_INCREMENT("trie_put_nodes", 1);
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_db->set_value(convert_key(key), {value.begin(), value.end()}) == false) {
@@ -35,11 +35,11 @@ void xtop_kv_db::Put(xbytes_t const & key, xbytes_t const & value, std::error_co
     return;
 }
 
-void xtop_kv_db::PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) {
+void xtop_kv_db::PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_code & ec) {
     XMETRICS_COUNTER_INCREMENT("trie_put_nodes", batch.size());
     std::lock_guard<std::mutex> lock(m_mutex);
     std::map<std::string, std::string> convert_batch;
-    for (auto b : batch) {
+    for (auto const & b : batch) {
         convert_batch.emplace(std::make_pair(convert_key(b.first), std::string{b.second.begin(), b.second.end()}));
     }
     if (m_db->set_values(convert_batch) == false) {
@@ -87,7 +87,7 @@ void xtop_kv_db::Delete(xbytes_t const & key, std::error_code & ec) {
     xdbg("xtop_kv_db::Delete key: %s", top::to_hex(key).c_str());
 }
 
-void xtop_kv_db::DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {
+void xtop_kv_db::DeleteBatch(std::vector<gsl::span<xbyte_t const>> const & batch, std::error_code & ec) {
     assert(!ec);
     std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<std::string> convert_batch;
@@ -126,34 +126,34 @@ void xtop_kv_db::DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::err
     return;
 }
 
-bool xtop_kv_db::Has(xbytes_t const & key, std::error_code & ec) {
+bool xtop_kv_db::has(gsl::span<xbyte_t const> const key, std::error_code & ec) const {
     std::lock_guard<std::mutex> lock(m_mutex);
-    return (m_db->get_value(convert_key(key))) != std::string();
+    return !m_db->get_value(convert_key(key)).empty();
 }
 
-bool xtop_kv_db::HasDirect(xbytes_t const & key, std::error_code & ec) {
+bool xtop_kv_db::HasDirect(xbytes_t const & key, std::error_code & ec) const {
     std::lock_guard<std::mutex> lock(m_mutex);
-    return (m_db->get_value({key.begin(), key.end()})) != std::string();
+    return !m_db->get_value({key.begin(), key.end()}).empty();
 }
 
-xbytes_t xtop_kv_db::Get(xbytes_t const & key, std::error_code & ec) {
+xbytes_t xtop_kv_db::get(gsl::span<xbyte_t const> const key, std::error_code & ec) const {
     XMETRICS_COUNTER_INCREMENT("trie_get_nodes", 1);
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto value = m_db->get_value(convert_key(key));
-    if (value == std::string()) {
+    auto const & value = m_db->get_value(convert_key(key));
+    if (value.empty()) {
         xwarn("xtop_kv_db::Get key: %s, not found", top::to_hex(key).c_str());
         ec = error::xerrc_t::trie_db_not_found;
         return {};
     }
     xdbg("xtop_kv_db::Get key: %s, value: %s", top::to_hex(key).c_str(), top::to_hex(value).c_str());
-    return {value.begin(), value.end()};
+    return {std::begin(value), std::end(value)};
 }
 
-xbytes_t xtop_kv_db::GetDirect(xbytes_t const & key, std::error_code & ec) {
+xbytes_t xtop_kv_db::GetDirect(xbytes_t const & key, std::error_code & ec) const {
     XMETRICS_COUNTER_INCREMENT("trie_get_units", 1);
     std::lock_guard<std::mutex> lock(m_mutex);
     auto value = m_db->get_value({key.begin(), key.end()});
-    if (value == std::string()) {
+    if (value.empty()) {
         xwarn("xtop_kv_db::GetDirect key: %s, not found", top::to_hex(key).c_str());
         ec = error::xerrc_t::trie_db_not_found;
         return {};

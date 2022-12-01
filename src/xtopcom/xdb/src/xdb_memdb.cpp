@@ -114,7 +114,30 @@ bool xdb_mem_t::erase(const std::vector<std::string>& keys) {
     return true;
 }
 
+bool xdb_mem_t::erase(std::vector<gsl::span<char const>> const & keys) {
+    std::lock_guard<std::mutex> lock(m_lock);
+    for (const auto & key : keys) {
+        std::string const key_string{key.data(), key.size()};
+        auto iter = m_values.find(key_string);
+        if (iter != m_values.end()) {
+            m_meta.m_db_key_size -= key.size();
+            m_meta.m_db_value_size -= iter->second.size();
+            m_meta.m_key_count--;
+
+            m_values.erase(key_string);
+        }
+        m_meta.m_erase_count++;
+    }
+    return true;
+}
+
 bool xdb_mem_t::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) {
+    write(objs);
+    erase(delete_keys);
+    return true;
+}
+
+bool xdb_mem_t::batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys) {
     write(objs);
     erase(delete_keys);
     return true;

@@ -4,6 +4,7 @@
 #include "../xdb_write.h"
 #include "../xdbtool_util.h"
 #include "xbase/xhash.h"
+#include "xbasic/xutility.h"
 #include "xmigrate/xvmigrate.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"

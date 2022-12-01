@@ -54,7 +54,7 @@ public:
      * @param force bool
      * @return (hashed, cached)
      */
-    std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash(xtrie_node_face_ptr_t node, bool force);
+    std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash(xtrie_node_face_ptr_t const & node, bool force);
 
     // hashData hashes the provided data
     xtrie_hash_node_ptr_t hashData(xbytes_t const & input) const;
@@ -67,9 +67,9 @@ public:
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> proofHash(xtrie_node_face_ptr_t node);
 
 private:
-    std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> hashShortNodeChildren(xtrie_short_node_ptr_t node);
+    std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> hashShortNodeChildren(xtrie_short_node_ptr_t const & node);
 
-    std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> hashFullNodeChildren(xtrie_full_node_ptr_t node);
+    std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> hashFullNodeChildren(xtrie_full_node_ptr_t const & node);
 
     xtrie_node_face_ptr_t shortnodeToHash(xtrie_short_node_ptr_t node, bool force);
 

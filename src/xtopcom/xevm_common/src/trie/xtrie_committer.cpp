@@ -11,7 +11,7 @@
 
 NS_BEG3(top, evm_common, trie)
 
-std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node_face_ptr_t const & n, xtrie_db_ptr_t db, std::error_code & ec) {
+std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node_face_ptr_t const & n, observer_ptr<xtrie_db_t> const db, std::error_code & ec) {
     if (db == nullptr) {
         ec = error::xerrc_t::trie_db_not_provided;
         return std::make_pair(nullptr, 0);
@@ -30,7 +30,7 @@ std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node
     return std::make_pair(hashnode, committed);
 }
 
-std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node_face_ptr_t const & n, xtrie_db_ptr_t db, std::error_code & ec) {
+std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node_face_ptr_t const & n, observer_ptr<xtrie_db_t> const db, std::error_code & ec) {
     // if this path is clean, use available cached data
     auto const cached_data = n->cache();
     if (cached_data.hash_node() != nullptr && !cached_data.dirty()) {
@@ -85,7 +85,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         }
 
         auto collapsed = cn->clone();
-        collapsed->Children = hashedKids;
+        collapsed->children = hashedKids;
 
         auto const hashed_node = store(collapsed, db);
         assert(hashed_node != nullptr);
@@ -112,12 +112,12 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     __builtin_unreachable();
 }
 
-std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::commitChildren(xtrie_full_node_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
+std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::commitChildren(xtrie_full_node_ptr_t n, observer_ptr<xtrie_db_t> const db, std::error_code & ec) {
     std::array<xtrie_node_face_ptr_t, 17> children;
     int32_t committed{0};
 
     for (std::size_t index = 0; index < 16; ++index) {
-        auto child = n->Children[index];
+        auto child = n->children[index];
         if (child == nullptr)
             continue;
 
@@ -146,8 +146,8 @@ std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::c
     }
 
     // For the 17th child, it's possible the type is valuenode.
-    if (n->Children[16] != nullptr) {
-        children[16] = n->Children[16];
+    if (n->children[16] != nullptr) {
+        children[16] = n->children[16];
     }
 
     return std::make_pair(children, committed);
@@ -156,7 +156,7 @@ std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::c
 // store hashes the node n and if we have a storage layer specified, it writes
 // the key/value pair to it and tracks any node->child references as well as any
 // node->external trie references.
-xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db) {
+xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, observer_ptr<xtrie_db_t> const db) {
     auto hash = n->cache().hash_node();
     int32_t size{0};
 
@@ -176,7 +176,7 @@ xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_
     if (false) {
         // todo leafCh
     } else {
-        db->insert(xhash256_t{hash->data()}, size, n);
+        db->insert(hash->data(), size, n);
     }
     return hash;
 }
@@ -195,7 +195,7 @@ int32_t xtop_trie_committer::estimateSize(xtrie_node_face_ptr_t n) {
 
         int32_t s = 3;
         for (std::size_t index = 0; index < 16; ++index) {
-            auto child = fullnode->Children[index];
+            auto child = fullnode->children[index];
             if (child != nullptr) {
                 s += estimateSize(child);
             } else {

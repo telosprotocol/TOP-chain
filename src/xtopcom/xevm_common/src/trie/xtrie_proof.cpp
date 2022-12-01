@@ -9,18 +9,18 @@
 #include "xevm_common/xerror/xerror.h"
 
 NS_BEG3(top, evm_common, trie)
-xbytes_t VerifyProof(xhash256_t rootHash, xbytes_t const & _key, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
+xbytes_t VerifyProof(xh256_t rootHash, xbytes_t const & _key, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
     auto key = keybytesToHex(_key);
-    xdbg("[VerifyProof]: roothash: %s", rootHash.as_hex_str().c_str());
-    xhash256_t wantHash = rootHash;
+    xdbg("[VerifyProof]: roothash: %s", rootHash.hex().c_str());
+    xh256_t wantHash = rootHash;
     for (std::size_t index = 0;; index++) {
-        auto buf = proofDB->Get(to_bytes(wantHash), ec);
+        auto const & buf = proofDB->get(wantHash, ec);
         if (buf.empty()) {
-            xwarn("proof node %zu (hash: %s) missing", index, wantHash.as_hex_str().c_str());
+            xwarn("proof node %zu (hash: %s) missing", index, wantHash.hex().c_str());
             ec = error::xerrc_t::trie_proof_missing;
             return {};
         }
-        auto n = xtrie_node_rlp::decodeNode(wantHash, buf, ec);
+        auto n = xtrie_node_rlp::decode_node(wantHash, buf, ec);
         if (ec) {
             return {};
         }
@@ -36,7 +36,7 @@ xbytes_t VerifyProof(xhash256_t rootHash, xbytes_t const & _key, xkv_db_face_ptr
             auto cld_n = std::dynamic_pointer_cast<xtrie_hash_node_t>(cld);
             assert(cld_n != nullptr);
 
-            wantHash = xhash256_t{cld_n->data()};
+            wantHash = cld_n->data();
             break;
         }
         case xtrie_node_type_t::valuenode: {
@@ -77,7 +77,7 @@ std::pair<xbytes_t, xtrie_node_face_ptr_t> get(xtrie_node_face_ptr_t tn, xbytes_
             auto n = std::dynamic_pointer_cast<xtrie_full_node_t>(tn);
             assert(n != nullptr);
 
-            tn = n->Children[key[0]];
+            tn = n->children[key[0]];
             key = xbytes_t{key.begin() + 1, key.end()};
             if (!skipResolved) {
                 return std::make_pair(key, tn);
