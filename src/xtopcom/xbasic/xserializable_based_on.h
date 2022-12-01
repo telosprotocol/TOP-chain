@@ -94,6 +94,8 @@ public:
      */
     virtual std::int32_t serialize_from(base::xstream_t & stream);
 
+    virtual std::int32_t serialize_from_short(base::xstream_t & stream);
+
     std::int32_t serialize_from(base::xstream_t & stream, std::error_code & ec);
 
     virtual std::int32_t serialize_to(base::xbuffer_t & stream) const;
