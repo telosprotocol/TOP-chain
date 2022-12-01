@@ -1,5 +1,6 @@
 
 #include "gtest/gtest.h"
+#include "xbasic/xhex.h"
 #include "xstate_reset/xstate_tablestate_reseter_sample.h"
 #include "xstate_reset/xstate_tablestate_reseter_continuous_sample.h"
 #include "xstate_reset/xstate_tablestate_reseter_account_state_sample.h"
