@@ -39,9 +39,9 @@ class xblockextract_t {
     static cross_chain_contract_info get_cross_chain_config();
     static bool     is_cross_tx(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config);
     static bool     get_chain_bits(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config, evm_common::u256 & chain_bits);
+    static void     get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec);
 
  private:
-    static void     get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec);
     static std::shared_ptr<xrelay_block>            unpack_commit_relay_block_from_relay_table(base::xvblock_t* _block, std::error_code & ec);    
 };
 

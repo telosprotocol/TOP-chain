@@ -254,10 +254,7 @@ public:
     virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) = 0;
     virtual void refresh_table(uint8_t zone, uint16_t subaddr) = 0;
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
-    virtual void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr,
-                                    const data::xtablestate_ptr_t & table_state,
-                                    base::xvblock_t * _lock_block,
-                                    base::xvblock_t * _cert_block) = 0;
+    virtual void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) = 0;
     virtual void build_recv_tx(base::xtable_shortid_t from_table_sid,
                                base::xtable_shortid_t to_table_sid,
                                std::vector<uint64_t> receiptids,
@@ -274,6 +271,7 @@ public:
     virtual xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const = 0;
     virtual const std::set<base::xtable_shortid_t> & get_all_table_sids() const = 0;
     virtual uint32_t get_tx_cache_size(const std::string & table_addr) const = 0;
+    virtual void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) = 0;
 };
 
 class xtxpool_instance {

@@ -93,12 +93,13 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
     cs_para->set_table_state(tablestate, tablestate_commit);
 
     // TODO(jimmy) keep for help txpool clear cache
-    update_txpool_table_state(latest_blocks.get_latest_committed_block(), latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block(), tablestate_commit);
+    update_txpool_table_state(latest_blocks.get_latest_committed_block(), tablestate_commit);
+    get_txpool()->update_uncommit_txs(latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block());
     return cs_para;
 }
 
 int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consensus_para_t & cs_para, base::xvblock_t *proposal_block) {
-    uint64_t gmtime = proposal_block->get_second_level_gmtime();
+    uint64_t gmtime = cs_para.get_gmtime();
     uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
     if ( (gmtime > (now + 60)) || (gmtime < (now - 60))) { // the gmtime of leader should in +-60s with backup node
         xwarn("xproposal_maker_t::verify_proposal fail-gmtime not match. proposal=%s,leader_gmtime=%ld,backup_gmtime=%ld",
@@ -195,7 +196,7 @@ int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consens
     cs_para.set_table_state(tablestate, commit_tablestate);
 
     // TODO(jimmy) keep for help txpool clear cache
-    update_txpool_table_state(commit_block.get(), prev_lock_block.get(), proposal_prev_block.get(), commit_tablestate);
+    update_txpool_table_state(commit_block.get(), commit_tablestate);
     return xsuccess;
 }
 
@@ -464,7 +465,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
     return true;
 }
 
-void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block, base::xvblock_t* _lock_block, base::xvblock_t* _cert_block, data::xtablestate_ptr_t const& commit_tablestate) {
+void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block, data::xtablestate_ptr_t const& commit_tablestate) {
     // TODO(jimmy) update txpool table state
     if (_commit_block->get_height() > 0) {
         base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
@@ -473,7 +474,7 @@ void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), _commit_block->get_height());
         }
-        get_txpool()->update_table_state(property_prove_ptr, commit_tablestate, _lock_block, _cert_block);
+        get_txpool()->update_table_state(property_prove_ptr, commit_tablestate);
     }
 }
 
@@ -621,24 +622,12 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
                                       proposal->get_cert()->get_viewtoken(),
                                       proposal->get_cert()->get_drand_height());
     if (proposal->get_block_class() == base::enum_xvblock_class_light) {
-        uint64_t property_height = 0;
+        uint64_t property_height = cs_para.get_tgas_height();
         uint64_t total_lock_tgas_token = 0;
-        xassert(!proposal->get_header()->get_extra_data().empty());
-        if (!proposal->get_header()->get_extra_data().empty()) {
-            const std::string & extra_data = proposal->get_header()->get_extra_data();
-            data::xtableheader_extra_t blockheader_extradata;
-            int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
-            if (ret <= 0) {
-                xerror("xtable_blockmaker_t::verify_block fail-extra data invalid");
-                return false;
-            }
-
-            property_height = blockheader_extradata.get_tgas_total_lock_amount_property_height();
-            bool bret = store::xtgas_singleton::get_instance().backup_get_total_lock_tgas_token(proposal->get_cert()->get_clock(), property_height, total_lock_tgas_token);
-            if (!bret) {
-                xwarn("xtable_blockmaker_t::verify_block fail-backup_set_consensus_para.proposal=%s", proposal->dump().c_str());
-                return bret;
-            }
+        bool bret = store::xtgas_singleton::get_instance().backup_get_total_lock_tgas_token(proposal->get_cert()->get_clock(), property_height, total_lock_tgas_token);
+        if (!bret) {
+            xwarn("xtable_blockmaker_t::verify_block fail-backup_set_consensus_para.proposal=%s", proposal->dump().c_str());
+            return bret;
         }
 
         std::string random_seed = calc_random_seed(latest_cert_block, bind_drand_cert, proposal->get_cert()->get_viewtoken());
