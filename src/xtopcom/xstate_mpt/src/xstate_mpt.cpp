@@ -15,7 +15,7 @@ namespace top {
 namespace state_mpt {
 
 std::string xaccount_info_t::encode() {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     std::string data;
     m_index.serialize_to(data);
     stream << m_account;

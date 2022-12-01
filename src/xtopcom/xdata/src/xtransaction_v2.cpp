@@ -199,7 +199,7 @@ void xtransaction_v2_t::adjust_target_address(uint32_t table_id) {
 
 void xtransaction_v2_t::set_digest() {
     if (m_transaction_hash == uint256_t()) {
-        base::xstream_t stream(base::xcontext_t::instance());
+        base::xautostream_t<1024> stream(base::xcontext_t::instance());
         do_uncompact_write_without_hash_signature(stream);
         m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
         XMETRICS_GAUGE(metrics::cpu_hash_256_xtransaction_v2_calc, 1);
@@ -219,7 +219,7 @@ bool xtransaction_v2_t::transaction_len_check() const {
         return false;
     }
 
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
     do_write_without_hash_signature(stream);
     stream.write_compact_var(m_authorization);
@@ -290,7 +290,7 @@ void xtransaction_v2_t::set_target(const std::string & addr, const std::string &
 }
 
 void xtransaction_v2_t::set_len() {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
     do_write_without_hash_signature(stream);
     stream.write_compact_var(m_authorization);
