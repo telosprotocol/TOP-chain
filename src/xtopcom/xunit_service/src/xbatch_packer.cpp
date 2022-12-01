@@ -556,7 +556,16 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
         return blockmaker::xblockmaker_error_proposal_cannot_connect_to_cp;
     }
 
-    data::xblock_consensus_para_t proposal_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), proposal_block->get_second_level_gmtime());
+    std::error_code ec;
+    data::xtableheader_extra_t header_extra;
+    data::xblockextract_t::get_tableheader_extra_from_block(proposal_block, header_extra, ec);
+    if (ec) {
+        return blockmaker::xblockmaker_error_proposal_bad_header;
+    }
+
+    uint64_t gmtime = (header_extra.get_second_level_gmtime() == 0) ? proposal_block->get_timestamp() : header_extra.get_second_level_gmtime();
+    data::xblock_consensus_para_t proposal_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), gmtime);
+    proposal_para.set_tgas_height(header_extra.get_tgas_total_lock_amount_property_height());
     set_election_round(false, proposal_para);
     auto ret = m_proposal_maker->verify_proposal(proposal_para, proposal_block, bind_clock_cert);
     if (ret == xsuccess) {

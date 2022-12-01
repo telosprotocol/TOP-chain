@@ -40,10 +40,7 @@ public:
     void refresh_table(uint8_t zone, uint16_t subaddr) override {
     }
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override {}
-    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr,
-                            const data::xtablestate_ptr_t & table_state,
-                            base::xvblock_t * _lock_block,
-                            base::xvblock_t * _cert_block) override {
+    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) override {
     }
     void build_recv_tx(base::xtable_shortid_t from_table_sid,
                        base::xtable_shortid_t to_table_sid,
@@ -79,6 +76,7 @@ public:
         return 0;
     }
 
+    void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) override {}
 private:
     std::set<base::xtable_shortid_t> m_all_table_sids;
 };
