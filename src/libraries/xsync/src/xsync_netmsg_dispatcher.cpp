@@ -76,7 +76,6 @@ void xsync_netmsg_dispatcher_t::on_receive(vnetwork::xvnode_address_t const & ad
     uint32_t msg_size = msg.payload().size();
     XMETRICS_TIME_RECORD("xsync_network_message_dispatch");
     //xsync_dbg("xsync_netmsg_dispatcher_t on_receive_msg received %x %" PRIx64 " ", msg_type, msg.hash());
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_in", 1);
     XMETRICS_COUNTER_INCREMENT("sync_bytes_in", msg_size);
     xbyte_buffer_t message;
     xmessage_pack_t::unpack_message(msg.payload(), message);
