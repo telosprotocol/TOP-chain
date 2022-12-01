@@ -17,7 +17,7 @@ NS_BEG2(top, txexecutor)
 
 class xaccount_vm_t {
  public:
-    xaccount_vm_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx);
+    xaccount_vm_t(const data::xaccountstate_ptr_t & accountstate, const statectx::xstatectx_face_ptr_t & statectx);
 
  public:
     int32_t execute(const xvm_input_t & input, xvm_output_t & output);

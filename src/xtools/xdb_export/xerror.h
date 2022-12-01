@@ -13,6 +13,7 @@ enum class xtop_errc {
     table_state_not_found,
     account_data_not_found,
     unknown_token,
+    unit_state_not_found,
 };
 using xerrc_t = xtop_errc;
 

@@ -21,7 +21,7 @@
 NS_BEG2(top, statectx)
 
 xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablestate_ext_ptr_t & prev_table_state, base::xvblock_t* commit_block, const statestore::xtablestate_ext_ptr_t & commit_table_state, const xstatectx_para_t & para)
-: m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
+: m_table_address(prev_block->get_account()), m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
     // create proposal table state for context
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = xstatectx_base_t::create_proposal_bstate(prev_block, prev_table_state->get_table_state()->get_bstate().get(), para.m_clock);
     data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);  // change to modified state
@@ -37,8 +37,11 @@ xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablest
     m_prev_tablestate_ext = tablestate;
 }
 
-bool xstatectx_t::is_same_table(const base::xvaccount_t & addr) const {
-    return get_tableid() == addr.get_short_table_id();
+bool xstatectx_t::is_same_table(common::xaccount_address_t const& address) const {
+    if (address.ledger_id().zone_id() == m_table_address.ledger_id().zone_id() && address.table_id() == m_table_address.table_id()) {
+        return true;
+    }
+    return false;
 }
 
 xunitstate_ctx_ptr_t xstatectx_t::find_unit_ctx(const std::string & addr, bool is_same_table) {
@@ -66,88 +69,91 @@ void xstatectx_t::add_unit_ctx(const std::string & addr, bool is_same_table, con
 
 
 
-xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) {
+xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(common::xaccount_address_t const& address) {
     xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
     data::xblock_ptr_t unitblock = nullptr;
-    bool is_same = is_same_table(addr);
-    xunitstate_ctx_ptr_t unit_ctx = find_unit_ctx(addr.get_address(), is_same);
+    bool is_same = is_same_table(address);
+    xunitstate_ctx_ptr_t unit_ctx = find_unit_ctx(address.to_string(), is_same);
     if (nullptr != unit_ctx) {
         return unit_ctx;
     }
     if (is_same) {
         base::xaccount_index_t account_index;
-        if (false == m_statectx_base.load_account_index(addr, account_index)) {
-            xerror("xstatectx_t::load_unit_ctx fail-load accountindex.addr=%s", addr.get_address().c_str());
-            return nullptr;
-        }
-        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(common::xaccount_address_t(addr.get_account()), account_index);
-        if (nullptr == unitstate) {
-            m_statectx_base.sync_unit_block(addr, account_index.get_latest_unit_height());
-            xwarn("xstatectx_t::load_unit_ctx fail-load unitstate.addr=%s,index=%s", addr.get_address().c_str(),account_index.dump().c_str());
+        if (false == m_statectx_base.load_account_index(address, account_index)) {
+            xerror("xstatectx_t::load_unit_ctx fail-load accountindex.addr=%s", address.to_string().c_str());
             return nullptr;
         }
 
+        // TODO(jimmy) account_index not include genesis unit
         if (account_index.get_latest_unit_hash().empty()) {
+            xassert(account_index.get_latest_unit_height() == 0);
             // XTODO before fork, need unit block
-            auto _unit = m_statectx_base.load_block_object(addr, account_index);
-            if (nullptr == _unit) {
-                m_statectx_base.sync_unit_block(addr, account_index.get_latest_unit_height());
-                xerror("xstatectx_t::load_unit_ctx fail-load unit.addr=%s,index=%s", addr.get_address().c_str(),account_index.dump().c_str());
-                return nullptr;
-            }
-            unitblock = data::xblock_t::raw_vblock_to_object_ptr(_unit.get());
+            auto _unit = m_statectx_base.load_block_object(address.vaccount(), account_index);
+            xassert(_unit != nullptr);
+            account_index.reset_unit_hash(_unit->get_block_hash());
         }
 
-        if (nullptr != unitblock) {
-            bstate = m_statectx_base.change_to_proposal_block_state(unitblock.get(), unitstate->get_bstate().get());
-        } else {
-            bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
-        }
-        if (nullptr == bstate) {
-            xerror("xstatectx_t::load_unit_ctx fail-change proposal state.addr=%s,index=%s", addr.get_address().c_str(),account_index.dump().c_str());
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(address, account_index);
+        if (nullptr == unitstate) {
+            m_statectx_base.sync_unit_block(address.vaccount(), account_index.get_latest_unit_height());
+            xerror("xstatectx_t::load_unit_ctx fail-load unitstate.addr=%s,index=%s", address.to_string().c_str(),account_index.dump().c_str());
             return nullptr;
         }
 
-        data::xunitstate_ptr_t unitstate_proposal = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
-        unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate_proposal, unitblock);
-        xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
-    } else { // different table unit state is readonly        
-        data::xunitstate_ptr_t unitstate = m_statectx_base.load_different_table_unit_state(addr);
-        if (nullptr != unitstate) {
-            unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate);
+        bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
+        if (nullptr == bstate) {
+            xerror("xstatectx_t::load_unit_ctx fail-change proposal state.addr=%s,index=%s", address.to_string().c_str(),account_index.dump().c_str());
+            return nullptr;
         }
+        xassert(!bstate->get_last_block_hash().empty());
+        data::xunitstate_ptr_t unitstate_proposal = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state        
+        data::xaccountstate_ptr_t accountstate(std::make_shared<data::xaccount_state_t>(unitstate_proposal, account_index));
+        unit_ctx = std::make_shared<xunitstate_ctx_t>(accountstate);
+        xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), address.to_string().c_str(), account_index.dump().c_str());
+    } else { // different table unit state is readonly        
+        // data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(addr.get_account()));
+        data::xaccountstate_ptr_t accountstate = statestore::xstatestore_hub_t::instance()->get_accountstate(LatestConnectBlock, address);
+        if (nullptr == accountstate) {
+            xerror("xstatectx_t::load_unit_ctx fail-get other table state.addr=%s", address.to_string().c_str());
+            return nullptr;            
+        }
+        unit_ctx = std::make_shared<xunitstate_ctx_t>(accountstate);
     }
 
-    if (nullptr != unit_ctx) {
-        add_unit_ctx(addr.get_address(), is_same, unit_ctx);
-    } else {
-        xwarn("xstatectx_t::load_unit_ctx fail-load state.addr=%s,is_same=%d", addr.get_address().c_str(), is_same);
-    }
+    add_unit_ctx(address.to_string(), is_same, unit_ctx);
     return unit_ctx;
 }
 
-data::xunitstate_ptr_t xstatectx_t::load_unit_state(const base::xvaccount_t & addr) {
-    xunitstate_ctx_ptr_t unit_ctx = load_unit_ctx(addr);
+data::xaccountstate_ptr_t xstatectx_t::load_account_state(common::xaccount_address_t const& address) {
+    xunitstate_ctx_ptr_t unit_ctx = load_unit_ctx(address);
+    if (nullptr != unit_ctx) {
+        return unit_ctx->get_accoutstate();
+    }
+    return nullptr;
+}
+
+data::xunitstate_ptr_t xstatectx_t::load_unit_state(common::xaccount_address_t const& address) {
+    xunitstate_ctx_ptr_t unit_ctx = load_unit_ctx(address);
     if (nullptr != unit_ctx) {
         return unit_ctx->get_unitstate();
     }
     return nullptr;
 }
 
-data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(const base::xvaccount_t & addr) {
-    bool is_same = is_same_table(addr);
+data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(common::xaccount_address_t const& address) {
+    bool is_same = is_same_table(address);
     data::xunitstate_ptr_t unitstate = nullptr;
     // TODO(jimmy) load from statestore and invoke sync in statestore same-table should use commit-table
     if (is_same) {
-        unitstate = m_statectx_base.load_inner_table_commit_unit_state(common::xaccount_address_t(addr.get_account())); // TODO(jimmy) change to common::xaccount_address_
+        unitstate = m_statectx_base.load_inner_table_commit_unit_state(address); // TODO(jimmy) change to common::xaccount_address_
     } else {
-        unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(addr.get_account()));
+        unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
     }
     return unitstate;
 }
 
-data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) {
-    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_committed_state(common::xaccount_address_t(addr.get_account()), height);
+data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(common::xaccount_address_t const& address, uint64_t height) {
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_committed_state(address, height);
     return unitstate;
 }
 
@@ -164,7 +170,7 @@ bool xstatectx_t::do_rollback() {
     }
     // no need rollback table-state
     for (auto & unitctx : m_unit_ctxs) {
-        ret = unitctx.second->get_unitstate()->do_rollback();
+        ret = unitctx.second->get_accoutstate()->do_rollback();
         if (!ret) {
             xerror("xstatectx_t::do_rollback fail-do_rollback");
             return ret;
@@ -180,7 +186,7 @@ size_t xstatectx_t::do_snapshot() {
     snapshot_size += _size;
     // no need snapshot table-state
     for (auto & unitctx : m_unit_ctxs) {
-        _size = unitctx.second->get_unitstate()->do_snapshot();
+        _size = unitctx.second->get_accoutstate()->do_snapshot();
         snapshot_size += _size;
     }
     return snapshot_size;

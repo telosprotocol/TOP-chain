@@ -98,8 +98,9 @@ void xrpc_query_manager::getAccount(xJson::Value & js_req, xJson::Value & js_rsp
 
 xJson::Value xrpc_query_manager::parse_account(const std::string & account, string & strResult, uint32_t & nErrorCode) {
     xJson::Value result_json;
-    data::xunitstate_ptr_t account_ptr = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(account));
-    if (account_ptr != nullptr && (!account_ptr->is_empty_state())) {
+    data::xaccountstate_ptr_t accountstate_ptr = statestore::xstatestore_hub_t::instance()->get_accountstate(LatestConnectBlock, common::xaccount_address_t(account));
+    if (accountstate_ptr != nullptr && (!accountstate_ptr->get_unitstate()->is_empty_state())) {
+        data::xunitstate_ptr_t account_ptr = accountstate_ptr->get_unitstate();
         // string freeze_fee{};
         result_json["account_addr"] = account;
         result_json["created_time"] = static_cast<xJson::UInt64>(account_ptr->get_account_create_time());
@@ -112,13 +113,13 @@ xJson::Value xrpc_query_manager::parse_account(const std::string & account, stri
         // result_json["lock_gas"] = static_cast<xJson::UInt64>(account_ptr->lock_tgas());
         result_json["burned_token"] = static_cast<xJson::UInt64>(account_ptr->burn_balance());
         result_json["unused_vote_amount"] = static_cast<xJson::UInt64>(account_ptr->unvote_num());
-        result_json["nonce"] = static_cast<xJson::UInt64>(account_ptr->account_send_trans_number());
-        uint256_t last_hash = account_ptr->account_send_trans_hash();
-        result_json["latest_tx_hash"] = uint_to_str(last_hash.data(), last_hash.size());
-        uint64_t last_hash_xxhash64 = static_cast<xJson::UInt64>(utl::xxh64_t::digest(last_hash.data(), last_hash.size()));
-        result_json["latest_tx_hash_xxhash64"] = uint64_to_str(last_hash_xxhash64);
+        result_json["nonce"] = static_cast<xJson::UInt64>(accountstate_ptr->get_tx_nonce()); // XTODO disable static_cast<xJson::UInt64>(accountstate_ptr->account_send_trans_number());
+        // uint256_t last_hash = account_ptr->account_send_trans_hash();
+        result_json["latest_tx_hash"] = std::string();  // XTODO disable uint_to_str(last_hash.data(), last_hash.size());
+        // uint64_t last_hash_xxhash64 = static_cast<xJson::UInt64>(utl::xxh64_t::digest(last_hash.data(), last_hash.size()));
+        result_json["latest_tx_hash_xxhash64"] = std::string(); // XTODO disable uint64_to_str(last_hash_xxhash64);
         result_json["latest_unit_height"] = static_cast<xJson::UInt64>(account_ptr->height());
-        result_json["recv_tx_num"] = static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
+        result_json["recv_tx_num"] = 0; // XTODO disable static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
 
         auto timer_height = get_timer_height();
         auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
@@ -1814,18 +1815,19 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
 }
 
 void xrpc_query_manager::set_fullunit_state(xJson::Value & j_fu, data::xblock_t * bp) {
-    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(bp);
-    if (nullptr == unitstate) {
-        xwarn("xrpc_query_manager::set_fullunit_state get target state fail.block=%s", bp->dump().c_str());
-        return;
-    }
+    // TODO(jimmy)
+    // data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(bp);
+    // if (nullptr == unitstate) {
+    //     xwarn("xrpc_query_manager::set_fullunit_state get target state fail.block=%s", bp->dump().c_str());
+    //     return;
+    // }
 
-    j_fu["latest_send_trans_number"] = static_cast<unsigned long long>(unitstate->account_send_trans_number());
-    j_fu["latest_send_trans_hash"] = to_hex_str(unitstate->account_send_trans_hash());
-    j_fu["latest_recv_trans_number"] = static_cast<unsigned long long>(unitstate->account_recv_trans_number());
-    j_fu["account_balance"] = static_cast<unsigned long long>(unitstate->balance());
-    j_fu["burned_amount_change"] = static_cast<unsigned long long>(unitstate->burn_balance());
-    j_fu["account_create_time"] = static_cast<unsigned long long>(unitstate->get_account_create_time());
+    j_fu["latest_send_trans_number"] = 0;  // TODO(jimmy) static_cast<unsigned long long>(unitstate->account_send_trans_number());
+    j_fu["latest_send_trans_hash"] = std::string(); // TODO(jimmy) unitstate->account_send_trans_hash());
+    j_fu["latest_recv_trans_number"] = 0; // TODO(jimmy) static_cast<unsigned long long>(unitstate->account_recv_trans_number());
+    j_fu["account_balance"] = 0; // TODO(jimmy) static_cast<unsigned long long>(unitstate->balance());
+    j_fu["burned_amount_change"] = 0;// TODO(jimmy) static_cast<unsigned long long>(unitstate->burn_balance());
+    j_fu["account_create_time"] = 0;// TODO(jimmy) static_cast<unsigned long long>(unitstate->get_account_create_time());
 }
 
 void xrpc_query_manager::set_body_info(xJson::Value & body, xblock_t * bp, const std::string & rpc_version) {

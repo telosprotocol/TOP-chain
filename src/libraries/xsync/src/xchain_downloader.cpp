@@ -653,8 +653,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         m_address.c_str(), count, total_cost, from_addr.to_string().c_str());
 
     m_ratelimit->feedback(total_cost, now);
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
+    XMETRICS_COUNTER_INCREMENT("sync_downloader_response_cost", total_cost);
 
     if (false == sync_blocks_continue_check(blocks, "", false)) {
         xsync_warn("execute_next_download  blocks(address error) (%s)", blocks[0]->get_account().c_str());
@@ -750,8 +749,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
         m_address.c_str(), total_cost, from_addr.to_string().c_str());
 
     m_ratelimit->feedback(total_cost, now);
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
+    XMETRICS_COUNTER_INCREMENT("sync_downloader_response_cost", total_cost);
 
     base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_policy_fast);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);

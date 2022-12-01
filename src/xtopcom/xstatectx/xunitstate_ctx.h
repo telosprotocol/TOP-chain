@@ -15,21 +15,18 @@ NS_BEG2(top, statectx)
 // unit state context is a wrap unitstate 
 class xunitstate_ctx_t {
  public:
-    xunitstate_ctx_t(const data::xunitstate_ptr_t & unitstate);
-    xunitstate_ctx_t(const data::xunitstate_ptr_t & unitstate, const data::xblock_ptr_t & prev_block);
+    xunitstate_ctx_t(data::xunitstate_ptr_t const& unitstate, base::xaccount_index_t const& accoutindex);
+    xunitstate_ctx_t(data::xaccountstate_ptr_t const& accountstate) 
+    : m_accountstate(accountstate) {}    
 
  public:
     // common::xaccount_address_t const&   get_address() const {return m_cur_unitstate->account_address();}
-    const data::xunitstate_ptr_t &      get_unitstate() const {return m_cur_unitstate;}
-    const data::xblock_ptr_t &          get_prev_block() const {return m_prev_block;} 
-    std::string const&                  get_unit_hash() const{return m_unit_hash;}
+    const data::xunitstate_ptr_t &      get_unitstate() const {return m_accountstate->get_unitstate();}
+    std::string const&                  get_unit_hash() const{return m_accountstate->get_unit_hash();}
+    data::xaccountstate_ptr_t const&    get_accoutstate() const {return m_accountstate;}
 
-    void                                set_unit_hash(std::string const& unit_hash);
-
- private:
-    std::string                         m_unit_hash;
-    data::xunitstate_ptr_t              m_cur_unitstate{nullptr};
-    data::xblock_ptr_t                  m_prev_block{nullptr};
+ private: 
+    data::xaccountstate_ptr_t           m_accountstate{nullptr};
 };
 using xunitstate_ctx_ptr_t = std::shared_ptr<xunitstate_ctx_t>;
 

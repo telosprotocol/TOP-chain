@@ -48,11 +48,13 @@ public:
 
 protected:
     uint64_t update_execute_from_execute_height(uint64_t old_execute_height) const;
-    void    set_latest_executed_info(uint64_t height,const std::string & blockhash) const;
+    void    set_latest_executed_info(bool is_commit_block, uint64_t height) const;
     void    set_need_sync_state_block_height(uint64_t height) const;
-    void    update_latest_executed_info(base::xvblock_t* block) const;
     void    recover_execute_height(uint64_t old_executed_height);
     bool    need_store_unitstate() const;
+    inline uint64_t get_cert_executed_height_inner() const {return m_executed_cert_height;}
+    inline uint64_t get_commit_executed_height_inner() const {return m_executed_height;}
+    inline uint64_t get_need_sync_state_height_inner() const {return m_need_all_state_sync_height;}
     xtablestate_ext_ptr_t write_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
 
     data::xunitstate_ptr_t make_state_from_current_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, std::error_code & ec) const;
@@ -66,7 +68,7 @@ protected:
 
 protected:
     mutable std::mutex          m_execute_lock;  // protect the whole execution
-    mutable std::mutex          m_execute_height_lock;
+    mutable uint64_t            m_executed_cert_height{0};
     mutable uint64_t            m_executed_height{0};
     mutable uint64_t            m_need_all_state_sync_height{0};
     common::xaccount_address_t  m_table_addr;

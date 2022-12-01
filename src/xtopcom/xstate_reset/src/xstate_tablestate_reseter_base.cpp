@@ -13,7 +13,7 @@ xstate_tablestate_reseter_base::xstate_tablestate_reseter_base(statectx::xstatec
 }
 
 void xstate_tablestate_reseter_base::account_set_tep1_token(std::string const & account_address, common::xtoken_id_t const & token_id, evm_common::u256 const & token_value) {
-    auto unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{account_address});
+    auto unit_state = m_statectx_ptr->load_unit_state(common::xaccount_address_t{account_address});
     assert(unit_state);
     if (unit_state == nullptr) {
         xwarn("xstate_tablestate_reseter_base::account_set_tep1_token find empty unit state object of account %s", account_address.c_str());
@@ -23,7 +23,7 @@ void xstate_tablestate_reseter_base::account_set_tep1_token(std::string const & 
 }
 
 void xstate_tablestate_reseter_base::account_set_top_balance(std::string const & account_address, std::string const & property_name, uint64_t property_value) {
-    auto unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{account_address});
+    auto unit_state = m_statectx_ptr->load_unit_state(common::xaccount_address_t{account_address});
     assert(unit_state);
     if (unit_state == nullptr) {
         xwarn("xstate_tablestate_reseter_base::account_set_top_balance find empty unit state object of account %s", account_address.c_str());
@@ -42,7 +42,7 @@ void xstate_tablestate_reseter_base::account_set_property(std::string const & ac
                                                           std::string const & property_name,
                                                           std::string const & property_type,
                                                           std::string const & property_value) {
-    auto unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{account_address});
+    auto unit_state = m_statectx_ptr->load_unit_state(common::xaccount_address_t{account_address});
     assert(unit_state);
     if (unit_state == nullptr) {
         xwarn("xstate_tablestate_reseter_base::account_set_property find empty unit state object of account %s", account_address.c_str());
@@ -56,6 +56,18 @@ void xstate_tablestate_reseter_base::account_set_property(std::string const & ac
     // else if (property_type == "string") {
     //     unit_state->string_set(property_name, property_value);
     // }
+}
+
+void xstate_tablestate_reseter_base::account_set_state(std::string const & account_address, std::string const & hex_state_data) {
+    auto unit_state = m_statectx_ptr->load_unit_state(common::xaccount_address_t{account_address});
+    assert(unit_state);
+    if (unit_state == nullptr) {
+        xwarn("xstate_tablestate_reseter_account_state_sample::exec_reset_tablestate find empty unit state object of account %s", account_address.c_str());
+        return;
+    }
+    auto data_bytes = top::from_hex(hex_state_data);
+    std::string data = std::string{data_bytes.begin(), data_bytes.end()};
+    unit_state->reset_state(data);
 }
 
 NS_END2

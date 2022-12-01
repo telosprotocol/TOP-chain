@@ -348,7 +348,7 @@ void xtest_evm_fixture::mock_add_balance(common::xaccount_address_t const & acco
     std::string eth_address = account.to_string().substr(6);
     assert(eth_address.size() == 40);
 
-    auto state = statestore->load_unit_state(account.vaccount());
+    auto state = statestore->load_unit_state(account);
     if (token_symbol != top::data::XPROPERTY_ASSET_TOP) {
         state->set_tep_balance(top::common::token_id(common::xsymbol_t{token_symbol}), amount);
     } else {
@@ -365,7 +365,7 @@ void xtest_evm_fixture::mock_add_approve(common::xaccount_address_t const & owne
     assert(eth_address.size() == 40);
 
     std::error_code ec;
-    auto state = statestore->load_unit_state(owner.vaccount());
+    auto state = statestore->load_unit_state(owner);
     if (symbol != top::data::XPROPERTY_ASSET_TOP) {
         if (symbol == "tUSDT") {
             state->approve(common::xtoken_id_t::usdt, spender, amount, ec);

@@ -193,7 +193,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
 
 void xtop_account_vm::preprocess(std::vector<data::xcons_transaction_ptr_t> const & txs, state_accessor::xstate_accessor_t & sa, xaccount_vm_execution_result_t & r) {
     uint64_t recv_tx_num_new{0};
-
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     for (size_t i = 0; i < txs.size(); i++) {
         auto const & tx = txs[i];
         if (tx->is_recv_tx()) {
@@ -238,7 +238,7 @@ xaccount_vm_output_t xtop_account_vm::pack(std::vector<data::xcons_transaction_p
                                            state_accessor::xstate_accessor_t & sa) {
     xaccount_vm_output_t output;
     std::vector<data::xcons_transaction_ptr_t> output_txs(txs);
-
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     using namespace state_accessor::properties;
     std::error_code ec;
     auto last_nonce_bytes = sa.get_property_cell_value<xproperty_type_t::map>(

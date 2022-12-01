@@ -73,6 +73,10 @@ class xaccount_index_t {
     enum_xblock_consensus_type  get_latest_unit_consensus_type() const {return (enum_xblock_consensus_type)((m_account_flag) & 0x03);}
     bool                        check_account_index_flag(enum_xaccount_index_flag _flag) const;
 
+ public:  // for consensus
+    void                    set_tx_nonce(uint64_t txnonce);
+    void                    reset_unit_hash(std::string const& unithash);
+
  private:  // only can be set by constructor function
     // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
     void                    set_latest_unit_class(base::enum_xvblock_class _class);
@@ -89,6 +93,8 @@ class xaccount_index_t {
     std::string     m_unit_hash;
     std::string     m_state_hash;
 };
+
+using xaccount_index_ptr_t = std::shared_ptr<xaccount_index_t>;
 
 class xaccount_indexs_t {
 public:

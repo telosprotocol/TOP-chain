@@ -106,6 +106,7 @@ data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t &
     bodypara.set_txkeys(unitbuilder_para.get_txkeys());
 
     bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
+    xassert(!unitstate->get_bstate()->get_last_block_hash().empty());
     std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
         unitstate->account_address().to_string(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
@@ -133,37 +134,6 @@ void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, 
         std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
         property_hashs[data::xtable_bstate_t::get_receiptid_property_name()] = prophash;
     }
-}
-
-bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
-                                                        const xblock_ptr_t & unit,
-                                                        const data::xunitstate_ptr_t & unit_state) {
-    uint64_t nonce = unit_state->account_send_trans_number();
-
-    // make account index property binlog
-    // read old index
-    base::xaccount_index_t _old_aindex;
-    tablestate->get_account_index(unit->get_account(), _old_aindex);
-    // update unconfirm sendtx flag
-    // bool has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
-    bool has_unconfirm_sendtx = false;  // TODO(jimmy)
-    base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
-    if (unit->get_block_class() == base::enum_xvblock_class_light) {
-        _cs_type = base::enum_xblock_consensus_flag_authenticated;  // if light-unit, reset to authenticated
-    } else {
-        if (_cs_type == base::enum_xblock_consensus_flag_authenticated) {  // if other-unit, update type
-            _cs_type = base::enum_xblock_consensus_flag_locked;
-        } else if (_cs_type == base::enum_xblock_consensus_flag_locked) {
-            _cs_type = base::enum_xblock_consensus_flag_committed;
-        } else if (_cs_type == base::enum_xblock_consensus_flag_committed) {
-            // do nothing
-        }
-    }
-
-    base::xaccount_index_t _new_aindex(unit->get_height(), unit->get_viewid(), nonce, _cs_type, unit->get_block_class(), unit->get_block_type(), has_unconfirm_sendtx, false);
-    tablestate->set_account_index(unit->get_account(), _new_aindex);
-    xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
-    return true;
 }
 
 bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
@@ -227,13 +197,7 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblo
 }
 
 data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
-    std::shared_ptr<base::xvblockmaker_t> vbmaker = nullptr;
-    if (top::chain_fork::xutility_t::is_forked(fork_points::v1_7_0_block_fork_point, cs_para.get_clock())) {
-        vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);
-    } else {
-        vbmaker = std::make_shared<data::xlighttable_build_t>(prev_block.get(), lighttable_para, cs_para);
-    }
-
+    std::shared_ptr<base::xvblockmaker_t> vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);
     auto _new_block = vbmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
 

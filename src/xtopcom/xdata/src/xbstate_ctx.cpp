@@ -126,6 +126,10 @@ size_t xbstate_ctx_t::get_canvas_records_size() const {
     return m_canvas->get_op_records_size();
 }
 
+bool xbstate_ctx_t::reset_state(const std::string & snapshot) {
+    return get_bstate()->reset_state(snapshot, m_canvas.get());
+}
+
 int32_t xbstate_ctx_t::check_create_property(const std::string & key) {
     if (false == base::xvpropertyrules_t::is_valid_sys_contract_property(key)) {
         xerror("xbstate_ctx_t::check_create_property,property name not valid.key=%s", key.c_str());

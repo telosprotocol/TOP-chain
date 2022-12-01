@@ -173,22 +173,19 @@ void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJso
 
     // add top address check
     ETH_ADDRESS_CHECK_VALID(account)
-    data::xunitstate_ptr_t account_ptr;
-    enum_query_result ret = query_account_by_number(account, js_req[1].asString(), account_ptr);
-    if (ret == enum_block_not_found) {
+    base::xaccount_index_t accountindex;
+    if (false == statestore::xstatestore_hub_t::instance()->get_accountindex(js_req[1].asString(), common::xaccount_address_t(account), accountindex)) {
+        xwarn("xrpc_eth_query_manager::eth_getTransactionCount fail-load. account=%s,table_height=%s", account.c_str(),js_req[1].asString().c_str());
         std::string msg = "header not found";
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
         return;
-    } else if (ret == enum_unit_not_found) {
-        js_rsp["result"] = "0x0";
-        return;
-    } else if (ret == enum_success) {
-        uint64_t nonce = account_ptr->get_latest_send_trans_number();
-        xdbg("xarc_query_manager::eth_getTransactionCount: %s, %llu", account.c_str(), nonce);
-        std::stringstream outstr;
-        outstr << "0x" << std::hex << nonce;
-        js_rsp["result"] = std::string(outstr.str());
     }
+
+    uint64_t nonce = accountindex.get_latest_tx_nonce();
+    xdbg("xarc_query_manager::eth_getTransactionCount: %s, %llu", account.c_str(), nonce);
+    std::stringstream outstr;
+    outstr << "0x" << std::hex << nonce;
+    js_rsp["result"] = std::string(outstr.str());
 }
 void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
@@ -511,7 +508,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
         return;
     }
 
-    base::xvaccount_t _vaddr(from);
+    common::xaccount_address_t _vaddr(from);
     data::xunitstate_ptr_t unitstate = statectx_ptr->load_unit_state(_vaddr);
     if (nullptr == unitstate) {
         xwarn("eth_call fail-load unit state, %s", from.c_str());
@@ -640,7 +637,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         return;
     }
 
-    base::xvaccount_t _vaddr(from);
+    common::xaccount_address_t _vaddr(from);
     data::xunitstate_ptr_t unitstate = statectx_ptr->load_unit_state(_vaddr);
     if (nullptr == unitstate) {
         xwarn("eth_estimateGas fail-load unit state, %s", from.c_str());

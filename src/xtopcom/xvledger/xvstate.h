@@ -39,6 +39,10 @@ namespace top
             xauto_ptr<xvcanvas_t>       take_snapshot();
             xauto_ptr<xvcanvas_t>       rebase_change_to_snapshot(); //snapshot for whole xvbstate of every properties
 
+        public://the whole state export and reset
+            bool                        reset_state(const std::string & snapshot, xvcanvas_t * canvas);
+            std::string                 export_state();
+
         public://note: only allow access by our kernel module. it means private for application'contract
             xauto_ptr<xtokenvar_t>              load_token_var(const std::string & property_name);//for main token(e.g. TOP Token)
             xauto_ptr<xnoncevar_t>              load_nonce_var(const std::string & property_name);//for noance of account
@@ -116,6 +120,7 @@ namespace top
             const xvalue_t  do_reset_property(const xvmethod_t & op,xvcanvas_t * canvas);
             const xvalue_t  do_renew_property(const xvmethod_t & op,xvcanvas_t * canvas);
             const xvalue_t  do_del_property(const xvmethod_t & op,xvcanvas_t * canvas);
+            const xvalue_t  do_reset_state(const xvmethod_t & op,xvcanvas_t * canvas);
 
             //keep private as safety
             xauto_ptr<xvproperty_t>  new_property(const std::string & property_name,const int propertyType,xvcanvas_t * canvas);
@@ -128,6 +133,7 @@ namespace top
                 IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_reset_property,do_reset_property)
                 IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_renew_property,do_renew_property)
                 IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_del_property,do_del_property)
+                IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_reset_state,do_reset_state)                
             END_DECLARE_XVIFUNC_ID_API(enum_xvinstruct_class_state_function)
         };
 
