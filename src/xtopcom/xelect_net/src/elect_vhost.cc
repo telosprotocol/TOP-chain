@@ -110,11 +110,12 @@ void EcVHost::send_to(common::xip2_t const & src, common::xip2_t const & dst, xb
 
     base::KadmliaKeyPtr send_kad_key = base::GetKadmliaKey(src);
     base::KadmliaKeyPtr recv_kad_key = base::GetKadmliaKey(dst);
-    xinfo("[EcVHost][send] src_xip2:%s dst_xip2:%s src_key:%s recv_key:%s",
+    xinfo("[EcVHost][send] src_xip2:%s dst_xip2:%s src_key:%s recv_key:%s bytes_size:%zu",
           src.to_string().c_str(),
           dst.to_string().c_str(),
           send_kad_key->Get().c_str(),
-          recv_kad_key->Get().c_str());
+          recv_kad_key->Get().c_str(),
+          byte_message.size());
     ec_netcard_->send_to(send_kad_key, recv_kad_key, byte_message, ec);
 }
 
@@ -134,11 +135,12 @@ void EcVHost::send_to_through_root(common::xip2_t const & src, common::xnode_id_
         auto recv_node = kroot_rt->GetRandomNode();
         recv_kad_key = base::GetKadmliaKey(recv_node->node_id);
     }
-    xinfo("[EcVHost][send_to_through_root] src_xip2:%s dst_node_id:%s src_key:%s recv_key:%s",
+    xinfo("[EcVHost][send_to_through_root] src_xip2:%s dst_node_id:%s src_key:%s recv_key:%s bytes_size:%zu",
           src.to_string().c_str(),
           dst_node_id.to_string().c_str(),
           send_kad_key->Get().c_str(),
-          recv_kad_key->Get().c_str());
+          recv_kad_key->Get().c_str(),
+          byte_message.size());
     ec_netcard_->send_to(send_kad_key, recv_kad_key, byte_message, ec);
 }
 
@@ -152,11 +154,12 @@ void EcVHost::spread_rumor(common::xip2_t const & src, common::xip2_t const & ds
 
     base::KadmliaKeyPtr send_kad_key = base::GetKadmliaKey(src);
     base::KadmliaKeyPtr recv_kad_key = base::GetKadmliaKey(dst);
-    xinfo("[EcVHost][spread_rumor] src_xip2:%s dst_xip2:%s src_key:%s recv_key:%s",
+    xinfo("[EcVHost][spread_rumor] src_xip2:%s dst_xip2:%s src_key:%s recv_key:%s bytes_size:%zu",
           src.to_string().c_str(),
           dst.to_string().c_str(),
           send_kad_key->Get().c_str(),
-          recv_kad_key->Get().c_str());
+          recv_kad_key->Get().c_str(),
+          byte_message.size());
     ec_netcard_->spread_rumor(send_kad_key, recv_kad_key, byte_message, ec);
 }
 
@@ -164,7 +167,11 @@ void EcVHost::broadcast(common::xip2_t const & src, xbyte_buffer_t const & byte_
     base::KadmliaKeyPtr send_kad_key = base::GetKadmliaKey(src);
     base::KadmliaKeyPtr recv_kad_key = base::GetRootKadmliaKey(global_node_id);
     // base::KadmliaKeyPtr recv_kad_key = base::GetKadmliaKey(dst);
-    xinfo("[EcVHost][broadcast] src_xip2:%s src_key:%s recv_key:%s", src.to_string().c_str(), send_kad_key->Get().c_str(), recv_kad_key->Get().c_str());
+    xinfo("[EcVHost][broadcast] src_xip2:%s src_key:%s recv_key:%s bytes_size:%zu",
+          src.to_string().c_str(),
+          send_kad_key->Get().c_str(),
+          recv_kad_key->Get().c_str(),
+          byte_message.size());
     ec_netcard_->broadcast(send_kad_key, recv_kad_key, byte_message, ec);
 }
 #if 0
