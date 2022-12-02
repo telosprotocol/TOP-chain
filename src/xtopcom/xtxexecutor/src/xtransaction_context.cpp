@@ -188,7 +188,7 @@ int32_t xtransaction_context_t::exec() {
 }
 
 std::string xtransaction_face_t::assemble_lock_token_param(const uint64_t amount, const uint32_t version) const {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     stream << version; // version
     stream << amount; // amount
     stream << xaction_lock_account_token::UT_time; // unlock_type
