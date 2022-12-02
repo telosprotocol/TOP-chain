@@ -134,6 +134,8 @@ xtrie_node_type_t xtop_trie_short_node::type() const noexcept {
 
 void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
+    encoded.reserve(1024);
+
     append(encoded, RLP::encode(key));
 
     switch (val->type()) {  // NOLINT(clang-diagnostic-switch-enum)
@@ -211,6 +213,8 @@ xtrie_node_type_t xtop_trie_full_node::type() const noexcept {
 
 void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
+    encoded.reserve(1024);
+
     for (auto const & child : children) {
         if (child == nullptr) {
             append(encoded, RLP::encode(nilValueNode.data()));  // 0x80 for empty bytes.
@@ -258,6 +262,7 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
 
 void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
+    encoded.reserve(1024);
 
     for (auto const & child : Children) {
         if (child == nullptr) {
@@ -314,6 +319,8 @@ void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
 
 void xtop_trie_raw_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
+    encoded.reserve(1024);
+
     append(encoded, RLP::encode(Key));
 
     switch (Val->type()) {  // NOLINT(clang-diagnostic-switch-enum)

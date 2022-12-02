@@ -10,7 +10,7 @@
 
 NS_BEG3(top, evm_common, trie)
 xbytes_t VerifyProof(xh256_t rootHash, xbytes_t const & _key, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
-    auto key = keybytesToHex(_key);
+    auto key = key_bytes_to_hex(_key);
     xdbg("[VerifyProof]: roothash: %s", rootHash.hex().c_str());
     xh256_t wantHash = rootHash;
     for (std::size_t index = 0;; index++) {

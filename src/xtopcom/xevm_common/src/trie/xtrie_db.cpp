@@ -439,7 +439,7 @@ xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> const & hash
         auto node = std::dynamic_pointer_cast<xtrie_raw_short_node_t>(n);
         assert(node != nullptr);
 
-        return std::make_shared<xtrie_short_node_t>(compactToHex(node->Key), expandNode(nullptr, node->Val), xnode_flag_t{hash});
+        return std::make_shared<xtrie_short_node_t>(compact_to_hex(node->Key), expandNode(nullptr, node->Val), xnode_flag_t{hash});
     }
     case xtrie_node_type_t::rawfullnode: {
         auto node = std::dynamic_pointer_cast<xtrie_raw_full_node_t>(n);

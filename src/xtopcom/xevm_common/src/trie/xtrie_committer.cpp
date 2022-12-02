@@ -60,7 +60,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
             childCommitted = committed;
         }
         // The key needs to be copied, since we're delivering it to database
-        collapsed->key = hexToCompact(cn->key);
+        collapsed->key = hex_to_compact(cn->key);
         auto const hashed_node = store(collapsed, db);
         assert(hashed_node != nullptr);
         if (hashed_node->type() == xtrie_node_type_t::hashnode) {

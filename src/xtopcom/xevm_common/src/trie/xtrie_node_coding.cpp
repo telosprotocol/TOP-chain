@@ -12,15 +12,16 @@
 #include <cinttypes>
 
 NS_BEG3(top, evm_common, trie)
-xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
+xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t const & node) {
     assert(node);
     // printf("type: %d\n", node->type());
     switch (node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::fullnode: {
-        auto fn = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
+        auto const fn = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
         assert(fn != nullptr);
 
         xbytes_t buf;
+        buf.reserve(1024);
         std::error_code ec;
         fn->EncodeRLP(buf, ec);
         // printf("buf: %s", top::to_hex(buf).c_str());
@@ -31,6 +32,7 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         assert(sn != nullptr);
 
         xbytes_t buf;
+        buf.reserve(1024);
         std::error_code ec;
         sn->EncodeRLP(buf, ec);
         // printf("buf: %s", top::to_hex(buf).c_str());
@@ -54,6 +56,7 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         assert(rfn != nullptr);
 
         xbytes_t buf;
+        buf.reserve(1024);
         std::error_code ec;
         rfn->EncodeRLP(buf, ec);
         // printf("buf: %s", top::to_hex(buf).c_str());
@@ -70,6 +73,7 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         assert(rsn != nullptr);
 
         xbytes_t buf;
+        buf.reserve(1024);
         std::error_code ec;
         rsn->EncodeRLP(buf, ec);
         // printf("buf: %s", top::to_hex(buf).c_str());
@@ -85,6 +89,7 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
 template <std::size_t len>
 xbytes_t xtop_trie_node_rlp::EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t, len> nodes) {
     xbytes_t encoded;
+    encoded.reserve(1024);
     for (auto _n : nodes) {
         if (_n == nullptr) {
             append(encoded, RLP::encode(nilValueNode.data()));  // 0x80 for empty bytes.
@@ -299,7 +304,7 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_short(std::shared_ptr<xtrie_has
     auto flag = xnode_flag_t{std::move(hash)};
 
     auto key = compact_to_hex(kbuf);
-    if (hasTerm(key)) {
+    if (has_terminator(key)) {
         // value node
         // gsl::span<xbyte_t const> val, _;
         auto const result2 = rlp::split_string(rest, ec);

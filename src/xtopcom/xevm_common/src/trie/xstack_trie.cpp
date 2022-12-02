@@ -32,8 +32,8 @@ void xtop_stack_trie::Update(xbytes_t const & key, xbytes_t const & value) {
 }
 
 void xtop_stack_trie::TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
-    auto k = keybytesToHex(key);
-    if (value.size() == 0) {
+    auto k = key_bytes_to_hex(key);
+    if (value.empty()) {
         xerror("stack trie not support delete");
         return;
     }
@@ -219,7 +219,7 @@ void xtop_stack_trie::hash() {
         } else {
             valuenode = std::make_shared<xtrie_hash_node_t>(m_children[0]->m_val);
         }
-        auto key = hexToCompact(m_key);
+        auto key = hex_to_compact(m_key);
         xbytes_t encoded;
         append(encoded, key);
         append(encoded, xtrie_node_rlp::EncodeToBytes(valuenode));
@@ -228,9 +228,9 @@ void xtop_stack_trie::hash() {
         xdbg("xtop_stack_trie hash extNode buffer: %s", top::to_hex(hash_buffer).c_str());
     }
     case xstack_trie_node_type_t::leafNode: {
-        m_key.insert(m_key.end(), xbyte_t(16));
-        auto sz = hexToCompactInPlace(m_key);
-        auto key = xbytes_t{m_key.begin(), m_key.begin() + sz};
+        m_key.insert(m_key.end(), static_cast<xbyte_t>(16));
+        auto const sz = hex_to_compact_inplace(m_key);
+        auto const key = xbytes_t{m_key.begin(), m_key.begin() + sz};
         xbytes_t encoded;
         append(encoded, key);
         append(encoded, m_val);
