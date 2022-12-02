@@ -88,7 +88,7 @@ xbytes_t xtop_trie::try_get(xbytes_t const & key, std::error_code & ec) const {
     xbytes_t value;
     xtrie_node_face_ptr_t newroot;
     bool didResolve;
-    std::tie(value, newroot, didResolve) = try_get(trie_root_, keybytesToHex(key), 0, ec);
+    std::tie(value, newroot, didResolve) = try_get(trie_root_, key_bytes_to_hex(key), 0, ec);
 
     return value;
 }
@@ -98,7 +98,7 @@ std::pair<xbytes_t, std::size_t> xtop_trie::try_get_node(xbytes_t const & path, 
     xbytes_t item;
     xtrie_node_face_ptr_t newroot;
     std::size_t resolved;
-    std::tie(item, newroot, resolved) = try_get_node(trie_root_, compactToHex(path), 0, ec);
+    std::tie(item, newroot, resolved) = try_get_node(trie_root_, compact_to_hex(path), 0, ec);
     if (ec) {
         return std::make_pair(xbytes_t{}, resolved);
     }
@@ -140,7 +140,7 @@ void xtop_trie::update(xbytes_t const & key, xbytes_t const & value) {
 void xtop_trie::try_update(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
     xassert(!ec);
     unhashed_++;
-    auto const k = keybytesToHex(key);
+    auto const k = key_bytes_to_hex(key);
     if (!value.empty()) {
         auto result = insert(trie_root_, {}, k, std::make_shared<xtrie_value_node_t>(value), ec);
         if (ec) {
@@ -178,7 +178,7 @@ void xtop_trie::Delete(xbytes_t const & key) {
 void xtop_trie::try_delete(xbytes_t const & key, std::error_code & ec) {
     xassert(!ec); 
     unhashed_++;
-    auto const k = keybytesToHex(key);
+    auto const k = key_bytes_to_hex(key);
     auto result = erase(trie_root_, {}, k, ec);
     if (ec) {
         return;
@@ -225,7 +225,7 @@ std::pair<xh256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
 bool xtop_trie::prove(xbytes_t const & key, uint32_t from_level, xkv_db_face_ptr_t const & proof_db, std::error_code & ec) const {
     xassert(!ec);
     // Collect all nodes on the path to key.
-    auto key_path = keybytesToHex(key);
+    auto key_path = key_bytes_to_hex(key);
     std::vector<xtrie_node_face_ptr_t> nodes;
     for (auto tn = trie_root_; !key_path.empty() && tn != nullptr;) {
         xdbg("key: %s", top::to_hex(key_path).c_str());
@@ -478,7 +478,7 @@ xtop_trie::update_result xtop_trie::insert(xtrie_node_face_ptr_t const & node, x
     case xtrie_node_type_t::shortnode: {
         auto short_node = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(short_node != nullptr);
-        auto const matchlen = prefixLen(key, short_node->key);
+        auto const matchlen = prefix_len(key, short_node->key);
         // If the whole key matches, keep this short node as is
         // and only update the value.
         if (matchlen == short_node->key.size()) {
@@ -585,7 +585,7 @@ xtop_trie::update_result xtop_trie::erase(xtrie_node_face_ptr_t const & node, xb
         // printf("erase node_type short\n");
         auto short_node = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(short_node != nullptr);
-        auto const matchlen = prefixLen(key, short_node->key);
+        auto const matchlen = prefix_len(key, short_node->key);
         if (matchlen < short_node->key.size()) {
             return {false, short_node};  // don't replace n on mismatch
         }

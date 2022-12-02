@@ -13,7 +13,7 @@ NS_BEG3(top, evm_common, trie)
 
 class xtop_trie_node_rlp {
 public:
-    static xbytes_t EncodeToBytes(xtrie_node_face_ptr_t node);
+    static xbytes_t EncodeToBytes(xtrie_node_face_ptr_t const & node);
 
     template <std::size_t len>
     static xbytes_t EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t, len> nodes);
