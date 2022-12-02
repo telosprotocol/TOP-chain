@@ -108,7 +108,7 @@ void xtop_unit_state_sync::sync_unit(std::error_code & ec) {
 }
 
 void xtop_unit_state_sync::assign_unit_tasks(const sync_peers & peers) {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     state_mpt::xaccount_info_t info;
     info.m_account = m_account;
     info.m_index = m_index;

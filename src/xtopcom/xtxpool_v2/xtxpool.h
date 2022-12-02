@@ -51,7 +51,7 @@ public:
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) override;
     const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) override;
     xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para) override;
-    const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const override;
+    data::xcons_transaction_ptr_t query_tx(const std::string & account_addr, const uint256_t & hash) const override;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) override;
     void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) override;
     void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) override;
@@ -75,6 +75,8 @@ public:
     std::map<std::string, uint64_t> get_min_keep_heights() const override;
     xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const override;
     const std::set<base::xtable_shortid_t> & get_all_table_sids() const override;
+    uint32_t get_tx_cache_size(const std::string & table_addr) const override;
+    void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) override;
 
 private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;

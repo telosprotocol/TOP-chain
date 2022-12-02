@@ -379,6 +379,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_receiver_unconfirm_cache);
         RETURN_METRICS_NAME(txpool_height_record_cache);
         RETURN_METRICS_NAME(txpool_table_unconfirm_raw_txs);
+        RETURN_METRICS_NAME(txpool_pack_nonce_expired);
+        RETURN_METRICS_NAME(txpool_pack_nonce_uncontinuous);
 
         // txstore
         RETURN_METRICS_NAME(txstore_request_origin_tx);
@@ -667,6 +669,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(prune_block_timer);
         RETURN_METRICS_NAME(prune_block_contract);
         RETURN_METRICS_NAME(prune_state_unitstate);
+
+        RETURN_METRICS_NAME(ethtx_get_from);
 
         default: assert(false); return nullptr;
     }

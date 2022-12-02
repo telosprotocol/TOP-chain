@@ -527,6 +527,9 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         // std::cout << "mpt commit:" << j+1 << std::endl;
         mpt_root_vec.push_back(base_mpt->get_root_hash(ec));
         // std::cout << "mpt get root:" << j+1 << std::endl;
+        if (j%50 == 0) {
+            std::cout << "mpt commit:" << j  << "/" << mpt_all_num << std::endl;
+        }
     }
 
     auto last_keep_mpt_root = mpt_root_vec[mpt_prune_num];
@@ -553,12 +556,10 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     std::cout << "before prune.time:" << t1 << std::endl;
 #endif
 
-
     std::unordered_set<evm_common::xh256_t> pruned_hashes;
-    t1 = base::xtime_utl::time_now_ms();
-    for (auto const & hash : mpt_root_vec) {
+    for (uint32_t l = 0; l < mpt_prune_num; l++) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
-        last_keep_mpt->prune(hash, ec);
+        last_keep_mpt->prune(mpt_root_vec[l], pruned_hashes, ec);
         // auto t_now = base::xtime_utl::time_now_ms();
         // uint32_t db_read_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
         // uint32_t db_write_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_write);
@@ -571,6 +572,9 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         // db_read_last = db_read_now;
         if (ec) {
             assert(false);
+        }
+        if (l%50 == 0) {
+            std::cout << "mpt prune:" << l << "/" << mpt_prune_num << std::endl;
         }
     }
     auto t2 = base::xtime_utl::time_now_ms();
@@ -590,7 +594,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 #endif
 
     t2 = base::xtime_utl::time_now_ms();
-    last_keep_mpt->commit_pruned(ec);
+    last_keep_mpt->commit_pruned(pruned_hashes, ec);
     if (ec) {
         assert(false);
     }

@@ -94,11 +94,12 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
 
     // TODO(jimmy) keep for help txpool clear cache
     update_txpool_table_state(latest_blocks.get_latest_committed_block(), tablestate_commit);
+    get_txpool()->update_uncommit_txs(latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block());
     return cs_para;
 }
 
 int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consensus_para_t & cs_para, base::xvblock_t *proposal_block) {
-    uint64_t gmtime = proposal_block->get_second_level_gmtime();
+    uint64_t gmtime = cs_para.get_gmtime();
     uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
     if ( (gmtime > (now + 60)) || (gmtime < (now - 60))) { // the gmtime of leader should in +-60s with backup node
         xwarn("xproposal_maker_t::verify_proposal fail-gmtime not match. proposal=%s,leader_gmtime=%ld,backup_gmtime=%ld",
@@ -209,7 +210,8 @@ data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) {
-    XMETRICS_TIMER(metrics::cons_make_proposal_tick);
+    // XMETRICS_TIMER(metrics::cons_make_proposal_tick);
+    XMETRICS_TIME_RECORD("cons_make_proposal_cost");
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
     data::xtablestate_ptr_t tablestate = proposal_para.get_cert_table_state();
@@ -277,7 +279,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     auto & proposal_input = table_para.get_proposal();
     std::string proposal_input_str;
     proposal_input->serialize_to_string(proposal_input_str);
-    proposal_block->get_input()->set_proposal(proposal_input_str);
+    proposal_block->set_proposal(proposal_input_str);
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
 
@@ -297,7 +299,8 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 }
 
 int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
-    XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
+    // XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
+    XMETRICS_TIME_RECORD("cons_verify_proposal_cost");
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
     
     int ret = backup_verify_and_set_consensus_para_basic(cs_para, proposal_block);
@@ -362,7 +365,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         return false;
     }
 
-    std::string proposal_input_str = proposal_block->get_input()->get_proposal();
+    std::string proposal_input_str = proposal_block->get_proposal();
     xtable_proposal_input_ptr_t proposal_input = make_object_ptr<xtable_proposal_input_t>();
     int32_t ret = proposal_input->serialize_from_string(proposal_input_str);
     if (ret <= 0) {
@@ -482,6 +485,12 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
+    bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, proposal_para.get_clock());
+    if (forked) {
+        all_txs_max_num = 200;  // TODO(jimmy) config paras
+        confirm_and_recv_txs_max_num = 160;
+        confirm_txs_max_num = 120;
+    }
 
     // TODO(jimmy)  proposal_para.get_table_account() == sys_contract_eth_table_block_addr_with_suffix
     if (proposal_para.get_table_account() == sys_contract_relay_table_block_addr) {
@@ -613,24 +622,12 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
                                       proposal->get_cert()->get_viewtoken(),
                                       proposal->get_cert()->get_drand_height());
     if (proposal->get_block_class() == base::enum_xvblock_class_light) {
-        uint64_t property_height = 0;
+        uint64_t property_height = cs_para.get_tgas_height();
         uint64_t total_lock_tgas_token = 0;
-        xassert(!proposal->get_header()->get_extra_data().empty());
-        if (!proposal->get_header()->get_extra_data().empty()) {
-            const std::string & extra_data = proposal->get_header()->get_extra_data();
-            data::xtableheader_extra_t blockheader_extradata;
-            int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
-            if (ret <= 0) {
-                xerror("xtable_blockmaker_t::verify_block fail-extra data invalid");
-                return false;
-            }
-
-            property_height = blockheader_extradata.get_tgas_total_lock_amount_property_height();
-            bool bret = store::xtgas_singleton::get_instance().backup_get_total_lock_tgas_token(proposal->get_cert()->get_clock(), property_height, total_lock_tgas_token);
-            if (!bret) {
-                xwarn("xtable_blockmaker_t::verify_block fail-backup_set_consensus_para.proposal=%s", proposal->dump().c_str());
-                return bret;
-            }
+        bool bret = store::xtgas_singleton::get_instance().backup_get_total_lock_tgas_token(proposal->get_cert()->get_clock(), property_height, total_lock_tgas_token);
+        if (!bret) {
+            xwarn("xtable_blockmaker_t::verify_block fail-backup_set_consensus_para.proposal=%s", proposal->dump().c_str());
+            return bret;
         }
 
         std::string random_seed = calc_random_seed(latest_cert_block, bind_drand_cert, proposal->get_cert()->get_viewtoken());

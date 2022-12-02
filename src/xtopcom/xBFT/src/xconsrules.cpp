@@ -868,6 +868,25 @@ namespace top
             
             return true;
         }
+
+        bool xBFTRules::safe_check_for_proposal_packet(base::xcspdu_t & packet,xproposal_msg_v2_t & out_msg)
+        {
+            base::xvblock_t * lock_block = get_lock_block();
+            if( (NULL == lock_block)
+               || (packet.get_block_chainid() != lock_block->get_chainid())
+               || (packet.get_block_account() != lock_block->get_account()) )
+            {
+                return false;
+            }
+                        
+            if(out_msg.serialize_from_string(packet.get_msg_body()) <= 0) //invalid packet
+                return false;
+            
+            if(out_msg.get_block_object().empty()) //alow empty body of block
+                return false;
+            
+            return true;
+        }
         
         bool xBFTRules::safe_check_for_vote_packet(base::xcspdu_t & in_packet,xvote_msg_t & out_msg)
         {
@@ -940,6 +959,27 @@ namespace top
             
             return true;
         }
+
+        bool xBFTRules::safe_check_for_sync_respond_v2_packet(base::xcspdu_t & packet,xsync_respond_v2_t & _sync_respond_msg)
+        {
+            base::xvblock_t * lock_block = get_lock_block();
+            if( (NULL == lock_block)
+               || (packet.get_block_viewid() < packet.get_block_height())   //view#id must >= block height
+               || (packet.get_block_chainid() != lock_block->get_chainid())
+               || (packet.get_block_account() != lock_block->get_account())
+               )
+            {
+                return false;
+            }
+            
+            if(_sync_respond_msg.serialize_from_string(packet.get_msg_body()) <= 0) //invalid packet
+                return false;
+            
+            if(_sync_respond_msg.get_block_object().empty()) //block'header & cert must be ready
+                return false;
+            
+            return true;
+        }
         
         ////////////////////////////////////safe rules for blocks////////////////////////////////////////////
         
@@ -978,11 +1018,11 @@ namespace top
             #endif
             
             //now ready to do deep verification for hash based on header and input 'binary data
-            if(_proposal_block->is_valid(true) == false)
-            {
-                xerror("xBFTRules::safe_check_for_proposal_block,it is not a valid block=%s at node=0x%llx",_proposal_block->dump().c_str(),get_xip2_addr().low_addr);
-                return false;
-            }
+            // if(_proposal_block->is_valid(true) == false)
+            // {
+            //     xerror("xBFTRules::safe_check_for_proposal_block,it is not a valid block=%s at node=0x%llx",_proposal_block->dump().c_str(),get_xip2_addr().low_addr);
+            //     return false;
+            // }
             return true;
         }
             

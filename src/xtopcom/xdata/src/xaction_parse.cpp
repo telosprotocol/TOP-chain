@@ -56,7 +56,7 @@ int32_t xaction_asset_out::parse(const xaction_t & action) {
 
 int32_t xaction_asset_out::serialze_to(xaction_t & action, const data::xproperty_asset & asset_out) {
     action.set_action_type(xaction_type_asset_out);
-    xstream_t stream(xcontext_t::instance());
+    base::xautostream_t<1024> stream(xcontext_t::instance());
     stream << asset_out.m_token_name;
     stream << asset_out.m_amount;
     std::string param((char *)stream.data(), stream.size());
@@ -93,7 +93,7 @@ int32_t xaction_asset_proc::serialze_to(xaction_t & action, const data::xpropert
     //     return xchain_error_action_param_zero;
     // }
     action.set_action_type(action_type);
-    xstream_t stream(xcontext_t::instance());
+    base::xautostream_t<1024> stream(xcontext_t::instance());
     stream << asset.m_token_name;
     stream << asset.m_amount;
     std::string param((char *)stream.data(), stream.size());
@@ -138,7 +138,7 @@ int32_t xaction_create_user_account::parse(const xaction_t & action) {
 
 int32_t xaction_create_user_account::serialze_to(xaction_t & action, const std::string & address) {
     action.set_action_type(xaction_type_create_user_account);
-    xstream_t stream(xcontext_t::instance());
+    base::xautostream_t<1024> stream(xcontext_t::instance());
     stream << address;
     std::string param((char *)stream.data(), stream.size());
     action.set_action_param(std::move(param));
@@ -173,7 +173,7 @@ int32_t xaction_deploy_contract::serialze_to(xaction_t & action, uint64_t tgas_l
         return xchain_error_action_param_empty;
     }
     action.set_action_type(xaction_type_create_contract_account);
-    xstream_t stream(xcontext_t::instance());
+    base::xautostream_t<1024> stream(xcontext_t::instance());
     stream << tgas_limit;
     stream << code;
     std::string param((char *)stream.data(), stream.size());
@@ -410,7 +410,7 @@ int32_t xaction_pledge_token_vote::parse(const xaction_t & action) {
 
 int32_t xaction_pledge_token_vote::serialze_to(xaction_t & action, const uint64_t num, const uint16_t duration) {
     action.set_action_type(xaction_type_pledge_token_vote);
-    xstream_t stream(xcontext_t::instance());
+    base::xautostream_t<1024> stream(xcontext_t::instance());
     stream << num;
     stream << duration;
     std::string param((char *)stream.data(), stream.size());
@@ -432,7 +432,7 @@ int32_t xaction_redeem_token_vote::parse(const xaction_t & action) {
 
 int32_t xaction_redeem_token_vote::serialze_to(xaction_t & action, const uint64_t num) {
     action.set_action_type(xaction_type_redeem_token_vote);
-    xstream_t stream(xcontext_t::instance());
+    base::xautostream_t<1024> stream(xcontext_t::instance());
     stream << num;
     std::string param((char *)stream.data(), stream.size());
     action.set_action_param(std::move(param));
