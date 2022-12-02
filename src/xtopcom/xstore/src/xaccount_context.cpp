@@ -402,7 +402,7 @@ int32_t xaccount_context_t::lock_token(const uint256_t &tran_hash, uint64_t amou
         xerror("xaccount_context_t::lock_token failed, same tx hash %s", hash_str.c_str());
         return xaccount_property_lock_token_key_same;
     }
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     stream << m_timer_height;
     stream << tran_params;
     std::string record_str = std::string((char *)stream.data(), stream.size());

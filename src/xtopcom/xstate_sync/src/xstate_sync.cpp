@@ -237,7 +237,7 @@ void xtop_state_sync::loop(std::function<bool()> condition,
 }
 
 void xtop_state_sync::assign_table_tasks(const sync_peers & peers) {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     stream << m_table.to_string();
     stream << m_height;
     stream << m_table_block_hash.to_bytes();
@@ -265,7 +265,7 @@ void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
         if (m_cancel) {
             return;
         }
-        base::xstream_t stream(base::xcontext_t::instance());
+        base::xautostream_t<1024> stream(base::xcontext_t::instance());
         stream << m_table.to_string();
         stream << m_req_sequence_id;
         std::vector<xbytes_t> nodes_bytes;

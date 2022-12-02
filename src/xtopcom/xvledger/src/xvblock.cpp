@@ -2159,7 +2159,7 @@ namespace top
             if(get_input()->get_resources_hash().empty())//if no resources
                 return true;
 
-            if (get_input()->get_resources_data().empty()) {
+            if (!get_input()->has_resource_data()) {
                 xwarn("xvblock_t::is_input_ready fail-resources empty.%s", dump().c_str());
                 return false;
             }
