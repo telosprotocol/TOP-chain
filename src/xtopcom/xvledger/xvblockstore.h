@@ -220,7 +220,6 @@ namespace top
             //execute_block will move to statestore soon
             //execute block and update state of acccount
             //note: block must be committed and connected
-            virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type,const int atag = 0) = 0;
             virtual base::xauto_ptr<base::xvblock_t>    get_block_by_hash(const std::string& hash) = 0;
         public:
             // check if genesis block exist
