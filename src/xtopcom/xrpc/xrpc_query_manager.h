@@ -15,6 +15,7 @@
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xrpc/xjson_proc.h"
 #include "xrpc/xrpc_query_func.h"
+#include "xrpc/xrpc_loader.h"
 
 namespace top {
 
@@ -131,7 +132,7 @@ public:
     xJson::Value parse_account(const std::string & account, string & strResult, uint32_t & nErrorCode);
     void update_tx_state(xJson::Value & result, const xJson::Value & cons, const std::string & rpc_version);
     xJson::Value parse_tx(top::data::xtransaction_t * tx_ptr, const std::string & version);
-    int parse_tx(const uint256_t & tx_hash, top::data::xtransaction_t * cons_tx_ptr, const std::string & version, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
+    int parse_tx(const std::string & tx_hash, xtransaction_t * txpool_tx, xtxindex_detail_ptr_t const& sendindex, const std::string & version, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
     xJson::Value parse_action(const top::data::xaction_t & action);
     void getRecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getZecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -220,7 +221,6 @@ private:
     void set_sharding_vote_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
     void set_sharding_reward_claiming_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
     int get_transaction_on_demand(const std::string & account,
-                                  top::data::xtransaction_t * tx_ptr,
                                   const std::string & version,
                                   const uint256_t & tx_hash,
                                   xJson::Value & result_json,

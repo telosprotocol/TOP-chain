@@ -201,10 +201,6 @@ public:
         return false;
     }
 
-    base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_transaction_subtype,const int atag = 0) override {
-        return nullptr;
-    }
-
     base::xauto_ptr<base::xvblock_t> get_block_by_hash(const std::string& hash) override {
         return nullptr;
     }
