@@ -221,45 +221,59 @@ uint64_t xcons_transaction_t::get_dump_rsp_id() const {
 }
 
 std::string xcons_transaction_t::dump(bool detail) const {
-    xassert(m_receipt != nullptr || m_tx != nullptr);// should not both null
+    xassert(m_receipt != nullptr || m_tx != nullptr);  // should not both null
 
     if (!m_dump_str.empty()) {
         return m_dump_str;
     }
-    if (get_tx_hash().empty())
-    {
+    if (get_tx_hash().empty()) {
         return m_dump_str;
     }
-    std::stringstream ss;
-    ss << "{";
-    ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_tx_hash(), get_tx_subtype());
-    base::xtable_shortid_t origin_src_tableid = is_recv_tx() ? get_peer_tableid() : get_self_tableid();
-    base::xtable_shortid_t origin_dst_tableid = is_recv_tx() ? get_self_tableid() : get_peer_tableid();
 
-    ss << ",id={" << (uint32_t)origin_src_tableid;
-    ss << "->" << (uint32_t)origin_dst_tableid;
-    ss << ":" << get_dump_receipt_id();
-    ss << "," << get_dump_rsp_id();
-    ss << "}";
-    if (is_recv_tx() && get_last_not_need_confirm()) {
-        ss << ",no_need_confirm";
+    auto txhash = base::xstring_utl::to_hex(get_tx_hash());
+    char local_param_buf[256];
+    if (is_self_tx()) {
+        xprintf(local_param_buf,
+                sizeof(local_param_buf),
+                "{%s:self,id={%d->%d},nonce:%lu,type:%d,addr:%s}",
+                txhash.c_str(),
+                get_self_tableid(),
+                get_peer_tableid(),
+                get_transaction()->get_tx_nonce(),
+                get_transaction()->get_tx_type(),
+                get_transaction()->get_source_addr().c_str());
+    } else if (is_send_tx()) {
+        xprintf(local_param_buf,
+                sizeof(local_param_buf),
+                "{%s:send,id={%d->%d},nonce:%lu,type:%d,addr:%s->%s}",
+                txhash.c_str(),
+                get_self_tableid(),
+                get_peer_tableid(),
+                get_transaction()->get_tx_nonce(),
+                get_transaction()->get_tx_type(),
+                get_transaction()->get_source_addr().c_str(),
+                get_transaction()->get_target_addr().c_str());
+    } else if (is_recv_tx()) {
+        xprintf(local_param_buf,
+                sizeof(local_param_buf),
+                "{%s:recv,id={%d->%d:%lu,%lu},no_need_confirm:%d}",
+                txhash.c_str(),
+                get_self_tableid(),
+                get_peer_tableid(),
+                get_dump_receipt_id(),
+                get_dump_rsp_id(),
+                get_last_not_need_confirm());
+    } else {
+        xprintf(local_param_buf,
+                sizeof(local_param_buf),
+                "{%s:confirm,id={%d->%d:%lu,%lu}}",
+                txhash.c_str(),
+                get_self_tableid(),
+                get_peer_tableid(),
+                get_dump_receipt_id(),
+                get_dump_rsp_id());
     }
-    if (is_self_tx() || is_send_tx()) {
-        ss << ",nonce:" << get_transaction()->get_tx_nonce();
-        ss << ",type:" << get_transaction()->get_tx_type();
-    }
-    if (is_send_tx() || is_self_tx()) {
-        if (get_transaction() != nullptr) {
-            // ss << ",fire:" << get_transaction()->get_fire_timestamp();
-            // ss << ",duration:" << (uint32_t)get_transaction()->get_expire_duration();
-            ss << ",addr:" << get_transaction()->get_source_addr();
-            if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
-                ss << "->" << get_transaction()->get_target_addr();
-            }
-        }
-    }
-    ss << "}";
-    return ss.str();
+    return local_param_buf;
 }
 
 uint64_t xcons_transaction_t::get_last_action_used_tgas() const {

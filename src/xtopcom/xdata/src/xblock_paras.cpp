@@ -20,6 +20,7 @@ xblockpara_base_t::xblockpara_base_t(const std::map<std::string, std::string> & 
 }
 
 std::string xblockpara_base_t::dump() const {
+#ifdef DEBUG
     std::stringstream ss;
     ss << "{";
     for (auto & v : m_values) {
@@ -28,6 +29,9 @@ std::string xblockpara_base_t::dump() const {
     }
     ss << "}";
     return ss.str();
+#else
+    return "";
+#endif
 }
 
 void    xblockpara_base_t::clear() {
