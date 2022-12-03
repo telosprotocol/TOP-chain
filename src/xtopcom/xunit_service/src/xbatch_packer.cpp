@@ -685,7 +685,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
             xcons_utl::xip_to_hex(m_last_xip2).c_str());
 
         base::xvblock_t *vblock = _evt_obj->get_target_proposal();
-        xassert(vblock->is_body_and_offdata_ready(false));
+        xdbgassert(vblock->is_body_and_offdata_ready(false));
 
         if (vblock->get_excontainer() != nullptr) {
             vblock->get_excontainer()->commit(vblock);
@@ -717,7 +717,7 @@ bool  xbatch_packer::on_replicate_finish(const base::xvevent_t & event,xcsobject
     if(_evt_obj->get_error_code() == xconsensus::enum_xconsensus_code_successful)
     {
         base::xvblock_t *vblock = _evt_obj->get_target_block();
-        xassert(vblock->is_body_and_offdata_ready(false));
+        xdbgassert(vblock->is_body_and_offdata_ready(false));
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
         m_para->get_resources()->get_bus()->push_event(ev);

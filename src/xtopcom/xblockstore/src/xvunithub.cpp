@@ -751,7 +751,7 @@ namespace top
                 base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
                 if( (nullptr == existing_index) || (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
                 {
-                    xassert(container_block->is_body_and_offdata_ready(false));
+                    xdbgassert(container_block->is_body_and_offdata_ready(false));
 
                     std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;  
                     if (false == container_block->extract_sub_blocks(sub_blocks)) {
@@ -1215,8 +1215,8 @@ namespace top
                 return false;
             }
 
-            xassert(container_block->is_input_ready(true));
-            xassert(container_block->is_output_ready(true));
+            xdbgassert(container_block->is_input_ready(true));
+            xdbgassert(container_block->is_output_ready(true));
 
             std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
             if(container_block->extract_sub_blocks(sub_blocks))
