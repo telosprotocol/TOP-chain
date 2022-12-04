@@ -848,7 +848,7 @@ namespace top
                 return nullptr;
             }
 
-            xinfo("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s,binlog=%zu,fullstate=%zu,offdata=%zu,%s",
+            xdbg("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s,binlog=%zu,fullstate=%zu,offdata=%zu,%s",
                 get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
                 get_block()->get_input()->dump().c_str(), get_block()->get_output()->dump().c_str(), get_block()->get_binlog().size(), get_block()->get_full_state().size(),
                 get_output_offdata().size(),base::xstring_utl::to_hex(get_block()->get_output_offdata_hash()).c_str());
