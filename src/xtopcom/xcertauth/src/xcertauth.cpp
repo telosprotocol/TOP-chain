@@ -8,6 +8,7 @@
 #include "xauthscheme.h"
 #include "xmutisig/xmutisig.h"
 #include "xsigndata.h"
+#include "xbasic/xlru_cache_specialize.h"
 
 namespace top
 {
@@ -74,6 +75,8 @@ namespace top
         protected:
             xauthscheme_t*       m_auth_schemes[base::enum_xvchain_sign_scheme_max + 1];  //total not over 8 as refer enum_xvchain_sign_scheme
             base::xvnodesrv_t&   m_node_service;
+        private:
+            basic::xlru_cache_specialize<std::string, bool> m_verified_hash{2000};
         };
 
         base::xvcertauth_t &  xauthcontext_t::instance(base::xvnodesrv_t & node_service)
@@ -551,6 +554,13 @@ namespace top
 
         base::enum_vcert_auth_result   xauthcontext_t_impl::verify_muti_sign_impl(const base::xvqcert_t * test_for_cert)
         {
+            const std::string ask_verify_hash = test_for_cert->get_hash_to_sign();
+            bool result = false;
+            bool ret = m_verified_hash.get(ask_verify_hash, result);
+            if (ret && result) {
+                return base::enum_vcert_auth_result::enum_successful;
+            }
+
             if(false == test_for_cert->is_deliver())
             {
                 xerror("xauthcontext_t_impl::verify_muti_sign,fail-an undeliver cert:%s",test_for_cert->dump().c_str());
@@ -584,7 +594,6 @@ namespace top
 
             std::set<std::string>  exclude_nodes;
             std::set<std::string>  exclude_keys;
-            const std::string ask_verify_hash = test_for_cert->get_hash_to_sign();
             base::enum_vcert_auth_result verify_result = verify_validator_mutisig(*verify_scheme_obj,ask_verify_hash,test_for_cert,exclude_nodes,exclude_keys);
             if(verify_result != base::enum_vcert_auth_result::enum_successful )
                 return verify_result;
@@ -595,6 +604,7 @@ namespace top
                 if(audit_result != base::enum_vcert_auth_result::enum_successful)
                     return audit_result;
             }
+            m_verified_hash.put(ask_verify_hash, true);
             return base::enum_vcert_auth_result::enum_successful;
         }
 
