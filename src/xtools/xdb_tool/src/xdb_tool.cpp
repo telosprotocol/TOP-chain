@@ -9,6 +9,7 @@
 #include "xdata/xproperty.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
+#include "xstatestore/xstatestore_face.h"
 
 #include "xvledger/xvledger.h"
 #include "xvledger/xvblock.h"
@@ -109,21 +110,23 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height, bool print) cons
     outstr << height;
 
     auto vblock = blockstore_->load_block_object((std::string)top::sys_contract_zec_elect_consensus_addr, height, 0, false);
+    if (vblock == nullptr) {
+        std::cout << "[ xdb_tool::cons_electinfo_by_height]" << " cannot get cons elect info at height: " << height << ", unit is null. \n";
+        return "";
+    }
     outstr << " " << vblock->get_clock();
-    top::base::xauto_ptr<top::base::xvbstate_t> bstate = top::base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
-    if (bstate == nullptr) {
+    xunit_bstate_ptr_t unitstate = top::statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get());
+    if (unitstate == nullptr) {
         std::cout << "[ xdb_tool::cons_electinfo_by_height]" << " cannot get cons elect info at height: " << height << ", state is null. \n";
         return "";
     }
-    xunit_bstate_t unitstate(bstate.get());
-
     // process auditor&validator
     for (auto i = 0; i < CONS_AUDITOR_COUNT; ++i) {
         uint8_t auditor_group_id = top::common::xauditor_group_id_value_begin + i;
         outstr << " auditor_" << std::dec << (uint16_t)auditor_group_id << ":";
 
         std::string property_name = std::string(top::data::XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_" + std::to_string(auditor_group_id);
-        std::string result = unitstate.string_get(property_name);
+        std::string result = unitstate->string_get(property_name);
 
         if (result.empty()) {
             std::cout << "[ xdb_tool::cons_electinfo_by_height] auditor groupid " << std::dec << (uint16_t)auditor_group_id << " cannot get native property at height: " << height << "," "\n";
