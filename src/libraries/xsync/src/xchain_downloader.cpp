@@ -620,14 +620,14 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
     uint64_t height = start_height;
 
     if (sync_policy == enum_chain_sync_policy_fast) {
-        xauto_ptr<xvblock_t> start_vblock = m_sync_store->get_latest_start_block(m_address, sync_policy);
-        data::xblock_ptr_t current_block = autoptr_to_blockptr(start_vblock);
-        if (!current_block->is_full_state_block() && current_block->get_height() == start_height) {
-            if (!handle_fulltable(start_height, self_addr, target_addr)){
-                return abort_overflow;
-            }
-            return wait_response;
-        }
+        // xauto_ptr<xvblock_t> start_vblock = m_sync_store->get_latest_start_block(m_address, sync_policy);
+        // data::xblock_ptr_t current_block = autoptr_to_blockptr(start_vblock);
+        // if (!current_block->is_full_state_block() && current_block->get_height() == start_height) {
+        //     if (!handle_fulltable(start_height, self_addr, target_addr)){
+        //         return abort_overflow;
+        //     }
+        //     return wait_response;
+        // }
 
         uint64_t latest_end_height = m_sync_store->get_latest_end_block_height(m_address, sync_policy);
         height = sync::derministic_height(latest_end_height, std::make_pair(start_height,end_height));
@@ -713,21 +713,21 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         }
     }
 
-    if (sync_policy == enum_chain_sync_policy_fast) {
-        xauto_ptr<xvblock_t> table_block = m_sync_store->get_latest_start_block(m_address, sync_policy);
-        xblock_ptr_t block = autoptr_to_blockptr(table_block);
-        xsync_info("chain_downloader on_response %s, height=%lu",m_address.c_str(), table_block->get_height());
-        if (!block->is_full_state_block()) {
-            init_committed_event_group();
-            m_sync_range_mgr.set_current_sync_start_height(next_block->get_height());
-            xsync_info("chain_downloader on_response(chain_snapshot) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
-            m_address.c_str(), table_block->get_height(), table_block->get_viewid(), to_hex_str(table_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
-            if (!handle_fulltable(block->get_height(), self_addr, from_addr)) {
-                return abort_overflow;
-            }
-            return wait_response;
-        }
-    }
+    // if (sync_policy == enum_chain_sync_policy_fast) {
+    //     xauto_ptr<xvblock_t> table_block = m_sync_store->get_latest_start_block(m_address, sync_policy);
+    //     xblock_ptr_t block = autoptr_to_blockptr(table_block);
+    //     xsync_info("chain_downloader on_response %s, height=%lu",m_address.c_str(), table_block->get_height());
+    //     if (!block->is_full_state_block()) {
+    //         init_committed_event_group();
+    //         m_sync_range_mgr.set_current_sync_start_height(next_block->get_height());
+    //         xsync_info("chain_downloader on_response(chain_snapshot) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+    //         m_address.c_str(), table_block->get_height(), table_block->get_viewid(), to_hex_str(table_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
+    //         if (!handle_fulltable(block->get_height(), self_addr, from_addr)) {
+    //             return abort_overflow;
+    //         }
+    //         return wait_response;
+    //     }
+    // }
 
     xsync_info("chain_downloader on_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
         m_address.c_str(), next_block->get_height(), next_block->get_viewid(), to_hex_str(next_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
@@ -745,26 +745,26 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     int64_t now = get_time();
     int64_t total_cost = now - m_request->send_time;
 
-    xsync_info("chain_downloader on_snapshot_response(overview) %s  cost(%ldms) %s",
-        m_address.c_str(), total_cost, from_addr.to_string().c_str());
+    xsync_info("chain_downloader on_snapshot_response(overview) %s  cost(%ldms) %s sync_start_height=%ld",
+        m_address.c_str(), total_cost, from_addr.to_string().c_str(), m_sync_range_mgr.get_current_sync_start_height());
 
     m_ratelimit->feedback(total_cost, now);
     XMETRICS_COUNTER_INCREMENT("sync_downloader_response_cost", total_cost);
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_policy_fast);
-    data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-    if (current_block->is_fullblock() && !current_block->is_full_state_block() && current_block->get_height() == height) {
-        if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot)) {
-            xsync_error("chain_downloader on_snapshot_response invalid snapshot. block=%s", current_vblock->dump().c_str());
-            return abort;
-        }
-        xsync_dbg("chain_downloader on_snapshot_response valid snapshot. block=%s", current_vblock->dump().c_str());
-        statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
-        // m_sync_store->store_block(current_block.get());
-    }
+    // base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_policy_fast);
+    // data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+    // if (current_block->is_fullblock() && !current_block->is_full_state_block() && current_block->get_height() == height) {
+    //     if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot)) {
+    //         xsync_error("chain_downloader on_snapshot_response invalid snapshot. block=%s", current_vblock->dump().c_str());
+    //         return abort;
+    //     }
+    //     xsync_dbg("chain_downloader on_snapshot_response valid snapshot. block=%s", current_vblock->dump().c_str());
+    //     statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
+    //     m_sync_store->store_block(current_block.get());
+    // }
 
-    xsync_info("chain_downloader on_snapshot_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
-        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
+    // xsync_info("chain_downloader on_snapshot_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+    //     m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
 
     return handle_next(m_sync_range_mgr.get_current_sync_start_height());
 }

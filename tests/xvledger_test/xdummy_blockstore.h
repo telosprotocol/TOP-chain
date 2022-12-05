@@ -74,6 +74,10 @@ public:
         return 0;
     }
 
+    uint64_t get_latest_full_block_height(const base::xvaccount_t & account, const int atag = 0) override {
+        return 0;
+    }
+
     uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override {
         return 0;
     }

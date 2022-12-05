@@ -637,20 +637,22 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
 
         xchain_state_info_t info;
         info.address = address;
-        if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
-            base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
-            if (!block->is_full_state_block()) {
-                info.start_height = 0;
-                info.end_height = 0;
-            } else {
-                info.start_height = latest_start_block->get_height();
-                info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
-            }
-        } else {
-            info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
-            info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
-        }
+        // if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
+        //     base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
+        //     xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+        //     if (!block->is_full_state_block()) {
+        //         info.start_height = 0;
+        //         info.end_height = 0;
+        //     } else {
+        //         info.start_height = latest_start_block->get_height();
+        //         info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
+        //     }
+        // } else {
+        //     info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
+        //     info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
+        // }
+        info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
+        info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);        
         rsp_info_list.push_back(info);
     }
 
@@ -1030,33 +1032,35 @@ void xsync_handler_t::handle_chain_snapshot_request(
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
-    ptr->serialize_from(stream);
+    xsync_warn("xsync_handler_t::handle_chain_snapshot_request fail-not support");
 
-    XMETRICS_GAUGE(metrics::xsync_handle_chain_snapshot_request, 1);
-    xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-    base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock, false);
-    if (blk != nullptr) {
-        if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
-            // it must be full-table block now
-            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_chain_snapshot)) {
-                std::string property_snapshot = blk->get_full_state();
-                xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
-                    property_snapshot, ptr->m_height_of_fullblock);
-                m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
-            } else {
-                xsync_warn("xsync_handler receive chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
-                    ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
-            }
-        } else {
-            xsync_error("xsync_handler receive chain_snapshot_request, and it is not full table,account:%s, height:%llu",
-                    ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-        }
-    } else {
-        xsync_info("xsync_handler receive chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
-                ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-    }
+    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
+    // ptr->serialize_from(stream);
+
+    // XMETRICS_GAUGE(metrics::xsync_handle_chain_snapshot_request, 1);
+    // xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
+    // base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock, false);
+    // if (blk != nullptr) {
+    //     if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
+    //         // it must be full-table block now
+    //         if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_chain_snapshot)) {
+    //             std::string property_snapshot = blk->get_full_state();
+    //             xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
+    //                 property_snapshot, ptr->m_height_of_fullblock);
+    //             m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
+    //         } else {
+    //             xsync_warn("xsync_handler receive chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
+    //                 ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
+    //         }
+    //     } else {
+    //         xsync_error("xsync_handler receive chain_snapshot_request, and it is not full table,account:%s, height:%llu",
+    //                 ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
+    //     }
+    // } else {
+    //     xsync_info("xsync_handler receive chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
+    //             ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
+    // }
 }
 
 void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
@@ -1065,17 +1069,19 @@ void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vn
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
+    // TODO(jimmy)
+    xerror("xsync_handler_t::handle_chain_snapshot_response fail-not support");
 
-    auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
-    ptr->serialize_from(stream);
+    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
+    // ptr->serialize_from(stream);
 
-    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
+    // xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
 
-    XMETRICS_GAUGE(metrics::xsync_handler_chain_snapshot_reponse, 1);
+    // XMETRICS_GAUGE(metrics::xsync_handler_chain_snapshot_reponse, 1);
 
-    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
-    m_downloader->push_event(e);
+    // mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
+    // m_downloader->push_event(e);
 }
 
 void xsync_handler_t::handle_ondemand_chain_snapshot_request(
@@ -1086,13 +1092,16 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_request(
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
-    ptr->serialize_from(stream);
+    // TODO(jimmy)
+    xwarn("xsync_handler_t::handle_ondemand_chain_snapshot_request fail-not support");
 
-    XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_request, 1);
-    xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-    m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);
+    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
+    // ptr->serialize_from(stream);
+
+    // XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_request, 1);
+    // xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
+    // m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);
 }
 
 void xsync_handler_t::handle_ondemand_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
@@ -1102,15 +1111,18 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_response(uint32_t msg_size,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
 
-    auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
-    ptr->serialize_from(stream);
+    // TODO(jimmy)
+    xerror("xsync_handler_t::handle_ondemand_chain_snapshot_request fail-not support");
 
-    xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
+    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
+    // ptr->serialize_from(stream);
 
-    XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_reponse, 1);
+    // xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
 
-    m_sync_on_demand->handle_chain_snapshot(*(ptr.get()), from_address, network_self);
+    // XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_reponse, 1);
+
+    // m_sync_on_demand->handle_chain_snapshot(*(ptr.get()), from_address, network_self);
 }
 
 void xsync_handler_t::get_on_demand_by_hash_blocks(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
