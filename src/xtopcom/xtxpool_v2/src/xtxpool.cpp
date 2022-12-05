@@ -220,6 +220,15 @@ void xtxpool_t::on_block_confirmed(xblock_t * block) {
     table->on_block_confirmed(block);
 }
 
+bool xtxpool_t::on_block_confirmed(const std::string table_addr, base::enum_xvblock_class blk_class, uint64_t height) {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return true;
+    }
+
+    return table->on_block_confirmed(blk_class, height);
+}
+
 int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
     auto table = get_txpool_table_by_addr(account);
     if (table == nullptr) {
