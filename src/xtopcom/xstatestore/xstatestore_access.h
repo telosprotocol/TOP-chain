@@ -6,6 +6,7 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
+#include "xbase/xlru_cache.h"
 #include "xstatestore/xstatestore_base.h"
 #include "xstatestore/xtablestate_ext.h"
 #include "xdata/xtable_bstate.h"

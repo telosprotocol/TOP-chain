@@ -121,10 +121,6 @@ base::xvblockstore_t*  xstatectx_base_t::get_blockstore() const {
     return base::xvchain_t::instance().get_xblockstore();
 }
 
-base::xvblkstatestore_t* xstatectx_base_t::get_xblkstatestore() const {
-    return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
-}
-
 bool xstatectx_base_t::load_account_index(common::xaccount_address_t const& address, base::xaccount_index_t & account_index) const {
     return get_account_index(m_table_state, address.to_string(), account_index);                                            
 }

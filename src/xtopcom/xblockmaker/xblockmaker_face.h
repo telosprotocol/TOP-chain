@@ -29,7 +29,6 @@ class xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const = 0;
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
     virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
-    virtual base::xvblkstatestore_t*    get_xblkstatestore() const = 0;
     virtual base::xvcertauth_t*         get_certauth() const {return m_ca;}
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {m_ca = _ca;}
  private:
@@ -47,7 +46,6 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
-    virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}
 
  private:
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
