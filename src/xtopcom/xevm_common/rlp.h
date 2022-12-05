@@ -366,7 +366,7 @@ public:
     static xbytes_t encodeList(const xbytes_t & encoded) noexcept;
 
     /// Encodes a block of data.
-    static xbytes_t encode(const xbytes_t & data);
+    // static xbytes_t encode(const xbytes_t & data);
 
     static xbytes_t encode(gsl::span<xbyte_t const> bytes);
 

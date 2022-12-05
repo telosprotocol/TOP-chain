@@ -21,10 +21,11 @@ static const std::size_t maxFetchesPerDepth = 16384;
 SyncPath newSyncPath(xbytes_t const & path) {
     SyncPath res;
     if (path.size() < 64) {
-        res.push_back(hexToCompact(path));
+        res.push_back(hex_to_compact(path));
     } else {
-        res.push_back(hexToKeybytes(xbytes_t{path.begin(), path.begin() + 64}));
-        res.push_back(hexToCompact(xbytes_t{path.begin() + 64, path.end()}));
+        gsl::span<xbyte_t const> const path_span{path};
+        res.push_back(hex_to_key_bytes(path_span.first(64)));
+        res.push_back(hex_to_compact(path_span.subspan(64)));
     }
     return res;
 }
@@ -269,14 +270,14 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
         auto node = std::dynamic_pointer_cast<xtrie_short_node_t>(object);
         assert(node != nullptr);
 
-        auto key = node->key;
-        if (hasTerm(key)) {
-            key = xbytes_t{key.begin(), key.end() - 1};
+        gsl::span<xbyte_t const> key{node->key};
+        if (has_terminator(key)) {
+            key = key.first(key.size() - 1);
         }
         xbytes_t combined_path;
         combined_path.insert(combined_path.end(), req->path.begin(), req->path.end());
         combined_path.insert(combined_path.end(), key.begin(), key.end());
-        children.push_back(std::make_pair(combined_path, node->val));
+        children.emplace_back(std::move(combined_path), node->val);
         break;
     }
     case xtrie_node_type_t::fullnode: {
@@ -288,8 +289,8 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
                 auto child = node->children[i];
                 xbytes_t combined_path;
                 combined_path.insert(combined_path.end(), req->path.begin(), req->path.end());
-                combined_path.insert(combined_path.end(), xbyte_t(i));
-                children.push_back(std::make_pair(combined_path, child));
+                combined_path.insert(combined_path.end(), static_cast<xbyte_t>(i));
+                children.emplace_back(std::move(combined_path), child);
             }
         }
         break;
@@ -312,10 +313,11 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
 
                 std::vector<xbytes_t> paths;
                 if (child_p.first.size() == 2 * 32) {
-                    paths.push_back(hexToKeybytes(child_p.first));
+                    paths.push_back(hex_to_key_bytes(child_p.first));
                 } else if (child_p.first.size() == 4 * 32) {
-                    paths.push_back(hexToKeybytes(xbytes_t{child_p.first.begin(), child_p.first.begin() + 2 * 32}));
-                    paths.push_back(hexToKeybytes(xbytes_t{child_p.first.begin() + 2 * 32, child_p.first.end()}));
+                    gsl::span<xbyte_t const> child_p_first_span{child_p.first};
+                    paths.push_back(hex_to_key_bytes(child_p_first_span.first(64)));
+                    paths.push_back(hex_to_key_bytes(child_p_first_span.subspan(64)));
                 }
                 req->callback(paths, child_p.first, node->data(), req->hash, ec);
                 if (ec) {
