@@ -130,7 +130,7 @@ void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
     
     if (chain_fork::xutility_t::is_forked(fork_points::v1_9_0_vote_contract_update_point, timestamp)) {
         xinfo("xtable_vote_contract::unvoteNode use new version to set vote");
-        set_vote_info_v2(account, vote_info, true);
+        set_vote_info_v2(account, vote_info, false);
     } else {
         xinfo("xtable_vote_contract::unvoteNode not forked yet, %lu, use old version to set vote", timestamp);
         set_vote_info(account, vote_info, false);

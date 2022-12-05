@@ -293,8 +293,14 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_archives, std::uint32_t
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num, uint16_t, normal, 1, 1, std::numeric_limits<uint16_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_pernode_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_report_interval, xinterval_t, normal, 3, 0, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_report_interval, xinterval_t, normal, 1, 0, std::numeric_limits<xinterval_t>::max());
+
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_ineffective_period, xinterval_t, normal, 1, 0, std::numeric_limits<xinterval_t>::max());
+#else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_ineffective_period, xinterval_t, normal, 8640, 0, std::numeric_limits<xinterval_t>::max());
+#endif
+
 
 // reward:
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio, uint32_t, critical, 8, 0, 100);   // mean 8%

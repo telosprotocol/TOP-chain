@@ -186,7 +186,7 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                         if (m_contract_info->address == sharding_statistic_info_contract_address) {
                             clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
                         } else if (m_contract_info->address == sharding_vote_contract_address) {
-                            clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_report_interval);
+                            clock_interval = 1;
                         }
 
                         if (m_table_contract_schedule.find(m_contract_info->address) != m_table_contract_schedule.end()) {
