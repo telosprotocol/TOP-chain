@@ -247,6 +247,30 @@ TEST_F(test_block_executed, xstatestore_executor_t_test_3) {
     }
 }
 
+TEST_F(test_block_executed, xstatestore_table_state_get_BENCH_1) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 10;
+    mock::xdatamock_table mocktable(1, 8);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    statestore::xtablestate_ext_ptr_t tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(tableblocks[max_count].get());
+    ASSERT_NE(tablestate_ext, nullptr);
+
+    std::error_code ec;
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(tableblocks[max_count].get(), ec);
+    if (ec) {
+        xassert(false);
+    }
+    ASSERT_EQ(table_accounts.size(), 8);
+}
+
+
 TEST_F(test_block_executed, xstatestore_executor_t_test_5) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();

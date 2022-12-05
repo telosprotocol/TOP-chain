@@ -121,7 +121,7 @@ std::vector<std::string> xdb_export_tools_t::get_table_accounts() {
 }
 
 std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
-    std::set<std::string> accounts;
+    std::vector<std::string> accounts;
     auto const tables = get_table_accounts();
     for (auto const table : tables) {
         auto latest_block = m_blockstore->get_latest_committed_block(table);
@@ -131,33 +131,19 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
         }
 
         std::error_code ec;
-        auto const & state_root = data::xblockextract_t::get_state_root(latest_block.get(), ec);
-        if (state_root.empty()) {
-            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
-            if (bstate == nullptr) {
-                std::cerr << table << " get_block_state null!" << std::endl;
-                continue;
-            }
-            auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
-            auto const & units = table_state->get_all_accounts();
-            accounts.insert(units.cbegin(), units.cend());
-        } else {
-            auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), common::xaccount_address_t(table));
-            auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
-            auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(state_root, make_observer(xtrie_db));
-            for (auto & leaf : leafs) {
-                state_mpt::xaccount_info_t info;
-                info.decode({leaf.begin(), leaf.end()});
-                accounts.insert(info.m_account.to_string());
-            }
+        auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(latest_block.get(), ec);
+        if (ec) {
+            std::cerr << table << " get_block_state null!" << std::endl;
+            continue;
+        }
+
+        for (auto & account : table_accounts) {
+            accounts.push_back(account.first.to_string());
         }
     }
 
-    std::vector<std::string> v;
-    v.assign(accounts.begin(), accounts.end());
-
-    std::cout << "total " << v.size() << " units in db" << std::endl;
-    return v;
+    std::cout << "total " << accounts.size() << " units in db" << std::endl;
+    return accounts;
 }
 
 void xdb_export_tools_t::query_all_account_data(std::vector<std::string> const & accounts_vec, bool is_table, const xdb_check_data_func_face_t & func) {
@@ -515,7 +501,20 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, const ui
         std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
         return;
     }
-    auto const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+
+    xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
+    common::xaccount_address_t account_address(account);
+    if (base::xvaccount_t::is_table_address_type(account_address.type())) {
+        auto tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(vblock.get());
+        if (nullptr != tablestate_ext && tablestate_ext->get_table_state() != nullptr) {
+            bstate = tablestate_ext->get_table_state()->get_bstate();
+        }
+    } else {
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get());
+        if (nullptr != unitstate) {
+            bstate = unitstate->get_bstate();
+        }
+    }
     if (bstate == nullptr) {
         std::cout << "account: " << account << ", height: " << h << " state null" << std::endl;
         return;
@@ -657,6 +656,7 @@ void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & 
 }
 
 void xdb_export_tools_t::query_table_unit_info(std::string const & account) {
+    common::xaccount_address_t table_address(account);
     json root;
     auto const h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
     for (size_t i = 0; i <= h; i++) {
@@ -671,20 +671,16 @@ void xdb_export_tools_t::query_table_unit_info(std::string const & account) {
         std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
         return;
     }
-    auto const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
-    if (bstate == nullptr) {
-        std::cerr << "account: " << account << ", height: " << h << " state null" << std::endl;
+    std::error_code ec;
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(vblock.get(), ec);
+    if (ec) {
+        std::cerr << "account: " << account << ", height: " << h << " table state null" << std::endl;
         return;
     }
-    auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
-    auto const units = table_state->get_all_accounts();
-    for (auto const & unit : units) {
-        json root_unit;
-        base::xaccount_index_t index;
-        if (table_state->get_account_index(unit, index) == false) {
-            std::cout << "account: " << unit << " get index failed " << std::endl;
-            continue;
-        }
+    for (auto const & v: table_accounts) {
+        json root_unit; 
+        base::xaccount_index_t const& index = v.second;
+        std::string unit = v.first.to_string();
         auto const h_unit = index.get_latest_unit_height();
         for (size_t i = 0; i <= h_unit; i++) {
             query_block_basic(unit, i, root_unit["block" + std::to_string(i)]);
@@ -723,7 +719,19 @@ void xdb_export_tools_t::query_property(std::string const & account, std::string
         std::cerr << account << " height: " << height << " block null!" << std::endl;
         return;
     }
-    auto const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get());
+    xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
+    common::xaccount_address_t account_address(account);
+    if (base::xvaccount_t::is_table_address_type(account_address.type())) {
+        auto tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(block.get());
+        if (nullptr != tablestate_ext && tablestate_ext->get_table_state() != nullptr) {
+            bstate = tablestate_ext->get_table_state()->get_bstate();
+        }
+    } else {
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(block.get());
+        if (nullptr != unitstate) {
+            bstate = unitstate->get_bstate();
+        }
+    }
     if (bstate == nullptr) {
         std::cerr << account << " height: " << height << " bstate null!" << std::endl;
         return;
@@ -785,13 +793,19 @@ void xdb_export_tools_t::query_balance() {
     std::cout << ", usable balance: " << total_balance - burn_balance << std::endl;
 
     std::cout << "===> top reward issurance" << std::endl;
+
     auto reward_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{sys_contract_zec_reward_addr});
-    auto reward_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(reward_vblock.get());
-    if (reward_bstate != nullptr && true == reward_bstate->find_property(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
-        auto map = reward_bstate->load_string_map_var(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
-        std::cout << map["total"] << std::endl;
-    } else {
+    auto reward_unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(reward_vblock.get());
+    if (nullptr == reward_unitstate) {
         std::cerr << "load error!" << std::endl;
+    } else {
+        auto reward_bstate = reward_unitstate->get_bstate();
+        if (reward_bstate != nullptr && true == reward_bstate->find_property(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)) {
+            auto map = reward_bstate->load_string_map_var(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE)->query();
+            std::cout << map["total"] << std::endl;
+        } else {
+            std::cerr << "load error!" << std::endl;
+        }
     }
 
     std::string filename = "top_balance_detail.json";
@@ -967,111 +981,74 @@ void xdb_export_tools_t::query_checkpoint(const uint64_t clock) {
 }
 
 void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data) {
-    auto const genesis_block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table);
-    if (nullptr == genesis_block) {
-        std::cerr << table << " genesis block nullptr!" << std::endl;
-        return;
-    }
-    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table, genesis_block.get())) {
-        std::cerr << table << " genesis block load_block_output failed!" << std::endl;
-        return;
-    }
-    xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*genesis_block.get());
-    if (genesis_block->get_block_class() != base::enum_xvblock_class_nil) {
-        std::string binlog = genesis_block->get_binlog();
-        if(false == current_state->apply_changes_of_binlog(binlog)) {
-            std::cerr << table << " genesis block apply_changes_of_binlog failed!" << std::endl;
-            return;
-        }
-    }
-    auto const height = m_blockstore->get_latest_committed_block_height(table);
-    auto table_height = genesis_block->get_height();
-    auto table_hash = genesis_block->get_block_hash();
-    for (size_t h = 1; h <= height; h++) {
-        auto const vblock = m_blockstore->load_block_object(table, h, 0, false);
+    common::xaccount_address_t table_address(table);
+    auto const height = m_blockstore->get_latest_committed_block_height(table_address.vaccount());
+    xobject_ptr_t<base::xvblock_t> match_block = nullptr;
+    for (size_t h = 0; h <= height; h++) {
+        auto const vblock = m_blockstore->load_block_object(table, h, base::enum_xvblock_flag_committed, false);
         if (vblock == nullptr) {
             std::cerr << table << " height " << h << " block nullptr!" << std::endl;
             break;
         }
         if (vblock->get_clock() > clock) {
+            std::cout << table << " height " << h << " finish clock newer " << vblock->get_clock() << std::endl;
             break;
         }
-        xassert(vblock->get_height() == current_state->get_block_height() + 1);
-        table_height = vblock->get_height();
-        table_hash = vblock->get_block_hash();
-        current_state = make_object_ptr<base::xvbstate_t>(*vblock.get(), *current_state.get());
-        if (vblock->get_block_class() == base::enum_xvblock_class_light) {
-            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table, vblock.get())) {
-                std::cerr << table << " height " << h << " load_block_output false!" << std::endl;
-                return;
-            }
-            xassert(!vblock->get_binlog_hash().empty());
-            std::string binlog = vblock->get_binlog();
-            xassert(!binlog.empty());
-            if(false == current_state->apply_changes_of_binlog(binlog)) {
-                std::cerr << table << " height " << h << " apply_changes_of_binlog false!" << std::endl;
-                return;
-            }
-        }
+        match_block = vblock;
     }
+    if (match_block == nullptr) {
+        std::cerr << table << " not find block older than clock " << clock << std::endl;
+        return;
+    }
+
+    auto table_height = match_block->get_height();
+    auto table_hash = match_block->get_block_hash();
     j_data["table_data"]["height"] = base::xstring_utl::tostring(table_height);
     j_data["table_data"]["hash"] = base::xstring_utl::to_hex(table_hash);
-    // std::string bin_data;
-    // current_state->serialize_to_string(bin_data);
-    // j_state["table_state"] = base::xstring_utl::to_hex(bin_data);
 
-    auto const & table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
-    auto const & table_units = table_bstate->get_all_accounts();
+    std::error_code ec;
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(match_block.get(), ec);
+    if (ec) {
+        std::cerr << table << " get_block_state null!" << std::endl;
+        return;
+    }
+
     json j_unit_data;
     // json j_unit_state;
-    for (auto const & unit : table_units) {
-        base::xaccount_index_t index;
-        if (table_bstate->get_account_index(unit, index) == false) {
-            std::cerr << table << " " << unit << " get index failed!" << std::endl;
-            continue;
-        }
+    for (auto const & v : table_accounts) {
+        base::xaccount_index_t const & index = v.second;
+        std::string unit = v.first.to_string();
+
         auto const unit_height = index.get_latest_unit_height();
         auto const & unit_vblock = m_blockstore->load_block_object(unit, unit_height, 0, false);
         if (unit_vblock == nullptr) {
             std::cerr << unit << " height " << unit_height << " block nullptr!" << std::endl;
             continue;
         }
-        // auto const & unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        // if (unit_bstate == nullptr) {
-        //     std::cerr << unit << " height " << unit_height << " state nullptr!" << std::endl;
-        //     continue;
-        // }
         j_unit_data[unit]["height"] = base::xstring_utl::tostring(unit_height);
         j_unit_data[unit]["hash"] = base::xstring_utl::to_hex(unit_vblock->get_block_hash());
-        // std::string bin_data;
-        // unit_bstate->serialize_to_string(bin_data);
-        // j_unit_state[unit] = base::xstring_utl::to_hex(bin_data);
     }
     base::xvaccount_t table_account{table};
     auto table_shortid = table_account.get_tableid().to_table_shortid();
     for (auto const & genesis : genesis_only) {
         base::xvaccount_t genesis_account{genesis};
-        if (table_shortid != genesis_account.get_tableid().to_table_shortid() || table_units.count(genesis)) {
+        if (table_shortid != genesis_account.get_tableid().to_table_shortid()) {
             continue;
+        }
+        for (auto const & v : table_accounts) {
+            if (genesis == v.first.to_string()) {
+                continue;
+            }
         }
         auto const & unit_vblock = m_blockstore->get_genesis_block(genesis);
         if (unit_vblock == nullptr) {
             std::cerr << genesis << " genesis block nullptr!" << std::endl;
             continue;
         }
-        // auto const & unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        // if (unit_bstate == nullptr) {
-        //     std::cerr << genesis << " genesis state nullptr!" << std::endl;
-        //     continue;
-        // }
         j_unit_data[genesis]["height"] = base::xstring_utl::tostring(0);
         j_unit_data[genesis]["hash"] = base::xstring_utl::to_hex(unit_vblock->get_block_hash());
-        // std::string bin_data;
-        // unit_bstate->serialize_to_string(bin_data);
-        // j_unit_state[genesis] = base::xstring_utl::to_hex(bin_data);
     }
     j_data["unit_data"] = j_unit_data;
-    // j_state["unit_state"] = j_unit_state;
     std::cout << table << " cp checkout finish!" << std::endl;
 }
 
@@ -1138,13 +1115,14 @@ void xdb_export_tools_t::query_table_latest_fullblock(std::string const & accoun
     j["last_full_block"]["height"] = height_full;
     if (height_full != 0) {
         j["last_full_block"]["hash"] = data::to_hex_str(block->get_fullstate_hash());
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
-        if (bstate == nullptr) {
+
+        std::error_code ec;
+        auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(block, ec);
+        if (ec) {
             j["last_full_block"]["bstate"] = "null";
         } else {
-            data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
             j["last_full_block"]["bstate"] = "ok";
-            j["last_full_block"]["bstate_account_size"] = tablestate->get_account_size();
+            j["last_full_block"]["bstate_account_size"] = table_accounts.size();
         }
     }
     std::string s;
@@ -1557,37 +1535,29 @@ void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit,
         j_table = nullptr;
         return;
     }
-    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
-    if (bstate == nullptr) {
+
+    std::error_code ec;
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(vblock.get(), ec);
+    if (ec) {
         std::cerr << "table: " << table << ", latest committed block state constructed failed" << std::endl;
         j_table = nullptr;
         return;
     }
-    std::map<std::string, std::string> table_account_index;
-    if (false == bstate->find_property(data::XPROPERTY_TABLE_ACCOUNT_INDEX)) {
-        std::cerr << "table: " << table << ", latest committed block state fail-find property XPROPERTY_TABLE_ACCOUNT_INDEX " << data::XPROPERTY_TABLE_ACCOUNT_INDEX << std::endl;
-    } else {
-        auto propobj = bstate->load_string_map_var(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
-        table_account_index = propobj->query();
-    }
+
     uint64_t balance = 0;
     uint64_t lock_balance = 0;
     uint64_t tgas_balance = 0;
     uint64_t vote_balance = 0;
     uint64_t burn_balance = 0;
-    for (auto const & pair : table_account_index) {
-        auto const & account  = pair.first;
+    for (auto const & pair : table_accounts) {
+        auto const & account  = pair.first.to_string();
         json j;
-        auto unit_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t{account});
-        if (unit_vblock == nullptr) {
-            std::cerr << "table: " << table << ", unit: " << account << ", latest committed block nullptr!" << std::endl;
-            continue;
-        }
-        auto unit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
-        if (unit_bstate == nullptr) {
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(pair.first, pair.second);
+        if (unitstate == nullptr) {
             std::cerr << "table: " << table << ", unit: " << account << ", latest committed block state constructed failed" << std::endl;
             continue;
         }
+        auto unit_bstate = unitstate->get_bstate();
         uint64_t unit_balance = 0;
         uint64_t unit_lock_balance = 0;
         uint64_t unit_tgas_balance = 0;
@@ -1634,21 +1604,15 @@ void xdb_export_tools_t::load_db_unit_accounts_info() {
             std::cerr << table << " get_latest_committed_block null!" << std::endl;
             continue;
         }
-        auto const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
-        if (bstate == nullptr) {
+        std::error_code ec;
+        auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(latest_block.get(), ec);
+        if (ec) {
             std::cerr << table << " get_block_state null!" << std::endl;
             continue;
         }
-        auto const table_bstate = std::make_shared<data::xtable_bstate_t>(bstate.get());
-        auto const & table_units = table_bstate->get_all_accounts();
         std::map<std::string, base::xaccount_index_t> table_indexs;
-        for (auto const & unit : table_units) {
-            base::xaccount_index_t index;
-            if (table_bstate->get_account_index(unit, index) == false) {
-                std::cerr << "account: " << unit << " get index failed " << std::endl;
-                continue;
-            }
-            table_indexs.insert(std::make_pair(unit, index));
+        for (auto & v : table_accounts) {
+            table_indexs.insert(std::make_pair(v.first.to_string(), v.second));
         }
         m_db_units_info.insert(std::make_pair(table, table_indexs));
     }
@@ -2139,63 +2103,29 @@ std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> xdb_expor
     });
 
     assert(m_blockstore != nullptr);
-    auto const table_block = m_blockstore->load_block_object(table_address.vaccount(), table_height, base::enum_xvblock_flag_committed, true);
+    auto const table_block = m_blockstore->load_block_object(table_address.vaccount(), table_height, base::enum_xvblock_flag_committed, false);
     if (table_block == nullptr) {
         ec = xerrc_t::table_block_not_found;
         std::cerr << "table block at address " << table_address.to_string() << ":" << table_height << " not found" << std::endl;
         return result;
     }
 
-    auto const & root_hash = data::xblockextract_t::get_state_root(table_block.get(), ec);
-    if (ec || root_hash.empty()) {
-        base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(table_block.get());
-        if (bstate == nullptr) {
-            ec = xerrc_t::table_state_not_found;
-            std::cerr << table_address.to_string() << " get_block_state null!" << std::endl;
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(table_block.get(), ec);        
+    if (ec) {
+        std::cerr << "table block at address " << table_address.to_string() << ":" << table_height << " table state not found" << std::endl;
+        return result;
+    }
 
-            return result;
-        }
-
-        auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
-        auto const & account_data = table_state->all_accounts();
-        if (qualified.empty()) {
-            std::transform(std::begin(account_data),
-                           std::end(account_data),
-                           std::inserter(result, std::end(result)),
-                           [](std::pair<common::xaccount_address_t, base::xaccount_index_t> const & account_datum) {
-                               return std::make_pair(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum));
-                           });
-        } else {
-            std::for_each(
-                std::begin(account_data), std::end(account_data), [&qualified, &result](std::pair<common::xaccount_address_t, base::xaccount_index_t> const & account_datum) {
-                    if (std::find_if(std::begin(qualified), std::end(qualified), [&account_datum](common::xaccount_address_t const & allowed) {
-                            return allowed == top::get<common::xaccount_address_t>(account_datum);
-                        }) != std::end(qualified)) {
-                        result.emplace(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum));
-                    }
-                });
+    if (qualified.empty()) {
+        for (auto & v : table_accounts) {
+            result.emplace(v.first, v.second);
         }
     } else {
-        auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), table_address);
-        auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
-        auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(root_hash, make_observer(xtrie_db));
-        if (qualified.empty()) {
-            std::for_each(std::begin(leafs), std::end(leafs), [&result](xbytes_t const & bytes) {
-                state_mpt::xaccount_info_t info;
-                info.decode({std::begin(bytes), std::end(bytes)});
-
-                result.emplace(info.m_account, info.m_index);
-            });
-        } else {
-            std::for_each(std::begin(leafs), std::end(leafs), [&qualified, &result](xbytes_t const & bytes) {
-                state_mpt::xaccount_info_t info;
-                info.decode({std::begin(bytes), std::end(bytes)});
-
-                if (std::find_if(std::begin(qualified), std::end(qualified), [&info](common::xaccount_address_t const & acc) { return acc == info.m_account; }) !=
-                    std::end(qualified)) {
-                    result.emplace(info.m_account, info.m_index);
-                }
-            });
+        for (auto & v : table_accounts) {
+            if (std::find_if(std::begin(qualified), std::end(qualified), [&v](common::xaccount_address_t const & acc) { return acc == v.first; }) !=
+                std::end(qualified)) {
+                result.emplace(v.first, v.second);
+            }
         }
     }
 

@@ -11,8 +11,11 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xaccountindex.h"
 #include "xstatestore/xstatestore_impl.h"
+#include "xstatestore/xerror.h"
 #include "xdata/xblocktool.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
+#include "xevm_common/trie/xtrie_iterator.h"
+#include "xevm_common/trie/xtrie_kv_db.h"
 
 NS_BEG2(top, statestore)
 
@@ -249,6 +252,14 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_sta
     return get_unit_state_from_block(account_address, _block.get());
 }
 
+data::xunitstate_ptr_t xstatestore_impl_t::get_unitstate(xblock_number_t number, common::xaccount_address_t const & account_address) const {
+    data::xaccountstate_ptr_t accountstate = get_accountstate(number, account_address);
+    if (nullptr != accountstate) {
+        return accountstate->get_unitstate();
+    }
+    return nullptr;
+}
+
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_state(common::xaccount_address_t const & account_address) const {
     // auto _block = get_blockstore()->get_latest_connected_block(account_address.vaccount());
     // if (_block == nullptr) {
@@ -356,6 +367,36 @@ bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xaccou
     }
     return tablestore->get_accountindex_from_table_block(account_address, _block.get(), account_index);
 }
+
+std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstatestore_impl_t::get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const {
+    auto tablestate_ext = get_tablestate_ext_from_block(table_block);
+    if (nullptr == tablestate_ext) {
+        ec = error::xerrc_t::statestore_load_tablestate_err;
+        return {};
+    }
+
+    auto state_root = tablestate_ext->get_state_mpt()->get_original_root_hash();
+    if (state_root.empty()) {
+        if (tablestate_ext->get_table_state() == nullptr) {
+            ec = error::xerrc_t::statestore_load_tablestate_err;
+            return {};
+        }
+        return tablestate_ext->get_table_state()->all_accounts();
+    } else {
+        common::xaccount_address_t table_addr(table_block->get_account());
+        std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> accounts_index;
+        auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), table_addr);
+        auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
+        auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(state_root, make_observer(xtrie_db));
+        for (auto & leaf : leafs) {
+            state_mpt::xaccount_info_t info;
+            info.decode({leaf.begin(), leaf.end()});
+            accounts_index.emplace_back(info.m_account, info.m_index);
+        }
+        return accounts_index;
+    }
+}
+
 data::xaccountstate_ptr_t xstatestore_impl_t::get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const {
     base::xaccount_index_t account_index;
     bool ret = get_accountindex(number, account_address, account_index);
