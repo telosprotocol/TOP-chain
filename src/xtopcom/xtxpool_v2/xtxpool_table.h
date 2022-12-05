@@ -73,13 +73,12 @@ private:
 #define table_unconfirm_txs_num_max (100)
 
 struct update_id_state_para {
-    update_id_state_para(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce)
-      : m_txinfo(txinfo), m_peer_table_sid(peer_table_sid), m_receiptid(receiptid), m_nonce(nonce) {
+    update_id_state_para(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid)
+      : m_txinfo(txinfo), m_peer_table_sid(peer_table_sid), m_receiptid(receiptid) {
     }
     tx_info_t m_txinfo;
     base::xtable_shortid_t m_peer_table_sid;
     uint64_t m_receiptid;
-    uint64_t m_nonce;
 };
 
 class xtxpool_table_t {
@@ -106,6 +105,7 @@ public:
     data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash);
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void on_block_confirmed(xblock_t * table_block);
+    bool on_block_confirmed(base::enum_xvblock_class blk_class, uint64_t height);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs);
     void refresh_table(bool refresh_state_only = false);
     // void update_non_ready_accounts();
@@ -159,6 +159,8 @@ private:
     xuncommit_txs_t m_uncommit_txs;
     // for test
     std::string m_push_send_tx_metrics_name;
+
+    std::atomic<uint64_t> m_latest_commit_height{0};
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts

@@ -100,13 +100,12 @@ data::xcons_transaction_ptr_t xtxmgr_table_t::pop_tx(const std::string & tx_hash
     return tx_ent->get_tx();
 }
 
-void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid, uint64_t nonce) {
+void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid) {
     if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
-        updata_latest_nonce(txinfo.get_addr(), nonce);
+        m_send_tx_queue.updata_latest_nonce_by_hash(txinfo.get_hash_str());
+    } else {
+        m_new_receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, table_sid, receiptid);
     }
-
-    // only send and self tx push to pending accounts queue.so as pop.
-    m_new_receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, table_sid, receiptid);
 }
 
 std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para, const xunconfirm_id_height & unconfirm_id_height) {

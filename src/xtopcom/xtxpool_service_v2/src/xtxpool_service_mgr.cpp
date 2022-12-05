@@ -52,6 +52,10 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     if (block_event->blk_level != base::enum_xvblock_level_table) {
         return;
     }
+    
+    if (m_para->get_txpool()->on_block_confirmed(block_event->owner, block_event->blk_class, block_event->blk_height)) {
+        return;
+    }
 
     // use slow thread to deal with block event
     if (m_timer->is_mailbox_over_limit()) {

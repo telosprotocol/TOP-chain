@@ -69,6 +69,17 @@ bool xstatestore_impl_t::start(const xobject_ptr_t<base::xiothread_t> & iothread
     return false;
 }
 
+void xstatestore_impl_t::on_table_block_committed(const mbus::xevent_ptr_t & event) const {
+    mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(event);
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(block_event->owner);
+
+    if (tablestore->on_table_block_committed_by_height(block_event->blk_height, block_event->blk_hash)) {
+        return;
+    }
+    const data::xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
+    tablestore->on_table_block_committed(block.get());
+}
+
 void xstatestore_impl_t::on_table_block_committed(base::xvblock_t* block) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(block->get_account());
     tablestore->on_table_block_committed(block);
@@ -93,9 +104,7 @@ void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
     auto event_handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         mbus::xevent_object_t* _event_obj = dynamic_cast<mbus::xevent_object_t*>(call.get_param1().get_object());
         xassert(_event_obj != nullptr);
-        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(_event_obj->event);
-        const data::xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
-        on_table_block_committed(block.get());
+        on_table_block_committed(_event_obj->event);
         return true;
     };
 
