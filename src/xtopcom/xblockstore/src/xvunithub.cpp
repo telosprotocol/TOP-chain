@@ -389,6 +389,11 @@ namespace top
             METRICS_TAG(atag, 1);
             return account_obj->get_latest_cert_block_height();
         }
+        uint64_t xvblockstore_impl::get_latest_full_block_height(const base::xvaccount_t & account, const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_full_block_height();
+        }
 
         uint64_t xvblockstore_impl::get_latest_connected_block_height(const base::xvaccount_t & account,const int atag)
         {
@@ -828,14 +833,6 @@ namespace top
                 METRICS_TAG(atag, 1);
                 ret = store_block(account_obj,block);
             }
-
-            // XTODO only tabletable need execute immediately after stored
-            // if (block->get_block_level() == base::enum_xvblock_level_table) {
-            //     // TODO(jimmy) commit tableblock try to update table state
-            //     base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-            // // base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
-            //     statestore::xstatestore_hub_t::instance()->execute_table_block(block);
-            // }
 
             return ret;
         }

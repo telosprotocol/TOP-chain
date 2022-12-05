@@ -28,7 +28,6 @@ class xstatestore_base_t {
 
  public:
     base::xvblockstore_t*       get_blockstore() const;
-    base::xvblkstatestore_t*    get_blkstate_store() const;
     base::xvdbstore_t*          get_dbstore() const;
 };
 

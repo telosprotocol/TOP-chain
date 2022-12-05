@@ -34,7 +34,6 @@ class xstatectx_base_t {
 
  private:
     base::xvblockstore_t*       get_blockstore() const;
-    base::xvblkstatestore_t*    get_xblkstatestore() const;
     bool                        get_account_index(const statestore::xtablestate_ext_ptr_t & table_state, const std::string & account, base::xaccount_index_t & account_index) const;
  private:
     statestore::xtablestate_ext_ptr_t     m_table_state{nullptr};

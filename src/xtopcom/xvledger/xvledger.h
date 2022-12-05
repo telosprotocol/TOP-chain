@@ -330,7 +330,7 @@ namespace top
             xvdbstore_t*                get_xdbstore(); //global shared db instance
             xvtxstore_t*                get_xtxstore();   //global shared xvtxstore_t instance
             xvblockstore_t*             get_xblockstore();//global shared blockstore instance
-            xvstatestore_t*             get_xstatestore();//global shared statestore instance
+            // xvstatestore_t*             get_xstatestore();//global shared statestore instance
             xvcontractstore_t*          get_xcontractstore();//global shared statestore instance
             xveventbus_t*               get_xevmbus(); //global mbus object
             xvdrecycle_mgr*             get_xrecyclemgr(); //global recycler manager
@@ -340,7 +340,7 @@ namespace top
             bool                        set_xdbstore(xvdbstore_t * new_store);//set global shared instance
             bool                        set_xtxstore(xvtxstore_t * new_store);
             bool                        set_xblockstore(xvblockstore_t * new_store);//set global shared instance
-            bool                        set_xstatestore(xvstatestore_t* new_sotre);
+            // bool                        set_xstatestore(xvstatestore_t* new_sotre);
             bool                        set_xcontractstore(xvcontractstore_t * new_store);
             bool                        set_xevmbus(xveventbus_t * new_mbus);
             

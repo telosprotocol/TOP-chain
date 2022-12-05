@@ -5,6 +5,7 @@
 #include "xvledger/xvpropertyprove.h"
 #include "xdata/xblocktool.h"
 #include "xblockmaker/xtable_maker.h"
+#include "xstatestore/xstatestore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xdatamock_address.hpp"
@@ -88,9 +89,13 @@ TEST_F(test_propertyreceipt, propertyreceipt_inner_table_tx) {
     }
 
     auto tableblocks = mocktable.get_history_tables();
-    auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[1].get());
+    // auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[1].get());
 
-    xvproperty_prove_ptr_t propreceipt = xblocktool_t::create_receiptid_property_prove(tableblocks[1].get(), tableblocks[3].get(), tablestate.get());
+    xvproperty_prove_ptr_t propreceipt = nullptr;// xblocktool_t::create_receiptid_property_prove(tableblocks[1].get(), tableblocks[3].get(), tablestate.get());
+    data::xtablestate_ptr_t tablestate = nullptr;
+
+    auto ret = statestore::xstatestore_hub_t::instance()->get_receiptid_state_and_prove(common::xaccount_address_t(tableblocks[1]->get_account()), tableblocks[1].get(), propreceipt, tablestate);
+    xassert(ret == false);
     xassert(propreceipt == nullptr);
 }
 
@@ -150,11 +155,15 @@ TEST_F(test_propertyreceipt, propertyreceipt_between_table_tx) {
     }
 
     auto tableblocks = mocktable.get_history_tables();
-    auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[1].get());
+    // auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[1].get());
 
-    xvproperty_prove_ptr_t propreceipt = xblocktool_t::create_receiptid_property_prove(tableblocks[1].get(), tableblocks[3].get(), tablestate.get());
+    xvproperty_prove_ptr_t propreceipt = nullptr;// xblocktool_t::create_receiptid_property_prove(tableblocks[1].get(), tableblocks[3].get(), tablestate.get());
+    data::xtablestate_ptr_t tablestate = nullptr;
+
+    auto ret = statestore::xstatestore_hub_t::instance()->get_receiptid_state_and_prove(common::xaccount_address_t(tableblocks[1]->get_account()), tableblocks[1].get(), propreceipt, tablestate);
+    xassert(ret == true);
     xassert(propreceipt != nullptr);
-    xassert(propreceipt->is_valid());
+
 
     std::string propreceipt_bin;
     propreceipt->serialize_to_string(propreceipt_bin);

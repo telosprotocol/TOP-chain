@@ -89,7 +89,8 @@ namespace top
             m_block_state = NULL;
             
             xvaccount_t target_account(target_header.get_account());
-            xauto_ptr<xvbstate_t> target_state(xvchain_t::instance().get_xstatestore()->get_block_state(target_account,target_header.get_height() - 1, target_header.get_last_block_hash(), metrics::statestore_access_from_blk_ctx));
+            // xauto_ptr<xvbstate_t> target_state(xvchain_t::instance().get_xstatestore()->get_block_state(target_account,target_header.get_height() - 1, target_header.get_last_block_hash(), metrics::statestore_access_from_blk_ctx));
+            xauto_ptr<xvbstate_t> target_state(nullptr);
             if(target_state)
             {
                 m_block_state = target_state.get();
@@ -106,7 +107,8 @@ namespace top
         {
             m_block_state = NULL;
             
-            xauto_ptr<xvbstate_t> target_state(xvchain_t::instance().get_xstatestore()->get_block_state((xvblock_t*)&target_block, metrics::statestore_access_from_blk_ctx));
+            // xauto_ptr<xvbstate_t> target_state(xvchain_t::instance().get_xstatestore()->get_block_state((xvblock_t*)&target_block, metrics::statestore_access_from_blk_ctx));
+            xauto_ptr<xvbstate_t> target_state(nullptr);
             if(target_state)
             {
                 m_block_state = target_state.get();

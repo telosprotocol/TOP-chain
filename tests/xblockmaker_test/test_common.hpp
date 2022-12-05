@@ -122,7 +122,6 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const {return m_creator.get_blockstore();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
-    virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}    
 
  private:
     xvchain_creator                 m_creator{true};
