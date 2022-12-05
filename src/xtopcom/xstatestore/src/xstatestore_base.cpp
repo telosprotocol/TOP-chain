@@ -63,9 +63,6 @@ base::xvblockstore_t*  xstatestore_base_t::get_blockstore() const {
     return base::xvchain_t::instance().get_xblockstore();
 }
 
-base::xvblkstatestore_t* xstatestore_base_t::get_blkstate_store() const {
-    return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
-}
 base::xvdbstore_t* xstatestore_base_t::get_dbstore() const {
     return base::xvchain_t::instance().get_xdbstore();
 }

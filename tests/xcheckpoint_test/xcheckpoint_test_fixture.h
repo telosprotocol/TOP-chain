@@ -193,11 +193,11 @@ public:
         }
 
         // XTODO only tabletable need execute immediately after stored
-        if (block->get_block_level() == base::enum_xvblock_level_table) {
-            // TODO(jimmy) commit tableblock try to update table state
-            base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
-        }
+        // if (block->get_block_level() == base::enum_xvblock_level_table) {
+        //     // TODO(jimmy) commit tableblock try to update table state
+        //     base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
+        //     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+        // }
 
         return ret;
     }
