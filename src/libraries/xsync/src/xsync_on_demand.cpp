@@ -134,17 +134,17 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
         return;
     }
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
-    if (current_vblock != nullptr){
-        data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-        xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
-        if(current_block->is_tableblock() && !current_block->is_full_state_block()){
-            xsync_warn("xsync_handler::on_demand_blocks request account(%s)'s snapshot, height is %llu",
-                current_block->get_account().c_str(), current_block->get_height());
-            m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
-            return;
-        }
-    }
+    // base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
+    // if (current_vblock != nullptr){
+    //     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+    //     xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
+    //     if(current_block->is_tableblock() && !current_block->is_full_state_block()){
+    //         xsync_warn("xsync_handler::on_demand_blocks request account(%s)'s snapshot, height is %llu",
+    //             current_block->get_account().c_str(), current_block->get_height());
+    //         m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
+    //         return;
+    //     }
+    // }
 
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account, tracer)){
@@ -213,17 +213,17 @@ void xsync_on_demand_t::handle_blocks_response_with_proof(const std::vector<data
         return;
     }
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
-    if (current_vblock != nullptr){
-        data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-        xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
-        if(current_block->is_tableblock() && !current_block->is_full_state_block()){
-            xsync_warn("xsync_handler::handle_blocks_response_with_proof request account(%s)'s snapshot, height is %llu",
-                current_block->get_account().c_str(), current_block->get_height());
-            m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
-            return;
-        }
-    }
+    // base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
+    // if (current_vblock != nullptr){
+    //     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+    //     xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
+    //     if(current_block->is_tableblock() && !current_block->is_full_state_block()){
+    //         xsync_warn("xsync_handler::handle_blocks_response_with_proof request account(%s)'s snapshot, height is %llu",
+    //             current_block->get_account().c_str(), current_block->get_height());
+    //         m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
+    //         return;
+    //     }
+    // }
 
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account, tracer)){
@@ -436,31 +436,33 @@ void xsync_on_demand_t::handle_blocks_request_with_hash(const xsync_message_get_
 void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
 
-    std::string account = chain_meta.m_account_addr;
+    xsync_error("xsync_on_demand_t::handle_chain_snapshot_meta fail-not support");
 
-    xsync_info("xsync_on_demand_t::handle_chain_snapshot_meta receive snapshot request of account %s, height %llu",
-        account.c_str(), chain_meta.m_height_of_fullblock);
+    // std::string account = chain_meta.m_account_addr;
 
-    base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock, false);
-    if ((blk != nullptr) && (blk->get_block_level() == base::enum_xvblock_level_table)) {
-        if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
-            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_handle_chain_snapshot_meta)) {
-                std::string property_snapshot = blk->get_full_state();
-                xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
-                    property_snapshot, chain_meta.m_height_of_fullblock);
-                m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_ondemand_chain_snapshot_response, network_self, to_address);
-            } else {
-                xsync_warn("xsync_handler receive ondemand_chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
-                    account.c_str(), chain_meta.m_height_of_fullblock, blk->get_block_class());
-            }
-        } else {
-            xsync_error("xsync_handler receive ondemand_chain_snapshot_request, and it is not full table,account:%s, height:%llu",
-                    account.c_str(), chain_meta.m_height_of_fullblock);
-        }
-    } else {
-        xsync_info("xsync_handler receive ondemand_chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
-                account.c_str(), chain_meta.m_height_of_fullblock);
-    }
+    // xsync_info("xsync_on_demand_t::handle_chain_snapshot_meta receive snapshot request of account %s, height %llu",
+    //     account.c_str(), chain_meta.m_height_of_fullblock);
+
+    // base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock, false);
+    // if ((blk != nullptr) && (blk->get_block_level() == base::enum_xvblock_level_table)) {
+    //     if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
+    //         if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_handle_chain_snapshot_meta)) {
+    //             std::string property_snapshot = blk->get_full_state();
+    //             xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
+    //                 property_snapshot, chain_meta.m_height_of_fullblock);
+    //             m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_ondemand_chain_snapshot_response, network_self, to_address);
+    //         } else {
+    //             xsync_warn("xsync_handler receive ondemand_chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
+    //                 account.c_str(), chain_meta.m_height_of_fullblock, blk->get_block_class());
+    //         }
+    //     } else {
+    //         xsync_error("xsync_handler receive ondemand_chain_snapshot_request, and it is not full table,account:%s, height:%llu",
+    //                 account.c_str(), chain_meta.m_height_of_fullblock);
+    //     }
+    // } else {
+    //     xsync_info("xsync_handler receive ondemand_chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
+    //             account.c_str(), chain_meta.m_height_of_fullblock);
+    // }
 }
 
 
@@ -483,17 +485,17 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
         return;
     }
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock, true);
-    data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-    if (current_block->is_tableblock() && current_block->is_fullblock() && !current_block->is_full_state_block()) {
-        if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot.m_chain_snapshot)) {
-            xsync_error("xsync_on_demand_t::handle_chain_snapshot invalid snapshot. block=%s", current_vblock->dump().c_str());
-            return;
-        }
-        xsync_dbg("xsync_on_demand_t::handle_chain_snapshot valid snapshot. block=%s", current_vblock->dump().c_str());
-        statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
-        // m_sync_store->store_block(current_block.get());
-    }
+    // base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock, true);
+    // data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+    // if (current_block->is_tableblock() && current_block->is_fullblock() && !current_block->is_full_state_block()) {
+    //     if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot.m_chain_snapshot)) {
+    //         xsync_error("xsync_on_demand_t::handle_chain_snapshot invalid snapshot. block=%s", current_vblock->dump().c_str());
+    //         return;
+    //     }
+    //     xsync_dbg("xsync_on_demand_t::handle_chain_snapshot valid snapshot. block=%s", current_vblock->dump().c_str());
+    //     statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
+    //     // m_sync_store->store_block(current_block.get());
+    // }
 
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account, tracer)) {
@@ -847,17 +849,17 @@ void xsync_on_demand_t::handle_blocks_response_with_params(const std::vector<dat
         return;
     }
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
-    if (current_vblock != nullptr){
-        data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-        xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
-        if(current_block->is_tableblock() && !current_block->is_full_state_block()){
-            xsync_warn("xsync_handler::handle_blocks_response_with_params request account(%s)'s snapshot, height is %llu",
-                current_block->get_account().c_str(), current_block->get_height());
-            m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
-            return;
-        }
-    }
+    // base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
+    // if (current_vblock != nullptr){
+    //     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+    //     xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
+    //     if(current_block->is_tableblock() && !current_block->is_full_state_block()){
+    //         xsync_warn("xsync_handler::handle_blocks_response_with_params request account(%s)'s snapshot, height is %llu",
+    //             current_block->get_account().c_str(), current_block->get_height());
+    //         m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
+    //         return;
+    //     }
+    // }
 
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account, tracer)){

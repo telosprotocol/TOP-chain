@@ -24,6 +24,7 @@ namespace mock {
             virtual uint64_t get_latest_committed_block_height(const base::xvaccount_t & account,const int atag = 0)  {xassert(false);return 0;}
             virtual uint64_t get_latest_locked_block_height(const base::xvaccount_t & account, const int atag = 0) {xassert(false);return 0;}
             virtual uint64_t get_latest_cert_block_height(const base::xvaccount_t & account, const int atag = 0) {xassert(false);return 0;}
+            virtual uint64_t get_latest_full_block_height(const base::xvaccount_t & account, const int atag = 0) {xassert(false);return 0;}
             virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0)  {xassert(false);return 0;}
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) {xassert(false);return 0;}
             virtual uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0)  {xassert(false);return 0;}

@@ -105,20 +105,21 @@ void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) co
         return;
     }
 
-    uint64_t new_execute_height = update_execute_from_execute_height(old_execute_height);
-    if (block->get_height() > new_execute_height) {
-        // TODO(jimmy) still can't execute, for compatibility old version block, the full state block is synced from other nodes, try to jump execute immediately
-        if ( block->get_block_class() == base::enum_xvblock_class_full 
-            && block->is_full_state_block()
-            && m_statestore_base.get_state_root_from_block(block).empty() ) {
-            xinfo("xstatestore_executor_t::on_table_block_committed full state block.execute_height old=%ld,block=%s,is_fullstate=%d", old_execute_height, block->dump().c_str(),block->is_full_state_block());
-            uint32_t limit = 1;
-            execute_block_recursive(block, limit, ec);
-            if (ec) {
-                xwarn("xstatestore_executor_t::on_table_block_committed fail-execute full state block.execute_height=%ld,block=%s", old_execute_height,block->dump().c_str());
-            }
-        }
-    }
+    update_execute_from_execute_height(old_execute_height);
+    // uint64_t new_execute_height = update_execute_from_execute_height(old_execute_height);
+    // if (block->get_height() > new_execute_height) {
+    //     // TODO(jimmy) still can't execute, for compatibility old version block, the full state block is synced from other nodes, try to jump execute immediately
+    //     if ( block->get_block_class() == base::enum_xvblock_class_full 
+    //         && block->is_full_state_block()
+    //         && m_statestore_base.get_state_root_from_block(block).empty() ) {
+    //         xinfo("xstatestore_executor_t::on_table_block_committed full state block.execute_height old=%ld,block=%s,is_fullstate=%d", old_execute_height, block->dump().c_str(),block->is_full_state_block());
+    //         uint32_t limit = 1;
+    //         execute_block_recursive(block, limit, ec);
+    //         if (ec) {
+    //             xwarn("xstatestore_executor_t::on_table_block_committed fail-execute full state block.execute_height=%ld,block=%s", old_execute_height,block->dump().c_str());
+    //         }
+    //     }
+    // }
 }
 
 xtablestate_ext_ptr_t xstatestore_executor_t::execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, bool bstate_must, std::error_code & ec) const {
