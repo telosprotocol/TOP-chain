@@ -121,6 +121,7 @@ public:
     const std::shared_ptr<xtx_entry> pop_tx(const std::string & tx_hash, bool clear_follower);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const std::string & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
+    void updata_latest_nonce_by_hash(const std::string & tx_hash);
     void clear_expired_txs();
     uint32_t size() const {
         return m_send_tx_queue_internal.size();

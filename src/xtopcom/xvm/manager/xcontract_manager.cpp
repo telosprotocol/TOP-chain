@@ -297,6 +297,10 @@ void xtop_contract_manager::do_on_block(const xevent_ptr_t & e) {
             return;
         }
 
+        if (!is_need_process_commit_event(store_event)) {
+            return;
+        }
+
         auto block = mbus::extract_block_from(store_event, metrics::blockstore_access_from_mbus_contract_db_on_block); // load mini-block firstly
         if (block == nullptr) {  // should not happen
             assert(false);
@@ -311,6 +315,19 @@ void xtop_contract_manager::do_on_block(const xevent_ptr_t & e) {
             }
         }
     }
+}
+
+bool xtop_contract_manager::is_need_process_commit_event(const xevent_store_block_committed_ptr_t & store_event) const {
+    if (store_event->blk_class == base::enum_xvblock_class_full) {
+        return true;
+    }
+
+    auto & addr = store_event->owner;
+    if (addr.find(sys_contract_beacon_table_block_addr) != addr.npos || addr.find(sys_contract_zec_table_block_addr) != addr.npos ||
+        addr == sys_contract_eth_table_block_addr_with_suffix) {
+        return true;
+    }
+    return false;
 }
 
 void xtop_contract_manager::do_new_vnode(const xevent_vnode_ptr_t & e) {

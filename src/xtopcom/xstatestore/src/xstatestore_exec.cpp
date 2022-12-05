@@ -122,6 +122,26 @@ void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) co
     // }
 }
 
+bool xstatestore_executor_t::on_table_block_committed_by_height(uint64_t height, const std::string & block_hash) const {
+    std::lock_guard<std::mutex> l(m_execute_lock);
+    std::error_code ec;
+    uint64_t old_execute_height = get_commit_executed_height_inner();
+    if (height <= old_execute_height) {
+        xdbg("xstatestore_executor_t::on_table_block_committed_by_height finish-already done.execute_height old=%ld,new=%ld,block hash:%s", old_execute_height, height, block_hash.c_str());
+        return true;
+    }
+
+    if (get_cert_executed_height_inner() >= height) {
+        xtablestate_ext_ptr_t tablestate_ext = m_state_accessor.read_table_bstate_from_cache(m_table_addr, height, block_hash);
+        if (nullptr != tablestate_ext) {
+            set_latest_executed_info(true, height); // increase commit execute height
+            xdbg("xstatestore_executor_t::on_table_block_committed finish-update execute height.execute_height old=%ld,new=%ld,block hash:%s", old_execute_height, height, block_hash.c_str());
+            return true;
+        }
+    }
+    return false;
+}
+
 xtablestate_ext_ptr_t xstatestore_executor_t::execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, bool bstate_must, std::error_code & ec) const {
     uint64_t cert_execute_height = get_cert_executed_height_inner();
     xtablestate_ext_ptr_t tablestate_ext = nullptr;

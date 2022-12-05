@@ -345,6 +345,23 @@ void xsend_tx_queue_t::updata_latest_nonce(const std::string & account_addr, uin
     }
 }
 
+void xsend_tx_queue_t::updata_latest_nonce_by_hash(const std::string & tx_hash) {
+    auto tx_ent = m_send_tx_queue_internal.find(tx_hash);
+    if (tx_ent == nullptr) {
+        return;
+    }
+
+    auto addr = tx_ent->get_tx()->get_account_addr();
+    auto send_tx_account = m_send_tx_accounts.find(addr);
+    xassert(send_tx_account != m_send_tx_accounts.end());
+    if (send_tx_account != m_send_tx_accounts.end()) {
+        send_tx_account->second->update_latest_nonce(tx_ent->get_tx()->get_transaction()->get_tx_nonce());
+        if (send_tx_account->second->empty()) {
+            m_send_tx_accounts.erase(addr);
+        }
+    }
+}
+
 void xsend_tx_queue_t::clear_expired_txs() {
     auto expired_txs = m_send_tx_queue_internal.get_expired_txs();
     for (auto & tx : expired_txs) {
