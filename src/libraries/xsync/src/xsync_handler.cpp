@@ -1013,11 +1013,11 @@ void xsync_handler_t::handle_consensus_result(const mbus::xevent_ptr_t& e) {
     auto ptr = dynamic_xobject_ptr_cast<mbus::xevent_consensus_data_t>(e);
     xblock_ptr_t block = autoptr_to_blockptr(ptr->vblock_ptr);
 
-    const std::string &address = block->get_account();
-    if (!m_role_chains_mgr->exists(address)) {
-        xsync_warn("xsync_handler on_consensus_block role not exist %s", block->get_account().c_str());
-        return;
-    }
+    // const std::string &address = block->get_account();
+    // if (!m_role_chains_mgr->exists(address)) {
+    //     xsync_warn("xsync_handler on_consensus_block role not exist %s", block->get_account().c_str());
+    //     return;
+    // }
 
     xsync_info("xsync_handler on_consensus_block %s", block->dump().c_str());
 
@@ -1545,21 +1545,6 @@ void xsync_handler_t::on_block_push_newblock(uint32_t msg_size,
     const std::string& address = block->get_account();
     if (!m_role_chains_mgr->exists(address)) {
         xsync_warn("xsync_handler_t::on_block_push_newblock receive push_newblock(no role) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
-        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
-        return;
-    }
-
-    // to be deleted
-    // check block existed already
-    auto exist_block = m_sync_store->existed(block->get_account(), block->get_height(), block->get_viewid());
-    if (exist_block) {
-        XMETRICS_GAUGE(metrics::xsync_recv_duplicate_block, 1);
-         xsync_warn("xsync_handler_t::on_block_push_newblock exist_block %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
-        return;
-    }
-
-    if (!check_auth(m_certauth, block)) {
-        xsync_warn("xsync_handler_t::on_block_push_newblock receive push_newblock(auth failed) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
         XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
