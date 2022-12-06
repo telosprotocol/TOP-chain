@@ -324,41 +324,14 @@ TEST_F(test_block_executed, latest_executed_state_1) {
         uint64_t max_count = 10;
         mock::xdatamock_table mocktable(1, 4);      
         mocktable.genrate_table_chain(max_count, blockstore);
-        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();        
-        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate->height(), 0);      
-
+        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();    
         for (auto & block : tableblocks) {
             ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+            statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(block.get());
         }
         auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
         EXPECT_EQ(tablestate2->height(), max_count-2);         
     }
-
-    {
-        mock::xvchain_creator creator;
-        base::xvblockstore_t* blockstore = creator.get_blockstore();
-        uint64_t max_count = 10;
-        mock::xdatamock_table mocktable(1, 4);      
-        mocktable.genrate_table_chain(max_count, blockstore);
-        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();        
-        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate->height(), 0);      
-
-        for (auto & block : tableblocks) {
-            if (block->get_height() == 6) {
-                continue;
-            }
-            ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
-        }
-        auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate2->height(), 3);
-
-        ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[6].get()));
-        auto tablestate3 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate3->height(), max_count-2);        
-    }
-
 }
 
 TEST_F(test_block_executed, not_store_units_1) {

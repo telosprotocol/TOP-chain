@@ -73,8 +73,9 @@ protected:
     mutable uint64_t            m_executed_height{0};
     mutable uint64_t            m_need_all_state_sync_height{0};
     common::xaccount_address_t  m_table_addr;
+    base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
     xstatestore_base_t          m_statestore_base;
-    xstatestore_accessor_t      m_state_accessor;
+    mutable xstatestore_accessor_t m_state_accessor;
     xexecute_listener_face_t *  m_execute_listener{nullptr};
 };
 

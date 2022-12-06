@@ -9,31 +9,12 @@
 
 NS_BEG2(top, statestore)
 
-xstatestore_cache_t::xstatestore_cache_t() : m_tablestate_cache(enum_max_table_state_lru_cache_max), m_unitstate_cache(enum_max_unit_state_lru_cache_max) {
+xstatestore_cache_t::xstatestore_cache_t() : m_unitstate_cache(enum_max_unit_state_lru_cache_max) {
 
-}
-
-xtablestate_ext_ptr_t xstatestore_cache_t::get_tablestate(std::string const& block_hash) const {
-    xtablestate_ext_ptr_t state = nullptr;
-    m_tablestate_cache.get(block_hash, state);
-    XMETRICS_GAUGE(metrics::statestore_get_table_state_from_cache, state != nullptr ? 1 : 0);
-    return state;
 }
 
 xtablestate_ext_ptr_t xstatestore_cache_t::get_latest_connectted_tablestate() const {
-    std::lock_guard<std::mutex> lck(m_mutex);
     return m_latest_connectted_tablestate;
-}
-
-void xstatestore_cache_t::set_latest_connectted_tablestate(xtablestate_ext_ptr_t const& tablestate) const {
-    std::lock_guard<std::mutex> lck(m_mutex);
-    m_latest_connectted_tablestate = tablestate;
-    xdbg("xstatestore_cache_t::set_latest_connectted_tablestate %s", tablestate->get_table_state()->get_bstate()->dump().c_str());
-}
-
-void xstatestore_cache_t::set_tablestate(std::string const& block_hash, xtablestate_ext_ptr_t const& state) const {
-    m_tablestate_cache.put(block_hash, state);
-    xdbg("xstatestore_cache_t::set_tablestate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_table_state()->get_bstate()->dump().c_str());
 }
 
 data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& block_hash) const {
@@ -43,11 +24,61 @@ data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& blo
     return state;
 }
 
-void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) const {
+void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) {
     m_unitstate_cache.put(block_hash, state);
     xdbg("xstatestore_cache_t::set_unitstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
 }
 
+void xstatestore_cache_t::set_tablestate(uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& tablestate, bool is_commit) {
+    m_table_states[height][block_hash] = tablestate;
+
+    // update connectted state
+    if (is_commit) {
+        if (m_latest_connectted_tablestate == nullptr || height > m_latest_connectted_tablestate->get_table_state()->height()) {
+            m_latest_connectted_tablestate = tablestate;
+        }
+    } else if (height > m_latest_connectted_tablestate->get_table_state()->height()+2) {
+        auto _tablestate = get_prev_tablestate(height-1, tablestate->get_table_state()->get_bstate()->get_last_block_hash());
+        if (nullptr != _tablestate) {
+            m_latest_connectted_tablestate = _tablestate;
+        } else {
+            xassert(false);
+        }
+    }
+
+    // XTODO keep four heights table states in cache
+    for (auto iter = m_table_states.begin(); iter != m_table_states.end(); ) {
+        if (iter->first + 3 < height) {
+            iter = m_table_states.erase(iter);
+        } else {
+            break;
+        }
+    }    
+}
+xtablestate_ext_ptr_t xstatestore_cache_t::get_tablestate_inner(uint64_t height, std::string const& block_hash) const {
+    auto iter = m_table_states.find(height);
+    if (iter != m_table_states.end()) {
+        const auto & hash_map = iter->second;
+        auto iter2 = hash_map.find(block_hash);
+        if (iter2 != hash_map.end()) {
+            return iter2->second;
+        }
+    }
+    return nullptr;
+}
+xtablestate_ext_ptr_t xstatestore_cache_t::get_tablestate(uint64_t height, std::string const& block_hash) const {
+    xtablestate_ext_ptr_t tablestate = get_tablestate_inner(height, block_hash);
+    XMETRICS_GAUGE(metrics::statestore_get_table_state_from_cache, tablestate != nullptr ? 1 : 0);
+    return tablestate;
+}
+
+xtablestate_ext_ptr_t xstatestore_cache_t::get_prev_tablestate(uint64_t height, std::string const& block_hash) const {
+    xtablestate_ext_ptr_t tablestate = get_tablestate_inner(height, block_hash);
+    if (tablestate != nullptr) {
+        return get_tablestate_inner(height, block_hash);
+    }
+    return nullptr;
+}
 
 //============================xstatestore_dbaccess_t============================
 void xstatestore_dbaccess_t::write_table_bstate(common::xaccount_address_t const& address, data::xtablestate_ptr_t const& tablestate, const std::string & block_hash, std::error_code & ec) const {
@@ -141,8 +172,7 @@ data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount
 
 
 //============================xstatestore_accessor_t============================
-xstatestore_accessor_t::xstatestore_accessor_t(common::xaccount_address_t const& address)
-: m_table_addr(address) {
+xstatestore_accessor_t::xstatestore_accessor_t() {
 
 }
 
@@ -151,8 +181,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::get_latest_connectted_table_state(
 }
 
 xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_cache(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {
-    xtablestate_ext_ptr_t tablestate = m_state_cache.get_tablestate(block_hash);
-    return tablestate;
+    return m_state_cache.get_tablestate(height, block_hash);
 }
 
 xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db_inner(common::xaccount_address_t const& address, base::xvblock_t* block, bool bstate_must) const {
@@ -182,7 +211,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db(common::
 }
 
 xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate(common::xaccount_address_t const& address, base::xvblock_t* block) const {
-    auto tablestate = m_state_cache.get_tablestate(block->get_block_hash());
+    auto tablestate = m_state_cache.get_tablestate(block->get_height(), block->get_block_hash());
     if (nullptr != tablestate) {
         return tablestate;
     }
@@ -190,7 +219,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate(common::xaccount
 }
 
 xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_for_account_index(common::xaccount_address_t const& address, base::xvblock_t* block) const {
-    xtablestate_ext_ptr_t tablestate = m_state_cache.get_tablestate(block->get_block_hash());
+    xtablestate_ext_ptr_t tablestate = m_state_cache.get_tablestate(block->get_height(), block->get_block_hash());
     if (nullptr != tablestate) {
         return tablestate;
     }    
@@ -205,26 +234,19 @@ data::xunitstate_ptr_t xstatestore_accessor_t::read_unit_bstate(common::xaccount
     return m_dbaccess.read_unit_bstate(address, height, block_hash);
 }
 
-void xstatestore_accessor_t::set_latest_connectted_tablestate(xtablestate_ext_ptr_t const& tablestate) const {
-    m_state_cache.set_latest_connectted_tablestate(tablestate);
-}
-
-void xstatestore_accessor_t::write_table_bstate_to_db(common::xaccount_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& state, std::error_code & ec) const {    
+void xstatestore_accessor_t::write_table_bstate_to_db(common::xaccount_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& state, std::error_code & ec) {    
     m_dbaccess.write_table_bstate(address, state, block_hash, ec);
-    if (ec) {
-        return;
-    }
 }
 
-void xstatestore_accessor_t::write_table_bstate_to_cache(common::xaccount_address_t const& address, std::string const& block_hash, xtablestate_ext_ptr_t const& state) const {    
-    m_state_cache.set_tablestate(block_hash, state);
+void xstatestore_accessor_t::write_table_bstate_to_cache(common::xaccount_address_t const& address, uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& state, bool is_commit) {    
+    m_state_cache.set_tablestate(height, block_hash, state, is_commit);
 }
 
-void xstatestore_accessor_t::write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const {
+void xstatestore_accessor_t::write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) {
     m_dbaccess.write_unit_bstate(unitstate, block_hash, ec);
 }
 
-void xstatestore_accessor_t::write_unitstate_to_cache(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash) const {
+void xstatestore_accessor_t::write_unitstate_to_cache(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash) {
     m_state_cache.set_unitstate(block_hash, unitstate);
 }
 
