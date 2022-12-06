@@ -215,7 +215,7 @@ std::pair<uint64_t, uint64_t> xsync_chain_spans_t::get_continuous_unused_interva
     uint64_t unused_start_height = 0;
     uint64_t unused_end_height = 0;
 
-    while (end_height < height_interval.second) {
+    do {
         uint64_t span_index = xcommon_span_t::index(start_height);
         xcommon_span_t *span;
         if (m_connect_to_genesis_span->owned(span_index)) {
@@ -259,7 +259,7 @@ std::pair<uint64_t, uint64_t> xsync_chain_spans_t::get_continuous_unused_interva
 
             unused_end_height = continuous_unused_interval.second;
         }
-    }
+    } while (end_height < height_interval.second);
 
     clear_highest_spans();
 
