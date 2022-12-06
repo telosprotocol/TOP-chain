@@ -268,6 +268,7 @@ bool xtimer_picker_t::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr
     common::xelection_round_t version{0};
     xvip2_t leader_xip;
     if (type == xconsensus::enum_consensus_msg_type_proposal ||
+        type == xconsensus::enum_consensus_msg_type_proposal_v2 ||
         type == xconsensus::enum_consensus_msg_type_commit) {
         // check if sender is leader
         leader_xip = m_leader_selector->get_leader_xip(packet.get_block_viewid(), get_account(), nullptr, get_xip2_addr(), from_addr, version, enum_rotate_mode_no_rotate);

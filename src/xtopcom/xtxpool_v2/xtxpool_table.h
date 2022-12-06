@@ -107,7 +107,7 @@ public:
     void on_block_confirmed(xblock_t * table_block);
     bool on_block_confirmed(base::enum_xvblock_class blk_class, uint64_t height);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs);
-    void refresh_table(bool refresh_state_only = false);
+    void refresh_table();
     // void update_non_ready_accounts();
     void update_table_state(const data::xtablestate_ptr_t & table_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
