@@ -182,6 +182,7 @@ bool xconspacemaker_t::on_pdu_event_down(const base::xvevent_t & event, xcsobjec
         return on_receive_timeout(from_addr, packet);
     // intercept other consensus down events
     case enum_consensus_msg_type_proposal:
+    case enum_consensus_msg_type_proposal_v2:
     case enum_consensus_msg_type_vote:
     case enum_consensus_msg_type_commit:
         return filter_consensus_event(event);
