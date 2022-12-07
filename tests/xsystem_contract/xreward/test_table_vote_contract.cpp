@@ -785,3 +785,22 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote_on_timer) {
 
     EXPECT_EQ(contract.STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY), xstring_utl::tostring(0));
 }
+
+TEST_F(xtest_table_vote_contract_dev_t, test_vote_bug) {
+    auto voter = std::string{"T800004e1a8db34504e7b57a881746d0826661cc68f9a0"};
+    auto adv = std::string{"T00000LYhXYm8rrkfKkYrrjT8ibbFtdi1SJDrHRD"};
+    {
+        xtable_vote_contract::vote_info_map_t map;
+        map[adv] = 100;
+        contract.handle_votes(common::xaccount_address_t{voter}, map, true);
+
+        std::map<std::uint64_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
+        xtable_vote_contract::vote_info_map_t map1;
+        map1[adv] = 100;
+        all_time_ineffective_votes.insert({100, map1});
+        contract.set_all_time_ineffective_votes(common::xaccount_address_t{voter}, all_time_ineffective_votes);
+    }
+    xtable_vote_contract::vote_info_map_t map;
+    map[adv] = 150;
+    contract.set_vote_info_v2(common::xaccount_address_t{voter}, map, false);
+}

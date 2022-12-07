@@ -575,6 +575,9 @@ void xtable_vote_contract::del_all_time_ineffective_votes(vote_info_map_t & vote
         } else {
             it_old++;
         }
+        if (all_time_ineffective_votes.empty() || vote_info.empty()) {
+            break;
+        }
     }
 }
 
