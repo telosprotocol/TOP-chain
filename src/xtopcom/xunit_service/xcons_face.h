@@ -204,7 +204,7 @@ public:
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
 #endif
-const int32_t max_mailbox_num = 8192;
+const int32_t max_mailbox_num = 2048;
 // block dispatcher
 class xcons_dispatcher {
 public:

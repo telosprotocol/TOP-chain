@@ -62,6 +62,7 @@ private:
 private:
     mutable std::mutex m_prune_lock;
     common::xaccount_address_t m_table_addr;
+    base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
     uint64_t m_pruned_height{0};
     xstatestore_base_t m_statestore_base;
     std::shared_ptr<xstatestore_resources_t> m_para;
