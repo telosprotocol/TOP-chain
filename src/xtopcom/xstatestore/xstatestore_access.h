@@ -24,21 +24,22 @@ protected:
 public:
     xstatestore_cache_t();
 public:
-    xtablestate_ext_ptr_t   get_tablestate(std::string const& block_hash) const;
     data::xunitstate_ptr_t  get_unitstate(std::string const& block_hash) const;
     xtablestate_ext_ptr_t   get_latest_connectted_tablestate() const;
+    xtablestate_ext_ptr_t   get_tablestate(uint64_t height, std::string const& block_hash) const;
 
 public:
-    void    set_latest_connectted_tablestate(xtablestate_ext_ptr_t const& tablestate) const;
-    void    set_tablestate(std::string const& block_hash, xtablestate_ext_ptr_t const& tablestate) const;
-    void    set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& unitstate) const;
+    void    set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& unitstate);    
+    void    set_tablestate(uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& tablestate, bool is_commit);
+
 
 private:
-   // TODO(jimmy) it is better to use non-lock cache
-   mutable std::mutex m_mutex;
-   mutable xtablestate_ext_ptr_t    m_latest_connectted_tablestate{nullptr};
-   mutable base::xlru_cache<std::string, xtablestate_ext_ptr_t> m_tablestate_cache;  //tablestate cache
-   mutable base::xlru_cache<std::string, data::xunitstate_ptr_t> m_unitstate_cache;  //unitstate cache
+    xtablestate_ext_ptr_t   get_prev_tablestate(uint64_t height, std::string const& block_hash) const;
+    xtablestate_ext_ptr_t   get_tablestate_inner(uint64_t height, std::string const& block_hash) const;
+
+    xtablestate_ext_ptr_t    m_latest_connectted_tablestate{nullptr};
+    mutable base::xlru_cache<std::string, data::xunitstate_ptr_t> m_unitstate_cache;  //unitstate cache
+    std::map<uint64_t, std::map<std::string, xtablestate_ext_ptr_t>>  m_table_states;
 };
 
 
@@ -59,7 +60,7 @@ class xstatestore_dbaccess_t {
 // access state from cache or db
 class xstatestore_accessor_t {
  public:
-    xstatestore_accessor_t(common::xaccount_address_t const& address);
+    xstatestore_accessor_t();
 public:
     xtablestate_ext_ptr_t       get_latest_connectted_table_state() const;
     xtablestate_ext_ptr_t       read_table_bstate_from_cache(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
@@ -68,15 +69,13 @@ public:
     xtablestate_ext_ptr_t       read_table_bstate_for_account_index(common::xaccount_address_t const& address, base::xvblock_t* block) const;
     data::xunitstate_ptr_t      read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
 
-    void    set_latest_connectted_tablestate(xtablestate_ext_ptr_t const& tablestate) const;
-    void    write_table_bstate_to_db(common::xaccount_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& tablestate, std::error_code & ec) const;
-    void    write_table_bstate_to_cache(common::xaccount_address_t const& address, std::string const& block_hash, xtablestate_ext_ptr_t const& state) const;
-    void    write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & e) const;
-    void    write_unitstate_to_cache(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash) const;
+    void    write_table_bstate_to_db(common::xaccount_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& tablestate, std::error_code & ec);
+    void    write_table_bstate_to_cache(common::xaccount_address_t const& address, uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& state, bool is_commit);
+    void    write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec);
+    void    write_unitstate_to_cache(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash);
 private:
     xtablestate_ext_ptr_t read_table_bstate_from_db_inner(common::xaccount_address_t const& address, base::xvblock_t* block, bool bstate_must) const;
 private:
-    common::xaccount_address_t  m_table_addr;
     xstatestore_cache_t         m_state_cache;
     xstatestore_dbaccess_t      m_dbaccess;
     xstatestore_base_t          m_store_base;

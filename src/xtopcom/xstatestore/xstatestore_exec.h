@@ -22,6 +22,7 @@ public:
 
 class xstatestore_executor_t {
 public:
+    static constexpr uint32_t               push_execute_limit{32};
     static constexpr uint32_t               execute_update_limit{32};
     static constexpr uint32_t               execute_unit_limit_demand{100};  // execute unit for unitstate on demand to fullunit
     static std::mutex   m_global_execute_lock;
@@ -48,7 +49,7 @@ public:
     uint64_t get_need_sync_state_block_height() const;
 
 protected:
-    uint64_t update_execute_from_execute_height(uint64_t old_execute_height) const;
+    uint64_t update_execute_from_execute_height(bool force_update) const;
     void    set_latest_executed_info(bool is_commit_block, uint64_t height) const;
     void    set_need_sync_state_block_height(uint64_t height) const;
     void    recover_execute_height(uint64_t old_executed_height);
@@ -72,9 +73,11 @@ protected:
     mutable uint64_t            m_executed_cert_height{0};
     mutable uint64_t            m_executed_height{0};
     mutable uint64_t            m_need_all_state_sync_height{0};
+    mutable uint32_t            m_force_push_execute_count{0};
     common::xaccount_address_t  m_table_addr;
+    base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
     xstatestore_base_t          m_statestore_base;
-    xstatestore_accessor_t      m_state_accessor;
+    mutable xstatestore_accessor_t m_state_accessor;
     xexecute_listener_face_t *  m_execute_listener{nullptr};
 };
 

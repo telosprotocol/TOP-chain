@@ -20,7 +20,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xchain_fork/xutility.h"
 
-#define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
+#define METRICS_TAG(tag, val)    // TODO(jimmy) no use XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 
 
 namespace top
@@ -743,15 +743,14 @@ namespace top
 
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
         {            
-            bool is_store_units = should_store_units(container_account->get_account_obj()->get_zone_index());
-            xdbg("xvblockstore_impl::store_block enter,store block(%s),is_store_units=%d", container_block->dump().c_str(), is_store_units);
+            xdbg("xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
 
             //first do store sub-blocks
             bool is_subblocks_store = false;
-            if( is_store_units
-               &&(container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+            if( (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
                &&(container_block->get_block_level() == base::enum_xvblock_level_table)
-               &&(container_block->get_height() != 0) )
+               &&(container_block->get_height() != 0)
+               && should_store_units(container_account->get_account_obj()->get_zone_index()) )
             {
                 base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
                 if( (nullptr == existing_index) || (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet

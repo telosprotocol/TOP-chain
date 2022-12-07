@@ -87,9 +87,8 @@ data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_b
     }
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
-    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu,size=%zu,%zu", 
-        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size(),
-        proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size());
+    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
+        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size());
     return proposal_block;
 }
 
@@ -119,9 +118,8 @@ data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t &
     // xdbg("xunitbuilder_t::make_block unit=%s,detail=%s", proposal_block->dump().c_str(), proposal_block->detail_dump().c_str());
     // xdbg("xunitbuilder_t::make_block unit=%s,qcert=%s", proposal_block->dump().c_str(), proposal_block->get_cert()->dump().c_str());
 
-    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu,size=%zu,%zu", 
-        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size(),
-        proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size());
+    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
+        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size());
     return proposal_block;
 }
 

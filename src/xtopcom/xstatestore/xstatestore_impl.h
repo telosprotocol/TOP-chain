@@ -85,7 +85,6 @@ private:
     xstatestore_timer_t * m_timer;
     uint32_t m_store_block_listen_id;
     uint32_t m_state_sync_listen_id;
-    common::xnode_type_t m_combined_node_type{common::xnode_type_t::invalid};
     bool m_started{false};
     xobject_ptr_t<statestore_prune_dispatcher_t> m_prune_dispather{nullptr};
     std::shared_ptr<xstatestore_resources_t> m_para;
