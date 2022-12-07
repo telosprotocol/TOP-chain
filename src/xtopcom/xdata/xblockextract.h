@@ -19,6 +19,7 @@ using cross_chain_contract_info = std::map<std::string, std::pair<std::string, e
 
 class xblockextract_t {
  public:
+    static void                                     extract_sub_txs(base::xvblock_t* _block, std::vector<base::xvtxindex_ptr> & sub_txs);
     static uint32_t                                 get_txactions_count(base::xvblock_t* _block);
     static std::vector<xlightunit_action_t>         unpack_txactions(base::xvblock_t* _block);
     static std::vector<xlightunit_action_t>         unpack_eth_txactions(base::xvblock_t* _block);
