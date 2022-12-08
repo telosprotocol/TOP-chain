@@ -512,10 +512,17 @@ void xtop_vhost::do_handle_network_data() {
                         continue;
                     }
 
-                    xinfo("[vnetwork] message hash: %" PRIx64 " , after  filter:s&r sender is %s , receiver is %s",
+                    xinfo("[vnetwork] message hash: %" PRIx64 " , after  filter:s&r sender is %s z%" PRIu16 "g%" PRIu16 "s%" PRIu16 ", receiver is %s z%" PRIu16 "g%" PRIu16
+                          "s%" PRIu16,
                           vnetwork_message.hash(),
-                          sender.to_string().c_str(),
-                          receiver.to_string().c_str());
+                          sender.account_address().to_string().c_str(),
+                          static_cast<uint16_t>(sender.zone_id().value()),
+                          static_cast<uint16_t>(sender.group_id().value()),
+                          static_cast<uint16_t>(sender.slot_id().value()),
+                          receiver.account_address().empty() ? "'empty'" : receiver.account_address().to_string().c_str(),
+                          static_cast<uint16_t>(receiver.zone_id().value()),
+                          static_cast<uint16_t>(receiver.group_id().value()),
+                          static_cast<uint16_t>(receiver.slot_id().value()));
 
                     std::vector<std::pair<common::xnode_address_t const, xmessage_ready_callback_t>> callbacks;
                     XLOCK_GUARD(m_callbacks_mutex) {

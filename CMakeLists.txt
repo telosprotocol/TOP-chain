@@ -321,7 +321,8 @@ message(STATUS "XUSE_JEMALLOC:" ${XUSE_JEMALLOC})
 
 find_package(Threads REQUIRED)
 if (XUSE_JEMALLOC)
-    link_libraries(jemalloc)
+    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/xtopcom/xdepends/jemalloc/lib)
+    link_libraries(jemalloc_pic)
 endif()
 
 include_directories(src/xtopcom)  # xtopcom build warning will not print
