@@ -6,6 +6,22 @@ if(XBUILD_TEST)
     add_subdirectory(googletest)
 endif()
 
+if (XUSE_JEMALLOC)
+    message(STATUS "")
+    message(STATUS "========== thrid-party: jemalloc ============")
+
+    execute_process(
+        COMMAND bash "-c" "./autogen.sh"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/jemalloc
+    )
+
+    execute_process(
+        COMMAND make
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/jemalloc
+        ERROR_FILE "make_jemalloc.log"
+        OUTPUT_FILE "make_jemalloc.log"
+    )
+endif()
 
 message(STATUS "")
 message(STATUS "========== thrid-party: xquic ============")
