@@ -19,7 +19,7 @@ xcons_unorder_cache::~xcons_unorder_cache() {
 bool xcons_unorder_cache::filter_event(uint64_t account_viewid, const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet) {
     const uint64_t viewid = packet.get_block_viewid();
     // only process proposal msg now
-    if (viewid == account_viewid || packet.get_msg_type() != xconsensus::enum_consensus_msg_type_proposal) {
+    if (viewid == account_viewid || (packet.get_msg_type() != xconsensus::enum_consensus_msg_type_proposal && packet.get_msg_type() != xconsensus::enum_consensus_msg_type_proposal_v2)) {
         return true;
     }
 
@@ -68,7 +68,8 @@ void xcons_unorder_cache::clear_old_unorder_event(uint64_t account_viewid) {
 
 xconsensus::xcspdu_fire* xcons_unorder_cache::get_proposal_event(uint64_t account_viewid) {
     for (auto iter = m_unorder_events.begin(); iter != m_unorder_events.end();) {
-        if (iter->first == account_viewid && iter->second->_packet.get_msg_type() == xconsensus::enum_consensus_msg_type_proposal) {
+        if (iter->first == account_viewid && (iter->second->_packet.get_msg_type() == xconsensus::enum_consensus_msg_type_proposal ||
+                                              iter->second->_packet.get_msg_type() == xconsensus::enum_consensus_msg_type_proposal_v2)) {
             xconsensus::xcspdu_fire* event = iter->second;
             xunit_dbg("xcons_unorder_cache::get_proposal_event find event.account_viewid=%ld", account_viewid);
             iter = m_unorder_events.erase(iter);

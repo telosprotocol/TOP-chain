@@ -539,7 +539,7 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     bool is_leader = false;
     auto type = packet.get_msg_type();
     bool valid = true;
-    if (type == xconsensus::enum_consensus_msg_type_proposal) {
+    if (type == xconsensus::enum_consensus_msg_type_proposal || type == xconsensus::enum_consensus_msg_type_proposal_v2) {
         valid = verify_proposal_packet(from_addr, to_addr, packet);
     }
     if (!valid) {
@@ -652,7 +652,6 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                   || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_validator())
                   || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
-
         // accumulated table failed value
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_INCREMENT( fork_tag , 1);
@@ -672,7 +671,6 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
              xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
              xcons_utl::xip_to_hex(m_last_xip2).c_str());
     } else {
-
         // reset to 0
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_SET( fork_tag , 0);
