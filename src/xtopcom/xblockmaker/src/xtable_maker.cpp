@@ -163,8 +163,8 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
 
         unitctx->get_accoutstate()->update_account_index(aindex);
 
-        xinfo("xtable_maker_t::make_units_v2 succ-make unit.is_leader=%d,%s,unit=%s,size=%zu,%zu",
-            is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),unitblock->get_input()->get_resources_data().size(),unitblock->get_output()->get_resources_data().size());
+        xinfo("xtable_maker_t::make_units_v2 succ-make unit.is_leader=%d,%s,unit=%s",
+            is_leader, cs_para.dump().c_str(), unitblock->dump().c_str());
     }
 
     return batch_unit_and_index;

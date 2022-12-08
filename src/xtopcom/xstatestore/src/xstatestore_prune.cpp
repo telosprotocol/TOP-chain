@@ -71,7 +71,7 @@ const std::vector<std::string> & xtablestate_and_offdata_prune_info_t::get_offda
     return m_offdata_keys;
 }
 
-xstatestore_prune_t::xstatestore_prune_t(common::xaccount_address_t const & table_addr, std::shared_ptr<xstatestore_resources_t> para) : m_table_addr(table_addr), m_para(para) {
+xstatestore_prune_t::xstatestore_prune_t(common::xaccount_address_t const & table_addr, std::shared_ptr<xstatestore_resources_t> para) : m_table_addr(table_addr), m_table_vaddr(table_addr.vaccount()), m_para(para) {
     init();
 }
 
@@ -210,7 +210,7 @@ uint64_t xstatestore_prune_t::prune_exec_storage(uint64_t from_height, uint64_t 
     uint64_t height = from_height;
     for (; height <= to_height; height++) {
         // prune include fork blocks.
-        auto blocks = base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), height, false);
+        auto blocks = base::xvchain_t::instance().get_xblockstore()->load_block_object(m_table_vaddr, height, false);
         if (blocks.get_vector().empty()) {
             xerror("xstatestore_prune_t::prune_exec_storage load block fail.table:%s height:%llu", m_table_addr.to_string().c_str(), height);
             break;
@@ -234,7 +234,7 @@ uint64_t xstatestore_prune_t::prune_exec_storage_and_cons(uint64_t from_height, 
     uint64_t height = from_height;
     for (; height <= to_height; height++) {
         // prune include fork blocks.
-        auto blocks = base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), height, false);
+        auto blocks = base::xvchain_t::instance().get_xblockstore()->load_block_object(m_table_vaddr, height, false);
         if (blocks.get_vector().empty()) {
             xerror("xstatestore_prune_t::prune_exec_storage load block fail.table:%s height:%llu", m_table_addr.to_string().c_str(), height);
             break;
@@ -261,7 +261,7 @@ uint64_t xstatestore_prune_t::prune_exec_storage_and_cons(uint64_t from_height, 
 uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_height, uint64_t exec_height) {
     uint64_t lowest_keep_height = to_height + 1;
     xobject_ptr_t<base::xvblock_t> lowest_keep_block =
-        base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), lowest_keep_height, base::enum_xvblock_flag_committed, false);
+        base::xvchain_t::instance().get_xblockstore()->load_block_object(m_table_vaddr, lowest_keep_height, base::enum_xvblock_flag_committed, false);
     if (lowest_keep_block == nullptr) {
         xinfo("xstatestore_prune_t::prune_exec_cons table:%s load lowest block fail.height:%llu", get_account().to_string().c_str(), lowest_keep_height);
         return from_height - 1;
@@ -277,7 +277,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             XMETRICS_GAUGE(metrics::state_delete_create_mpt_fail, 1);
 
             xobject_ptr_t<base::xvblock_t> latest_exec_block =
-                base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), exec_height, base::enum_xvblock_flag_committed, false);
+                base::xvchain_t::instance().get_xblockstore()->load_block_object(m_table_vaddr, exec_height, base::enum_xvblock_flag_committed, false);
             if (latest_exec_block == nullptr) {
                 xerror("xstatestore_prune_t::prune_exec_cons table:%s load latest exec block fail.height:%llu", get_account().to_string().c_str(), exec_height);
                 return from_height - 1;
@@ -291,7 +291,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             }
             auto & latest_full_hash = latest_exec_block->get_last_full_block_hash();
             xobject_ptr_t<base::xvblock_t> latest_full_block =
-                base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), exec_height, latest_full_hash, false);
+                base::xvchain_t::instance().get_xblockstore()->load_block_object(m_table_vaddr, exec_height, latest_full_hash, false);
             if (latest_full_block == nullptr) {
                 xwarn("xstatestore_prune_t::prune_exec_cons table:%s load latest full block fail.height:%llu", get_account().to_string().c_str(), latest_full_height);
                 XMETRICS_GAUGE(metrics::state_delete_by_full_table, 0);
@@ -327,7 +327,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
     std::unordered_set<evm_common::xh256_t> pruned_hashes;
     for (uint64_t height = from_height; height <= to_height; height++) {
         // prune include fork blocks.
-        auto blocks = base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), height, false);
+        auto blocks = base::xvchain_t::instance().get_xblockstore()->load_block_object(m_table_vaddr, height, false);
         if (blocks.get_vector().empty()) {
             xdbg("xstatestore_prune_t::prune_exec_cons load block fail.table:%s height:%llu", m_table_addr.to_string().c_str(), height);
             continue;
