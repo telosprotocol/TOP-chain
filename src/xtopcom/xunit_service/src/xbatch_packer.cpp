@@ -531,13 +531,25 @@ bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip
 }
 
 bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
+    auto type = packet.get_msg_type();
+    bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, m_para->get_resources()->get_chain_timer()->logic_time());
+    if (forked && (type == xconsensus::enum_consensus_msg_type_proposal || type == xconsensus::enum_consensus_msg_type_sync_resp)) {
+        xwarn("xbatch_packer::recv_in drop old msg. pdu_recv_in=%s, clock=%llu, viewid=%llu, from_xip=%s,to_xip=%s,node_xip=%s.",
+              packet.dump().c_str(),
+              m_last_view_clock,
+              m_last_view_id,
+              xcons_utl::xip_to_hex(from_addr).c_str(),
+              xcons_utl::xip_to_hex(to_addr).c_str(),
+              xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+        return false;
+    }
+    
     xunit_info("xbatch_packer::recv_in, consensus_tableblock  pdu_recv_in=%s, clock=%llu, viewid=%llu, from_xip=%s,to_xip=%s,node_xip=%s.",
                 packet.dump().c_str(), m_last_view_clock, m_last_view_id, xcons_utl::xip_to_hex(from_addr).c_str(),xcons_utl::xip_to_hex(to_addr).c_str(),xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
     // proposal should pass to xbft, so xbft could realize local is beind in view/block and do sync
     bool is_leader = false;
-    auto type = packet.get_msg_type();
     bool valid = true;
     if (type == xconsensus::enum_consensus_msg_type_proposal || type == xconsensus::enum_consensus_msg_type_proposal_v2) {
         valid = verify_proposal_packet(from_addr, to_addr, packet);
