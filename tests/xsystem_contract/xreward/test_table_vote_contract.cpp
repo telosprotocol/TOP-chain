@@ -178,6 +178,17 @@ static std::vector<std::string> advs = {
 
     // m_registered_miner_type
 
+    // virtual const data::xtablestate_ptr_t &     get_table_state() const = 0;
+    // virtual data::xaccountstate_ptr_t           load_account_state(common::xaccount_address_t const& address) = 0;
+    // virtual data::xunitstate_ptr_t  load_unit_state(common::xaccount_address_t const& address) = 0;
+    // virtual data::xunitstate_ptr_t  load_commit_unit_state(common::xaccount_address_t const& address) {return nullptr;}  // TODO(jimmy) just for accountcontext
+    // virtual data::xunitstate_ptr_t  load_commit_unit_state(common::xaccount_address_t const& address, uint64_t height) {return nullptr;}  // TODO(jimmy) just for accountcontext
+    // virtual bool                    do_rollback() = 0;
+    // virtual size_t                  do_snapshot() = 0;
+    // virtual void                    do_commit(base::xvblock_t* current_block) {return;}  // TODO(jimmy) do commit changed state to db
+    // virtual std::string             get_table_address() const = 0;
+    // virtual bool                    is_state_dirty() const = 0;
+
 class xmock_statectx_t : public statectx::xstatectx_face_t {
  public:
     xmock_statectx_t() {
@@ -201,16 +212,20 @@ class xmock_statectx_t : public statectx::xstatectx_face_t {
         static data::xtablestate_ptr_t ptr{nullptr};
         return ptr;
      }
-    data::xunitstate_ptr_t  load_unit_state(const base::xvaccount_t & addr) override {
+    data::xaccountstate_ptr_t  load_account_state(const common::xaccount_address_t & addr) override {
         assert(false);
         return nullptr;
     }
-    data::xunitstate_ptr_t load_commit_unit_state(const base::xvaccount_t & addr) {
-        assert(addr.get_account() == sys_contract_rec_registration_addr);
+    data::xunitstate_ptr_t  load_unit_state(const common::xaccount_address_t & addr) override {
+        assert(false);
+        return nullptr;
+    }
+    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr) {
+        assert(addr.to_string() == sys_contract_rec_registration_addr);
         return m_unitstate;
     }
-    data::xunitstate_ptr_t load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) {
-        assert(addr.get_account() == sys_contract_rec_registration_addr);
+    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr, uint64_t height) {
+        assert(addr.to_string() == sys_contract_rec_registration_addr);
         return m_unitstate;
     }
     bool do_rollback() override {
@@ -246,14 +261,13 @@ public:
         m_vbstate = make_object_ptr<xvbstate_t>(m_table_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
         m_unitstate = std::make_shared<xunit_bstate_t>(m_vbstate.get());
         m_statectx = std::make_shared<xmock_statectx_t>();
-        m_account_index = std::make_shared<xaccount_context_t>(m_unitstate, m_statectx);
+        m_account_index = std::make_shared<xaccount_context_t>(m_unitstate, m_statectx, 0);
         m_contract_helper = std::make_shared<xcontract_helper>(m_account_index.get(), m_contract_addr, m_exe_addr);
         contract.set_contract_helper(m_contract_helper);
         contract.setup();
     }
 
     void SetUp() override {
-        top::config::config_register.get_instance().set(config::xtable_vote_ineffective_period_onchain_goverance_parameter_t::name, std::to_string(8640));
         init();
     }
 
@@ -563,9 +577,14 @@ TEST_F(xtest_table_vote_contract_dev_t, test_get_and_update_all_effective_votes_
         contract.set_all_time_ineffective_votes(voter, all_time_ineffective_votes);
         index.insert({voters[i], i});
     }
-    auto h99 = contract.get_and_update_all_effective_votes_of_all_account(99 + 8640);
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+    uint32_t ineffective_period = 1;
+#else
+    uint32_t ineffective_period = 8640;
+#endif
+    auto h99 = contract.get_and_update_all_effective_votes_of_all_account(99 + ineffective_period);
     EXPECT_TRUE(h99.empty());
-    auto h200 = contract.get_and_update_all_effective_votes_of_all_account(200 + 8640);
+    auto h200 = contract.get_and_update_all_effective_votes_of_all_account(200 + ineffective_period);
     EXPECT_EQ(h200.size(), voters.size());
     for (auto p : h200) {
         EXPECT_EQ(p.second.size(), 4);
@@ -641,6 +660,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_on_timer_not_fork) {
     EXPECT_EQ(contract.STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY), xstring_utl::tostring(1));
 }
 
+#if !defined(XBUILD_CI) && !defined(XBUILD_DEV) && !defined(XBUILD_GALILEO) && !defined(XBUILD_BOUNTY)
 TEST_F(xtest_table_vote_contract_dev_t, test_vote_on_timer) {
     auto fork_time = fork_points::v1_7_0_block_fork_point->point;
     {
@@ -784,4 +804,24 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote_on_timer) {
     EXPECT_EQ(to_string(m_account_index->m_contract_txs[1]->m_tx->get_target_action_para()), data);
 
     EXPECT_EQ(contract.STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY), xstring_utl::tostring(0));
+}
+#endif
+
+TEST_F(xtest_table_vote_contract_dev_t, test_vote_bug) {
+    auto voter = std::string{"T800004e1a8db34504e7b57a881746d0826661cc68f9a0"};
+    auto adv = std::string{"T00000LYhXYm8rrkfKkYrrjT8ibbFtdi1SJDrHRD"};
+    {
+        xtable_vote_contract::vote_info_map_t map;
+        map[adv] = 100;
+        contract.handle_votes(common::xaccount_address_t{voter}, map, true);
+
+        std::map<std::uint64_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
+        xtable_vote_contract::vote_info_map_t map1;
+        map1[adv] = 100;
+        all_time_ineffective_votes.insert({100, map1});
+        contract.set_all_time_ineffective_votes(common::xaccount_address_t{voter}, all_time_ineffective_votes);
+    }
+    xtable_vote_contract::vote_info_map_t map;
+    map[adv] = 150;
+    contract.set_vote_info_v2(common::xaccount_address_t{voter}, map, false);
 }
