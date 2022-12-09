@@ -104,7 +104,7 @@ void xtop_contract_deploy::deploy_sys_contracts() {
            xnode_type_t::consensus_validator,
            "",
            enum_broadcast_policy_t::normal,
-           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xtable_vote_report_interval_onchain_goverance_parameter_t::name);
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C,1");
 
     // deploy(common::xaccount_address_t{sys_contract_eth_table_statistic_info_addr},
     //        xnode_type_t::evm_validator,

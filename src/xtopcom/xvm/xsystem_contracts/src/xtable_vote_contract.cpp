@@ -455,7 +455,12 @@ std::map<common::xaccount_address_t, xtable_vote_contract::vote_info_map_t> xtab
         return {};
     }
 
-    auto ineffective_period = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_vote_ineffective_period);
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+    uint32_t ineffective_period = 1;
+#else
+    uint32_t ineffective_period = 8640;
+#endif
+
     std::map<common::xaccount_address_t, xtable_vote_contract::vote_info_map_t> all_effective_votes;
     for (auto const & p : ineffective_votes_str_map) {
         auto const & voter = p.first;
@@ -574,6 +579,9 @@ void xtable_vote_contract::del_all_time_ineffective_votes(vote_info_map_t & vote
             all_time_ineffective_votes.erase((++it_old).base());
         } else {
             it_old++;
+        }
+        if (all_time_ineffective_votes.empty() || vote_info.empty()) {
+            break;
         }
     }
 }
