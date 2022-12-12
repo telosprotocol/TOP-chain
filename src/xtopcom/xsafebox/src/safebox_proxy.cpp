@@ -47,6 +47,7 @@ public:
         EC_GROUP_precompute_mult(m_ec_group, NULL);
     }
     ~xsafebox_curve() {
+        BN_free(m_bn_order);
         EC_GROUP_clear_free(m_ec_group);
     }
 
@@ -186,7 +187,9 @@ public:
     xsafebox_private_key & operator=(xsafebox_private_key const &) = delete;
     xsafebox_private_key(xsafebox_private_key &&) = default;
     xsafebox_private_key & operator=(xsafebox_private_key &&) = default;
-    ~xsafebox_private_key() = default;
+    ~xsafebox_private_key() {
+        BN_free(m_data);
+    }
 
     xsafebox_private_key(std::string && sign_key) {
         assert(sign_key.size() != 0);
@@ -210,7 +213,10 @@ public:
     xsafebox_signature & operator=(xsafebox_signature const &) = delete;
     xsafebox_signature(xsafebox_signature &&) = default;
     xsafebox_signature & operator=(xsafebox_signature &&) = default;
-    ~xsafebox_signature() = default;
+    ~xsafebox_signature() {
+        EC_POINT_free(m_point);
+        BN_free(m_data);
+    };
 
     xsafebox_signature(BIGNUM * object, BIGNUM const * const prikey) {
         BIGNUM * rand{nullptr};
@@ -236,6 +242,8 @@ public:
 
         } while (BN_is_zero(m_data));
         m_point = xsafebox_schnor::get_instance().generate_point_with_bn(rand);
+        BN_free(rand);
+        BN_free(object);
     }
 
     std::pair<std::string, std::string> output_data() {
