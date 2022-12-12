@@ -174,7 +174,7 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     block_timestamp = block->get_timestamp();
 
 
-                    if ((m_contract_info->address == sharding_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
+                    if ((m_contract_info->address == sharding_statistic_info_contract_address || m_contract_info->address == sharding_vote_contract_address) && valid_call(onchain_timer_round)) {
 
                         int table_num = m_driver->table_ids().size();
                         if (table_num == 0) {
@@ -183,7 +183,11 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                         }
 
                         int clock_interval = 1;
-                        clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
+                        if (m_contract_info->address == sharding_statistic_info_contract_address) {
+                            clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
+                        } else if (m_contract_info->address == sharding_vote_contract_address) {
+                            clock_interval = 1;
+                        }
 
                         if (m_table_contract_schedule.find(m_contract_info->address) != m_table_contract_schedule.end()) {
                             auto& schedule_info = m_table_contract_schedule[m_contract_info->address];

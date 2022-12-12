@@ -294,7 +294,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num, uint16_t, normal, 1, 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_pernode_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 
-
 // reward:
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio, uint32_t, critical, 8, 0, 100);   // mean 8%
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(mining_annual_ratio_from_reserve_pool, uint32_t, critical, 8, 0, 100);   // mean 8%
