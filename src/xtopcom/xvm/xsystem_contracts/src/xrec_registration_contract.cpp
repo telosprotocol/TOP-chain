@@ -199,6 +199,19 @@ void xrec_registration_contract::setup() {
     }
 }
 
+common::xminer_type_t legal_archive_address_check(common::xminer_type_t const & miner_type,
+                                                  common::xaccount_address_t const & account_address) {
+    static const std::vector<common::xaccount_address_t> legal_archive_address_list{common::xaccount_address_t{""}};
+#if !defined(XENABLE_MOCK_ZEC_STAKE)
+    // is archive but not legal, return invalid
+    if (miner_type == common::xminer_type_t::archive &&
+        std::find(legal_archive_address_list.begin(), legal_archive_address_list.end(), account_address) == legal_archive_address_list.end()) {
+        return common::xminer_type_t::invalid;
+    }
+#endif
+    return miner_type;
+}
+
 void xrec_registration_contract::registerNode(const std::string & miner_type_name,
                                               const std::string & nickname,
                                               const std::string & signing_key,
@@ -231,7 +244,7 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
     XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "registerNode_Called", 1);
     XMETRICS_TIME_RECORD(XREG_CONTRACT "registerNode_ExecutionTime");
 
-    auto const miner_type = common::to_miner_type(miner_type_name);
+    auto const miner_type = legal_archive_address_check(common::to_miner_type(miner_type_name), common::xaccount_address_t{SOURCE_ADDRESS()});
     XCONTRACT_ENSURE(miner_type != common::xminer_type_t::invalid, "xrec_registration_contract::registerNode2: invalid node_type!");
 
 #if defined(XENABLE_MOCK_ZEC_STAKE)
@@ -362,7 +375,7 @@ void xrec_registration_contract::updateNodeInfo(const std::string & nickname, co
     XCONTRACT_ENSURE(is_valid_name(nickname) == true, "xrec_registration_contract::updateNodeInfo: invalid nickname");
     XCONTRACT_ENSURE(updateDepositType == 1 || updateDepositType == 2, "xrec_registration_contract::updateNodeInfo: invalid updateDepositType");
     XCONTRACT_ENSURE(dividend_rate >= 0 && dividend_rate <= 100, "xrec_registration_contract::updateNodeInfo: dividend_rate must be greater than or be equal to zero");
-    auto const miner_type = common::to_miner_type(node_types);
+    auto const miner_type = legal_archive_address_check(common::to_miner_type(node_types), common::xaccount_address_t{account});
     XCONTRACT_ENSURE(miner_type != common::xminer_type_t::invalid, "xrec_registration_contract::updateNodeInfo: invalid node_type!");
 
     node_info.nickname          = nickname;
@@ -843,7 +856,7 @@ void xrec_registration_contract::updateNodeType(const std::string & node_types) 
     auto ret = get_node_info(account, node_info);
     XCONTRACT_ENSURE(ret == 0, "xrec_registration_contract::updateNodeType: node not exist");
 
-    auto const miner_type = common::to_miner_type(node_types);
+    auto const miner_type = legal_archive_address_check(common::to_miner_type(node_types), common::xaccount_address_t{account});
     XCONTRACT_ENSURE(miner_type != common::xminer_type_t::invalid, "xrec_registration_contract::updateNodeType: invalid node_type!");
     XCONTRACT_ENSURE(miner_type != node_info.miner_type(), "xrec_registration_contract::updateNodeType: node_types can not be same!");
 
