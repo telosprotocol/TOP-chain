@@ -33,6 +33,7 @@ xcurve::xcurve()
 
 xcurve::~xcurve()
 {
+    BN_free(m_bn_order);
     EC_GROUP_clear_free(m_ec_group);
 }
 
