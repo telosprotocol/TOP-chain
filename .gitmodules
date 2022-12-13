@@ -16,3 +16,6 @@
 [submodule "src/xtopcom/xdepends/GSL"]
 	path = src/xtopcom/xdepends/GSL
 	url = git@github.com:telosprotocol/GSL.git
+[submodule "src/xtopcom/xdepends/jemalloc"]
+	path = src/xtopcom/xdepends/jemalloc
+	url = git@github.com:jemalloc/jemalloc.git
