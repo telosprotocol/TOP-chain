@@ -19,3 +19,6 @@
 [submodule "src/xtopcom/xdepends/jemalloc"]
 	path = src/xtopcom/xdepends/jemalloc
 	url = git@github.com:jemalloc/jemalloc.git
+[submodule "src/xtopcom/xdepends/gperftools"]
+	path = src/xtopcom/xdepends/gperftools
+	url = git@github.com:gperftools/gperftools.git

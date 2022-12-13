@@ -38,8 +38,8 @@ using top::data::election::xstandby_result_t;
 
 NS_BEG3(top, xvm, system_contracts)
 
-const uint64_t minimum_comprehensive_stake = 1;
-const uint64_t basic_comprehensive_stake = 100000000;
+constexpr uint64_t minimum_comprehensive_stake = 1;
+constexpr uint64_t basic_comprehensive_stake = 100000000;
 
 static std::size_t calculate_rotation_count(xelection_group_result_t const & group, std::size_t const default_upper_limit) {
     assert(default_upper_limit != 0);

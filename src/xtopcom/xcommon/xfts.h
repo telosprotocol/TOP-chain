@@ -55,7 +55,7 @@ public:
     xtop_fts_merkle_tree & operator=(xtop_fts_merkle_tree const &) = delete;
     xtop_fts_merkle_tree(xtop_fts_merkle_tree &&) = default;
     xtop_fts_merkle_tree & operator=(xtop_fts_merkle_tree &&) = default;
-    ~xtop_fts_merkle_tree() = default;
+    ~xtop_fts_merkle_tree() override = default;
 
     explicit xtop_fts_merkle_tree(std::shared_ptr<node_type> root) noexcept : base_t{std::move(root)} {}
 
