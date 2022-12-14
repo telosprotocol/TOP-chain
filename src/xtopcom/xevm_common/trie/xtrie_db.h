@@ -37,7 +37,7 @@ private:
     friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
-    basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_{10000};
+    basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_{5000};
     std::map<xh256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xh256_t> pruned_hashes_;
 

@@ -367,21 +367,21 @@ namespace top
                 
                 bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, _local_block->get_clock());
                 if (forked) {
-                    xsync_respond_t respond_msg(sync_targets,_syncrequest_msg.get_sync_cookie());
-                    respond_msg.set_block_object(block_object_bin);
-                    respond_msg.set_input_resource(input_resource);
-                    respond_msg.set_output_resource(output_resource);
-                    respond_msg.set_output_offdata(output_offdata);
-                    respond_msg.serialize_to_string(msg_stream);
-                    msg_type = xsync_respond_t::get_msg_type();                    
-                } else {
                     xsync_respond_v2_t respond_msg(sync_targets,_syncrequest_msg.get_sync_cookie());
                     respond_msg.set_block_object(block_object_bin);
                     respond_msg.set_input_resource(input_resource);
                     respond_msg.set_output_resource(output_resource);
                     respond_msg.set_output_offdata(output_offdata);
                     respond_msg.serialize_to_string(msg_stream);
-                    msg_type = xsync_respond_v2_t::get_msg_type();    
+                    msg_type = xsync_respond_v2_t::get_msg_type();
+                } else {
+                    xsync_respond_t respond_msg(sync_targets,_syncrequest_msg.get_sync_cookie());
+                    respond_msg.set_block_object(block_object_bin);
+                    respond_msg.set_input_resource(input_resource);
+                    respond_msg.set_output_resource(output_resource);
+                    respond_msg.set_output_offdata(output_offdata);
+                    respond_msg.serialize_to_string(msg_stream);
+                    msg_type = xsync_respond_t::get_msg_type();
                 }
 
                 xinfo("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,size=%zu,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),msg_stream.size(), get_xip2_low_addr());
