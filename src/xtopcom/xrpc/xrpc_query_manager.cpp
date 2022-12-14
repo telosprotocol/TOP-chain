@@ -2110,7 +2110,7 @@ void xrpc_query_manager::getLatestTables(xJson::Value & js_req, xJson::Value & j
     js_rsp = jv;
 }
 
-
+#if defined(XBUILD_CONSORTIUM)
 void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string version = js_req["version"].asString();
     if (version.empty()) {
@@ -2260,6 +2260,32 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
     }
 }
 
+void xrpc_query_manager::nodeInfoAccountQuery(xJson::Value& js_req, xJson::Value& js_rsp, std::string& strResult, uint32_t& nErrorCode)
+{
+    std::string type = js_req["type"].asString();
+    std::string owner = js_req["account_addr"].asString();
 
+    xJson::Value jm;
+    std::map<std::string, std::string> node_info_detail_map;
+    if (statestore::xstatestore_hub_t::instance()->map_copy_get(rec_node_manage_address, data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, node_info_detail_map) != 0) {
+        xwarn("[grpc::nodeInfoAccountQuery] node_info_detail size %d", node_info_detail_map.size());
+    } else {
+        xJson::Value jr_node;
+        for (auto info_detail : node_info_detail_map) {
+            jr_node["account"] = info_detail.first;
+            auto detail = info_detail.second;
+            data::system_contract::xnode_manage_account_info_t node_info;
+            base::xstream_t _stream { xcontext_t::instance(), (uint8_t*)detail.data(), static_cast<uint32_t>(detail.size()) };
+            node_info.serialize_from(_stream);
+            jr_node["reg_time"] = (xJson::UInt64)node_info.reg_time;
+            jr_node["expiry_time"] = (xJson::UInt64)node_info.expiry_time;
+            jr_node["expiry_time"] = (xJson::UInt64)node_info.cert_time;
+            jm.append(jr_node);
+        } 
+    }
+
+    js_rsp["value"] = jm;
+}
+#endif 
 }  // namespace chain_info
 }  // namespace top

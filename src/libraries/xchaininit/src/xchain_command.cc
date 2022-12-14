@@ -631,67 +631,67 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     nodep2paddr->add_option("--admin_http_port", admin_http_port, "admin http server port(default: 8000).");
     nodep2paddr->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
 
-    if (XGET_CONFIG(node_reward_gas) == false) {
-        /*
-         * staking
-         */
-        auto staking_app = app.add_subcommand("staking", "Stake fund to vote miners and manage vote tickets.");
+#if !defined(XBUILD_CONSORTIUM)
+    /*
+     * staking
+     */
+    auto staking_app = app.add_subcommand("staking", "Stake fund to vote miners and manage vote tickets.");
 
-        // stake fund
-        auto stakeFund_app = staking_app->add_subcommand("stakeFund", "Stake TOP tokens to receive vote tickets.");
-        uint64_t stakeFund_amount = 0;
-        uint16_t stakeFund_lock_duration = 0;
-        stakeFund_app->add_option("vote_amount", stakeFund_amount, "Amount of votes to be exchanged.")->required();
-        stakeFund_app->add_option("lock_duration", stakeFund_lock_duration, "TOP token lock duration,minimum 30 days.")->required();
-        stakeFund_app->callback(std::bind(&ApiMethod::stake_fund, &topcl.api, std::ref(stakeFund_amount), std::ref(stakeFund_lock_duration), std::ref(out_str)));
+    // stake fund
+    auto stakeFund_app = staking_app->add_subcommand("stakeFund", "Stake TOP tokens to receive vote tickets.");
+    uint64_t stakeFund_amount = 0;
+    uint16_t stakeFund_lock_duration = 0;
+    stakeFund_app->add_option("vote_amount", stakeFund_amount, "Amount of votes to be exchanged.")->required();
+    stakeFund_app->add_option("lock_duration", stakeFund_lock_duration, "TOP token lock duration,minimum 30 days.")->required();
+    stakeFund_app->callback(std::bind(&ApiMethod::stake_fund, &topcl.api, std::ref(stakeFund_amount), std::ref(stakeFund_lock_duration), std::ref(out_str)));
 
-        // stake withdraw fund
-        auto stake_withdrawFund_app = staking_app->add_subcommand("withdrawFund", "Withdraw pledged TOP tokens and tickets.");
-        uint64_t stake_withdrawFund_amount = 0;
-        std::string stake_withdrawFund_deposit("0");
-        stake_withdrawFund_app->add_option("votes_num", stake_withdrawFund_amount, "Votes amount, unlock the corresponding TOP token.")->required();
-        stake_withdrawFund_app->add_option("-t,--tx_deposit", stake_withdrawFund_deposit, "Transaction deposit, a minimum of 0.1 TOP.");
-        stake_withdrawFund_app->callback(
-            std::bind(&ApiMethod::stake_withdraw_fund, &topcl.api, std::ref(stake_withdrawFund_amount), std::ref(stake_withdrawFund_deposit), std::ref(out_str)));
+    // stake withdraw fund
+    auto stake_withdrawFund_app = staking_app->add_subcommand("withdrawFund", "Withdraw pledged TOP tokens and tickets.");
+    uint64_t stake_withdrawFund_amount = 0;
+    std::string stake_withdrawFund_deposit("0");
+    stake_withdrawFund_app->add_option("votes_num", stake_withdrawFund_amount, "Votes amount, unlock the corresponding TOP token.")->required();
+    stake_withdrawFund_app->add_option("-t,--tx_deposit", stake_withdrawFund_deposit, "Transaction deposit, a minimum of 0.1 TOP.");
+    stake_withdrawFund_app->callback(
+        std::bind(&ApiMethod::stake_withdraw_fund, &topcl.api, std::ref(stake_withdrawFund_amount), std::ref(stake_withdrawFund_deposit), std::ref(out_str)));
 
-        // vote miner
-        auto voteMiner_app = staking_app->add_subcommand("voteMiner", "Assign tickets to miners.");
-        std::vector<std::pair<std::string, int64_t>> vote_infos;
-        voteMiner_app
-            ->add_option("miner_and_votes",
-                vote_infos,
-                "Miner account address(es) and votes. For example, if you want to vote 2 miners, you can execute command as: topio staking voteMiner miner_addr1 80000 "
-                "miner_addr2 10000")
-            ->required();
-        voteMiner_app->callback(std::bind(&ApiMethod::vote_miner, &topcl.api, std::ref(vote_infos), std::ref(out_str)));
+    // vote miner
+    auto voteMiner_app = staking_app->add_subcommand("voteMiner", "Assign tickets to miners.");
+    std::vector<std::pair<std::string, int64_t>> vote_infos;
+    voteMiner_app
+        ->add_option("miner_and_votes",
+                     vote_infos,
+                     "Miner account address(es) and votes. For example, if you want to vote 2 miners, you can execute command as: topio staking voteMiner miner_addr1 80000 "
+                     "miner_addr2 10000")
+        ->required();
+    voteMiner_app->callback(std::bind(&ApiMethod::vote_miner, &topcl.api, std::ref(vote_infos), std::ref(out_str)));
 
-        // withdraw votes
-        auto withdrawVotes_app = staking_app->add_subcommand("withdrawVotes", "Withdraw vote tickets from miners.");
-        std::vector<std::pair<std::string, int64_t>> withdrawVotes_vote_infos;
-        withdrawVotes_app
-            ->add_option("miner_and_votes",
-                withdrawVotes_vote_infos,
-                "Miner account address(es) and votes. For example, if you want to withdraw votes on 2 miners, you can execute command as: topio staking withdrawVotes "
-                "miner_addr1 80000 miner_addr2 10000")
-            ->required();
-        withdrawVotes_app->callback(std::bind(&ApiMethod::withdraw_votes, &topcl.api, std::ref(withdrawVotes_vote_infos), std::ref(out_str)));
+    // withdraw votes
+    auto withdrawVotes_app = staking_app->add_subcommand("withdrawVotes", "Withdraw vote tickets from miners.");
+    std::vector<std::pair<std::string, int64_t>> withdrawVotes_vote_infos;
+    withdrawVotes_app
+        ->add_option("miner_and_votes",
+                     withdrawVotes_vote_infos,
+                     "Miner account address(es) and votes. For example, if you want to withdraw votes on 2 miners, you can execute command as: topio staking withdrawVotes "
+                     "miner_addr1 80000 miner_addr2 10000")
+        ->required();
+    withdrawVotes_app->callback(std::bind(&ApiMethod::withdraw_votes, &topcl.api, std::ref(withdrawVotes_vote_infos), std::ref(out_str)));
 
-        // query votes
-        auto queryVotes_app = staking_app->add_subcommand("queryVotes", "Query allocation information of vote tickets.");
-        std::string queryVotes_account;
-        queryVotes_app->add_option("account_addr", queryVotes_account, "Account address. If you do not add this parameter, your default account will be queried.");
-        queryVotes_app->callback(std::bind(&ApiMethod::query_votes, &topcl.api, std::ref(queryVotes_account), std::ref(out_str)));
+    // query votes
+    auto queryVotes_app = staking_app->add_subcommand("queryVotes", "Query allocation information of vote tickets.");
+    std::string queryVotes_account;
+    queryVotes_app->add_option("account_addr", queryVotes_account, "Account address. If you do not add this parameter, your default account will be queried.");
+    queryVotes_app->callback(std::bind(&ApiMethod::query_votes, &topcl.api, std::ref(queryVotes_account), std::ref(out_str)));
 
-        // query reward
-        auto queryReward_app = staking_app->add_subcommand("queryReward", "Query reward amount.");
-        std::string queryReward_account;
-        queryReward_app->add_option("account_addr", queryReward_account, "Account address. If you do not add this parameters, your default miner account will be queried.");
-        queryReward_app->callback(std::bind(&ApiMethod::query_reward, &topcl.api, std::ref(queryReward_account), std::ref(out_str)));
+    // query reward
+    auto queryReward_app = staking_app->add_subcommand("queryReward", "Query reward amount.");
+    std::string queryReward_account;
+    queryReward_app->add_option("account_addr", queryReward_account, "Account address. If you do not add this parameters, your default miner account will be queried.");
+    queryReward_app->callback(std::bind(&ApiMethod::query_reward, &topcl.api, std::ref(queryReward_account), std::ref(out_str)));
 
-        // claim reward
-        auto claimReward_app = staking_app->add_subcommand("claimReward", "Claim reward.");
-        claimReward_app->callback(std::bind(&ApiMethod::claim_reward, &topcl.api, std::ref(out_str)));
-    }
+    // claim reward
+    auto claimReward_app = staking_app->add_subcommand("claimReward", "Claim reward.");
+    claimReward_app->callback(std::bind(&ApiMethod::claim_reward, &topcl.api, std::ref(out_str)));
+#endif
 
     /*
      * transfer

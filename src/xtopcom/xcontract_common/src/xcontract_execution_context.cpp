@@ -612,8 +612,11 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     xassert(sender() == contract_state()->state_account_address());
     xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
-    if (sender().to_string() == sys_contract_zec_reward_addr ||
-        sender().to_string() == sys_contract_zec_consortium_reward_addr ) {
+#if !defined(XBUILD_CONSORTIUM)
+    if (sender().to_string() == sys_contract_zec_reward_addr) {
+#else 
+    if (sender().to_string() == sys_contract_zec_consortium_reward_addr) {
+#endif
         xdbg("[xtop_contract_execution_context::execute_default_source_action] reward contract issue, ignore");
         return {};
     }

@@ -16,6 +16,10 @@
 
 NS_BEG2(top, data)
 
+#define EXTEND_ROOT_ACCOUNT_KEY  "root_account"
+#define EXTEND_ROOT_ACCOUNT_CA_KEY  "root_ca"
+#define EXTEND_ROOT_SEED_NODES_CA_MAP_KEY  "seedNodes_ca"
+
 class xrootblock_input_t : public base::xdataunit_t {
  public:
     xrootblock_input_t();
@@ -30,6 +34,7 @@ class xrootblock_input_t : public base::xdataunit_t {
     bool    set_genesis_funds_accounts(std::vector<std::string> const & accounts);
     bool    set_genesis_tcc_accounts(std::vector<std::string> const& accounts);
     bool    set_genesis_nodes(const std::vector<node_info_t> & nodes);
+    bool    set_extend_data_map(std::map<std::string, std::string> const& extend_data);
 
  public:
     const uint64_t get_account_balance(const std::string& account_addr) const;
@@ -37,12 +42,14 @@ class xrootblock_input_t : public base::xdataunit_t {
     const std::vector<std::string>& get_funds_accounts() const {return m_geneis_funds_accounts;}
     const std::vector<std::string>& get_tcc_accounts() const {return m_tcc_accounts;};
     const std::vector<node_info_t> & get_seed_nodes() const {return m_genesis_nodes;}
+    const std::string   get_extend_data_by_key (const std::string& key) const;
 
  private:
     std::map<std::string, uint64_t>           m_account_balances;
     std::vector<std::string>                  m_geneis_funds_accounts;
     std::vector<std::string>                  m_tcc_accounts;
     std::vector<node_info_t>                  m_genesis_nodes;
+    std::map<std::string, std::string>        m_extend_data_map;
 };
 
 struct xrootblock_para_t {
@@ -50,6 +57,7 @@ struct xrootblock_para_t {
     std::vector<std::string>                  m_geneis_funds_accounts;
     std::vector<std::string>                  m_tcc_accounts;
     std::vector<node_info_t>                  m_genesis_nodes;
+    std::map<std::string, std::string>        m_extend_data_map;
     uint64_t                                  m_genesis_time_stamp{0};
 };
 class xrootblock_t : public xblock_t {
@@ -89,6 +97,7 @@ class xrootblock_t : public xblock_t {
     static const std::vector<std::string>& get_tcc_initial_committee_addr();
     static const std::vector<node_info_t> & get_seed_nodes();
     static std::map<std::string, uint64_t> get_all_genesis_accounts();
+    static const std::string get_extend_data_by_key(const std::string& key);
     static bool is_seed_node(const std::string & account);
     static const std::string get_rootblock_hash();
     static base::enum_xchain_id get_rootblock_chainid();

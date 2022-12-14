@@ -21,3 +21,11 @@ add_executable(xsystem_contract_test ${main_src} ${xelection_algorithm_fixture} 
 
 add_dependencies(xsystem_contract_test xvledger xvm xcommon xstore xblockstore xtxstore xxbase xloader xgenesis)
 target_link_libraries(xsystem_contract_test PRIVATE xvledger xvm xvledger xcommon xstore xblockstore xtxstore xblockmaker xelection_lib xxbase xloader xgenesis gtest)
+
+if (XBUILD_CONSORTIUM)
+    aux_source_directory(./xnode_manage_contract xnode_manage_contract)
+    target_sources(xsystem_contract_test PRIVATE ${xnode_manage_contract})
+endif()
+
+
+

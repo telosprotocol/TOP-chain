@@ -23,6 +23,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
+#include "xverifier/xtx_verifier.h"
 
 #ifdef STATIC_CONSENSUS
 #    include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
@@ -106,6 +107,12 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
                                                      std::string const & program_version) {
     XMETRICS_TIME_RECORD(XREC_STANDBY "add_node_all_time");
     XMETRICS_CPU_TIME_RECORD(XREC_STANDBY "add_node_cpu_time");
+
+#if defined(XBUILD_CONSORTIUM)
+    bool check_ret = check_node_valid(node_id.to_string());
+    XCONTRACT_ENSURE(check_ret, "[xrec_standby_pool_contract_t][nodeJoinNetwork2] failed!");   
+#endif 
+
 #if !defined(XENABLE_MOCK_ZEC_STAKE)
 
     // get reg_node_info && standby_info
@@ -587,8 +594,13 @@ void xtop_rec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
     for (auto const & item : reg_node_info) {
         data::system_contract::xreg_node_info node_info;
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)item.second.c_str(), (uint32_t)item.second.size());
-
         node_info.serialize_from(stream);
+#if defined(XBUILD_CONSORTIUM)
+        if (!check_node_valid(item.first)) {
+            xwarn("[xrec_standby_pool_contract_t][on_timer] account is not valid %s",item.first.c_str());
+            continue;;
+        }
+#endif 
         registration_data[common::xnode_id_t{item.first}] = node_info;
         xdbg("[xrec_standby_pool_contract_t][on_timer] found from registration contract node %s", item.first.c_str());
     }
@@ -610,4 +622,52 @@ void xtop_rec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
     }
 }
 
+#if defined(XBUILD_CONSORTIUM)
+bool xtop_rec_standby_pool_contract::check_node_valid(std::string account_str)
+{
+
+// check account reg info from node manage contract
+    std::string reg_node_info_str;
+    try {
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, account_str, reg_node_info_str, sys_contract_rec_node_manage_addr);
+        XCONTRACT_ENSURE(!reg_node_info_str.empty(), "check_node_valid can't find account from node manage contract");
+    } catch (top::error::xtop_error_t const&) {
+        xdbg("[xtop_rec_standby_pool_contract::check_node_valid] can't find %s", account_str.c_str());
+        return false; // not exist
+    }
+
+    data::system_contract::xnode_manage_account_info_t reg_account_info;
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)reg_node_info_str.data(), reg_node_info_str.size());
+    if (_stream.size() > 0) {
+        reg_account_info.serialize_from(_stream);
+    }
+
+    std::string check_all, check_ca, check_expiry_time;
+    try {
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_all", check_all, sys_contract_rec_node_manage_addr);
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_ca", check_ca, sys_contract_rec_node_manage_addr);
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_expiry_time", check_expiry_time, sys_contract_rec_node_manage_addr);
+    } catch (top::error::xtop_error_t const&) {
+        xdbg("[xtop_rec_standby_pool_contract::check_node_valid] can't find XPROPERTY_NODE_CHECK_OPTION_KEY");
+        return false;
+    }
+
+    if (check_all == "1") {
+        uint64_t cur_time = TIME();
+        if (check_ca == "1") {
+            if (reg_account_info.cert_time < cur_time) {
+                xwarn("[xtop_rec_standby_pool_contract::check_node_valid] account %s  time is expiry", account_str.c_str());
+                return false;
+            }
+        }
+        if (check_expiry_time == "1") {
+            if (reg_account_info.expiry_time < cur_time) {
+                xwarn("[xtop_rec_standby_pool_contract::check_node_valid] account %s cert time is expiry", account_str.c_str());
+                return false;
+            }
+        }
+    }
+    return true;
+}
+#endif
 NS_END4
