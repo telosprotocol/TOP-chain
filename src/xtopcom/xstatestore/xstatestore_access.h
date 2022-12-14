@@ -25,16 +25,15 @@ public:
     xstatestore_cache_t();
 public:
     data::xunitstate_ptr_t  get_unitstate(std::string const& block_hash) const;
-    xtablestate_ext_ptr_t   get_latest_connectted_tablestate() const;
+    xtablestate_ext_ptr_t const&    get_latest_connectted_tablestate() const;
     xtablestate_ext_ptr_t   get_tablestate(uint64_t height, std::string const& block_hash) const;
 
 public:
     void    set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& unitstate);    
     void    set_tablestate(uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& tablestate, bool is_commit);
-
-
-private:
+    void    set_latest_connected_tablestate(uint64_t height, xtablestate_ext_ptr_t const& tablestate);
     xtablestate_ext_ptr_t   get_prev_tablestate(uint64_t height, std::string const& block_hash) const;
+private:
     xtablestate_ext_ptr_t   get_tablestate_inner(uint64_t height, std::string const& block_hash) const;
 
     xtablestate_ext_ptr_t    m_latest_connectted_tablestate{nullptr};
