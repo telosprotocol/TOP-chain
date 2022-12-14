@@ -50,7 +50,7 @@ data::xfulltableblock_statistic_accounts xfulltableblock_process_t::fulltableblo
 
     // process one full tableblock statistic data
     for (auto const& statistic_item : block_statistic_data.detail) {
-        auto elect_statistic = statistic_item.second;
+        xelection_statistics_cons_data_t const& elect_statistic = statistic_item.second;
         xfulltableblock_group_data_t res_group_data;
         for (auto const& group_item : elect_statistic.group_statistics_data) {
             xgroup_statistics_cons_data_t const& group_account_data = group_item.second;

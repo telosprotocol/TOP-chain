@@ -20,7 +20,6 @@ public:
     ~xtop_fulltableblock_process() = delete;
 
     static data::xfulltableblock_statistic_accounts fulltableblock_statistic_accounts(data::xstatistics_data_t const& block_statistic_data, base::xvnodesrv_t * node_service);
-
     static data::xfulltableblock_statistic_accounts fulltableblock_statistic_cons_accounts(data::xstatistics_cons_data_t const& block_statistic_data, base::xvnodesrv_t* node_service);
 };
 

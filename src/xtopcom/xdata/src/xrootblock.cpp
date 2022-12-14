@@ -34,6 +34,9 @@ int32_t xrootblock_input_t::do_write(base::xstream_t &stream) {
     SERIALIZE_CONTAINER(m_genesis_nodes) {
         item.serialize(stream);
     }
+    if(m_extend_data_map.size() > 0){
+        SERIALIZE_FIELD_BT(m_extend_data_map);
+    }
     return CALC_LEN();
 }
 int32_t xrootblock_input_t::do_read(base::xstream_t &stream) {
@@ -45,6 +48,9 @@ int32_t xrootblock_input_t::do_read(base::xstream_t &stream) {
         node_info_t item;
         item.deserialize(stream);
         m_genesis_nodes.push_back(item);
+    }
+    if(stream.size() > 0){
+        DESERIALIZE_FIELD_BT(m_extend_data_map);
     }
     return CALC_LEN();
 }
@@ -75,6 +81,22 @@ const uint64_t xrootblock_input_t::get_account_balance(const std::string& accoun
         return entry->second;
     } else {
         return 0;
+    }
+}
+
+
+bool xrootblock_input_t::set_extend_data_map(std::map<std::string, std::string> const& extend_data_map) {
+    m_extend_data_map = extend_data_map;
+    return true;
+}
+
+const std::string xrootblock_input_t::get_extend_data_by_key (const std::string& key) const{
+
+    auto entry = m_extend_data_map.find(key);
+    if (entry != m_extend_data_map.end()) {
+        return entry->second;
+    } else {
+        return std::string{};
     }
 }
 
@@ -220,6 +242,11 @@ const std::vector<node_info_t> & xrootblock_t::get_seed_nodes() {
     xassert(!m_instance->get_rootblock_input()->get_seed_nodes().empty());
 #endif
     return m_instance->get_rootblock_input()->get_seed_nodes();
+}
+
+const std::string xrootblock_t::get_extend_data_by_key(const std::string& key) {
+    xassert(m_instance != nullptr);
+    return m_instance->get_rootblock_input()->get_extend_data_by_key(key);
 }
 
 std::map<std::string, uint64_t> xrootblock_t::get_all_genesis_accounts() {

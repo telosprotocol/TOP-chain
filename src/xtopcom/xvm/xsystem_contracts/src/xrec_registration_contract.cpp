@@ -276,6 +276,37 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
 
     xstream_t stream(xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(trans_ptr->get_source_action_para().data())), static_cast<uint32_t>(trans_ptr->get_source_action_para().size()));
 
+//check account reg info from node manage contract
+#if defined(XBUILD_CONSORTIUM)
+    std::string reg_node_info_str;
+    ret = MAP_GET2(data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, account.to_string(), reg_node_info_str, sys_contract_rec_node_manage_addr);
+
+    XCONTRACT_ENSURE((ret == 0 && !reg_node_info_str.empty()), "registerNode2 can't find account from node manage contract");
+
+    data::system_contract::xnode_manage_account_info_t reg_account_info;
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)reg_node_info_str.data(), reg_node_info_str.size());
+    if (_stream.size() > 0) {
+        reg_account_info.serialize_from(_stream);
+    }
+
+    std::string check_all, check_ca, check_expiry_time;
+    MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_all", check_all, sys_contract_rec_node_manage_addr);
+    MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_ca", check_ca, sys_contract_rec_node_manage_addr);
+    MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_expiry_time", check_expiry_time, sys_contract_rec_node_manage_addr);
+
+    if (check_all == "1") {
+        uint64_t cur_time = TIME();
+        xdbg("[xrec_registration_contract::registerNode2] accoutn[%s] expiry time[%ld], cert time[%ld] now time[%ld]", 
+              account.to_string().c_str(), reg_account_info.expiry_time, reg_account_info.cert_time, cur_time);
+        if (check_ca == "1") {
+            XCONTRACT_ENSURE((reg_account_info.cert_time > cur_time), "registerNode2 account  cert time is expiry");
+        }
+        if (check_expiry_time == "1") {
+            XCONTRACT_ENSURE((reg_account_info.expiry_time > cur_time), "registerNode2 account time is expiry");
+        }
+    }
+#endif
+
     data::xproperty_asset asset_out{0};
     stream >> asset_out.m_token_name;
     stream >> asset_out.m_amount;

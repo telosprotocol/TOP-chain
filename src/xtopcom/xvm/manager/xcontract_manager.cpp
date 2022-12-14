@@ -61,6 +61,7 @@
 #include "xvm/xsystem_contracts/xevm/xtable_cross_chain_txs_collection_contract.h"
 #include "xvm/xsystem_contracts/xslash/xtable_consortium_statistic_contract.h" 
 #include "xvm/xsystem_contracts/xreward/xzec_consortium_reward_contract.h"
+#include "xvm/xsystem_contracts/node_manage/xnode_manage_contract.h"
 #include "xvm/xvm_service.h"
 
 #include <cinttypes>
@@ -88,25 +89,42 @@ xtop_contract_manager::~xtop_contract_manager() {
 void xtop_contract_manager::instantiate_sys_contracts() {
     auto const & network_id = common::network_id();
 
-    if (XGET_CONFIG(node_reward_gas) == false) {
-        XREGISTER_CONTRACT(top::xstake::xtable_vote_contract, sys_contract_sharding_vote_addr, network_id);
-        XREGISTER_CONTRACT(top::xstake::xzec_vote_contract, sys_contract_zec_vote_addr, network_id);
-        XREGISTER_CONTRACT(top::xstake::xzec_reward_contract, sys_contract_zec_reward_addr, network_id);
-        XREGISTER_CONTRACT(top::xvm::system_contracts::xzec_workload_contract_v2, sys_contract_zec_workload_addr, network_id);
-        XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
-        XREGISTER_CONTRACT(top::xvm::xcontract::xzec_slash_info_contract, sys_contract_zec_slash_info_addr, network_id);
-
-        xinfo("xtop_contract_manager::instantiate_sys_contracts node_reward_gas is false.");
-    } else {
-
-        XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_cons_contract, sys_contract_consortium_table_statistic_addr, network_id);
-        XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_cons_contract, sys_contract_consortium_eth_table_statistic_addr, network_id);
-        XREGISTER_CONTRACT(top::xstake::xzec_consortium_reward_contract, sys_contract_zec_consortium_reward_addr, network_id);
-        xinfo("xtop_contract_manager::instantiate_sys_contracts node_reward_gas is true.");
-    }
-
+#if !defined(XBUILD_CONSORTIUM)
+    xinfo("xtop_contract_manager::instantiate_sys_contracts.");
+    XREGISTER_CONTRACT(top::xstake::xrec_registration_contract, sys_contract_rec_registration_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::xzec_workload_contract_v2, sys_contract_zec_workload_addr, network_id);
+    XREGISTER_CONTRACT(top::xstake::xzec_vote_contract, sys_contract_zec_vote_addr, network_id);
+    XREGISTER_CONTRACT(top::xstake::xzec_reward_contract, sys_contract_zec_reward_addr, network_id);
+    XREGISTER_CONTRACT(top::xstake::xtable_vote_contract, sys_contract_sharding_vote_addr, network_id);
+    XREGISTER_CONTRACT(top::tcc::xrec_proposal_contract, sys_contract_rec_tcc_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_edge_contract_t, sys_contract_rec_elect_edge_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_fullnode_contract_t, sys_contract_rec_elect_fullnode_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_archive_contract_t, sys_contract_rec_elect_archive_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_exchange_contract_t, sys_contract_rec_elect_exchange_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_rec_contract_t, sys_contract_rec_elect_rec_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_zec_contract_t, sys_contract_rec_elect_zec_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_standby_pool_contract_t, sys_contract_rec_standby_pool_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_consensus_group_contract_t, sys_contract_zec_elect_consensus_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_standby_pool_contract_t, sys_contract_zec_standby_pool_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xgroup_association_contract_t, sys_contract_zec_group_assoc_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::xcontract::xzec_slash_info_contract, sys_contract_zec_slash_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
+    // XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::xtable_cross_chain_txs_collection_contract_t, sys_contract_eth_table_cross_chain_txs_collection_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_relay_contract_t, sys_contract_zec_elect_relay_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_make_block_contract_t, relay_make_block_contract_address, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::fork::xsharding_fork_info_contract_t, sys_contract_sharding_fork_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::fork::xeth_fork_info_contract_t, sys_contract_eth_fork_info_addr, network_id);
+#else 
+    xinfo("xtop_contract_manager::instantiate_sys_contracts consortium.");
+    XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_cons_contract, sys_contract_consortium_table_statistic_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_cons_contract, sys_contract_consortium_eth_table_statistic_addr, network_id);
+    XREGISTER_CONTRACT(top::xstake::xzec_consortium_reward_contract, sys_contract_zec_consortium_reward_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
     XREGISTER_CONTRACT(top::xstake::xrec_registration_contract, sys_contract_rec_registration_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xnode_manage_contract_t, sys_contract_rec_node_manage_addr, network_id);
     XREGISTER_CONTRACT(top::tcc::xrec_proposal_contract, sys_contract_rec_tcc_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_edge_contract_t, sys_contract_rec_elect_edge_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_fullnode_contract_t, sys_contract_rec_elect_fullnode_addr, network_id);
@@ -124,6 +142,7 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_make_block_contract_t, relay_make_block_contract_address, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::fork::xsharding_fork_info_contract_t, sys_contract_sharding_fork_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::fork::xeth_fork_info_contract_t, sys_contract_eth_fork_info_addr, network_id);
+#endif
 }
 
 #undef XREGISTER_CONTRACT
@@ -2605,6 +2624,31 @@ static void get_chain_effective_hash(common::xaccount_address_t const & contract
     }
 }
 
+static void get_node_manage_info_map(common::xaccount_address_t const & contract_address,
+                                    std::string const & property_name,
+                                    const data::xunitstate_ptr_t unitstate,
+                                    const xjson_format_t json_format,
+                                    xJson::Value & json) {
+    std::map<std::string, std::string> info_map = unitstate->map_get(property_name);
+    if (info_map.size() < 1) {
+        xdbg("[get_node_manage_info_map] contract_address: %s, property_name: %s,info_map.size() %d, error", contract_address.to_string().c_str(), property_name.c_str(), info_map.size());
+        return;
+    }
+    for (auto m : info_map) {
+        auto const &account =  m.first;
+        auto const &detail = m.second;
+        base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
+        data::system_contract::xnode_manage_account_info_t reg_account_info;
+        reg_account_info.serialize_from(stream);
+        xJson::Value jn;
+        jn["reg_time"] =  (xJson::UInt64)reg_account_info.reg_time;
+        jn["expiry_time"] = (xJson::UInt64)reg_account_info.expiry_time;
+        jn["cert_time"] = (xJson::UInt64)reg_account_info.cert_time;
+        jn["cert_info"] = reg_account_info.cert_info;
+        json[m.first] = jn;
+    }
+}
+
 void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address,
                                               const data::xunitstate_ptr_t unitstate,
                                               std::string const & property_name,
@@ -2692,6 +2736,8 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_current_sync_committee(contract_address, property_name, unitstate, json_format, json);
     } else if (property_name == data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE) {
         return get_next_sync_committee(contract_address, property_name, unitstate, json_format, json);
+    } else if(property_name == data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY) {
+        return get_node_manage_info_map(contract_address, property_name, unitstate, json_format, json);
     }
     if (contract_address.base_address() == table_vote_contract_base_address && property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY) {
         return get_ineffective_votes_map(contract_address, property_name, unitstate, json_format, json);

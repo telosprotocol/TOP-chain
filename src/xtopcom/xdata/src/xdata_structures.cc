@@ -1011,6 +1011,27 @@ std::int32_t xgroup_cons_reward_t::do_read(base::xstream_t & stream) {
     return begin - end;
 }
 
+std::int32_t xnode_manage_account_info_t::do_write(base::xstream_t & stream) const {
+    auto const begin = stream.size();
+    stream << reg_time;
+    stream << expiry_time;
+    stream << cert_time;
+    stream << account;
+    stream << cert_info;
+    auto const end = stream.size();
+    return (end - begin);
+}
+
+std::int32_t xnode_manage_account_info_t::do_read(base::xstream_t & stream) {
+    auto const begin = stream.size();
+    stream >> reg_time;
+    stream >> expiry_time;
+    stream >> cert_time;
+    stream >> account;
+    stream >> cert_info;
+    auto const end = stream.size();
+    return (begin - end);
+}
 
 
 NS_END3

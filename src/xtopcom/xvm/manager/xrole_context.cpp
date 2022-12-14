@@ -187,10 +187,12 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     onchain_timer_round = block->get_height();
                     block_timestamp = block->get_timestamp();
 
-
-                    if (((m_contract_info->address == sharding_statistic_info_contract_address) || 
-                        (m_contract_info->address == sharding_statistic_consortium_contract_address) ||
+                #if !defined(XBUILD_CONSORTIUM)
+                    if ((m_contract_info->address == sharding_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
+                #else 
+                    if (((m_contract_info->address == sharding_statistic_consortium_contract_address) ||
                         (m_contract_info->address == eth_statistic_consortium_contract_address)) && valid_call(onchain_timer_round)) {
+                #endif
 
                         int table_num = m_driver->table_ids().size();
                         if (table_num == 0) {

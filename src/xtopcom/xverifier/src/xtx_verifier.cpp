@@ -240,6 +240,9 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         sys_contract_sharding_vote_addr,
         sys_contract_rec_tcc_addr,
         sys_contract_sharding_reward_claiming_addr
+#if defined(XBUILD_CONSORTIUM)
+        ,sys_contract_rec_node_manage_addr
+#endif
     };
 
     if (trx_ptr->get_target_action_name() == "nodeJoinNetwork") {

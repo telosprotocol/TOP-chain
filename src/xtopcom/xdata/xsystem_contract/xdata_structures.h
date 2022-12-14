@@ -85,6 +85,12 @@ XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_ELECT_PACK_HEIGHT = "@170";
 XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_WRAP_PHASE = "@171";
 XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_STR = "@172";
 
+
+XINLINE_CONSTEXPR const char * XPROPERTY_NODE_CHECK_OPTION_KEY = "@173";
+XINLINE_CONSTEXPR const char * XPROPERTY_NODE_ROOT_ACCOUNT_KEY = "@174";
+XINLINE_CONSTEXPR const char * XPROPERTY_NODE_ROOT_CA_KEY = "@175";
+XINLINE_CONSTEXPR const char * XPROPERTY_NODE_INFO_MAP_KEY = "@176";
+
 // eth2
 XINLINE_CONSTEXPR const char * XPROPERTY_FINALIZED_EXECUTION_BLOCKS = "@180";
 XINLINE_CONSTEXPR const char * XPROPERTY_UNFINALIZED_HEADERS = "@181";
@@ -862,6 +868,30 @@ private:
      * @return int32_t
      */
     int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xnode_manage_account_info_t final : public xserializable_based_on<void> {
+    uint64_t        reg_time;
+    uint64_t        expiry_time;
+    uint64_t        cert_time;
+    std::string     account;
+    std::string     cert_info;
+
+private:
+    /**
+     * @brief write to stream
+     *
+     * @param stream
+     * @return std::int32_t
+     */
+    std::int32_t do_write(base::xstream_t & stream) const override;
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return std::int32_t
+     */
+    std::int32_t do_read(base::xstream_t & stream) override;
 };
 
 // class xtop_allowance {

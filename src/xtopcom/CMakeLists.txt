@@ -84,3 +84,7 @@ add_subdirectory(xstatestore)
 add_subdirectory(xhttp)
 add_subdirectory(xsafebox)
 add_subdirectory(xstate_reset)
+if (XBUILD_CONSORTIUM)
+    add_subdirectory(xca_auth)
+endif()
+

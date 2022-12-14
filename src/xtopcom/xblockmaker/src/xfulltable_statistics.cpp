@@ -121,7 +121,8 @@ data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::x
     return data;
 }
 
-static void calc_consortium_data(const xvip2_t leader_xip, const uint64_t burn_gas, data::xstatistics_cons_data_t & data) {
+static void calc_consortium_data(const xvip2_t leader_xip, const uint64_t burn_gas, data::xstatistics_cons_data_t& data)
+{
     // height
     uint64_t block_height = get_network_height_from_xip2(leader_xip);
     auto it_height = data.detail.find(block_height);
@@ -131,7 +132,7 @@ static void calc_consortium_data(const xvip2_t leader_xip, const uint64_t burn_g
         it_height = ret.first;
     }
     // gid
-    auto group_addr = common::xgroup_address_t{ common::xip_t{leader_xip.low_addr} };
+    auto group_addr = common::xgroup_address_t { common::xip_t { leader_xip.low_addr } };
     auto it_group = it_height->second.group_statistics_data.find(group_addr);
     if (it_group == it_height->second.group_statistics_data.end()) {
         data::xgroup_statistics_cons_data_t group_related_data;
@@ -141,13 +142,13 @@ static void calc_consortium_data(const xvip2_t leader_xip, const uint64_t burn_g
     // nid
     uint16_t slot_idx = uint16_t(get_node_id_from_xip2(leader_xip));
     // common::xslot_id_t slot_id = common::xslot_id_t{slot_idx};
-    if(it_group->second.account_statistics_data.size() < size_t(slot_idx+1)){
-        it_group->second.account_statistics_data.resize(slot_idx+1);
+    if (it_group->second.account_statistics_data.size() < size_t(slot_idx + 1)) {
+        it_group->second.account_statistics_data.resize(slot_idx + 1);
     }
     // reward
     it_group->second.account_statistics_data[slot_idx].burn_gas_value += burn_gas;
-    xdbg("[calc_consortium_data] blks height %u xip %s burn_gas %lu total_gas %lu ", block_height, 
-      data::xdatautil::xip_to_hex(leader_xip).c_str(),  burn_gas, it_group->second.account_statistics_data[slot_idx].burn_gas_value );
+    xdbg("[calc_consortium_data] blks height %u xip %s burn_gas %lu total_gas %lu ", block_height,
+        data::xdatautil::xip_to_hex(leader_xip).c_str(), burn_gas, it_group->second.account_statistics_data[slot_idx].burn_gas_value);
 }
 
 data::xstatistics_cons_data_t tableblock_statistics_consortium(std::vector<xobject_ptr_t<data::xblock_t>> const& blks)

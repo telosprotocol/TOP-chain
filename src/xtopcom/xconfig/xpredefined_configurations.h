@@ -622,20 +622,13 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, norma
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
 
 #if defined(XBUILD_CONSORTIUM)
-
-XDECLARE_CONFIGURATION(node_reward_gas, bool, true); 
-XDECLARE_CONFIGURATION(enable_slash, bool, false);  
-XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
-XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");
-#define g_tx_deposit_fee (1)
-
+    XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
+    XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");
+    #define g_tx_deposit_fee (1)
 #else 
-XDECLARE_CONFIGURATION(node_reward_gas, bool, false); 
-XDECLARE_CONFIGURATION(enable_slash, bool, true);  
-XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);  
-XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH");
-#define g_tx_deposit_fee XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio)
-
+    XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);  
+    XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH");
+    #define g_tx_deposit_fee XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio)
 #endif 
 
 
