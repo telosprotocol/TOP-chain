@@ -31,8 +31,8 @@ TEST_F(test_block_extract, cross_chain_config) {
     std::string cross_topic_str2 = "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a732";
     evm_common::xh256_t cross_topic2 = evm_common::xh256_t(top::from_hex(cross_topic_str2, ec));
 
-    std::string cross_config_addr = cross_addr + ":" + cross_topic_str + ":0," + cross_addr2 + ":" + cross_topic_str2 + ":1";
-    top::config::config_register.get_instance().set(config::xcross_chain_contract_list_onchain_goverance_parameter_t::name, cross_config_addr);
+    std::string cross_config_addr = cross_addr + ":" + cross_topic_str + ":1:1," + cross_addr2 + ":" + cross_topic_str2 + ":2:2";
+    top::config::config_register.get_instance().set(config::xcross_chain_contract_tx_list_onchain_goverance_parameter_t::name, cross_config_addr);
 
     auto cross_chain_config = data::xblockextract_t::get_cross_chain_config();
     EXPECT_EQ(cross_chain_config.size(), 2);
@@ -84,3 +84,38 @@ TEST_F(test_block_extract, cross_chain_config) {
     EXPECT_EQ(chain_bits3, 1);
 }
 
+
+TEST_F(test_block_extract, cross_chain_gasprice_config) {
+
+    std::string cross_config_addr = "1:100,2:1000";
+    top::config::config_register.get_instance().set(config::xcross_chain_gasprice_list_onchain_goverance_parameter_t::name, cross_config_addr);
+
+    auto cross_chain_config = data::xblockextract_t::get_cross_chain_gasprice_config();
+    EXPECT_EQ(cross_chain_config.size(), 2);
+
+    uint64_t gasprice = 0;
+    evm_common::u256 chain_bit_1 = 100;
+    auto iter_1 = cross_chain_config.find(chain_bit_1.str());
+    if (iter_1 != cross_chain_config.end()) {
+        gasprice = iter_1->second;
+    }
+
+    EXPECT_EQ(gasprice, 0);
+
+    evm_common::u256 chain_bit_2 = 1;
+    auto iter_2 = cross_chain_config.find(chain_bit_2.str());
+    if (iter_2 != cross_chain_config.end()) {
+        gasprice = iter_2->second;
+    }
+
+    EXPECT_EQ(gasprice, 100);
+
+
+    evm_common::u256 chain_bit_3 = 2;
+    auto iter_3 = cross_chain_config.find(chain_bit_3.str());
+    if (iter_3 != cross_chain_config.end()) {
+        gasprice = iter_3->second;
+    }
+
+    EXPECT_EQ(gasprice, 1000);
+}

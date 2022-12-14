@@ -405,7 +405,7 @@ void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, 
 }
 
 cross_chain_contract_info xblockextract_t::get_cross_chain_config() {
-    auto cross_chain_config_str = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
+    auto cross_chain_config_str = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_tx_list);
     std::vector<std::string> str_vec;
     base::xstring_utl::split_string(cross_chain_config_str, ',', str_vec);
     if (str_vec.size() <= 0) {
@@ -416,20 +416,21 @@ cross_chain_contract_info xblockextract_t::get_cross_chain_config() {
     for (auto & str : str_vec) {
         std::vector<std::string> config_str_vec;
         base::xstring_utl::split_string(str, ':', config_str_vec);
-        if (config_str_vec.size() != 3) {
-            xerror("xblockextract_t::get_cross_chain_config cross_chain_contract_list invalid:%s", cross_chain_config_str.c_str());
+        if (config_str_vec.size() != 4) {
+            xerror("xblockextract_t::get_cross_chain_config cross_chain_contract_tx_list invalid:%s", cross_chain_config_str.c_str());
             return {};
         }
-        cross_chain_contract_info info;
+
         std::string & addr = config_str_vec[0];
         std::string & topic = config_str_vec[1];
-        uint32_t chain_bits_shift = static_cast<std::uint32_t>(std::stoi(config_str_vec[2]));
-        evm_common::u256 chain_bits = (1 << chain_bits_shift);
-        cross_chain_config[addr] = std::make_pair(topic, chain_bits);
+        uint32_t tx_seppd_type = static_cast<std::uint32_t>(std::stoi(config_str_vec[2]));
+        evm_common::u256 chain_bit = evm_common::u256(config_str_vec[3]);
+       // uint32_t chain_bit = static_cast<std::uint32_t>(std::stoi(config_str_vec[3]));
+        cross_chain_config[addr][topic] =  std::make_pair(tx_seppd_type,chain_bit);
     }
 
     if (str_vec.size() != cross_chain_config.size()) {
-        xerror("xblockextract_t::get_cross_chain_config repeat addresses in cross_chain_contract_list:%s", cross_chain_config_str.c_str());
+        xerror("xblockextract_t::get_cross_chain_config repeat addresses in cross_chain_contract_tx_list:%s", cross_chain_config_str.c_str());
     }
 
     return cross_chain_config;
@@ -443,7 +444,8 @@ bool xblockextract_t::is_cross_tx(const evm_common::xevm_logs_t & logs, const cr
         }
 
         std::string topic_hex = top::to_hex_prefixed(log.topics[0].asBytes());
-        if ((topic_hex == it->second.first)) {
+        auto it2 = it->second.find(topic_hex);
+        if (it2 != it->second.end()) {
             return true;
         }
     }
@@ -456,15 +458,42 @@ bool xblockextract_t::get_chain_bits(const evm_common::xevm_logs_t & logs, const
         if (it == cross_chain_config.end()) {
             continue;
         }
-        chain_bits = it->second.second;
-        return true;
+
+        std::string topic_hex = top::to_hex_prefixed(log.topics[0].asBytes());
+        auto it2 = it->second.find(topic_hex);
+        if (it2 != it->second.end()) {
+            chain_bits = it2->second.second;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool xblockextract_t::cross_tx_info_check_and_get(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config,
+                                                  uint32_t &speed_type, evm_common::u256 & chain_bit)
+{
+    for (auto & log : logs) {
+        auto it = cross_chain_config.find(log.address.to_hex_string());
+        if (it == cross_chain_config.end()) {
+            continue;
+        }
+
+        std::string topic_hex = top::to_hex_prefixed(log.topics[0].asBytes());
+        auto it2 = it->second.find(topic_hex);
+        if (it2 != it->second.end()) {
+            speed_type = it2->second.first;
+            chain_bit = it2->second.second;
+            return true;
+        }
     }
     return false;
 }
 
 void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec) {
-    bool config_loaded = false;
-    cross_chain_contract_info cross_chain_config;
+
+#ifndef CROSS_TX_DBG
+    cross_chain_contract_info cross_chain_config  = get_cross_chain_config();
+#endif
     data::xblock_t * block = dynamic_cast<data::xblock_t*>(_block);
     if (nullptr == block) {
         ec = common::error::xerrc_t::invalid_block;
@@ -497,13 +526,16 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             continue;
         }
 
-#ifndef CROSS_TX_DBG
-        if (!config_loaded) {
-            cross_chain_config = get_cross_chain_config();
-            config_loaded = true;
+        uint32_t speed_type = 0;
+        evm_common::u256 chain_bit = 0;
+        //rank,test
+        if((block->get_height() / 2) == 0){
+            speed_type = 1;
+            chain_bit = 1;
         }
 
-        if (!is_cross_tx(evm_result.get_logs(), cross_chain_config)) {
+#ifndef CROSS_TX_DBG
+        if (!cross_tx_info_check_and_get(evm_result.get_logs(), cross_chain_config, speed_type, chain_bit)) {
             xdbg("xblockextract_t::unpack_crosschain_txs topic not match.tx:%s is not a cross chain tx", top::to_hex_prefixed(top::to_bytes(txaction.get_tx_hash())).c_str());
             continue;
         }
@@ -527,7 +559,7 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
         receipt.set_logs(evm_result.get_logs());
         receipt.create_bloom();
 
-        xrelayblock_crosstx_info_t info(ethtx, receipt);
+        xrelayblock_crosstx_info_t info(ethtx, receipt, speed_type, chain_bit);
         infos.tx_infos.push_back(info);
         xinfo("xblockextract_t::unpack_crosschain_txs succ.block=%s,tx=%s", block->dump().c_str(), _rawtx->dump().c_str());
     }
@@ -562,6 +594,33 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
     }
 
     xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
+}
+
+cross_chain_contract_gasprice_info xblockextract_t::get_cross_chain_gasprice_config() {
+    auto cross_chain_gasprice_config_str = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_gasprice_list);
+    std::vector<std::string> str_vec;
+    base::xstring_utl::split_string(cross_chain_gasprice_config_str, ',', str_vec);
+    if (str_vec.size() <= 0) {
+        return {};
+    }
+    cross_chain_contract_gasprice_info cross_chain_gasprices_config;
+    for (auto & str : str_vec) {
+        std::vector<std::string> config_str_vec;
+        base::xstring_utl::split_string(str, ':', config_str_vec);
+        if (config_str_vec.size() != 2) {
+            xerror("xblockextract_t::get_cross_chain_gasprice_config cross_chain_contract_tx_list invalid:%s", cross_chain_gasprice_config_str.c_str());
+            return {};
+        }
+        evm_common::u256 chain_bit = evm_common::u256(config_str_vec[0]);
+      //  uint32_t chain_bit = static_cast<std::uint32_t>(std::stoi(config_str_vec[0]));
+        uint64_t gasprice = static_cast<std::uint64_t>(std::stoi(config_str_vec[1]));
+        cross_chain_gasprices_config[chain_bit.str()] = gasprice;
+    }
+
+    if (str_vec.size() != cross_chain_gasprices_config.size()) {
+        xerror("xblockextract_t::get_cross_chain_gasprice_config repeat addresses in cross_chain_contract_tx_list:%s", cross_chain_gasprice_config_str.c_str());
+    }
+    return cross_chain_gasprices_config;
 }
 
 NS_END2

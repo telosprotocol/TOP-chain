@@ -1122,14 +1122,24 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     
     if (blocklist_type == "transaction") {
         std::vector<evm_common::h256> block_hash_vector;
-        data::xrelay_block_store::get_all_leaf_block_hash_list_from_cache(relay_block, block_hash_vector, true);
-        for (auto hash: block_hash_vector) {
+       // data::xrelay_block_store::get_all_leaf_block_hash_list_from_cache(relay_block, block_hash_vector, true);
+        enum_block_cache_type block_type = relay_block.check_block_type();
+        if (block_type == cache_poly_tx_block) {
+            auto &leaf_block_map = relay_block.get_blocks_from_poly();
+            for (auto &block_pair:leaf_block_map) {
+                xJson::Value js_block;
+                std::string block_hash = std::string("0x") + block_pair.second.hex();
+                js_block["blockIndex"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(index);
+                js_block["blockHash"] =  block_hash;
+                js_block_list.append(js_block);
+                index++;
+            }
+            
             xJson::Value js_block;
-            std::string block_hash = std::string("0x") + hash.hex();
+            std::string block_hash = std::string("0x") + relay_block.get_block_hash().hex();
             js_block["blockIndex"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(index);
             js_block["blockHash"] =  block_hash;
             js_block_list.append(js_block);
-            index++;
         }
         js_result["blockList"] = js_block_list;
     } else if (blocklist_type == "aggregate") {

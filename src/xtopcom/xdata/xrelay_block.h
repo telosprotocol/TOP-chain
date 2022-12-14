@@ -90,6 +90,7 @@ namespace data {
 
         uint64_t signature_viewID { 0 };
         evm_common::u256 chain_bits { 0 };
+        std::map<uint64_t, evm_common::h256> m_blocks_in_poly{}; 
         evm_common::h256 build_additional_hash();
     };
 
@@ -168,13 +169,15 @@ namespace data {
         void set_signature_nodes(std::vector<xrelay_signature_node_t>& signature_nodes);
         void set_signature_groups(const xrelay_signature_group_t& signature_groups);
         void set_block_merkle_root_hash(evm_common::h256 hash);
-        void make_merkle_root_hash(const std::vector<evm_common::h256>& hash_vector);
+        void set_tx_blocks_info_and_make_block_merkle_root(const std::vector<uint64_t>& height_vector, const std::vector<evm_common::h256>& hash_vector);
+        void set_bocks_to_poly(const std::vector<uint64_t> & blocks_height, const std::vector<evm_common::h256> & blocks_hash);
         void build_finish();
 
     public:
-        const evm_common::u256& get_chain_bits() const { return m_exteend_data.chain_bits; }
+        const evm_common::u256& get_chain_bits() const { return m_extend_data.chain_bits; }
         const uint64_t get_epochid() const { return m_signatures_groups.signature_epochID; }
-        const uint64_t get_viewid() const { return m_exteend_data.signature_viewID; }
+        const uint64_t get_viewid() const { return m_extend_data.signature_viewID; }
+        const std::map<uint64_t, evm_common::h256>& get_blocks_from_poly() const {return m_extend_data.m_blocks_in_poly; }
         uint8_t get_block_version() const { return m_version; }
         xrelay_block_header& get_header() { return m_header; }
         const evm_common::h256& get_block_hash() const { return m_block_hash; }
@@ -211,7 +214,7 @@ namespace data {
         xrelay_signature_group_t m_signatures_groups; // vector of this blcok's signatures
         std::vector<xeth_receipt_t> m_receipts; // vector of receipts in this block
         std::vector<xeth_transaction_t> m_transactions; // vector of transaction in this block
-        xrelay_extend_data m_exteend_data;
+        xrelay_extend_data m_extend_data;
     };
 
 } // namespace data

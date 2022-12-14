@@ -19,7 +19,7 @@ NS_BEG3(top, xvm, system_contracts)
 
 #define BATCH_PROCESS_BLOCKS_NUM        (10)
 #define BATCH_PROCESS_CLOCK_INTERVAL    (10)   // TODO(jimmy) define para in configurations
-#define BATCH_TXS_COUNT_MAX             (5)
+#define BATCH_TXS_COUNT_MAX             (20)
 #define UPDATE_MIN_BLOCKS_NUM           (6) // should larger than 3, avoiding drive self issue
 
 xtable_cross_chain_txs_collection_contract::xtable_cross_chain_txs_collection_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
@@ -61,16 +61,11 @@ void xtable_cross_chain_txs_collection_contract::on_timer(common::xlogic_time_t 
         auto _block = get_block_by_height(sys_contract_eth_table_block_addr_with_suffix, i);
         XCONTRACT_ENSURE(nullptr != _block, "xtable_cross_chain_txs_collection_contract::on_timer, block nullptr " + std::to_string(i));
 
-        xrelayblock_crosstx_infos_t crosstxs;
-        data::xblockextract_t::unpack_crosschain_txs(_block.get(), crosstxs, ec);
+        data::xblockextract_t::unpack_crosschain_txs(_block.get(), all_crosstxs, ec);
         XCONTRACT_ENSURE(!ec, "xtable_cross_chain_txs_collection_contract::on_timer, unpack crosstxs fail " + ec.message());
 
-        for (auto & v : crosstxs.tx_infos) {
-            all_crosstxs.tx_infos.push_back(v);
-            xdbg("xtable_cross_chain_txs_collection_contract::on_timer,packtx.height=%" PRIu64 ",tx=%s", i,top::to_hex_prefixed(top::to_bytes(v.tx.get_tx_hash())).c_str());
-        }
-        
         if (all_crosstxs.tx_infos.size() >= BATCH_TXS_COUNT_MAX) {
+            XMETRICS_PACKET_INFO("xtable_cross_chain_txs_collection_contract", "last_height", i, "latest_height", latest_height);
             finish_height = i;  // report tx size should not too large
             break;
         }

@@ -25,32 +25,7 @@ NS_BEG2(top, blockmaker)
 using data::xblock_t;
 using data::xblock_consensus_para_t;
 
-class relay_wrap_info_t {
-public:
-   relay_wrap_info_t() {}
-   relay_wrap_info_t(uint64_t evm_height, uint64_t elect_height, uint64_t poly_timestamp) : m_evm_height(evm_height), m_elect_height(elect_height), m_poly_timestamp(poly_timestamp) {}
-   uint64_t evm_height() const {return m_evm_height;}
-   uint64_t elect_height() const {return m_elect_height;}
-   uint64_t poly_timestamp() const {return m_poly_timestamp;}
-   void set_evm_height(uint64_t evm_height) {m_evm_height = evm_height;}
-   void set_elect_height(uint64_t elect_height) {m_elect_height = elect_height;}
-   void set_poly_timestamp(uint64_t poly_timestamp) {m_poly_timestamp = poly_timestamp;}
-private:
-   uint64_t m_evm_height{0};
-   uint64_t m_elect_height{0};
-   uint64_t m_poly_timestamp{0};
-};
 
-class lack_account_info_t {
-public:
-    lack_account_info_t() {}
-    lack_account_info_t(const std::string & addr, const base::xaccount_index_t & account_index) : m_addr(addr), m_account_index(account_index) {}
-    const std::string & get_addr() const {return m_addr;}
-    const base::xaccount_index_t & get_account_index() const {return m_account_index;}
-private:
-    std::string m_addr;
-    base::xaccount_index_t m_account_index;
-};
 
 typedef bool (*account_index_converter)(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index);
 
