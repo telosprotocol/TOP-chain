@@ -167,6 +167,10 @@ else()
     message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
 endif()
 
+if ((BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC) AND XUSE_JEMALLOC)
+    message(FATAL_ERROR "Not allowed to enable tcmalloc and jemalloc at the same time")
+endif()
+
 if (ADDRESS_SANITIZER)
     add_compile_options(-fsanitize=address)
 endif()
@@ -323,6 +327,9 @@ find_package(Threads REQUIRED)
 if (XUSE_JEMALLOC)
     link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/xtopcom/xdepends/jemalloc/lib)
     link_libraries(jemalloc_pic)
+elseif(BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC)
+    include_directories(SYSTEM src/xtopcom/xdepends/gperftools/src)
+    link_directories(src/xtopcom/xdepends/gperftools/.libs)
 endif()
 
 include_directories(src/xtopcom)  # xtopcom build warning will not print
