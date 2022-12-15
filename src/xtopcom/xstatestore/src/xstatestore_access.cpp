@@ -13,7 +13,7 @@ xstatestore_cache_t::xstatestore_cache_t() : m_unitstate_cache(enum_max_unit_sta
 
 }
 
-xtablestate_ext_ptr_t xstatestore_cache_t::get_latest_connectted_tablestate() const {
+xtablestate_ext_ptr_t const& xstatestore_cache_t::get_latest_connectted_tablestate() const {
     return m_latest_connectted_tablestate;
 }
 
@@ -29,22 +29,14 @@ void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xun
     xdbg("xstatestore_cache_t::set_unitstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
 }
 
+void xstatestore_cache_t::set_latest_connected_tablestate(uint64_t height, xtablestate_ext_ptr_t const& tablestate) {
+    if (m_latest_connectted_tablestate == nullptr || height > m_latest_connectted_tablestate->get_table_state()->height()) {
+        m_latest_connectted_tablestate = tablestate;
+    }
+}
+
 void xstatestore_cache_t::set_tablestate(uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& tablestate, bool is_commit) {
     m_table_states[height][block_hash] = tablestate;
-
-    // update connectted state
-    if (is_commit) {
-        if (m_latest_connectted_tablestate == nullptr || height > m_latest_connectted_tablestate->get_table_state()->height()) {
-            m_latest_connectted_tablestate = tablestate;
-        }
-    } else if (height > m_latest_connectted_tablestate->get_table_state()->height()+2) {
-        auto _tablestate = get_prev_tablestate(height-1, tablestate->get_table_state()->get_bstate()->get_last_block_hash());
-        if (nullptr != _tablestate) {
-            m_latest_connectted_tablestate = _tablestate;
-        } else {
-            xassert(false);
-        }
-    }
 
     // XTODO keep four heights table states in cache
     for (auto iter = m_table_states.begin(); iter != m_table_states.end(); ) {
@@ -240,6 +232,32 @@ void xstatestore_accessor_t::write_table_bstate_to_db(common::xaccount_address_t
 
 void xstatestore_accessor_t::write_table_bstate_to_cache(common::xaccount_address_t const& address, uint64_t height, std::string const& block_hash, xtablestate_ext_ptr_t const& state, bool is_commit) {    
     m_state_cache.set_tablestate(height, block_hash, state, is_commit);
+
+    if (is_commit) {
+        m_state_cache.set_latest_connected_tablestate(height, state);
+    } else if ( (m_state_cache.get_latest_connectted_tablestate() != nullptr)
+            && (height > m_state_cache.get_latest_connectted_tablestate()->get_table_state()->height()+2) ) {
+        const auto & latest_connect_state = m_state_cache.get_latest_connectted_tablestate();
+        auto lock_state = m_state_cache.get_prev_tablestate(height-1, state->get_table_state()->get_bstate()->get_last_block_hash());
+        if (nullptr != lock_state) {
+            auto commit_state = m_state_cache.get_prev_tablestate(height-2, lock_state->get_table_state()->get_bstate()->get_last_block_hash());
+            if (nullptr != commit_state) {
+                m_state_cache.set_latest_connected_tablestate(height-2, commit_state);
+                return;
+            }
+        }
+
+        // TODO(jimmy) load commit state from cache. it may happen when jump-write table state
+        auto commit_block = m_store_base.get_blockstore()->load_block_object(address.vaccount(), height-2, base::enum_xvblock_flag_committed, false);
+        if (nullptr != commit_block) {
+            auto commit_state = read_table_bstate_from_db(address, commit_block.get());
+            if (nullptr != commit_state) {
+                m_state_cache.set_latest_connected_tablestate(height-2, commit_state);
+                return;
+            }
+        }
+        xassert(false);
+    }
 }
 
 void xstatestore_accessor_t::write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) {
