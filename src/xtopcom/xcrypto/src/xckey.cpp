@@ -174,26 +174,26 @@ namespace top
                 return false;
             }
 
-            auto secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+            std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> secp256k1_context_verify{secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), &secp256k1_context_destroy};
 
-            if(secp256k1_ecdsa_recoverable_signature_parse_compact((secp256k1_context*)secp256k1_context_verify, &recover_sigature, signature.get_raw_signature(), signature.get_recover_id()) != 1)
+            if(secp256k1_ecdsa_recoverable_signature_parse_compact((secp256k1_context*)secp256k1_context_verify.get(), &recover_sigature, signature.get_raw_signature(), signature.get_recover_id()) != 1)
             {
                 return false;
             }
 
             secp256k1_pubkey native_pubkey;
-            if(secp256k1_ecdsa_recover((secp256k1_context*)secp256k1_context_verify, &native_pubkey, &recover_sigature, msg_digest.data()) != 1)
+            if(secp256k1_ecdsa_recover((secp256k1_context*)secp256k1_context_verify.get(), &native_pubkey, &recover_sigature, msg_digest.data()) != 1)
             {
                 return false;
             }
 
             secp256k1_ecdsa_signature normal_signature;
-            if(secp256k1_ecdsa_recoverable_signature_convert((secp256k1_context*)secp256k1_context_verify,&normal_signature,&recover_sigature) != 1)
+            if(secp256k1_ecdsa_recoverable_signature_convert((secp256k1_context*)secp256k1_context_verify.get(),&normal_signature,&recover_sigature) != 1)
             {
                 return false;
             }
 
-            if(secp256k1_ecdsa_verify((secp256k1_context*)secp256k1_context_verify, &normal_signature, msg_digest.data(), &native_pubkey) != 1)
+            if(secp256k1_ecdsa_verify((secp256k1_context*)secp256k1_context_verify.get(), &normal_signature, msg_digest.data(), &native_pubkey) != 1)
             {
                 return false;
             }
@@ -204,8 +204,8 @@ namespace top
              */
             size_t  serialize_pubkey_size = 65;
             uint8_t serialize_pubkey_data[65] = {0};
-            auto secp256k1_context_sign = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
-            const int ret = secp256k1_ec_pubkey_serialize((secp256k1_context*)secp256k1_context_sign, serialize_pubkey_data, &serialize_pubkey_size, &native_pubkey,SECP256K1_EC_UNCOMPRESSED);
+            std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> secp256k1_context_sign{secp256k1_context_create(SECP256K1_CONTEXT_SIGN), &secp256k1_context_destroy};
+            const int ret = secp256k1_ec_pubkey_serialize((secp256k1_context*)secp256k1_context_sign.get(), serialize_pubkey_data, &serialize_pubkey_size, &native_pubkey,SECP256K1_EC_UNCOMPRESSED);
             xassert(ret == 1);
             xassert(serialize_pubkey_size == 65);
 
@@ -242,7 +242,7 @@ namespace top
             if (ret) {
                 if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account ||
                     addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account)
-                    return is_eth_valid();                
+                    return is_eth_valid();
                 if (addr_type == base::enum_vaccount_addr_type_block_contract)
                     return true;
                 std::string public_address;
@@ -361,17 +361,17 @@ namespace top
             }
             return false;
         }
-    
+
         xecpubkey_t::xecpubkey_t(const std::string pub_key_data)//it support compressed/uncompressed key
         {
             init((const uint8_t *)pub_key_data.data(),(int32_t)pub_key_data.size());
         }
-    
+
         xecpubkey_t::xecpubkey_t(const uint8_t * pubkey_ptr,const int32_t pubkey_len)//it support compressed/uncompressed key
         {
             init(pubkey_ptr,pubkey_len);
         }
-    
+
         void xecpubkey_t::init(const uint8_t * pubkey_ptr,const int32_t pubkey_len)//it support convert compressed key to uncompressed
         {
             memset(m_publickey_data, 0, sizeof(m_publickey_data));//reset first
@@ -392,7 +392,7 @@ namespace top
                 {
                     size_t  serialize_pubkey_size = 65;
                     uint8_t serialize_pubkey_data[65] = {0};
-                    
+
                     secp256k1_pubkey  secppubkey;
                     int ret = secp256k1_ec_pubkey_parse((secp256k1_context*)static_secp256k1_context_sign, &secppubkey, pubkey_ptr,pubkey_len);//parse compressed public key
                     xassert(1 == ret);
@@ -444,7 +444,7 @@ namespace top
         {
             if(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account)
                 return to_eth_address(publickey,addr_type,ledger_id);
-                
+
             char address[128] = {0};
             const uint32_t version_uint32 = (((uint32_t)ledger_id) << 8) | ((uint32_t)addr_type);
             ecdsa_get_address(publickey, version_uint32, HASHER_SHA2_RIPEMD, HASHER_SHA2D, address, sizeof(address));
@@ -456,11 +456,11 @@ namespace top
         std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
             xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
-            
+
             const uint256_t hash_value = xkeccak256_t::digest(publickey + 1, size() - 1);//remove frist byte of type from public key
             const std::string raw_eth_address((const char *)hash_value.data() + 12, hash_value.size() - 12);//drop first 12 bytes of total 32,as Ethereum just use the last 20 bytes of hash(keccak256)
             const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);//convert to Hex codec
-            
+
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)addr_type, ledger_id, hex_eth_address,-1);
         }
 
