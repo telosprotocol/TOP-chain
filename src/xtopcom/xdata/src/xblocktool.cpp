@@ -453,25 +453,15 @@ std::vector<xlightunit_action_t> xblocktool_t::unpack_all_txreceipt_action(base:
         return {};
     }
     std::vector<xlightunit_action_t> txreceipt_actions;
-    auto & all_entitys = commit_block->get_input()->get_entitys();
-    for (auto & entity : all_entitys) {
-        // it must be xinentitys
-        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
-        if (_inentity == nullptr) {
-            xassert(false);
-            return {};
+
+    auto f = [&txreceipt_actions](const base::xvaction_t & action) { 
+        xlightunit_action_t txaction(action);
+        if (txaction.is_need_make_txreceipt()) {
+            txreceipt_actions.push_back(txaction);
         }
-        auto & all_actions = _inentity->get_actions();
-        for (auto & action : all_actions) {
-            if (xlightunit_action_t::is_not_txaction(action)) {
-                continue;;
-            }
-            xlightunit_action_t txaction(action);
-            if (txaction.is_need_make_txreceipt()) {
-                txreceipt_actions.push_back(txaction);
-            }
-        }
-    }
+    };
+    xblockextract_t::loop_top_txactions(commit_block, f);
+    xdbg("xblocktool_t::unpack_all_txreceipt_action block=%s,count=%zu",commit_block->dump().c_str(),txreceipt_actions.size());
     return txreceipt_actions;
 }
 
@@ -481,36 +471,21 @@ std::vector<xlightunit_action_t> xblocktool_t::unpack_one_txreceipt_action(base:
         return {};
     }
     std::vector<xlightunit_action_t> txreceipt_actions;
-    auto & all_entitys = commit_block->get_input()->get_entitys();
-    for (auto & entity : all_entitys) {
-        // it must be xinentitys
-        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
-        if (_inentity == nullptr) {
-            xassert(false);
-            return {};
-        }
-        auto & all_actions = _inentity->get_actions();
-        for (auto & action : all_actions) {
-            if (xlightunit_action_t::is_not_txaction(action)) {
-                continue;;
-            }
-            enum_transaction_subtype _actionid = xlightunit_action_t::get_txaction_subtype(action);
-            if (_actionid != subtype) {
-                continue;
-            }
+    auto f = [&txreceipt_actions,&peer_table_sid,&receipt_id,&subtype](const base::xvaction_t & action) { 
+        enum_transaction_subtype _actionid = xlightunit_action_t::get_txaction_subtype(action);
+        if (_actionid == subtype) {
             xlightunit_action_t txaction(action);
             xinfo("xblocktool_t::create_one_txreceipt peer tableid:%d:%d, receiptid:%llu:%llu", peer_table_sid, txaction.get_receipt_id_peer_tableid(), receipt_id, txaction.get_receipt_id());
-            if (txaction.get_receipt_id_peer_tableid() != peer_table_sid || txaction.get_receipt_id() != receipt_id) {
-                continue;  
+            if (txaction.get_receipt_id_peer_tableid() == peer_table_sid && txaction.get_receipt_id() == receipt_id) {
+                if (txaction.is_need_make_txreceipt()) {
+                    txreceipt_actions.push_back(txaction);         
+                } else {
+                    xassert(false);
+                }          
             }
-            if (false == txaction.is_need_make_txreceipt()) {
-                xassert(false);
-                continue;  
-            }
-            txreceipt_actions.push_back(txaction);
-            break;
         }
-    }
+    };
+    xblockextract_t::loop_top_txactions(commit_block, f);
     return txreceipt_actions;
 }
 

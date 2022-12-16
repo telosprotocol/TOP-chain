@@ -162,6 +162,7 @@ namespace top
             virtual bool               is_equal(const xvheader_t & other) const;
             virtual void*              query_interface(const int32_t _enum_xobject_type_) override final;//caller need to cast (void*) to related ptr
             virtual xauto_ptr<xvheader_t> clone() const;
+            virtual std::string        dump() const override;  //just for debug purpose
         public:
             //[0][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_state_mode] =  [1][3][3][7][2] = 16bits
             inline enum_xvblock_level          get_block_level()  const {return (enum_xvblock_level)((m_types >> 12) & 0x07);}

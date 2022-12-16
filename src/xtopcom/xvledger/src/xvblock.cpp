@@ -274,7 +274,18 @@ namespace top
          
             return (begin_size - stream.size());
         }
-        
+
+        std::string   xvheader_t::dump() const  //just for debug purpose
+        {
+            char local_param_buf[256];
+
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvheader:t=%d,v=%u,c=%u,h=%" PRIu64 ",w=%" PRIu64 ",l=%" PRIu64 ",a=%s,c=%s,,i=%" PRIu64 ",o=%" PRIu64 ",l=%" PRIu64 ",f=%" PRIu64 "}",
+            m_types,m_versions,m_chainid,m_height,m_weight,m_last_full_block_height,m_account.c_str(),m_comments.c_str(),
+            base::xhash64_t::digest(m_input_hash),base::xhash64_t::digest(m_output_hash),base::xhash64_t::digest(m_last_block_hash),base::xhash64_t::digest(m_last_full_block_hash));
+           
+            return std::string(local_param_buf);
+        }
+
         //---------------------------------xvqcert_t---------------------------------//
         xvqcert_t::xvqcert_t()
         : xdataunit_t((enum_xdata_type)enum_xobject_type_vqccert)

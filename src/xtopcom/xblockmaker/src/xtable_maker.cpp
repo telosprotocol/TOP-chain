@@ -458,6 +458,10 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     xblock_ptr_t current_block = prev_block;
     xassert(current_block->get_height() > 0);
     _form_highest_blocks.push_back(current_block);
+    if (false == get_blockstore()->load_block_input(*this, current_block.get())) {
+        xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block input.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+        return false;        
+    }
 
     while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() > 1) {
         // only mini-block is enough
@@ -467,6 +471,10 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
             return false;
         }
         current_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+        if (false == get_blockstore()->load_block_input(*this, current_block.get())) {
+            xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block input.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+            return false;        
+        }
         blocks.push_back(current_block);
     }
 
@@ -656,16 +664,16 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             return false;
         }
 
-        xwarn("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
+        xwarn_err("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
             proposal_block->dump().c_str(),
-            ((data::xblock_t*)proposal_block)->dump_header().c_str(),
-            ((data::xblock_t*)local_block)->dump_header().c_str());
+            proposal_block->get_header()->dump().c_str(),
+            local_block->get_header()->dump().c_str());
         return false;
     }
     if(!local_block->get_cert()->is_equal(*proposal_block->get_cert())){
         xerror("xtable_maker_t::verify_proposal_with_local fail-cert hash not match. proposal:%s local:%s",
-            ((data::xblock_t*)proposal_block)->dump_cert().c_str(),
-            ((data::xblock_t*)local_block)->dump_cert().c_str());
+            proposal_block->get_cert()->dump().c_str(),
+            local_block->get_cert()->dump().c_str());
         return false;
     }
 

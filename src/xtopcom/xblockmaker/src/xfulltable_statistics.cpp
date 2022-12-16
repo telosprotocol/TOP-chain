@@ -98,7 +98,7 @@ static void process_vote_info(xobject_ptr_t<data::xblock_t> const & block, data:
 
 data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_t>> const & blks) {
     data::xstatistics_data_t data;
-    xdbg("[tableblock_statistics] blks size: %u", blks.size());
+    uint32_t total_txs_count = 0;
     for (size_t i = 0; i < blks.size(); i++) {
         if (nullptr == blks[i]) {
             xerror("[tableblock_statistics] blks[%u] null", i);
@@ -106,6 +106,7 @@ data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::x
         }
 
         uint32_t txs_count = data::xblockextract_t::get_txactions_count(blks[i].get());
+        total_txs_count += txs_count;
 
         auto leader_xip = blks[i]->get_cert()->get_validator();
         if (get_node_id_from_xip2(leader_xip) == 0x3FF) {
@@ -116,6 +117,7 @@ data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::x
         calc_workload_data(leader_xip, txs_count, data);
         process_vote_info(blks[i], data);
     }
+    xdbg("[tableblock_statistics] %s,height=%ld,blks size: %u,txs_count=%u", blks[0]->get_account().c_str(), blks[0]->get_height(), blks.size(), total_txs_count);
 
     return data;
 }

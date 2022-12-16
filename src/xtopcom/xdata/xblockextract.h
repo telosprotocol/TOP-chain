@@ -20,6 +20,9 @@ NS_BEG2(top, data)
 
 class xblockextract_t {
  public:
+    static void loop_all_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func);
+    static void loop_eth_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func);
+    static void loop_top_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func); 
     static void                                     extract_sub_txs(base::xvblock_t* _block, std::vector<base::xvtxindex_ptr> & sub_txs);
     static uint32_t                                 get_txactions_count(base::xvblock_t* _block);
     static std::vector<xlightunit_action_t>         unpack_txactions(base::xvblock_t* _block);
