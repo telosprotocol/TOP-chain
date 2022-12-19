@@ -36,6 +36,13 @@ std::int32_t xtop_serializable_based_on<void>::serialize_from(base::xstream_t & 
     return ret;
 }
 
+std::int32_t xtop_serializable_based_on<void>::serialize_from_short(base::xstream_t & stream) {
+    base::xautostream_t<1024> internal_stream{ base::xcontext_t::instance() };
+    auto ret = stream >> internal_stream;
+    do_read(internal_stream);
+    return ret;
+}
+
 std::int32_t xtop_serializable_based_on<void>::serialize_from(base::xstream_t & stream, std::error_code & ec) {
     assert(!ec);
     try {

@@ -138,7 +138,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             return false;
         }
 
-        auto state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(eth_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
+        auto state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(eth_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account));
 
         evm_common::u256 value = state->balance();
         output.cost = 0;
@@ -205,8 +205,8 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             return false;
         }
 
-        auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
-        auto recver_state = state_ctx->load_unit_state(recipient_account_address.vaccount());
+        auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account));
+        auto recver_state = state_ctx->load_unit_state(recipient_account_address);
 
         sender_state->transfer(common::xtoken_id_t::top, top::make_observer(recver_state.get()), value, ec);
 
@@ -308,14 +308,14 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             return false;
         }
 
-        auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
+        auto owner_state = state_ctx->load_unit_state(owner_account_address);
         owner_state->update_allowance(common::xtoken_id_t::top,
                                       common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account),
                                       value,
                                       data::xallowance_update_op_t::decrease,
                                       ec);
         if (!ec) {
-            auto recver_state = state_ctx->load_unit_state(recipient_account_address.vaccount());
+            auto recver_state = state_ctx->load_unit_state(recipient_account_address);
             owner_state->transfer(common::xtoken_id_t::top, top::make_observer(recver_state.get()), value, ec);
             if (!ec) {
                 result[31] = 1;
@@ -405,7 +405,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             return false;
         }
 
-        auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
+        auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account));
         sender_state->approve(common::xtoken_id_t::top, spender_account_address, amount, ec);
 
         auto const & contract_address = context.address;
@@ -481,7 +481,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         auto const & owner_account_address = common::xaccount_address_t::build_from(owner_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
-        auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
+        auto owner_state = state_ctx->load_unit_state(owner_account_address);
         result = top::to_bytes(owner_state->allowance(common::xtoken_id_t::top, spender_account_address, ec));
         assert(result.size() == 32);
 

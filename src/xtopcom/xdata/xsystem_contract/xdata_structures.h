@@ -42,6 +42,7 @@ XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY1 = "@112-1";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY2 = "@112-2";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY3 = "@112-3";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTES_KEY4 = "@112-4";
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY = "@113";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_MAX_TIME_KEY = "@115";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_AWARD_KEY = "@118";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VALIDATOR_KEY = "@120";
@@ -434,9 +435,6 @@ public:
 
     /// @brief Check to see if this node can be an archive based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_archive() const noexcept;
-
-    /// @brief Check to see if this node can be an archive based on miner type and other information (e.g. deposit, amount of received tickets).
-    bool legacy_can_be_archive() const noexcept;
 
     /// @brief Check to see if this node can be an edge based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_edge() const noexcept;

@@ -494,7 +494,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
 }
 
 void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_receipt_t & pulled_receipt) {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pulled_receipt.serialize_to(stream);
     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_recv_receipt);
@@ -502,7 +502,7 @@ void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_receipt_t & pulle
 }
 
 void xtxpool_service::send_pull_receipts_of_confirm(xreceipt_pull_receipt_t & pulled_receipt) {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pulled_receipt.serialize_to(stream);
     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2);

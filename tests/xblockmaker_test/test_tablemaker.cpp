@@ -1161,7 +1161,7 @@ bool convert_func_random_true(const base::xvaccount_t & account, const base::xac
     }
     return convert_func_all_true(account, old_account_index, new_account_index);
 }
-
+#if 0
 TEST_F(test_tablemaker, account_index_upgrade) {
     uint32_t account_num = 1000;
     uint64_t height = 10000;
@@ -1209,7 +1209,8 @@ TEST_F(test_tablemaker, account_index_upgrade) {
         account_index_upgrade.clear();
     }
 }
-
+#endif
+#if 0
 TEST_F(test_tablemaker, account_index_upgrade_tool) {
     mock::xvchain_creator creator(true);
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -1278,4 +1279,51 @@ TEST_F(test_tablemaker, account_index_upgrade_tool) {
         EXPECT_EQ(account_index.get_latest_state_hash(), statehash);
         EXPECT_EQ(account_index.get_latest_tx_nonce(), nonce);
     }
+}
+#endif
+
+TEST_F(test_tablemaker, proposal_msg_v2) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    auto xdb = creator.get_xdb();
+
+    uint64_t max_block_height = 10;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    xvblock_ptr_t block = tableblocks[max_block_height];
+
+    assert(block->get_input()->get_root_hash() == block->get_cert()->get_input_root_hash() && block->get_output()->get_root_hash() == block->get_cert()->get_output_root_hash());
+
+    xconsensus::xproposal_msg_t proposal_msg_old(*(block.get()), nullptr);
+    base::xauto_ptr<base::xvblock_t> block1(base::xvblock_t::create_block_object(proposal_msg_old.get_block_object()));
+    block1->set_proposal(proposal_msg_old.get_input_proposal());
+    auto block_ptr1 = xblock_t::raw_vblock_to_object_ptr(block1.get());
+    assert(block_ptr1 != nullptr);
+
+    xconsensus::xproposal_msg_v2_t proposal_msg(*(block.get()));
+    base::xauto_ptr<base::xvblock_t> block2(base::xvblock_t::create_block_object(proposal_msg.get_block_object(), false));
+
+    block2->set_proposal(proposal_msg.get_input_proposal());
+
+    std::string vinput_bin;
+    block->get_input()->serialize_to_string(vinput_bin);
+    std::string voutput_bin;
+    block->get_output()->serialize_to_string(voutput_bin);
+
+    auto ret = block2->set_input_output(vinput_bin, voutput_bin);
+    assert(ret);
+
+    //check if block is valid.
+    std::string vheader_bin;
+    block2->get_header()->serialize_to_string(vheader_bin);
+
+    const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
+    const std::string vheader_input_output_hash = block2->get_cert()->hash(vheader_input_output);
+    assert(block2->get_cert()->get_header_hash() == vheader_input_output_hash);
+
+    auto block_ptr = xblock_t::raw_vblock_to_object_ptr(block2.get());
+    assert(block_ptr != nullptr);
 }

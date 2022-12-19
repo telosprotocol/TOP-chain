@@ -11,6 +11,7 @@
 #include "xcommon/xaddress.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xmbus/xevent_vnode.h"
+#include "xmbus/xevent_store.h"
 
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvcnode.h"
@@ -228,6 +229,7 @@ private:
      * @param store store
      */
     void setup_chain(common::xaccount_address_t const & contract_cluster_address, xvblockstore_t * blockstore);
+    bool is_need_process_commit_event(const mbus::xevent_store_block_committed_ptr_t & store_event) const;
 
     std::unordered_map<common::xaccount_address_t, xrole_map_t *>    m_map;
     xcontract_register_t                                             m_contract_register;

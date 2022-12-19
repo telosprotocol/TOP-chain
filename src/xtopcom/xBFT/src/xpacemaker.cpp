@@ -314,8 +314,8 @@ namespace top
                 return true; //stop
 
             xcspdu_fire * _evt_obj = (xcspdu_fire*)&event;
-            if( (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_commit) )
-            {
+            if ((_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal_v2) ||
+                (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_commit)) {
                 if(_evt_obj->_packet.get_xclock_cert().empty())
                 {
                     std::string latest_block_cert;
@@ -449,7 +449,7 @@ namespace top
                     xwarn_err("xclockcert_view::on_pdu_event_down,fail-carry a unrecognized clock cert for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr()); //possible attack
                 }
             }
-            if(_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal)
+            if(_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal || _evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal_v2)
             {
                 if(_evt_obj->get_xclock_cert() == NULL) //proposal now force to carry the bind clock cert
                 {
@@ -461,8 +461,8 @@ namespace top
             if(packet.get_block_viewid() != get_latest_viewid(packet.get_block_account()))
             {
                 //only do cert verification for view and proposal at pacemaker layer, since this node will not be leader after updated view by this cert
-                if( (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_view) || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) )
-                {
+                if ((_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_view) || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) ||
+                    (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal_v2)) {
                     const std::string & latest_vblock_cert_bin = _evt_obj->_packet.get_vblock_cert();
                     if(latest_vblock_cert_bin.empty() == false) //try to update hqc cert
                     {

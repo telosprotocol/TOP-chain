@@ -199,7 +199,7 @@ void xtransaction_v2_t::adjust_target_address(uint32_t table_id) {
 
 void xtransaction_v2_t::set_digest() {
     if (m_transaction_hash == uint256_t()) {
-        base::xstream_t stream(base::xcontext_t::instance());
+        base::xautostream_t<1024> stream(base::xcontext_t::instance());
         do_uncompact_write_without_hash_signature(stream);
         m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
         XMETRICS_GAUGE(metrics::cpu_hash_256_xtransaction_v2_calc, 1);
@@ -219,7 +219,7 @@ bool xtransaction_v2_t::transaction_len_check() const {
         return false;
     }
 
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
     do_write_without_hash_signature(stream);
     stream.write_compact_var(m_authorization);
@@ -248,7 +248,7 @@ int32_t xtransaction_v2_t::make_tx_transfer(const data::xproperty_asset & asset)
 int32_t xtransaction_v2_t::make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) {
     set_tx_type(xtransaction_type_run_contract);
 
-    xstream_t stream(xcontext_t::instance());
+    base::xautostream_t<1024> stream(xcontext_t::instance());
     stream << asset_out.m_token_name;
     stream << asset_out.m_amount;
     m_source_action_para = std::string((char *)stream.data(), stream.size());
@@ -290,7 +290,7 @@ void xtransaction_v2_t::set_target(const std::string & addr, const std::string &
 }
 
 void xtransaction_v2_t::set_len() {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
     do_write_without_hash_signature(stream);
     stream.write_compact_var(m_authorization);

@@ -70,6 +70,7 @@ namespace top
             virtual uint64_t get_latest_committed_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_locked_block_height(const base::xvaccount_t & account, const int atag = 0) override;
             virtual uint64_t get_latest_cert_block_height(const base::xvaccount_t & account, const int atag = 0) override;
+            virtual uint64_t get_latest_full_block_height(const base::xvaccount_t & account, const int atag = 0) override;
             virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
             virtual uint64_t get_latest_cp_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override;
@@ -118,7 +119,6 @@ namespace top
 
         public:
             //note: block must be committed and connected
-            virtual base::xvtransaction_store_ptr_t  query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvblock_t>    get_block_by_hash(const std::string& hash) override;
         public:
             virtual bool exist_genesis_block(const base::xvaccount_t & account, const int atag = 0) override;

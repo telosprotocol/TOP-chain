@@ -245,14 +245,15 @@ std::vector<std::string> DbPrune::get_db_unit_accounts() {
             std::cerr << table << " not exist." << std::endl;
             continue;
         }
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
-        if (bstate == nullptr) {
+        std::error_code ec;
+        auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(latest_block.get(), ec);
+        if (ec) {
             std::cerr << table << " get_block_state null!" << std::endl;
             continue;
         }
-        auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
-        auto const & units = table_state->get_all_accounts();
-        accounts.insert(units.cbegin(), units.cend());
+        for (auto & v : table_accounts) {
+            accounts.insert(v.first.to_string());
+        }
     }
 
     std::vector<std::string> v;

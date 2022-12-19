@@ -98,7 +98,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
 
         // Only controller can mint tokens.
-        auto const & contract_state = state_ctx->load_unit_state(evm_eth_contract_address.vaccount());
+        auto const & contract_state = state_ctx->load_unit_state(evm_eth_contract_address);
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(chain_uuid);
         if (msg_sender != token_controller) {
@@ -198,7 +198,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
             return false;
         }
 
-        auto const & contract_state = state_ctx->load_unit_state(evm_eth_contract_address.vaccount());
+        auto const & contract_state = state_ctx->load_unit_state(evm_eth_contract_address);
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(chain_uuid);
         if (msg_sender != token_controller) {
@@ -298,7 +298,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         assert(chain_uuid == common::xchain_uuid_t::eth);
 
-        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address.vaccount());
+        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address);
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_owner = contract_state->tep_token_owner(chain_uuid);
         if (msg_sender != token_owner) {
@@ -386,7 +386,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         assert(chain_uuid == common::xchain_uuid_t::eth);
 
         // only contract owner can set controller.
-        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address.vaccount());
+        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address);
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_owner = contract_state->tep_token_owner(chain_uuid);
         if (msg_sender != token_owner) {
@@ -461,7 +461,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         xbytes_t result(32, 0);
 
-        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address.vaccount());
+        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address);
         auto const & token_owner = contract_state->tep_token_owner(chain_uuid);
         auto const owner = common::xeth_address_t::build_from(token_owner);
 
@@ -477,7 +477,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         xbytes_t result(32, 0);
 
-        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address.vaccount());
+        auto contract_state = state_ctx->load_unit_state(evm_eth_contract_address);
         auto const & controller = common::xeth_address_t::build_from(contract_state->tep_token_controller(chain_uuid));
 
         output.cost = 0;

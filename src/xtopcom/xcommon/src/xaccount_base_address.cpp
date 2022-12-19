@@ -136,6 +136,8 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         m_account_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
         auto const account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
         m_default_table_id = xtable_id_t{static_cast<uint16_t>(account_index % static_cast<uint16_t>(enum_vbucket_has_tables_count))};
+    } else if (m_account_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+        m_default_table_id = xtable_id_t(uint16_t(0));
     }
 }
 

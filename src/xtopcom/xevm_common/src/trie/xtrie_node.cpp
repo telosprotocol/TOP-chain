@@ -4,6 +4,7 @@
 
 #include "xevm_common/trie/xtrie_node.h"
 
+#include "xbasic/xhex.h"
 #include "xevm_common/rlp.h"
 #if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
@@ -60,21 +61,20 @@ xtop_trie_node_face::~xtop_trie_node_face() noexcept {
 
 #endif
 
-xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t data)
-    : m_data{std::move(data)} {
+xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t const & hash_data) : hash_{hash_data} {
 }
 
-xtop_trie_hash_node::xtop_trie_hash_node(xhash256_t const & hash) : m_data{hash.begin(), hash.end()} {
+xtop_trie_hash_node::xtop_trie_hash_node(gsl::span<xbyte_t const> const hash_data) : hash_{hash_data} {
 }
 
-xbytes_t const & xtop_trie_hash_node::data() const noexcept {
-    return m_data;
+xh256_t const & xtop_trie_hash_node::data() const noexcept {
+    return hash_;
 }
 
 std::string xtop_trie_hash_node::fstring(std::string const & ind) const {
     // return fmt.Sprintf("<%x> ", []byte(n))
     std::ostringstream resp;
-    resp << "<" << to_hex(m_data) << "> ";
+    resp << "<" << to_hex(hash_) << "> ";
     return resp.str();
 }
 
@@ -134,12 +134,14 @@ xtrie_node_type_t xtop_trie_short_node::type() const noexcept {
 
 void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
+    encoded.reserve(1024);
+
     append(encoded, RLP::encode(key));
 
     switch (val->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::hashnode: {
         assert(dynamic_cast<xtrie_hash_node_t *>(val.get()) != nullptr);
-        append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(val)->data()));
+        append(encoded, RLP::encode(gsl::span<xbyte_t const>{std::dynamic_pointer_cast<xtrie_hash_node_t>(val)->data()}));
 
         break;
     }
@@ -168,6 +170,13 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     append(buf, RLP::encodeList(encoded));
 }
 
+xtop_trie_full_node::xtop_trie_full_node(xnode_flag_t f) : flags{std::move(f)} {
+}
+
+std::shared_ptr<xtop_trie_full_node> xtop_trie_full_node::clone() const {
+    return std::make_shared<xtop_trie_full_node>(*this);
+}
+
 std::string xtop_trie_full_node::fstring(std::string const & ind) const {
     /*
      * resp := fmt.Sprintf("[\n%s  ", ind)
@@ -182,8 +191,8 @@ std::string xtop_trie_full_node::fstring(std::string const & ind) const {
      */
     std::ostringstream resp;
     resp << "[\n  " << ind;
-    for (auto i = 0u; i < Children.size(); ++i) {
-        auto const & child = Children[i];
+    for (auto i = 0u; i < children.size(); ++i) {
+        auto const & child = children[i];
         if (child == nullptr) {
             resp << indices[i] << ": <nil> ";
         } else {
@@ -204,7 +213,9 @@ xtrie_node_type_t xtop_trie_full_node::type() const noexcept {
 
 void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
-    for (auto const & child : Children) {
+    encoded.reserve(1024);
+
+    for (auto const & child : children) {
         if (child == nullptr) {
             append(encoded, RLP::encode(nilValueNode.data()));  // 0x80 for empty bytes.
             continue;
@@ -213,7 +224,7 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
         switch (child->type()) {  // NOLINT(clang-diagnostic-switch-enum)
         case xtrie_node_type_t::hashnode: {
             assert(dynamic_cast<xtrie_hash_node_t *>(child.get()) != nullptr);
-            append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()));
+            append(encoded, RLP::encode(gsl::span<xbyte_t const>{std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()}));
 
             break;
         }
@@ -251,6 +262,7 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
 
 void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
+    encoded.reserve(1024);
 
     for (auto const & child : Children) {
         if (child == nullptr) {
@@ -261,7 +273,7 @@ void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
         switch (child->type()) {  // NOLINT(clang-diagnostic-switch-enum)
         case xtrie_node_type_t::hashnode: {
             assert(dynamic_cast<xtrie_hash_node_t *>(child.get()) != nullptr);
-            append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()));
+            append(encoded, RLP::encode(gsl::span<xbyte_t const>{std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()}));
 
             break;
         }
@@ -307,12 +319,14 @@ void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
 
 void xtop_trie_raw_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
+    encoded.reserve(1024);
+
     append(encoded, RLP::encode(Key));
 
     switch (Val->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::hashnode: {
         assert(dynamic_cast<xtrie_hash_node_t *>(Val.get()) != nullptr);
-        append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(Val)->data()));
+        append(encoded, RLP::encode(gsl::span<xbyte_t const>{std::dynamic_pointer_cast<xtrie_hash_node_t>(Val)->data()}));
 
         break;
     }

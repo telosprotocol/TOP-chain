@@ -14,6 +14,7 @@
 #include "xvledger/xvstatestore.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
+#include "xstatestore/xstatestore_face.h"
 
 using namespace top::genesis;
 using json = nlohmann::json;
@@ -414,7 +415,6 @@ public:
         static mock::xvchain_creator creator(false);
         m_store = creator.get_xstore();
         m_blockstore = creator.get_blockstore();
-        m_statestore = creator.get_xblkstatestore();
         m_genesis_manager = make_unique<xgenesis_manager_t>(top::make_observer(m_blockstore));
         contract::xcontract_deploy_t::instance().deploy_sys_contracts();
         contract::xcontract_manager_t::instance().instantiate_sys_contracts();
@@ -425,7 +425,6 @@ public:
 
     store::xstore_face_t * m_store;
     base::xvblockstore_t * m_blockstore;
-    base::xvblkstatestore_t * m_statestore;
     std::unique_ptr<xgenesis_manager_t> m_genesis_manager;
 };
 
@@ -494,7 +493,7 @@ TEST_F(test_genesis, test_create_genesis_block_before_init) {
         EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
         EXPECT_EQ(m_blockstore->get_latest_executed_block_height(account), 0);
         auto vblock = m_blockstore->get_genesis_block(account);
-        auto bstate = m_statestore->get_block_state(vblock.get());
+        auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), 500600000);
         EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), 800000000);
         EXPECT_EQ(bstate->load_uint64_var(data::XPROPERTY_ACCOUNT_CREATE_TIME)->get(), 1609387590);
@@ -571,7 +570,7 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
         EXPECT_EQ(bool(ec), false);
         EXPECT_NE(block, nullptr);
         auto vblock = m_blockstore->get_genesis_block(contract);
-        auto bstate = m_statestore->get_block_state(vblock.get());
+        auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         auto property_set = bstate->get_all_property_names();
         EXPECT_EQ(property_set.empty(), false);
         EXPECT_EQ(property_set.count(data::system_contract::XPORPERTY_CONTRACT_REG_KEY), true);
@@ -584,7 +583,7 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
         EXPECT_EQ(bool(ec), false);
         EXPECT_NE(block, nullptr);
         auto vblock = m_blockstore->get_genesis_block(datauser);
-        auto bstate = m_statestore->get_block_state(vblock.get());
+        auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         auto property_set = bstate->get_all_property_names();
         EXPECT_EQ(property_set.count(data::XPROPERTY_BALANCE_AVAILABLE), true);
     }
@@ -598,7 +597,7 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
         EXPECT_EQ(bool(ec), false);
         EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
         auto vblock = m_blockstore->get_genesis_block(account);
-        auto bstate = m_statestore->get_block_state(vblock.get());
+        auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         auto property_set = bstate->get_all_property_names();
         EXPECT_EQ(property_set.empty(), true);
     }
@@ -619,7 +618,7 @@ TEST_F(test_genesis, test_blockstore_callback) {
     EXPECT_EQ(bool(ec), false);
     EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
     auto vblock = m_blockstore->get_genesis_block(account);
-    auto bstate = m_statestore->get_block_state(vblock.get());
+    auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
     auto property_set = bstate->get_all_property_names();
     EXPECT_EQ(property_set.empty(), true);
 }

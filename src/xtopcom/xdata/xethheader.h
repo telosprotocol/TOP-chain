@@ -23,7 +23,7 @@ class xeth_header_t {
     std::string serialize_to_string() const;
     void        serialize_from_string(const std::string & bin_data, std::error_code & ec);
     xbytes_t    encodeBytes() const;
-    void        decodeBytes(xbytes_t const& _d, std::error_code & ec); 
+    void        decodeBytes(xbytes_t const& _d, std::error_code & ec);
     void        streamRLP(evm_common::RLPStream& _s) const;
     void        decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
  public:  // get APIS
@@ -33,7 +33,9 @@ class xeth_header_t {
     const evm_common::xbloom9_t &       get_logBloom() const {return m_logBloom;}
     const evm_common::xh256_t &         get_transactions_root() const {return m_transactions_root;}
     const evm_common::xh256_t &         get_receipts_root() const {return m_receipts_root;}
-    const evm_common::xh256_t &         get_state_root() const {return m_state_root;}
+    evm_common::xh256_t const & get_state_root() const {
+        return m_state_root;
+    }
     xbytes_t const&                     get_extra_data() const {return m_extra_data;}
     common::xeth_address_t const&       get_coinbase() const {return m_coinbase;}
 
@@ -44,7 +46,7 @@ class xeth_header_t {
     void        set_logBloom(const evm_common::xbloom9_t & bloom);
     void        set_transactions_root(const evm_common::xh256_t & root);
     void        set_receipts_root(const evm_common::xh256_t & root);
-    void        set_state_root(const evm_common::xh256_t & root);
+    void        set_state_root(evm_common::xh256_t const & root);
     void        set_extra_data(xbytes_t const& _data);
     void        set_coinbase(const common::xeth_address_t & miner);
 

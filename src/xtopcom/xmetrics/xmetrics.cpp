@@ -379,6 +379,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_receiver_unconfirm_cache);
         RETURN_METRICS_NAME(txpool_height_record_cache);
         RETURN_METRICS_NAME(txpool_table_unconfirm_raw_txs);
+        RETURN_METRICS_NAME(txpool_pack_nonce_expired);
+        RETURN_METRICS_NAME(txpool_pack_nonce_uncontinuous);
 
         // txstore
         RETURN_METRICS_NAME(txstore_request_origin_tx);
@@ -526,7 +528,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         RETURN_METRICS_NAME(statestore_get_unit_state_succ);
         RETURN_METRICS_NAME(statestore_get_unit_state_from_cache);
-        RETURN_METRICS_NAME(statestore_get_unit_state_from_db);        
+        RETURN_METRICS_NAME(statestore_get_unit_state_from_db);
         RETURN_METRICS_NAME(statestore_get_unit_state_with_unit_count);
         RETURN_METRICS_NAME(statestore_get_table_state_succ);
         RETURN_METRICS_NAME(statestore_get_table_state_from_cache);
@@ -534,7 +536,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_get_table_state_with_table_count);
         RETURN_METRICS_NAME(statestore_load_table_block_succ);
         RETURN_METRICS_NAME(statestore_execute_block_recursive_succ);
-        RETURN_METRICS_NAME(statestore_execute_unit_recursive_succ);        
+        RETURN_METRICS_NAME(statestore_execute_unit_recursive_succ);
 
         RETURN_METRICS_NAME(statestore_sync_succ);
 
@@ -622,7 +624,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         //cpu
         RETURN_METRICS_NAME(cpu_hash_256_calc);
-        RETURN_METRICS_NAME(cpu_hash_64_calc);        
+        RETURN_METRICS_NAME(cpu_hash_64_calc);
         RETURN_METRICS_NAME(cpu_ca_merge_sign_xbft);
         RETURN_METRICS_NAME(cpu_ca_merge_sign_tc);
         RETURN_METRICS_NAME(cpu_ca_do_sign_xbft);
@@ -657,6 +659,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         RETURN_METRICS_NAME(mpt_total_pruned_trie_node_cnt);
         RETURN_METRICS_NAME(mpt_cached_pruned_trie_node_cnt);
+        RETURN_METRICS_NAME(mpt_trie_cache_visit);
+        RETURN_METRICS_NAME(mpt_trie_cache_miss);
+
         //prune
         RETURN_METRICS_NAME(prune_block_table);
         RETURN_METRICS_NAME(prune_block_unit);
@@ -664,6 +669,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(prune_block_timer);
         RETURN_METRICS_NAME(prune_block_contract);
         RETURN_METRICS_NAME(prune_state_unitstate);
+
+        RETURN_METRICS_NAME(ethtx_get_from);
 
         default: assert(false); return nullptr;
     }
@@ -846,11 +853,9 @@ void e_metrics::flow_count(std::string metrics_name, int64_t value, time_point t
     m_message_queue.push(event_message(metrics::e_metrics_major_id::flow, metrics::e_metrics_minor_id::flow_count, metrics_name, value, metrics_appendant_info{timestamp}));
 }
 void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
-    if (tag >= e_simple_total || tag <= e_simple_begin ) {
-        return;
-    }
+    // assert(e_simple_begin < tag && tag < e_simple_total); // TODO(jimmy) need remove tag 0 case
     s_counters[tag].value += value;
-    s_counters[tag].call_count++;
+    ++s_counters[tag].call_count;
 }
 void e_metrics::gauge_set_value(E_SIMPLE_METRICS_TAG tag, int64_t value) {
     if (tag >= e_simple_total || tag <= e_simple_begin ) {

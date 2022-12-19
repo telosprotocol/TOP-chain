@@ -112,7 +112,6 @@ class xlightunit_block_t : public xblock_t {
     virtual     std::string     dump_body() const;
  public:  // override base block api
     const std::vector<xlightunit_action_ptr_t> get_txs() const;
-    uint32_t                    get_unconfirm_sendtx_num() const override;
 };
 
 NS_END2

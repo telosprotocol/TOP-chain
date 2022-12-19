@@ -146,7 +146,6 @@ public:
     virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
     virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {}
-    virtual bool                        account_index_upgrade() = 0;
 };
 
 // block maker face
@@ -205,7 +204,8 @@ public:
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
 #endif
-const int32_t max_mailbox_num = 8192;
+
+const int32_t max_mailbox_num = 2048;
 // block dispatcher
 class xcons_dispatcher {
 public:
@@ -240,6 +240,7 @@ protected:
             return -1;
         } else {
             XMETRICS_GAUGE(metrics::mailbox_us_total, 1);
+            XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_us_cur, queue_size);
             xunit_info("xnetwork_proxy::async_dispatch,recv_in pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
         }
 

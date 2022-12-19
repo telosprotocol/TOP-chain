@@ -83,11 +83,11 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     vnetwork::xvnode_address_t self_addr;
     xsync_dbg("push_newblock_to_archive: %s", address.c_str());
 
-    bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
-    if (!is_table_address) {
-        xsync_warn("xsync_pusher_t push_newblock_to_archive is not table %s", block->dump().c_str());
-        return;
-    }
+    // bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
+    // if (!is_table_address) {
+    //     xsync_warn("xsync_pusher_t push_newblock_to_archive is not table %s", block->dump().c_str());
+    //     return;
+    // }
 
     common::xnode_type_t node_type = common::xnode_type_t::invalid;
     std::string address_prefix;

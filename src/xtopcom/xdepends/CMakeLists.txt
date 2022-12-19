@@ -6,12 +6,180 @@ if(XBUILD_TEST)
     add_subdirectory(googletest)
 endif()
 
+if (XUSE_JEMALLOC)
+    message(STATUS "")
+    message(STATUS "========== thrid-party: jemalloc ============")
+
+    SET(JEMALLOC_AUTOGEN_LOG "autogen_jemalloc.log")
+    SET(JEMALLOC_MAKE_LOG "make_jemalloc.log")
+    SET(JEMALLOC_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/jemalloc)
+
+    execute_process(
+        COMMAND bash "-c" "rm ${JEMALLOC_AUTOGEN_LOG} ${JEMALLOC_MAKE_LOG}"
+        WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
+        ERROR_FILE "/dev/null"
+        OUTPUT_FILE "/dev/null"
+    )
+    # execute_process(
+    #     COMMAND bash "-c" "dos2unix * */* */*/* */*/*/*"
+    #     WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
+    #     ERROR_FILE "/dev/null"
+    #     OUTPUT_FILE "/dev/null"
+    # )
+
+    message(STATUS "executing autogen.sh")
+    execute_process(
+        COMMAND bash "-c" "./autogen.sh"
+        WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
+        ERROR_FILE ${JEMALLOC_AUTOGEN_LOG}
+        OUTPUT_FILE ${JEMALLOC_AUTOGEN_LOG}
+        RESULT_VARIABLE JemallocConfigResult
+    )
+    if (${JemallocConfigResult})
+        execute_process(
+            COMMAND bash "-c" "cat ${JEMALLOC_AUTOGEN_LOG}"
+            WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        message(FATAL_ERROR "execute autogen.sh failed")
+    else()
+        message(STATUS "execute autogen.sh done")
+    endif()
+
+    message(STATUS "executing make")
+    execute_process(
+        COMMAND make
+        WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
+        ERROR_FILE ${JEMALLOC_MAKE_LOG}
+        OUTPUT_FILE ${JEMALLOC_MAKE_LOG}
+        RESULT_VARIABLE JemallocConfigResult
+    )
+    if (${JemallocConfigResult})
+        execute_process(
+            COMMAND bash "-c" "cat ${JEMALLOC_MAKE_LOG}"
+            WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        message(FATAL_ERROR "execute make failed")
+    else()
+        message(STATUS "execute make done")
+    endif()
+elseif(BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC)
+    message(STATUS "")
+    message(STATUS "========== thrid-party: tcmalloc ============")
+
+    SET(GPERFTOOLS_AUTOGEN_LOG "autogen_gperftools.log")
+    SET(GPERFTOOLS_CONFIGURE_LOG "configure_gperftools.log")
+    SET(GPERFTOOLS_MAKE_LOG "make_gperftools.log")
+    SET(GPERFTOOLS_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/gperftools)
+
+    execute_process(
+        COMMAND bash "-c" "rm ${GPERFTOOLS_AUTOGEN_LOG} ${GPERFTOOLS_CONFIGURE_LOG} ${GPERFTOOLS_MAKE_LOG}"
+        WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+        ERROR_FILE "/dev/null"
+        OUTPUT_FILE "/dev/null"
+    )
+    # execute_process(
+    #     COMMAND bash "-c" "dos2unix * */* */*/*"
+    #     WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+    #     ERROR_FILE "/dev/null"
+    #     OUTPUT_FILE "/dev/null"
+    # )
+
+    message(STATUS "executing autogen.sh")
+    execute_process(
+        COMMAND bash "-c" "./autogen.sh"
+        WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+        ERROR_FILE ${GPERFTOOLS_AUTOGEN_LOG}
+        OUTPUT_FILE ${GPERFTOOLS_AUTOGEN_LOG}
+        RESULT_VARIABLE GperfToolsConfigResult
+    )
+    if (${GperfToolsConfigResult})
+        execute_process(
+            COMMAND bash "-c" "cat ${GPERFTOOLS_AUTOGEN_LOG}"
+            WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        message(FATAL_ERROR "execute autogen.sh failed")
+    else()
+        message(STATUS "execute autogen.sh done")
+    endif()
+
+    message(STATUS "updating ltmain.sh")
+    execute_process(
+        COMMAND bash "-c" "mv ltmain.sh ltmain.origin"
+        WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+    )
+    SET(PATTERN "\"$objname\"")
+    SET(REPLACEMENT "\"$objdir/$objname\"")
+    execute_process(
+        COMMAND sed "-e" "2281 s@${PATTERN}@${REPLACEMENT}@" "ltmain.origin"
+        WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+        ERROR_FILE "ltmain.sh"
+        OUTPUT_FILE "ltmain.sh"
+        RESULT_VARIABLE GperfToolsConfigResult
+    )
+    if (${GperfToolsConfigResult})
+        execute_process(
+            COMMAND bash "-c" "cat ltmain.sh"
+            WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        message(FATAL_ERROR "update ltmain.sh failed")
+    else()
+        message(STATUS "update ltmain.sh done")
+    endif()
+
+    message(STATUS "executing configure")
+    execute_process(
+        COMMAND bash "-c" "./configure"
+        WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+        ERROR_FILE ${GPERFTOOLS_CONFIGURE_LOG}
+        OUTPUT_FILE ${GPERFTOOLS_CONFIGURE_LOG}
+        RESULT_VARIABLE GperfToolsConfigResult
+    )
+    if (${GperfToolsConfigResult})
+        execute_process(
+            COMMAND bash "-c" "cat ${GPERFTOOLS_CONFIGURE_LOG}"
+            WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        message(FATAL_ERROR "execute configure failed")
+    else()
+        message(STATUS "execute configure done")
+    endif()
+
+    message(STATUS "executing make")
+    execute_process(
+        COMMAND make
+        WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+        ERROR_FILE ${GPERFTOOLS_MAKE_LOG}
+        OUTPUT_FILE ${GPERFTOOLS_MAKE_LOG}
+        RESULT_VARIABLE GperfToolsConfigResult
+    )
+    if (${GperfToolsConfigResult})
+        execute_process(
+            COMMAND bash "-c" "cat ${GPERFTOOLS_MAKE_LOG}"
+            WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        message(FATAL_ERROR "execute make failed")
+    else()
+        execute_process(
+            COMMAND bash "-c" "rm ./.libs/libtcmalloc_and_profiler.so*"
+            WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
+            ERROR_FILE "/dev/null"
+            OUTPUT_FILE "/dev/null"
+        )
+        message(STATUS "execute make done")
+    endif()
+endif()
 
 message(STATUS "")
 message(STATUS "========== thrid-party: xquic ============")
 # options for compile xquic
 add_definitions(-DBORINGSSL_PREFIX=FORQUIC)
-# include_directories(./boringssl_static_libs/) # to find boringssl_prefix_symbols.h 
+# include_directories(./boringssl_static_libs/) # to find boringssl_prefix_symbols.h
 # add_subdirectory(boringssl)
 set(SSL_TYPE "boringssl")
 set(SSL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/boringssl)

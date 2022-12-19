@@ -1356,8 +1356,8 @@ namespace top
             m_proces_start_time = xtime_utl::gmttime_ms();
             
             //build default stores
-            xauto_ptr<xvstatestore_t> default_state_store(new xvstatestore_t());
-            set_xstatestore(default_state_store());
+            // xauto_ptr<xvstatestore_t> default_state_store(new xvstatestore_t());
+            // set_xstatestore(default_state_store());
             
             // xauto_ptr<xvtxstore_t> default_txs_store(new xvtxstore_t());
             // set_xtxstore(default_txs_store());
@@ -1498,12 +1498,12 @@ namespace top
             return (xvblockstore_t*)target;
         }
     
-        xvstatestore_t*    xvchain_t::get_xstatestore()//global shared statestore instance
-        {
-            xobject_t* target = m_plugins[enum_xvchain_plugin_state_store];
-            xassert(target != NULL);
-            return (xvstatestore_t*)target;
-        }
+        // xvstatestore_t*    xvchain_t::get_xstatestore()//global shared statestore instance
+        // {
+        //     xobject_t* target = m_plugins[enum_xvchain_plugin_state_store];
+        //     xassert(target != NULL);
+        //     return (xvstatestore_t*)target;
+        // }
     
         xvcontractstore_t*  xvchain_t::get_xcontractstore()//global shared statestore instance
         {
@@ -1557,14 +1557,14 @@ namespace top
             return register_plugin(new_store,enum_xvchain_plugin_block_store);
         }
     
-        bool    xvchain_t::set_xstatestore(xvstatestore_t* new_store)
-        {
-            xassert(new_store != NULL);
-            if(NULL == new_store)
-                return false;
+        // bool    xvchain_t::set_xstatestore(xvstatestore_t* new_store)
+        // {
+        //     xassert(new_store != NULL);
+        //     if(NULL == new_store)
+        //         return false;
             
-            return register_plugin(new_store,enum_xvchain_plugin_state_store);
-        }
+        //     return register_plugin(new_store,enum_xvchain_plugin_state_store);
+        // }
     
         bool    xvchain_t::set_xcontractstore(xvcontractstore_t * new_store)
         {

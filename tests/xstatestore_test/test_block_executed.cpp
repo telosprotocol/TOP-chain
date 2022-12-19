@@ -247,6 +247,30 @@ TEST_F(test_block_executed, xstatestore_executor_t_test_3) {
     }
 }
 
+TEST_F(test_block_executed, xstatestore_table_state_get_BENCH_1) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 10;
+    mock::xdatamock_table mocktable(1, 8);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    statestore::xtablestate_ext_ptr_t tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(tableblocks[max_count].get());
+    ASSERT_NE(tablestate_ext, nullptr);
+
+    std::error_code ec;
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(tableblocks[max_count].get(), ec);
+    if (ec) {
+        xassert(false);
+    }
+    ASSERT_EQ(table_accounts.size(), 8);
+}
+
+
 TEST_F(test_block_executed, xstatestore_executor_t_test_5) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -300,41 +324,14 @@ TEST_F(test_block_executed, latest_executed_state_1) {
         uint64_t max_count = 10;
         mock::xdatamock_table mocktable(1, 4);      
         mocktable.genrate_table_chain(max_count, blockstore);
-        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();        
-        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate->height(), 0);      
-
+        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();    
         for (auto & block : tableblocks) {
             ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+            statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(block.get());
         }
         auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
         EXPECT_EQ(tablestate2->height(), max_count-2);         
     }
-
-    {
-        mock::xvchain_creator creator;
-        base::xvblockstore_t* blockstore = creator.get_blockstore();
-        uint64_t max_count = 10;
-        mock::xdatamock_table mocktable(1, 4);      
-        mocktable.genrate_table_chain(max_count, blockstore);
-        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();        
-        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate->height(), 0);      
-
-        for (auto & block : tableblocks) {
-            if (block->get_height() == 6) {
-                continue;
-            }
-            ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
-        }
-        auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate2->height(), 3);
-
-        ASSERT_TRUE(blockstore->store_block(mocktable, tableblocks[6].get()));
-        auto tablestate3 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
-        EXPECT_EQ(tablestate3->height(), max_count-2);        
-    }
-
 }
 
 TEST_F(test_block_executed, not_store_units_1) {
@@ -467,14 +464,13 @@ TEST_F(test_block_executed, xstatestore_get_state_before_prune) {
 }
 
 TEST_F(test_block_executed, xstatestore_execute_BENCH) {
-// test result in release
-// total time of store blocks: 617 ms
-// dbmeta key_size:1042158 value_size = 6847566 key_count = 17023 write_count = 23531 read_count = 3101
-// hash_calc_count = 22843
+// total time of store blocks: 2651 ms
+// dbmeta key_size:1052256 value_size = 6865708 key_count = 17231 write_count = 23739 read_count = 3241
+// hash_calc_count = 28805
 
-// total time of execute blocks: 740 ms
-// dbmeta key_size:1694253 value_size = 8274938 key_count = 26934 write_count = 42299 read_count = 12954
-// hash_calc_count = 16786
+// total time of execute blocks: 5729 ms
+// dbmeta key_size:1752869 value_size = 8335650 key_count = 28132 write_count = 38600 read_count = 10195
+// hash_calc_count = 20809
 
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -525,17 +521,62 @@ TEST_F(test_block_executed, xstatestore_execute_BENCH) {
 
 }
 
-TEST_F(test_block_executed, xvaccount_BENCH) {
-// total time: 5759 ms  in release    after optimize   total time: 12 ms
-    uint32_t count = 10000000;
+TEST_F(test_block_executed, xstatestore_execute_BENCH_2) {
+// test result in release
+// total time of store blocks: 617 ms
+// dbmeta key_size:1042158 value_size = 6847566 key_count = 17023 write_count = 23531 read_count = 3101
+// hash_calc_count = 22843
+
+// total time of execute blocks: 740 ms
+// dbmeta key_size:1694253 value_size = 8274938 key_count = 26934 write_count = 42299 read_count = 12954
+// hash_calc_count = 16786
+
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 1000;
+    mock::xdatamock_table mocktable(1, 100);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+
 {
+    xhashtest_t::hash_calc_count = 0;
     auto t1 = base::xtime_utl::time_now_ms();
-    common::xaccount_address_t _address{"Ta0000@1"};
-    for (uint32_t i =0;i<count;i++) {
-        _address.vaccount();
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
     }
     auto t2 = base::xtime_utl::time_now_ms();
-    std::cout << "total time: " << t2 - t1 << " ms" << std::endl;
+    std::cout << "total time of store blocks: " << t2 - t1 << " ms" << std::endl;
+    db::xdb_meta_t dbmeta = creator.get_xdb()->get_meta();
+    std::cout << "dbmeta key_size:" << dbmeta.m_db_key_size
+    << " value_size = " << dbmeta.m_db_value_size
+    << " key_count = " << dbmeta.m_key_count  
+    << " write_count = " << dbmeta.m_write_count
+    << " read_count = " << dbmeta.m_read_count
+    << std::endl;
+    std::cout << "hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl<< std::endl;    
+}
+
+{
+    xhashtest_t::hash_calc_count = 0;
+    auto t1 = base::xtime_utl::time_now_ms();
+    
+    for (uint32_t i=0;i<max_count-2;i++) {
+        tableblocks[i]->set_block_flag(base::enum_xvblock_flag_committed);
+        statestore::xstatestore_hub_t::instance()->on_table_block_committed(tableblocks[i].get());
+    }
+    auto t2 = base::xtime_utl::time_now_ms();
+    std::cout << "total time of execute blocks: " << t2 - t1 << " ms" << std::endl;   
+    db::xdb_meta_t dbmeta = creator.get_xdb()->get_meta();
+    std::cout << "dbmeta key_size:" << dbmeta.m_db_key_size
+    << " value_size = " << dbmeta.m_db_value_size
+    << " key_count = " << dbmeta.m_key_count  
+    << " write_count = " << dbmeta.m_write_count
+    << " read_count = " << dbmeta.m_read_count
+    << std::endl;
+    std::cout << "hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl;        
 }
 
 }
+

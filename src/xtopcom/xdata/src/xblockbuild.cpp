@@ -43,7 +43,7 @@ int32_t xtableheader_extra_t::do_read(base::xstream_t & stream) {
 
 int32_t xtableheader_extra_t::deserialize_from_string(const std::string & extra_data) {
     base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)extra_data.data(), (uint32_t)extra_data.size());
-    return serialize_from(_stream);
+    return serialize_from_short(_stream);
 }
 
 int32_t xtableheader_extra_t::serialize_to_string(std::string & extra_data) {

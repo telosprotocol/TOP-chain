@@ -5,6 +5,7 @@
 
 #include <cinttypes>
 
+#include "xchain_fork/xutility.h"
 #include "xconsdriver.h"
 #include "xbase/xutl.h"
 #include "xmetrics/xmetrics.h"
@@ -119,7 +120,7 @@ namespace top
                 }
 
                 if(   (false == proposal->is_body_and_offdata_ready(false))  //leader should has full block  XTODO no need check resource hash
-                   || (false == proposal->is_valid(true))
+                   /*|| (false == proposal->is_valid(true))*/
                    || (false == proposal->get_cert_hash().empty()) //proposal should not have build cert hash before verify muti-sign
                    || (proposal->check_block_flag(base::enum_xvblock_flag_authenticated)) )//proposal should not add authenticated flag
                 {
@@ -182,9 +183,20 @@ namespace top
                 
                 //step#5: now ready to start consensus for this proposal
                 std::string msg_stream;
-                xproposal_msg_t msg(*proposal,NULL);
-                msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
-                msg.serialize_to_string(msg_stream);
+                uint8_t msg_type;
+
+                bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, proposal->get_clock());
+                if (forked) {
+                    xproposal_msg_v2_t msg(*proposal);
+                    msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
+                    msg.serialize_to_string(msg_stream);
+                    msg_type = xproposal_msg_v2_t::get_msg_type();
+                } else {
+                    xproposal_msg_t msg(*proposal,NULL);
+                    msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
+                    msg.serialize_to_string(msg_stream);
+                    msg_type = xproposal_msg_t::get_msg_type();
+                }
 
                 //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
                 xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
@@ -203,7 +215,7 @@ namespace top
                 
                 std::string last_block_cert;
                 proposal->get_prev_block()->get_cert()->serialize_to_string(last_block_cert);
-                fire_pdu_event_up(xproposal_msg_t::get_msg_type(), msg_stream, 0, self_addr, broadcast_addr, proposal,last_block_cert,latest_clock_cert);
+                fire_pdu_event_up(msg_type, msg_stream, 0, self_addr, broadcast_addr, proposal,last_block_cert,latest_clock_cert);
             }
             return true;
         }
@@ -217,11 +229,29 @@ namespace top
             //step#0: verified that replica and leader are valid by from_addr and to_addr at top layer like xconsnetwork or xconsnode_t. here just consider pass.
             base::xcspdu_t & packet = event_obj->_packet;
             //step#1: do sanity check packet first
-            xproposal_msg_t _proposal_msg;
-            if(safe_check_for_proposal_packet(packet,_proposal_msg) == false)
-            {
-                xwarn("xBFTdriver_t::handle_proposal_msg,fail-safe_check_for_proposal_packet=%s vs driver=%s,at node=0x%llx",packet.dump().c_str(),dump().c_str(),get_xip2_low_addr());
-                return enum_xconsensus_error_bad_packet;
+            std::string block_object_data;
+            std::string input_proposal;
+            uint32_t expired_ms = 0;
+            if (event_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) {
+                xproposal_msg_t _proposal_msg;
+                if(safe_check_for_proposal_packet(packet,_proposal_msg) == false)
+                {
+                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-safe_check_for_proposal_packet=%s vs driver=%s,at node=0x%llx",packet.dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_bad_packet;
+                }
+                block_object_data = _proposal_msg.get_block_object();
+                input_proposal = _proposal_msg.get_input_proposal();
+                expired_ms = _proposal_msg.get_expired_ms();
+            } else {
+                xproposal_msg_v2_t _proposal_msg;
+                if(safe_check_for_proposal_packet(packet,_proposal_msg) == false)
+                {
+                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-safe_check_for_proposal_packet=%s vs driver=%s,at node=0x%llx",packet.dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_bad_packet;
+                }
+                block_object_data = _proposal_msg.get_block_object();
+                input_proposal = _proposal_msg.get_input_proposal();
+                expired_ms = _proposal_msg.get_expired_ms();
             }
             
             if(event_obj->get_xclock_cert() == NULL)
@@ -289,8 +319,8 @@ namespace top
 
 
             //step#3: load proposal block and do safe check
-            base::xauto_ptr<base::xvblock_t> _peer_block(base::xvblock_t::create_block_object(_proposal_msg.get_block_object()));
-            if( (!_peer_block) || (false == _peer_block->is_valid(false)) )
+            base::xauto_ptr<base::xvblock_t> _peer_block(base::xvblock_t::create_block_object(block_object_data, false));
+            if( (!_peer_block)/* || (false == _peer_block->is_valid(false))*/ )
             {
                 xerror("xBFTdriver_t::handle_proposal_msg,fail-invalid proposal from packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_proposal;
@@ -311,11 +341,11 @@ namespace top
                 return enum_xconsensus_error_bad_proposal; //that is not a qualified node for vote
             }
             //proposal ==> input ==> output
-            _peer_block->get_input()->set_proposal(_proposal_msg.get_input_proposal());  //copy proposal
-            if(_proposal_msg.get_input_resource().empty() == false)//carry input resource
-                _peer_block->set_input_resources(_proposal_msg.get_input_resource());//copy proposal
-            if(_proposal_msg.get_ouput_resource().empty() == false)//carry output resource
-                _peer_block->set_output_resources(_proposal_msg.get_ouput_resource());//copy proposal
+            _peer_block->set_proposal(input_proposal);  //copy proposal
+            // if(_proposal_msg.get_input_resource().empty() == false)//carry input resource
+            //     _peer_block->set_input_resources(_proposal_msg.get_input_resource());//copy proposal
+            // if(_proposal_msg.get_ouput_resource().empty() == false)//carry output resource
+            //     _peer_block->set_output_resources(_proposal_msg.get_ouput_resource());//copy proposal
 
             //sanity check the proposal block
             if(   (_peer_block->get_height()  != packet.get_block_height())
@@ -333,7 +363,7 @@ namespace top
             
             //pre-create proposal wrap
             base::xauto_ptr<xproposal_t> _final_proposal_block(new xproposal_t(*_peer_block,_peer_prev_block_cert));
-            _final_proposal_block->set_expired_ms(get_time_now() + _proposal_msg.get_expired_ms());
+            _final_proposal_block->set_expired_ms(get_time_now() + expired_ms);
             _final_proposal_block->set_bind_clock_cert(event_obj->get_xclock_cert());
             _final_proposal_block->set_proposal_source_addr(from_addr);
             _final_proposal_block->set_proposal_msg_nonce(packet.get_msg_nonce());
@@ -1608,6 +1638,7 @@ namespace top
             switch (_evt_obj->_packet.get_msg_type()) //msg'type is under specific pdu class
             {
                 case enum_consensus_msg_type_proposal:
+                case enum_consensus_msg_type_proposal_v2:
                     return on_proposal_msg_recv(from_addr,to_addr,_evt_obj,cur_thread_id,timenow_ms,(xcsobject_t*)from_parent);
 
                 case enum_consensus_msg_type_vote:
@@ -1620,6 +1651,7 @@ namespace top
                     return on_sync_request_msg_recv(from_addr,to_addr,_evt_obj,cur_thread_id,timenow_ms,(xcsobject_t*)from_parent);
 
                 case enum_consensus_msg_type_sync_resp:
+                case enum_consensus_msg_type_sync_resp_v2:
                     return on_sync_respond_msg_recv(from_addr,to_addr,_evt_obj,cur_thread_id,timenow_ms,(xcsobject_t*)from_parent);
 
                 case enum_consensus_msg_type_vote_report:

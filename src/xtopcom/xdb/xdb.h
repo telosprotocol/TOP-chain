@@ -11,6 +11,8 @@
 
 #include "xdb/xdb_face.h"
 
+#include <gsl/span>
+
 namespace top { namespace db {
 
 class xdb_error : public std::runtime_error {
@@ -25,17 +27,19 @@ class xdb : public xdb_face_t {
     ~xdb() noexcept;
     bool open() override;
     bool close() override;
-    bool read(const std::string& key, std::string& value) const override;
+    bool read(const std::string& key, std::string & value) const override;
     bool exists(const std::string& key) const override;
     bool write(const std::string& key, const std::string& value) override;
     bool write(const std::string& key, const char* data, size_t size) override;
     bool write(const std::map<std::string, std::string>& batches) override;
     bool erase(const std::string& key) override;
     bool erase(const std::vector<std::string>& keys) override;
+    bool erase(std::vector<gsl::span<char const>> const & keys) override;
     static void destroy(const std::string& m_db_name);
     
     //batch mode for multiple keys with multiple ops
     bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) override;
+    bool batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys) override;
     
     //prefix must start from first char of key
     bool read_range(const std::string& prefix, std::vector<std::string>& values) override;

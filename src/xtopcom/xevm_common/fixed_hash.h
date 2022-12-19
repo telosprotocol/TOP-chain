@@ -6,6 +6,8 @@
 
 #include "xevm_common/common_data.h"
 
+#include <gsl/span>
+
 #include <boost/functional/hash.hpp>
 
 #include <algorithm>
@@ -39,7 +41,7 @@ public:
         boost::multiprecision::number<boost::multiprecision::cpp_int_backend<N * 8, N * 8, boost::multiprecision::unsigned_magnitude, boost::multiprecision::unchecked, void>>;
 
     /// The size of the container.
-    enum { size = N };
+    // enum { size = N };
 
     /// A dummy flag to avoid accidental construction from pointer.
     enum ConstructFromPointerType { ConstructFromPointer };
@@ -75,7 +77,7 @@ public:
     }
 
     /// Explicitly construct, copying from a byte array.
-    explicit FixedHash(xbytes_t const & _b, ConstructFromHashType _t = FailIfDifferent) {
+    explicit FixedHash(gsl::span<xbyte_t const> const _b, ConstructFromHashType _t = FailIfDifferent) {
         if (_b.size() == N)
             memcpy(m_data.data(), _b.data(), std::min<unsigned>(_b.size(), N));
         else {
@@ -235,6 +237,10 @@ public:
         return m_data.data();
     }
 
+    constexpr static size_t size() noexcept {
+        return N;
+    }
+
     /// @returns begin iterator.
     auto begin() const -> typename std::array<xbyte_t, N>::const_iterator {
         return m_data.begin();
@@ -332,6 +338,10 @@ public:
 
     void clear() {
         m_data.fill(0);
+    }
+
+    bool empty() const noexcept {
+        return std::all_of(std::begin(m_data), std::end(m_data), [](xbyte_t const byte) { return byte == 0; });
     }
 
 private:

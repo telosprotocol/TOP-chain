@@ -82,16 +82,27 @@ void xchain_block_fetcher_t::on_timer() {
 }
 
 void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t & block, const vnetwork::xvnode_address_t & network_self, const vnetwork::xvnode_address_t & from_address) {
-    insert_block(block);
-    add_blocks();
+    // to be deleted
+    // check block existed already
+    auto exist_block = m_sync_store->existed(block->get_account(), block->get_height(), block->get_viewid());
+    if (exist_block) {
+        XMETRICS_GAUGE(metrics::xsync_recv_duplicate_block, 1);
+        xsync_warn("xsync_handler_t::on_newblock exist_block %s", block->dump().c_str());
+        return;
+    }
+
+    if (!check_auth(m_certauth, block)) {
+        xsync_warn("xsync_handler_t::on_newblock fail-auth failed %s", block->dump().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
+        return;
+    }
+
+    import_block(block);
 
     if (common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
         uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(m_address, enum_chain_sync_policy_full);
-        xsync_info("chain_fetcher on_newblock %s,height=%lu,viewid=%lu,hash=%s,%llu",
-                   m_address.c_str(),
-                   block->get_height(),
-                   block->get_viewid(),
-                   to_hex_str(block->get_block_hash()).c_str(),
+        xsync_info("chain_fetcher on_newblock %s,%llu",
+                   block->dump().c_str(),
                    latest_end_block_height);
         xchain_state_info_t info;
         info.address = m_address;

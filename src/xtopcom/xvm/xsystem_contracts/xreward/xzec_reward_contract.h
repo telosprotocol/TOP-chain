@@ -91,9 +91,8 @@ private:
      * @brief call calc_nodes_rewards_v2 and dispatch_all_reward
      *
      * @param onchain_timer_round chain timer round
-     * @param workload_str the workload str
      */
-    void        reward(const common::xlogic_time_t onchain_timer_round, std::string const& workload_str);
+    void        reward(const common::xlogic_time_t onchain_timer_round);
 
     /**
      * @brief Get the task id
@@ -350,7 +349,7 @@ private:
      * @param map_nodes nodes to count
      * @return count resualt
      */
-    std::vector<std::vector<uint32_t>> calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes, bool fullnode_enabled);
+    std::vector<std::vector<uint32_t>> calc_role_nums(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes);
 
     /**
      * @brief set votes_detail into map_nodes and calculate total valid auditor votes

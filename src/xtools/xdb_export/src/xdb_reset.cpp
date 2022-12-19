@@ -6,6 +6,7 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xunit_bstate.h"
 #include "xvledger/xvledger.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <fstream>
 #include <iostream>
@@ -210,12 +211,8 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
             // std::cout << account << " height " << 0 << " block genesis and nil!" << std::endl;
             continue;
         }
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
-        if (bstate == nullptr) {
-            std::cout << account << " height " << 0 << " bstate null!" << std::endl;
-            continue;
-        }
-        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
         if (unitstate == nullptr) {
             std::cout << account << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -302,12 +299,7 @@ void xdb_reset_t::get_contract_stake_property_string(json & stake_json) {
             std::cout << addr << " height " << 0 << " block genesis and nil!" << std::endl;
             continue;
         }
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
-        if (bstate == nullptr) {
-            std::cout << addr << " height " << 0 << " bstate null!" << std::endl;
-            continue;
-        }
-        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
         if (unitstate == nullptr) {
             std::cout << addr << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -356,12 +348,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
             std::cout << addr << " height " << 0 << " block genesis and nil!" << std::endl;
             continue;
         }
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
-        if (bstate == nullptr) {
-            std::cout << addr << " height " << 0 << " bstate null!" << std::endl;
-            continue;
-        }
-        data::xunitstate_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
         if (unitstate == nullptr) {
             std::cout << addr << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -553,12 +540,7 @@ void xdb_reset_t::get_contract_table_stake_property_map_string_string(json & sta
                 std::cout << table_addr << " height " << 0 << " block genesis and nil!" << std::endl;
                 continue;
             }
-            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
-            if (bstate == nullptr) {
-                std::cout << table_addr << " height " << 0 << " bstate null!" << std::endl;
-                continue;
-            }
-            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+            data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
             if (unitstate == nullptr) {
                 std::cout << table_addr << " height " << 0 << " unitstate null!" << std::endl;
                 continue;

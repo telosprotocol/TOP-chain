@@ -10,6 +10,8 @@
 #include "xevm_common/common.h"
 #include "xevm_common/data.h"
 
+#include <gsl/span>
+
 #include <array>
 #include <exception>
 #include <iomanip>
@@ -60,7 +62,7 @@ public:
     using Strictness = int;
 
     /// Construct a null node.
-    RLP() {}
+    RLP() = default;
 
     /// Construct a node of value given in the bytes.
     explicit RLP(bytesConstRef _d, Strictness _s = VeryStrict);
@@ -73,7 +75,7 @@ public:
     }
 
     /// Construct a node to read RLP data in the string.
-    explicit RLP(std::string const & _s, Strictness _st = VeryStrict) : RLP(bytesConstRef((xbyte_t const *)_s.data(), _s.size()), _st) {
+    explicit RLP(std::string const & _s, Strictness _st = VeryStrict) : RLP(bytesConstRef(reinterpret_cast<xbyte_t const *>(_s.data()), _s.size()), _st) {
     }
 
     /// The bare data of the RLP.
@@ -83,7 +85,7 @@ public:
     explicit operator bool() const { return !isNull(); }
 
     /// No value.
-    bool isNull() const { return m_data.size() == 0; }
+    bool isNull() const { return m_data.empty(); }
 
     /// Contains a zero-length string or zero-length list.
     bool isEmpty() const { return !isNull() && (m_data[0] == c_rlpDataImmLenStart || m_data[0] == c_rlpListStart); }
@@ -300,7 +302,7 @@ public:
         requireGood();
         auto p = payload();
         auto l = p.size();
-        if (!isData() || (l > _N::size && (_flags & FailIfTooBig)) || (l < _N::size && (_flags & FailIfTooSmall)))
+        if (!isData() || (l > _N::size() && (_flags & FailIfTooBig)) || (l < _N::size() && (_flags & FailIfTooSmall)))
         {
             if (_flags & ThrowOnFail)
                    assert(true); //todo
@@ -309,8 +311,8 @@ public:
         }
 
         _N ret;
-        size_t s = std::min<size_t>(_N::size, l);
-        memcpy(ret.data() + _N::size - s, p.data(), s);
+        size_t s = std::min<size_t>(_N::size(), l);
+        memcpy(ret.data() + _N::size() - s, p.data(), s);
         return ret;
     }
 
@@ -364,7 +366,9 @@ public:
     static xbytes_t encodeList(const xbytes_t & encoded) noexcept;
 
     /// Encodes a block of data.
-    static xbytes_t encode(const xbytes_t & data) noexcept;
+    // static xbytes_t encode(const xbytes_t & data);
+
+    static xbytes_t encode(gsl::span<xbyte_t const> bytes);
 
     /// Encodes a static array.
     template <std::size_t N>

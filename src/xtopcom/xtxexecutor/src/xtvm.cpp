@@ -19,18 +19,18 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
     const xcons_transaction_ptr_t & tx = input.get_tx();
     // execute the first tx
     {
-        std::string address = tx->get_account_addr();
-        base::xvaccount_t vaddr(address);
-        data::xunitstate_ptr_t unitstate = input.get_statectx()->load_unit_state(vaddr);
-        if (nullptr == unitstate) {
-            xwarn("xtvm_t::execute fail-load unit state.tx=%s", tx->dump().c_str());
+        common::xaccount_address_t address(tx->get_account_addr());
+        data::xaccountstate_ptr_t accountstate = input.get_statectx()->load_account_state(address);
+        if (nullptr == accountstate) {
+            xerror("xtvm_t::execute fail-load unit state.tx=%s", tx->dump().c_str());
             return enum_exec_error_load_state;
         }
-        if (unitstate->is_state_readonly()) {
+
+        if (accountstate->get_unitstate()->is_state_readonly()) {
             xerror("xtvm_t::execute fail-not same table unit state.tx=%s", tx->dump().c_str());
             return enum_exec_error_load_state;
         }
-        xaccount_vm_t accountvm(unitstate, input.get_statectx());  // TODO(jimmy)
+        xaccount_vm_t accountvm(accountstate, input.get_statectx());  // TODO(jimmy)
         int32_t ret = accountvm.execute(input, output);
         if (ret != xsuccess) {
             xwarn("xtvm_t::execute fail-vm execute.tx=%s,ret=%s", tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
@@ -40,18 +40,20 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
     }
     // execute the second inner table tx
     if (tx->is_send_tx() && tx->get_inner_table_flag()) {  // TODO(jimmy) only transfer now
-        std::string address = tx->get_target_addr();
-        base::xvaccount_t vaddr(address);
-        data::xunitstate_ptr_t unitstate = input.get_statectx()->load_unit_state(vaddr);
-        if (nullptr == unitstate) {
-            xwarn("xtvm_t::execute fail-load unit state.tx=%s", tx->dump().c_str());
+        common::xaccount_address_t address(tx->get_target_addr());
+
+        data::xaccountstate_ptr_t accountstate = input.get_statectx()->load_account_state(address);
+        if (nullptr == accountstate) {
+            xerror("xtvm_t::execute fail-load unit state.tx=%s", tx->dump().c_str());
             return enum_exec_error_load_state;
         }
-        if (unitstate->is_state_readonly()) {
+
+        if (accountstate->get_unitstate()->is_state_readonly()) {
             xerror("xtvm_t::execute fail-not same table unit state.tx=%s", tx->dump().c_str());
             return enum_exec_error_load_state;
         }
-        // make a mock recvtx
+
+        // TODO(jimmy) make a mock recvtx  performance
         base::xvaction_t srctx_action = data::xblockaction_build_t::make_tx_action(tx);
         base::xtx_receipt_ptr_t txreceipt = make_object_ptr<base::xtx_receipt_t>(srctx_action);
         data::xcons_transaction_ptr_t recvtx = make_object_ptr<data::xcons_transaction_t>(tx->get_transaction(), txreceipt);
@@ -59,7 +61,7 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
         xvm_input_t recv_input(input.get_statectx(), input.get_para(), recvtx);
         xvm_output_t recv_output;
 
-        xaccount_vm_t accountvm(unitstate, input.get_statectx());
+        xaccount_vm_t accountvm(accountstate, input.get_statectx());
         int32_t ret = accountvm.execute(recv_input, recv_output);  // TODO(jimmy) ignore recvtx output
         if (ret != xsuccess) {
             xerror("xtvm_t::execute fail-vm execute.tx=%s", tx->dump().c_str());

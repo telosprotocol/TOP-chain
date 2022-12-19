@@ -74,6 +74,10 @@ public:
         return 0;
     }
 
+    uint64_t get_latest_full_block_height(const base::xvaccount_t & account, const int atag = 0) override {
+        return 0;
+    }
+
     uint64_t get_latest_connected_block_height(const base::xvaccount_t & account,const int atag = 0) override {
         return 0;
     }
@@ -199,10 +203,6 @@ public:
 
     bool clean_caches(const base::xvaccount_t & account,const int atag = 0) override {
         return false;
-    }
-
-    base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_transaction_subtype,const int atag = 0) override {
-        return nullptr;
     }
 
     base::xauto_ptr<base::xvblock_t> get_block_by_hash(const std::string& hash) override {

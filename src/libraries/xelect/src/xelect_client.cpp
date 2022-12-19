@@ -98,18 +98,18 @@ void xelect_client_imp::bootstrap_node_join() {
                 std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
 
                 uint64_t nonce = 0;
-                uint64_t last_hash = 0;
+                // uint64_t last_hash = 0;
                 xJson::Value account_info_response_json;
                 if (!reader.parse(account_info_response_str, account_info_response_json) || account_info_response_json[xrpc::RPC_ERRNO].asInt() != xrpc::RPC_OK_CODE) {
                     xwarn("account_info_response_json error");
                 } else {
                     nonce = account_info_response_json["data"]["nonce"].asUInt64();
-                    std::string last_trans_hash = account_info_response_json["data"]["latest_tx_hash_xxhash64"].asString();
-                    last_hash = data::hex_to_uint64(last_trans_hash);
+                    // std::string last_trans_hash = account_info_response_json["data"]["latest_tx_hash_xxhash64"].asString();
+                    // last_hash = data::hex_to_uint64(last_trans_hash);
                 }
 
                 uint32_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
-                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.to_string(), nonce, last_hash, param, deposit);
+                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.to_string(), nonce, param, deposit);
 
                 tx->set_authorization(safebox::xsafebox_proxy::get_instance().get_proxy_secp256_signature(base::xstring_utl::base64_decode(user_params.publickey), tx->digest()));
                 tx->set_len();

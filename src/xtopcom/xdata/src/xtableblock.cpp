@@ -194,13 +194,7 @@ bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock
 }
 
 bool xtable_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
-    auto tx_actions =  data::xblockextract_t::unpack_txactions(this);
-    xassert(!tx_actions.empty());
-    xdbg("xtable_block_t::extract_sub_txs tx_action size:%zu, %s", tx_actions.size(), dump().c_str());
-    for (auto & txaction : tx_actions) {
-        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, txaction.get_org_tx_hash(), txaction.get_tx_subtype());
-        sub_txs.push_back(tx_index);
-    }
+    xblockextract_t::extract_sub_txs(this, sub_txs);
 
     return true;
 }

@@ -11,6 +11,7 @@
 #include "xmetrics/xmetrics.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xvledger/xvledger.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cassert>
 #include <cinttypes>
@@ -34,27 +35,26 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
                                                                                        static_cast<uint16_t>(0));
     return address_bstate;
 #else
-    xobject_ptr_t<base::xvbstate_t> address_bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(address.vaccount(), metrics::statestore_access_from_store_bstate);
-    if (address_bstate == nullptr) {
+    data::xunitstate_ptr_t unitstate = nullptr;//statestore::xstatestore_hub_t::instance()->get_unitstate(LatestConnectBlock, address); // TODO(jimmy)
+    if (unitstate == nullptr) {
         xerror("[state_accessor::state] get latest connectted state none, account=%s", address.to_string().c_str());
         top::error::throw_error(error::xenum_errc::load_account_state_failed);
         return nullptr;
     }
-    xdbg("[state_accessor::state] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), address_bstate->get_block_height());
-    return address_bstate;
+    xdbg("[state_accessor::state] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), unitstate->height());
+    return unitstate->get_bstate();
 #endif
 }
 
 static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & address, uint64_t const height) {
-    xobject_ptr_t<base::xvbstate_t> address_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(address.vaccount(), height);
-    if (address_bstate == nullptr) {
+    data::xunitstate_ptr_t unitstate = nullptr;//statestore::xstatestore_hub_t::instance()->get_unit_committed_state(address, height); // TODO(jimmy)
+    if (unitstate == nullptr) {
         xerror("[xtop_state_accessor::get_property] get committed state none at height %" PRIu64 ", account=%s", height, address.to_string().c_str());
         top::error::throw_error(error::xenum_errc::load_account_state_failed);
         return nullptr;
     }
-    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), address_bstate->get_block_height());
-    return address_bstate;
+    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), unitstate->height());
+    return unitstate->get_bstate();
 }
 
 xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data)
@@ -499,16 +499,14 @@ common::xaccount_address_t xtop_state_accessor::account_address() const {
 }
 
 xobject_ptr_t<base::xvbstate_t> xtop_state_accessor::state(common::xaccount_address_t const & address, std::error_code & ec) const {
-    base::xvaccount_t _vaddr(address.to_string());
-    xobject_ptr_t<base::xvbstate_t> address_bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr, metrics::statestore_access_from_store_bstate);
-    if (address_bstate == nullptr) {
+    data::xunitstate_ptr_t unitstate = nullptr;// statestore::xstatestore_hub_t::instance()->get_unitstate(LatestConnectBlock, address); // TODO(jimmy)
+    if (unitstate == nullptr) {
         xerror("[xtop_state_accessor::get_property] get latest connectted state none, account=%s", address.to_string().c_str());
         ec = error::xenum_errc::load_account_state_failed;
         return nullptr;
     }
-    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), address_bstate->get_block_height());
-    return address_bstate;
+    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), unitstate->height());
+    return unitstate->get_bstate();
 }
 
 uint64_t xtop_state_accessor::height() const {

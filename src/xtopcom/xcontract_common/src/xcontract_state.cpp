@@ -261,6 +261,7 @@ std::string const & xtop_contract_state::random_seed() const noexcept {
 
 uint256_t xtop_contract_state::latest_sendtx_hash(std::error_code & ec) const {
     assert(!ec);
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     auto r = get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
@@ -279,6 +280,7 @@ uint256_t xtop_contract_state::latest_sendtx_hash() const {
 
 void xtop_contract_state::latest_sendtx_hash(uint256_t hash, std::error_code & ec) {
     assert(!ec);
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH,
@@ -295,6 +297,7 @@ void xtop_contract_state::latest_sendtx_hash(uint256_t hash) {
 
 uint64_t xtop_contract_state::latest_sendtx_nonce(std::error_code & ec) const {
     assert(!ec);
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     auto r = get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM,
@@ -313,6 +316,7 @@ uint64_t xtop_contract_state::latest_sendtx_nonce() const {
 
 void xtop_contract_state::latest_sendtx_nonce(uint64_t nonce, std::error_code & ec) {
     assert(!ec);
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM,
@@ -345,6 +349,7 @@ void xtop_contract_state::latest_followup_tx_nonce(uint64_t nonce) {
 
 uint64_t xtop_contract_state::unconfirm_sendtx_num(std::error_code & ec) const {
     assert(!ec);
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     auto r = get_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM,
@@ -363,6 +368,7 @@ uint64_t xtop_contract_state::unconfirm_sendtx_num() const {
 
 void xtop_contract_state::unconfirm_sendtx_num(uint64_t num, std::error_code & ec) {
     assert(!ec);
+    // TODO(jimmy) XPROPERTY_TX_INFO should not be used
     set_property_cell_value<state_accessor::properties::xproperty_type_t::map>(
         state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system},
         data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM,

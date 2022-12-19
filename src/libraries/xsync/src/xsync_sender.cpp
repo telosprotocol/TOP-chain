@@ -49,9 +49,7 @@ void xsync_sender_t::send_gossip(const std::vector<xgossip_chain_info_ptr_t> &in
 
     for (auto& addr : lists) {
         xsync_dbg("xsync_sender_t send gossip %s -> %s", self_xip.to_string().c_str(), addr.to_string().c_str());
-        XMETRICS_COUNTER_INCREMENT("sync_pkgs_gossip_send", 1);
         XMETRICS_COUNTER_INCREMENT("sync_bytes_gossip_send", msg.payload().size());
-        XMETRICS_COUNTER_INCREMENT("sync_pkgs_out", 1);
         XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
         std::error_code ec;
         m_vhost->send_to(self_xip, addr, msg, ec);
@@ -81,9 +79,7 @@ void xsync_sender_t::send_frozen_gossip(const std::vector<xgossip_chain_info_ptr
     xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_frozen_gossip_send", 1);
     XMETRICS_COUNTER_INCREMENT("sync_bytes_frozen_gossip_send", msg.payload().size());
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_out", 1);
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
 
     common::xnode_address_t addr(common::build_frozen_sharding_address(self_xip.network_id()));
@@ -216,9 +212,7 @@ void xsync_sender_t::send_frozen_broadcast_chain_state(const std::vector<xchain_
     xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_frozen_broadcast_chain_state_send", 1);
     XMETRICS_COUNTER_INCREMENT("sync_bytes_frozen_broadcast_chain_state_send", msg.payload().size());
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_out", 1);
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
 
     common::xnode_address_t target_addr(common::build_frozen_sharding_address(self_addr.network_id()));
@@ -436,11 +430,8 @@ bool xsync_sender_t::send_message(
     xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
 
-    std::string pkg_metric_name = "sync_pkgs_" + metric_key + "_send";
     std::string bytes_metric_name = "sync_pkgs_" + metric_key + "_send";
-    XMETRICS_COUNTER_INCREMENT(pkg_metric_name, 1);
     XMETRICS_COUNTER_INCREMENT(bytes_metric_name, msg.payload().size());
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_out", 1);
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
     
     std::error_code ec;

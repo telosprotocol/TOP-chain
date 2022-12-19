@@ -9,7 +9,9 @@
 
 NS_BEG3(top, evm_common, trie)
 
-std::shared_ptr<xtop_secure_trie> xtop_secure_trie::build_from(xhash256_t root, xtrie_db_ptr_t db, std::error_code & ec) {
+std::shared_ptr<xtop_secure_trie> xtop_secure_trie::build_from(xh256_t const & root, observer_ptr<xtrie_db_t> const db, std::error_code & ec) {
+    assert(!ec);
+
     if (db == nullptr) {
         xerror("build secure trie from null db");
     }
@@ -85,23 +87,23 @@ xbytes_t xtop_secure_trie::get_key(xbytes_t const & shaKey) {
     }
     xdbg("xtop_secure_trie::GetKey find key from trie_db preimage");
     assert(m_trie != nullptr);
-    return m_trie->trie_db()->preimage(xhash256_t{shaKey});
+    return m_trie->trie_db()->preimage(xh256_t{shaKey});
 }
 
-std::pair<xhash256_t, int32_t> xtop_secure_trie::commit(std::error_code & ec) {
+std::pair<xh256_t, int32_t> xtop_secure_trie::commit(std::error_code & ec) {
     assert(m_trie != nullptr);
     // Write all the pre-images to the actual disk database
     auto const sc = get_sec_key_cache();
     if (!sc->empty()) {
         for (auto const & scp : *sc) {
-            m_trie->trie_db()->insertPreimage(xhash256_t{top::to_bytes(top::get<std::string const>(scp))}, top::get<xbytes_t>(scp));
+            m_trie->trie_db()->insertPreimage(xh256_t{top::to_bytes(top::get<std::string const>(scp))}, top::get<xbytes_t>(scp));
         }
         sc->clear();
     }
     return m_trie->commit(ec);
 }
 
-xhash256_t xtop_secure_trie::hash() {
+xh256_t xtop_secure_trie::hash() {
     assert(m_trie != nullptr);
     return m_trie->hash();
 }
@@ -116,7 +118,7 @@ xbytes_t xtop_secure_trie::hash_key(xbytes_t const & key) const {
     return hashbuf;
 }
 
-void xtop_secure_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) {
+void xtop_secure_trie::prune(xh256_t const & old_trie_root_hash, std::error_code & ec) {
     assert(!ec);
     assert(m_trie != nullptr);
 
@@ -130,5 +132,18 @@ void xtop_secure_trie::commit_pruned(std::error_code & ec) {
     m_trie->commit_pruned(ec);
 }
 
+void xtop_secure_trie::prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
+    assert(!ec);
+    assert(m_trie != nullptr);
+
+    m_trie->prune(old_trie_root_hash, pruned_hashes, ec);
+}
+
+void xtop_secure_trie::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) {
+    assert(!ec);
+    assert(m_trie != nullptr);
+
+    m_trie->commit_pruned(pruned_hashes, ec);
+}
 
 NS_END3

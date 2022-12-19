@@ -582,12 +582,12 @@ namespace top
                     }
                 }
             }
+            xdbg("xblockacct_t::query_index, fail: %s,height=%ld,viewid=%ld,cache_size=%zu", get_account().c_str(), height, viewid, m_all_blocks.size());
             return nullptr;
         }
 
         base::xvbindex_t*  xblockacct_t::query_index(const uint64_t height, const std::string & blockhash)
         {
-            xdbg("xblockacct_t::query_index, %s,%d", get_account().c_str(), m_all_blocks.size());
             if(false == m_all_blocks.empty())
             {
                 auto height_it = m_all_blocks.find(height);
@@ -599,13 +599,12 @@ namespace top
                         if(blockhash == view_it->second->get_block_hash())
                         {
                             view_it->second->add_ref();
-                            xdbg("xblockacct_t::query_index, hash check succ: %s,%s", get_account().c_str(), HexEncode(blockhash).c_str());
                             return view_it->second;
                         }
-                        xdbg("xblockacct_t::query_index, hash check fail: %s,%s", get_account().c_str(), HexEncode(blockhash).c_str());
                     }
                 }
             }
+            xdbg("xblockacct_t::query_index, fail: %s,height=%ld,hash=%s,cache_size=%zu", get_account().c_str(), height, HexEncode(blockhash).c_str(), m_all_blocks.size());
             return nullptr;
         }
 
@@ -628,6 +627,7 @@ namespace top
                     }
                 }
             }
+            xdbg("xblockacct_t::query_index, fail: %s,height=%ld,flag=%d,cache_size=%zu", get_account().c_str(), target_height, request_flag, m_all_blocks.size());
             return nullptr;
         }
 
@@ -1085,7 +1085,7 @@ namespace top
                 target_block = query_index(target_height, view_id);//query again after loaded
 
             if(NULL == target_block)
-                xwarn("xblockacct_t::load_index(viewid),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
+                xwarn("xblockacct_t::load_index(viewid),faild to load index for addr=%s,height=%ld,viewid=%ld", get_account().c_str(), target_height, view_id);
 
             return target_block;
         }
@@ -1118,7 +1118,7 @@ namespace top
                 target_block = query_index(target_height, block_hash);//query again after loaded
 
             if(NULL == target_block)
-                xdbg("xblockacct_t::load_index(hash),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
+                xdbg("xblockacct_t::load_index(hash),faild to load index for addr=%s,height=%ld", get_account().c_str(), target_height);
 
             return target_block;
         }
@@ -1151,7 +1151,7 @@ namespace top
                 target_block = query_index(target_height, request_flag);//query again after loaded
 
             if(NULL == target_block)
-                xdbg("xblockacct_t::load_index(flag),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
+                xdbg("xblockacct_t::load_index(flag),faild to load index for addr=%s,height=%ld", get_account().c_str(), target_height);
 
             return target_block;
         }
@@ -1220,7 +1220,7 @@ namespace top
                     //transfer flag of unpacked to existing if need
                     if(new_raw_block->check_block_flag(base::enum_xvblock_flag_unpacked))
                         exist_cert->set_block_flag(base::enum_xvblock_flag_unpacked);
-
+                    xwarn("xblockacct_t::store_block,duplicate block=%s",new_raw_block->dump().c_str());
                     return false;
                 }
             }
@@ -2678,7 +2678,7 @@ namespace top
             }
             //extra_relay_block.build_finish();
             evm_common::h256 hash = extra_relay_block.get_block_hash();
-            std::string block_hash_str((char*)hash.data(), hash.size);
+            std::string block_hash_str((char*)hash.data(), hash.size());
             xdbg("xrelay_plugin::create_index,block=%s,relay=%s", new_raw_block.dump().c_str(), extra_relay_block.dump().c_str());
             new_index->set_extend_data(block_hash_str);
             return new_index;
