@@ -9,8 +9,8 @@
 #include "xdata/xelect_transaction.hpp"
 #include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
-#include "xverifier/xverifier_errors.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_errors.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xvledger/xvaccount.h"
 
 #include <algorithm>

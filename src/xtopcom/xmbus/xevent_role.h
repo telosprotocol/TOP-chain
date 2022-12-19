@@ -1,7 +1,7 @@
 #pragma once
 
 #include "xmbus/xevent.h"
-#include "xvnetwork/xaddress.h"
+#include "xvnetwork/xvnetwork_driver_face.h"
 
 NS_BEG2(top, mbus)
 

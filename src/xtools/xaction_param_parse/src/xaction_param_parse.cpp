@@ -1,8 +1,10 @@
 #include "../xaction_param_parse.h"
 
-#include <iostream>
+#include "xbase/xcontext.h"
 #include "xdata/xaction.h"
 #include "xdata/xproperty.h"
+
+#include <iostream>
 
 void xaction_param_parse_tool::parse_action_param(std::string const& action_str, uint32_t action_type) {
     using namespace top::data;

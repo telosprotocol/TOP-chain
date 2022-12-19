@@ -32,7 +32,7 @@ using base::xstring_utl;
 const uint16_t EXPIRE_DURATION = 300;
 xrole_context_t::xrole_context_t(const observer_ptr<store::xsyncvstore_t> & syncstore,
                                  const std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face> & unit_service,
-                                 const std::shared_ptr<xvnetwork_driver_face_t> & driver,
+                                 const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & driver,
                                  xcontract_info_t * info)
   : m_syncstore(syncstore), m_unit_service(unit_service), m_driver(driver), m_contract_info(info) {
     XMETRICS_COUNTER_INCREMENT("xvm_contract_role_context_counter", 1);
@@ -43,7 +43,7 @@ xrole_context_t::~xrole_context_t() {
     delete m_contract_info;
 }
 
-void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_broadcasted) {
+void xrole_context_t::on_block_to_db(const data::xblock_ptr_t & block, bool & event_broadcasted) {
     if (!m_contract_info->has_monitors()) {
         return;
     }
@@ -61,7 +61,7 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
             base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, true);
 
-            auto const * full_tableblock = dynamic_cast<xfull_tableblock_t*>(full_block.get());
+            auto const * full_tableblock = dynamic_cast<data::xfull_tableblock_t*>(full_block.get());
             auto node_service = contract::xcontract_manager_t::instance().get_node_service();
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
             auto const statistic_accounts = fulltableblock_statistic_accounts(fulltable_statisitc_data, node_service);
@@ -75,7 +75,7 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
 
             xblock_monitor_info_t * info = m_contract_info->find(m_contract_info->address);
             uint32_t table_id = 0;
-            auto result = xdatautil::extract_table_id_from_address(block_owner, table_id);
+            auto result = data::xdatautil::extract_table_id_from_address(block_owner, table_id);
             assert(result);
             XMETRICS_GAUGE(metrics::xmetrics_tag_t::contract_table_fullblock_event, 1);
             on_fulltableblock_event(m_contract_info->address, "on_collect_statistic_info", action_params, block->get_timestamp(), (uint16_t)table_id);
@@ -132,15 +132,15 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
     }
 }
 
-void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
+void xrole_context_t::on_block_timer(const mbus::xevent_ptr_t & e) {
     if (!m_contract_info->has_monitors()) {
         return;
     }
     if (m_contract_info->has_block_monitors()) {
         auto event = (const mbus::xevent_chain_timer_ptr_t&) e;
         event->time_block->add_ref();
-        xblock_ptr_t block{};
-        block.attach((xblock_t*) event->time_block);
+        data::xblock_ptr_t block{};
+        block.attach((data::xblock_t*) event->time_block);
         xdbg("[xrole_context_t::on_block_timer] %s, %" PRIu64, block->get_account().c_str(), block->get_height());
 
         // on_relay_election_data_update(block->get_height(),block->get_timestamp());
@@ -351,7 +351,7 @@ void xrole_context_t:: call_contract(const uint64_t onchain_timer_round, xblock_
 bool xrole_context_t::is_timer_unorder(common::xaccount_address_t const & address, uint64_t timestamp) {
     if (address == timer_system_address) {
         auto block = m_syncstore->get_vblockstore()->get_latest_committed_block(address.to_string());
-        if (abs((int64_t)(((xblock_t *)block.get())->get_timestamp() - timestamp)) <= 3) {
+        if (abs((int64_t)(((data::xblock_t *)block.get())->get_timestamp() - timestamp)) <= 3) {
             return true;
         }
     }
@@ -360,14 +360,14 @@ bool xrole_context_t::is_timer_unorder(common::xaccount_address_t const & addres
 
 void xrole_context_t::call_contract(const std::string & action_params, uint64_t timestamp, xblock_monitor_info_t * info) {
     std::vector<common::xaccount_address_t> addresses;
-    if (is_sys_sharding_contract_address(m_contract_info->address)) {
+    if (data::is_sys_sharding_contract_address(m_contract_info->address)) {
         for (auto & tid : m_driver->table_ids()) {
             addresses.push_back(xcontract_address_map_t::calc_cluster_address(m_contract_info->address, tid));
         }
     } else {
         addresses.push_back(m_contract_info->address);
     }
-    xproperty_asset asset_out{0};
+    data::xproperty_asset asset_out{0};
     for (auto & address : addresses) {
         if (is_timer_unorder(address, timestamp)) {
             xinfo("[xrole_context_t] call_contract in consensus mode, address timer unorder, not create tx", address.to_string().c_str());
@@ -380,7 +380,7 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
             xerror("xrole_context_t::call_contract fail-query account.address=%s", address.to_string().c_str());
             return;            
         }
-        xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(
             address.to_string(),
                                                          accountindex.get_latest_tx_nonce(),
                                                          info->action, action_params, timestamp, EXPIRE_DURATION);
@@ -419,7 +419,7 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
         return;            
     }
 
-    xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
+    data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(
         address.to_string(),
                                                      accountindex.get_latest_tx_nonce(),
                                                      info->action, action_params, timestamp, EXPIRE_DURATION);
@@ -451,7 +451,7 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
         return;            
     }
 
-    xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
+    data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(
         address.to_string(), accountindex.get_latest_tx_nonce(), action_name, action_params, timestamp, EXPIRE_DURATION);
 
     auto const & driver_ids = m_driver->table_ids();
@@ -590,11 +590,11 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
 
 // todo(nathan):relay make contract already do this
 
-void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_type_t types) {
+void xrole_context_t::broadcast(const data::xblock_ptr_t & block_ptr, common::xnode_type_t types) {
     assert(block_ptr != nullptr);
     base::xstream_t stream(base::xcontext_t::instance());
     block_ptr->full_block_serialize_to(stream);
-    auto message = xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_block_broadcast_id);
+    auto message = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_block_broadcast_id);
 
     if (common::has<common::xnode_type_t::real_part_mask>(types)) {
         common::xnode_address_t dest{common::xcluster_address_t{m_driver->network_id()}};

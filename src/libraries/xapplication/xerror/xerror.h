@@ -7,10 +7,9 @@
 #include "xbase/xns_macro.h"
 
 #include <system_error>
+#include <type_traits>
 
-namespace top {
-namespace application {
-namespace error {
+NS_BEG3(top, application, error)
 
 enum class xenum_errc {
     successful,
@@ -29,9 +28,7 @@ std::error_condition make_error_condition(xerrc_t errc) noexcept;
 
 std::error_category const & application_category();
 
-}
-}
-}
+NS_END3
 
 namespace std {
 
@@ -45,11 +42,9 @@ struct hash<top::application::error::xerrc_t> final {
 #endif
 
 template <>
-struct is_error_code_enum<top::application::error::xerrc_t> : std::true_type {
-};
+struct is_error_code_enum<::top::application::error::xerrc_t> : ::std::true_type {};
 
 template <>
-struct is_error_condition_enum<top::application::error::xerrc_t> : std::true_type {
-};
+struct is_error_condition_enum<::top::application::error::xerrc_t> : ::std::true_type {};
 
-}
+}  // namespace ::std

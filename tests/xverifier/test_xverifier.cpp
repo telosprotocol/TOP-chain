@@ -2,7 +2,7 @@
 #include "xtxexecutor/xunit_service_error.h"
 
 #include "xconfig/xconfig_register.h"
-#include "xverifier/xblacklist_verifier.h"
+#include "xdata/xverifier/xblacklist_verifier.h"
 #include "xconfig/xconfig_face.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xtransaction_maker.hpp"
@@ -10,12 +10,12 @@
 #include "xdata/xtransaction_v1.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
-#include "xverifier/xtx_verifier.h"
-#include "xverifier/xverifier_errors.h"
+#include "xdata/xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xverifier_errors.h"
 #include "xrpc/xuint_format.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 using namespace top;
 using namespace top::xverifier;

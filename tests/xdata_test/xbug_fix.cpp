@@ -16,7 +16,7 @@ TEST(bug_fix, top_4103) {
     std::error_code ec;
     auto st = egr.start_time(ec);
     ASSERT_TRUE(ec);
-    ASSERT_EQ(ec.category(), top::data::error::data_category());
+    ASSERT_TRUE(ec.category() == top::data::error::data_category());
     ASSERT_EQ(ec.value(), static_cast<int>(top::data::error::xerrc_t::election_data_start_time_invalid));
     ec.clear();
 
@@ -33,7 +33,7 @@ TEST(bug_fix, top_4103) {
     ASSERT_THROW(egr.start_time(new_st1), top::error::xtop_error_t);
     egr.start_time(new_st1, ec);
     ASSERT_TRUE(ec);
-    ASSERT_EQ(ec.category(), top::data::error::data_category());
+    ASSERT_TRUE(ec.category() == top::data::error::data_category());
     ASSERT_EQ(ec.value(), static_cast<int>(top::data::error::xerrc_t::election_data_start_time_invalid));
     ec.clear();
 
@@ -45,7 +45,7 @@ TEST(bug_fix, top_4103) {
     ASSERT_THROW(egr.start_time(top::common::xjudgement_day), top::error::xtop_error_t);
     egr.start_time(top::common::xjudgement_day, ec);
     ASSERT_TRUE(ec);
-    ASSERT_EQ(ec.category(), top::data::error::data_category());
+    ASSERT_TRUE(ec.category() == top::data::error::data_category());
     ASSERT_EQ(ec.value(), static_cast<int>(top::data::error::xerrc_t::election_data_start_time_invalid));
     ec.clear();
 

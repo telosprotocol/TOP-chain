@@ -16,9 +16,9 @@ using namespace top::data;
 using namespace top::mock;
 
 // 1shard(5node)
-static xJson::Value build_validators() {
+static Json::Value build_validators() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -87,7 +87,7 @@ TEST(xsync_peer_keeper, test_shard) {
     xsync_peerset_t peerset("");
     xsync_peer_keeper_t peer_keeper("", &sync_store, &role_chains_mgr, &role_xips_mgr, &sync_sender, &peerset);
 
-    xJson::Value validators = build_validators();
+    Json::Value validators = build_validators();
     xmock_network_config_t cfg_network(validators);
     xmock_network_t network(cfg_network);
 

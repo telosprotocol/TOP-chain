@@ -470,7 +470,7 @@ namespace SimpleWeb {
         if(!lock)
           return;
         if((!ec || ec == asio::error::not_found) && session->response->streambuf.size() == session->response->streambuf.max_size()) {
-          session->callback(session->connection, make_error_code::make_error_code(errc::message_size));
+          session->callback(session->connection, make_error_code::make_error_code(std::errc::message_size));
           return;
         }
         if(!ec) {
@@ -478,7 +478,7 @@ namespace SimpleWeb {
           std::size_t num_additional_bytes = session->response->streambuf.size() - bytes_transferred;
 
           if(!ResponseMessage::parse(session->response->content, session->response->http_version, session->response->status_code, session->response->header)) {
-            session->callback(session->connection, make_error_code::make_error_code(errc::protocol_error));
+            session->callback(session->connection, make_error_code::make_error_code(std::errc::protocol_error));
             return;
           }
 

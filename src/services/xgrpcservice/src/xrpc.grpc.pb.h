@@ -6,23 +6,25 @@
 
 #include "xrpc.pb.h"
 
+#include <functional>
+#include <grpc/impl/codegen/port_platform.h>
 #include <grpcpp/impl/codegen/async_generic_service.h>
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
-#include <grpcpp/impl/codegen/method_handler_impl.h>
+#include <grpcpp/impl/codegen/client_callback.h>
+#include <grpcpp/impl/codegen/client_context.h>
+#include <grpcpp/impl/codegen/completion_queue.h>
+#include <grpcpp/impl/codegen/message_allocator.h>
+#include <grpcpp/impl/codegen/method_handler.h>
 #include <grpcpp/impl/codegen/proto_utils.h>
 #include <grpcpp/impl/codegen/rpc_method.h>
+#include <grpcpp/impl/codegen/server_callback.h>
+#include <grpcpp/impl/codegen/server_callback_handlers.h>
+#include <grpcpp/impl/codegen/server_context.h>
 #include <grpcpp/impl/codegen/service_type.h>
 #include <grpcpp/impl/codegen/status.h>
 #include <grpcpp/impl/codegen/stub_options.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
-
-namespace grpc {
-class CompletionQueue;
-class Channel;
-class ServerCompletionQueue;
-class ServerContext;
-}  // namespace grpc
 
 namespace top {
 
@@ -50,6 +52,34 @@ class xrpc_service final {
     std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::top::xrpc_reply>> PrepareAsynctable_stream(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::top::xrpc_reply>>(PrepareAsynctable_streamRaw(context, request, cq));
     }
+    class experimental_async_interface {
+     public:
+      virtual ~experimental_async_interface() {}
+      virtual void call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void table_stream(::grpc::ClientContext* context, ::top::xrpc_request* request, ::grpc::ClientReadReactor< ::top::xrpc_reply>* reactor) = 0;
+      #else
+      virtual void table_stream(::grpc::ClientContext* context, ::top::xrpc_request* request, ::grpc::experimental::ClientReadReactor< ::top::xrpc_reply>* reactor) = 0;
+      #endif
+    };
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    typedef class experimental_async_interface async_interface;
+    #endif
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    async_interface* async() { return experimental_async(); }
+    #endif
+    virtual class experimental_async_interface* experimental_async() { return nullptr; }
   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::top::xrpc_reply>* AsynccallRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::top::xrpc_reply>* PrepareAsynccallRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) = 0;
@@ -76,9 +106,37 @@ class xrpc_service final {
     std::unique_ptr< ::grpc::ClientAsyncReader< ::top::xrpc_reply>> PrepareAsynctable_stream(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncReader< ::top::xrpc_reply>>(PrepareAsynctable_streamRaw(context, request, cq));
     }
+    class experimental_async final :
+      public StubInterface::experimental_async_interface {
+     public:
+      void call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, std::function<void(::grpc::Status)>) override;
+      void call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void table_stream(::grpc::ClientContext* context, ::top::xrpc_request* request, ::grpc::ClientReadReactor< ::top::xrpc_reply>* reactor) override;
+      #else
+      void table_stream(::grpc::ClientContext* context, ::top::xrpc_request* request, ::grpc::experimental::ClientReadReactor< ::top::xrpc_reply>* reactor) override;
+      #endif
+     private:
+      friend class Stub;
+      explicit experimental_async(Stub* stub): stub_(stub) { }
+      Stub* stub() { return stub_; }
+      Stub* stub_;
+    };
+    class experimental_async_interface* experimental_async() override { return &async_stub_; }
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
+    class experimental_async async_stub_{this};
     ::grpc::ClientAsyncResponseReader< ::top::xrpc_reply>* AsynccallRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::top::xrpc_reply>* PrepareAsynccallRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientReader< ::top::xrpc_reply>* table_streamRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request) override;
@@ -99,7 +157,7 @@ class xrpc_service final {
   template <class BaseClass>
   class WithAsyncMethod_call : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_call() {
       ::grpc::Service::MarkMethodAsync(0);
@@ -108,7 +166,7 @@ class xrpc_service final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status call(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response) override {
+    ::grpc::Status call(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -119,7 +177,7 @@ class xrpc_service final {
   template <class BaseClass>
   class WithAsyncMethod_table_stream : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_table_stream() {
       ::grpc::Service::MarkMethodAsync(1);
@@ -128,7 +186,7 @@ class xrpc_service final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status table_stream(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::grpc::ServerWriter< ::top::xrpc_reply>* writer) override {
+    ::grpc::Status table_stream(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::grpc::ServerWriter< ::top::xrpc_reply>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -138,9 +196,99 @@ class xrpc_service final {
   };
   typedef WithAsyncMethod_call<WithAsyncMethod_table_stream<Service > > AsyncService;
   template <class BaseClass>
+  class ExperimentalWithCallbackMethod_call : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_call() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(0,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::top::xrpc_request, ::top::xrpc_reply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::top::xrpc_request* request, ::top::xrpc_reply* response) { return this->call(context, request, response); }));}
+    void SetMessageAllocatorFor_call(
+        ::grpc::experimental::MessageAllocator< ::top::xrpc_request, ::top::xrpc_reply>* allocator) {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(0);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(0);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::top::xrpc_request, ::top::xrpc_reply>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~ExperimentalWithCallbackMethod_call() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status call(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* call(
+      ::grpc::CallbackServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* call(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_table_stream : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_table_stream() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(1,
+          new ::grpc_impl::internal::CallbackServerStreamingHandler< ::top::xrpc_request, ::top::xrpc_reply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::top::xrpc_request* request) { return this->table_stream(context, request); }));
+    }
+    ~ExperimentalWithCallbackMethod_table_stream() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status table_stream(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::grpc::ServerWriter< ::top::xrpc_reply>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerWriteReactor< ::top::xrpc_reply>* table_stream(
+      ::grpc::CallbackServerContext* /*context*/, const ::top::xrpc_request* /*request*/)
+    #else
+    virtual ::grpc::experimental::ServerWriteReactor< ::top::xrpc_reply>* table_stream(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::top::xrpc_request* /*request*/)
+    #endif
+      { return nullptr; }
+  };
+  #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+  typedef ExperimentalWithCallbackMethod_call<ExperimentalWithCallbackMethod_table_stream<Service > > CallbackService;
+  #endif
+
+  typedef ExperimentalWithCallbackMethod_call<ExperimentalWithCallbackMethod_table_stream<Service > > ExperimentalCallbackService;
+  template <class BaseClass>
   class WithGenericMethod_call : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_call() {
       ::grpc::Service::MarkMethodGeneric(0);
@@ -149,7 +297,7 @@ class xrpc_service final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status call(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response) override {
+    ::grpc::Status call(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -157,7 +305,7 @@ class xrpc_service final {
   template <class BaseClass>
   class WithGenericMethod_table_stream : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_table_stream() {
       ::grpc::Service::MarkMethodGeneric(1);
@@ -166,7 +314,7 @@ class xrpc_service final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status table_stream(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::grpc::ServerWriter< ::top::xrpc_reply>* writer) override {
+    ::grpc::Status table_stream(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::grpc::ServerWriter< ::top::xrpc_reply>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -174,7 +322,7 @@ class xrpc_service final {
   template <class BaseClass>
   class WithRawMethod_call : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_call() {
       ::grpc::Service::MarkMethodRaw(0);
@@ -183,7 +331,7 @@ class xrpc_service final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status call(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response) override {
+    ::grpc::Status call(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -194,7 +342,7 @@ class xrpc_service final {
   template <class BaseClass>
   class WithRawMethod_table_stream : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_table_stream() {
       ::grpc::Service::MarkMethodRaw(1);
@@ -203,7 +351,7 @@ class xrpc_service final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status table_stream(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::grpc::ServerWriter< ::top::xrpc_reply>* writer) override {
+    ::grpc::Status table_stream(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::grpc::ServerWriter< ::top::xrpc_reply>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -212,19 +360,102 @@ class xrpc_service final {
     }
   };
   template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_call : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_call() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(0,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->call(context, request, response); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_call() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status call(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* call(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* call(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_table_stream : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_table_stream() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(1,
+          new ::grpc_impl::internal::CallbackServerStreamingHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const::grpc::ByteBuffer* request) { return this->table_stream(context, request); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_table_stream() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status table_stream(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::grpc::ServerWriter< ::top::xrpc_reply>* /*writer*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerWriteReactor< ::grpc::ByteBuffer>* table_stream(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
+    #else
+    virtual ::grpc::experimental::ServerWriteReactor< ::grpc::ByteBuffer>* table_stream(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
   class WithStreamedUnaryMethod_call : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_call() {
       ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::StreamedUnaryHandler< ::top::xrpc_request, ::top::xrpc_reply>(std::bind(&WithStreamedUnaryMethod_call<BaseClass>::Streamedcall, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::top::xrpc_request, ::top::xrpc_reply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::top::xrpc_request, ::top::xrpc_reply>* streamer) {
+                       return this->Streamedcall(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_call() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status call(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response) override {
+    ::grpc::Status call(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::top::xrpc_reply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -235,17 +466,24 @@ class xrpc_service final {
   template <class BaseClass>
   class WithSplitStreamingMethod_table_stream : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithSplitStreamingMethod_table_stream() {
       ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::SplitServerStreamingHandler< ::top::xrpc_request, ::top::xrpc_reply>(std::bind(&WithSplitStreamingMethod_table_stream<BaseClass>::Streamedtable_stream, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::SplitServerStreamingHandler<
+          ::top::xrpc_request, ::top::xrpc_reply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerSplitStreamer<
+                     ::top::xrpc_request, ::top::xrpc_reply>* streamer) {
+                       return this->Streamedtable_stream(context,
+                         streamer);
+                  }));
     }
     ~WithSplitStreamingMethod_table_stream() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status table_stream(::grpc::ServerContext* context, const ::top::xrpc_request* request, ::grpc::ServerWriter< ::top::xrpc_reply>* writer) override {
+    ::grpc::Status table_stream(::grpc::ServerContext* /*context*/, const ::top::xrpc_request* /*request*/, ::grpc::ServerWriter< ::top::xrpc_reply>* /*writer*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }

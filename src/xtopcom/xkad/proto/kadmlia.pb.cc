@@ -5,344 +5,314 @@
 
 #include <algorithm>
 
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/port.h>
 #include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/wire_format_lite_inl.h>
+#include <google/protobuf/extension_set.h>
+#include <google/protobuf/wire_format_lite.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/generated_message_reflection.h>
 #include <google/protobuf/reflection_ops.h>
 #include <google/protobuf/wire_format.h>
-// This is a temporary google only hack
-#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-#include "third_party/protobuf/version.h"
-#endif
 // @@protoc_insertion_point(includes)
-
-namespace protobuf_kadmlia_2eproto {
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_kadmlia_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_NodeInfo;
-}  // namespace protobuf_kadmlia_2eproto
+#include <google/protobuf/port_def.inc>
+extern PROTOBUF_INTERNAL_EXPORT_kadmlia_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_NodeInfo_kadmlia_2eproto;
 namespace top {
 namespace kadmlia {
 namespace protobuf {
 class BootstrapJoinRequestDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<BootstrapJoinRequest>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<BootstrapJoinRequest> _instance;
 } _BootstrapJoinRequest_default_instance_;
 class BootstrapJoinResponseDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<BootstrapJoinResponse>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<BootstrapJoinResponse> _instance;
 } _BootstrapJoinResponse_default_instance_;
 class HandshakeDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Handshake>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Handshake> _instance;
 } _Handshake_default_instance_;
 class NodeInfoDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<NodeInfo>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<NodeInfo> _instance;
 } _NodeInfo_default_instance_;
 class FindClosestNodesRequestDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<FindClosestNodesRequest>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<FindClosestNodesRequest> _instance;
 } _FindClosestNodesRequest_default_instance_;
 class FindClosestNodesResponseDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<FindClosestNodesResponse>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<FindClosestNodesResponse> _instance;
 } _FindClosestNodesResponse_default_instance_;
 class RootCompleteNodeResponseDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<RootCompleteNodeResponse>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<RootCompleteNodeResponse> _instance;
 } _RootCompleteNodeResponse_default_instance_;
 class RootCacheElectNodesRequestDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<RootCacheElectNodesRequest>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<RootCacheElectNodesRequest> _instance;
 } _RootCacheElectNodesRequest_default_instance_;
 class RootCacheElectNodesResponseDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<RootCacheElectNodesResponse>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<RootCacheElectNodesResponse> _instance;
 } _RootCacheElectNodesResponse_default_instance_;
 class RootMessageDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<RootMessage>
-      _instance;
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<RootMessage> _instance;
 } _RootMessage_default_instance_;
 }  // namespace protobuf
 }  // namespace kadmlia
 }  // namespace top
-namespace protobuf_kadmlia_2eproto {
-static void InitDefaultsBootstrapJoinRequest() {
+static void InitDefaultsscc_info_BootstrapJoinRequest_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
     void* ptr = &::top::kadmlia::protobuf::_BootstrapJoinRequest_default_instance_;
     new (ptr) ::top::kadmlia::protobuf::BootstrapJoinRequest();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::top::kadmlia::protobuf::BootstrapJoinRequest::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_BootstrapJoinRequest =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsBootstrapJoinRequest}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_BootstrapJoinRequest_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_BootstrapJoinRequest_kadmlia_2eproto}, {}};
 
-static void InitDefaultsBootstrapJoinResponse() {
+static void InitDefaultsscc_info_BootstrapJoinResponse_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
     void* ptr = &::top::kadmlia::protobuf::_BootstrapJoinResponse_default_instance_;
     new (ptr) ::top::kadmlia::protobuf::BootstrapJoinResponse();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::top::kadmlia::protobuf::BootstrapJoinResponse::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_BootstrapJoinResponse =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsBootstrapJoinResponse}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_BootstrapJoinResponse_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_BootstrapJoinResponse_kadmlia_2eproto}, {}};
 
-static void InitDefaultsHandshake() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::top::kadmlia::protobuf::_Handshake_default_instance_;
-    new (ptr) ::top::kadmlia::protobuf::Handshake();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::top::kadmlia::protobuf::Handshake::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_Handshake =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsHandshake}, {}};
-
-static void InitDefaultsNodeInfo() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::top::kadmlia::protobuf::_NodeInfo_default_instance_;
-    new (ptr) ::top::kadmlia::protobuf::NodeInfo();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::top::kadmlia::protobuf::NodeInfo::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_NodeInfo =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsNodeInfo}, {}};
-
-static void InitDefaultsFindClosestNodesRequest() {
+static void InitDefaultsscc_info_FindClosestNodesRequest_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
     void* ptr = &::top::kadmlia::protobuf::_FindClosestNodesRequest_default_instance_;
     new (ptr) ::top::kadmlia::protobuf::FindClosestNodesRequest();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::top::kadmlia::protobuf::FindClosestNodesRequest::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<1> scc_info_FindClosestNodesRequest =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsFindClosestNodesRequest}, {
-      &protobuf_kadmlia_2eproto::scc_info_NodeInfo.base,}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_FindClosestNodesRequest_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_FindClosestNodesRequest_kadmlia_2eproto}, {
+      &scc_info_NodeInfo_kadmlia_2eproto.base,}};
 
-static void InitDefaultsFindClosestNodesResponse() {
+static void InitDefaultsscc_info_FindClosestNodesResponse_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
     void* ptr = &::top::kadmlia::protobuf::_FindClosestNodesResponse_default_instance_;
     new (ptr) ::top::kadmlia::protobuf::FindClosestNodesResponse();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::top::kadmlia::protobuf::FindClosestNodesResponse::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<1> scc_info_FindClosestNodesResponse =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsFindClosestNodesResponse}, {
-      &protobuf_kadmlia_2eproto::scc_info_NodeInfo.base,}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_FindClosestNodesResponse_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_FindClosestNodesResponse_kadmlia_2eproto}, {
+      &scc_info_NodeInfo_kadmlia_2eproto.base,}};
 
-static void InitDefaultsRootCompleteNodeResponse() {
+static void InitDefaultsscc_info_Handshake_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::top::kadmlia::protobuf::_RootCompleteNodeResponse_default_instance_;
-    new (ptr) ::top::kadmlia::protobuf::RootCompleteNodeResponse();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    void* ptr = &::top::kadmlia::protobuf::_Handshake_default_instance_;
+    new (ptr) ::top::kadmlia::protobuf::Handshake();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::top::kadmlia::protobuf::RootCompleteNodeResponse::InitAsDefaultInstance();
+  ::top::kadmlia::protobuf::Handshake::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<1> scc_info_RootCompleteNodeResponse =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsRootCompleteNodeResponse}, {
-      &protobuf_kadmlia_2eproto::scc_info_NodeInfo.base,}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Handshake_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_Handshake_kadmlia_2eproto}, {}};
 
-static void InitDefaultsRootCacheElectNodesRequest() {
+static void InitDefaultsscc_info_NodeInfo_kadmlia_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::top::kadmlia::protobuf::_NodeInfo_default_instance_;
+    new (ptr) ::top::kadmlia::protobuf::NodeInfo();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::top::kadmlia::protobuf::NodeInfo::InitAsDefaultInstance();
+}
+
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_NodeInfo_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_NodeInfo_kadmlia_2eproto}, {}};
+
+static void InitDefaultsscc_info_RootCacheElectNodesRequest_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
     void* ptr = &::top::kadmlia::protobuf::_RootCacheElectNodesRequest_default_instance_;
     new (ptr) ::top::kadmlia::protobuf::RootCacheElectNodesRequest();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::top::kadmlia::protobuf::RootCacheElectNodesRequest::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_RootCacheElectNodesRequest =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsRootCacheElectNodesRequest}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_RootCacheElectNodesRequest_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_RootCacheElectNodesRequest_kadmlia_2eproto}, {}};
 
-static void InitDefaultsRootCacheElectNodesResponse() {
+static void InitDefaultsscc_info_RootCacheElectNodesResponse_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
     void* ptr = &::top::kadmlia::protobuf::_RootCacheElectNodesResponse_default_instance_;
     new (ptr) ::top::kadmlia::protobuf::RootCacheElectNodesResponse();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::top::kadmlia::protobuf::RootCacheElectNodesResponse::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<1> scc_info_RootCacheElectNodesResponse =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsRootCacheElectNodesResponse}, {
-      &protobuf_kadmlia_2eproto::scc_info_NodeInfo.base,}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_RootCacheElectNodesResponse_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_RootCacheElectNodesResponse_kadmlia_2eproto}, {
+      &scc_info_NodeInfo_kadmlia_2eproto.base,}};
 
-static void InitDefaultsRootMessage() {
+static void InitDefaultsscc_info_RootCompleteNodeResponse_kadmlia_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::top::kadmlia::protobuf::_RootCompleteNodeResponse_default_instance_;
+    new (ptr) ::top::kadmlia::protobuf::RootCompleteNodeResponse();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::top::kadmlia::protobuf::RootCompleteNodeResponse::InitAsDefaultInstance();
+}
+
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_RootCompleteNodeResponse_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_RootCompleteNodeResponse_kadmlia_2eproto}, {
+      &scc_info_NodeInfo_kadmlia_2eproto.base,}};
+
+static void InitDefaultsscc_info_RootMessage_kadmlia_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
     void* ptr = &::top::kadmlia::protobuf::_RootMessage_default_instance_;
     new (ptr) ::top::kadmlia::protobuf::RootMessage();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
   }
   ::top::kadmlia::protobuf::RootMessage::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_RootMessage =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsRootMessage}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_RootMessage_kadmlia_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_RootMessage_kadmlia_2eproto}, {}};
 
-void InitDefaults() {
-  ::google::protobuf::internal::InitSCC(&scc_info_BootstrapJoinRequest.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_BootstrapJoinResponse.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_Handshake.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_NodeInfo.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_FindClosestNodesRequest.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_FindClosestNodesResponse.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_RootCompleteNodeResponse.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_RootCacheElectNodesRequest.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_RootCacheElectNodesResponse.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_RootMessage.base);
-}
+static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_kadmlia_2eproto[10];
+static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_kadmlia_2eproto = nullptr;
+static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_kadmlia_2eproto = nullptr;
 
-::google::protobuf::Metadata file_level_metadata[10];
-
-const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinRequest, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinRequest, _internal_metadata_),
+const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_kadmlia_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinRequest, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinRequest, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinRequest, xid_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinRequest, xid_),
   0,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, public_ip_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, public_port_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, bootstrap_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, xid_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, public_ip_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, public_port_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, bootstrap_id_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::BootstrapJoinResponse, xid_),
   0,
   3,
   1,
   2,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, public_ip_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, public_port_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, xid_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, type_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, public_ip_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, public_port_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::Handshake, xid_),
   2,
   0,
   3,
   1,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, public_ip_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, public_port_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, xid_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, public_ip_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, public_port_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, id_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::NodeInfo, xid_),
   0,
   3,
   1,
   2,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, count_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, target_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, bloomfilter_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, src_nodeinfo_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, count_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, target_id_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, bloomfilter_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesRequest, src_nodeinfo_),
   2,
   0,
   ~0u,
   1,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, nodes_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, public_ip_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, public_port_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, nodes_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, public_ip_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::FindClosestNodesResponse, public_port_),
   ~0u,
   0,
   1,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCompleteNodeResponse, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCompleteNodeResponse, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCompleteNodeResponse, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCompleteNodeResponse, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCompleteNodeResponse, nodes_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCompleteNodeResponse, nodes_),
   0,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, des_service_type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, count_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, des_service_type_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesRequest, count_),
   0,
   1,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesResponse, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesResponse, _internal_metadata_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesResponse, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesResponse, nodes_),
-  ~0u,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootCacheElectNodesResponse, nodes_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, message_type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, data_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, message_type_),
+  PROTOBUF_FIELD_OFFSET(::top::kadmlia::protobuf::RootMessage, data_),
   1,
   0,
 };
-static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, 6, sizeof(::top::kadmlia::protobuf::BootstrapJoinRequest)},
   { 7, 16, sizeof(::top::kadmlia::protobuf::BootstrapJoinResponse)},
   { 20, 29, sizeof(::top::kadmlia::protobuf::Handshake)},
@@ -351,84 +321,71 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROT
   { 59, 67, sizeof(::top::kadmlia::protobuf::FindClosestNodesResponse)},
   { 70, 76, sizeof(::top::kadmlia::protobuf::RootCompleteNodeResponse)},
   { 77, 84, sizeof(::top::kadmlia::protobuf::RootCacheElectNodesRequest)},
-  { 86, 92, sizeof(::top::kadmlia::protobuf::RootCacheElectNodesResponse)},
-  { 93, 100, sizeof(::top::kadmlia::protobuf::RootMessage)},
+  { 86, -1, sizeof(::top::kadmlia::protobuf::RootCacheElectNodesResponse)},
+  { 92, 99, sizeof(::top::kadmlia::protobuf::RootMessage)},
 };
 
-static ::google::protobuf::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_BootstrapJoinRequest_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_BootstrapJoinResponse_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_Handshake_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_NodeInfo_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_FindClosestNodesRequest_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_FindClosestNodesResponse_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_RootCompleteNodeResponse_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_RootCacheElectNodesRequest_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_RootCacheElectNodesResponse_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::kadmlia::protobuf::_RootMessage_default_instance_),
+static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_BootstrapJoinRequest_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_BootstrapJoinResponse_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_Handshake_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_NodeInfo_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_FindClosestNodesRequest_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_FindClosestNodesResponse_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_RootCompleteNodeResponse_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_RootCacheElectNodesRequest_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_RootCacheElectNodesResponse_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::top::kadmlia::protobuf::_RootMessage_default_instance_),
 };
 
-void protobuf_AssignDescriptors() {
-  AddDescriptors();
-  AssignDescriptors(
-      "kadmlia.proto", schemas, file_default_instances, TableStruct::offsets,
-      file_level_metadata, NULL, NULL);
-}
+const char descriptor_table_protodef_kadmlia_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
+  "\n\rkadmlia.proto\022\024top.kadmlia.protobuf\"#\n"
+  "\024BootstrapJoinRequest\022\013\n\003xid\030\001 \001(\014\"b\n\025Bo"
+  "otstrapJoinResponse\022\021\n\tpublic_ip\030\001 \001(\014\022\023"
+  "\n\013public_port\030\002 \001(\005\022\024\n\014bootstrap_id\030\003 \001("
+  "\014\022\013\n\003xid\030\004 \001(\014\"N\n\tHandshake\022\014\n\004type\030\001 \001("
+  "\005\022\021\n\tpublic_ip\030\002 \001(\014\022\023\n\013public_port\030\003 \001("
+  "\005\022\013\n\003xid\030\004 \001(\014\"K\n\010NodeInfo\022\021\n\tpublic_ip\030"
+  "\001 \001(\014\022\023\n\013public_port\030\002 \001(\005\022\n\n\002id\030\003 \001(\014\022\013"
+  "\n\003xid\030\004 \001(\014\"\206\001\n\027FindClosestNodesRequest\022"
+  "\r\n\005count\030\001 \001(\r\022\021\n\ttarget_id\030\002 \001(\014\022\023\n\013blo"
+  "omfilter\030\003 \003(\004\0224\n\014src_nodeinfo\030\004 \001(\0132\036.t"
+  "op.kadmlia.protobuf.NodeInfo\"q\n\030FindClos"
+  "estNodesResponse\022-\n\005nodes\030\001 \003(\0132\036.top.ka"
+  "dmlia.protobuf.NodeInfo\022\021\n\tpublic_ip\030\002 \001"
+  "(\014\022\023\n\013public_port\030\003 \001(\005\"I\n\030RootCompleteN"
+  "odeResponse\022-\n\005nodes\030\001 \001(\0132\036.top.kadmlia"
+  ".protobuf.NodeInfo\"E\n\032RootCacheElectNode"
+  "sRequest\022\030\n\020des_service_type\030\001 \001(\004\022\r\n\005co"
+  "unt\030\002 \001(\r\"L\n\033RootCacheElectNodesResponse"
+  "\022-\n\005nodes\030\001 \003(\0132\036.top.kadmlia.protobuf.N"
+  "odeInfo\"1\n\013RootMessage\022\024\n\014message_type\030\001"
+  " \001(\r\022\014\n\004data\030\002 \001(\014"
+  ;
+static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_kadmlia_2eproto_deps[1] = {
+};
+static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_kadmlia_2eproto_sccs[10] = {
+  &scc_info_BootstrapJoinRequest_kadmlia_2eproto.base,
+  &scc_info_BootstrapJoinResponse_kadmlia_2eproto.base,
+  &scc_info_FindClosestNodesRequest_kadmlia_2eproto.base,
+  &scc_info_FindClosestNodesResponse_kadmlia_2eproto.base,
+  &scc_info_Handshake_kadmlia_2eproto.base,
+  &scc_info_NodeInfo_kadmlia_2eproto.base,
+  &scc_info_RootCacheElectNodesRequest_kadmlia_2eproto.base,
+  &scc_info_RootCacheElectNodesResponse_kadmlia_2eproto.base,
+  &scc_info_RootCompleteNodeResponse_kadmlia_2eproto.base,
+  &scc_info_RootMessage_kadmlia_2eproto.base,
+};
+static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_kadmlia_2eproto_once;
+const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_kadmlia_2eproto = {
+  false, false, descriptor_table_protodef_kadmlia_2eproto, "kadmlia.proto", 858,
+  &descriptor_table_kadmlia_2eproto_once, descriptor_table_kadmlia_2eproto_sccs, descriptor_table_kadmlia_2eproto_deps, 10, 0,
+  schemas, file_default_instances, TableStruct_kadmlia_2eproto::offsets,
+  file_level_metadata_kadmlia_2eproto, 10, file_level_enum_descriptors_kadmlia_2eproto, file_level_service_descriptors_kadmlia_2eproto,
+};
 
-void protobuf_AssignDescriptorsOnce() {
-  static ::google::protobuf::internal::once_flag once;
-  ::google::protobuf::internal::call_once(once, protobuf_AssignDescriptors);
-}
-
-void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
-void protobuf_RegisterTypes(const ::std::string&) {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 10);
-}
-
-void AddDescriptorsImpl() {
-  InitDefaults();
-  static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\rkadmlia.proto\022\024top.kadmlia.protobuf\"#\n"
-      "\024BootstrapJoinRequest\022\013\n\003xid\030\001 \001(\014\"b\n\025Bo"
-      "otstrapJoinResponse\022\021\n\tpublic_ip\030\001 \001(\014\022\023"
-      "\n\013public_port\030\002 \001(\005\022\024\n\014bootstrap_id\030\003 \001("
-      "\014\022\013\n\003xid\030\004 \001(\014\"N\n\tHandshake\022\014\n\004type\030\001 \001("
-      "\005\022\021\n\tpublic_ip\030\002 \001(\014\022\023\n\013public_port\030\003 \001("
-      "\005\022\013\n\003xid\030\004 \001(\014\"K\n\010NodeInfo\022\021\n\tpublic_ip\030"
-      "\001 \001(\014\022\023\n\013public_port\030\002 \001(\005\022\n\n\002id\030\003 \001(\014\022\013"
-      "\n\003xid\030\004 \001(\014\"\206\001\n\027FindClosestNodesRequest\022"
-      "\r\n\005count\030\001 \001(\r\022\021\n\ttarget_id\030\002 \001(\014\022\023\n\013blo"
-      "omfilter\030\003 \003(\004\0224\n\014src_nodeinfo\030\004 \001(\0132\036.t"
-      "op.kadmlia.protobuf.NodeInfo\"q\n\030FindClos"
-      "estNodesResponse\022-\n\005nodes\030\001 \003(\0132\036.top.ka"
-      "dmlia.protobuf.NodeInfo\022\021\n\tpublic_ip\030\002 \001"
-      "(\014\022\023\n\013public_port\030\003 \001(\005\"I\n\030RootCompleteN"
-      "odeResponse\022-\n\005nodes\030\001 \001(\0132\036.top.kadmlia"
-      ".protobuf.NodeInfo\"E\n\032RootCacheElectNode"
-      "sRequest\022\030\n\020des_service_type\030\001 \001(\004\022\r\n\005co"
-      "unt\030\002 \001(\r\"L\n\033RootCacheElectNodesResponse"
-      "\022-\n\005nodes\030\001 \003(\0132\036.top.kadmlia.protobuf.N"
-      "odeInfo\"1\n\013RootMessage\022\024\n\014message_type\030\001"
-      " \001(\r\022\014\n\004data\030\002 \001(\014"
-  };
-  ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 858);
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
-    "kadmlia.proto", &protobuf_RegisterTypes);
-}
-
-void AddDescriptors() {
-  static ::google::protobuf::internal::once_flag once;
-  ::google::protobuf::internal::call_once(once, AddDescriptorsImpl);
-}
-// Force AddDescriptors() to be called at dynamic initialization time.
-struct StaticDescriptorInitializer {
-  StaticDescriptorInitializer() {
-    AddDescriptors();
-  }
-} static_descriptor_initializer;
-}  // namespace protobuf_kadmlia_2eproto
+// Force running AddDescriptors() at dynamic initialization time.
+static bool dynamic_init_dummy_kadmlia_2eproto = (static_cast<void>(::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_kadmlia_2eproto)), true);
 namespace top {
 namespace kadmlia {
 namespace protobuf {
@@ -437,150 +394,133 @@ namespace protobuf {
 
 void BootstrapJoinRequest::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int BootstrapJoinRequest::kXidFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class BootstrapJoinRequest::_Internal {
+ public:
+  using HasBits = decltype(std::declval<BootstrapJoinRequest>()._has_bits_);
+  static void set_has_xid(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+};
 
-BootstrapJoinRequest::BootstrapJoinRequest()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_BootstrapJoinRequest.base);
+BootstrapJoinRequest::BootstrapJoinRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.BootstrapJoinRequest)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.BootstrapJoinRequest)
 }
 BootstrapJoinRequest::BootstrapJoinRequest(const BootstrapJoinRequest& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_xid()) {
-    xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_xid()) {
+    xid_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_xid(),
+      GetArena());
   }
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.BootstrapJoinRequest)
 }
 
 void BootstrapJoinRequest::SharedCtor() {
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_BootstrapJoinRequest_kadmlia_2eproto.base);
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 BootstrapJoinRequest::~BootstrapJoinRequest() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.BootstrapJoinRequest)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void BootstrapJoinRequest::SharedDtor() {
-  xid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  xid_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void BootstrapJoinRequest::ArenaDtor(void* object) {
+  BootstrapJoinRequest* _this = reinterpret_cast< BootstrapJoinRequest* >(object);
+  (void)_this;
+}
+void BootstrapJoinRequest::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void BootstrapJoinRequest::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* BootstrapJoinRequest::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const BootstrapJoinRequest& BootstrapJoinRequest::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_BootstrapJoinRequest.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_BootstrapJoinRequest_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void BootstrapJoinRequest::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.BootstrapJoinRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
-    xid_.ClearNonDefaultToEmptyNoArena();
+    xid_.ClearNonDefaultToEmpty();
   }
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool BootstrapJoinRequest::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.BootstrapJoinRequest)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* BootstrapJoinRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional bytes xid = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_xid()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          auto str = _internal_mutable_xid();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.BootstrapJoinRequest)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.BootstrapJoinRequest)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void BootstrapJoinRequest::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.BootstrapJoinRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes xid = 1;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->xid(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.BootstrapJoinRequest)
-}
-
-::google::protobuf::uint8* BootstrapJoinRequest::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* BootstrapJoinRequest::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.BootstrapJoinRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional bytes xid = 1;
   if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        1, this->xid(), target);
+    target = stream->WriteBytesMaybeAliased(
+        1, this->_internal_xid(), target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.BootstrapJoinRequest)
   return target;
@@ -590,32 +530,36 @@ size_t BootstrapJoinRequest::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.BootstrapJoinRequest)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // optional bytes xid = 1;
-  if (has_xid()) {
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->xid());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+        this->_internal_xid());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void BootstrapJoinRequest::MergeFrom(const ::google::protobuf::Message& from) {
+void BootstrapJoinRequest::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.BootstrapJoinRequest)
   GOOGLE_DCHECK_NE(&from, this);
   const BootstrapJoinRequest* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const BootstrapJoinRequest>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<BootstrapJoinRequest>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.BootstrapJoinRequest)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.BootstrapJoinRequest)
     MergeFrom(*source);
@@ -625,17 +569,16 @@ void BootstrapJoinRequest::MergeFrom(const ::google::protobuf::Message& from) {
 void BootstrapJoinRequest::MergeFrom(const BootstrapJoinRequest& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.BootstrapJoinRequest)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_xid()) {
-    set_has_xid();
-    xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+  if (from._internal_has_xid()) {
+    _internal_set_xid(from._internal_xid());
   }
 }
 
-void BootstrapJoinRequest::CopyFrom(const ::google::protobuf::Message& from) {
+void BootstrapJoinRequest::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.BootstrapJoinRequest)
   if (&from == this) return;
   Clear();
@@ -653,21 +596,15 @@ bool BootstrapJoinRequest::IsInitialized() const {
   return true;
 }
 
-void BootstrapJoinRequest::Swap(BootstrapJoinRequest* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void BootstrapJoinRequest::InternalSwap(BootstrapJoinRequest* other) {
   using std::swap;
-  xid_.Swap(&other->xid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  xid_.Swap(&other->xid_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
 
-::google::protobuf::Metadata BootstrapJoinRequest::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata BootstrapJoinRequest::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -675,250 +612,209 @@ void BootstrapJoinRequest::InternalSwap(BootstrapJoinRequest* other) {
 
 void BootstrapJoinResponse::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int BootstrapJoinResponse::kPublicIpFieldNumber;
-const int BootstrapJoinResponse::kPublicPortFieldNumber;
-const int BootstrapJoinResponse::kBootstrapIdFieldNumber;
-const int BootstrapJoinResponse::kXidFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class BootstrapJoinResponse::_Internal {
+ public:
+  using HasBits = decltype(std::declval<BootstrapJoinResponse>()._has_bits_);
+  static void set_has_public_ip(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_public_port(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
+  static void set_has_bootstrap_id(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+  static void set_has_xid(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+};
 
-BootstrapJoinResponse::BootstrapJoinResponse()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_BootstrapJoinResponse.base);
+BootstrapJoinResponse::BootstrapJoinResponse(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.BootstrapJoinResponse)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.BootstrapJoinResponse)
 }
 BootstrapJoinResponse::BootstrapJoinResponse(const BootstrapJoinResponse& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_public_ip()) {
-    public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_public_ip()) {
+    public_ip_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_public_ip(),
+      GetArena());
   }
-  bootstrap_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_bootstrap_id()) {
-    bootstrap_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.bootstrap_id_);
+  bootstrap_id_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_bootstrap_id()) {
+    bootstrap_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_bootstrap_id(),
+      GetArena());
   }
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_xid()) {
-    xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_xid()) {
+    xid_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_xid(),
+      GetArena());
   }
   public_port_ = from.public_port_;
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.BootstrapJoinResponse)
 }
 
 void BootstrapJoinResponse::SharedCtor() {
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  bootstrap_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_BootstrapJoinResponse_kadmlia_2eproto.base);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  bootstrap_id_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   public_port_ = 0;
 }
 
 BootstrapJoinResponse::~BootstrapJoinResponse() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.BootstrapJoinResponse)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void BootstrapJoinResponse::SharedDtor() {
-  public_ip_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  bootstrap_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  public_ip_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  bootstrap_id_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  xid_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void BootstrapJoinResponse::ArenaDtor(void* object) {
+  BootstrapJoinResponse* _this = reinterpret_cast< BootstrapJoinResponse* >(object);
+  (void)_this;
+}
+void BootstrapJoinResponse::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void BootstrapJoinResponse::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* BootstrapJoinResponse::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const BootstrapJoinResponse& BootstrapJoinResponse::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_BootstrapJoinResponse.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_BootstrapJoinResponse_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void BootstrapJoinResponse::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.BootstrapJoinResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 7u) {
+  if (cached_has_bits & 0x00000007u) {
     if (cached_has_bits & 0x00000001u) {
-      public_ip_.ClearNonDefaultToEmptyNoArena();
+      public_ip_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000002u) {
-      bootstrap_id_.ClearNonDefaultToEmptyNoArena();
+      bootstrap_id_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000004u) {
-      xid_.ClearNonDefaultToEmptyNoArena();
+      xid_.ClearNonDefaultToEmpty();
     }
   }
   public_port_ = 0;
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool BootstrapJoinResponse::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.BootstrapJoinResponse)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* BootstrapJoinResponse::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional bytes public_ip = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_public_ip()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          auto str = _internal_mutable_public_ip();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional int32 public_port = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-          set_has_public_port();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &public_port_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          _Internal::set_has_public_port(&has_bits);
+          public_port_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes bootstrap_id = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_bootstrap_id()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+          auto str = _internal_mutable_bootstrap_id();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes xid = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_xid()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          auto str = _internal_mutable_xid();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.BootstrapJoinResponse)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.BootstrapJoinResponse)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void BootstrapJoinResponse::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.BootstrapJoinResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes public_ip = 1;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->public_ip(), output);
-  }
-
-  // optional int32 public_port = 2;
-  if (cached_has_bits & 0x00000008u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->public_port(), output);
-  }
-
-  // optional bytes bootstrap_id = 3;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->bootstrap_id(), output);
-  }
-
-  // optional bytes xid = 4;
-  if (cached_has_bits & 0x00000004u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      4, this->xid(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.BootstrapJoinResponse)
-}
-
-::google::protobuf::uint8* BootstrapJoinResponse::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* BootstrapJoinResponse::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.BootstrapJoinResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional bytes public_ip = 1;
   if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        1, this->public_ip(), target);
+    target = stream->WriteBytesMaybeAliased(
+        1, this->_internal_public_ip(), target);
   }
 
   // optional int32 public_port = 2;
   if (cached_has_bits & 0x00000008u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->public_port(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_public_port(), target);
   }
 
   // optional bytes bootstrap_id = 3;
   if (cached_has_bits & 0x00000002u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        3, this->bootstrap_id(), target);
+    target = stream->WriteBytesMaybeAliased(
+        3, this->_internal_bootstrap_id(), target);
   }
 
   // optional bytes xid = 4;
   if (cached_has_bits & 0x00000004u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        4, this->xid(), target);
+    target = stream->WriteBytesMaybeAliased(
+        4, this->_internal_xid(), target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.BootstrapJoinResponse)
   return target;
@@ -928,55 +824,59 @@ size_t BootstrapJoinResponse::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.BootstrapJoinResponse)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  if (_has_bits_[0 / 32] & 15u) {
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x0000000fu) {
     // optional bytes public_ip = 1;
-    if (has_public_ip()) {
+    if (cached_has_bits & 0x00000001u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->public_ip());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_public_ip());
     }
 
     // optional bytes bootstrap_id = 3;
-    if (has_bootstrap_id()) {
+    if (cached_has_bits & 0x00000002u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->bootstrap_id());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_bootstrap_id());
     }
 
     // optional bytes xid = 4;
-    if (has_xid()) {
+    if (cached_has_bits & 0x00000004u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->xid());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_xid());
     }
 
     // optional int32 public_port = 2;
-    if (has_public_port()) {
+    if (cached_has_bits & 0x00000008u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->public_port());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+          this->_internal_public_port());
     }
 
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void BootstrapJoinResponse::MergeFrom(const ::google::protobuf::Message& from) {
+void BootstrapJoinResponse::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.BootstrapJoinResponse)
   GOOGLE_DCHECK_NE(&from, this);
   const BootstrapJoinResponse* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const BootstrapJoinResponse>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<BootstrapJoinResponse>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.BootstrapJoinResponse)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.BootstrapJoinResponse)
     MergeFrom(*source);
@@ -986,23 +886,20 @@ void BootstrapJoinResponse::MergeFrom(const ::google::protobuf::Message& from) {
 void BootstrapJoinResponse::MergeFrom(const BootstrapJoinResponse& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.BootstrapJoinResponse)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 15u) {
+  if (cached_has_bits & 0x0000000fu) {
     if (cached_has_bits & 0x00000001u) {
-      set_has_public_ip();
-      public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+      _internal_set_public_ip(from._internal_public_ip());
     }
     if (cached_has_bits & 0x00000002u) {
-      set_has_bootstrap_id();
-      bootstrap_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.bootstrap_id_);
+      _internal_set_bootstrap_id(from._internal_bootstrap_id());
     }
     if (cached_has_bits & 0x00000004u) {
-      set_has_xid();
-      xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+      _internal_set_xid(from._internal_xid());
     }
     if (cached_has_bits & 0x00000008u) {
       public_port_ = from.public_port_;
@@ -1011,7 +908,7 @@ void BootstrapJoinResponse::MergeFrom(const BootstrapJoinResponse& from) {
   }
 }
 
-void BootstrapJoinResponse::CopyFrom(const ::google::protobuf::Message& from) {
+void BootstrapJoinResponse::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.BootstrapJoinResponse)
   if (&from == this) return;
   Clear();
@@ -1029,26 +926,18 @@ bool BootstrapJoinResponse::IsInitialized() const {
   return true;
 }
 
-void BootstrapJoinResponse::Swap(BootstrapJoinResponse* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void BootstrapJoinResponse::InternalSwap(BootstrapJoinResponse* other) {
   using std::swap;
-  public_ip_.Swap(&other->public_ip_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  bootstrap_id_.Swap(&other->bootstrap_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  xid_.Swap(&other->xid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(public_port_, other->public_port_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  public_ip_.Swap(&other->public_ip_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  bootstrap_id_.Swap(&other->bootstrap_id_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  xid_.Swap(&other->xid_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  swap(public_port_, other->public_port_);
 }
 
-::google::protobuf::Metadata BootstrapJoinResponse::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata BootstrapJoinResponse::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -1056,32 +945,42 @@ void BootstrapJoinResponse::InternalSwap(BootstrapJoinResponse* other) {
 
 void Handshake::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Handshake::kTypeFieldNumber;
-const int Handshake::kPublicIpFieldNumber;
-const int Handshake::kPublicPortFieldNumber;
-const int Handshake::kXidFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class Handshake::_Internal {
+ public:
+  using HasBits = decltype(std::declval<Handshake>()._has_bits_);
+  static void set_has_type(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+  static void set_has_public_ip(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_public_port(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
+  static void set_has_xid(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+};
 
-Handshake::Handshake()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_Handshake.base);
+Handshake::Handshake(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.Handshake)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.Handshake)
 }
 Handshake::Handshake(const Handshake& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_public_ip()) {
-    public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_public_ip()) {
+    public_ip_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_public_ip(),
+      GetArena());
   }
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_xid()) {
-    xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_xid()) {
+    xid_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_xid(),
+      GetArena());
   }
   ::memcpy(&type_, &from.type_,
     static_cast<size_t>(reinterpret_cast<char*>(&public_port_) -
@@ -1090,8 +989,9 @@ Handshake::Handshake(const Handshake& from)
 }
 
 void Handshake::SharedCtor() {
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Handshake_kadmlia_2eproto.base);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   ::memset(&type_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&public_port_) -
       reinterpret_cast<char*>(&type_)) + sizeof(public_port_));
@@ -1100,204 +1000,152 @@ void Handshake::SharedCtor() {
 Handshake::~Handshake() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.Handshake)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void Handshake::SharedDtor() {
-  public_ip_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  public_ip_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  xid_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void Handshake::ArenaDtor(void* object) {
+  Handshake* _this = reinterpret_cast< Handshake* >(object);
+  (void)_this;
+}
+void Handshake::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void Handshake::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* Handshake::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const Handshake& Handshake::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_Handshake.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Handshake_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void Handshake::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.Handshake)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 3u) {
+  if (cached_has_bits & 0x00000003u) {
     if (cached_has_bits & 0x00000001u) {
-      public_ip_.ClearNonDefaultToEmptyNoArena();
+      public_ip_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000002u) {
-      xid_.ClearNonDefaultToEmptyNoArena();
+      xid_.ClearNonDefaultToEmpty();
     }
   }
-  if (cached_has_bits & 12u) {
+  if (cached_has_bits & 0x0000000cu) {
     ::memset(&type_, 0, static_cast<size_t>(
         reinterpret_cast<char*>(&public_port_) -
         reinterpret_cast<char*>(&type_)) + sizeof(public_port_));
   }
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool Handshake::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.Handshake)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* Handshake::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional int32 type = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          set_has_type();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &type_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          _Internal::set_has_type(&has_bits);
+          type_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes public_ip = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_public_ip()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          auto str = _internal_mutable_public_ip();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional int32 public_port = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-          set_has_public_port();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &public_port_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          _Internal::set_has_public_port(&has_bits);
+          public_port_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes xid = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_xid()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          auto str = _internal_mutable_xid();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.Handshake)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.Handshake)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void Handshake::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.Handshake)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional int32 type = 1;
-  if (cached_has_bits & 0x00000004u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->type(), output);
-  }
-
-  // optional bytes public_ip = 2;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      2, this->public_ip(), output);
-  }
-
-  // optional int32 public_port = 3;
-  if (cached_has_bits & 0x00000008u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->public_port(), output);
-  }
-
-  // optional bytes xid = 4;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      4, this->xid(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.Handshake)
-}
-
-::google::protobuf::uint8* Handshake::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* Handshake::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.Handshake)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional int32 type = 1;
   if (cached_has_bits & 0x00000004u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->type(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(1, this->_internal_type(), target);
   }
 
   // optional bytes public_ip = 2;
   if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        2, this->public_ip(), target);
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_public_ip(), target);
   }
 
   // optional int32 public_port = 3;
   if (cached_has_bits & 0x00000008u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->public_port(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(3, this->_internal_public_port(), target);
   }
 
   // optional bytes xid = 4;
   if (cached_has_bits & 0x00000002u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        4, this->xid(), target);
+    target = stream->WriteBytesMaybeAliased(
+        4, this->_internal_xid(), target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.Handshake)
   return target;
@@ -1307,55 +1155,59 @@ size_t Handshake::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.Handshake)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  if (_has_bits_[0 / 32] & 15u) {
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x0000000fu) {
     // optional bytes public_ip = 2;
-    if (has_public_ip()) {
+    if (cached_has_bits & 0x00000001u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->public_ip());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_public_ip());
     }
 
     // optional bytes xid = 4;
-    if (has_xid()) {
+    if (cached_has_bits & 0x00000002u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->xid());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_xid());
     }
 
     // optional int32 type = 1;
-    if (has_type()) {
+    if (cached_has_bits & 0x00000004u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->type());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+          this->_internal_type());
     }
 
     // optional int32 public_port = 3;
-    if (has_public_port()) {
+    if (cached_has_bits & 0x00000008u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->public_port());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+          this->_internal_public_port());
     }
 
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void Handshake::MergeFrom(const ::google::protobuf::Message& from) {
+void Handshake::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.Handshake)
   GOOGLE_DCHECK_NE(&from, this);
   const Handshake* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const Handshake>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Handshake>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.Handshake)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.Handshake)
     MergeFrom(*source);
@@ -1365,19 +1217,17 @@ void Handshake::MergeFrom(const ::google::protobuf::Message& from) {
 void Handshake::MergeFrom(const Handshake& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.Handshake)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 15u) {
+  if (cached_has_bits & 0x0000000fu) {
     if (cached_has_bits & 0x00000001u) {
-      set_has_public_ip();
-      public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+      _internal_set_public_ip(from._internal_public_ip());
     }
     if (cached_has_bits & 0x00000002u) {
-      set_has_xid();
-      xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+      _internal_set_xid(from._internal_xid());
     }
     if (cached_has_bits & 0x00000004u) {
       type_ = from.type_;
@@ -1389,7 +1239,7 @@ void Handshake::MergeFrom(const Handshake& from) {
   }
 }
 
-void Handshake::CopyFrom(const ::google::protobuf::Message& from) {
+void Handshake::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.Handshake)
   if (&from == this) return;
   Clear();
@@ -1407,25 +1257,22 @@ bool Handshake::IsInitialized() const {
   return true;
 }
 
-void Handshake::Swap(Handshake* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void Handshake::InternalSwap(Handshake* other) {
   using std::swap;
-  public_ip_.Swap(&other->public_ip_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  xid_.Swap(&other->xid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(type_, other->type_);
-  swap(public_port_, other->public_port_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  public_ip_.Swap(&other->public_ip_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  xid_.Swap(&other->xid_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(Handshake, public_port_)
+      + sizeof(Handshake::public_port_)
+      - PROTOBUF_FIELD_OFFSET(Handshake, type_)>(
+          reinterpret_cast<char*>(&type_),
+          reinterpret_cast<char*>(&other->type_));
 }
 
-::google::protobuf::Metadata Handshake::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata Handshake::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -1433,250 +1280,209 @@ void Handshake::InternalSwap(Handshake* other) {
 
 void NodeInfo::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int NodeInfo::kPublicIpFieldNumber;
-const int NodeInfo::kPublicPortFieldNumber;
-const int NodeInfo::kIdFieldNumber;
-const int NodeInfo::kXidFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class NodeInfo::_Internal {
+ public:
+  using HasBits = decltype(std::declval<NodeInfo>()._has_bits_);
+  static void set_has_public_ip(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_public_port(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
+  static void set_has_id(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+  static void set_has_xid(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+};
 
-NodeInfo::NodeInfo()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_NodeInfo.base);
+NodeInfo::NodeInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.NodeInfo)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.NodeInfo)
 }
 NodeInfo::NodeInfo(const NodeInfo& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_public_ip()) {
-    public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_public_ip()) {
+    public_ip_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_public_ip(),
+      GetArena());
   }
-  id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_id()) {
-    id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.id_);
+  id_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_id()) {
+    id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_id(),
+      GetArena());
   }
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_xid()) {
-    xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_xid()) {
+    xid_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_xid(),
+      GetArena());
   }
   public_port_ = from.public_port_;
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.NodeInfo)
 }
 
 void NodeInfo::SharedCtor() {
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_NodeInfo_kadmlia_2eproto.base);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  id_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  xid_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   public_port_ = 0;
 }
 
 NodeInfo::~NodeInfo() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.NodeInfo)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void NodeInfo::SharedDtor() {
-  public_ip_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  public_ip_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  id_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  xid_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void NodeInfo::ArenaDtor(void* object) {
+  NodeInfo* _this = reinterpret_cast< NodeInfo* >(object);
+  (void)_this;
+}
+void NodeInfo::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void NodeInfo::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* NodeInfo::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const NodeInfo& NodeInfo::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_NodeInfo.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_NodeInfo_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void NodeInfo::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.NodeInfo)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 7u) {
+  if (cached_has_bits & 0x00000007u) {
     if (cached_has_bits & 0x00000001u) {
-      public_ip_.ClearNonDefaultToEmptyNoArena();
+      public_ip_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000002u) {
-      id_.ClearNonDefaultToEmptyNoArena();
+      id_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000004u) {
-      xid_.ClearNonDefaultToEmptyNoArena();
+      xid_.ClearNonDefaultToEmpty();
     }
   }
   public_port_ = 0;
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool NodeInfo::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.NodeInfo)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* NodeInfo::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional bytes public_ip = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_public_ip()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          auto str = _internal_mutable_public_ip();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional int32 public_port = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-          set_has_public_port();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &public_port_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          _Internal::set_has_public_port(&has_bits);
+          public_port_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes id = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_id()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+          auto str = _internal_mutable_id();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes xid = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_xid()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          auto str = _internal_mutable_xid();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.NodeInfo)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.NodeInfo)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void NodeInfo::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.NodeInfo)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes public_ip = 1;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->public_ip(), output);
-  }
-
-  // optional int32 public_port = 2;
-  if (cached_has_bits & 0x00000008u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->public_port(), output);
-  }
-
-  // optional bytes id = 3;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->id(), output);
-  }
-
-  // optional bytes xid = 4;
-  if (cached_has_bits & 0x00000004u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      4, this->xid(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.NodeInfo)
-}
-
-::google::protobuf::uint8* NodeInfo::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* NodeInfo::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.NodeInfo)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional bytes public_ip = 1;
   if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        1, this->public_ip(), target);
+    target = stream->WriteBytesMaybeAliased(
+        1, this->_internal_public_ip(), target);
   }
 
   // optional int32 public_port = 2;
   if (cached_has_bits & 0x00000008u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->public_port(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_public_port(), target);
   }
 
   // optional bytes id = 3;
   if (cached_has_bits & 0x00000002u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        3, this->id(), target);
+    target = stream->WriteBytesMaybeAliased(
+        3, this->_internal_id(), target);
   }
 
   // optional bytes xid = 4;
   if (cached_has_bits & 0x00000004u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        4, this->xid(), target);
+    target = stream->WriteBytesMaybeAliased(
+        4, this->_internal_xid(), target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.NodeInfo)
   return target;
@@ -1686,55 +1492,59 @@ size_t NodeInfo::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.NodeInfo)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  if (_has_bits_[0 / 32] & 15u) {
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x0000000fu) {
     // optional bytes public_ip = 1;
-    if (has_public_ip()) {
+    if (cached_has_bits & 0x00000001u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->public_ip());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_public_ip());
     }
 
     // optional bytes id = 3;
-    if (has_id()) {
+    if (cached_has_bits & 0x00000002u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->id());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_id());
     }
 
     // optional bytes xid = 4;
-    if (has_xid()) {
+    if (cached_has_bits & 0x00000004u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->xid());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_xid());
     }
 
     // optional int32 public_port = 2;
-    if (has_public_port()) {
+    if (cached_has_bits & 0x00000008u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->public_port());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+          this->_internal_public_port());
     }
 
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void NodeInfo::MergeFrom(const ::google::protobuf::Message& from) {
+void NodeInfo::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.NodeInfo)
   GOOGLE_DCHECK_NE(&from, this);
   const NodeInfo* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const NodeInfo>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<NodeInfo>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.NodeInfo)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.NodeInfo)
     MergeFrom(*source);
@@ -1744,23 +1554,20 @@ void NodeInfo::MergeFrom(const ::google::protobuf::Message& from) {
 void NodeInfo::MergeFrom(const NodeInfo& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.NodeInfo)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 15u) {
+  if (cached_has_bits & 0x0000000fu) {
     if (cached_has_bits & 0x00000001u) {
-      set_has_public_ip();
-      public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+      _internal_set_public_ip(from._internal_public_ip());
     }
     if (cached_has_bits & 0x00000002u) {
-      set_has_id();
-      id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.id_);
+      _internal_set_id(from._internal_id());
     }
     if (cached_has_bits & 0x00000004u) {
-      set_has_xid();
-      xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
+      _internal_set_xid(from._internal_xid());
     }
     if (cached_has_bits & 0x00000008u) {
       public_port_ = from.public_port_;
@@ -1769,7 +1576,7 @@ void NodeInfo::MergeFrom(const NodeInfo& from) {
   }
 }
 
-void NodeInfo::CopyFrom(const ::google::protobuf::Message& from) {
+void NodeInfo::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.NodeInfo)
   if (&from == this) return;
   Clear();
@@ -1787,26 +1594,18 @@ bool NodeInfo::IsInitialized() const {
   return true;
 }
 
-void NodeInfo::Swap(NodeInfo* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void NodeInfo::InternalSwap(NodeInfo* other) {
   using std::swap;
-  public_ip_.Swap(&other->public_ip_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  id_.Swap(&other->id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  xid_.Swap(&other->xid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(public_port_, other->public_port_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  public_ip_.Swap(&other->public_ip_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  id_.Swap(&other->id_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  xid_.Swap(&other->xid_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  swap(public_port_, other->public_port_);
 }
 
-::google::protobuf::Metadata NodeInfo::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata NodeInfo::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -1816,41 +1615,54 @@ void FindClosestNodesRequest::InitAsDefaultInstance() {
   ::top::kadmlia::protobuf::_FindClosestNodesRequest_default_instance_._instance.get_mutable()->src_nodeinfo_ = const_cast< ::top::kadmlia::protobuf::NodeInfo*>(
       ::top::kadmlia::protobuf::NodeInfo::internal_default_instance());
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int FindClosestNodesRequest::kCountFieldNumber;
-const int FindClosestNodesRequest::kTargetIdFieldNumber;
-const int FindClosestNodesRequest::kBloomfilterFieldNumber;
-const int FindClosestNodesRequest::kSrcNodeinfoFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class FindClosestNodesRequest::_Internal {
+ public:
+  using HasBits = decltype(std::declval<FindClosestNodesRequest>()._has_bits_);
+  static void set_has_count(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+  static void set_has_target_id(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static const ::top::kadmlia::protobuf::NodeInfo& src_nodeinfo(const FindClosestNodesRequest* msg);
+  static void set_has_src_nodeinfo(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+};
 
-FindClosestNodesRequest::FindClosestNodesRequest()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_FindClosestNodesRequest.base);
+const ::top::kadmlia::protobuf::NodeInfo&
+FindClosestNodesRequest::_Internal::src_nodeinfo(const FindClosestNodesRequest* msg) {
+  return *msg->src_nodeinfo_;
+}
+FindClosestNodesRequest::FindClosestNodesRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena),
+  bloomfilter_(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.FindClosestNodesRequest)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.FindClosestNodesRequest)
 }
 FindClosestNodesRequest::FindClosestNodesRequest(const FindClosestNodesRequest& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_),
       bloomfilter_(from.bloomfilter_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  target_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_target_id()) {
-    target_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.target_id_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  target_id_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_target_id()) {
+    target_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_target_id(),
+      GetArena());
   }
-  if (from.has_src_nodeinfo()) {
+  if (from._internal_has_src_nodeinfo()) {
     src_nodeinfo_ = new ::top::kadmlia::protobuf::NodeInfo(*from.src_nodeinfo_);
   } else {
-    src_nodeinfo_ = NULL;
+    src_nodeinfo_ = nullptr;
   }
   count_ = from.count_;
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.FindClosestNodesRequest)
 }
 
 void FindClosestNodesRequest::SharedCtor() {
-  target_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_FindClosestNodesRequest_kadmlia_2eproto.base);
+  target_id_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   ::memset(&src_nodeinfo_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&count_) -
       reinterpret_cast<char*>(&src_nodeinfo_)) + sizeof(count_));
@@ -1859,207 +1671,158 @@ void FindClosestNodesRequest::SharedCtor() {
 FindClosestNodesRequest::~FindClosestNodesRequest() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.FindClosestNodesRequest)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void FindClosestNodesRequest::SharedDtor() {
-  target_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  target_id_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete src_nodeinfo_;
 }
 
+void FindClosestNodesRequest::ArenaDtor(void* object) {
+  FindClosestNodesRequest* _this = reinterpret_cast< FindClosestNodesRequest* >(object);
+  (void)_this;
+}
+void FindClosestNodesRequest::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void FindClosestNodesRequest::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* FindClosestNodesRequest::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const FindClosestNodesRequest& FindClosestNodesRequest::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_FindClosestNodesRequest.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_FindClosestNodesRequest_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void FindClosestNodesRequest::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.FindClosestNodesRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   bloomfilter_.Clear();
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 3u) {
+  if (cached_has_bits & 0x00000003u) {
     if (cached_has_bits & 0x00000001u) {
-      target_id_.ClearNonDefaultToEmptyNoArena();
+      target_id_.ClearNonDefaultToEmpty();
     }
     if (cached_has_bits & 0x00000002u) {
-      GOOGLE_DCHECK(src_nodeinfo_ != NULL);
+      GOOGLE_DCHECK(src_nodeinfo_ != nullptr);
       src_nodeinfo_->Clear();
     }
   }
   count_ = 0u;
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool FindClosestNodesRequest::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.FindClosestNodesRequest)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* FindClosestNodesRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional uint32 count = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          set_has_count();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &count_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          _Internal::set_has_count(&has_bits);
+          count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes target_id = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_target_id()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          auto str = _internal_mutable_target_id();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // repeated uint64 bloomfilter = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 1, 24u, input, this->mutable_bloomfilter())));
-        } else if (
-            static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, this->mutable_bloomfilter())));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            _internal_add_bloomfilter(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr));
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<24>(ptr));
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt64Parser(_internal_mutable_bloomfilter(), ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional .top.kadmlia.protobuf.NodeInfo src_nodeinfo = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_src_nodeinfo()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+          ptr = ctx->ParseMessage(_internal_mutable_src_nodeinfo(), ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.FindClosestNodesRequest)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.FindClosestNodesRequest)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void FindClosestNodesRequest::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.FindClosestNodesRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional uint32 count = 1;
-  if (cached_has_bits & 0x00000004u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->count(), output);
-  }
-
-  // optional bytes target_id = 2;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      2, this->target_id(), output);
-  }
-
-  // repeated uint64 bloomfilter = 3;
-  for (int i = 0, n = this->bloomfilter_size(); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(
-      3, this->bloomfilter(i), output);
-  }
-
-  // optional .top.kadmlia.protobuf.NodeInfo src_nodeinfo = 4;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4, this->_internal_src_nodeinfo(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.FindClosestNodesRequest)
-}
-
-::google::protobuf::uint8* FindClosestNodesRequest::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* FindClosestNodesRequest::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.FindClosestNodesRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional uint32 count = 1;
   if (cached_has_bits & 0x00000004u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->count(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->_internal_count(), target);
   }
 
   // optional bytes target_id = 2;
   if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        2, this->target_id(), target);
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_target_id(), target);
   }
 
   // repeated uint64 bloomfilter = 3;
-  target = ::google::protobuf::internal::WireFormatLite::
-    WriteUInt64ToArray(3, this->bloomfilter_, target);
+  for (int i = 0, n = this->_internal_bloomfilter_size(); i < n; i++) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(3, this->_internal_bloomfilter(i), target);
+  }
 
   // optional .top.kadmlia.protobuf.NodeInfo src_nodeinfo = 4;
   if (cached_has_bits & 0x00000002u) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        4, this->_internal_src_nodeinfo(), deterministic, target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(
+        4, _Internal::src_nodeinfo(this), target, stream);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.FindClosestNodesRequest)
   return target;
@@ -2069,57 +1832,61 @@ size_t FindClosestNodesRequest::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.FindClosestNodesRequest)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // repeated uint64 bloomfilter = 3;
   {
-    size_t data_size = ::google::protobuf::internal::WireFormatLite::
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       UInt64Size(this->bloomfilter_);
     total_size += 1 *
-                  ::google::protobuf::internal::FromIntSize(this->bloomfilter_size());
+                  ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(this->_internal_bloomfilter_size());
     total_size += data_size;
   }
 
-  if (_has_bits_[0 / 32] & 7u) {
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000007u) {
     // optional bytes target_id = 2;
-    if (has_target_id()) {
+    if (cached_has_bits & 0x00000001u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->target_id());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_target_id());
     }
 
     // optional .top.kadmlia.protobuf.NodeInfo src_nodeinfo = 4;
-    if (has_src_nodeinfo()) {
+    if (cached_has_bits & 0x00000002u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
           *src_nodeinfo_);
     }
 
     // optional uint32 count = 1;
-    if (has_count()) {
+    if (cached_has_bits & 0x00000004u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->count());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+          this->_internal_count());
     }
 
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void FindClosestNodesRequest::MergeFrom(const ::google::protobuf::Message& from) {
+void FindClosestNodesRequest::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.FindClosestNodesRequest)
   GOOGLE_DCHECK_NE(&from, this);
   const FindClosestNodesRequest* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const FindClosestNodesRequest>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<FindClosestNodesRequest>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.FindClosestNodesRequest)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.FindClosestNodesRequest)
     MergeFrom(*source);
@@ -2129,19 +1896,18 @@ void FindClosestNodesRequest::MergeFrom(const ::google::protobuf::Message& from)
 void FindClosestNodesRequest::MergeFrom(const FindClosestNodesRequest& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.FindClosestNodesRequest)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   bloomfilter_.MergeFrom(from.bloomfilter_);
   cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 7u) {
+  if (cached_has_bits & 0x00000007u) {
     if (cached_has_bits & 0x00000001u) {
-      set_has_target_id();
-      target_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.target_id_);
+      _internal_set_target_id(from._internal_target_id());
     }
     if (cached_has_bits & 0x00000002u) {
-      mutable_src_nodeinfo()->::top::kadmlia::protobuf::NodeInfo::MergeFrom(from.src_nodeinfo());
+      _internal_mutable_src_nodeinfo()->::top::kadmlia::protobuf::NodeInfo::MergeFrom(from._internal_src_nodeinfo());
     }
     if (cached_has_bits & 0x00000004u) {
       count_ = from.count_;
@@ -2150,7 +1916,7 @@ void FindClosestNodesRequest::MergeFrom(const FindClosestNodesRequest& from) {
   }
 }
 
-void FindClosestNodesRequest::CopyFrom(const ::google::protobuf::Message& from) {
+void FindClosestNodesRequest::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.FindClosestNodesRequest)
   if (&from == this) return;
   Clear();
@@ -2168,24 +1934,22 @@ bool FindClosestNodesRequest::IsInitialized() const {
   return true;
 }
 
-void FindClosestNodesRequest::Swap(FindClosestNodesRequest* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void FindClosestNodesRequest::InternalSwap(FindClosestNodesRequest* other) {
   using std::swap;
-  bloomfilter_.InternalSwap(&other->bloomfilter_);
-  target_id_.Swap(&other->target_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(src_nodeinfo_, other->src_nodeinfo_);
-  swap(count_, other->count_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  bloomfilter_.InternalSwap(&other->bloomfilter_);
+  target_id_.Swap(&other->target_id_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(FindClosestNodesRequest, count_)
+      + sizeof(FindClosestNodesRequest::count_)
+      - PROTOBUF_FIELD_OFFSET(FindClosestNodesRequest, src_nodeinfo_)>(
+          reinterpret_cast<char*>(&src_nodeinfo_),
+          reinterpret_cast<char*>(&other->src_nodeinfo_));
 }
 
-::google::protobuf::Metadata FindClosestNodesRequest::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata FindClosestNodesRequest::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -2193,210 +1957,176 @@ void FindClosestNodesRequest::InternalSwap(FindClosestNodesRequest* other) {
 
 void FindClosestNodesResponse::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int FindClosestNodesResponse::kNodesFieldNumber;
-const int FindClosestNodesResponse::kPublicIpFieldNumber;
-const int FindClosestNodesResponse::kPublicPortFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class FindClosestNodesResponse::_Internal {
+ public:
+  using HasBits = decltype(std::declval<FindClosestNodesResponse>()._has_bits_);
+  static void set_has_public_ip(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_public_port(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+};
 
-FindClosestNodesResponse::FindClosestNodesResponse()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_FindClosestNodesResponse.base);
+FindClosestNodesResponse::FindClosestNodesResponse(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena),
+  nodes_(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.FindClosestNodesResponse)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.FindClosestNodesResponse)
 }
 FindClosestNodesResponse::FindClosestNodesResponse(const FindClosestNodesResponse& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_),
       nodes_(from.nodes_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_public_ip()) {
-    public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_public_ip()) {
+    public_ip_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_public_ip(),
+      GetArena());
   }
   public_port_ = from.public_port_;
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.FindClosestNodesResponse)
 }
 
 void FindClosestNodesResponse::SharedCtor() {
-  public_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_FindClosestNodesResponse_kadmlia_2eproto.base);
+  public_ip_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   public_port_ = 0;
 }
 
 FindClosestNodesResponse::~FindClosestNodesResponse() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.FindClosestNodesResponse)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void FindClosestNodesResponse::SharedDtor() {
-  public_ip_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  public_ip_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void FindClosestNodesResponse::ArenaDtor(void* object) {
+  FindClosestNodesResponse* _this = reinterpret_cast< FindClosestNodesResponse* >(object);
+  (void)_this;
+}
+void FindClosestNodesResponse::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void FindClosestNodesResponse::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* FindClosestNodesResponse::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const FindClosestNodesResponse& FindClosestNodesResponse::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_FindClosestNodesResponse.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_FindClosestNodesResponse_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void FindClosestNodesResponse::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.FindClosestNodesResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   nodes_.Clear();
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
-    public_ip_.ClearNonDefaultToEmptyNoArena();
+    public_ip_.ClearNonDefaultToEmpty();
   }
   public_port_ = 0;
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool FindClosestNodesResponse::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.FindClosestNodesResponse)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* FindClosestNodesResponse::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_nodes()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_nodes(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<10>(ptr));
+        } else goto handle_unusual;
+        continue;
       // optional bytes public_ip = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_public_ip()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          auto str = _internal_mutable_public_ip();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional int32 public_port = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-          set_has_public_port();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &public_port_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          _Internal::set_has_public_port(&has_bits);
+          public_port_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.FindClosestNodesResponse)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.FindClosestNodesResponse)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void FindClosestNodesResponse::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.FindClosestNodesResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->nodes_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1,
-      this->nodes(static_cast<int>(i)),
-      output);
-  }
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes public_ip = 2;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      2, this->public_ip(), output);
-  }
-
-  // optional int32 public_port = 3;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->public_port(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.FindClosestNodesResponse)
-}
-
-::google::protobuf::uint8* FindClosestNodesResponse::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* FindClosestNodesResponse::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.FindClosestNodesResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->nodes_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        1, this->nodes(static_cast<int>(i)), deterministic, target);
+      n = static_cast<unsigned int>(this->_internal_nodes_size()); i < n; i++) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, this->_internal_nodes(i), target, stream);
   }
 
   cached_has_bits = _has_bits_[0];
   // optional bytes public_ip = 2;
   if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        2, this->public_ip(), target);
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_public_ip(), target);
   }
 
   // optional int32 public_port = 3;
   if (cached_has_bits & 0x00000002u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->public_port(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(3, this->_internal_public_port(), target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.FindClosestNodesResponse)
   return target;
@@ -2406,52 +2136,52 @@ size_t FindClosestNodesResponse::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.FindClosestNodesResponse)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
-  {
-    unsigned int count = static_cast<unsigned int>(this->nodes_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->nodes(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_nodes_size();
+  for (const auto& msg : this->nodes_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
-  if (_has_bits_[0 / 32] & 3u) {
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
     // optional bytes public_ip = 2;
-    if (has_public_ip()) {
+    if (cached_has_bits & 0x00000001u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->public_ip());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_public_ip());
     }
 
     // optional int32 public_port = 3;
-    if (has_public_port()) {
+    if (cached_has_bits & 0x00000002u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->public_port());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+          this->_internal_public_port());
     }
 
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void FindClosestNodesResponse::MergeFrom(const ::google::protobuf::Message& from) {
+void FindClosestNodesResponse::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.FindClosestNodesResponse)
   GOOGLE_DCHECK_NE(&from, this);
   const FindClosestNodesResponse* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const FindClosestNodesResponse>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<FindClosestNodesResponse>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.FindClosestNodesResponse)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.FindClosestNodesResponse)
     MergeFrom(*source);
@@ -2461,16 +2191,15 @@ void FindClosestNodesResponse::MergeFrom(const ::google::protobuf::Message& from
 void FindClosestNodesResponse::MergeFrom(const FindClosestNodesResponse& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.FindClosestNodesResponse)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   nodes_.MergeFrom(from.nodes_);
   cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 3u) {
+  if (cached_has_bits & 0x00000003u) {
     if (cached_has_bits & 0x00000001u) {
-      set_has_public_ip();
-      public_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.public_ip_);
+      _internal_set_public_ip(from._internal_public_ip());
     }
     if (cached_has_bits & 0x00000002u) {
       public_port_ = from.public_port_;
@@ -2479,7 +2208,7 @@ void FindClosestNodesResponse::MergeFrom(const FindClosestNodesResponse& from) {
   }
 }
 
-void FindClosestNodesResponse::CopyFrom(const ::google::protobuf::Message& from) {
+void FindClosestNodesResponse::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.FindClosestNodesResponse)
   if (&from == this) return;
   Clear();
@@ -2497,23 +2226,17 @@ bool FindClosestNodesResponse::IsInitialized() const {
   return true;
 }
 
-void FindClosestNodesResponse::Swap(FindClosestNodesResponse* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void FindClosestNodesResponse::InternalSwap(FindClosestNodesResponse* other) {
   using std::swap;
-  CastToBase(&nodes_)->InternalSwap(CastToBase(&other->nodes_));
-  public_ip_.Swap(&other->public_ip_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(public_port_, other->public_port_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  nodes_.InternalSwap(&other->nodes_);
+  public_ip_.Swap(&other->public_ip_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  swap(public_port_, other->public_port_);
 }
 
-::google::protobuf::Metadata FindClosestNodesResponse::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata FindClosestNodesResponse::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -2523,152 +2246,140 @@ void RootCompleteNodeResponse::InitAsDefaultInstance() {
   ::top::kadmlia::protobuf::_RootCompleteNodeResponse_default_instance_._instance.get_mutable()->nodes_ = const_cast< ::top::kadmlia::protobuf::NodeInfo*>(
       ::top::kadmlia::protobuf::NodeInfo::internal_default_instance());
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int RootCompleteNodeResponse::kNodesFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class RootCompleteNodeResponse::_Internal {
+ public:
+  using HasBits = decltype(std::declval<RootCompleteNodeResponse>()._has_bits_);
+  static const ::top::kadmlia::protobuf::NodeInfo& nodes(const RootCompleteNodeResponse* msg);
+  static void set_has_nodes(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+};
 
-RootCompleteNodeResponse::RootCompleteNodeResponse()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_RootCompleteNodeResponse.base);
+const ::top::kadmlia::protobuf::NodeInfo&
+RootCompleteNodeResponse::_Internal::nodes(const RootCompleteNodeResponse* msg) {
+  return *msg->nodes_;
+}
+RootCompleteNodeResponse::RootCompleteNodeResponse(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.RootCompleteNodeResponse)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.RootCompleteNodeResponse)
 }
 RootCompleteNodeResponse::RootCompleteNodeResponse(const RootCompleteNodeResponse& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  if (from.has_nodes()) {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  if (from._internal_has_nodes()) {
     nodes_ = new ::top::kadmlia::protobuf::NodeInfo(*from.nodes_);
   } else {
-    nodes_ = NULL;
+    nodes_ = nullptr;
   }
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.RootCompleteNodeResponse)
 }
 
 void RootCompleteNodeResponse::SharedCtor() {
-  nodes_ = NULL;
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_RootCompleteNodeResponse_kadmlia_2eproto.base);
+  nodes_ = nullptr;
 }
 
 RootCompleteNodeResponse::~RootCompleteNodeResponse() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.RootCompleteNodeResponse)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void RootCompleteNodeResponse::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
   if (this != internal_default_instance()) delete nodes_;
 }
 
+void RootCompleteNodeResponse::ArenaDtor(void* object) {
+  RootCompleteNodeResponse* _this = reinterpret_cast< RootCompleteNodeResponse* >(object);
+  (void)_this;
+}
+void RootCompleteNodeResponse::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void RootCompleteNodeResponse::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* RootCompleteNodeResponse::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const RootCompleteNodeResponse& RootCompleteNodeResponse::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_RootCompleteNodeResponse.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_RootCompleteNodeResponse_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void RootCompleteNodeResponse::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
-    GOOGLE_DCHECK(nodes_ != NULL);
+    GOOGLE_DCHECK(nodes_ != nullptr);
     nodes_->Clear();
   }
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool RootCompleteNodeResponse::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* RootCompleteNodeResponse::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional .top.kadmlia.protobuf.NodeInfo nodes = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_nodes()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_nodes(), ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.RootCompleteNodeResponse)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.RootCompleteNodeResponse)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void RootCompleteNodeResponse::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional .top.kadmlia.protobuf.NodeInfo nodes = 1;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, this->_internal_nodes(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.RootCompleteNodeResponse)
-}
-
-::google::protobuf::uint8* RootCompleteNodeResponse::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* RootCompleteNodeResponse::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional .top.kadmlia.protobuf.NodeInfo nodes = 1;
   if (cached_has_bits & 0x00000001u) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        1, this->_internal_nodes(), deterministic, target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(
+        1, _Internal::nodes(this), target, stream);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.RootCompleteNodeResponse)
   return target;
@@ -2678,32 +2389,36 @@ size_t RootCompleteNodeResponse::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // optional .top.kadmlia.protobuf.NodeInfo nodes = 1;
-  if (has_nodes()) {
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *nodes_);
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void RootCompleteNodeResponse::MergeFrom(const ::google::protobuf::Message& from) {
+void RootCompleteNodeResponse::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
   GOOGLE_DCHECK_NE(&from, this);
   const RootCompleteNodeResponse* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const RootCompleteNodeResponse>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<RootCompleteNodeResponse>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.RootCompleteNodeResponse)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.RootCompleteNodeResponse)
     MergeFrom(*source);
@@ -2713,16 +2428,16 @@ void RootCompleteNodeResponse::MergeFrom(const ::google::protobuf::Message& from
 void RootCompleteNodeResponse::MergeFrom(const RootCompleteNodeResponse& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_nodes()) {
-    mutable_nodes()->::top::kadmlia::protobuf::NodeInfo::MergeFrom(from.nodes());
+  if (from._internal_has_nodes()) {
+    _internal_mutable_nodes()->::top::kadmlia::protobuf::NodeInfo::MergeFrom(from._internal_nodes());
   }
 }
 
-void RootCompleteNodeResponse::CopyFrom(const ::google::protobuf::Message& from) {
+void RootCompleteNodeResponse::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.RootCompleteNodeResponse)
   if (&from == this) return;
   Clear();
@@ -2740,20 +2455,15 @@ bool RootCompleteNodeResponse::IsInitialized() const {
   return true;
 }
 
-void RootCompleteNodeResponse::Swap(RootCompleteNodeResponse* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void RootCompleteNodeResponse::InternalSwap(RootCompleteNodeResponse* other) {
   using std::swap;
-  swap(nodes_, other->nodes_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(nodes_, other->nodes_);
 }
 
-::google::protobuf::Metadata RootCompleteNodeResponse::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata RootCompleteNodeResponse::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -2761,23 +2471,27 @@ void RootCompleteNodeResponse::InternalSwap(RootCompleteNodeResponse* other) {
 
 void RootCacheElectNodesRequest::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int RootCacheElectNodesRequest::kDesServiceTypeFieldNumber;
-const int RootCacheElectNodesRequest::kCountFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class RootCacheElectNodesRequest::_Internal {
+ public:
+  using HasBits = decltype(std::declval<RootCacheElectNodesRequest>()._has_bits_);
+  static void set_has_des_service_type(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_count(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+};
 
-RootCacheElectNodesRequest::RootCacheElectNodesRequest()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_RootCacheElectNodesRequest.base);
+RootCacheElectNodesRequest::RootCacheElectNodesRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.RootCacheElectNodesRequest)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.RootCacheElectNodesRequest)
 }
 RootCacheElectNodesRequest::RootCacheElectNodesRequest(const RootCacheElectNodesRequest& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   ::memcpy(&des_service_type_, &from.des_service_type_,
     static_cast<size_t>(reinterpret_cast<char*>(&count_) -
     reinterpret_cast<char*>(&des_service_type_)) + sizeof(count_));
@@ -2793,144 +2507,114 @@ void RootCacheElectNodesRequest::SharedCtor() {
 RootCacheElectNodesRequest::~RootCacheElectNodesRequest() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.RootCacheElectNodesRequest)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void RootCacheElectNodesRequest::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
 }
 
+void RootCacheElectNodesRequest::ArenaDtor(void* object) {
+  RootCacheElectNodesRequest* _this = reinterpret_cast< RootCacheElectNodesRequest* >(object);
+  (void)_this;
+}
+void RootCacheElectNodesRequest::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void RootCacheElectNodesRequest::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* RootCacheElectNodesRequest::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const RootCacheElectNodesRequest& RootCacheElectNodesRequest::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_RootCacheElectNodesRequest.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_RootCacheElectNodesRequest_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void RootCacheElectNodesRequest::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 3u) {
+  if (cached_has_bits & 0x00000003u) {
     ::memset(&des_service_type_, 0, static_cast<size_t>(
         reinterpret_cast<char*>(&count_) -
         reinterpret_cast<char*>(&des_service_type_)) + sizeof(count_));
   }
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool RootCacheElectNodesRequest::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* RootCacheElectNodesRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional uint64 des_service_type = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          set_has_des_service_type();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &des_service_type_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          _Internal::set_has_des_service_type(&has_bits);
+          des_service_type_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional uint32 count = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-          set_has_count();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &count_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          _Internal::set_has_count(&has_bits);
+          count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void RootCacheElectNodesRequest::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional uint64 des_service_type = 1;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->des_service_type(), output);
-  }
-
-  // optional uint32 count = 2;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->count(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-}
-
-::google::protobuf::uint8* RootCacheElectNodesRequest::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* RootCacheElectNodesRequest::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional uint64 des_service_type = 1;
   if (cached_has_bits & 0x00000001u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->des_service_type(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(1, this->_internal_des_service_type(), target);
   }
 
   // optional uint32 count = 2;
   if (cached_has_bits & 0x00000002u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->count(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(2, this->_internal_count(), target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.RootCacheElectNodesRequest)
   return target;
@@ -2940,41 +2624,45 @@ size_t RootCacheElectNodesRequest::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  if (_has_bits_[0 / 32] & 3u) {
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
     // optional uint64 des_service_type = 1;
-    if (has_des_service_type()) {
+    if (cached_has_bits & 0x00000001u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt64Size(
-          this->des_service_type());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
+          this->_internal_des_service_type());
     }
 
     // optional uint32 count = 2;
-    if (has_count()) {
+    if (cached_has_bits & 0x00000002u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->count());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+          this->_internal_count());
     }
 
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void RootCacheElectNodesRequest::MergeFrom(const ::google::protobuf::Message& from) {
+void RootCacheElectNodesRequest::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
   GOOGLE_DCHECK_NE(&from, this);
   const RootCacheElectNodesRequest* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const RootCacheElectNodesRequest>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<RootCacheElectNodesRequest>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.RootCacheElectNodesRequest)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.RootCacheElectNodesRequest)
     MergeFrom(*source);
@@ -2984,12 +2672,12 @@ void RootCacheElectNodesRequest::MergeFrom(const ::google::protobuf::Message& fr
 void RootCacheElectNodesRequest::MergeFrom(const RootCacheElectNodesRequest& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 3u) {
+  if (cached_has_bits & 0x00000003u) {
     if (cached_has_bits & 0x00000001u) {
       des_service_type_ = from.des_service_type_;
     }
@@ -3000,7 +2688,7 @@ void RootCacheElectNodesRequest::MergeFrom(const RootCacheElectNodesRequest& fro
   }
 }
 
-void RootCacheElectNodesRequest::CopyFrom(const ::google::protobuf::Message& from) {
+void RootCacheElectNodesRequest::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.RootCacheElectNodesRequest)
   if (&from == this) return;
   Clear();
@@ -3018,21 +2706,20 @@ bool RootCacheElectNodesRequest::IsInitialized() const {
   return true;
 }
 
-void RootCacheElectNodesRequest::Swap(RootCacheElectNodesRequest* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void RootCacheElectNodesRequest::InternalSwap(RootCacheElectNodesRequest* other) {
   using std::swap;
-  swap(des_service_type_, other->des_service_type_);
-  swap(count_, other->count_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(RootCacheElectNodesRequest, count_)
+      + sizeof(RootCacheElectNodesRequest::count_)
+      - PROTOBUF_FIELD_OFFSET(RootCacheElectNodesRequest, des_service_type_)>(
+          reinterpret_cast<char*>(&des_service_type_),
+          reinterpret_cast<char*>(&other->des_service_type_));
 }
 
-::google::protobuf::Metadata RootCacheElectNodesRequest::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata RootCacheElectNodesRequest::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -3040,144 +2727,122 @@ void RootCacheElectNodesRequest::InternalSwap(RootCacheElectNodesRequest* other)
 
 void RootCacheElectNodesResponse::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int RootCacheElectNodesResponse::kNodesFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class RootCacheElectNodesResponse::_Internal {
+ public:
+};
 
-RootCacheElectNodesResponse::RootCacheElectNodesResponse()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_RootCacheElectNodesResponse.base);
+RootCacheElectNodesResponse::RootCacheElectNodesResponse(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena),
+  nodes_(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.RootCacheElectNodesResponse)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.RootCacheElectNodesResponse)
 }
 RootCacheElectNodesResponse::RootCacheElectNodesResponse(const RootCacheElectNodesResponse& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      _has_bits_(from._has_bits_),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       nodes_(from.nodes_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.RootCacheElectNodesResponse)
 }
 
 void RootCacheElectNodesResponse::SharedCtor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_RootCacheElectNodesResponse_kadmlia_2eproto.base);
 }
 
 RootCacheElectNodesResponse::~RootCacheElectNodesResponse() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.RootCacheElectNodesResponse)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void RootCacheElectNodesResponse::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
 }
 
+void RootCacheElectNodesResponse::ArenaDtor(void* object) {
+  RootCacheElectNodesResponse* _this = reinterpret_cast< RootCacheElectNodesResponse* >(object);
+  (void)_this;
+}
+void RootCacheElectNodesResponse::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void RootCacheElectNodesResponse::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* RootCacheElectNodesResponse::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const RootCacheElectNodesResponse& RootCacheElectNodesResponse::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_RootCacheElectNodesResponse.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_RootCacheElectNodesResponse_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void RootCacheElectNodesResponse::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   nodes_.Clear();
-  _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool RootCacheElectNodesResponse::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* RootCacheElectNodesResponse::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_nodes()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_nodes(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<10>(ptr));
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-  return true;
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void RootCacheElectNodesResponse::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->nodes_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1,
-      this->nodes(static_cast<int>(i)),
-      output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-}
-
-::google::protobuf::uint8* RootCacheElectNodesResponse::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* RootCacheElectNodesResponse::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->nodes_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        1, this->nodes(static_cast<int>(i)), deterministic, target);
+      n = static_cast<unsigned int>(this->_internal_nodes_size()); i < n; i++) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, this->_internal_nodes(i), target, stream);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.RootCacheElectNodesResponse)
   return target;
@@ -3187,36 +2852,35 @@ size_t RootCacheElectNodesResponse::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // repeated .top.kadmlia.protobuf.NodeInfo nodes = 1;
-  {
-    unsigned int count = static_cast<unsigned int>(this->nodes_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->nodes(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_nodes_size();
+  for (const auto& msg : this->nodes_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void RootCacheElectNodesResponse::MergeFrom(const ::google::protobuf::Message& from) {
+void RootCacheElectNodesResponse::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
   GOOGLE_DCHECK_NE(&from, this);
   const RootCacheElectNodesResponse* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const RootCacheElectNodesResponse>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<RootCacheElectNodesResponse>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.RootCacheElectNodesResponse)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.RootCacheElectNodesResponse)
     MergeFrom(*source);
@@ -3226,14 +2890,14 @@ void RootCacheElectNodesResponse::MergeFrom(const ::google::protobuf::Message& f
 void RootCacheElectNodesResponse::MergeFrom(const RootCacheElectNodesResponse& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   nodes_.MergeFrom(from.nodes_);
 }
 
-void RootCacheElectNodesResponse::CopyFrom(const ::google::protobuf::Message& from) {
+void RootCacheElectNodesResponse::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.RootCacheElectNodesResponse)
   if (&from == this) return;
   Clear();
@@ -3251,20 +2915,14 @@ bool RootCacheElectNodesResponse::IsInitialized() const {
   return true;
 }
 
-void RootCacheElectNodesResponse::Swap(RootCacheElectNodesResponse* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void RootCacheElectNodesResponse::InternalSwap(RootCacheElectNodesResponse* other) {
   using std::swap;
-  CastToBase(&nodes_)->InternalSwap(CastToBase(&other->nodes_));
-  swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  nodes_.InternalSwap(&other->nodes_);
 }
 
-::google::protobuf::Metadata RootCacheElectNodesResponse::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata RootCacheElectNodesResponse::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -3272,178 +2930,153 @@ void RootCacheElectNodesResponse::InternalSwap(RootCacheElectNodesResponse* othe
 
 void RootMessage::InitAsDefaultInstance() {
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int RootMessage::kMessageTypeFieldNumber;
-const int RootMessage::kDataFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class RootMessage::_Internal {
+ public:
+  using HasBits = decltype(std::declval<RootMessage>()._has_bits_);
+  static void set_has_message_type(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+  static void set_has_data(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+};
 
-RootMessage::RootMessage()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_kadmlia_2eproto::scc_info_RootMessage.base);
+RootMessage::RootMessage(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:top.kadmlia.protobuf.RootMessage)
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:top.kadmlia.protobuf.RootMessage)
 }
 RootMessage::RootMessage(const RootMessage& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
+  : ::PROTOBUF_NAMESPACE_ID::Message(),
       _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_data()) {
-    data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  data_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (from._internal_has_data()) {
+    data_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_data(),
+      GetArena());
   }
   message_type_ = from.message_type_;
   // @@protoc_insertion_point(copy_constructor:top.kadmlia.protobuf.RootMessage)
 }
 
 void RootMessage::SharedCtor() {
-  data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_RootMessage_kadmlia_2eproto.base);
+  data_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   message_type_ = 0u;
 }
 
 RootMessage::~RootMessage() {
   // @@protoc_insertion_point(destructor:top.kadmlia.protobuf.RootMessage)
   SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 void RootMessage::SharedDtor() {
-  data_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  data_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
+void RootMessage::ArenaDtor(void* object) {
+  RootMessage* _this = reinterpret_cast< RootMessage* >(object);
+  (void)_this;
+}
+void RootMessage::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
 void RootMessage::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* RootMessage::descriptor() {
-  ::protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
 const RootMessage& RootMessage::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_kadmlia_2eproto::scc_info_RootMessage.base);
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_RootMessage_kadmlia_2eproto.base);
   return *internal_default_instance();
 }
 
 
 void RootMessage::Clear() {
 // @@protoc_insertion_point(message_clear_start:top.kadmlia.protobuf.RootMessage)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
-    data_.ClearNonDefaultToEmptyNoArena();
+    data_.ClearNonDefaultToEmpty();
   }
   message_type_ = 0u;
   _has_bits_.Clear();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool RootMessage::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.kadmlia.protobuf.RootMessage)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* RootMessage::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
       // optional uint32 message_type = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          set_has_message_type();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &message_type_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          _Internal::set_has_message_type(&has_bits);
+          message_type_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       // optional bytes data = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_data()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
+          auto str = _internal_mutable_data();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
-        if (tag == 0) {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
           goto success;
         }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
       }
-    }
-  }
+    }  // switch
+  }  // while
 success:
-  // @@protoc_insertion_point(parse_success:top.kadmlia.protobuf.RootMessage)
-  return true;
+  _has_bits_.Or(has_bits);
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:top.kadmlia.protobuf.RootMessage)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto success;
+#undef CHK_
 }
 
-void RootMessage::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.kadmlia.protobuf.RootMessage)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional uint32 message_type = 1;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->message_type(), output);
-  }
-
-  // optional bytes data = 2;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      2, this->data(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.kadmlia.protobuf.RootMessage)
-}
-
-::google::protobuf::uint8* RootMessage::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+::PROTOBUF_NAMESPACE_ID::uint8* RootMessage::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:top.kadmlia.protobuf.RootMessage)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
   // optional uint32 message_type = 1;
   if (cached_has_bits & 0x00000002u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->message_type(), target);
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt32ToArray(1, this->_internal_message_type(), target);
   }
 
   // optional bytes data = 2;
   if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        2, this->data(), target);
+    target = stream->WriteBytesMaybeAliased(
+        2, this->_internal_data(), target);
   }
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:top.kadmlia.protobuf.RootMessage)
   return target;
@@ -3453,41 +3086,45 @@ size_t RootMessage::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:top.kadmlia.protobuf.RootMessage)
   size_t total_size = 0;
 
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  if (_has_bits_[0 / 32] & 3u) {
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
     // optional bytes data = 2;
-    if (has_data()) {
+    if (cached_has_bits & 0x00000001u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->data());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
+          this->_internal_data());
     }
 
     // optional uint32 message_type = 1;
-    if (has_message_type()) {
+    if (cached_has_bits & 0x00000002u) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->message_type());
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
+          this->_internal_message_type());
     }
 
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void RootMessage::MergeFrom(const ::google::protobuf::Message& from) {
+void RootMessage::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:top.kadmlia.protobuf.RootMessage)
   GOOGLE_DCHECK_NE(&from, this);
   const RootMessage* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const RootMessage>(
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<RootMessage>(
           &from);
-  if (source == NULL) {
+  if (source == nullptr) {
   // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.kadmlia.protobuf.RootMessage)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
   } else {
   // @@protoc_insertion_point(generalized_merge_from_cast_success:top.kadmlia.protobuf.RootMessage)
     MergeFrom(*source);
@@ -3497,15 +3134,14 @@ void RootMessage::MergeFrom(const ::google::protobuf::Message& from) {
 void RootMessage::MergeFrom(const RootMessage& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:top.kadmlia.protobuf.RootMessage)
   GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
   cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 3u) {
+  if (cached_has_bits & 0x00000003u) {
     if (cached_has_bits & 0x00000001u) {
-      set_has_data();
-      data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
+      _internal_set_data(from._internal_data());
     }
     if (cached_has_bits & 0x00000002u) {
       message_type_ = from.message_type_;
@@ -3514,7 +3150,7 @@ void RootMessage::MergeFrom(const RootMessage& from) {
   }
 }
 
-void RootMessage::CopyFrom(const ::google::protobuf::Message& from) {
+void RootMessage::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
 // @@protoc_insertion_point(generalized_copy_from_start:top.kadmlia.protobuf.RootMessage)
   if (&from == this) return;
   Clear();
@@ -3532,22 +3168,16 @@ bool RootMessage::IsInitialized() const {
   return true;
 }
 
-void RootMessage::Swap(RootMessage* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void RootMessage::InternalSwap(RootMessage* other) {
   using std::swap;
-  data_.Swap(&other->data_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(message_type_, other->message_type_);
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  data_.Swap(&other->data_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  swap(message_type_, other->message_type_);
 }
 
-::google::protobuf::Metadata RootMessage::GetMetadata() const {
-  protobuf_kadmlia_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_kadmlia_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata RootMessage::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -3555,39 +3185,38 @@ void RootMessage::InternalSwap(RootMessage* other) {
 }  // namespace protobuf
 }  // namespace kadmlia
 }  // namespace top
-namespace google {
-namespace protobuf {
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::BootstrapJoinRequest* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::BootstrapJoinRequest >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::BootstrapJoinRequest >(arena);
+PROTOBUF_NAMESPACE_OPEN
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::BootstrapJoinRequest* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::BootstrapJoinRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::BootstrapJoinRequest >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::BootstrapJoinResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::BootstrapJoinResponse >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::BootstrapJoinResponse >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::BootstrapJoinResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::BootstrapJoinResponse >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::BootstrapJoinResponse >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::Handshake* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::Handshake >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::Handshake >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::Handshake* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::Handshake >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::Handshake >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::NodeInfo* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::NodeInfo >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::NodeInfo >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::NodeInfo* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::NodeInfo >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::NodeInfo >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::FindClosestNodesRequest* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::FindClosestNodesRequest >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::FindClosestNodesRequest >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::FindClosestNodesRequest* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::FindClosestNodesRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::FindClosestNodesRequest >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::FindClosestNodesResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::FindClosestNodesResponse >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::FindClosestNodesResponse >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::FindClosestNodesResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::FindClosestNodesResponse >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::FindClosestNodesResponse >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::RootCompleteNodeResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootCompleteNodeResponse >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::RootCompleteNodeResponse >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::RootCompleteNodeResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootCompleteNodeResponse >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::RootCompleteNodeResponse >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::RootCacheElectNodesRequest* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootCacheElectNodesRequest >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::RootCacheElectNodesRequest >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::RootCacheElectNodesRequest* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootCacheElectNodesRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::RootCacheElectNodesRequest >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::RootCacheElectNodesResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootCacheElectNodesResponse >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::RootCacheElectNodesResponse >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::RootCacheElectNodesResponse* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootCacheElectNodesResponse >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::RootCacheElectNodesResponse >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::kadmlia::protobuf::RootMessage* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootMessage >(Arena* arena) {
-  return Arena::CreateInternal< ::top::kadmlia::protobuf::RootMessage >(arena);
+template<> PROTOBUF_NOINLINE ::top::kadmlia::protobuf::RootMessage* Arena::CreateMaybeMessage< ::top::kadmlia::protobuf::RootMessage >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::top::kadmlia::protobuf::RootMessage >(arena);
 }
-}  // namespace protobuf
-}  // namespace google
+PROTOBUF_NAMESPACE_CLOSE
 
 // @@protoc_insertion_point(global_scope)
+#include <google/protobuf/port_undef.inc>

@@ -11,13 +11,14 @@
 
 #include <iostream>
 #include <regex>
+
+using namespace top::xChainRPC;
 NS_BEG2(top, xrpc)
 
 HttpServer xevm_server::m_server;
 unique_ptr<xevm_rpc_service<xedge_evm_http_method>> xevm_server::m_rpc_service = nullptr;
 bool xevm_server::m_is_running = false;
 
-using namespace top::xChainRPC;
 xevm_server::xevm_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                            common::xip2_t xip2,
                            bool archive_flag,

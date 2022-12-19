@@ -2,8 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include <sstream>
-#define private public
-#define protected public
+
 #include "xconfig/xconfig_register.h"
 #include "xdata/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_info_bundle.h"

@@ -75,10 +75,10 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
     for (const auto &role_it: roles) {
 
-        const vnetwork::xvnode_address_t &self_addr = role_it.first;
+        const common::xnode_address_t &self_addr = role_it.first;
         const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
 
-        common::xnode_type_t role_type = real_part_type(self_addr.type());
+        common::xnode_type_t role_type = common::real_part_type(self_addr.type());
         if (common::has<common::xnode_type_t::storage>(role_type) || role_type==common::xnode_type_t::frozen)
             continue;
 
@@ -89,17 +89,17 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
     }
 }
 
-void xsync_gossip_t::add_role(const vnetwork::xvnode_address_t& addr) {
+void xsync_gossip_t::add_role(const common::xnode_address_t& addr) {
 
 
     XMETRICS_TIME_RECORD("sync_cost_gossip_add_role_event");
 
-    common::xnode_type_t type = real_part_type(addr.type());
+    common::xnode_type_t type = common::real_part_type(addr.type());
 
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
     for (const auto &role_it: roles) {
         if (real_part_type(role_it.first.type()) == type) {
-            const vnetwork::xvnode_address_t &self_addr = role_it.first;
+            const common::xnode_address_t &self_addr = role_it.first;
             const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
             walk_role(self_addr, role_chains, enum_walk_type_add_role);
             return;
@@ -109,11 +109,11 @@ void xsync_gossip_t::add_role(const vnetwork::xvnode_address_t& addr) {
     update_behind_role();
 }
 
-void xsync_gossip_t::remove_role(const vnetwork::xvnode_address_t& addr) {
+void xsync_gossip_t::remove_role(const common::xnode_address_t& addr) {
     update_behind_role();
 }
 
-void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, const std::shared_ptr<xrole_chains_t> &role_chains, enum_walk_type walk_type) {
+void xsync_gossip_t::walk_role(const common::xnode_address_t &self_addr, const std::shared_ptr<xrole_chains_t> &role_chains, enum_walk_type walk_type) {
 
     std::vector<xgossip_chain_info_ptr_t> info_list;
 
@@ -172,7 +172,7 @@ void xsync_gossip_t::process_timer(bool is_frozen) {
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
     for (const auto &role_it: roles) {
 
-        const vnetwork::xvnode_address_t &self_addr = role_it.first;
+        const common::xnode_address_t &self_addr = role_it.first;
         const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
 
         if (is_frozen) {
@@ -189,7 +189,7 @@ void xsync_gossip_t::process_timer(bool is_frozen) {
 }
 
 void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> &info_list, 
-    const vnetwork::xvnode_address_t &from_address, const vnetwork::xvnode_address_t &network_self, std::map<std::string, xgossip_behind_info_t> &behind_chain_set) {
+    const common::xnode_address_t &from_address, const common::xnode_address_t &network_self, std::map<std::string, xgossip_behind_info_t> &behind_chain_set) {
 
     std::vector<xgossip_chain_info_ptr_t> info_list_rsp;
 
@@ -262,7 +262,7 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
     }
 }
 
-void xsync_gossip_t::send_gossip(const xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers, enum_gossip_target_type target_type) {
+void xsync_gossip_t::send_gossip(const common::xnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers, enum_gossip_target_type target_type) {
 
     xbyte_buffer_t bloom_data(32, 0);
 
@@ -274,7 +274,7 @@ void xsync_gossip_t::send_gossip(const xvnode_address_t &self_addr, std::vector<
     }
 }
 
-void xsync_gossip_t::send_gossip_to_target(const xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, const xvnode_address_t &target_addr) {
+void xsync_gossip_t::send_gossip_to_target(const common::xnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, const common::xnode_address_t &target_addr) {
 
     xbyte_buffer_t bloom_data(32, 0);
 
@@ -283,7 +283,7 @@ void xsync_gossip_t::send_gossip_to_target(const xvnode_address_t &self_addr, st
     XMETRICS_COUNTER_INCREMENT("sync_gossip_send", 1);
 }
 
-void xsync_gossip_t::send_frozen_gossip(const xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers) {
+void xsync_gossip_t::send_frozen_gossip(const common::xnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers) {
 
     xbyte_buffer_t bloom_data(32, 0);
 
@@ -293,7 +293,7 @@ void xsync_gossip_t::send_frozen_gossip(const xvnode_address_t &self_addr, std::
     }
 }
 
-void xsync_gossip_t::send_frozen_gossip_to_target(const xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, const xvnode_address_t &target_addr) {
+void xsync_gossip_t::send_frozen_gossip_to_target(const common::xnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, const common::xnode_address_t &target_addr) {
 
     xbyte_buffer_t bloom_data(32, 0);
 

@@ -259,7 +259,7 @@ public:
         m_exe_addr = m_table_addr;
         m_contract_addr = common::xnode_id_t{m_table_addr};
         m_vbstate = make_object_ptr<xvbstate_t>(m_table_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
-        m_unitstate = std::make_shared<xunit_bstate_t>(m_vbstate.get());
+        m_unitstate = std::make_shared<data::xunit_bstate_t>(m_vbstate.get());
         m_statectx = std::make_shared<xmock_statectx_t>();
         m_account_index = std::make_shared<xaccount_context_t>(m_unitstate, m_statectx, 0);
         m_contract_helper = std::make_shared<xcontract_helper>(m_account_index.get(), m_contract_addr, m_exe_addr);
@@ -278,7 +278,7 @@ public:
     std::string m_table_addr;
     common::xnode_id_t m_contract_addr;
     xobject_ptr_t<xvbstate_t> m_vbstate{nullptr};
-    std::shared_ptr<xunit_bstate_t> m_unitstate{nullptr};
+    std::shared_ptr<data::xunit_bstate_t> m_unitstate{nullptr};
     statectx::xstatectx_face_ptr_t m_statectx{nullptr};
     std::shared_ptr<xaccount_context_t> m_account_index{nullptr};
     std::shared_ptr<xcontract_helper> m_contract_helper{nullptr};

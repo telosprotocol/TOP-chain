@@ -41,7 +41,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xtable_vote_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     /**
      * @brief vote the nodes
      *

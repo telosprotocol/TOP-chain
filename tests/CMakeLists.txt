@@ -3,6 +3,9 @@ add_compile_options(-Wno-narrowing)
 
 add_definitions(-DXENABLE_TESTS)
 
+enable_testing()
+find_package(GTest REQUIRED)
+
 add_subdirectory(xbasic)
 add_subdirectory(xcommon)
 add_subdirectory(xrouter)

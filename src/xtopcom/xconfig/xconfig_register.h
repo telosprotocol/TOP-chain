@@ -134,13 +134,13 @@ private:
             std::map<std::string, std::string>& filterd_map);
     bool is_param_changed(const std::string& key, const std::string& value);
 private:
-    std::mutex m_listener_lock {};
+    std::mutex m_listener_lock;
     std::list<xconfig_register_listener_ptr_t> m_listeners {};
 
-    std::mutex m_loader_lock {};
+    std::mutex m_loader_lock;
     std::list<xconfig_loader_ptr_t> m_loaders {};
 
-    mutable base::xrwlock_t m_param_lock {};
+    mutable base::xrwlock_t m_param_lock;
     std::map<std::string, std::string> m_params_map {};
 };
 

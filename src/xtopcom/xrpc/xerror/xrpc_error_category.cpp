@@ -24,7 +24,7 @@ static string xcodec_errc_map(int const errc) noexcept {
 class xrpc_category final : public std::error_category
 {
     const char* name() const noexcept override {
-        return u8"xrpc::error";
+        return "xrpc::error";
     }
 
     std::string message(int errc) const override {

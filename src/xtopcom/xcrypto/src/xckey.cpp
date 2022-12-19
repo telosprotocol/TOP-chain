@@ -17,8 +17,8 @@ extern "C"
     #include "trezor-crypto/secp256k1.h"
     #include "trezor-crypto/ecdsa.h"
 }
-#include "secp256k1/secp256k1.h"
-#include "secp256k1/secp256k1_recovery.h"
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 
 namespace top
 {
@@ -174,7 +174,8 @@ namespace top
                 return false;
             }
 
-            std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> secp256k1_context_verify{secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), &secp256k1_context_destroy};
+            std::unique_ptr<secp256k1_context, void (*)(secp256k1_context *)> secp256k1_context_verify{secp256k1_context_create(SECP256K1_CONTEXT_VERIFY),
+                                                                                                       &secp256k1_context_destroy};
 
             if(secp256k1_ecdsa_recoverable_signature_parse_compact((secp256k1_context*)secp256k1_context_verify.get(), &recover_sigature, signature.get_raw_signature(), signature.get_recover_id()) != 1)
             {
@@ -204,7 +205,7 @@ namespace top
              */
             size_t  serialize_pubkey_size = 65;
             uint8_t serialize_pubkey_data[65] = {0};
-            std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> secp256k1_context_sign{secp256k1_context_create(SECP256K1_CONTEXT_SIGN), &secp256k1_context_destroy};
+            std::unique_ptr<secp256k1_context, void (*)(secp256k1_context *)> secp256k1_context_sign{secp256k1_context_create(SECP256K1_CONTEXT_SIGN), &secp256k1_context_destroy};
             const int ret = secp256k1_ec_pubkey_serialize((secp256k1_context*)secp256k1_context_sign.get(), serialize_pubkey_data, &serialize_pubkey_size, &native_pubkey,SECP256K1_EC_UNCOMPRESSED);
             xassert(ret == 1);
             xassert(serialize_pubkey_size == 65);

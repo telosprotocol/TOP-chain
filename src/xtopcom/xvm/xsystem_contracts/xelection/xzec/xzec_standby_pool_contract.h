@@ -28,7 +28,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xtop_zec_standby_pool_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     void on_timer(common::xlogic_time_t const current_time);
 };
 using xzec_standby_pool_contract_t = xtop_zec_standby_pool_contract;

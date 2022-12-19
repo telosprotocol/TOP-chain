@@ -84,7 +84,7 @@ template <typename T, typename... Args>
 class pre_request_service<T, Args...> : public pre_request_service<Args...>
 {
 public:
-    pre_request_service<T, Args...>(T* t, Args*... args): pre_request_service<Args...>(args...), m_interface(t) {
+    pre_request_service(T* t, Args*... args) : pre_request_service<Args...>(args...), m_interface(t) {
         if (!m_interface)
             return;
         for (auto const& method : m_interface->methods()) {

@@ -16,7 +16,7 @@
 
 NS_BEG3(top, xvm, xcontract)
 
-using namespace top::store;
+// using namespace top::store;
 
 /**
  * @brief the enum definition for contract property type

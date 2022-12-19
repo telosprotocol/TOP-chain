@@ -5,15 +5,15 @@ add_compile_options(-static -Wall -Werror)
 aux_source_directory(./src src_dir)
 add_library(xstore STATIC ${src_dir})
 
-add_dependencies(xstore xchain_fork xdata xxbase xdb)
+add_dependencies(xstore xchain_fork xmbus xstatectx xdb xdata xxbase)
 
 target_link_libraries(xstore PRIVATE
     xchain_fork
-    xxbase
     xmbus
     xdata
     xstatectx
     xdb
+    xxbase
 )
 
 if (BUILD_METRICS)

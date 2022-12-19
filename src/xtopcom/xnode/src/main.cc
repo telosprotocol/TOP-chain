@@ -28,7 +28,7 @@
 #include "xmonitor.h"
 #include "generated/version.h"
 #include "topio_setproctitle.h"
-#include "CLI11.hpp"
+#include "CLI/CLI.hpp"
 #include "xnode/xconfig.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
 #include "xbasic/xtimer_driver.h"

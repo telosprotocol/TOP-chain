@@ -5,12 +5,11 @@
 
 #pragma once
 
+#include "xbasic/xspan.h"
 #include "fixed_hash.h"
 #include "vector_ref.h"
 #include "xevm_common/common.h"
 #include "xevm_common/data.h"
-
-#include <gsl/span>
 
 #include <array>
 #include <exception>
@@ -368,7 +367,7 @@ public:
     /// Encodes a block of data.
     // static xbytes_t encode(const xbytes_t & data);
 
-    static xbytes_t encode(gsl::span<xbyte_t const> bytes);
+    static xbytes_t encode(xspan_t<xbyte_t const> bytes);
 
     /// Encodes a static array.
     template <std::size_t N>

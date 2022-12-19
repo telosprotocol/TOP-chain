@@ -112,8 +112,8 @@ TEST(test_ws_server, token)
         string result = in_message->string();
         cout << "Client: Message received: \"" << result << "\"" << endl;
         ++count;
-        xJson::Reader reader;
-        xJson::Value result_json;
+        Json::Reader reader;
+        Json::Value result_json;
         if (reader.parse(result, result_json)) {
             ws_account_token = result_json["data"]["token"].asString();
         }

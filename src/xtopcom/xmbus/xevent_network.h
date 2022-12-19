@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xmbus/xevent.h"
-#include "xvnetwork/xaddress.h"
+#include "xcommon/xaddress.h"
 #include "xvnetwork/xmessage.h"
 
 NS_BEG2(top, mbus)
@@ -21,8 +21,8 @@ public:
     };
 
     xevent_network_t(
-            const vnetwork::xvnode_address_t& _from_address,
-            const vnetwork::xvnode_address_t& _network_self,
+            const common::xnode_address_t& _from_address,
+            const common::xnode_address_t& _network_self,
             const xbyte_buffer_t& msg,
             vnetwork::xmessage_t::message_type _msg_type,
             int _minor_type = (int) none,
@@ -38,8 +38,8 @@ public:
     msg_type(_msg_type) {
     }
 
-    vnetwork::xvnode_address_t from_address;
-    vnetwork::xvnode_address_t network_self;
+    common::xnode_address_t from_address;
+    common::xnode_address_t network_self;
     xbyte_buffer_t message;
     vnetwork::xmessage_t::message_type msg_type;
 };
@@ -50,8 +50,8 @@ class xevent_network_sync_t : public xevent_network_t {
 public:
 
     xevent_network_sync_t(
-            const vnetwork::xvnode_address_t& _from_address,
-            const vnetwork::xvnode_address_t& _network_self, 
+            const common::xnode_address_t& _from_address,
+            const common::xnode_address_t& _network_self, 
             const xbyte_buffer_t& msg,
             vnetwork::xmessage_t::message_type msg_type,
             direction_type dir = to_listener,

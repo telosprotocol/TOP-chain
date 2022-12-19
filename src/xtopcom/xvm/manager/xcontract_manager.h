@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 #include "xbase/xlock.h"
 #include "xbasic/xmemory.hpp"
 #include "xblockstore/xsyncvstore_face.h"
@@ -28,7 +28,7 @@
 
 NS_BEG2(top, contract)
 
-using xrole_map_t = std::unordered_map<xvnetwork_driver_face_t *, xrole_context_t *>;
+using xrole_map_t = std::unordered_map<vnetwork::xvnetwork_driver_face_t *, xrole_context_t *>;
 enum class xtop_enum_json_format : uint8_t {
     invalid,
     simple,
@@ -36,7 +36,7 @@ enum class xtop_enum_json_format : uint8_t {
 };
 using xjson_format_t = xtop_enum_json_format;
 
-class xtop_contract_manager final : public xbase_sync_event_monitor_t {
+class xtop_contract_manager final : public mbus::xbase_sync_event_monitor_t {
 public:
     xtop_contract_manager(){
         XMETRICS_COUNTER_INCREMENT("xvm_contract_manager_counter", 1);
@@ -70,7 +70,7 @@ public:
      * @param store store
      * @param syncstore sync store
      */
-    void install_monitors(observer_ptr<xmessage_bus_face_t> const &               bus,
+    void install_monitors(observer_ptr<mbus::xmessage_bus_face_t> const &               bus,
                           observer_ptr<vnetwork::xmessage_callback_hub_t> const & msg_callback_hub,
                           xobject_ptr_t<store::xsyncvstore_t> const&              syncstore);
 
@@ -98,7 +98,7 @@ public:
      * @param address contract address
      * @return xcontract_base*
      */
-    xcontract_base * get_contract(common::xaccount_address_t const & address);
+    xvm::xcontract::xcontract_base * get_contract(common::xaccount_address_t const & address);
     /**
      * @brief register the contract object
      *
@@ -117,7 +117,7 @@ public:
      *
      * @return observer_ptr<xiothread_t>
      */
-    observer_ptr<xiothread_t> get_thread() const noexcept { return m_observed_thread; }
+    observer_ptr<base::xiothread_t> get_thread() const noexcept { return m_observed_thread; }
 
     // for tests
     /**
@@ -132,7 +132,7 @@ public:
      *
      * @return std::unordered_map<common::xaccount_address_t, xcontract_base *> const&
      */
-    std::unordered_map<common::xaccount_address_t, xcontract_base *> const & get_contract_inst_map() const noexcept { return m_contract_inst_map; }
+    std::unordered_map<common::xaccount_address_t, xvm::xcontract::xcontract_base *> const & get_contract_inst_map() const noexcept { return m_contract_inst_map; }
 
     /**
      * @brief Set the nodesrv ptr object
@@ -149,20 +149,20 @@ public:
      */
     static int32_t get_account_from_xip(const xvip2_t & target_node, std::string& target_addr);
 
-    void get_contract_data(common::xaccount_address_t const & contract_address, xjson_format_t const json_format, bool compatible_mode, xJson::Value & json) const;
-    void get_contract_data(common::xaccount_address_t const & contract_address, std::uint64_t const height, xjson_format_t const json_format, xJson::Value & json, std::error_code & ec) const;
+    void get_contract_data(common::xaccount_address_t const & contract_address, xjson_format_t const json_format, bool compatible_mode, Json::Value & json) const;
+    void get_contract_data(common::xaccount_address_t const & contract_address, std::uint64_t const height, xjson_format_t const json_format, Json::Value & json, std::error_code & ec) const;
     void get_contract_data(common::xaccount_address_t const & contract_address,
                            std::string const & property_name,
                            xjson_format_t const json_format,
                            bool compatible_mode,
-                           xJson::Value & json) const;
+                           Json::Value & json) const;
     void get_contract_data(common::xaccount_address_t const & contract_address,
                            const data::xunitstate_ptr_t unitstate,
                            std::string const & property_name,
                            xjson_format_t const json_format,
                            bool compatible_mode,
-                           xJson::Value & json) const;
-    void get_contract_data(common::xaccount_address_t const & contract_address, std::string const & property_name, std::string const & key, xjson_format_t const json_format, xJson::Value & json) const;
+                           Json::Value & json) const;
+    void get_contract_data(common::xaccount_address_t const & contract_address, std::string const & property_name, std::string const & key, xjson_format_t const json_format, Json::Value & json) const;
 
     void get_election_data(common::xaccount_address_t const & contract_address, const data::xunitstate_ptr_t unitstate, std::string const & property_name, std::vector<std::pair<xpublic_key_t, uint64_t>> & election_data) const;
 private:
@@ -173,38 +173,38 @@ private:
      * @return true
      * @return false
      */
-    bool filter_event(const xevent_ptr_t & e) override;
+    bool filter_event(const mbus::xevent_ptr_t & e) override;
     /**
      * @brief process the event
      *
      * @param e event prt
      */
-    void process_event(const xevent_ptr_t & e) override;
+    void process_event(const mbus::xevent_ptr_t & e) override;
     /**
      * @brief hook function, invoke after event pushed
      *
      * @param e event prt
      */
-    void after_event_pushed(const xevent_ptr_t & e) override;
+    void after_event_pushed(const mbus::xevent_ptr_t & e) override;
 
     /**
      * @brief process new vnode event
      *
      * @param e event prt
      */
-    void do_new_vnode(const xevent_vnode_ptr_t & e);
+    void do_new_vnode(const mbus::xevent_vnode_ptr_t & e);
     /**
      * @brief process destroy vnode event
      *
      * @param e event prt
      */
-    void do_destory_vnode(const xevent_vnode_ptr_t & e);
+    void do_destory_vnode(const mbus::xevent_vnode_ptr_t & e);
     /**
      * @brief process store and chain timer event
      *
      * @param e event prt
      */
-    void do_on_block(const xevent_ptr_t & e);
+    void do_on_block(const mbus::xevent_ptr_t & e);
     /**
      * @brief add to map
      *
@@ -212,7 +212,7 @@ private:
      * @param rc role context prt
      * @param driver driver
      */
-    void add_to_map(xrole_map_t & m, xrole_context_t * rc, xvnetwork_driver_face_t * driver);
+    void add_to_map(xrole_map_t & m, xrole_context_t * rc, vnetwork::xvnetwork_driver_face_t * driver);
     /**
      * @brief add role context
      *
@@ -220,7 +220,7 @@ private:
      * @param type node type
      * @param disable_broadcasts if disabling broadcasts
      */
-    void add_role_contexts_by_type(const xevent_vnode_ptr_t & e, common::xnode_type_t type, bool disable_broadcasts);
+    void add_role_contexts_by_type(const mbus::xevent_vnode_ptr_t & e, common::xnode_type_t type, bool disable_broadcasts);
 
     /**
      * @brief Set up contract
@@ -228,13 +228,13 @@ private:
      * @param contract_cluster_address contract cluster address
      * @param store store
      */
-    void setup_chain(common::xaccount_address_t const & contract_cluster_address, xvblockstore_t * blockstore);
+    void setup_chain(common::xaccount_address_t const & contract_cluster_address, base::xvblockstore_t * blockstore);
     bool is_need_process_commit_event(const mbus::xevent_store_block_committed_ptr_t & store_event) const;
 
     std::unordered_map<common::xaccount_address_t, xrole_map_t *>    m_map;
     xcontract_register_t                                             m_contract_register;
     observer_ptr<store::xsyncvstore_t>                               m_syncstore{};
-    std::unordered_map<common::xaccount_address_t, xcontract_base *> m_contract_inst_map;
+    std::unordered_map<common::xaccount_address_t, xvm::xcontract::xcontract_base *> m_contract_inst_map;
     base::xrwlock_t                                                  m_rwlock;
 
     static base::xvnodesrv_t                                         *m_nodesvr_ptr;

@@ -56,7 +56,7 @@ public:
 
     void SetUp() {
         top::base::xvchain_t::instance().clean_all();
-        m_store = xstore_factory::create_store_with_memdb();
+        m_store = store::xstore_factory::create_store_with_memdb();
         top::base::xvchain_t::instance().set_xdbstore(m_store.get());
         base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
         base::xvchain_t::instance().set_xblockstore(blockstore);
@@ -83,7 +83,7 @@ public:
     }
 
     data::xtransaction_ptr_t summarize_slash_info(std::string const& slash_info) {
-        data::xtransaction_ptr_t slash_summarize_trx = make_object_ptr<xtransaction_v2_t>();
+        data::xtransaction_ptr_t slash_summarize_trx = make_object_ptr<data::xtransaction_v2_t>();
         slash_summarize_trx->set_source_addr(shard_table_statistic_addr);
         slash_summarize_trx->set_target_addr(sys_contract_zec_slash_info_addr);
         slash_summarize_trx->set_target_action_name("summarize_slash_info");
@@ -96,7 +96,7 @@ public:
         top::base::xstream_t target_stream(base::xcontext_t::instance());
         target_stream << timestamp;
 
-        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
+        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<data::xtransaction_v2_t>();
         slash_colletion_trx->set_source_addr(sys_contract_zec_slash_info_addr);
         slash_colletion_trx->set_target_addr(sys_contract_zec_slash_info_addr);
         slash_colletion_trx->set_target_action_name("do_unqualified_node_slash");
@@ -105,7 +105,7 @@ public:
         return slash_colletion_trx;
     }
 
-   xobject_ptr_t<xstore_face_t> m_store;
+   xobject_ptr_t<store::xstore_face_t> m_store;
    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
    shared_ptr<xaccount_context_t> m_zec_slash_account_ctx_ptr;
 

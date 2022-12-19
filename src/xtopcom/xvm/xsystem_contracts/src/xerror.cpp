@@ -71,8 +71,12 @@ NS_END4
 
 NS_BEG1(std)
 
-size_t hash<top::xvm::system_contracts::error::xsystem_contract_errc_t>::operator()(top::xvm::system_contracts::error::xsystem_contract_errc_t errc) const noexcept {
+#if !defined(XCXX14_OR_ABOVE)
+
+size_t hash<top::xvm::system_contracts::error::xsystem_contract_errc_t>::operator()(top::xvm::system_contracts::error::xsystem_contract_errc_t errc) const {
     return static_cast<size_t>(static_cast<std::underlying_type<top::xvm::system_contracts::error::xsystem_contract_errc_t>::type>(errc));
 }
+
+#endif
 
 NS_END1

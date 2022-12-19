@@ -15,7 +15,7 @@
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xutility/xhash.h"
-#include "xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xtx_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvnetwork_error.h"
 #include "xvnetwork/xvnetwork_error2.h"

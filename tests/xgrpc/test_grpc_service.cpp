@@ -34,7 +34,7 @@ class test_grpc_service : public testing::Test {
 
 TEST_F(test_grpc_service, call) {
    xrpc_request *request = new xrpc_request;
-   xJson::Value jv;
+   Json::Value jv;
    jv["action"] = "getGeneralInfos";
    std::string req = jv.toStyledString();
    request->set_body(req);
@@ -47,7 +47,7 @@ TEST_F(test_grpc_service, call) {
 }
 
 TEST_F(test_grpc_service, table_stream_err) {
-//    xJson::Value jv;
+//    Json::Value jv;
 //    jv["action"] = "getGeneralInfos";
 //    std::string req = jv.toStyledString();
    xrpc_request *request = new xrpc_request;
@@ -64,7 +64,7 @@ TEST_F(test_grpc_service, table_stream_err) {
 }
 
 // TEST_F(test_grpc_service, table_stream) {
-//    xJson::Value jv;
+//    Json::Value jv;
 //    jv["action"] = "stream_table";
 //    std::string req = jv.toStyledString();
 //    xrpc_request *request = new xrpc_request;

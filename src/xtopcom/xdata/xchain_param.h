@@ -15,7 +15,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xdata/xdata_common.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "json/value.h"
+#include <jsoncpp/json/value.h>
 #include "xverifier/xverifier_utl.h"
 
 namespace top { namespace data {
@@ -92,7 +92,7 @@ struct xstaticec_params {
     int32_t round_consensus_nodes {3}; // 1 - current
     int32_t round_consensus_interval {60}; // >= 30
     int32_t total_working_edge_nodes {3};  // 1 - 3
-    xJson::Value custom;
+    Json::Value custom;
 
     static xstaticec_params& get_instance() {
         static xstaticec_params instance;

@@ -12,7 +12,7 @@ NS_BEG1(top)
 
 class xtop_scope_executer final
 {
-    std::function<void()> m_execution_definition;
+    ::std::function<void()> m_execution_definition;
 
 public:
     xtop_scope_executer(xtop_scope_executer const &) = delete;
@@ -22,7 +22,7 @@ public:
     ~xtop_scope_executer() noexcept;
 
     explicit
-    xtop_scope_executer(std::function<void()> && execution_body) noexcept;
+    xtop_scope_executer(::std::function<void()> && execution_body) noexcept;
 };
 using xscope_executer_t = xtop_scope_executer;
 

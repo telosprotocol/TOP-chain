@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-
+#if 0
 TEST(xcommon, define_msg_id) {
     XDEFINE_MSG_CATEGORY(xmessage_category_test, 0x0001);
     XDEFINE_MSG_ID(xmessage_category_test, xmessage_id_test1, 0x0001);
@@ -22,3 +22,4 @@ TEST(xcommon, define_msg_id) {
     EXPECT_NE(xmessage_id_test1, xmessage_id_test4);
 
 }
+#endif

@@ -23,7 +23,7 @@
 #include "xgasfee/xgas_estimate.h"
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xstatectx/xstatectx.h"
-#include "xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xtx_verifier.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstate_reset/xstate_reseter.h"
 

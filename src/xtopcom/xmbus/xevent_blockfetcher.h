@@ -2,7 +2,7 @@
 
 #include "xmbus/xevent.h"
 #include "xdata/xblock.h"
-#include "xvnetwork/xaddress.h"
+#include "xcommon/xaddress.h"
 
 NS_BEG2(top, mbus)
 
@@ -15,15 +15,15 @@ public:
     };
 
     xevent_blockfetcher_t(_minor_type_ type, 
-            const vnetwork::xvnode_address_t &_network_self, 
-            const vnetwork::xvnode_address_t &_from_address)
+            const common::xnode_address_t &_network_self, 
+            const common::xnode_address_t &_from_address)
     : xbus_event_t(xevent_major_type_blockfetcher, type, to_listener, true),
     network_self(_network_self),
     from_address(_from_address) {
     }
 
-    vnetwork::xvnode_address_t network_self;
-    vnetwork::xvnode_address_t from_address;
+    common::xnode_address_t network_self;
+    common::xnode_address_t from_address;
 };
 
 using xevent_blockfetcher_ptr_t = xobject_ptr_t<xevent_blockfetcher_t>;
@@ -32,8 +32,8 @@ class xevent_blockfetcher_block_t : public xevent_blockfetcher_t {
 public:
     xevent_blockfetcher_block_t(
             const data::xblock_ptr_t &_block,
-            const vnetwork::xvnode_address_t &_network_self,
-            const vnetwork::xvnode_address_t &_from_address):
+            const common::xnode_address_t &_network_self,
+            const common::xnode_address_t &_from_address):
     xevent_blockfetcher_t(newblock, _network_self, _from_address),
     block(_block) {
     }
@@ -47,8 +47,8 @@ public:
                 const std::string &_address,
                 uint64_t _height,
                 const std::string &_hash,
-                const vnetwork::xvnode_address_t &_network_self,
-                const vnetwork::xvnode_address_t &_from_address):
+                const common::xnode_address_t &_network_self,
+                const common::xnode_address_t &_from_address):
     xevent_blockfetcher_t(newblockhash, _network_self, _from_address),
     address(_address),
     height(_height),

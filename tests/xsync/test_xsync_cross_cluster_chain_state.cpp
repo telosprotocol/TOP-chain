@@ -15,9 +15,9 @@ using namespace top::data;
 using namespace top::mock;
 
 // 1shard(5node)
-static xJson::Value build_validators() {
+static Json::Value build_validators() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -36,9 +36,9 @@ static xJson::Value build_validators() {
     return v;
 }
 
-static xJson::Value build_beacons() {
+static Json::Value build_beacons() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["rec0"]["type"] = "beacon";
@@ -53,9 +53,9 @@ static xJson::Value build_beacons() {
     return v;
 }
 
-static xJson::Value build_zecs() {
+static Json::Value build_zecs() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["zec0"]["type"] = "zec";
@@ -70,9 +70,9 @@ static xJson::Value build_zecs() {
     return v;
 }
 
-static xJson::Value build_archives() {
+static Json::Value build_archives() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -121,7 +121,7 @@ TEST(xsync_cross_cluster_chain_state, test) {
     // archive
     std::vector<common::xnode_address_t> archive_addresses;
     {
-        xJson::Value archives = build_archives();
+        Json::Value archives = build_archives();
         xmock_network_config_t cfg_network(archives);
         xmock_network_t network(cfg_network);
         std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();
@@ -131,7 +131,7 @@ TEST(xsync_cross_cluster_chain_state, test) {
 
     // add validator
     {
-        xJson::Value validators = build_validators();
+        Json::Value validators = build_validators();
         xmock_network_config_t cfg_network(validators);
         xmock_network_t network(cfg_network);
 
@@ -165,7 +165,7 @@ TEST(xsync_cross_cluster_chain_state, test) {
 #if 0
     // add beacons
     {
-        xJson::Value beacons = build_beacons();
+        Json::Value beacons = build_beacons();
         xmock_network_config_t cfg_network(beacons);
         xmock_network_t network(cfg_network);
 
@@ -199,7 +199,7 @@ TEST(xsync_cross_cluster_chain_state, test) {
 
     // add zec
     {
-        xJson::Value zecs = build_zecs();
+        Json::Value zecs = build_zecs();
         xmock_network_config_t cfg_network(zecs);
         xmock_network_t network(cfg_network);
 

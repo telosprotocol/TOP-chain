@@ -70,8 +70,8 @@ void xelect_client_imp::bootstrap_node_join() {
                 xdbg("token_request:%s", token_request.c_str());
                 auto token_response_str = client.Request(token_request);
                 xdbg("token_response:%s", token_response_str.c_str());
-                xJson::Reader reader;
-                xJson::Value token_response_json;
+                Json::Reader reader;
+                Json::Value token_response_json;
                 xdbg("json parse: %d", reader.parse(token_response_str, token_response_json));
                 if (!reader.parse(token_response_str, token_response_json) || token_response_json[xrpc::RPC_ERRNO].asUInt() != xrpc::RPC_OK_CODE) {
                     xerror("token_response error");
@@ -99,7 +99,7 @@ void xelect_client_imp::bootstrap_node_join() {
 
                 uint64_t nonce = 0;
                 // uint64_t last_hash = 0;
-                xJson::Value account_info_response_json;
+                Json::Value account_info_response_json;
                 if (!reader.parse(account_info_response_str, account_info_response_json) || account_info_response_json[xrpc::RPC_ERRNO].asInt() != xrpc::RPC_OK_CODE) {
                     xwarn("account_info_response_json error");
                 } else {
@@ -115,8 +115,8 @@ void xelect_client_imp::bootstrap_node_join() {
                 tx->set_len();
 
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=sendTransaction&sequence_id=3&token=" + token;
-                xJson::FastWriter writer;
-                xJson::Value tx_json;
+                Json::FastWriter writer;
+                Json::Value tx_json;
                 if (tx->get_tx_version() == xtransaction_version_2) {
                     tx->parse_to_json(tx_json["params"], data::RPC_VERSION_V2);
                 } else {

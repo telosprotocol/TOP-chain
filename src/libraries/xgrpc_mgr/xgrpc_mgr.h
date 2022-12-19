@@ -50,7 +50,7 @@ public:
     handler_mgr();
 
     void add_handler(std::shared_ptr<xrpc_handle_face_t> handle);
-    bool handle(std::string& request, xJson::Value& js_req, xJson::Value& js_rsp, std::string & strResult, uint32_t& nErrorCode) override;
+    bool handle(std::string& request, Json::Value& js_req, Json::Value& js_rsp, std::string & strResult, uint32_t& nErrorCode) override;
 
 private:
     std::string m_response;

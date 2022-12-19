@@ -2,7 +2,7 @@
 #include "test_xtxpool_util.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xtxpool_error.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xtxpool_v2/xreceipt_state_cache.h"
 #include "tests/mock/xdatamock_table.hpp"
 
@@ -46,7 +46,7 @@ TEST_F(test_non_ready_account, non_ready_account_basic) {
 
     for (uint32_t i = 0; i < 5; i++) {
         auto find_tx = non_ready_accounts.find_tx(txs[i]->get_account_addr(), txs[i]->get_transaction()->digest());
-        ASSERT_NE(find_tx, nullptr);
+        ASSERT_NE(find_tx.get(), nullptr);
     }
 
     auto accounts = non_ready_accounts.get_accounts();
@@ -54,17 +54,17 @@ TEST_F(test_non_ready_account, non_ready_account_basic) {
 
     tx_info_t txinfo(txs[1]);
     auto poped_tx1 = non_ready_accounts.pop_tx(txinfo);
-    ASSERT_NE(poped_tx1, nullptr);
+    ASSERT_NE(poped_tx1.get(), nullptr);
 
     auto find_tx1 = non_ready_accounts.find_tx(txs[1]->get_account_addr(), txs[1]->get_transaction()->digest());
-    ASSERT_EQ(find_tx1, nullptr);
+    ASSERT_EQ(find_tx1.get(), nullptr);
 
     auto poped_txs = non_ready_accounts.pop_account_txs(txs[1]->get_account_addr());
     ASSERT_EQ(poped_txs.size(), 4);
 
     for (uint32_t i = 0; i < 5; i++) {
         auto find_tx = non_ready_accounts.find_tx(txs[i]->get_account_addr(), txs[i]->get_transaction()->digest());
-        ASSERT_EQ(find_tx, nullptr);
+        ASSERT_EQ(find_tx.get(), nullptr);
     }
 
     auto accounts2 = non_ready_accounts.get_accounts();

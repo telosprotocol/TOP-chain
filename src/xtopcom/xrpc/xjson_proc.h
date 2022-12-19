@@ -5,7 +5,7 @@
 #pragma once
 #include <string>
 #include <memory>
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 #include "xbase/xutl.h"
 #include "xdata/xtransaction.h"
 #include "prerequest/xpre_request_data.h"
@@ -20,10 +20,10 @@ public:
     std::string get_response();
     std::string get_request();
 public:
-    xJson::Reader           m_reader;
-    xJson::FastWriter       m_writer;
-    xJson::Value            m_request_json;
-    xJson::Value            m_response_json;
+    Json::Reader           m_reader;
+    Json::FastWriter       m_writer;
+    Json::Value            m_request_json;
+    Json::Value            m_response_json;
     data::xtransaction_ptr_t      m_tx_ptr;
     enum_xrpc_tx_type       m_tx_type;
     unordered_set<string>   m_account_set{};

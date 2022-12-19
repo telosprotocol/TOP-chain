@@ -28,7 +28,7 @@ endif()
 
 set(LINK_ARGS secp256k1 trezor-crypto)
 if(NOT MSVC)
-    set(LINK_ARGS ${LINK_ARGS} hiredis pthread)
+    set(LINK_ARGS ${LINK_ARGS} pthread)
 endif()
 
 add_library(xtopchain SHARED so.cpp)

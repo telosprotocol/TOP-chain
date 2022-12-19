@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include <sstream>
 #define private public
 #define protected public
@@ -22,8 +24,6 @@
 #include "xvledger/xvstate.h"
 // #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 // #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
-
-#include <gtest/gtest.h>
 
 #include <memory>
 

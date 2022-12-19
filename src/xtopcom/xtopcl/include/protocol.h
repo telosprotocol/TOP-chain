@@ -6,7 +6,7 @@
 #ifndef XCHAIN_SDK_PROTOCOL
 #    define XCHAIN_SDK_PROTOCOL
 
-#    include "json/json.h"
+#    include "jsoncpp/json/json.h"
 #    include "xtopcl/include/request_result_definition.h"
 #    include "xtopcl/include/task/task_info.h"
 #    include "xdata/xtransaction.h"
@@ -27,7 +27,7 @@ public:
     using CreateFuncMap = std::map<std::string, CreateFunc>;
     using ParamMap = std::map<std::string, std::string>;
 
-    virtual int encode_body_params(const ParamMap & params, xJson::Value & root);
+    virtual int encode_body_params(const ParamMap & params, Json::Value & root);
     virtual int encode_body(const ParamMap & params, std::string & body);
     virtual int encode(ParamMap & params, std::string & body);
     virtual void decode(const std::string & params, task_info * info);
@@ -37,7 +37,7 @@ public:
     static void regist_create_function(const std::string & method, CreateFunc func);
     static CreateFuncMap _create_funcs;
 
-    virtual int encode_transaction_params(xJson::Value & root, top::data::xtransaction_t * trans_action);
+    virtual int encode_transaction_params(Json::Value & root, top::data::xtransaction_t * trans_action);
     void set_transaction(top::data::xtransaction_ptr_t & val);
 
 protected:
@@ -53,7 +53,7 @@ class CheckTxHashCmd : public protocol {
 public:
     CheckTxHashCmd();
     virtual ~CheckTxHashCmd();
-    virtual int encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) override;
+    virtual int encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) override;
     virtual void decode(const std::string & params, task_info * info) override;
 };
 
@@ -61,7 +61,7 @@ class AccountTxCmd : public protocol {
 public:
     AccountTxCmd();
     virtual ~AccountTxCmd();
-    virtual int encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) override;
+    virtual int encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) override;
     virtual void decode(const std::string & params, task_info * info) override;
 };
 
@@ -121,7 +121,7 @@ class TransferCmd : public protocol {
 public:
     TransferCmd();
     virtual ~TransferCmd();
-    virtual int encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) override;
+    virtual int encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) override;
     virtual void decode(const std::string & params, task_info * info) override;
     std::vector<std::string> _cur_param_names = {"from", "to", "amount", "nonce", "last_hash"};
 };
@@ -140,7 +140,7 @@ class KeyStoreCmd : public protocol {
 public:
     KeyStoreCmd();
     virtual ~KeyStoreCmd();
-    virtual int encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) override;
+    virtual int encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) override;
     virtual void decode(const std::string & params, task_info * info) override;
     std::vector<std::string> _cur_param_names = {"from", "to", "type", "nonce", "last_hash", "key", "value"};
 };
@@ -150,7 +150,7 @@ public:
     GetPropertyCmd();
     virtual ~GetPropertyCmd();
 
-    virtual int encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) override;
+    virtual int encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) override;
     virtual void decode(const std::string & params, task_info * info) override;
     std::vector<std::string> _cur_param_names = {"account_addr", "type", "data1", "data2"};
 };
@@ -191,7 +191,7 @@ public:
 class GetBlockCmd : public protocol {
 public:
     GetBlockCmd();
-    virtual int encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) override;
+    virtual int encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) override;
     virtual void decode(const std::string & params, task_info * info) override;
     std::vector<std::string> _cur_param_names = {ParamAccount, ParamGetBlockType, ParamBlockHeight};
 };
@@ -243,7 +243,7 @@ public:
 class ChainInfoCmd : public protocol {
 public:
     ChainInfoCmd();
-    // virtual int encode_body_params(const std::map<std::string, std::string>& params, xJson::Value& root) override;
+    // virtual int encode_body_params(const std::map<std::string, std::string>& params, Json::Value& root) override;
     virtual ~ChainInfoCmd();
     virtual void decode(const std::string & params, task_info * info) override;
     std::vector<std::string> _cur_param_names = {"account_addr"};
@@ -252,7 +252,7 @@ public:
 class GeneralInfoCmd : public protocol {
 public:
     GeneralInfoCmd();
-    // virtual int encode_body_params(const std::map<std::string, std::string>& params, xJson::Value& root) override;
+    // virtual int encode_body_params(const std::map<std::string, std::string>& params, Json::Value& root) override;
     virtual ~GeneralInfoCmd();
     virtual void decode(const std::string & params, task_info * info) override;
     std::vector<std::string> _cur_param_names = {"account_addr"};

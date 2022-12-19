@@ -8,7 +8,7 @@
 #include "xmetrics/xmetrics_unit.h"
 #include "xmetrics/xmetrics_config.h"
 #include "nlohmann/json.hpp"
-#include "nlohmann/fifo_map.hpp"
+#include "fifo_map.hpp"
 #include "xbase/xlog.h"
 
 #include <iomanip>

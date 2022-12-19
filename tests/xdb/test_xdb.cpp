@@ -28,7 +28,7 @@ protected:
 TEST_F(test_xdb, db_open_close_1) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     db->write("1", "aa");
     db = nullptr;
     db = xdb_factory_t::create_kvdb(db_dir);
@@ -41,7 +41,7 @@ TEST_F(test_xdb, db_open_close_1) {
 TEST_F(test_xdb, db_open_close_2) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     size_t count = 50;
     for(size_t i = 0; i < count; i++)
     {
@@ -60,7 +60,7 @@ TEST_F(test_xdb, db_create_destroy) {
     string db_dir = DB_NAME;
 
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     db->write("1", "aa");
     db = nullptr;
 
@@ -76,7 +76,7 @@ TEST_F(test_xdb, db_create_destroy) {
 TEST_F(test_xdb, db_write_read_same_key_100000_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
 
     int count = 100000;
     string key = "key";
@@ -102,7 +102,7 @@ TEST_F(test_xdb, db_write_read_same_key_100000_BENCH) {
 TEST_F(test_xdb, db_write_read_different_key_100000_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
 
     int count = 100000;
     string key = "key";
@@ -153,7 +153,7 @@ std::string test_HexDecode(const std::string& str) {
 TEST_F(test_xdb, db_write_with_binary_key) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
 
     string key = test_HexDecode("1a021a020ffe1abd1a08215353c233d6e009613e95eec4253832a761af28ff37ac5a150c");
     string value = "22222";
@@ -255,19 +255,19 @@ TEST_F(test_xdb, db_read_range) {
         ASSERT_EQ(values.size(), 4);
         vector<string>::iterator iter;
         iter = std::find(values.begin(), values.end(), "value11");
-        ASSERT_NE(iter, values.end());
+        ASSERT_TRUE(iter != values.end());
         iter = std::find(values.begin(), values.end(), "value12");
-        ASSERT_NE(iter, values.end());
+        ASSERT_TRUE(iter != values.end());
         iter = std::find(values.begin(), values.end(), "value13");
-        ASSERT_NE(iter, values.end());
+        ASSERT_TRUE(iter != values.end());
         iter = std::find(values.begin(), values.end(), "value14");
-        ASSERT_NE(iter, values.end());
+        ASSERT_TRUE(iter != values.end());
         iter = std::find(values.begin(), values.end(), "value21");
-        ASSERT_EQ(iter, values.end());
+        ASSERT_TRUE(iter == values.end());
         iter = std::find(values.begin(), values.end(), "value22");
-        ASSERT_EQ(iter, values.end());
+        ASSERT_TRUE(iter == values.end());
         iter = std::find(values.begin(), values.end(), "value23");
-        ASSERT_EQ(iter, values.end());
+        ASSERT_TRUE(iter == values.end());
     }
 
     {
@@ -277,19 +277,19 @@ TEST_F(test_xdb, db_read_range) {
         ASSERT_EQ(values.size(), 3);
         vector<string>::iterator iter;
         iter = std::find(values.begin(), values.end(), "value11");
-        ASSERT_EQ(iter, values.end());
+        ASSERT_TRUE(iter == values.end());
         iter = std::find(values.begin(), values.end(), "value12");
-        ASSERT_EQ(iter, values.end());
+        ASSERT_TRUE(iter == values.end());
         iter = std::find(values.begin(), values.end(), "value13");
-        ASSERT_EQ(iter, values.end());
+        ASSERT_TRUE(iter == values.end());
         iter = std::find(values.begin(), values.end(), "value14");
-        ASSERT_EQ(iter, values.end());
+        ASSERT_TRUE(iter == values.end());
         iter = std::find(values.begin(), values.end(), "value21");
-        ASSERT_NE(iter, values.end());
+        ASSERT_TRUE(iter != values.end());
         iter = std::find(values.begin(), values.end(), "value22");
-        ASSERT_NE(iter, values.end());
+        ASSERT_TRUE(iter != values.end());
         iter = std::find(values.begin(), values.end(), "value23");
-        ASSERT_NE(iter, values.end());
+        ASSERT_TRUE(iter != values.end());
     }
 }
 /*TEST_F(test_xdb, db_backup) {

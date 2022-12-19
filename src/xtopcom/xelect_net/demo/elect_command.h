@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 #include "xelect_net/demo/elect_perf.h"
 #include "xelect_net/include/elect_netcard.h"
 #include "xkad/routing_table/node_info.h"
@@ -27,7 +27,7 @@ namespace top {
 
 using Arguments = std::vector<std::string>;
 using CommandProc = std::function<void(const Arguments &)>;
-using RpcCommandProc = std::function<xJson::Value(const Arguments &)>;
+using RpcCommandProc = std::function<Json::Value(const Arguments &)>;
 using MapCommands = std::map<std::string, CommandProc>;
 
 namespace kadmlia {
@@ -78,7 +78,7 @@ public:
      * @param cmdline command that to be executed
      */
 
-    xJson::Value ProcessRpcCommand(const std::string & cmdline, uint64_t cmd_index);
+    Json::Value ProcessRpcCommand(const std::string & cmdline, uint64_t cmd_index);
 
     void get_udp_instruction();
     void get_rpc_instruction(uint16_t delta);

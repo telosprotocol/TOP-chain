@@ -6,6 +6,9 @@
 //
 
 #include "xpbase/base/uint64_bloomfilter.h"
+#define XXH_INLINE_ALL
+#include "xutility/xxHash/xxhash.h"
+#undef XXH_INLINE_ALL
 
 #include <cassert>
 

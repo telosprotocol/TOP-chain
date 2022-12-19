@@ -5,7 +5,7 @@
 
 #include "xdata/xcheckpoint.h"
 
-#include "nlohmann/fifo_map.hpp"
+#include "fifo_map.hpp"
 #include "nlohmann/json.hpp"
 #include "xdata/xcheckpoint_data.h"
 #include "xdata/xerror/xerror.h"

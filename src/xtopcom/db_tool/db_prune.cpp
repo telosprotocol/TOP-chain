@@ -46,12 +46,12 @@ int DbPrune::db_init(const std::string datadir) {
     std::ifstream keyfile(extra_config, std::ios::in);
     xinfo("xdb_export_tools_t::read db start extra_config %s", extra_config.c_str());
     if (keyfile) {
-        xJson::Value key_info_js;
+        Json::Value key_info_js;
         std::stringstream buffer;
         buffer << keyfile.rdbuf();
         keyfile.close();
         std::string key_info = buffer.str();
-        xJson::Reader reader;
+        Json::Reader reader;
         // ignore any error when parse
         reader.parse(key_info, key_info_js);
         if (key_info_js["db_path_num"] > 1) {   
@@ -202,7 +202,7 @@ int DbPrune::do_db_prune(const std::string& datadir, const std::string& miner_ty
     //prune table
     std::cout << " start table account!" << std::endl;
     auto const tables = get_table_accounts();
-    for (auto const table_account : tables) {
+    for (auto const & table_account : tables) {
         auto vblock = m_blockstore->get_latest_committed_full_block(table_account);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr || block->get_height() < 8) {
@@ -239,7 +239,7 @@ int DbPrune::do_db_prune(const std::string& datadir, const std::string& miner_ty
 std::vector<std::string> DbPrune::get_db_unit_accounts() {
     std::set<std::string> accounts;
     auto const tables = get_table_accounts();
-    for (auto const table : tables) {
+    for (auto const & table : tables) {
         auto latest_block = m_blockstore->get_latest_committed_block(table);
         if (latest_block == nullptr) {
             std::cerr << table << " not exist." << std::endl;

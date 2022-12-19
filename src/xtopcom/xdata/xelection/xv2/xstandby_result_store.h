@@ -15,7 +15,9 @@
 NS_BEG4(top, data, election, v2)
 
 class xtop_standby_result_store final {
-private:
+#if defined(XENABLE_TESTS)
+public:
+#endif
     using container_t = std::map<common::xnetwork_id_t, xstandby_network_storage_result_t>;
     container_t m_results{};
 

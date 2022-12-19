@@ -56,7 +56,10 @@ public:
         CONTRACT_FUNCTION_PARAM(xzec_slash_info_contract, do_unqualified_node_slash);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
+
     /**
      * @brief internal function to process summarize info
      *

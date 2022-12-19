@@ -11,7 +11,7 @@
 
 NS_BEG2(top, contract)
 
-using namespace top::xvm::xcontract;
+// using namespace top::xvm::xcontract;
 
 class xcontract_register_t {
 public:
@@ -35,7 +35,7 @@ public:
      */
     template<typename T>
     void add(common::xaccount_address_t const & contract_addr, common::xnetwork_id_t const & network_id) {
-        static_assert(std::is_base_of<xcontract_base, T>::value, "must subclass of xcontract_base");
+        static_assert(std::is_base_of<xvm::xcontract::xcontract_base, T>::value, "must subclass of xcontract_base");
 
         m_rwlock.lock_write();
         m_map[contract_addr]= new T{ network_id };
@@ -48,8 +48,8 @@ public:
      * @param contract_addr
      * @return xcontract_base*
      */
-    xcontract_base* get_contract(common::xaccount_address_t const & contract_addr) {
-        xcontract_base* contract{};
+    xvm::xcontract::xcontract_base* get_contract(common::xaccount_address_t const & contract_addr) {
+        xvm::xcontract::xcontract_base* contract{};
         m_rwlock.lock_read();
         auto it = m_map.find(contract_addr);
         if (it != m_map.end()) {
@@ -61,7 +61,7 @@ public:
 
 protected:
     base::xrwlock_t m_rwlock;
-    std::unordered_map<common::xaccount_address_t, xcontract_base*> m_map; // key is the contract address
+    std::unordered_map<common::xaccount_address_t, xvm::xcontract::xcontract_base*> m_map; // key is the contract address
 };
 
 NS_END2

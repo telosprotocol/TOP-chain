@@ -4,8 +4,8 @@
 
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 
-#include "secp256k1/secp256k1.h"
-#include "secp256k1/secp256k1_recovery.h"
+// #include "secp256k1.h"
+// #include "secp256k1_recovery.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
@@ -537,7 +537,7 @@ int32_t xrec_registration_contract::get_node_info(const std::string & account, d
 
     if (value_str.empty()) {
         xdbg("[xrec_registration_contract] account(%s) not exist pid:%d\n", account.c_str(), getpid());
-        return xaccount_property_not_exist;
+        return store::xaccount_property_not_exist;
     }
 
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
@@ -603,7 +603,7 @@ int32_t xrec_registration_contract::get_refund(const std::string & account, data
 
     if (value_str.empty()) {
         xdbg("[xrec_registration_contract::get_refund] account(%s) not exist pid:%d\n", account.c_str(), getpid());
-        return xaccount_property_not_exist;
+        return store::xaccount_property_not_exist;
     }
 
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
@@ -939,7 +939,7 @@ int32_t xrec_registration_contract::get_slash_info(std::string const & account, 
     }
     if (value_str.empty()) {
         xdbg("[xrec_registration_contract][get_slash_info] account(%s) not exist,  pid:%d\n", account.c_str(), getpid());
-        return xaccount_property_not_exist;
+        return store::xaccount_property_not_exist;
     }
 
     xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());

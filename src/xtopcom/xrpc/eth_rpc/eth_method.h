@@ -8,7 +8,7 @@
 #include <functional>
 #include <string>
 #include <set>
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 #include "xbase/xbase.h"
 #include "xutility/xhash.h"
 #include "xpbase/base/top_utils.h"
@@ -17,8 +17,8 @@
 #include "xconfig/xconfig_register.h"
 
 namespace eth {
-using eth_method_handler = std::function<void(const xJson::Value & request, xJson::Value & response)>;
-namespace Json = xJson;
+using eth_method_handler = std::function<void(const Json::Value & request, Json::Value & response)>;
+namespace Json = Json;
 class EthMethod {
     std::unordered_map<std::string, eth_method_handler> m_eth_method_map;
     std::set<std::string> m_supported_method;
@@ -60,9 +60,9 @@ public:
             return false;
         return true;
     }
-    int CallMethod(const xJson::Value & req, xJson::Value & res) {
+    int CallMethod(const Json::Value & req, Json::Value & res) {
         std::string method = req["method"].asString();
-        xJson::Value eth_params = req["params"];
+        Json::Value eth_params = req["params"];
         auto iter = m_eth_method_map.find(method);
         if (iter != m_eth_method_map.end()) {
             xinfo("call method: %s", method.c_str());

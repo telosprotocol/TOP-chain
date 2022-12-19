@@ -11,13 +11,15 @@
 
 #include <iostream>
 #include <regex>
+
+using namespace top::xChainRPC;
+
 NS_BEG2(top, xrpc)
 
 HttpServer xhttp_server::m_server;
 unique_ptr<xrpc_service<xedge_http_method>> xhttp_server::m_rpc_service = nullptr;
 bool xhttp_server::m_is_running = false;
 
-using namespace top::xChainRPC;
 xhttp_server::xhttp_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                            common::xip2_t xip2,
                            bool archive_flag,

@@ -44,7 +44,9 @@ public:
         CONTRACT_FUNCTION_PARAM(xzec_vote_contract, on_receive_shard_votes_v2);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     /**
      * @brief check if mainnet is activated
      *

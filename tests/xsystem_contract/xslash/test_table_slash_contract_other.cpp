@@ -59,7 +59,7 @@ public:
 
     void SetUp() {
         top::base::xvchain_t::instance().clean_all();
-        m_store = xstore_factory::create_store_with_memdb();
+        m_store = store::xstore_factory::create_store_with_memdb();
         top::base::xvchain_t::instance().set_xdbstore(m_store.get());
         base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
         base::xvchain_t::instance().set_xblockstore(blockstore);
@@ -70,7 +70,7 @@ public:
         top::base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(mbus.get()), timer_driver));
         auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
         auto& config_center = top::config::xconfig_register_t::get_instance();
-        std::unique_ptr<genesis::xgenesis_manager_t> m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
+        std::unique_ptr<genesis::xgenesis_manager_t> m_genesis_manager = top::make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
         contract::xcontract_deploy_t::instance().deploy_sys_contracts();
         contract::xcontract_manager_t::instance().instantiate_sys_contracts();
         contract::xcontract_manager_t::instance().register_address();
@@ -91,7 +91,7 @@ public:
         target_stream << height;
         target_stream << tgas;
 
-        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
+        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<data::xtransaction_v2_t>();
         slash_colletion_trx->set_source_addr(shard_table_slash_addr);
         slash_colletion_trx->set_target_addr(shard_table_slash_addr);
         slash_colletion_trx->set_target_action_name("on_collect_statistic_info");
@@ -104,7 +104,7 @@ public:
         top::base::xstream_t target_stream(base::xcontext_t::instance());
         target_stream << timestamp;
 
-        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_v2_t>();
+        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<data::xtransaction_v2_t>();
         slash_colletion_trx->set_source_addr(shard_table_slash_addr);
         slash_colletion_trx->set_target_addr(shard_table_slash_addr);
         slash_colletion_trx->set_target_action_name("report_summarized_statistic_info");
@@ -113,7 +113,7 @@ public:
         return slash_colletion_trx;
     }
 
-   xobject_ptr_t<xstore_face_t> m_store;
+   xobject_ptr_t<store::xstore_face_t> m_store;
    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
    shared_ptr<xaccount_context_t> m_table_slash_account_ctx_ptr;
 };

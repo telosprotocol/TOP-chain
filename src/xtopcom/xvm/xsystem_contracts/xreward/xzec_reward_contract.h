@@ -78,7 +78,9 @@ public:
         CONTRACT_FUNCTION_PARAM(xzec_reward_contract, calculate_reward);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     /**
      * @brief check if we can calculate and dispatch rewards now
      *

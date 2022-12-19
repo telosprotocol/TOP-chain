@@ -35,7 +35,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xtop_table_reward_claiming_contract, recv_voter_dividend_reward);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     /**
      * \brief claim node reward. node reward includes:
      *        1. workload reward + vote reword if the account acts as an auditor

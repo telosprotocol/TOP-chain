@@ -21,10 +21,10 @@
 #include <memory>
 
 using namespace top::utl;
-
-namespace xChainSDK {
 using namespace top::data;
 using namespace top::xvm;
+
+namespace xChainSDK {
 
 uint32_t get_sequence_id() {
     static uint32_t sequence_id = 0;
@@ -550,8 +550,8 @@ bool api_method_imp::getElectInfo(const user_info & uinfo, const std::string & t
     task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
 
     auto rpc_response = task_dispatcher::get_instance()->get_result();
-    xJson::Value jv;
-    xJson::Reader reader;
+    Json::Value jv;
+    Json::Reader reader;
     if (reader.parse(rpc_response, jv)) {
         auto data = jv["data"];
         if (data.isNull()) {
@@ -584,8 +584,8 @@ bool api_method_imp::getStandbys(const user_info & uinfo, const std::string & ac
     task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
 
     auto rpc_response = task_dispatcher::get_instance()->get_result();
-    xJson::Value jv;
-    xJson::Reader reader;
+    Json::Value jv;
+    Json::Reader reader;
     if (reader.parse(rpc_response, jv)) {
         auto data = jv["data"];
         if (data.isNull()) {

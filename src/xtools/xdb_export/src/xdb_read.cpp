@@ -1,7 +1,7 @@
 #include "../xdb_read.h"
 #include "../xdbtool_util.h"
 #include "xdbstore/xstore.h"
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 #include "xdata/xblockextract.h"
 #include "xdata/xblocktool.h"
 #include "xbasic/xhex.h"

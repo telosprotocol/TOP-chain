@@ -170,13 +170,13 @@ void * xrootblock_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-void xrootblock_t::dump_block_data(xJson::Value & json) const {
+void xrootblock_t::dump_block_data(Json::Value & json) const {
     json["chain_id"] = get_rootblock_chainid();
     json["chain_name"] = XGET_CONFIG(chain_name);
     json["rootblock_address"] = get_rootblock_address();
     auto genesis_accounts = get_seed_nodes();
     for (auto info : genesis_accounts) {
-        xJson::Value accounts_info;
+        Json::Value accounts_info;
         accounts_info["node_account_address"] = info.m_account.to_string();
         accounts_info["node_public_key"] = info.m_publickey.to_string();
         json["genesis_accounts"].append(accounts_info);
@@ -252,7 +252,7 @@ base::enum_xchain_id xrootblock_t::get_rootblock_chainid() {
     return static_cast<base::enum_xchain_id>(m_instance->get_chainid());
 }
 
-void xrootblock_t::get_rootblock_data(xJson::Value & json) {
+void xrootblock_t::get_rootblock_data(Json::Value & json) {
     xassert(m_instance != nullptr);
     if (m_instance != nullptr) {
         m_instance->dump_block_data(json);

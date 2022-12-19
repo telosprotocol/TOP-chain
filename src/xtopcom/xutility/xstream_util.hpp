@@ -13,7 +13,7 @@
 
 NS_BEG1(top)
 
-using namespace top::base;
+// using namespace top::base;
 
 class xstream_util_t {
 public:
@@ -21,7 +21,7 @@ public:
     template<typename T>
     static T from_string(std::string& str) {
         T value;
-        xstream_t stream(xcontext_t::instance(), (uint8_t*) str.data(), str.size());
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)str.data(), str.size());
         stream >> value;
         return value;
     }
@@ -49,20 +49,20 @@ public:
     
     template<typename ..._Args>
     static std::string to_string(_Args&& ...args) {
-        xstream_t stream(xcontext_t::instance());
+        base::xstream_t stream(base::xcontext_t::instance());
         do_write(stream, args...);
         return std::string((char*) stream.data(), stream.size());
     }
 
     template<typename ..._Args>
     static int32_t from_string(const std::string& str, _Args& ...args) {
-        xstream_t stream(xcontext_t::instance(),
+        base::xstream_t stream(base::xcontext_t::instance(),
                 (uint8_t*) str.data(), str.size());
         return do_read(stream, args...);
     }
     
     template<typename ..._Args>
-    static uint32_t do_write(xstream_t& stream, _Args&& ...args) {
+    static uint32_t do_write(base::xstream_t& stream, _Args&& ...args) {
         uint32_t size = 0;
         for (auto& s : {(stream << args)...}) {
             size += s;
@@ -71,7 +71,7 @@ public:
     }
     
     template<typename ..._Args> 
-    static uint32_t do_read(xstream_t& stream, _Args& ...args) {
+    static uint32_t do_read(base::xstream_t& stream, _Args& ...args) {
         uint32_t size = 0;
         for(auto& s : {(stream >> args)...}) {
             size += s;
@@ -80,12 +80,12 @@ public:
     }
     
     inline
-    static std::string stream_to_str(xstream_t& stream) {
+    static std::string stream_to_str(base::xstream_t& stream) {
         return std::string((char*) stream.data(), stream.size());
     }
     
     template<typename EnumT>
-    static uint32_t do_read_enum(xstream_t& stream, EnumT& value) {
+    static uint32_t do_read_enum(base::xstream_t& stream, EnumT& value) {
         typename std::underlying_type<EnumT>::type temp;
         stream >> temp;
         value = static_cast<EnumT>(temp);
@@ -93,13 +93,13 @@ public:
     }
     
     template<typename EnumT>
-    static uint32_t do_write_enum(xstream_t& stream, EnumT value) {
+    static uint32_t do_write_enum(base::xstream_t& stream, EnumT value) {
         stream << static_cast<typename std::underlying_type<EnumT>::type>(value);
         return sizeof(typename std::underlying_type<EnumT>::type);
     }
     
     template<typename T>
-    static uint32_t do_read(xstream_t& stream, std::vector<T>& list) {
+    static uint32_t do_read(base::xstream_t& stream, std::vector<T>& list) {
         uint32_t size = stream.size();
         uint32_t count = 0;
         stream >> count;
@@ -112,7 +112,7 @@ public:
     }
     
     template<typename T>
-    static uint32_t do_write(xstream_t& stream, const std::vector<T>& list) {
+    static uint32_t do_write(base::xstream_t& stream, const std::vector<T>& list) {
         uint32_t size = stream.size();
         uint32_t count = list.size();
         stream << count;
@@ -123,7 +123,7 @@ public:
     }
     
     template<typename Tk, typename Tv>
-    static uint32_t do_read(xstream_t& stream, std::map<Tk, Tv>& map) {
+    static uint32_t do_read(base::xstream_t& stream, std::map<Tk, Tv>& map) {
         uint32_t size = stream.size();
         uint32_t count = 0;
         stream >> count;
@@ -138,7 +138,7 @@ public:
     }
     
     template<typename Tk, typename Tv>
-    static uint32_t do_write(xstream_t& stream, const std::map<Tk, Tv>& map) {
+    static uint32_t do_write(base::xstream_t& stream, const std::map<Tk, Tv>& map) {
         uint32_t size = stream.size();
         uint32_t count = map.size();
         stream << count;

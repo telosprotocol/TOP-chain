@@ -28,23 +28,23 @@ TEST(compatibility, election_info_v0_v1) {
         auto const to = codec::xmsgpack_codec_t<data::election::v0::xelection_info_t>::decode(from_bytes);
 
         ASSERT_EQ(from.comprehensive_stake(), to.comprehensive_stake());
-        ASSERT_EQ(from.public_key(), to.public_key());
-        ASSERT_EQ(from.joined_epoch(), to.joined_epoch());
+        ASSERT_TRUE(from.public_key() == to.public_key());
+        ASSERT_TRUE(from.joined_epoch() == to.joined_epoch());
         ASSERT_EQ(from.stake(), to.stake());
-        ASSERT_EQ(to, static_cast<v1::xelection_info_t const &>(from).v0());
+        ASSERT_TRUE(to == static_cast<v1::xelection_info_t const &>(from).v0());
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v0::xelection_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::decode(to_bytes);
 
         ASSERT_EQ(from.comprehensive_stake(), from_again.comprehensive_stake());
-        ASSERT_EQ(from.public_key(), from_again.public_key());
-        ASSERT_EQ(from.joined_epoch(), from_again.joined_epoch());
+        ASSERT_TRUE(from.public_key() == from_again.public_key());
+        ASSERT_TRUE(from.joined_epoch() == from_again.joined_epoch());
         ASSERT_EQ(from.stake(), from_again.stake());
         ASSERT_FALSE(from_again.genesis());
-        ASSERT_EQ(common::xminer_type_t::invalid, from_again.miner_type());
+        ASSERT_TRUE(common::xminer_type_t::invalid == from_again.miner_type());
 
         auto const from_from = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::decode(from_bytes);
-        ASSERT_EQ(from, from_from);
+        ASSERT_TRUE(from == from_from);
     }
 
     {
@@ -58,16 +58,16 @@ TEST(compatibility, election_info_v0_v1) {
         auto const to = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::decode(from_bytes);
 
         ASSERT_EQ(from.comprehensive_stake(), to.comprehensive_stake());
-        ASSERT_EQ(from.public_key(), to.public_key());
-        ASSERT_EQ(from.joined_epoch(), to.joined_epoch());
+        ASSERT_TRUE(from.public_key() == to.public_key());
+        ASSERT_TRUE(from.joined_epoch() == to.joined_epoch());
         ASSERT_EQ(from.stake(), to.stake());
         ASSERT_FALSE(to.genesis());
-        ASSERT_EQ(common::xminer_type_t::invalid, to.miner_type());
+        ASSERT_TRUE(common::xminer_type_t::invalid == to.miner_type());
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v0::xelection_info_t>::decode(to_bytes);
 
-        ASSERT_EQ(from, from_again);
+        ASSERT_TRUE(from == from_again);
     }
 }
 
@@ -85,16 +85,16 @@ TEST(compatibility, election_info_v1_v2) {
         auto const from_bytes = codec::xmsgpack_codec_t<data::election::v2::xelection_info_t>::encode(from);
         auto const to = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::decode(from_bytes);
 
-        ASSERT_EQ(static_cast<v2::xelection_info_t const &>(from).v1(), to);
+        ASSERT_TRUE(static_cast<v2::xelection_info_t const &>(from).v1() == to);
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v2::xelection_info_t>::decode(to_bytes);
 
-        ASSERT_EQ(static_cast<v2::xelection_info_t const &>(from).v1(), from_again.v1());
+        ASSERT_TRUE(static_cast<v2::xelection_info_t const &>(from).v1() == from_again.v1());
         ASSERT_EQ(0, from_again.raw_credit_score());
 
         auto const from_from = codec::xmsgpack_codec_t<data::election::v2::xelection_info_t>::decode(from_bytes);
-        ASSERT_EQ(from, from_from);
+        ASSERT_TRUE(from == from_from);
     }
 
     {
@@ -109,13 +109,13 @@ TEST(compatibility, election_info_v1_v2) {
         auto const from_bytes = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::encode(from);
         auto const to = codec::xmsgpack_codec_t<data::election::v2::xelection_info_t>::decode(from_bytes);
 
-        ASSERT_EQ(from, to.v1());
+        ASSERT_TRUE(from == to.v1());
         ASSERT_EQ(0, to.raw_credit_score());
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v2::xelection_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v1::xelection_info_t>::decode(to_bytes);
 
-        ASSERT_EQ(from, from_again);
+        ASSERT_TRUE(from == from_again);
     }
 }
 

@@ -100,7 +100,7 @@ TEST(xkad_test, test_service_type_group_xip) {
 
         auto s0 = base::GetKadmliaKey(xip2_0)->GetServiceType();
 
-        EXPECT_EQ(xip2_0.group_xip2(), s0.group_xip2());
+        EXPECT_TRUE(xip2_0.group_xip2() == s0.group_xip2());
 
         // std::cout << s0.info() << std::endl;
         EXPECT_FALSE(s0.is_root_service());

@@ -7,13 +7,15 @@ include_directories(./src)
 aux_source_directory(./src src_dir)
 add_library(xstatestore STATIC ${src_dir})
 
+add_dependencies(xstatestore xblockstore xmbus xstate_mpt xdata xcommon xvledger xxbase)
 target_link_libraries(xstatestore PRIVATE
-    xvledger
-    xmbus
     xblockstore
-    xdata
-    xxbase
+    xmbus
     xstate_mpt
+    xdata
+    xcommon
+    xvledger
+    xxbase
 )
 
 if (BUILD_METRICS)

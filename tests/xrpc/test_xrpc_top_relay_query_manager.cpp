@@ -38,8 +38,8 @@ class test_xrpc_top_relay_query_manager : public testing::Test {
 
 TEST_F(test_xrpc_top_relay_query_manager, topRelay_getBlockByHash) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -52,8 +52,8 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_getBlockByHash) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -69,8 +69,8 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_getBlockByHash) {
 
 TEST_F(test_xrpc_top_relay_query_manager, topRelay_getBlockByNumber) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -83,8 +83,8 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_getBlockByNumber) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -98,8 +98,8 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_getBlockByNumber) {
     }
 }
 TEST_F(test_xrpc_top_relay_query_manager, topRelay_blockNumber) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["id"] = "12345678";
@@ -112,8 +112,8 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_blockNumber) {
 }
 TEST_F(test_xrpc_top_relay_query_manager, topRelay_getTransactionByHash) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -126,8 +126,8 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_getTransactionByHash) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -141,8 +141,8 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_getTransactionByHash) {
     }
 }
 TEST_F(test_xrpc_top_relay_query_manager, topRelay_getTransactionReceipt) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["id"] = "12345678";
@@ -162,19 +162,19 @@ TEST_F(test_xrpc_top_relay_query_manager, set_relay_block_result) {
         return;
     }
     {
-        xJson::Value js_rsp;
+        Json::Value js_rsp;
         std::string blocklist_type;
         int ret = xrpc_eth_query_manager_ptr->set_relay_block_result(block, js_rsp, 0, blocklist_type);
         EXPECT_EQ(ret, 0);
     }
     {
-        xJson::Value js_rsp;
+        Json::Value js_rsp;
         std::string blocklist_type;
         int ret = xrpc_eth_query_manager_ptr->set_relay_block_result(block, js_rsp, 1, blocklist_type);
         EXPECT_EQ(ret, 0);
     }
     {
-        xJson::Value js_rsp;
+        Json::Value js_rsp;
         std::string blocklist_type;
         int ret = xrpc_eth_query_manager_ptr->set_relay_block_result(block, js_rsp, 2, blocklist_type);
         EXPECT_EQ(ret, 0);

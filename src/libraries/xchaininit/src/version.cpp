@@ -33,7 +33,26 @@ std::string get_md5() {
     char md5_buff[128];
     bzero(md5_buff, sizeof(md5_buff));
 
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunused-result"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wunused-result"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
     fgets(md5_buff, 128, output);
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
     md5 = std::string(md5_buff);
     pclose(output);
 

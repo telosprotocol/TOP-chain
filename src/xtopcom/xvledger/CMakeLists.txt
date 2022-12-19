@@ -8,8 +8,9 @@ if (BUILD_METRICS)
     target_link_libraries(xvledger PRIVATE xmetrics)
 endif()
 
+add_dependencies(xvledger xconfig xxbase)
 target_link_libraries(xvledger PRIVATE
-    xxbase
     xconfig
+    xxbase
     jsoncpp
 )

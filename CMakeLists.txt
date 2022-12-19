@@ -1,14 +1,16 @@
 cmake_minimum_required(VERSION 3.8)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 project(XTOPCHAIN CXX C)
+
+# SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 option(XENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(BUILD_METRICS "build metrics" OFF)
@@ -91,13 +93,6 @@ get_git_info()
 
 include(cmake/version.cmake)
 
-add_definitions(
-    -DBUILD_USER_LIB # for -lcommon
-    -D__TRACKING_PBFT_PROCESS__
-    -DTEST_FOR_ELECTION
-    -DGOSSIP_WITH_WROUTER
-)
-
 #==============================================================================
 # In order to set default executable and library binaries' location,
 # one solution, by setting
@@ -111,8 +106,16 @@ add_definitions(
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR/lib})
 #set_property(DIRECTORY PROPERTY LIBRARY_OUTPUT_DIRECTORY ${XTOPCHAIN_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE})
 
-set(EXECUTABLE_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/)
-set(LIBRARY_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/lib/${CMAKE_SYSTEM_NAME}/)
+set(EXECUTABLE_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/bin/)
+set(LIBRARY_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/lib/)
+
+if ("${LIBRARY_OUTPUT_DIRECTORY}" STREQUAL "")
+    set(LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH})
+endif()
+
+if ("${RUNTIME_OUTPUT_DIRECTORY}" STREQUAL "")
+    set(RUNTIME_OUTPUT_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+endif()
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
     # common compiling options
@@ -166,6 +169,9 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
 else()
     message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
 endif()
+
+add_definitions(-DMSGPACK_NO_BOOST)
+add_definitions(-DOPENSSL_API_COMPAT=10101)
 
 if ((BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC) AND XUSE_JEMALLOC)
     message(FATAL_ERROR "Not allowed to enable tcmalloc and jemalloc at the same time")
@@ -322,6 +328,8 @@ message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
 message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
 message(STATUS "DISABLE_SIGNAL_CAPTURE:" ${DISABLE_SIGNAL_CAPTURE})
 message(STATUS "XUSE_JEMALLOC:" ${XUSE_JEMALLOC})
+message(STATUS "LIBRARY_OUTPUT_DIRECTORY:" ${LIBRARY_OUTPUT_DIRECTORY})
+message(STATUS "RUNTIME_OUTPUT_DIRECTORY:" ${RUNTIME_OUTPUT_DIRECTORY})
 
 find_package(Threads REQUIRED)
 if (XUSE_JEMALLOC)
@@ -334,9 +342,23 @@ endif()
 
 include_directories(src/xtopcom)  # xtopcom build warning will not print
 include_directories(SYSTEM src/xtopcom/third_party)
-include_directories(SYSTEM src/xtopcom/xdepends/include/trezor-crypto)
+# setup for third party libs
+include_directories(SYSTEM src/xtopcom/xdepends/)
+include_directories(SYSTEM src/xtopcom/xdepends/trezor)
+include_directories(SYSTEM src/xtopcom/xdepends/trezor/trezor-crypto)
 include_directories(SYSTEM src/xtopcom/xdepends/include)
 include_directories(SYSTEM src/xtopcom/xdepends/GSL/include)
+# include_directories(SYSTEM src/xtopcom/xdepends/rocksdb/include)
+# include_directories(SYSTEM src/xtopcom/xdepends/jsoncpp/include)
+# include_directories(SYSTEM src/xtopcom/xdepends/msgpack-c/include)
+# include_directories(SYSTEM src/xtopcom/xdepends/secp256k1/include)
+# include_directories(SYSTEM src/xtopcom/xdepends/protobuf/src)
+include_directories(SYSTEM src/xtopcom/xdepends/ethash/include)
+include_directories(SYSTEM src/xtopcom/xdepends/ethash/lib)
+include_directories(SYSTEM src/xtopcom/xdepends/json/single_include)
+include_directories(SYSTEM src/xtopcom/xdepends/fifo_map/src)
+include_directories(SYSTEM src/xtopcom/xdepends/crossguid/include)
+include_directories(SYSTEM src/xtopcom/xdepends/lz4/lib)
 include_directories(src/xtopcom/xtopcl/src)  # xtopcom build warning will not print
 include_directories(src/xtopcom/xtopcl/include)  # xtopcom build warning will not print
 
@@ -344,7 +366,7 @@ include_directories(src/libraries)
 include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-link_directories(${LIBRARY_OUTPUT_PATH})
+link_directories(${LIBRARY_OUTPUT_DIRECTORY})
 link_directories(libs/Linux/${XBUILD_TYPE})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -366,10 +388,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     ELSE()
         link_directories(src/xtopcom/xbase/libs/${CMAKE_SYSTEM_NAME}/release)
         link_directories(src/xtopcom/libs/${CMAKE_SYSTEM_NAME}/release)
-        link_directories(src/xtopcom/xdepends/libs/linux)
+        #link_directories(src/xtopcom/xdepends/libs/linux)
     ENDIF()
-    
-    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
     set(XDB_TYPE "ROCKSDB")
     add_subdirectory(src)
@@ -438,8 +458,10 @@ if (XBUILD_TEST)
     endif()
     enable_testing()
     
-    include_directories(SYSTEM src/xtopcom/xdepends/googletest/googletest/include)
-    include_directories(SYSTEM src/xtopcom/xdepends/googletest/googlemock/include)
+    if (NOT ${distro} STREQUAL "Ubuntu")
+        include_directories(SYSTEM src/xtopcom/xdepends/googletest/googletest/include)
+        include_directories(SYSTEM src/xtopcom/xdepends/googletest/googlemock/include)
+    endif()
     include_directories(.)
 
     add_subdirectory(tests)

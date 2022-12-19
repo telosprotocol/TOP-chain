@@ -8,7 +8,6 @@
 #include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
 #include "xbase/xbase.h"
-#include "xdata/xnative_contract_address.h"
 
 NS_BEG2(top, mbus)
 

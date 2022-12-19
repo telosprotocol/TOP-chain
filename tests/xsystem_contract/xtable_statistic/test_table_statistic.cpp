@@ -1,7 +1,5 @@
-#ifndef private
 #include <sstream>
-#define private public
-#endif
+
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"

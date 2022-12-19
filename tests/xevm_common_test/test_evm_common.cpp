@@ -5,13 +5,13 @@
 #include "xevm_common/address.h"
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
-#include "json/json.h"
-#include "json/json.hpp"
+#include <jsoncpp/json/json.h>
+#include <nlohmann/json.hpp>
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
 #include "trezor-crypto/sha3.h"
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 
 #include <gtest/gtest.h>
 

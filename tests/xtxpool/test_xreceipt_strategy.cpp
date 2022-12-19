@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xtxpool_service_v2/xreceipt_strategy.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 using namespace top::xtxpool_service_v2;
 using namespace top;

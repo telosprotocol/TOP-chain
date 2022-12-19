@@ -8,7 +8,7 @@
 
 #include <random>
 
-using namespace std;
+// using namespace std;
 
 namespace {
 int fromHexChar(char _i) noexcept {
@@ -25,7 +25,7 @@ int fromHexChar(char _i) noexcept {
 namespace top {
 namespace evm_common {
 
-bool isHex(string const & _s) noexcept {
+bool isHex(std::string const & _s) noexcept {
     auto it = _s.begin();
     if (_s.compare(0, 2, "0x") == 0)
         it += 2;
@@ -33,7 +33,7 @@ bool isHex(string const & _s) noexcept {
 }
 
 std::string escaped(std::string const & _s, bool _all) {
-    static const map<char, char> prettyEscapes{{'\r', 'r'}, {'\n', 'n'}, {'\t', 't'}, {'\v', 'v'}};
+    static const std::map<char, char> prettyEscapes{{'\r', 'r'}, {'\n', 'n'}, {'\t', 't'}, {'\v', 'v'}};
     std::string ret;
     ret.reserve(_s.size() + 2);
     ret.push_back('"');

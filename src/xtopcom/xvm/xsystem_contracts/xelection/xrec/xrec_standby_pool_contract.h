@@ -36,7 +36,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xtop_rec_standby_pool_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     void nodeJoinNetwork2(common::xaccount_address_t const & node_id,
                          common::xnetwork_id_t const & joined_network_id,
 #if defined XENABLE_MOCK_ZEC_STAKE

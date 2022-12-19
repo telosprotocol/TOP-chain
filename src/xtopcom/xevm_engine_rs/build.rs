@@ -26,7 +26,7 @@ fn main() {
     Command::new("cp")
         .arg("-f")
         .arg(&format!(
-            "{}/../../../../../../../lib/Linux/libxevm_runner.a",
+            "{}/../../../../../../../lib/libxevm_runner.a",
             out_dir
         ))
         .arg(&format!("{}", out_dir))

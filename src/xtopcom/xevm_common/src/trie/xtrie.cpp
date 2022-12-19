@@ -782,7 +782,7 @@ void xtop_trie::prune(xh256_t const & old_trie_root_hash, std::error_code & ec) 
     assert(!ec);
 
     if (pruner_ == nullptr) {
-        pruner_ = make_unique<xtrie_pruner_t>();
+        pruner_ = top::make_unique<xtrie_pruner_t>();
         pruner_->init(trie_root_, trie_db_, ec);
     }
 
@@ -806,7 +806,7 @@ void xtop_trie::prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh2
     assert(!ec);
 
     if (pruner_ == nullptr) {
-        pruner_ = make_unique<xtrie_pruner_t>();
+        pruner_ = top::make_unique<xtrie_pruner_t>();
         pruner_->init(trie_root_, trie_db_, ec);
     }
 

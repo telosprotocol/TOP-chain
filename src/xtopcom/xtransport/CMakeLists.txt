@@ -16,11 +16,12 @@ set(SSL_LIB_PATH ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/
 target_link_libraries(xtransport PRIVATE xquic-static ${SSL_LIB_PATH})
 target_link_libraries(xtransport PUBLIC xsafebox xpbase xutility xxbase protobuf jsoncpp xcrypto -lm -pthread)
 
-add_dependencies(xtransport event_static)
-target_include_directories(xtransport PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/libevent/include/) # for libevent header file
-target_include_directories(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/include/) # for event-config.h
-target_link_libraries(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/lib/libevent.a) # static library output path
-target_link_libraries(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/lib/libevent_pthreads.a) # for event pthread
+#find_library(libevent REQUIRED)
+# add_dependencies(xtransport event_static)
+#target_include_directories(xtransport PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/libevent/include/) # for libevent header file
+#target_include_directories(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/include/) # for event-config.h
+target_link_libraries(xtransport PRIVATE event) # static library output path
+target_link_libraries(xtransport PRIVATE event_pthreads) # for event pthread
 
 if (BUILD_METRICS)
     target_link_libraries(xtransport PUBLIC xmetrics)

@@ -14,7 +14,7 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         xstore
         xstatectx
         xstate_reset
-        xverifier
+        #xverifier
         xvm
         xchain_upgrade
         xdata
@@ -30,7 +30,7 @@ ELSE()
         xstore
         xstatectx
         xstate_reset
-        xverifier
+        #xverifier
         xvm
         xchain_upgrade
         xdata

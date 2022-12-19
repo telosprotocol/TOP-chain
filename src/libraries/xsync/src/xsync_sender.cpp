@@ -34,7 +34,7 @@ void xsync_sender_t::send_gossip(const std::vector<xgossip_chain_info_ptr_t> &in
     body->serialize_to(stream);
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_gossip);
 
-    xmessage_t msg;
+    vnetwork::xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
 
     std::vector<vnetwork::xvnode_address_t> lists;
@@ -76,7 +76,7 @@ void xsync_sender_t::send_frozen_gossip(const std::vector<xgossip_chain_info_ptr
     body->serialize_to(stream);
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_frozen_gossip);
 
-    xmessage_t msg;
+    vnetwork::xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
 
     XMETRICS_COUNTER_INCREMENT("sync_bytes_frozen_gossip_send", msg.payload().size());
@@ -209,7 +209,7 @@ void xsync_sender_t::send_frozen_broadcast_chain_state(const std::vector<xchain_
     body->serialize_to(stream);
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_frozen_broadcast_chain_state);
 
-    xmessage_t msg;
+    vnetwork::xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
 
     XMETRICS_COUNTER_INCREMENT("sync_bytes_frozen_broadcast_chain_state_send", msg.payload().size());
@@ -427,7 +427,7 @@ bool xsync_sender_t::send_message(
     serializer->serialize_to(stream);
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, msgid);
 
-    xmessage_t msg;
+    vnetwork::xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
 
     std::string bytes_metric_name = "sync_pkgs_" + metric_key + "_send";

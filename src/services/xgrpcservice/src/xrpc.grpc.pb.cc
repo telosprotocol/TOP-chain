@@ -5,12 +5,18 @@
 #include "xrpc.pb.h"
 #include "xrpc.grpc.pb.h"
 
+#include <functional>
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
 #include <grpcpp/impl/codegen/channel_interface.h>
 #include <grpcpp/impl/codegen/client_unary_call.h>
-#include <grpcpp/impl/codegen/method_handler_impl.h>
+#include <grpcpp/impl/codegen/client_callback.h>
+#include <grpcpp/impl/codegen/message_allocator.h>
+#include <grpcpp/impl/codegen/method_handler.h>
 #include <grpcpp/impl/codegen/rpc_service_method.h>
+#include <grpcpp/impl/codegen/server_callback.h>
+#include <grpcpp/impl/codegen/server_callback_handlers.h>
+#include <grpcpp/impl/codegen/server_context.h>
 #include <grpcpp/impl/codegen/service_type.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
 namespace top {
@@ -35,24 +41,44 @@ xrpc_service::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& chann
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_call_, context, request, response);
 }
 
+void xrpc_service::Stub::experimental_async::call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_call_, context, request, response, std::move(f));
+}
+
+void xrpc_service::Stub::experimental_async::call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_call_, context, request, response, std::move(f));
+}
+
+void xrpc_service::Stub::experimental_async::call(::grpc::ClientContext* context, const ::top::xrpc_request* request, ::top::xrpc_reply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_call_, context, request, response, reactor);
+}
+
+void xrpc_service::Stub::experimental_async::call(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::top::xrpc_reply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_call_, context, request, response, reactor);
+}
+
 ::grpc::ClientAsyncResponseReader< ::top::xrpc_reply>* xrpc_service::Stub::AsynccallRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_call_, context, request, true);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_call_, context, request, true);
 }
 
 ::grpc::ClientAsyncResponseReader< ::top::xrpc_reply>* xrpc_service::Stub::PrepareAsynccallRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_call_, context, request, false);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_call_, context, request, false);
 }
 
 ::grpc::ClientReader< ::top::xrpc_reply>* xrpc_service::Stub::table_streamRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request) {
-  return ::grpc::internal::ClientReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), rpcmethod_table_stream_, context, request);
+  return ::grpc_impl::internal::ClientReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), rpcmethod_table_stream_, context, request);
+}
+
+void xrpc_service::Stub::experimental_async::table_stream(::grpc::ClientContext* context, ::top::xrpc_request* request, ::grpc::experimental::ClientReadReactor< ::top::xrpc_reply>* reactor) {
+  ::grpc_impl::internal::ClientCallbackReaderFactory< ::top::xrpc_reply>::Create(stub_->channel_.get(), stub_->rpcmethod_table_stream_, context, request, reactor);
 }
 
 ::grpc::ClientAsyncReader< ::top::xrpc_reply>* xrpc_service::Stub::Asynctable_streamRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_table_stream_, context, request, true, tag);
+  return ::grpc_impl::internal::ClientAsyncReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_table_stream_, context, request, true, tag);
 }
 
 ::grpc::ClientAsyncReader< ::top::xrpc_reply>* xrpc_service::Stub::PrepareAsynctable_streamRaw(::grpc::ClientContext* context, const ::top::xrpc_request& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_table_stream_, context, request, false, nullptr);
+  return ::grpc_impl::internal::ClientAsyncReaderFactory< ::top::xrpc_reply>::Create(channel_.get(), cq, rpcmethod_table_stream_, context, request, false, nullptr);
 }
 
 xrpc_service::Service::Service() {
@@ -60,12 +86,22 @@ xrpc_service::Service::Service() {
       xrpc_service_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< xrpc_service::Service, ::top::xrpc_request, ::top::xrpc_reply>(
-          std::mem_fn(&xrpc_service::Service::call), this)));
+          [](xrpc_service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::top::xrpc_request* req,
+             ::top::xrpc_reply* resp) {
+               return service->call(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       xrpc_service_method_names[1],
       ::grpc::internal::RpcMethod::SERVER_STREAMING,
       new ::grpc::internal::ServerStreamingHandler< xrpc_service::Service, ::top::xrpc_request, ::top::xrpc_reply>(
-          std::mem_fn(&xrpc_service::Service::table_stream), this)));
+          [](xrpc_service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::top::xrpc_request* req,
+             ::grpc_impl::ServerWriter<::top::xrpc_reply>* writer) {
+               return service->table_stream(ctx, req, writer);
+             }, this)));
 }
 
 xrpc_service::Service::~Service() {

@@ -2,14 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include <mutex>
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 #include "xpre_request_handler.h"
-#include "crossguid/Guid.hpp"
+#include <crossguid/guid.hpp>
 #include "xpre_request_handler_mgr.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xrpc_signature.h"
 #include "xrpc/prerequest/xpre_request_handler_server.h"
 #include "xrpc/xrpc_eth_parser.h"
+
+#include <sstream>
 
 NS_BEG2(top, xrpc)
 
@@ -26,7 +28,7 @@ void xpre_request_token_handler::requestToken(xpre_request_data_t & request) {
     std::string guid = xg::newGuid().str();
     std::string secret_key = xg::newGuid().str();
     auto account_address = request.get_request_value("target_account_addr");
-    xJson::Value result_json;
+    Json::Value result_json;
     result_json[xrpc_signature::secretkey_key_] = secret_key;                   // secret key
     result_json[xrpc_signature::keyid_key_] = guid;                             // section key id
     result_json[xrpc_signature::method_key_] = xrpc_signature::method_value_;   // sign method

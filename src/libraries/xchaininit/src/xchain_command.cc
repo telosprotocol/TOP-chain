@@ -7,27 +7,21 @@
 
 #include "xchaininit/xchain_command.h"
 
-#include "CLI11.hpp"
+#include <CLI/CLI.hpp>
+#include "db_tool/db_prune.h"
 #include "db_tool/db_tool.h"
-#include "rocksdb/convenience.h"
-#include "rocksdb/db.h"
-#include "rocksdb/options.h"
-#include "rocksdb/slice.h"
-#include "rocksdb/table.h"
-#include "rocksdb/utilities/backupable_db.h"
-#include "xchaininit/xchain_command_http_client.h"
 #include "xchaininit/version.h"
+#include "xchaininit/xchain_command_http_client.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xpbase/base/check_cast.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xtopcl/include/topcl.h"
 #include "xtopcl/include/global_definition.h"
+#include "xtopcl/include/topcl.h"
 #include "xtopcl/include/xcrypto.h"
-#include "xconfig/xpredefined_configurations.h"
 
-#include <dirent.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -39,8 +33,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <dirent.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
-#include "db_tool/db_prune.h"
+
 using json = nlohmann::json;
 
 namespace top {

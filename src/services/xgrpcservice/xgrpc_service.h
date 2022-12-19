@@ -4,7 +4,7 @@
 #include <thread>
 #include <deque>
 #include <condition_variable>
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 #include "src/xrpc.grpc.pb.h"
 #include <atomic>
 
@@ -16,7 +16,7 @@ namespace top { namespace rpc {
 
 extern std::atomic_int rpc_client_num;
 extern std::atomic_int rpc_version;
-extern std::deque<xJson::Value> tableblock_data;
+extern std::deque<Json::Value> tableblock_data;
 extern std::mutex tableblock_mtx;
 extern std::condition_variable tableblock_cv;
 
@@ -28,7 +28,7 @@ enum enum_xrpc_version {
 class xrpc_handle_face_t
 {
 public:
-    virtual bool handle(std::string & request, xJson::Value& js_req, xJson::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) = 0;
+    virtual bool handle(std::string & request, Json::Value& js_req, Json::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) = 0;
 };
 
 class xgrpc_service

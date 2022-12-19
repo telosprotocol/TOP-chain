@@ -7,7 +7,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 
 #include "xdata/xtransaction.h"
 #include "xdata/xdatautil.h"
@@ -91,8 +91,8 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual enum_xaction_type get_target_action_type() const {return xaction_type_max;}
     virtual std::string get_target_action_str() const;
     virtual const std::string & get_authorization() const override {return m_authorization;}
-    virtual void                parse_to_json(xJson::Value& tx_json, const std::string & version = RPC_VERSION_V2) const override;
-    virtual void                construct_from_json(xJson::Value& tx_json) override;
+    virtual void                parse_to_json(Json::Value& tx_json, const std::string & version = RPC_VERSION_V2) const override;
+    virtual void                construct_from_json(Json::Value& tx_json) override;
     virtual int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) override;
 
     // header

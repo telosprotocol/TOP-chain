@@ -151,7 +151,7 @@ void xzec_reward_contract::update_reg_contract_read_status(const uint64_t cur_ti
           last_read_time,
           last_read_height,
           latest_height);
-    XCONTRACT_ENSURE(latest_height >= last_read_height, u8"xzec_reward_contract::update_reg_contract_read_status latest_height < last_read_height");
+    XCONTRACT_ENSURE(latest_height >= last_read_height, "xzec_reward_contract::update_reg_contract_read_status latest_height < last_read_height");
     if (latest_height == last_read_height) {
         XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", last_read_height, "current_time", cur_time);
         STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));

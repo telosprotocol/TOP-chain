@@ -57,7 +57,11 @@ class xrootblock_t : public xblock_t {
     static XINLINE_CONSTEXPR char const * root_resource_name     = "0";
     static XINLINE_CONSTEXPR char const * ROOT_BLOCK_PROPERTY_NAME  = "$R";
  protected:
+#if defined(XCXX20_OR_ABOVE)
+     static inline constexpr int object_type_value = static_cast<int>(enum_xdata_type::enum_xdata_type_max) - static_cast<int>(xdata_type_rootblock);
+#else
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_rootblock };
+#endif
  public:
     static bool init(const xrootblock_para_t & para);
  public:
@@ -76,7 +80,7 @@ class xrootblock_t : public xblock_t {
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
-    void dump_block_data(xJson::Value & json) const override;
+    void dump_block_data(Json::Value & json) const override;
 
  protected:
     xrootblock_input_t*    get_rootblock_input() const;
@@ -92,7 +96,7 @@ class xrootblock_t : public xblock_t {
     static bool is_seed_node(const std::string & account);
     static const std::string get_rootblock_hash();
     static base::enum_xchain_id get_rootblock_chainid();
-    static void get_rootblock_data(xJson::Value & json);
+    static void get_rootblock_data(Json::Value & json);
     static xrelay_block get_genesis_relay_block();
 };
 

@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <string.h>
 #include <iostream>
-#include <json/json.h>
+#include <jsoncpp/json/json.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string>
@@ -45,8 +45,8 @@ int32_t xconfig::load_config_file(const std::string & config_file)
         content.append(buf, ret);
     }
 
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
     if(reader.parse(content, root)){
         m_rpc_port = root["rpc_port"].asInt();
         m_bootstrap_ip = root["bootstrap_ip"].asString();
@@ -219,14 +219,14 @@ int32_t xconfig::load_account()
     return 1;
 }
 
-static void dump_config_and_exit(const std::string &info, const xJson::Value &root) {
-    xJson::StyledWriter writer;
+static void dump_config_and_exit(const std::string &info, const Json::Value &root) {
+    Json::StyledWriter writer;
     const auto str = writer.write(root);
     ::printf("[config] %s: %s\n", info.c_str(), str.c_str());
     ::exit(1);
 }
 
-void xconfig::load_testnet_config(const xJson::Value &root) {
+void xconfig::load_testnet_config(const Json::Value &root) {
     if (root.isMember("testnet_elect_cycle")) {
         m_elect_cycle = root["testnet_elect_cycle"].asInt();
         if (m_elect_cycle < 5 || m_elect_cycle > 60 || 60 % m_elect_cycle != 0)

@@ -10,15 +10,15 @@
 #include <cinttypes>
 #include "xpbase/base/top_utils.h"
 #include <trezor-crypto/sha3.h>
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xutility/xhash.h"
 #include "xdata/xrelay_block.h"
-#include "../../src/xtopcom/xdepends/include/trezor-crypto/ed25519-donna/ed25519.h"
+#include "trezor-crypto/ed25519-donna/ed25519.h"
 #include <fstream>  
 #if 0
 

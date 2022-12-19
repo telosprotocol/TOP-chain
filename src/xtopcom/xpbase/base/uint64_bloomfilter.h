@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "common/xxhash.h"
+// #include "xutility/xxHash/xxhash.h"
 #include "check_cast.h"
 
 namespace top {

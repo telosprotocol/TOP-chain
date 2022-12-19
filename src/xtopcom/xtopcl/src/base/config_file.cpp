@@ -1,6 +1,6 @@
 #include "xtopcl/include/base/config_file.h"
 
-#include <json/reader.h>
+#include <jsoncpp/json/reader.h>
 
 #include <fstream>
 #include <iostream>
@@ -32,8 +32,8 @@ namespace xChainSDK {
         }
         cfg.close();
 
-        xJson::Reader reader;
-        xJson::Value root;
+        Json::Reader reader;
+        Json::Value root;
         try {
             if (!reader.parse(json_str, root_)) {
                 return false;

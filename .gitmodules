@@ -22,3 +22,45 @@
 [submodule "src/xtopcom/xdepends/gperftools"]
 	path = src/xtopcom/xdepends/gperftools
 	url = git@github.com:gperftools/gperftools.git
+[submodule "src/xtopcom/xdepends/rocksdb"]
+	path = src/xtopcom/xdepends/rocksdb
+	url = git@github.com:facebook/rocksdb.git
+[submodule "src/xtopcom/xdepends/jsoncpp"]
+	path = src/xtopcom/xdepends/jsoncpp
+	url = git@github.com:open-source-parsers/jsoncpp.git
+[submodule "src/xtopcom/xdepends/grpc"]
+	path = src/xtopcom/xdepends/grpc
+	url = git@github.com:grpc/grpc.git
+[submodule "src/xtopcom/xdepends/cryptopp-cmake"]
+	path = src/xtopcom/xdepends/cryptopp-cmake
+	url = git@github.com:abdes/cryptopp-cmake.git
+[submodule "src/xtopcom/xdepends/cryptopp"]
+	path = src/xtopcom/xdepends/cryptopp
+	url = git@github.com:weidai11/cryptopp.git
+[submodule "src/xtopcom/xdepends/msgpack-c"]
+	path = src/xtopcom/xdepends/msgpack-c
+	url = git@github.com:msgpack/msgpack-c.git
+[submodule "src/xtopcom/xdepends/secp256k1"]
+	path = src/xtopcom/xdepends/secp256k1
+	url = git@github.com:bitcoin-core/secp256k1.git
+[submodule "src/xtopcom/xdepends/trezor/trezor-crypto"]
+	path = src/xtopcom/xdepends/trezor/trezor-crypto
+	url = git@github.com:trezor/trezor-crypto.git
+[submodule "src/xtopcom/xdepends/protobuf"]
+	path = src/xtopcom/xdepends/protobuf
+	url = git@github.com:protocolbuffers/protobuf.git
+[submodule "src/xtopcom/xdepends/ethash"]
+	path = src/xtopcom/xdepends/ethash
+	url = git@github.com:chfast/ethash.git
+[submodule "src/xtopcom/xdepends/json"]
+	path = src/xtopcom/xdepends/json
+	url = git@github.com:nlohmann/json.git
+[submodule "src/xtopcom/xdepends/lz4"]
+	path = src/xtopcom/xdepends/lz4
+	url = git@github.com:lz4/lz4.git
+[submodule "src/xtopcom/xdepends/fifo_map"]
+	path = src/xtopcom/xdepends/fifo_map
+	url = git@github.com:nlohmann/fifo_map.git
+[submodule "src/xtopcom/xdepends/crossguid"]
+	path = src/xtopcom/xdepends/crossguid
+	url = git@github.com:graeme-hill/crossguid.git

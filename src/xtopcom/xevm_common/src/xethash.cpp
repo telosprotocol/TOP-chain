@@ -1,9 +1,9 @@
 #include "xevm_common/xcrosschain/xethash.h"
 
 #include "xbasic/xhex.h"
-#include "xdepends/include/ethash/keccak.hpp"
-#include "xdepends/include/ethash/src/ethash/endianness.hpp"
-#include "xdepends/include/ethash/src/ethash/ethash-internal.hpp"
+#include "ethash/keccak.hpp"
+#include "ethash/endianness.hpp"
+#include "ethash/ethash-internal.hpp"
 #include "xevm_common/rlp.h"
 #include "xevm_common/src/xethash_data.cpp"
 #include "xevm_common/xcrosschain/xeth_config.h"

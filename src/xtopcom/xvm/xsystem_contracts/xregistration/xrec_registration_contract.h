@@ -139,7 +139,9 @@ public:
         CONTRACT_FUNCTION_PARAM(xrec_registration_contract, slash_unqualified_node);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     /**
      * @brief register the node
      *

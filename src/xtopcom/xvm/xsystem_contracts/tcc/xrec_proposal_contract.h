@@ -63,7 +63,9 @@ public:
         CONTRACT_FUNCTION_PARAM(xrec_proposal_contract, tccVote);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     /**
      * @brief Get the proposal info object
      *

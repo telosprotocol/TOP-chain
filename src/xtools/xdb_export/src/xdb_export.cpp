@@ -51,7 +51,7 @@ NS_BEG2(top, db_export)
 xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     XMETRICS_INIT();
     auto io_obj = std::make_shared<xbase_io_context_wrapper_t>();
-    m_timer_driver = make_unique<xbase_timer_driver_t>(io_obj);
+    m_timer_driver = top::make_unique<xbase_timer_driver_t>(io_obj);
     m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
 
     int dst_db_kind = top::db::xdb_kind_kvdb;
@@ -123,7 +123,7 @@ std::vector<std::string> xdb_export_tools_t::get_table_accounts() {
 std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
     std::vector<std::string> accounts;
     auto const tables = get_table_accounts();
-    for (auto const table : tables) {
+    for (auto const & table : tables) {
         auto latest_block = m_blockstore->get_latest_committed_block(table);
         if (latest_block == nullptr) {
             std::cerr << table << " get_latest_committed_block null!" << std::endl;
@@ -406,7 +406,7 @@ void xdb_export_tools_t::query_block_exist(std::string const & address, const ui
 }
 
 void xdb_export_tools_t::query_block_info(std::string const & account, std::string const & param) {
-    xJson::Value root;
+    Json::Value root;
     if (param == "last") {
         auto const h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
         std::cout << "account: " << account << ", latest committed height: " << h << ", block info:" << std::endl;
@@ -418,7 +418,7 @@ void xdb_export_tools_t::query_block_info(std::string const & account, std::stri
     } else {
         auto const h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
         for (size_t i = 0; i <= h; i++) {
-            xJson::Value j;
+            Json::Value j;
             query_block_info(account, i, j);
             root["height" + std::to_string(i)] = j;
         }
@@ -646,7 +646,7 @@ void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & 
         }
     }
 
-    for (auto const account : genesis_only) {
+    for (auto const & account : genesis_only) {
         json root_unit;
         query_block_basic(account, 0, root_unit["block0"]);
         query_state_basic(account, 0, root_unit["state"]);
@@ -1509,7 +1509,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
     abnormal_stream.close();
 }
 
-void xdb_export_tools_t::query_block_info(std::string const & account, const uint64_t h, xJson::Value & root) {
+void xdb_export_tools_t::query_block_info(std::string const & account, const uint64_t h, Json::Value & root) {
     auto vblock = m_blockstore->load_block_object(account, h, 0, true);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (bp == nullptr) {
@@ -1598,7 +1598,7 @@ void xdb_export_tools_t::query_balance(std::string const & table, json & j_unit,
 
 void xdb_export_tools_t::load_db_unit_accounts_info() {
     auto const & tables = get_table_accounts();
-    for (auto const table : tables) {
+    for (auto const & table : tables) {
         auto const latest_block = m_blockstore->get_latest_committed_block(table);
         if (latest_block == nullptr) {
             std::cerr << table << " get_latest_committed_block null!" << std::endl;
@@ -1944,7 +1944,7 @@ void  xdb_export_tools_t::prune_db(){
     //prune account
     auto const unit_account_vec = get_db_unit_accounts();
     std::cout << " start prune unit account!" << std::endl;
-    for (auto unit_account: unit_account_vec) {
+    for (auto & unit_account: unit_account_vec) {
         if (data::is_sys_contract_address(common::xaccount_address_t{ unit_account })) {
             continue;
         }
@@ -1965,7 +1965,7 @@ void  xdb_export_tools_t::prune_db(){
     //prune table
     std::cout << " start table account!" << std::endl;
     auto const tables = get_table_accounts();
-    for (auto const table_account : tables) {
+    for (auto const & table_account : tables) {
         auto vblock = m_blockstore->get_latest_committed_full_block(table_account);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr || block->get_height() < 8) {

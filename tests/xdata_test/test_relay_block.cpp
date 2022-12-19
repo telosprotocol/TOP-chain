@@ -13,8 +13,8 @@
 #include "xcertauth/xcertauth_face.h"
 #include <cinttypes>
 #include <trezor-crypto/sha3.h>
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 #include <limits>
 
 using namespace top;

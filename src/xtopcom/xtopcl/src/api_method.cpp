@@ -135,8 +135,8 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
 
 void ApiMethod::tackle_null_query(std::ostringstream & out_str, std::string null_out) {
     auto tmp = out_str.str();
-    xJson::Value jv;
-    xJson::Reader reader;
+    Json::Value jv;
+    Json::Reader reader;
     if (reader.parse(tmp, jv)) {
         auto data = jv["data"];
         if (data.isNull() || (data.isMember("value") && data["value"].isNull())) {
@@ -158,8 +158,8 @@ void ApiMethod::tackle_null_query(std::ostringstream & out_str, std::string null
 
 void ApiMethod::tackle_send_tx_request(std::ostringstream & out_str) {
     auto result = out_str.str();
-    xJson::Value jv;
-    xJson::Reader reader;
+    Json::Value jv;
+    Json::Reader reader;
     if (reader.parse(result, jv)) {
         auto tx_hash = jv["tx_hash"].asString();
         if (!tx_hash.empty()) {
@@ -171,11 +171,11 @@ void ApiMethod::tackle_send_tx_request(std::ostringstream & out_str) {
 }
 
 int ApiMethod::update_account(std::ostringstream & out_str) {
-    xJson::Value root;
+    Json::Value root;
     return update_account(out_str, root);
 }
 
-int ApiMethod::update_account(std::ostringstream & out_str, xJson::Value & root) {
+int ApiMethod::update_account(std::ostringstream & out_str, Json::Value & root) {
     if (!set_default_prikey(out_str)) {
         return 1;
     }
@@ -269,8 +269,8 @@ std::unordered_map<std::string, std::string> ApiMethod::queryNodeInfos() {
     g_userinfo.account = tmp;
 
     std::unordered_map<std::string, std::string> node_infos;
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
     if (reader.parse(oss.str(), root)) {
         for (auto a : root["data"].getMemberNames()) {
             node_infos[a] = root["data"][a]["node_sign_key"].asString();
@@ -377,7 +377,7 @@ void ApiMethod::set_default_account(const std::string & account, const string & 
         return;
     }
 
-    xJson::Value keystore_info;
+    Json::Value keystore_info;
     if (parse_keystore(store_path, keystore_info) == false) {
         CONSOLE_ERROR("keystore parse error, check keystore file %s", store_path.c_str());
         return;
@@ -451,7 +451,7 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
         return;
     }
     // todo ------------------↑ refactor
-    xJson::Value keystore_info;
+    Json::Value keystore_info;
     if (parse_keystore(path, keystore_info) == false) {
         CONSOLE_ERROR("keystore parse error, check keystore file %s", path.c_str());
         return;
@@ -550,7 +550,7 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
         std::string keystore_file = g_keystore_dir + "/" + keys[i];
 
         // todo ------------------↑ refactor
-        xJson::Value keystore_info;
+        Json::Value keystore_info;
         if (parse_keystore(keystore_file, keystore_info) == false) {
             CONSOLE_ERROR("keystore parse error, check keystore file %s", keystore_file.c_str());
             return;
@@ -606,7 +606,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     for (const auto & kf : files) {
         auto kf_path = g_keystore_dir + "/" + kf;
 
-        xJson::Value key_info_js;
+        Json::Value key_info_js;
         std::ifstream keyfile(kf_path, std::ios::in);
         if (!keyfile) {
             out_str << "open keystore file:" << kf_path << " failed" << std::endl;
@@ -616,7 +616,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
         buffer << keyfile.rdbuf();
         keyfile.close();
         std::string key_info = buffer.str();
-        xJson::Reader reader;
+        Json::Reader reader;
         if (!reader.parse(key_info, key_info_js)) {
             out_str << "parse keystore file:" << kf_path << " failed" << std::endl;
             continue;
@@ -639,7 +639,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     }
 
     // todo ------------------↑ refactor
-    xJson::Value keystore_info;
+    Json::Value keystore_info;
     if (parse_keystore(target_kf, keystore_info) == false) {
         CONSOLE_ERROR("keystore parse error, check keystore file %s", target_kf.c_str());
         return -1;
@@ -742,14 +742,14 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     // todo ------------------↓ refactor
 
     std::string extra_config = g_data_dir + "/.extra_conf.json";
-    xJson::Value key_info_js;
+    Json::Value key_info_js;
     std::ifstream keyfile(extra_config, std::ios::in);
     if (keyfile) {
         std::stringstream buffer;
         buffer << keyfile.rdbuf();
         keyfile.close();
         std::string key_info = buffer.str();
-        xJson::Reader reader;
+        Json::Reader reader;
         // ignore any error when parse
         reader.parse(key_info, key_info_js);
     }
@@ -768,7 +768,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     }
 
     // dump new json to file
-    xJson::StyledWriter new_sw;
+    Json::StyledWriter new_sw;
     std::ofstream os;
     os.open(extra_config);
     if (!os.is_open()) {
@@ -940,7 +940,7 @@ void ApiMethod::register_node(const std::string & mortgage_d,
                               std::string & signing_key,
                               std::ostringstream & out_str) {
     std::ostringstream res;
-    xJson::Value root;
+    Json::Value root;
     if (update_account(res, root) != 0) {
         return;
     }
@@ -985,7 +985,7 @@ void ApiMethod::register_node(const std::string & mortgage_d,
         return;
     api_method_imp_.registerNode(g_userinfo, mortgage, role, nickname, signing_key, dividend_rate, out_str);
     auto result = out_str.str();
-    xJson::Reader reader;
+    Json::Reader reader;
     string tx_hash;
     if (!reader.parse(result, root)) {
         cout << result << endl;
@@ -1005,7 +1005,7 @@ void ApiMethod::register_node(const std::string & mortgage_d,
         std::ostringstream oss;
         api_method_imp_.getTransaction(g_userinfo, g_userinfo.account, tx_hash, oss);
         auto result = oss.str();
-        xJson::Reader reader;
+        Json::Reader reader;
         string tx_hash;
         if (!reader.parse(result, root)) {
             cout << result << endl;
@@ -1135,7 +1135,7 @@ void ApiMethod::update_miner_info(const std::string & role,
 
 void ApiMethod::add_deposit(const std::string & deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
-    xJson::Value root;
+    Json::Value root;
     if (update_account(res, root) != 0) {
         return;
     }
@@ -1479,7 +1479,7 @@ ApiMethod::ApiMethod() {
 ApiMethod::~ApiMethod() {
 }
 
-std::string ApiMethod::get_keystore_hint(xJson::Value const & keystore_info) {
+std::string ApiMethod::get_keystore_hint(Json::Value const & keystore_info) {
     std::string password_hint = keystore_info["hint"].asString();
     if (password_hint.empty()) {
         return "";
@@ -1585,8 +1585,8 @@ void ApiMethod::outAccountBalance(const std::string & account, std::ostringstrea
         std::transform(q_account.begin()+1, q_account.end(), q_account.begin()+1, ::tolower);
     api_method_imp_.getAccount(g_userinfo, q_account, as);
     g_userinfo.account = tmp;
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
     if (reader.parse(as.str(), root)) {
         if (root["data"]["balance"].isUInt64()) {
             auto balance = root["data"]["balance"].asUInt64();
@@ -1640,8 +1640,8 @@ void ApiMethod::change_trans_mode(bool use_http) {
         std::stringstream buffer;
         buffer << edge_config_file.rdbuf();
         string edge_info = buffer.str();
-        xJson::Reader reader;
-        xJson::Value edge_info_js;
+        Json::Reader reader;
+        Json::Value edge_info_js;
         if (!reader.parse(edge_info, edge_info_js)) {
             std::cout << "Edge domain name file: " << edge_config_path << " parse error" << endl;
         } else {
@@ -1664,10 +1664,10 @@ void ApiMethod::get_token() {
     sleep(1);
 }
 
-int ApiMethod::get_account_info(std::ostringstream & out_str, xJson::Value & root) {
+int ApiMethod::get_account_info(std::ostringstream & out_str, Json::Value & root) {
     api_method_imp_.getAccount(g_userinfo, g_userinfo.account, out_str);
     auto result = out_str.str();
-    xJson::Reader reader;
+    Json::Reader reader;
     if (reader.parse(result, root)) {
         if (root["data"].empty()) {
             cout << g_userinfo.account << " not found on chain!" << endl;
@@ -1688,14 +1688,14 @@ void ApiMethod::block_prune(std::string & prune_enable, std::ostringstream & out
         return;
     }
     std::string extra_config = g_data_dir + "/.extra_conf.json";
-    xJson::Value key_info_js;
+    Json::Value key_info_js;
     std::ifstream keyfile(extra_config, std::ios::in);
     if (keyfile) {
         std::stringstream buffer;
         buffer << keyfile.rdbuf();
         keyfile.close();
         std::string key_info = buffer.str();
-        xJson::Reader reader;
+        Json::Reader reader;
         // ignore any error when parse
         reader.parse(key_info, key_info_js);
     }
@@ -1703,7 +1703,7 @@ void ApiMethod::block_prune(std::string & prune_enable, std::ostringstream & out
     key_info_js["auto_prune_data"] = prune_enable;
 
     // dump new json to file
-    xJson::StyledWriter new_sw;
+    Json::StyledWriter new_sw;
     std::ofstream os;
     os.open(extra_config);
     if (!os.is_open()) {

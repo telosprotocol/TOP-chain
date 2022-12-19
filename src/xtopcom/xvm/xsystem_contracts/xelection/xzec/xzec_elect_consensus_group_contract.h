@@ -34,7 +34,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xtop_zec_elect_consensus_group_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
 #ifdef STATIC_CONSENSUS
     void swap_election_result(common::xlogic_time_t const current_time);
     void elect_config_nodes(common::xlogic_time_t const current_time);

@@ -10,7 +10,7 @@
 
 NS_BEG3(top, state_accessor, properties)
 
-enum class xenum_property_category: std::uint8_t {
+enum class xenum_property_category : unsigned char {
     invalid,
     system,
     user

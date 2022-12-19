@@ -11,7 +11,7 @@
 #include <mutex>
 #include "xbase/xint.h"
 #include "xdata/xtransaction.h"
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 
 NS_BEG2(top, elect)
 

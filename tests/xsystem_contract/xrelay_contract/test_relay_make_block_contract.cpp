@@ -1,5 +1,4 @@
 #include <sstream>
-#define private public
 #include "xbase/xutl.h"
 #include "xbasic/xhex.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -58,7 +57,7 @@ public:
     auto exe_addr = std::string{sys_contract_relay_make_block_addr};                                                                                                               \
     auto contract_addr = common::xnode_id_t{sys_contract_relay_make_block_addr};                                                                                                   \
     auto vbstate = make_object_ptr<xvbstate_t>(sys_contract_relay_make_block_addr, 1, 1, std::string{}, std::string{}, 0, 0, 0);                                                   \
-    auto unitstate = std::make_shared<xunit_bstate_t>(vbstate.get());                                                                                                              \
+    auto unitstate = std::make_shared<data::xunit_bstate_t>(vbstate.get());                                                                                                        \
     auto account_context = std::make_shared<xaccount_context_t>(unitstate);                                                                                                        \
     auto contract_helper = std::make_shared<xcontract_helper>(account_context.get(), contract_addr, exe_addr);                                                                     \
     set_contract_helper(contract_helper);                                                                                                                                          \
@@ -277,10 +276,10 @@ TEST_F(xtop_test_relay_make_block_contract, on_make_block_invalid) {
     on_make_block("");
 }
 
-static xeth_transaction_t create_test_eth() {
-    xeth_transaction_t tx;
+static data::xeth_transaction_t create_test_eth() {
+    data::xeth_transaction_t tx;
     std::error_code ec;
-    tx.set_tx_version(EIP_1559);
+    tx.set_tx_version(data::EIP_1559);
     tx.set_chainid(0x26b);
     tx.set_nonce(0x2);
     tx.set_max_priority_fee_per_gas(0x59682f00);
@@ -305,16 +304,16 @@ TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block) {
     std::string cross_config_addr = cross_addr + ":" + cross_topic_str + ":0" + ":1";
     top::config::config_register.get_instance().set(config::xcross_chain_contract_tx_list_onchain_goverance_parameter_t::name, cross_config_addr);
 
-    xrelayblock_crosstx_infos_t txinfos;
+    data::xrelayblock_crosstx_infos_t txinfos;
     for (uint32_t i = 0; i < 1; i++) {
-        xeth_transaction_t _tx = create_test_eth();
-        xeth_receipt_t _receipt;
+        data::xeth_transaction_t _tx = create_test_eth();
+        data::xeth_receipt_t _receipt;
         evm_common::xevm_logs_t logs;
         evm_common::xevm_log_t log;
         log.address = common::xtop_eth_address::build_from(cross_addr);
         logs.push_back(log);
         _receipt.set_logs(logs);
-        xrelayblock_crosstx_info_t txinfo(_tx, _receipt);
+        data::xrelayblock_crosstx_info_t txinfo(_tx, _receipt);
         txinfos.tx_infos.push_back(txinfo);
     }
     std::string param_str = txinfos.serialize_to_string();
@@ -355,17 +354,17 @@ TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block_fast) {
     std::string cross_gasprice_config_addr = "1:1000";
     top::config::config_register.get_instance().set(config::xcross_chain_gasprice_list_onchain_goverance_parameter_t::name, cross_gasprice_config_addr);
 
-    xrelayblock_crosstx_infos_t txinfos;
+    data::xrelayblock_crosstx_infos_t txinfos;
     for (uint32_t i = 0; i < 1; i++) {
-        xeth_transaction_t _tx = create_test_eth();
+        data::xeth_transaction_t _tx = create_test_eth();
         _tx.set_max_priority_fee_per_gas(999);
-        xeth_receipt_t _receipt;
+        data::xeth_receipt_t _receipt;
         evm_common::xevm_logs_t logs;
         evm_common::xevm_log_t log;
         log.address = common::xtop_eth_address::build_from(cross_addr);
         logs.push_back(log);
         _receipt.set_logs(logs);
-        xrelayblock_crosstx_info_t txinfo(_tx, _receipt,0,1);
+        data::xrelayblock_crosstx_info_t txinfo(_tx, _receipt,0,1);
         txinfos.tx_infos.push_back(txinfo);
     }
     std::string param_str = txinfos.serialize_to_string();
@@ -381,17 +380,17 @@ TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block_fast) {
     EXPECT_EQ(height, 1);
     EXPECT_EQ(LIST_SIZE(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST), 1);
 
-    xrelayblock_crosstx_infos_t txinfos_2;
+    data::xrelayblock_crosstx_infos_t txinfos_2;
     for (uint32_t i = 0; i < 1; i++) {
-        xeth_transaction_t _tx = create_test_eth();
+        data::xeth_transaction_t _tx = create_test_eth();
         _tx.set_max_priority_fee_per_gas(2000);
-        xeth_receipt_t _receipt;
+        data::xeth_receipt_t _receipt;
         evm_common::xevm_logs_t logs;
         evm_common::xevm_log_t log;
         log.address = common::xtop_eth_address::build_from(cross_addr);
         logs.push_back(log);
         _receipt.set_logs(logs);
-        xrelayblock_crosstx_info_t txinfo(_tx, _receipt,1,1);
+        data::xrelayblock_crosstx_info_t txinfo(_tx, _receipt,1,1);
         txinfos_2.tx_infos.push_back(txinfo);
     }
     std::string param_str_2 = txinfos_2.serialize_to_string();

@@ -5,9 +5,10 @@ add_compile_options(-Wall)
 add_compile_options(-Werror)
 add_library(xgrpc_mgr ${xgrpc_mgr_src})
 
-target_link_libraries(xgrpc_mgr PRIVATE
-    xrpc xgrpcservice grpc grpc++_unsecure grpc_unsecure gpr cares address_sorting
-)
+find_library(gRPC_LIBRARIES NAMES libgrpc.a libgrpc++_unsecure.a libgrpc_unsecure.a libgpr.a libaddress_sorting.a)
+find_library(ares_LIBRARIES libcares.a REQUIRED)
+
+target_link_libraries(xgrpc_mgr PRIVATE xrpc xgrpcservice ${gRPC_LIBRARIES} ${ares_LIBRARIES})
 
 if (BUILD_METRICS)
     #add_dependencies(xgrpc_mgr xmetrics)

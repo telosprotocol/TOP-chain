@@ -23,9 +23,9 @@ class xconfig_genesis_loader_t : public config::xconfig_loader_face_t {
     bool         extract_genesis_para(data::xrootblock_para_t & para);
 
  private:
-    bool extract_genesis_para_accounts(const xJson::Value & json_root, data::xrootblock_para_t & para);
-    bool extract_genesis_para_seedNodes(const xJson::Value & json_root, data::xrootblock_para_t & para);
-    bool extract_genesis_para_genesis_timestamp(const xJson::Value & json_root, data::xrootblock_para_t & para);
+    bool extract_genesis_para_accounts(const Json::Value & json_root, data::xrootblock_para_t & para);
+    bool extract_genesis_para_seedNodes(const Json::Value & json_root, data::xrootblock_para_t & para);
+    bool extract_genesis_para_genesis_timestamp(const Json::Value & json_root, data::xrootblock_para_t & para);
     std::string extract_genesis_content(const std::string& filecontent);
     std::string get_file_content(const std::string& filepath);
 

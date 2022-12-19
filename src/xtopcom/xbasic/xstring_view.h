@@ -7,6 +7,9 @@
 #include "xbase/xns_macro.h"
 
 #include <cassert>
+#if defined(XCXX20_OR_ABOVE)
+#include <compare>
+#endif
 #include <cstddef>
 #include <string>
 #include <iterator>
@@ -27,7 +30,7 @@ template <class TraitsT>
 class xtop_string_view_iterator {
 public:
 #ifdef __cpp_lib_concepts
-    using iterator_concept = contiguous_iterator_tag;
+    // using iterator_concept = contiguous_iterator_tag;
 #endif  // __cpp_lib_concepts
     using iterator_category = std::random_access_iterator_tag;
     using value_type = typename TraitsT::char_type;
@@ -117,7 +120,7 @@ public:
     }
 
 #if defined(XCXX20_OR_ABOVE)
-    XATTRIBUTE_NODISCARD constexpr strong_ordering operator<=>(xtop_string_view_iterator const & right) const noexcept {
+    XATTRIBUTE_NODISCARD constexpr std::strong_ordering operator<=>(xtop_string_view_iterator const & right) const noexcept {
         return offset_ <=> right.offset_;
     }
 #else

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 // #include "xbase/xobject.h"
 // #include "xcodec/xmsgpack_codec.hpp"
 // #include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
@@ -28,9 +28,9 @@ public:
     xrpc_query_func() {}
     bool is_prop_name_already_set_property(const std::string & prop_name);
     bool is_prop_name_not_set_property(const std::string & prop_name);
-    bool query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode);
-    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
+    bool query_special_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode);
+    void query_account_property_base(Json::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode);
+    void query_account_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
+    void query_account_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
 };
 NS_END2

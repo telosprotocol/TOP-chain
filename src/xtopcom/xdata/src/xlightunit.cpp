@@ -71,28 +71,28 @@ void * xlightunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
-    xJson::Value ji;
+void xlightunit_block_t::parse_to_json_v1(Json::Value & root) {
+    Json::Value ji;
     if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
         auto txs = get_txs();
         for (auto & tx : txs) {
-            xJson::Value jv;
+            Json::Value jv;
             jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
-            jv["send_tx_lock_gas"] = static_cast<unsigned long long>(tx->get_send_tx_lock_tgas());
-            jv["used_gas"] = static_cast<xJson::UInt64>(tx->get_used_tgas());
-            jv["used_tx_deposit"] = static_cast<xJson::UInt64>(tx->get_used_deposit());
-            jv["used_disk"] = static_cast<xJson::UInt64>(tx->get_used_disk());
+            jv["send_tx_lock_gas"] = tx->get_send_tx_lock_tgas();
+            jv["used_gas"] = static_cast<Json::UInt64>(tx->get_used_tgas());
+            jv["used_tx_deposit"] = static_cast<Json::UInt64>(tx->get_used_deposit());
+            jv["used_disk"] = static_cast<Json::UInt64>(tx->get_used_disk());
             jv["tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
-            xJson::Value jtx;
+            Json::Value jtx;
             jtx["0x" + tx->get_tx_hex_hash()] = jv;
             ji["txs"].append(jtx);
         }
     } else {
         auto tx_vec = get_txkeys();
         for (auto & tx : tx_vec) {
-            xJson::Value jv;
+            Json::Value jv;
             jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
-            xJson::Value jtx;
+            Json::Value jtx;
             jtx["0x" + tx.get_tx_hex_hash()] = jv;
             ji["txs"].append(jtx);
         }
@@ -100,20 +100,20 @@ void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
     root["lightunit"]["lightunit_input"] = ji;
 }
 
-void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
+void xlightunit_block_t::parse_to_json_v2(Json::Value & root) {
     if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
         auto txs = get_txs();
         for (auto & tx : txs) {
-            xJson::Value jv;
+            Json::Value jv;
             jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
             jv["tx_hash"] = "0x" + tx->get_tx_hex_hash();
             root["lightunit"]["txs"].append(jv);
         }
     } else {
         auto tx_vec = get_txkeys();
-        xJson::Value txs;
+        Json::Value txs;
         for (auto & tx : tx_vec) {
-            xJson::Value jv;
+            Json::Value jv;
             jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
             jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
             txs["txs"].append(jv);
@@ -122,7 +122,7 @@ void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
     }
 }
 
-void xlightunit_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
+void xlightunit_block_t::parse_to_json(Json::Value & root, const std::string & rpc_version) {
     if (rpc_version == RPC_VERSION_V1) {
         parse_to_json_v1(root);
     } else {

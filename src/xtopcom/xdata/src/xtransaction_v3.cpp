@@ -17,13 +17,13 @@
 #include "xcrypto/xckey.h"
 #include "xevm_common/rlp.h"
 
-using namespace std;
+// using namespace std;
 using namespace top::evm_common;
-
+using namespace top::base;
 
 namespace top { namespace data {
 
-using namespace top::base;
+
 
 xtransaction_v3_t::xtransaction_v3_t() {
     MEMCHECK_ADD_TRACE(this, "tx_create");
@@ -226,16 +226,16 @@ void xtransaction_v3_t::set_action_type() {
     xtransaction_t::set_action_type_by_tx_type(m_transaction_type);
 }
 
-void xtransaction_v3_t::parse_to_json(xJson::Value & result_json, const std::string & tx_version) const {
+void xtransaction_v3_t::parse_to_json(Json::Value & result_json, const std::string & tx_version) const {
     result_json["tx_structure_version"] = xtransaction_version_3;
     result_json["tx_deposit"] = get_deposit();
     result_json["tx_type"] = get_tx_type();
     result_json["tx_len"] = get_tx_len();
     result_json["tx_hash"] = data::uint_to_str(digest().data(), digest().size());
     result_json["tx_expire_duration"] = get_expire_duration();
-    result_json["send_timestamp"] = static_cast<xJson::UInt64>(get_fire_timestamp());
+    result_json["send_timestamp"] = static_cast<Json::UInt64>(get_fire_timestamp());
     result_json["premium_price"] = get_premium_price();
-    result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(get_last_nonce());
+    result_json["last_tx_nonce"] = static_cast<Json::UInt64>(get_last_nonce());
     result_json["note"] = get_memo();
     result_json["ext"] = data::uint_to_str(get_ext().data(), get_ext().size());
     result_json["authorization"] = get_authorization();
@@ -267,7 +267,7 @@ void xtransaction_v3_t::parse_to_json(xJson::Value & result_json, const std::str
             source_action_para = action.get_action_param();
             target_action_para = action.get_action_param();
         }
-        xJson::Value & s_action_json = result_json["sender_action"];
+        Json::Value & s_action_json = result_json["sender_action"];
         s_action_json["action_hash"] = "";
         s_action_json["action_type"] = 0;
         s_action_json["action_size"] = 0;
@@ -277,7 +277,7 @@ void xtransaction_v3_t::parse_to_json(xJson::Value & result_json, const std::str
         s_action_json["action_ext"] = "";
         s_action_json["action_authorization"] = "";
 
-        xJson::Value & t_action_json = result_json["receiver_action"];
+        Json::Value & t_action_json = result_json["receiver_action"];
         t_action_json["action_hash"] = "";
         t_action_json["action_type"] = 0;
         t_action_json["action_size"] = 0;
@@ -289,7 +289,7 @@ void xtransaction_v3_t::parse_to_json(xJson::Value & result_json, const std::str
     }
 }
 
-void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
+void xtransaction_v3_t::construct_from_json(Json::Value & request) {
     // TODO(jimmy)
     xassert(false);
 }

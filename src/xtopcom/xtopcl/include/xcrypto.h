@@ -1,5 +1,5 @@
 #include "cryptopp/aes.h"
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 
 #include <string>
 
@@ -27,15 +27,15 @@ public:
     std::string ciphertext;
 };
 
-std::string get_account_address_from_json_keystore(xJson::Value const & keystore_json);
+std::string get_account_address_from_json_keystore(Json::Value const & keystore_json);
 
 // decrypt:
-int get_top_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::byte * key);
-int get_eth_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::byte * key);
-bool parse_keystore(std::string const & keystore_path, xJson::Value & keystore_info);
-bool decrypt_get_kdf_key(std::string const & password, xJson::Value const & keystore_info, std::string & kdf_key);
-bool decrypt_keystore_by_password(std::string const & password, xJson::Value const & keystore_info, std::string & pri_key);
-bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const & keystore_info, std::string & pri_key);
+int get_top_ed_key(const string & pw, const Json::Value & key_info, CryptoPP::byte * key);
+int get_eth_ed_key(const string & pw, const Json::Value & key_info, CryptoPP::byte * key);
+bool parse_keystore(std::string const & keystore_path, Json::Value & keystore_info);
+bool decrypt_get_kdf_key(std::string const & password, Json::Value const & keystore_info, std::string & kdf_key);
+bool decrypt_keystore_by_password(std::string const & password, Json::Value const & keystore_info, std::string & pri_key);
+bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, Json::Value const & keystore_info, std::string & pri_key);
 bool decrypt_keystore_file_by_kdf_key(std::string const & kdf_key, std::string const & keystore_path, std::string & pri_key);
 
 // todo ref ↓
@@ -56,12 +56,12 @@ void fill_aes_info(const std::string & pw, const string & raw_text, AES_INFO & a
 void fill_eth_aes_info(const std::string & pw, const string & raw_text, AES_INFO & aes_info);
 
 // update:
-void update_keystore_file(const std::string & pw, const string & raw_text, std::ofstream & key_file, xJson::Value & key_info);
+void update_keystore_file(const std::string & pw, const string & raw_text, std::ofstream & key_file, Json::Value & key_info);
 
 // others:
 std::string get_keystore_filepath(string & dir, const string & account);
-xJson::Value parse_keystore(const string & path);
-xJson::Value attach_parse_keystore(const string & path, std::ostringstream & out_str);
+Json::Value parse_keystore(const string & path);
+Json::Value attach_parse_keystore(const string & path, std::ostringstream & out_str);
 std::vector<std::string> scan_key_dir(const std::string & path);
 bool set_g_userinfo(const string & base64_pri);
 }  // namespace xcrypto

@@ -1,4 +1,6 @@
-#include "nlohmann/fifo_map.hpp"
+#include <gtest/gtest.h>
+
+#include "fifo_map.hpp"
 #include "nlohmann/json.hpp"
 #include "test_state_mpt_cache_data.inc"
 #include "xcrypto/xckey.h"
@@ -26,8 +28,6 @@ using json = unordered_json;
 #include "xevm_common/trie/xtrie_sync.h"
 #include "xstate_mpt/xstate_mpt.h"
 #include "xstate_mpt/xstate_sync.h"
-
-#include <gtest/gtest.h>
 
 namespace top {
 

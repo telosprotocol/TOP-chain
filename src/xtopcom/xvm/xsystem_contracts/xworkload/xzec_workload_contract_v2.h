@@ -50,7 +50,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xzec_workload_contract_v2, on_timer);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     /**
      * @brief handle_workload_str
      *

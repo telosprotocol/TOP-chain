@@ -4,7 +4,7 @@
 #include <string>
 #include <errno.h>
 #include <string.h>
-#include <json/json.h> 
+#include <jsoncpp/json/json.h> 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string>
@@ -26,7 +26,7 @@ namespace top
             return c;
         }
         int32_t load_config_file(const std::string & config_file);
-        void load_elect_config(const xJson::Value &root);
+        void load_elect_config(const Json::Value &root);
         void load_free_node_config();
 
     public:
@@ -72,7 +72,7 @@ namespace top
         int32_t load_account();
 
     private:
-        void load_testnet_config(const xJson::Value &root);
+        void load_testnet_config(const Json::Value &root);
         void generate_account(int i); // return shard_i
         void load_local_host();
     };

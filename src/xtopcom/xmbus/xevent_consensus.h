@@ -6,13 +6,12 @@
 
 #include <vector>
 #include "xmbus/xevent.h"
-#include "xvnetwork/xaddress.h"
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xvblock.h"
 
 NS_BEG2(top, mbus)
 
-using namespace top;
+// using namespace top;
 
 class xevent_consensus_t : public xbus_event_t {
 public:

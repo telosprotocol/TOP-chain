@@ -64,7 +64,7 @@ void test_db_write_read_different_key(const std::shared_ptr<xdb_face_t>& db, int
 TEST_F(test_perf, db_write_read_same_key_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     test_db_write_read_same_key(db, 10000);
     test_db_write_read_same_key(db, 100000);
     test_db_write_read_same_key(db, 1000000);
@@ -74,7 +74,7 @@ TEST_F(test_perf, db_write_read_same_key_BENCH) {
 TEST_F(test_perf, db_write_read_different_key_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     test_db_write_read_different_key(db, 10000);
     test_db_write_read_different_key(db, 100000);
     test_db_write_read_different_key(db, 1000000);

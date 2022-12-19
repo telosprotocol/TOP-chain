@@ -54,8 +54,23 @@ int topio_init_setproctitle()
 
             size = strlen(environ[i]) + 1;
             topio_os_argv_last = environ[i] + size;
-
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wstringop-truncation"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wstringop-truncation"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
             strncpy(p, environ[i], size);
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
             environ[i] = (char *) p;
             p += size;
         }

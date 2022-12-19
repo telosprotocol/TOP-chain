@@ -6,6 +6,8 @@
 
 #include "xbase/xdata.h"
 
+#include <functional>
+
 namespace top
 {
     namespace base
@@ -22,10 +24,10 @@ namespace top
         };
 
         // XTODO need change old and new version when block structure changed
-        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_4_1_0;
-        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_5_0_0;
+        inline constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_4_1_0;
+        inline constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_5_0_0;
 
-        typedef std::function<bool(uint64_t clock) noexcept> xvblock_fork_check_fun_t;
+        typedef std::function<bool(uint64_t clock)> xvblock_fork_check_fun_t;
 
         class xvblock_fork_t
         {
@@ -65,7 +67,7 @@ namespace top
             }
         private:
             xvblock_fork_check_fun_t m_check_fun;
-        };        
+        };
 
     }//end of namespace of base
 

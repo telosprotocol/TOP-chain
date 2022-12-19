@@ -11,7 +11,7 @@ namespace data {
 /// xblock_data_t
 
 std::string xtop_block_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_block_data::do_read(base::xstream_t & stream) {
@@ -38,7 +38,7 @@ int32_t operator<<(base::xstream_t & stream, xblock_data_t const & data_object) 
 
 /// xconsensus_vote_data_t
 std::string xtop_consensus_vote_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_consensus_vote_data::do_read(base::xstream_t & stream) {
@@ -65,7 +65,7 @@ int32_t operator<<(base::xstream_t & stream, xconsensus_vote_data_t const & data
 
 /// xaccount_related_statistics_data_t
 std::string xtop_account_related_statistics_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_account_related_statistics_data::do_read(base::xstream_t & stream) {
@@ -100,7 +100,7 @@ int32_t operator<<(base::xbuffer_t & stream, xaccount_related_statistics_data_t 
 
 /// xgroup_related_statistics_data_t
 std::string xtop_group_releated_statistics_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_group_releated_statistics_data::do_read(base::xstream_t & stream) {
@@ -133,7 +133,7 @@ int32_t operator<<(base::xbuffer_t & buffer, xgroup_related_statistics_data_t co
 
 /// xelection_related_statistics_data_t
 std::string xtop_election_related_statistics_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_election_related_statistics_data::do_read(base::xstream_t & stream) {
@@ -166,7 +166,7 @@ int32_t operator<<(base::xbuffer_t & buffer, xelection_related_statistics_data_t
 
 /// xstatistics_data_t
 std::string xtop_statistics_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_statistics_data::do_read(base::xstream_t & stream) {

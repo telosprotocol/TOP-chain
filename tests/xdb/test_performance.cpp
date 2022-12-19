@@ -67,7 +67,7 @@ void test_db_performance_write_read_different_key(const std::shared_ptr<xdb_face
 TEST_F(test_performance, db_write_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
 
 	int64_t begin = top::base::xtime_utl::gmttime_ms();
 	uint32_t count = 2000000;
@@ -86,7 +86,7 @@ TEST_F(test_performance, db_write_BENCH) {
 TEST_F(test_performance, db_read_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
 
 	int64_t begin = top::base::xtime_utl::gmttime_ms();
 	uint32_t count = 2000000;
@@ -108,7 +108,7 @@ TEST_F(test_performance, db_read_BENCH) {
 TEST_F(test_performance, db_write_and_delete_1_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     uint32_t count = 2000000;
     string key;
     {
@@ -168,7 +168,7 @@ TEST_F(test_performance, db_write_and_delete_1_BENCH) {
 TEST_F(test_performance, db_write_and_delete_2_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     uint32_t count = 2000000;
     string key;
 
@@ -226,7 +226,7 @@ TEST_F(test_performance, db_write_and_delete_2_BENCH) {
 TEST_F(test_performance, db_write_and_delete_3_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     uint32_t count = 2000000;
     string key;
 
@@ -298,7 +298,7 @@ TEST_F(test_performance, db_write_and_delete_3_BENCH) {
 TEST_F(test_performance, db_write_and_delete_4_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     uint32_t count = 2000000;
     string key;
 
@@ -356,7 +356,7 @@ TEST_F(test_performance, db_write_and_delete_4_BENCH) {
 TEST_F(test_performance, db_write_and_delete_5_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     uint32_t count = 2000000;
     string key;
 
@@ -414,7 +414,7 @@ TEST_F(test_performance, db_write_and_delete_5_BENCH) {
 TEST_F(test_performance, db_write_and_delete_6_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
     uint32_t count = 2000000;
     string key;
     {
@@ -540,7 +540,7 @@ TEST_F(test_performance, db_write_single_path) {
     string db_dir[2] = {"./db_single/", "./db_single_2/"};
     for (int j = 0; j < 2; j++) {   
         std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir[j]);
-        ASSERT_NE(db, nullptr);
+        ASSERT_NE(db.get(), nullptr);
         uint32_t count = 20001;
         std::string value(2048, 'A');
         int64_t begin = top::base::xtime_utl::gmttime_ms();
@@ -562,7 +562,7 @@ TEST_F(test_performance, db_read_single_path) {
     string db_dir[2] = {"./db_single/",  "./db_single_2/"};
     for (int j = 0; j < 2; j++) {   
         std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir[j]);
-        ASSERT_NE(db, nullptr);
+        ASSERT_NE(db.get(), nullptr);
        
         uint32_t count = 20001;
         std::string value;
@@ -597,7 +597,7 @@ TEST_F(test_performance, db_write_mult_path) {
     }
   
     std::shared_ptr< top::db::xdb_face_t> db = top::db::xdb_factory_t::instance(db_dir, db_data_paths);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
 
 	int64_t begin = top::base::xtime_utl::gmttime_ms();
 	uint32_t count = 20001;
@@ -627,7 +627,7 @@ TEST_F(test_performance, db_read_mult_path) {
     }
   
     std::shared_ptr< top::db::xdb_face_t> db = top::db::xdb_factory_t::instance(db_dir, db_data_paths);
-    ASSERT_NE(db, nullptr);
+    ASSERT_NE(db.get(), nullptr);
 
 	int64_t begin = top::base::xtime_utl::gmttime_ms();
 	uint32_t count = 20001;
@@ -660,7 +660,7 @@ TEST_F(test_performance, db_test_db_compactions) {
             db_kinds |= (xdb_kind_high_compress << (j-1));
         }
         std::shared_ptr<xdb_face_t> db = xdb_factory_t::create(db_kinds, db_dir[j]);
-        ASSERT_NE(db, nullptr);
+        ASSERT_NE(db.get(), nullptr);
        
         uint32_t count = 2000;
         std::string value(2048, 'A');

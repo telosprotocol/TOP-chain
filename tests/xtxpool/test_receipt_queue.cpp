@@ -8,7 +8,7 @@
 #include "xtxpool_v2/xtx_receipt_queue.h"
 #include "xtxpool_v2/xtxpool_para.h"
 #include "xtxpool_v2/xtxpool_error.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -63,7 +63,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
         int32_t ret = receipt_queue.push_tx(tx_ent);
         ASSERT_EQ(ret, 0);
         auto find_receipt = receipt_queue.find(receiver, recv_txs[i]->get_tx_hash());
-        ASSERT_NE(find_receipt, nullptr);
+        ASSERT_NE(find_receipt.get(), nullptr);
     }
 
     uint32_t confirm_txs_num;
@@ -82,11 +82,11 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     ASSERT_EQ(receipts2.size(), tx_num - 1);
 
     auto find_receipt0 = receipt_queue.find(receiver, recv_txs[0]->get_tx_hash());
-    ASSERT_EQ(find_receipt0, nullptr);
+    ASSERT_EQ(find_receipt0.get(), nullptr);
 
     auto pop_receipt = receipt_queue.pop_tx(recv_txs[1]->get_tx_hash(), recv_txs[1]->get_tx_subtype());
-    ASSERT_NE(pop_receipt, nullptr);
+    ASSERT_NE(pop_receipt.get(), nullptr);
 
     auto find_receipt = receipt_queue.find(receiver, recv_txs[1]->get_tx_hash());
-    ASSERT_EQ(find_receipt, nullptr);
+    ASSERT_EQ(find_receipt.get(), nullptr);
 }

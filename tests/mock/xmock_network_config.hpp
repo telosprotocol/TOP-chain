@@ -5,14 +5,14 @@
 #pragma once
 
 #include "xdata/xdata_common.h"
-#include "json/json.h"
+#include <jsoncpp/json/json.h>
 
 namespace top { namespace mock {
 
 // 1shard(2node)
-static xJson::Value xsync_validator_behind() {
+static Json::Value xsync_validator_behind() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -29,9 +29,9 @@ static xJson::Value xsync_validator_behind() {
 }
 
 // 1shard(2node) + 1 archive(6node)
-static xJson::Value xsync_broadcast() {
+static Json::Value xsync_broadcast() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -57,9 +57,9 @@ static xJson::Value xsync_broadcast() {
 }
 
 // beacon(4node)
-static xJson::Value timercert() {
+static Json::Value timercert() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -75,9 +75,9 @@ static xJson::Value timercert() {
 }
 
 // 1rec(3node) + 1zec(3node) + 1adv(3node) + 1shard(3node) + 1archive(3node)
-static xJson::Value xsync_latest() {
+static Json::Value xsync_latest() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -176,7 +176,7 @@ public:
 class xmock_network_config_t {
 public:
 
-    xmock_network_config_t(xJson::Value &cfg_system_topology) {
+    xmock_network_config_t(Json::Value &cfg_system_topology) {
         extract_system_topology(cfg_system_topology, m_system_topology);
     }
 
@@ -185,7 +185,7 @@ public:
     }
 
 private:
-    void extract_system_topology(xJson::Value &system_topology, std::map<std::string, config_group_t> &map_group) {
+    void extract_system_topology(Json::Value &system_topology, std::map<std::string, config_group_t> &map_group) {
 
         printf("%s\n", system_topology.toStyledString().c_str());
 
@@ -193,8 +193,8 @@ private:
 
         // get group
         if (system_topology.isMember("group")) {
-            xJson::Value &group_list = system_topology["group"];
-            xJson::Value::Members members = group_list.getMemberNames();
+            Json::Value &group_list = system_topology["group"];
+            Json::Value::Members members = group_list.getMemberNames();
             for (auto member: members) {
 
                 config_group_t tmp;
@@ -231,8 +231,8 @@ private:
         if (system_topology.isMember("node")) {
 
             // find group
-            xJson::Value &node_list = system_topology["node"];
-            xJson::Value::Members members = node_list.getMemberNames();
+            Json::Value &node_list = system_topology["node"];
+            Json::Value::Members members = node_list.getMemberNames();
 
             for (auto member: members) {
                 config_node_t tmp;

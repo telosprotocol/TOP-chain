@@ -90,7 +90,11 @@ class xlightunit_block_t : public xblock_t {
  public:
     static  const std::string   unconfirm_tx_num_name() { return std::string("i0");}  // input resource #0
  protected:
+#if defined(XCXX20_OR_ABOVE)
+     static inline constexpr int object_type_value = static_cast<int>(enum_xdata_type_max) - static_cast<int>(xdata_type_lightunit_block);
+#else
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_lightunit_block };
+#endif
  public:
     xlightunit_block_t();
     xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
@@ -100,13 +104,13 @@ class xlightunit_block_t : public xblock_t {
  private:
     xlightunit_block_t(const xlightunit_block_t &);
     xlightunit_block_t & operator = (const xlightunit_block_t &);
-    void parse_to_json_v1(xJson::Value & root);
-    void parse_to_json_v2(xJson::Value & root);
+    void parse_to_json_v1(Json::Value & root);
+    void parse_to_json_v2(Json::Value & root);
  public:
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
-    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
+    virtual void parse_to_json(Json::Value & root, const std::string & rpc_version) override;
 
  public:  // lightunit special apis
     virtual     std::string     dump_body() const;

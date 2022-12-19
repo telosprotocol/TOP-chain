@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xspan.h"
 #include "xevm_common/rlp/xrlp_encodable.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
 #include "xevm_common/xfixed_hash.h"
@@ -105,7 +106,7 @@ public:
     ~xtop_trie_hash_node() override = default;
 
     explicit xtop_trie_hash_node(xbytes_t const & hash_data);
-    explicit xtop_trie_hash_node(gsl::span<xbyte_t const> hash_data);
+    explicit xtop_trie_hash_node(xspan_t<xbyte_t const> hash_data);
 
     xh256_t const & data() const noexcept;
 

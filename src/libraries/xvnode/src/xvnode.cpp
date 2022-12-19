@@ -74,8 +74,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
     } else {
         xwarn("[virtual node] vnode %p create at address %s", this, m_the_binding_driver->address().to_string().c_str());
     }
-    m_prune_data = make_unique<components::prune_data::xprune_data>();
-    m_sniff = make_unique<components::sniffing::xsniffer_t>(
+    m_prune_data = top::make_unique<components::prune_data::xprune_data>();
+    m_sniff = top::make_unique<components::sniffing::xsniffer_t>(
         nodesvr, make_observer(contract_runtime::system::xsystem_contract_manager_t::instance()), make_observer(this));
 }
 

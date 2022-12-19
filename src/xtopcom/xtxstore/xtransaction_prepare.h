@@ -23,7 +23,7 @@
 #include "xtxexecutor/xtransaction_context.h"
 #include "xtxexecutor/xtransaction_fee.h"
 #include "xtxexecutor/xunit_service_error.h"
-#include "xverifier/xtx_verifier.h"
+// #include "xverifier/xtx_verifier.h"
 #include "xvm/xvm_service.h"
 
 NS_BEG2(top, txexecutor)

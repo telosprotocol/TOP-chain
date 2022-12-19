@@ -251,7 +251,7 @@ public:
         auto increament_space = std::numeric_limits<value_type>::max() - step;
         if (step > increament_space) {
             assert(false);
-            throw std::overflow_error{ "version overflow " + std::to_string(m_value) + u8" increase " + std::to_string(step) };
+            throw std::overflow_error{ "version overflow " + std::to_string(m_value) + " increase " + std::to_string(step) };
         }
 
         m_value += step;

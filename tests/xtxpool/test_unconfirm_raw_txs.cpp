@@ -51,7 +51,7 @@ TEST_F(test_unconfirm_raw_txs, unconfirm_raw_txs) {
     unconfirm_raw_txs.add_raw_txs(raw_txs);
     for (auto & tx_tmp : raw_txs) {
         auto raw_tx = unconfirm_raw_txs.get_raw_tx(table_sid, tx_tmp.m_receipt_id);
-        ASSERT_NE(raw_tx, nullptr);
+        ASSERT_NE(raw_tx.get(), nullptr);
     }
 
     std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
@@ -76,6 +76,6 @@ TEST_F(test_unconfirm_raw_txs, unconfirm_raw_txs) {
     unconfirm_raw_txs.refresh(mocktable.get_table_state()->get_receiptid_state());
     for (auto & tx_tmp : raw_txs) {
         auto raw_tx = unconfirm_raw_txs.get_raw_tx(table_sid, tx_tmp.m_receipt_id);
-        ASSERT_EQ(raw_tx, nullptr);
+        ASSERT_EQ(raw_tx.get(), nullptr);
     }
 }

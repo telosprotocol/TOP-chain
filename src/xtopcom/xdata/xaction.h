@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include <string>
 #include "xbase/xmem.h"
-#include "xbase/xcontext.h"
-#include "xutility/xhash.h"
 #include "xdata/xdatautil.h"
-#include "json/json.h"
+#include "xutility/xhash.h"
+
+#include <string>
 
 namespace top { namespace data {
 

@@ -137,7 +137,7 @@ TEST_F(test_shard, process_msg_illegal) {
     // action_asset_out.serialze_to(tx->get_target_action(), asset_out);
     // tx->get_source_action().set_account_addr("m_source_account");
     // tx->get_target_action().set_account_addr("m_target_account");
-    // xJson::Value tx_json;
+    // Json::Value tx_json;
     // tx_json["version"] = "1.0";
     // tx_json["method"] = "account_info";
     // edge_msg.m_message_body = tx_json.toStyledString();

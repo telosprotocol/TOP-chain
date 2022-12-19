@@ -35,7 +35,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xtop_zec_elect_eth_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     void elect(common::xzone_id_t const zone_id, common::xcluster_id_t const cluster_id, std::uint64_t const random_seed, common::xlogic_time_t const election_timestamp);
 
     bool elect_eth_consensus(common::xzone_id_t const zone_id,

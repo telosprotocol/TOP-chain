@@ -402,7 +402,7 @@ TEST_F(test_state_sync_fixture, test_assign_trie_tasks) {
     EXPECT_TRUE(it != m_peers.peers.end());
     auto mock_net = std::dynamic_pointer_cast<xmock_vnetwork_driver_t>(m_peers.network);
     EXPECT_EQ(mock_net->m_msg.size(), 1);
-    EXPECT_EQ(mock_net->m_msg.front().first, (*it));
+    EXPECT_TRUE(mock_net->m_msg.front().first == (*it));
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(mock_net->m_msg.front().second.payload().data()), (uint32_t)mock_net->m_msg.front().second.payload().size());
     std::string table;
     uint32_t id{0};
@@ -514,7 +514,7 @@ TEST_F(test_state_sync_fixture, test_send_message) {
     EXPECT_TRUE(it != m_peers.peers.end());
 
     auto mock_net = std::dynamic_pointer_cast<xmock_vnetwork_driver_t>(m_peers.network);
-    EXPECT_EQ(mock_net->m_msg.front().first, (*it));
+    EXPECT_TRUE(mock_net->m_msg.front().first == (*it));
     EXPECT_EQ(mock_net->m_msg.front().second, vnetwork::xmessage_t(str, state_sync::xmessage_id_sync_table_request));
 }
 
@@ -556,7 +556,7 @@ TEST_F(test_state_sync_fixture, test_assign_table_tasks) {
 
     auto mock_net = std::dynamic_pointer_cast<xmock_vnetwork_driver_t>(m_peers.network);
     auto msg = mock_net->m_msg.front();
-    EXPECT_EQ(msg.first, (*it));
+    EXPECT_TRUE(msg.first == (*it));
     
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(msg.second.payload().data()), (uint32_t)msg.second.payload().size());
     std::string table;

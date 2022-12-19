@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "xbase/xcxx_config.h"
+
 #include <atomic>
 #include <cassert>
 #include <cstring>
@@ -24,7 +26,12 @@ public:
     using element_type = _T;
     using mutable_value_type = typename std::conditional<std::is_const<_T>::value, typename std::remove_const<_T>::type, _T>::type;
 
+#if defined(XCXX20_OR_ABOVE)
+    static_assert(std::is_standard_layout<value_type>::value && std::is_trivial<value_type>::value,
+                  "vector_ref can only be used with PODs due to its low-level treatment of data.");
+#else
     static_assert(std::is_pod<value_type>::value, "vector_ref can only be used with PODs due to its low-level treatment of data.");
+#endif
 
     vector_ref() : m_data(nullptr), m_count(0) {
     }

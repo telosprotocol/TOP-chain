@@ -8,9 +8,9 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include "json/value.h"
-#include "json/reader.h"
-#include "json/writer.h"
+#include <jsoncpp/json/value.h>
+#include <jsoncpp/json/reader.h>
+#include <jsoncpp/json/writer.h>
 #include "xbase/xutl.h"
 #include "xvledger/xvledger.h"
 
@@ -21,14 +21,14 @@ bool  xprune_data::update_prune_config_file(std::string& prune_enable)
 {
     top::base::xstring_utl::tolower_string(prune_enable);
     std::string extra_config = base::xvchain_t::instance().get_data_dir_path() + "/.extra_conf.json";
-    xJson::Value key_info_js;
+    Json::Value key_info_js;
     std::ifstream keyfile(extra_config, std::ios::in);
     if (keyfile) {
         std::stringstream buffer;
         buffer << keyfile.rdbuf();
         keyfile.close();
         std::string key_info = buffer.str();
-        xJson::Reader reader;
+        Json::Reader reader;
         // ignore any error when parse
         reader.parse(key_info, key_info_js);
     }
@@ -36,7 +36,7 @@ bool  xprune_data::update_prune_config_file(std::string& prune_enable)
     key_info_js["auto_prune_data"] = prune_enable;
     
     // dump new json to file
-    xJson::StyledWriter new_sw;
+    Json::StyledWriter new_sw;
     std::ofstream os;
     os.open(extra_config);
     if (!os.is_open()) {

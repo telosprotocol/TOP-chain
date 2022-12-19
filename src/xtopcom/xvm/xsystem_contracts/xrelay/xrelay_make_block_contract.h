@@ -52,7 +52,9 @@ public:
     CONTRACT_FUNCTION_PARAM(xtop_relay_make_block_contract, on_make_block);
     END_CONTRACT_WITH_PARAM
 
+#if !defined(XENABLE_TESTS)
 private:
+#endif
     void on_receive_cross_txs(std::string const & cross_txs_data);
     void on_make_block(std::string const & make_block_info);
     void proc_created_relay_block(data::xrelay_block & relay_block, uint64_t clock, const evm_common::u256 & chain_bits, uint64_t block_type);

@@ -17,9 +17,9 @@
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xcrosschain/xethash.h"
 
-NS_BEG4(top, contract_runtime, evm, sys_contract)
-
 using namespace top::evm_common;
+
+NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 constexpr uint64_t MinGasLimit = 5000;
 constexpr uint64_t MaxGasLimit = 0x7fffffffffffffff;

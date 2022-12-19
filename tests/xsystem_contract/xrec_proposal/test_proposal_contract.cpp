@@ -66,7 +66,7 @@ public:
     }
 
     static data::xtransaction_ptr_t submit_proposal(std::string const& source_param, std::string const& target_param) {
-        data::xtransaction_v2_ptr_t submit_proposal_trx = make_object_ptr<xtransaction_v2_t>();
+        data::xtransaction_v2_ptr_t submit_proposal_trx = make_object_ptr<data::xtransaction_v2_t>();
         submit_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
         submit_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
         submit_proposal_trx->set_source_action_para(source_param);
@@ -77,7 +77,7 @@ public:
     }
 
     static data::xtransaction_ptr_t withdraw_proposal(std::string const& target_param) {
-        data::xtransaction_v2_ptr_t withdraw_proposal_trx = make_object_ptr<xtransaction_v2_t>();
+        data::xtransaction_v2_ptr_t withdraw_proposal_trx = make_object_ptr<data::xtransaction_v2_t>();
         withdraw_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
         withdraw_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
         withdraw_proposal_trx->set_target_action_name("withdrawProposal");
@@ -86,7 +86,7 @@ public:
     }
 
     static data::xtransaction_ptr_t vote_proposal(std::string const& target_param) {
-        data::xtransaction_v2_ptr_t vote_proposal_trx = make_object_ptr<xtransaction_v2_t>();
+        data::xtransaction_v2_ptr_t vote_proposal_trx = make_object_ptr<data::xtransaction_v2_t>();
         vote_proposal_trx->set_source_addr("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB");
         vote_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
         vote_proposal_trx->set_target_action_name("tccVote");
@@ -103,10 +103,10 @@ shared_ptr<xaccount_context_t> test_proposal_contract::m_tcc_proposal_account_ct
 TEST_F(test_proposal_contract, submit_param_proposal) {
 
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    data::xunitstate_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(bstate);
     m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
-    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    data::xtcc_transaction_ptr_t tcc_genesis = std::make_shared<data::xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);
     for (auto const& entry: tcc_genesis->m_initial_values) {
         m_tcc_proposal_account_ctx_ptr->map_set(ONCHAIN_PARAMS, entry.first, entry.second);
@@ -136,10 +136,10 @@ TEST_F(test_proposal_contract, submit_param_proposal) {
 TEST_F(test_proposal_contract, submit_community_proposal) {
 
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    data::xunitstate_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(bstate);
     m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
-    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    data::xtcc_transaction_ptr_t tcc_genesis = std::make_shared<data::xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);
     for (auto const& entry: tcc_genesis->m_initial_values) {
         m_tcc_proposal_account_ctx_ptr->map_set(ONCHAIN_PARAMS, entry.first, entry.second);
@@ -170,10 +170,10 @@ TEST_F(test_proposal_contract, withdraw_proposal) {
 
     // first sumbmit proposal
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    data::xunitstate_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(bstate);
     m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
-    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    data::xtcc_transaction_ptr_t tcc_genesis = std::make_shared<data::xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);
     for (auto const& entry: tcc_genesis->m_initial_values) {
         m_tcc_proposal_account_ctx_ptr->map_set(ONCHAIN_PARAMS, entry.first, entry.second);
@@ -212,10 +212,10 @@ TEST_F(test_proposal_contract, vote_proposal) {
 
     // first sumbmit proposal
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    data::xunitstate_ptr_t account_state = std::make_shared<data::xunit_bstate_t>(bstate);
     m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
-    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    data::xtcc_transaction_ptr_t tcc_genesis = std::make_shared<data::xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);
     for (auto const& entry: tcc_genesis->m_initial_values) {
         m_tcc_proposal_account_ctx_ptr->map_set(ONCHAIN_PARAMS, entry.first, entry.second);

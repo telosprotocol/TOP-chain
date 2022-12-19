@@ -99,7 +99,7 @@ public:
     }
 
   private:
-    mutable std::mutex m_queue_mutex{};
+    mutable std::mutex m_queue_mutex;
     std::condition_variable m_cv{};
     Container m_queue{};
     std::size_t m_max_size;
