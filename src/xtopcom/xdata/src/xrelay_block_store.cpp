@@ -91,18 +91,19 @@ bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_bl
         top::data::xrelay_block poly_relay_block;
         check_result = load_block_hash_from_db(last_height, poly_relay_block);
         if (check_result) {
-            if (poly_relay_block.check_block_type() > block_type) {
-                block_type = poly_relay_block.check_block_type();
-                xdbg("xrelay_block_store:get_all_poly_block_hash_list_from_cache  height(%d) poly  height(%d)  type(%d).",
-                    tx_block.get_block_height(), last_height, block_type);
-                block_hash_map.insert(std::make_pair(last_height, poly_relay_block.get_block_hash()));
-                if (block_type == cache_poly_election_block) {
-                    xinfo("xrelay_block_store:get_all_poly_block_hash_list_from_cache tx_block height(%d) poly election height(%d).",
-                        tx_block.get_block_height(), last_height, block_type);
+            if (poly_relay_block.check_block_type() == cache_poly_tx_block) {
+                auto &block_map = poly_relay_block.get_blocks_from_poly();
+                auto iter = block_map.find(tx_block.get_block_height());
+                if (iter != block_map.end()) {
+                    block_hash_map.insert(std::make_pair(last_height, poly_relay_block.get_block_hash()));
+                    xinfo("xrelay_block_store:get_all_poly_block_hash_list_from_cache  height(%d) poly  height(%d)  type(%d).",
+                          tx_block.get_block_height(), last_height, block_type);
                     break;
                 }
             }
         } else {
+            xwarn("xrelay_block_store:get_all_poly_block_hash_list_from_cache  height(%d) no found poly block.",
+                          tx_block.get_block_height());
             break;
         }
     }

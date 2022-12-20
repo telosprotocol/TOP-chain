@@ -98,16 +98,19 @@ TEST_F(xtop_test_relay_make_block_contract, update_next_block_clock_for_a_type) 
 TEST_F(xtop_test_relay_make_block_contract, block_hash_chainid) {
     PREPAIR
 
+    uint64_t block_height=1;
     evm_common::h256 block_hash(top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits = 0x3;
 
-    auto str = block_hash_chainid_to_string(block_hash, chain_bits);
+    auto str = block_hash_chainid_to_string(block_height, block_hash, chain_bits);
 
+    uint64_t block_height_1=0;
     evm_common::h256 block_hash_1;
     evm_common::u256 chain_bits_1;
 
-    block_hash_chainid_from_string(str, block_hash_1, chain_bits_1);
+    block_hash_chainid_from_string(str, block_height_1, block_hash_1, chain_bits_1);
 
+    EXPECT_EQ(block_height_1, block_height);
     EXPECT_EQ(block_hash_1, block_hash);
     EXPECT_EQ(chain_bits_1, chain_bits);
 }
@@ -115,48 +118,53 @@ TEST_F(xtop_test_relay_make_block_contract, block_hash_chainid) {
 TEST_F(xtop_test_relay_make_block_contract, pop_tx_block_hashs) {
     PREPAIR
 
+    uint64_t block_height_1 = 1;
     evm_common::h256 block_hash1(top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits1 = 0x1;
 
+    uint64_t block_height_2 = 2;
     evm_common::h256 block_hash2(top::evm_common::fromHex("4963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits2 = 0x1;
 
+    uint64_t block_height_3 = 3;
     evm_common::h256 block_hash3(top::evm_common::fromHex("5963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits3 = 0x2;
 
     std::string list_key = XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST;
 
-    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_hash1, chain_bits1));
-    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_hash2, chain_bits2));
-    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_hash3, chain_bits3));
+    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_height_1, block_hash1, chain_bits1));
+    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_height_2, block_hash2, chain_bits2));
+    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_height_3, block_hash3, chain_bits3));
 
+    std::vector<uint64_t>   tx_block_height_vec;
     std::vector<evm_common::h256> tx_block_hash_vec;
     evm_common::u256 chain_bits;
-    pop_tx_block_hashs(list_key, true, tx_block_hash_vec, chain_bits);
+    pop_tx_block_hashs(list_key, tx_block_height_vec, tx_block_hash_vec, chain_bits);
 
+    EXPECT_EQ(3, tx_block_height_vec.size());
     EXPECT_EQ(3, tx_block_hash_vec.size());
+    EXPECT_EQ(block_height_1, tx_block_height_vec[0]);
+    EXPECT_EQ(block_height_2, tx_block_height_vec[1]);
+    EXPECT_EQ(block_height_3, tx_block_height_vec[2]);
     EXPECT_EQ(block_hash1, tx_block_hash_vec[0]);
     EXPECT_EQ(block_hash2, tx_block_hash_vec[1]);
     EXPECT_EQ(block_hash3, tx_block_hash_vec[2]);
     EXPECT_EQ(chain_bits, chain_bits1 | chain_bits2 | chain_bits3);
 
+    uint64_t block_height_4 = 100;
     evm_common::h256 block_hash4(top::evm_common::fromHex("6963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits4 = 0x4;
-    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_hash4, chain_bits4));
+    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_height_4, block_hash4, chain_bits4));
 
-    std::string list_key_e = XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST;
-
+    std::vector<uint64_t>   tx_block_height_vec_2;
     std::vector<evm_common::h256> tx_block_hash_vec_e;
     evm_common::u256 chain_bits_e;
-    pop_tx_block_hashs(list_key_e, false, tx_block_hash_vec_e, chain_bits_e);
-    pop_tx_block_hashs(list_key, false, tx_block_hash_vec_e, chain_bits_e);
+    pop_tx_block_hashs(list_key, tx_block_height_vec_2, tx_block_hash_vec_e, chain_bits_e);
 
-    EXPECT_EQ(4, tx_block_hash_vec_e.size());
-    EXPECT_EQ(block_hash1, tx_block_hash_vec_e[0]);
-    EXPECT_EQ(block_hash2, tx_block_hash_vec_e[1]);
-    EXPECT_EQ(block_hash3, tx_block_hash_vec_e[2]);
-    EXPECT_EQ(block_hash4, tx_block_hash_vec_e[3]);
-    EXPECT_EQ(chain_bits_e, chain_bits1 | chain_bits2 | chain_bits3 | chain_bits4);
+    EXPECT_EQ(1, tx_block_hash_vec_e.size());
+    EXPECT_EQ(block_height_4, tx_block_height_vec_2[0]);
+    EXPECT_EQ(block_hash4, tx_block_hash_vec_e[0]);
+    EXPECT_EQ(chain_bits_e, chain_bits4);
 }
 
 TEST_F(xtop_test_relay_make_block_contract, build_elect_relay_block_no_data) {
@@ -236,20 +244,23 @@ TEST_F(xtop_test_relay_make_block_contract, build_poly_relay_block) {
     ret = build_poly_relay_block({}, 1, clock + 1);
     EXPECT_EQ(ret, false);
 
+    uint64_t block_height_1 = 1;
     evm_common::h256 block_hash1(top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits1 = 0x1;
 
+    uint64_t block_height_2 = 2;
     evm_common::h256 block_hash2(top::evm_common::fromHex("4963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits2 = 0x1;
 
+    uint64_t block_height_3 = 3;
     evm_common::h256 block_hash3(top::evm_common::fromHex("5963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f"));
     evm_common::u256 chain_bits3 = 0x2;
 
     std::string list_key = XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST;
 
-    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_hash1, chain_bits1));
-    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_hash2, chain_bits2));
-    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_hash3, chain_bits3));
+    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_height_1, block_hash1, chain_bits1));
+    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_height_2, block_hash2, chain_bits2));
+    LIST_PUSH_BACK(list_key, block_hash_chainid_to_string(block_height_3, block_hash3, chain_bits3));
 
     ret = build_poly_relay_block({}, 1, clock + 1);
     EXPECT_EQ(ret, true);
@@ -258,7 +269,6 @@ TEST_F(xtop_test_relay_make_block_contract, build_poly_relay_block) {
     EXPECT_EQ(height, 1);
 
     EXPECT_EQ(LIST_SIZE(list_key), 0);
-    EXPECT_EQ(LIST_SIZE(XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST), 3);
 }
 
 TEST_F(xtop_test_relay_make_block_contract, on_make_block_invalid) {
@@ -292,8 +302,8 @@ TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block) {
     std::string cross_addr = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c";
     std::string cross_topic_str = "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735";
 
-    std::string cross_config_addr = cross_addr + ":" + cross_topic_str + ":1";
-    top::config::config_register.get_instance().set(config::xcross_chain_contract_list_onchain_goverance_parameter_t::name, cross_config_addr);
+    std::string cross_config_addr = cross_addr + ":" + cross_topic_str + ":0" + ":1";
+    top::config::config_register.get_instance().set(config::xcross_chain_contract_tx_list_onchain_goverance_parameter_t::name, cross_config_addr);
 
     xrelayblock_crosstx_infos_t txinfos;
     for (uint32_t i = 0; i < 1; i++) {
@@ -330,3 +340,74 @@ TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block) {
     height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_LAST_HEIGHT)));
     EXPECT_EQ(height, 1);
 }
+
+
+TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block_fast) {
+    PREPAIR
+
+    std::error_code ec;
+    std::string cross_addr = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c";
+    std::string cross_topic_str = "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735";
+
+    std::string cross_config_addr = cross_addr + ":" + cross_topic_str + "1:1";
+    top::config::config_register.get_instance().set(config::xcross_chain_contract_tx_list_onchain_goverance_parameter_t::name, cross_config_addr);
+
+    std::string cross_gasprice_config_addr = "1:1000";
+    top::config::config_register.get_instance().set(config::xcross_chain_gasprice_list_onchain_goverance_parameter_t::name, cross_gasprice_config_addr);
+
+    xrelayblock_crosstx_infos_t txinfos;
+    for (uint32_t i = 0; i < 1; i++) {
+        xeth_transaction_t _tx = create_test_eth();
+        _tx.set_max_priority_fee_per_gas(999);
+        xeth_receipt_t _receipt;
+        evm_common::xevm_logs_t logs;
+        evm_common::xevm_log_t log;
+        log.address = common::xtop_eth_address::build_from(cross_addr);
+        logs.push_back(log);
+        _receipt.set_logs(logs);
+        xrelayblock_crosstx_info_t txinfo(_tx, _receipt,0,1);
+        txinfos.tx_infos.push_back(txinfo);
+    }
+    std::string param_str = txinfos.serialize_to_string();
+
+    on_receive_cross_txs(param_str);
+    EXPECT_EQ(LIST_SIZE(XPROPERTY_RELAY_CROSS_TXS_FAST), 0);
+
+    auto clock_to_pack = TIME() + (uint64_t)XGET_CONFIG(max_relay_tx_block_interval_fast);
+
+    auto ret = build_tx_relay_block({}, 1, clock_to_pack - 1);
+    EXPECT_EQ(ret, true);
+    uint64_t height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_LAST_HEIGHT)));
+    EXPECT_EQ(height, 1);
+    EXPECT_EQ(LIST_SIZE(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST), 1);
+
+    xrelayblock_crosstx_infos_t txinfos_2;
+    for (uint32_t i = 0; i < 1; i++) {
+        xeth_transaction_t _tx = create_test_eth();
+        _tx.set_max_priority_fee_per_gas(2000);
+        xeth_receipt_t _receipt;
+        evm_common::xevm_logs_t logs;
+        evm_common::xevm_log_t log;
+        log.address = common::xtop_eth_address::build_from(cross_addr);
+        logs.push_back(log);
+        _receipt.set_logs(logs);
+        xrelayblock_crosstx_info_t txinfo(_tx, _receipt,1,1);
+        txinfos_2.tx_infos.push_back(txinfo);
+    }
+    std::string param_str_2 = txinfos_2.serialize_to_string();
+
+    on_receive_cross_txs(param_str_2);
+    EXPECT_EQ(LIST_SIZE(XPROPERTY_RELAY_CROSS_TXS_FAST), 1);
+
+    ret = build_tx_relay_block({}, 1, clock_to_pack);
+    EXPECT_EQ(ret, true);
+    height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_LAST_HEIGHT)));
+    EXPECT_EQ(height, 1);
+    EXPECT_EQ(LIST_SIZE(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST_FAST), 1);
+
+    ret = build_tx_relay_block({}, 1, clock_to_pack + 1);
+    EXPECT_EQ(ret, false);
+    height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_LAST_HEIGHT)));
+    EXPECT_EQ(height, 1);
+}
+

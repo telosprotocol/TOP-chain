@@ -13,7 +13,7 @@
 
 NS_BEG3(top, xvm, system_contracts)
 
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT = "@1";  // TODO(jimmy)
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_PROCESSED_TABLE_TX_COUNT = "@1";  // TODO(jimmy)
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME = "@2";  // TODO(jimmy)
 
 class xtable_cross_chain_txs_collection_contract : public xcontract::xcontract_base
@@ -39,10 +39,12 @@ public:
      *
      * @param timestamp the time to call
      */
-    void on_timer(common::xlogic_time_t const timestamp);
+   // void on_timer(common::xlogic_time_t const timestamp);
+
+    void updateCrossTx(std::string const& cross_txs_data);
 
     BEGIN_CONTRACT_WITH_PARAM(xtable_cross_chain_txs_collection_contract)
-    CONTRACT_FUNCTION_PARAM(xtable_cross_chain_txs_collection_contract, on_timer);
+    CONTRACT_FUNCTION_PARAM(xtable_cross_chain_txs_collection_contract, updateCrossTx);
     END_CONTRACT_WITH_PARAM
 
 private:
