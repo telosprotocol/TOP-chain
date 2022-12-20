@@ -145,8 +145,7 @@ void xtop_contract_deploy::deploy_sys_contracts() {
     deploy(eth_table_cross_chain_txs_collection_contract_address,
            xnode_type_t::evm_validator,
            "",
-           enum_broadcast_policy_t::normal,
-           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xevm_relay_txs_collection_interval_configuration_t::name);
+           enum_broadcast_policy_t::normal);
     deploy(relay_make_block_contract_address, xnode_type_t::relay, "all", enum_broadcast_policy_t::normal, std::string(sys_contract_beacon_timer_addr) + ",_,C");
 }
 

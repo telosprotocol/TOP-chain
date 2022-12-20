@@ -115,8 +115,15 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
     case proposal_type::proposal_update_parameter_incremental_add:
     case proposal_type::proposal_update_parameter_incremental_delete:
         // current only support whitelist/blacklist
-        XCONTRACT_ENSURE(target == "whitelist" || target == "blacklist" || target == "cross_chain_contract_list", "[xrec_proposal_contract::submitProposal] current target cannot support proposal_update_parameter_increamental_add/delete");
-        if (target == "whitelist" || target == "blacklist") check_bwlist_proposal(value);
+        XCONTRACT_ENSURE(target == "whitelist" || target == "blacklist" || target == "cross_chain_contract_tx_list" || target == "cross_chain_gasprice_list", "[xrec_proposal_contract::submitProposal] current target cannot support proposal_update_parameter_increamental_add/delete");
+        if (target == "whitelist" || target == "blacklist") {
+                check_bwlist_proposal(value);
+        } else if (target == "cross_chain_contract_tx_list") {
+                check_cross_chain_contract_tx_list_proposal(value);
+        } else if (target == "cross_chain_gasprice_list") {
+                check_cross_chain_gasprice_list_proposal(value);
+        }
+
         break;
     default:
         xwarn("[xrec_proposal_contract::submitProposal] proposal type %u current not support", type);
@@ -511,6 +518,43 @@ void xrec_proposal_contract::delete_expired_proposal() {
         }
 
 
+    }
+}
+
+void xrec_proposal_contract::check_cross_chain_contract_tx_list_proposal(std::string const& tx_list_config_str) {
+    std::vector<std::string> str_vec;
+    base::xstring_utl::split_string(tx_list_config_str, ',', str_vec);
+    XCONTRACT_ENSURE(str_vec.size() > 0, "[xrec_proposal_contract::check_cross_chain_contract_tx_list_proposal] target value error, size zero.");
+
+    for (auto& str : str_vec) {
+        std::vector<std::string> config_str_vec;
+        base::xstring_utl::split_string(str, ':', config_str_vec);
+
+        XCONTRACT_ENSURE(config_str_vec.size() == 4, "[xrec_proposal_contract::check_cross_chain_contract_tx_list_proposal] item size != 4.");
+        std::string& addr = config_str_vec[0];
+        std::string& topic = config_str_vec[1];
+        std::string& speed_type = config_str_vec[2];
+        std::string& chain_bits = config_str_vec[3];
+
+        top::base::xstring_utl::tolower_string(chain_bits);
+        XCONTRACT_ENSURE((speed_type == "0") || (speed_type == "1"), "[xrec_proposal_contract::check_cross_chain_contract_tx_list_proposal] speed_type is error string.");
+        XCONTRACT_ENSURE((chain_bits.compare(0, 2, "0x") == 0), "[xrec_proposal_contract::check_cross_chain_contract_tx_list_proposal] chain_bits is error type.");
+    }
+}
+
+void xrec_proposal_contract::check_cross_chain_gasprice_list_proposal(std::string const& gasprice_list_str) {
+    std::vector<std::string> str_vec;
+    base::xstring_utl::split_string(gasprice_list_str, ',', str_vec);
+    XCONTRACT_ENSURE(str_vec.size() > 0, "[xrec_proposal_contract::check_cross_chain_gasprice_list_proposal] target value error, size zero.");
+
+    for (auto& str : str_vec) {
+        std::vector<std::string> config_str_vec;
+        base::xstring_utl::split_string(str, ':', config_str_vec);
+        XCONTRACT_ENSURE(config_str_vec.size() == 2, "[xrec_proposal_contract::check_cross_chain_gasprice_list_proposal] item size != 4.");
+        std::string& chain_bits = config_str_vec[0];
+        std::string& priority_fee = config_str_vec[1];
+        top::base::xstring_utl::tolower_string(chain_bits);
+        XCONTRACT_ENSURE((chain_bits.compare(0, 2, "0x") == 0), "[xrec_proposal_contract::check_cross_chain_gasprice_list_proposal] chain_bits is error type.");
     }
 }
 

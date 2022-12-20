@@ -9,17 +9,23 @@ namespace top {
 namespace data {
 
 xrelayblock_crosstx_info_t::xrelayblock_crosstx_info_t(xeth_transaction_t const& _tx, xeth_receipt_t const& _receipt)
-: tx(_tx), receipt(_receipt) {
+: tx(_tx), receipt(_receipt), speed_type(0), chain_bit(0) {
+}
+
+xrelayblock_crosstx_info_t::xrelayblock_crosstx_info_t(xeth_transaction_t const& _tx, xeth_receipt_t const& _receipt, const uint8_t _type, const evm_common::u256& _chain_bit)
+: tx(_tx), receipt(_receipt), speed_type(_type), chain_bit(_chain_bit) {
 
 }
 void    xrelayblock_crosstx_info_t::streamRLP(evm_common::RLPStream& _s) const {
-    _s.appendList(2);
+    _s.appendList(4);
     _s << tx.encodeBytes();
     _s << receipt.encodeBytes();
+    _s << (uint8_t)speed_type;
+    _s << chain_bit;
 }
 
 void    xrelayblock_crosstx_info_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
-    if (!_r.isList() || _r.itemCount() != 2) {
+    if (!_r.isList() || _r.itemCount() != 4) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xrelayblock_crosstx_info_t::decodeRLP fail item count,%d", _r.itemCount());
         return;
@@ -31,6 +37,8 @@ void    xrelayblock_crosstx_info_t::decodeRLP(evm_common::RLP const& _r, std::er
     }
     xbytes_t receipt_bytes = _r[1].toBytes();
     receipt.decodeBytes(receipt_bytes, ec);
+    speed_type = (uint8_t)_r[2];
+    chain_bit = _r[3].toInt<evm_common::u256>();
 }
 
 xbytes_t xrelayblock_crosstx_info_t::encodeBytes() const {
