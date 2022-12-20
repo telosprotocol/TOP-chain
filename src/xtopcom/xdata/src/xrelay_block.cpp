@@ -403,24 +403,46 @@ void xrelay_block::set_block_merkle_root_hash(evm_common::h256 hash)
     m_header.set_block_merkle_root_hash(hash);
 }
 
-void xrelay_block::make_merkle_root_hash(const std::vector<evm_common::h256>& hash_vector)
+void xrelay_block::set_tx_blocks_info_and_make_block_merkle_root(const std::vector<uint64_t>& height_vector, const std::vector<evm_common::h256>& hash_vector)
 {
     h256 block_root_hash { 0 };
+    if (height_vector.size() != hash_vector.size()) {
+        xerror("xrelay_block::set_tx_blocks_info_and_make_block_merkle_root poly block height(%d): height size(%ld) and hash[%s] size(%ld) not compare",
+                get_block_height(), height_vector.size(), hash_vector.size());
+        return;
+    }
+
     if (hash_vector.size() > 0) {
         std::vector<xbytes_t> _blocks_hash_poly;
         for (auto& block_hash : hash_vector) {
             _blocks_hash_poly.push_back(block_hash.to_bytes());
         }
         block_root_hash = orderedTrieRoot(_blocks_hash_poly);
+        set_bocks_to_poly(height_vector, hash_vector);
     }
-    xinfo("xrelay_block::make_merkle_root_hash poly block height(%d) root hash[%s] hash_vector size(%ld)",
+    xinfo("xrelay_block::set_tx_blocks_info_and_make_block_merkle_root poly block height(%d) root hash[%s] hash_vector size(%ld)",
         get_block_height(), block_root_hash.hex().c_str(), hash_vector.size());
     set_block_merkle_root_hash(block_root_hash);
 }
 
+void xrelay_block::set_bocks_to_poly(const std::vector<uint64_t>& blocks_height, const std::vector<evm_common::h256>& blocks_hash)
+{
+    if (blocks_height.size() != blocks_hash.size()) {
+        xwarn("xrelay_block::set_poly_blocks blocks_height size (%d) , blocks_hash size (%s) not compare ",
+            blocks_height.size(), blocks_hash.size());
+        return;
+    }
+
+    for (uint32_t i = 0; i < blocks_height.size(); i++) {
+        auto& height = blocks_height[i];
+        auto& hash = blocks_hash[i];
+        m_extend_data.m_blocks_in_poly[height] = hash;
+    }
+}
+
 void xrelay_block::set_chain_bits(const evm_common::u256& chain_bits)
 {
-    m_exteend_data.chain_bits = chain_bits;
+    m_extend_data.chain_bits = chain_bits;
 }
 
 void xrelay_block::set_epochid(const uint64_t epochid)
@@ -430,7 +452,7 @@ void xrelay_block::set_epochid(const uint64_t epochid)
 
 void xrelay_block::set_viewid(const uint64_t viewID)
 {
-    m_exteend_data.signature_viewID = viewID;
+    m_extend_data.signature_viewID = viewID;
 }
 
 void xrelay_block::make_txs_root_hash()
@@ -491,7 +513,7 @@ void xrelay_block::streamRLP(evm_common::RLPStream& rlp_stream) const
     for (auto& tx : m_transactions) {
         rlp_stream << tx.encodeBytes();
     }
-    m_exteend_data.streamRLP(rlp_stream);
+    m_extend_data.streamRLP(rlp_stream);
 }
 
 void xrelay_block::decodeBytes(xbytes_t const& _d, std::error_code& ec)
@@ -542,7 +564,7 @@ void xrelay_block::decodeRLP(evm_common::RLP const& _r, std::error_code& ec)
         tx.decodeBytes(rlp_txList[i].toBytes(), ecode);
         m_transactions.emplace_back(tx);
     }
-    m_exteend_data.decodeRLP(RLP(_r[5].data()), ec);
+    m_extend_data.decodeRLP(RLP(_r[5].data()), ec);
 }
 
 void xrelay_block::make_block_hash()
@@ -566,18 +588,33 @@ void xrelay_block::build_finish()
 
 void xrelay_extend_data::streamRLP(evm_common::RLPStream& _s) const
 {
-    _s.appendList(2) << signature_viewID << chain_bits;
+    _s.appendList(3) << signature_viewID << chain_bits;
+    _s.appendList(m_blocks_in_poly.size());
+    for (auto& block_height_hash : m_blocks_in_poly) {
+        _s.appendList(2);
+        _s << block_height_hash.first;
+        _s << block_height_hash.second;
+    }
 }
 
 void xrelay_extend_data::decodeRLP(evm_common::RLP const& _r, std::error_code& ec)
 {
-    if (!_r.isList() || _r.itemCount() != 2) {
+    if (!_r.isList() || _r.itemCount() != 3) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xrelay_extend_data::decodeRLP fail item count,%d", _r.itemCount());
         return;
     }
     signature_viewID = _r[0].toInt<uint64_t>();
     chain_bits = _r[1].toInt<evm_common::u256>();
+
+    evm_common::RLP const& rlp_block_txList = RLP(_r[2].data());
+    unsigned itemCount = rlp_block_txList.itemCount();
+    for (unsigned i = 0; i < itemCount; i++) {
+        evm_common::RLP const& rlp_item = RLP(rlp_block_txList[i].data());
+        auto block_height = rlp_item[0].toInt<uint64_t>();
+        auto block_hash = rlp_item[1].toHash<evm_common::h256>();
+        m_blocks_in_poly[block_height] = block_hash;
+    }
 }
 
 evm_common::h256 xrelay_extend_data::build_additional_hash()
@@ -590,6 +627,15 @@ evm_common::h256 xrelay_extend_data::build_additional_hash()
 
     additional_hash_data.insert(additional_hash_data.end(), viewID_bytes.begin(), viewID_bytes.end());
     additional_hash_data.insert(additional_hash_data.end(), chain_bytes.begin(), chain_bytes.end());
+
+    for (auto blocks : m_blocks_in_poly) {
+        xbytes_t block_height_bytes(8);
+        evm_common::toBigEndian(blocks.first, block_height_bytes);
+        xbytes_t block_hash_bytes = to_bytes(blocks.second);
+        additional_hash_data.insert(additional_hash_data.end(), block_height_bytes.begin(), block_height_bytes.end());
+        additional_hash_data.insert(additional_hash_data.end(), block_hash_bytes.begin(), block_hash_bytes.end());
+    }
+
     additional_hash = sha3(additional_hash_data);
 
     xdbg("xrelay_extend_data::build_additional_hash signature_viewID[%lx] chain_bits[%s] additional_hash[%s]", signature_viewID, chain_bits.str().c_str(), additional_hash.hex().c_str());
@@ -602,7 +648,7 @@ const evm_common::h256 xrelay_block::build_signature_hash()
     xbytes_t signature_hash_data;
 
     assert(m_block_hash);
-    evm_common::h256 additional_hash = m_exteend_data.build_additional_hash();
+    evm_common::h256 additional_hash = m_extend_data.build_additional_hash();
     xbytes_t block_hash_bytes = to_bytes(m_block_hash);
     xbytes_t additional_hash_bytes = to_bytes(additional_hash);
     xbytes_t epochID_bytes(8);
@@ -632,15 +678,16 @@ std::string xrelay_block::dump() const
     char local_param_buf[512];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "{height:%lu,timestamp:%lu,viewid:%lu,epoch:%lu,hash:%s->%s,election:%lu,size:%u,txsize:%zu,bits:%s}",
+            "{height:%lu,timestamp:%lu,viewid:%lu,epoch:%lu,hash:%s->%s,election:%lu,size:%u,poly size:%zu,txsize:%zu,bits:%s}",
             m_header.get_block_height(),
             m_header.get_timestamp(),
-            m_exteend_data.signature_viewID,
+            m_extend_data.signature_viewID,
             m_signatures_groups.signature_epochID,
             m_block_hash.hex().c_str(),
             m_header.m_prev_hash.hex().c_str(),
             m_header.get_elections_sets().election_epochID,
             (uint32_t)m_header.get_elections_sets().elections_vector.size(),
+            m_extend_data.m_blocks_in_poly.size(),
             m_transactions.size(),
             evm_common::toHex((evm_common::h256)get_chain_bits()).c_str());
     return std::string(local_param_buf);
@@ -699,7 +746,7 @@ xbytes_t xrelay_block::streamRLP_header_to_contract()
         rlp_stream.appendList(3);
         m_header.streamRLP(rlp_stream);
         m_signatures_groups.streamRLP(rlp_stream);
-        rlp_stream << m_exteend_data.build_additional_hash();
+        rlp_stream << m_extend_data.build_additional_hash();
         _bytes.insert(_bytes.begin() + 1, rlp_stream.out().begin(), rlp_stream.out().end());
     } else {
         xwarn("xrelay_block::streamRLP_header_to_contract block_version %d not support!", m_version);
