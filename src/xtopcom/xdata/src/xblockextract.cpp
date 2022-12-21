@@ -22,7 +22,12 @@ void xblockextract_t::loop_top_txactions(base::xvblock_t* _block, std::function<
         return;
     }
 
-    auto & all_entitys = _block->get_input()->get_entitys();
+    std::error_code ec;
+    auto input_object = _block->load_input(ec);
+    if (nullptr == input_object) {
+        return;
+    }
+    auto & all_entitys = input_object->get_entitys();
     for (auto & entity : all_entitys) {
         // it must be xinentitys
         base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
@@ -44,7 +49,12 @@ void xblockextract_t::loop_eth_txactions(base::xvblock_t* _block, std::function<
         return;
     }
 
-    base::xvinentity_t* primary_input_entity = _block->get_input()->get_primary_entity();
+    std::error_code ec;
+    auto input_object = _block->load_input(ec);
+    if (nullptr == input_object) {
+        return;
+    }
+    base::xvinentity_t* primary_input_entity = input_object->get_primary_entity();
     xassert(primary_input_entity != nullptr);
     if (!primary_input_entity->get_extend_data().empty()) {
         xtable_primary_inentity_extend_t _extend;
@@ -135,25 +145,11 @@ std::vector<xlightunit_action_t> xblockextract_t::unpack_eth_txactions(base::xvb
     }
 
     std::vector<xlightunit_action_t> txactions;
-    base::xvinentity_t* primary_input_entity = _block->get_input()->get_primary_entity();
-    xassert(primary_input_entity != nullptr);
-    if (!primary_input_entity->get_extend_data().empty()) {
-        xtable_primary_inentity_extend_t _extend;
-        int32_t ret = _extend.serialize_from_string(primary_input_entity->get_extend_data());
-        if (ret <= 0) {
-            xassert(false);
-            return {};
-        }
-        base::xvactions_t _ethreceipt_actions = _extend.get_txactions();
-        for (auto & action : _ethreceipt_actions.get_actions()) {
-            if (action.get_org_tx_hash().empty()) {
-                xassert(false);
-                continue;
-            }
-            xlightunit_action_t txaction(action);
-            txactions.push_back(txaction);
-        }
-    }
+    auto f = [&txactions](const base::xvaction_t & action) { 
+        xlightunit_action_t txaction(action);
+        txactions.push_back(txaction);
+    };
+    loop_eth_txactions(_block, f);
     return txactions;
 }
 
@@ -185,7 +181,7 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
     }
 
     xassert(_block->get_block_level() == base::enum_xvblock_level_table);
-    data::xtableheader_extra_t header_extra;
+    base::xtableheader_extra_t header_extra;
     get_tableheader_extra_from_block(_block, header_extra, ec);
     if (ec) {
         return;
@@ -232,7 +228,7 @@ evm_common::xh256_t xblockextract_t::get_state_root_from_block(base::xvblock_t *
 }
 
 xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
-    std::string orgtx_bin = _block->get_input()->query_resource(txhash);
+    std::string orgtx_bin = _block->query_input_resource(txhash);
     if (orgtx_bin.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_raw_tx fail-query tx resouce._block=%s,tx=%s", _block->dump().c_str(), base::xstring_utl::to_hex(txhash).c_str());
@@ -258,7 +254,7 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_relay_block_from_table(bas
         return nullptr;
     }
 
-    std::string relayblock_resource = _block->get_output()->query_resource(base::xvoutput_t::RESOURCE_RELAY_BLOCK);
+    std::string relayblock_resource = _block->query_output_resource(base::xvoutput_t::RESOURCE_RELAY_BLOCK);
     if (relayblock_resource.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_relay_block_from_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());
@@ -363,7 +359,7 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_rela
     return wrap_relayblock;
 }
 
-void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec) {
+void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, base::xtableheader_extra_t &header_extra, std::error_code & ec) {
     assert(!ec);
 
     auto & header_extra_str = _block->get_header()->get_extra_data();

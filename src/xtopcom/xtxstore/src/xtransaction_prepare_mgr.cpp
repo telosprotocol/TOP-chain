@@ -57,7 +57,6 @@ void xtransaction_prepare_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return;
     }
     const data::xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
-    // xdbg("block tx size: %d, height: %d", block->get_txs().size(), block->get_height());
     update_prepare_cache(block);
     return;
 }

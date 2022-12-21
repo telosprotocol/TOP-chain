@@ -451,13 +451,13 @@ TEST_F(test_block_executed, xstatestore_get_state_before_prune) {
     char buffer[200];
     getcwd(buffer, 200);
     std::string dir = buffer;
-    std::string cmd = "rm -rf " + dir + "/test_xstatestore_get_state_before_prune";
+    std::string cmd = "rm -rf " + dir + "/test_db_xstatestore_get_state_before_prune";
     system(cmd.data());
     std::cout << cmd << std::endl;
 
     xdbg("xstatestore_get_state_before_prune begin");
 
-    mock::xvchain_creator creator(true, "test_xstatestore_get_state_before_prune");
+    mock::xvchain_creator creator(true, "test_db_xstatestore_get_state_before_prune");
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 150;
     mock::xdatamock_table mocktable(63, 4);

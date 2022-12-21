@@ -291,7 +291,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     proposal_block->serialize_to_string(block_object_bin);
     xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
         proposal_block->dump().c_str(),
-        block_object_bin.size(), proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size(),
+        block_object_bin.size(), proposal_block->get_input_data().size(), proposal_block->get_output_data().size(),
         proposal_block->get_output_offdata().size(),
         proposal_input_str.size(), proposal_input->get_input_txs().size(), proposal_input->get_other_accounts().size());
     return proposal_block;

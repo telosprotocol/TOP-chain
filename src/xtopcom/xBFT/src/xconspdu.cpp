@@ -80,8 +80,8 @@ namespace top
             
             // only take proposal. proposal -> input ->output
             m_input_proposal = proposal.get_proposal();
-//            m_input_resource  = proposal.get_input()->get_resources_data();
-//            m_output_resource = proposal.get_output()->get_resources_data();
+//            m_input_resource  = proposal.get_input_data();
+//            m_output_resource = proposal.get_output_data();
             
             //note: not carry raw data of output at proposal
             proposal.serialize_to_string(m_block_object);

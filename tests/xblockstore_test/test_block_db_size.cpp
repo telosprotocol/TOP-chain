@@ -97,11 +97,11 @@ TEST_F(test_block_db_size, table_unit_size) {
 
         std::string block_object_bin;
         block->serialize_to_string(block_object_bin);
-        size_t t_size = block_object_bin.size() + block->get_input()->get_resources_data().size() + block->get_output()->get_resources_data().size() + block->get_output_offdata().size();
+        size_t t_size = block_object_bin.size() + block->get_input_data().size() + block->get_output_data().size() + block->get_output_offdata().size();
         std::cout << "table = " <<  block->get_account() << " height=" << block->get_height() << " size = " << t_size
         << " object:" << block_object_bin.size() 
-        << " input:" << block->get_input()->get_resources_data().size() 
-        << " output:" << block->get_output()->get_resources_data().size() 
+        << " input:" << block->get_input_data().size() 
+        << " output:" << block->get_output_data().size() 
         << " offdata: " << block->get_output_offdata().size() << std::endl;
     }
 
@@ -111,10 +111,8 @@ TEST_F(test_block_db_size, table_unit_size) {
             unit->get_header()->serialize_to_string(header_bin);
             std::string cert_bin;
             unit->get_cert()->serialize_to_string(cert_bin);
-            std::string input_bin;
-            unit->get_input()->serialize_to_string(input_bin);            
-            std::string output_bin;
-            unit->get_output()->serialize_to_string(output_bin);
+            std::string input_bin = unit->get_input_data();  
+            std::string output_bin = unit->get_output_data();
 
             base::xstream_t stream(base::xcontext_t::instance());
             unit->full_block_serialize_to(stream);
@@ -123,8 +121,8 @@ TEST_F(test_block_db_size, table_unit_size) {
             << " qcert:" << cert_bin.size()
             << " input:" << input_bin.size()
             << " output:" << output_bin.size()          
-            << " input_res:" << unit->get_input()->get_resources_data().size() 
-            << " output_res:" << unit->get_output()->get_resources_data().size()                        
+            << " input_res:" << unit->get_input_data().size() 
+            << " output_res:" << unit->get_output_data().size()                        
             << " binlog:" << unit->get_binlog().size() << std::endl;// TODO(jimmy) size 590-660
         }
     }

@@ -53,7 +53,7 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
             xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block input for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
             return nullptr;
         }
-        std::string orgtx_bin = _block->get_input()->query_resource(raw_tx_hash);
+        std::string orgtx_bin = _block->query_input_resource(raw_tx_hash);
         if (orgtx_bin.empty())
         {
             xerror("xvblockstore_impl::query_tx fail-query tx from send unit.account=%s,tx=%s", txindex->get_block_addr().c_str(), base::xstring_utl::to_hex(raw_tx_hash).c_str());
@@ -185,7 +185,7 @@ xtxindex_detail_ptr_t xrpc_loader_t::load_ethtx_indx_detail(const std::string & 
             xerror("xrpc_loader_t::load_ethtx_indx_detail,fail to load input hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
             return nullptr;
         }
-        std::string orgtx_bin = _block->get_input()->query_resource(raw_tx_hash);
+        std::string orgtx_bin = _block->query_input_resource(raw_tx_hash);
         if (orgtx_bin.empty()) {
             xerror("xrpc_loader_t::load_ethtx_indx_detail,fail to find raw tx hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
             return nullptr;

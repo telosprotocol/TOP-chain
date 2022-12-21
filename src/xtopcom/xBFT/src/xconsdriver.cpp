@@ -343,9 +343,9 @@ namespace top
             //proposal ==> input ==> output
             _peer_block->set_proposal(input_proposal);  //copy proposal
             // if(_proposal_msg.get_input_resource().empty() == false)//carry input resource
-            //     _peer_block->set_input_resources(_proposal_msg.get_input_resource());//copy proposal
+            //     _peer_block->set_input_data(_proposal_msg.get_input_resource());//copy proposal
             // if(_proposal_msg.get_ouput_resource().empty() == false)//carry output resource
-            //     _peer_block->set_output_resources(_proposal_msg.get_ouput_resource());//copy proposal
+            //     _peer_block->set_output_data(_proposal_msg.get_ouput_resource());//copy proposal
 
             //sanity check the proposal block
             if(   (_peer_block->get_height()  != packet.get_block_height())

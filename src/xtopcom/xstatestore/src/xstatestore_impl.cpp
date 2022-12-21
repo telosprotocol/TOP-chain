@@ -575,6 +575,7 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
                                             base::xvblock_t * latest_commit_block,
                                             base::xvproperty_prove_ptr_t & property_prove_ptr,
                                             data::xtablestate_ptr_t & tablestate_ptr) const {
+    base::xvaccount_t _table_vaccount = table_address.vaccount();
     base::enum_xvblock_class block_class = latest_commit_block->get_block_class();
     uint32_t nil_block_num = 0;
     base::xvblock_ptr_t non_nil_commit_block = nullptr;
@@ -594,7 +595,7 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
             }
 
             auto commit_block =
-                get_blockstore()->load_block_object(table_address.vaccount(), height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
+                get_blockstore()->load_block_object(_table_vaccount, height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
             if (commit_block == nullptr) {
                 xwarn("xstatestore_impl_t::get_receiptid_state_and_prove load block fail,table:%s,height:%llu", table_address.to_string().c_str(), height - 1);
                 return false;
@@ -629,12 +630,18 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
         return false;
     }
 
-    auto cert_block = get_blockstore()->load_block_object(table_address.vaccount(), non_nil_commit_block->get_height() + 2, 0, false);
+    auto cert_block = get_blockstore()->load_block_object(_table_vaccount, non_nil_commit_block->get_height() + 2, 0, false);
     if (cert_block == nullptr) {
-        xinfo("xstatestore_impl_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu",
+        xwarn("xstatestore_impl_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu",
               table_address.to_string().c_str(),
               non_nil_commit_block->get_height() + 2);
         return false;
+    }
+    if (false == get_blockstore()->load_block_input(_table_vaccount, non_nil_commit_block.get())) {
+        xwarn("xstatestore_impl_t::get_receiptid_state_and_prove fail-load input.table:%s, cert height:%llu",
+              table_address.to_string().c_str(),
+              non_nil_commit_block->get_height() + 2);
+        return false;        
     }
 
     auto property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), tablestate->get_bstate().get(), data::XPROPERTY_TABLE_RECEIPTID);

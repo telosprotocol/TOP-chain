@@ -312,7 +312,7 @@ base::xauto_ptr<base::xvblock_t> create_new_wrap_block(std::string& extra_data)
     std::string data((char*)rlp_genesis_block_header_data.data(), rlp_genesis_block_header_data.size());
     data::xemptyblock_build_t bbuild(sys_contract_relay_table_block_addr);
 
-    data::xtableheader_extra_t header_extra_src;
+    base::xtableheader_extra_t header_extra_src;
     header_extra_src.set_relay_block_data(data);
     std::string _extra_data;
     header_extra_src.serialize_to_string(_extra_data);

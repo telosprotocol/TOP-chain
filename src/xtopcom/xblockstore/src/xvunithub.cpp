@@ -620,8 +620,8 @@ namespace top
                 return false;
             }
             if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
-               || block->get_input()->get_resources_hash().empty() //resources hash empty means has no resoure data
-               || block->get_input()->has_resource_data() )  //already has resource data
+               || false == block->should_has_input_data() //resources hash empty means has no resoure data
+               || block->has_input_data() )  //already has resource data
             {
                 return true;
             }
@@ -645,8 +645,8 @@ namespace top
                 return false;
             }
             if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
-               || block->get_output()->get_resources_hash().empty() //resources hash empty means has no resoure data
-               || block->get_output()->has_resource_data() )  //already has resource data
+               || !block->should_has_output_data() //resources hash empty means has no resoure data
+               || block->has_output_data() )  //already has resource data
             {
                 return true;
             }

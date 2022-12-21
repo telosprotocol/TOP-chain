@@ -485,18 +485,6 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
         return;
     }
 
-    // base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock, true);
-    // data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-    // if (current_block->is_tableblock() && current_block->is_fullblock() && !current_block->is_full_state_block()) {
-    //     if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot.m_chain_snapshot)) {
-    //         xsync_error("xsync_on_demand_t::handle_chain_snapshot invalid snapshot. block=%s", current_vblock->dump().c_str());
-    //         return;
-    //     }
-    //     xsync_dbg("xsync_on_demand_t::handle_chain_snapshot valid snapshot. block=%s", current_vblock->dump().c_str());
-    //     statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
-    //     // m_sync_store->store_block(current_block.get());
-    // }
-
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account, tracer)) {
         return;

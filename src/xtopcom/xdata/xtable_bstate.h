@@ -29,9 +29,6 @@ class xtable_bstate_t : public xbstate_ctx_t {
     static base::xreceiptid_state_ptr_t     make_receiptid_from_state(base::xvbstate_t* bstate);
 
  public:
-    static bool             set_block_offsnapshot(base::xvblock_t* block, const std::string & snapshot);
-
- public:
     bool                    get_account_index(const std::string & account, base::xaccount_index_t & account_index) const;
     std::set<std::string>   get_all_accounts() const;
     std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> all_accounts() const;

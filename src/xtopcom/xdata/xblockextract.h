@@ -40,9 +40,7 @@ class xblockextract_t {
     static evm_common::xh256_t get_state_root(base::xvblock_t * block, std::error_code & ec);
     static evm_common::xh256_t get_state_root_from_block(base::xvblock_t * block);
     static void     unpack_subblocks(base::xvblock_t* _block, std::vector<xobject_ptr_t<base::xvblock_t>> & sublocks, std::error_code & ec);
-    static void     get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec);
- 
-
+    static void     get_tableheader_extra_from_block(base::xvblock_t* _block, base::xtableheader_extra_t &header_extra, std::error_code & ec);
  private:
     static std::shared_ptr<xrelay_block>            unpack_commit_relay_block_from_relay_table(base::xvblock_t* _block, std::error_code & ec);    
 };
