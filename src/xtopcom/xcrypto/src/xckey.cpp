@@ -174,7 +174,7 @@ namespace top
                 return false;
             }
 
-            auto secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+            static secp256k1_context* secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
 
             if(secp256k1_ecdsa_recoverable_signature_parse_compact((secp256k1_context*)secp256k1_context_verify, &recover_sigature, signature.get_raw_signature(), signature.get_recover_id()) != 1)
             {
