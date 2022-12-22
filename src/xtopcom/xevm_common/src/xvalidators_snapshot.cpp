@@ -213,6 +213,43 @@ bool xvalidators_snapshot_t::init_with_epoch(const xeth_header_t & header) {
     return true;
 }
 
+bool xvalidators_snapshot_t::init_with_double_epoch(const xeth_header_t & header1, const xeth_header_t & header2) {
+    if (header1.number % epoch != 0 || header2.number % epoch != 0) {
+        xwarn("[xvalidators_snapshot_t::init_with_epoch] not epoch header");
+        return false;
+    }
+    {
+        number = static_cast<uint64_t>(header1.number);
+        hash = header1.hash();
+        xbytes_t new_validators_bytes{header1.extra.begin() + extraVanity, header1.extra.end() - extraSeal};
+        if (new_validators_bytes.size() % addressLength != 0) {
+            xwarn("[xvalidators_snapshot_t::init_with_epoch] new_validators_bytes size error: %zu", new_validators_bytes.size());
+            return false;
+        }
+        auto new_validators_num = new_validators_bytes.size() / addressLength;
+        for (uint32_t i = 0; i < new_validators_num; ++i) {
+            auto b = xbytes_t{new_validators_bytes.begin() + i * addressLength, new_validators_bytes.begin() + (i + 1) * addressLength};
+            last_validators.insert(b);
+        }
+    }
+    {
+        number = static_cast<uint64_t>(header2.number);
+        hash = header2.hash();
+        xbytes_t new_validators_bytes{header2.extra.begin() + extraVanity, header2.extra.end() - extraSeal};
+        if (new_validators_bytes.size() % addressLength != 0) {
+            xwarn("[xvalidators_snapshot_t::init_with_epoch] new_validators_bytes size error: %zu", new_validators_bytes.size());
+            return false;
+        }
+        auto new_validators_num = new_validators_bytes.size() / addressLength;
+        for (uint32_t i = 0; i < new_validators_num; ++i) {
+            auto b = xbytes_t{new_validators_bytes.begin() + i * addressLength, new_validators_bytes.begin() + (i + 1) * addressLength};
+            validators.insert(b);
+        }
+    }
+
+    return true;
+}
+
 bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check_inturn) {
     auto height = header.number;
     if (height != number + 1) {
@@ -291,9 +328,17 @@ bool xvalidators_snapshot_t::apply_with_chainid(const xeth_header_t & header, co
     auto validator = ecrecover(header, chainid);
     xinfo("[xvalidators_snapshot_t::apply_with_chainid] number: %s, validator: %s", height.str().c_str(), to_hex(validator).c_str());
 
-    if (!validators.count(validator)) {
-        xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s not in validators", to_hex(validator).c_str());
-        return false;
+    auto pos = height % 200;
+    if (pos >= 1 && pos <= 11) {
+        if (!last_validators.count(validator)) {
+            xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s not in last_validators", to_hex(validator).c_str());
+            return false;
+        }
+    } else {
+        if (!validators.count(validator)) {
+            xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s not in validators", to_hex(validator).c_str());
+            return false;
+        }
     }
     if (static_cast<h160>(validator) != header.miner) {
         xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s is not miner %s", to_hex(validator).c_str(), header.miner.hex().c_str());
@@ -321,6 +366,7 @@ bool xvalidators_snapshot_t::apply_with_chainid(const xeth_header_t & header, co
         for (auto i = 0; i < int(validators.size() / 2 - new_validators.size() / 2); i++) {
             recents.erase(static_cast<uint64_t>(height - limit - i));
         }
+        last_validators = validators;
         validators = new_validators;
     }
     number += 1;
