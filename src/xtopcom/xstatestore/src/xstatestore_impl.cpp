@@ -205,15 +205,19 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_from_block(common::xac
     return unitstate;
 }
 
-xtablestate_ext_ptr_t xstatestore_impl_t::get_tablestate_ext_from_block(base::xvblock_t* target_block) const {
+xtablestate_ext_ptr_t xstatestore_impl_t::get_tablestate_ext_from_block_inner(base::xvblock_t* target_block, bool bstate_must) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(target_block->get_account());
-    auto tablestate = tablestore->get_tablestate_ext_from_block(target_block);
+    auto tablestate = tablestore->get_tablestate_ext_from_block(target_block, bstate_must);
     XMETRICS_GAUGE(metrics::statestore_get_table_state_succ, tablestate != nullptr ? 1 : 0);
     return tablestate;
 }
 
+xtablestate_ext_ptr_t xstatestore_impl_t::get_tablestate_ext_from_block(base::xvblock_t* target_block) const {
+    return get_tablestate_ext_from_block_inner(target_block, true);
+}
+
 data::xtablestate_ptr_t xstatestore_impl_t::get_table_state_by_block(base::xvblock_t * target_block) const {
-    xtablestate_ext_ptr_t tablestate_ext = get_tablestate_ext_from_block(target_block);
+    xtablestate_ext_ptr_t tablestate_ext = get_tablestate_ext_from_block_inner(target_block, true);
     if (nullptr != tablestate_ext) {
         return tablestate_ext->get_table_state();
     }
@@ -378,7 +382,7 @@ bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xaccou
 }
 
 std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstatestore_impl_t::get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const {
-    auto tablestate_ext = get_tablestate_ext_from_block(table_block);
+    auto tablestate_ext = get_tablestate_ext_from_block_inner(table_block, false);// not need table bstate
     if (nullptr == tablestate_ext) {
         ec = error::xerrc_t::statestore_load_tablestate_err;
         return {};
