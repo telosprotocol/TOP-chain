@@ -10,7 +10,7 @@ struct xvalidators_snapshot_t {
     h256 digest() const;
     bool apply(const xeth_header_t & header, bool check);
     bool apply_with_chainid(const xeth_header_t & header, const bigint chainid, bool check_inturn);
-    bool inturn(uint64_t number, xbytes_t validator);
+    bool inturn(uint64_t number, xbytes_t validator, bool use_old);
     void print() const;
 
     uint64_t number{0};
