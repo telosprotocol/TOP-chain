@@ -263,7 +263,7 @@ bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check_intu
     const bigint diffInTurn = 2;
     const bigint diffNoTurn = 1;
     if (check_inturn) {
-        auto turn = inturn(number, validator);
+        auto turn = inturn(number, validator, false);
         if (turn && header.difficulty != diffInTurn) {
             xwarn("[xvalidators_snapshot_t::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
             return false;
@@ -328,7 +328,12 @@ bool xvalidators_snapshot_t::apply_with_chainid(const xeth_header_t & header, co
     const bigint diffInTurn = 2;
     const bigint diffNoTurn = 1;
     if (check_inturn) {
-        auto turn = inturn(number, validator);
+        bool turn{false};
+        if (pos >= 0 && pos <= 11) {
+            turn = inturn(number, validator, true);
+        } else {
+            turn = inturn(number, validator, false);
+        }
         if (turn && header.difficulty != diffInTurn) {
             xwarn("[xvalidators_snapshot_t::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
             return false;
@@ -343,11 +348,18 @@ bool xvalidators_snapshot_t::apply_with_chainid(const xeth_header_t & header, co
     return true;
 }
 
-bool xvalidators_snapshot_t::inturn(uint64_t number, xbytes_t validator) {
+bool xvalidators_snapshot_t::inturn(uint64_t number, xbytes_t validator, bool use_old) {
     std::vector<h160> addrs;
-    for (auto bytes : validators) {
-        addrs.emplace_back(static_cast<h160>(bytes));
+    if (use_old) {
+        for (auto bytes : last_validators) {
+            addrs.emplace_back(static_cast<h160>(bytes));
+        }
+    } else {
+        for (auto bytes : validators) {
+            addrs.emplace_back(static_cast<h160>(bytes));
+        }
     }
+
     std::sort(addrs.begin(), addrs.end());
     uint32_t index{0};
     for (; index < addrs.size(); ++index) {
