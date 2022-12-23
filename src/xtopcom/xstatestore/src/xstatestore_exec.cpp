@@ -143,7 +143,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_and_get_tablestate_ext_unl
 
         if (block->get_height() <= commit_execute_height) {
             ec = error::xerrc_t::statestore_load_tablestate_err;
-            xerror("xstatestore_executor_t::execute_and_get_tablestate_ext_unlock fail-read commit state.execute_height=%ld,block=%s",commit_execute_height,block->dump().c_str());
+            xwarn("xstatestore_executor_t::execute_and_get_tablestate_ext_unlock fail-read commit state.execute_height=%ld,block=%s",commit_execute_height,block->dump().c_str());
             return nullptr;
         }
     }

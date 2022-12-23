@@ -53,9 +53,9 @@ xtablestate_ext_ptr_t xstatestore_table_t::do_commit_table_all_states(base::xvbl
     return m_table_executor.do_commit_table_all_states(current_block, tablestate_store, ec);
 }
 
-xtablestate_ext_ptr_t xstatestore_table_t::get_tablestate_ext_from_block(base::xvblock_t* target_block) const {
+xtablestate_ext_ptr_t xstatestore_table_t::get_tablestate_ext_from_block(base::xvblock_t* target_block, bool bstate_must) const {
     std::error_code ec;
-    xtablestate_ext_ptr_t tablestate = m_table_executor.execute_and_get_tablestate_ext(target_block, true, ec);
+    xtablestate_ext_ptr_t tablestate = m_table_executor.execute_and_get_tablestate_ext(target_block, bstate_must, ec);
     return tablestate;
 }
 

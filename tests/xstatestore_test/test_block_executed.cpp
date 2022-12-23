@@ -247,6 +247,7 @@ TEST_F(test_block_executed, xstatestore_executor_t_test_3) {
     }
 }
 
+// TODO(jimmy) can't run succ when run continuously
 TEST_F(test_block_executed, xstatestore_table_state_get_BENCH_1) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -259,11 +260,46 @@ TEST_F(test_block_executed, xstatestore_table_state_get_BENCH_1) {
         ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
     }
 
-    statestore::xtablestate_ext_ptr_t tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(tableblocks[max_count].get());
-    ASSERT_NE(tablestate_ext, nullptr);
+    uint32_t count = 10;
+    do {
+        statestore::xtablestate_ext_ptr_t tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(tableblocks[max_count].get());
+        ASSERT_NE(tablestate_ext, nullptr);
+
+        std::error_code ec;
+        auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(tableblocks[max_count].get(), ec);
+        if (ec) {
+            xassert(false);
+        }
+        ASSERT_EQ(table_accounts.size(), 8);
+    } while (count--);
+}
+
+TEST_F(test_block_executed, get_history_account_indexs_BENCH_2) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 40;
+    mock::xdatamock_table mocktable(1, 8);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+    for (uint32_t i=0;i<max_count-2;i++) {
+        auto _block = blockstore->load_block_object(mocktable, i, base::enum_xvblock_flag_committed, false);
+        statestore::xstatestore_hub_t::instance()->on_table_block_committed(_block.get());
+    }
+
+    uint64_t old_height = 10;
+    xblock_ptr_t old_block = tableblocks[old_height];
+    const std::string delete_key = base::xvdbkey_t::create_prunable_state_key(old_block->get_account(), old_block->get_height(), old_block->get_block_hash());
+    creator.get_xdb()->single_delete(delete_key);
+
+    statestore::xtablestate_ext_ptr_t tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(old_block.get());
+    ASSERT_EQ(tablestate_ext, nullptr);
 
     std::error_code ec;
-    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(tableblocks[max_count].get(), ec);
+    auto table_accounts = statestore::xstatestore_hub_t::instance()->get_all_accountindex(old_block.get(), ec);
     if (ec) {
         xassert(false);
     }
