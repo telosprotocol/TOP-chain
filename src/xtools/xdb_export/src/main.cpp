@@ -69,7 +69,8 @@ void usage() {
     std::cout << "        - correct_all_txindex [db_path] " << std::endl;// ./xdb_export ./db_v3/ correct_all_txindex
     std::cout << "        - correct_one_txindex [db_path] <hex_txhash> " << std::endl; // ./xdb_export ./db_v3/ correct_one_txindex   txhash
     std::cout << "        - db_prune [db_path] " << std::endl;
-    std::cout << "        - export <exported.json> <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
+    std::cout << "        - export <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
+    std::cout << "        - export_bstate <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -384,7 +385,7 @@ int main(int argc, char ** argv) {
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
     } else if (function_name == "export") {
-        // xdb_export db_path export exported.json table0:height0,table1:height1,... [account0,[account1,...]]
+        // xdb_export <db_path> export exported.json table0:height0,table1:height1,... [account0,[account1,...]]
 
         if (argc < 4) {
             usage();
@@ -453,8 +454,8 @@ int main(int argc, char ** argv) {
             tools.export_to_json(table_address, table_height, result, json_file_name, account_string.empty() ? std::ios_base::trunc : std::ios_base::app, ec);
         }
     } else if (function_name == "export_bstate") {
-        // xdb_export db_path export_bstate table0:height0,table1:height1,... [account0,[account1,...]]
-        if (argc < 5) {
+        // xdb_export <db_path> export_bstate table0:height0,table1:height1,... [account0,[account1,...]]
+        if (argc < 4) {
             usage();
             return -1;
         }
