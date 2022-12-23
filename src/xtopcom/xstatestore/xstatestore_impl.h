@@ -78,6 +78,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
     common::xnode_type_t         get_node_type() const;
     bool                         is_archive_node() const;
     void                         on_table_block_committed(const mbus::xevent_ptr_t & event) const;
+    xtablestate_ext_ptr_t        get_tablestate_ext_from_block_inner(base::xvblock_t* target_block, bool bstate_must) const;
 
 private:
     std::map<std::string, xstatestore_table_ptr_t> m_table_statestore;

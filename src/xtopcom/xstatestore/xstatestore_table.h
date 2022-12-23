@@ -26,7 +26,7 @@ public:
 public:
     common::xaccount_address_t const &  get_table_address() const {return m_table_addr;}
 
-    xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t* target_block) const;
+    xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t* target_block, bool bstate_must) const;
     bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const;
     void                    on_table_block_committed(base::xvblock_t* block) const;
     bool                    on_table_block_committed_by_height(uint64_t height, const std::string & block_hash) const;
