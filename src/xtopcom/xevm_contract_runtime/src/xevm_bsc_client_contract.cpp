@@ -54,22 +54,25 @@ bool xtop_evm_bsc_client_contract::init(const xbytes_t & rlp_bytes, state_ptr st
         };
         headers.emplace_back(header);
     }
-    // min 12 to construnct state
-    if (headers.size() < (validator_num / 2 + 1) + 1) {
+    // min 12 + 1 to construnct state
+    if (headers.size() < (validator_num / 2 + 1) + 1 + 1) {
         xwarn("[xtop_evm_bsc_client_contract::init] not enough headers");
         return false;
     }
 
     std::error_code ec;
     xvalidators_snapshot_t snap;
-    if (!snap.init_with_epoch(headers[0])) {
+    if (!snap.init_with_double_epoch(headers[0], headers[1])) {
         xwarn("[xtop_evm_bsc_client_contract::init] new_epoch_snapshot error");
         return false;
     }
 
     for (size_t i = 0; i < headers.size(); ++i) {
+        if (i == 0) {
+            continue;
+        }
         auto const & h = headers[i];
-        if (i != 0) {
+        if (i != 1) {
             if (!snap.apply_with_chainid(h, bsc_chainid, false)) {
                 xwarn("[xtop_evm_bsc_client_contract::init] apply_with_chainid failed");
                 return false;
