@@ -151,7 +151,19 @@ bool xtop_evm_bsc_client_contract::sync(const xbytes_t & rlp_bytes, state_ptr st
         for (uint64_t i = 0; i < validator_num; ++i) {
             snap.validators.insert(item.decoded[i + validators_index]);
         }
-        const uint32_t recent_num_index = validator_num + validator_num_index + 1;
+
+        const uint32_t last_validator_num_index = validator_num + validator_num_index + 1;
+        auto last_validator_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[last_validator_num_index]));
+        if (decoded_size < last_validator_num_index + 1 + last_validator_num) {
+            xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
+            return false;
+        }
+        const uint32_t last_validators_index = last_validator_num_index + 1;
+        for (uint64_t i = 0; i < last_validator_num; ++i) {
+            snap.last_validators.insert(item.decoded[i + last_validators_index]);
+        }
+
+        const uint32_t recent_num_index = last_validator_num + last_validator_num_index + 1;
         auto recent_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[recent_num_index]));
         if (decoded_size < recent_num_index + 1 + recent_num) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
