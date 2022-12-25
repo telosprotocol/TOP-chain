@@ -329,7 +329,7 @@ bool xvalidators_snapshot_t::apply_with_chainid(const xeth_header_t & header, co
     xinfo("[xvalidators_snapshot_t::apply_with_chainid] number: %s, validator: %s", height.str().c_str(), to_hex(validator).c_str());
 
     auto pos = height % 200;
-    if (pos >= 1 && pos <= 11) {
+    if (pos >= 1 && pos <= 10) {
         if (!last_validators.count(validator)) {
             xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s not in last_validators", to_hex(validator).c_str());
             return false;
@@ -375,7 +375,7 @@ bool xvalidators_snapshot_t::apply_with_chainid(const xeth_header_t & header, co
     const bigint diffNoTurn = 1;
     if (check_inturn) {
         bool turn{false};
-        if (pos >= 0 && pos <= 11) {
+        if (pos >= 0 && pos <= 10) {
             turn = inturn(number, validator, true);
         } else {
             turn = inturn(number, validator, false);
