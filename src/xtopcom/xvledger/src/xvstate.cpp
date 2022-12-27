@@ -923,7 +923,7 @@ namespace top
             base::xstream_t _stream(base::xcontext_t::instance());            
             uint8_t version = 0;
             _stream << version;
-            int32_t ret = do_write(_stream);
+            int32_t ret = xvexestate_t::do_write(_stream); // not include xvbstate do_write
             if (ret <= 0) {
                 xerror("xvexestate_t::reset_state fail-serialize.error=%d",ret);
                 return std::string();
@@ -970,7 +970,7 @@ namespace top
             }
 
             remove_all_child_unit();
-            int32_t ret = do_read(_stream);
+            int32_t ret = xvexestate_t::do_read(_stream);
             if (ret > 0)
                 return xvalue_t(enum_xcode_successful);
             
