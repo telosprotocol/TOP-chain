@@ -275,34 +275,9 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
 
 //check account reg info from node manage contract
 #if defined(XBUILD_CONSORTIUM)
-    std::string reg_node_info_str;
-    ret = MAP_GET2(data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, account.to_string(), reg_node_info_str, sys_contract_rec_node_manage_addr);
-
-    XCONTRACT_ENSURE((ret == 0 && !reg_node_info_str.empty()), "registerNode2 can't find account from node manage contract");
-
-    data::system_contract::xnode_manage_account_info_t reg_account_info;
-    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)reg_node_info_str.data(), reg_node_info_str.size());
-    if (_stream.size() > 0) {
-        reg_account_info.serialize_from(_stream);
-    }
-
-    std::string check_all, check_ca, check_expiry_time;
-    MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_all", check_all, sys_contract_rec_node_manage_addr);
-    MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_ca", check_ca, sys_contract_rec_node_manage_addr);
-    MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_expiry_time", check_expiry_time, sys_contract_rec_node_manage_addr);
-
-    if (check_all == "1") {
-        uint64_t cur_time = TIME();
-        xdbg("[xrec_registration_contract::registerNode2] accoutn[%s] expiry time[%ld], cert time[%ld] now time[%ld]", 
-              account.to_string().c_str(), reg_account_info.expiry_time, reg_account_info.cert_time, cur_time);
-        if (check_ca == "1") {
-            XCONTRACT_ENSURE((reg_account_info.cert_time > cur_time), "registerNode2 account  cert time is expiry");
-        }
-        if (check_expiry_time == "1") {
-            XCONTRACT_ENSURE((reg_account_info.expiry_time > cur_time), "registerNode2 account time is expiry");
-        }
-    }
-#endif
+    bool check_ret = check_node_valid(account.to_string());
+    XCONTRACT_ENSURE(check_ret, "[xrec_registration_contract][registerNode2] failed!");   
+#endif 
 
     data::xproperty_asset asset_out{0};
     stream >> asset_out.m_token_name;
@@ -1078,6 +1053,56 @@ void xrec_registration_contract::init_node_credit(data::system_contract::xreg_no
     }
 
 }
+
+bool xrec_registration_contract::check_node_valid(std::string const &account_str)
+{
+    std::string reg_node_info_str;
+
+    try {
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, account_str, reg_node_info_str, sys_contract_rec_node_manage_addr);
+        if(reg_node_info_str.empty()) {
+            xwarn("[xrec_registration_contract::check_node_valid] can't find account from node manage contract %s", account_str.c_str());
+            return false;
+        }
+    } catch (top::error::xtop_error_t const&) {
+        xdbg("[xrec_registration_contract::check_node_valid] can't find %s", account_str.c_str());
+        return false; // not exist
+    }
+
+    data::system_contract::xnode_manage_account_info_t reg_account_info;
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)reg_node_info_str.data(), reg_node_info_str.size());
+    if (_stream.size() > 0) {
+        reg_account_info.serialize_from(_stream);
+    }
+
+    std::string check_all, check_ca, check_expiry_time;
+    try {
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_all", check_all, sys_contract_rec_node_manage_addr);
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_ca", check_ca, sys_contract_rec_node_manage_addr);
+        MAP_GET2(data::system_contract::XPROPERTY_NODE_CHECK_OPTION_KEY, "check_expiry_time", check_expiry_time, sys_contract_rec_node_manage_addr);
+    } catch (top::error::xtop_error_t const&) {
+        xwarn("[xrec_registration_contract::check_node_valid] can't find XPROPERTY_NODE_CHECK_OPTION_KEY");
+        return false;
+    }
+
+    if (check_all == "1") {
+        uint64_t cur_time = TIME();
+        if (check_ca == "1") {
+            if (reg_account_info.cert_time < cur_time) {
+                xwarn("[xrec_registration_contract::check_node_valid] account %s  time is expiry", account_str.c_str());
+                return false;
+            }
+        }
+        if (check_expiry_time == "1") {
+            if (reg_account_info.expiry_time < cur_time) {
+                xwarn("[xrec_registration_contract::check_node_valid] account %s cert time is expiry", account_str.c_str());
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 
 NS_END2
 

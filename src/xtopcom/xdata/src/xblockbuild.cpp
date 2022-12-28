@@ -130,9 +130,7 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t * _tablehe
     if (!base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_compatible_eth) && !eth_header.empty()) {
         header_extra.set_ethheader(eth_header);
     }
-#if defined(XBUILD_CONSORTIUM)
     header_extra.set_total_burn_gas(burn_gas);
-#endif 
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
     return extra_string;

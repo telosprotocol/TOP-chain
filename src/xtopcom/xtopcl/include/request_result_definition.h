@@ -74,7 +74,6 @@ const char CMD_SET_INFO_REG[]{"nodeInfoReg"};
 const char CMD_SET_INFO_UNREG[]{"nodeInfoUnreg"};
 const char CMD_ADD_ROOT_CA[]{"nodeInfoRootCaReplace"};
 const char CMD_SET_NODE_CHECK_TYPE[]{"nodeInfoAuthConfig"};
-const char CMD_QUERY_ROOT_CA[]{"nodeInfoAccountQuery"};
 #endif
 
 using VoteDetailsResultPtr = std::shared_ptr<VoteDetailsResult>;

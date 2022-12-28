@@ -242,6 +242,7 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         sys_contract_sharding_reward_claiming_addr
 #if defined(XBUILD_CONSORTIUM)
         ,sys_contract_rec_node_manage_addr
+        ,sys_contract_consortium_reward_claiming_addr
 #endif
     };
 

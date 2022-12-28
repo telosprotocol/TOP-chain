@@ -4,8 +4,6 @@
 
 #pragma once
 
-#if defined(XBUILD_CONSORTIUM)
-
 #include "xdata/xblock_statistics_data.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtableblock.h"
@@ -14,13 +12,13 @@
 #include "xvm/xcontract_helper.h"
 
 
-NS_BEG4(top, xvm, system_contracts, rec)
+NS_BEG3(top, xvm, consortium)
 
 using namespace xvm;
 using namespace xvm::xcontract;
 
-class xnode_manage_contract : public xcontract_base {
-    using xbase_t = xcontract_base;
+class xnode_manage_contract : public xcontract::xcontract_base {
+    using xbase_t = xcontract::xcontract_base;
 
 public:
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xnode_manage_contract);
@@ -80,6 +78,7 @@ public:
     CONTRACT_FUNCTION_PARAM(xnode_manage_contract, nodeInfoAuthConfig);
     END_CONTRACT_WITH_PARAM
 
+    
 private:
 
     /**
@@ -142,6 +141,4 @@ private:
 
 using xnode_manage_contract_t = xnode_manage_contract;
 
-NS_END4
-
-#endif 
+NS_END3

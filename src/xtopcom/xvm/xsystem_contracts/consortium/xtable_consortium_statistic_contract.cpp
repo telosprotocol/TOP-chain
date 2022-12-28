@@ -2,14 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvm/xsystem_contracts/xslash/xtable_consortium_statistic_contract.h"
+
+#include "xtable_consortium_statistic_contract.h"
 
 #include "xbase/xmem.h"
 #include "xcertauth/xcertauth_face.h"
 #include "xcommon/xip.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xmetrics/xmetrics.h"
 #include "xvm/manager/xcontract_manager.h"
 
@@ -17,7 +17,7 @@ using namespace top::base;
 using namespace top::data;
 using namespace top::data::system_contract;
 
-NS_BEG3(top, xvm, xcontract)
+NS_BEG3(top, xvm, consortium)
 
 #define FULLTABLE_NUM "FULLTABLE_NUM"
 #define FULLTABLE_HEIGHT "FULLTABLE_HEIGHT"

@@ -1,22 +1,19 @@
 
-#include "xvm/xsystem_contracts/xreward/xzec_consortium_reward_contract.h"
 
+#include "xzec_consortium_reward_contract.h"
 #include "xbase/xutl.h"
 #include "xbasic/xuint.hpp"
 #include "xbasic/xutility.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xstore/xstore_error.h"
-
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xblock_statistics_data.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/manager/xcontract_manager.h"
-
 #include <iomanip>
 
 using top::base::xcontext_t;
@@ -32,7 +29,7 @@ using namespace top::data;
 
 #define CONS_REWARD_CONTRACT XZEC_MODULE XCONTRACT_PREFIX
 
-NS_BEG2(top, xstake)
+NS_BEG3(top, xvm, consortium)
 
 xzec_consortium_reward_contract::xzec_consortium_reward_contract(common::xnetwork_id_t const& network_id)
     : xbase_t { network_id }
@@ -741,7 +738,7 @@ common::xaccount_address_t xzec_consortium_reward_contract::calc_table_contract_
             account.to_string().c_str());
         return {};
     }
-    auto const& table_address = CALC_CONTRACT_ADDRESS(sys_contract_sharding_reward_claiming_addr, table_id);
+    auto const& table_address = CALC_CONTRACT_ADDRESS(sys_contract_consortium_reward_claiming_addr, table_id);
     return common::xaccount_address_t { table_address };
 }
 
@@ -821,7 +818,7 @@ bool xzec_consortium_reward_contract::check_reg_contract_read_time(const uint64_
     return false;
 }
 
-NS_END2
+NS_END3
 
 #undef CONS_REWARD_CONTRACT
 #undef XCONTRACT_PREFIX

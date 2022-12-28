@@ -159,7 +159,7 @@ int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asse
 #if !defined(XBUILD_CONSORTIUM)
     if(get_address() == sys_contract_zec_reward_addr) {
 #else 
-    if( get_address() == sys_contract_zec_consortium_reward_addr) {
+    if(get_address() == sys_contract_zec_consortium_reward_addr) {
 #endif 
         return xstore_success;
     }
@@ -303,9 +303,7 @@ int32_t xaccount_context_t::update_tgas_sender(uint64_t tgas_usage, const uint32
         incr_used_tgas(tgas_usage);
     }
     available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(deposit_usage));
-#if defined(XBUILD_CONSORTIUM)
     m_total_gas_burn += deposit_usage;
-#endif 
     xdbg("xaccount_context_t::update_tgas_sender tgas_usage: %llu, deposit: %u, deposit_usage: %llu", tgas_usage, deposit, deposit_usage);
     return ret;
 }
@@ -380,9 +378,7 @@ int32_t xaccount_context_t::calc_resource(uint64_t& tgas, uint32_t deposit, uint
     if (used_deposit > 0) {
         xdbg("xaccount_context_t::calc_resource balance withdraw used_deposit=%u", used_deposit);
         ret = available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(used_deposit));
-#if defined(XBUILD_CONSORTIUM)
         m_total_gas_burn += used_deposit;
-#endif 
     }
     return ret;
 }

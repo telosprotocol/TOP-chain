@@ -265,6 +265,14 @@ private:
      * @param node_info
      */
     void init_node_credit(data::system_contract::xreg_node_info & node_info);
+
+    /**
+     * @brief  
+     * @note   
+     * @param  account_str: 
+     * @retval 
+     */
+    bool check_node_valid(std::string const &account_str);
 };
 
 

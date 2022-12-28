@@ -44,6 +44,7 @@ XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T200
 XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_fork_info_addr{ "T200000000000000000000000000000000000010" };
 XINLINE_CONSTEXPR char const * sys_contract_consortium_table_statistic_addr{"T200000000000000000000000000000000000003"};
+XINLINE_CONSTEXPR char const * sys_contract_consortium_reward_claiming_addr{"T200000000000000000000000000000000000004"};
 
 XINLINE_CONSTEXPR char const * sys_contract_eth_fork_info_addr{"T200040000000000000000000000000000000010@0"};
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001@0" };
@@ -98,12 +99,6 @@ extern common::xaccount_address_t const eth_fork_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address;
 
-#if defined(XBUILD_CONSORTIUM)
-extern common::xaccount_address_t const zec_reward_consortium_contract_addr;
-extern common::xaccount_address_t const sharding_statistic_consortium_contract_address;
-extern common::xaccount_address_t const eth_statistic_consortium_contract_address;
-#endif 
-
 extern common::xaccount_address_t const eth_zero_address;
 
 extern common::xaccount_address_t const rec_table_address;
@@ -126,6 +121,10 @@ extern common::xaccount_address_t const evm_usdc_contract_address;
 extern common::xaccount_address_t const relay_make_block_contract_address;
 
 #if defined(XBUILD_CONSORTIUM)
+extern common::xaccount_address_t const zec_reward_consortium_contract_addr;
+extern common::xaccount_address_t const sharding_statistic_consortium_contract_address;
+extern common::xaccount_address_t const sharding_consortium_reward_claiming_contract_address;
+extern common::xaccount_address_t const eth_statistic_consortium_contract_address;
 extern common::xaccount_address_t const rec_node_manage_address;
 #endif 
 
