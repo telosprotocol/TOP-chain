@@ -414,6 +414,9 @@ bool xreg_node_info::can_be_relay() const noexcept {
 }
 
 bool xreg_node_info::has_enough_tickets() const noexcept {
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist) == true)
+        return true;
+
 #if defined(XENABLE_MOCK_ZEC_STAKE)
     return true;
 #else
@@ -980,5 +983,55 @@ xtop_allowance::const_iterator xtop_allowance::find(key_type const & key) const 
 xtop_allowance::data_type const & xtop_allowance::raw_data() const noexcept {
     return data_;
 }
+
+
+xgroup_cons_reward_t & xgroup_cons_reward_t::operator+=(xgroup_cons_reward_t const & rhs) {
+    if (group_address_str != rhs.group_address_str) {
+        return *this;
+    }
+    for (auto const & count : rhs.m_leader_reward) {
+        m_leader_reward[count.first] += count.second;
+    }
+    return *this;
+}
+
+std::int32_t xgroup_cons_reward_t::do_write(base::xstream_t & stream) const {
+    auto const begin = stream.size();
+    stream << group_address_str;
+    MAP_SERIALIZE_SIMPLE(stream, m_leader_reward);
+    auto const end = stream.size();
+    return end - begin;
+}
+
+std::int32_t xgroup_cons_reward_t::do_read(base::xstream_t & stream) {
+    auto const begin = stream.size();
+    stream >> group_address_str;
+    MAP_DESERIALIZE_SIMPLE(stream, m_leader_reward);
+    auto const end = stream.size();
+    return begin - end;
+}
+
+std::int32_t xnode_manage_account_info_t::do_write(base::xstream_t & stream) const {
+    auto const begin = stream.size();
+    stream << reg_time;
+    stream << expiry_time;
+    stream << cert_time;
+    stream << account;
+    stream << cert_info;
+    auto const end = stream.size();
+    return (end - begin);
+}
+
+std::int32_t xnode_manage_account_info_t::do_read(base::xstream_t & stream) {
+    auto const begin = stream.size();
+    stream >> reg_time;
+    stream >> expiry_time;
+    stream >> cert_time;
+    stream >> account;
+    stream >> cert_info;
+    auto const end = stream.size();
+    return (begin - end);
+}
+
 
 NS_END3

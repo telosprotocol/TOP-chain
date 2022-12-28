@@ -63,6 +63,9 @@ private:
 
     bool update_activated_state(data::election::xstandby_network_storage_result_t & standby_network_storage_result,
                                 data::system_contract::xactivation_record const & activation_record);
+#if defined(XBUILD_CONSORTIUM)
+    bool check_node_valid(std::string account_str);
+#endif
 };
 using xrec_standby_pool_contract_t = xtop_rec_standby_pool_contract;
 

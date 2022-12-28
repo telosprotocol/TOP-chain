@@ -16,6 +16,7 @@ common::xaccount_address_t const rec_elect_rec_contract_address{sys_contract_rec
 common::xaccount_address_t const rec_elect_zec_contract_address{sys_contract_rec_elect_zec_addr};
 common::xaccount_address_t const rec_tcc_contract_address{sys_contract_rec_tcc_addr};
 common::xaccount_address_t const rec_standby_pool_contract_address{sys_contract_rec_standby_pool_addr};
+common::xaccount_address_t const rec_node_manage_address{sys_contract_rec_node_manage_addr};
 
 common::xaccount_address_t const zec_workload_contract_address{sys_contract_zec_workload_addr};
 common::xaccount_address_t const zec_vote_contract_address{sys_contract_zec_vote_addr};
@@ -37,6 +38,10 @@ common::xaccount_address_t const eth_statistic_info_contract_address{sys_contrac
 common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address{sys_contract_eth_table_cross_chain_txs_collection_addr};
 
 common::xaccount_address_t const eth_zero_address{"T600040000000000000000000000000000000000000000"};
+
+common::xaccount_address_t const zec_reward_consortium_contract_addr {sys_contract_zec_consortium_reward_addr};
+common::xaccount_address_t const sharding_statistic_consortium_contract_address{sys_contract_consortium_table_statistic_addr};
+common::xaccount_address_t const eth_statistic_consortium_contract_address{sys_contract_consortium_eth_table_statistic_addr};
 
 common::xaccount_address_t const rec_table_address{sys_contract_beacon_table_block_addr};
 common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_addr};

@@ -525,10 +525,15 @@ XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
 XDECLARE_CONFIGURATION(evm_port, uint16_t, 8080);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
-#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
-XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
-#else
-XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+
+#if defined(XBUILD_CONSORTIUM)
+    XDECLARE_CONFIGURATION(chain_id, uint32_t, 9999);
+#else 
+    #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+        XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
+    #else
+        XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+    #endif
 #endif
 XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
 XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
@@ -598,6 +603,24 @@ XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
 XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
 XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 256);
 #endif
+
+
+//consortium configuration
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, bool, normal, false, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, normal, false, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
+
+#if defined(XBUILD_CONSORTIUM)
+    XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
+    XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");
+    #define g_tx_deposit_fee (1)
+#else 
+    XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);  
+    XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH");
+    #define g_tx_deposit_fee XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio)
+#endif 
+
 
 XDECLARE_CONFIGURATION(table_fork_info_interval, xinterval_t, 10);
 

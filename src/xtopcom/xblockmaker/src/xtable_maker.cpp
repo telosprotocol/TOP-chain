@@ -117,12 +117,17 @@ void xtable_maker_t::execute_txs(bool is_leader, const data::xblock_consensus_pa
 
     // execute all txs
     executor.execute(input_txs, execute_output);
-
+#if defined(XBUILD_CONSORTIUM)
+    uint64_t total_burn_gas = 0;
     for (auto & txout : execute_output.pack_outputs) {
-        xinfo("xtable_maker_t::execute_txs packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s",
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
+        xinfo("xtable_maker_t::execute_txs packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s, gas_brun=%ld", 
+            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str(),
+            txout.m_vm_output.m_total_gas_burn);
+        //total born gas to cs_para
+        total_burn_gas +=  txout.m_vm_output.m_total_gas_burn;
     }
-
+    cs_para.set_total_burn_gas(total_burn_gas);
+#endif 
     for (auto & txout : execute_output.drop_outputs) {
         xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s",
             is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());

@@ -48,6 +48,7 @@ class xblock_consensus_para_t {
     void    set_need_relay_prove(bool is_need) const {m_need_relay_prove = is_need;}
     void    set_vote_extend_hash(const uint256_t & hash) const {m_vote_extend_hash = hash;}
     void    set_tgas_height(uint64_t tgas_height) {m_total_lock_tgas_token_property_height = tgas_height;}
+    void    set_total_burn_gas(const uint64_t burn_gas) const;
 
  public:
     const std::string &     get_random_seed() const {return m_random_seed;}
@@ -82,6 +83,7 @@ class xblock_consensus_para_t {
     xtablestate_ptr_t const& get_commit_table_state() const {return m_commit_tablestate;}
     bool                    need_relay_prove() const {return m_need_relay_prove;}
     const uint256_t &       get_vote_extend_hash() const {return m_vote_extend_hash;}
+   uint64_t                 get_total_burn_gas() const {return  m_total_burn_tgas_token;}
 
  private:
     std::string     m_account;
@@ -113,6 +115,7 @@ class xblock_consensus_para_t {
     xtablestate_ptr_t         m_commit_tablestate{nullptr};
     mutable bool            m_need_relay_prove{false};
     mutable uint256_t       m_vote_extend_hash;
+    mutable uint64_t        m_total_burn_tgas_token{0};
 };
 
 using xblock_consensus_para_ptr_t = std::shared_ptr<xblock_consensus_para_t>;

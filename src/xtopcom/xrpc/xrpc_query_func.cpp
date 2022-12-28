@@ -99,6 +99,7 @@ bool xrpc_query_func::is_prop_name_not_set_property(const std::string & prop_nam
                                                    data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER,
                                                    data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE,
                                                    data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE,
+                                                   data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY,
                                                    PROPOSAL_MAP_ID,
                                                    VOTE_MAP_ID};
 

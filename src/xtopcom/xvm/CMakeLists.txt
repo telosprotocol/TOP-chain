@@ -41,3 +41,7 @@ if (BUILD_METRICS)
     #add_dependencies(xvm xmetrics)
     target_link_libraries(xvm PRIVATE xmetrics)
 endif()
+
+if (XBUILD_CONSORTIUM)
+    target_link_libraries(xvm PRIVATE xca_auth)
+endif()

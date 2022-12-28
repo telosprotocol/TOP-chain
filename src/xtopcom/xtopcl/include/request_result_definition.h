@@ -69,6 +69,14 @@ const char CMD_VOTER_REWARD[]{"queryVoterDividend"};
 const char CMD_GET_PROPOSAL[]{"queryProposal"};
 const char CMD_GET_ONCHAINPARAMS[]{"getCGP"};
 
+#if defined(XBUILD_CONSORTIUM)
+const char CMD_SET_INFO_REG[]{"nodeInfoReg"};
+const char CMD_SET_INFO_UNREG[]{"nodeInfoUnreg"};
+const char CMD_ADD_ROOT_CA[]{"nodeInfoRootCaReplace"};
+const char CMD_SET_NODE_CHECK_TYPE[]{"nodeInfoAuthConfig"};
+const char CMD_QUERY_ROOT_CA[]{"nodeInfoAccountQuery"};
+#endif
+
 using VoteDetailsResultPtr = std::shared_ptr<VoteDetailsResult>;
 using CandidateDetailsResultPtr = std::shared_ptr<CandidateDetailsResult>;
 using DividendDetailsResultPtr = std::shared_ptr<DividendDetailsResult>;

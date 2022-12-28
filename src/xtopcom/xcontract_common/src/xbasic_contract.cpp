@@ -355,7 +355,11 @@ void xtop_basic_contract::delay_followup(std::vector<xfollowup_transaction_delay
 
 void xtop_basic_contract::exec_delay_followup() {
     // only for reward contract now
+#if !defined(XBUILD_CONSORTIUM)
     if (m_associated_execution_context->recver() != common::xaccount_address_t{sys_contract_zec_reward_addr}) {
+#else 
+    if (m_associated_execution_context->recver() != common::xaccount_address_t{sys_contract_zec_consortium_reward_addr}) {
+#endif 
         return;
     }
     state_accessor::properties::xtypeless_property_identifier_t property{data::system_contract::XPORPERTY_CONTRACT_TASK_KEY};
