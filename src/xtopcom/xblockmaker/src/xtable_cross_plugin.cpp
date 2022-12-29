@@ -170,7 +170,9 @@ std::vector<data::xcons_transaction_ptr_t> xtable_cross_plugin_t::make_contract_
         } else {
             speed_type = 0;
         }
-
+#ifdef CROSS_TX_DBG // debug mode always fast speed
+        speed_type = 1;
+#endif
         data::xeth_receipt_t eth_receipt(ethtx.get_tx_version(), status, gas_used, evm_result.logs);
         eth_receipt.create_bloom();
         eth_receipts.push_back(eth_receipt);
