@@ -11,6 +11,7 @@
 #include "xblockmaker/xblock_builder.h"
 #include "xblockmaker/xerror/xerror.h"
 #include "xblockmaker/xrelayblock_plugin.h"
+#include "xblockmaker/xtable_cross_plugin.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xethreceipt.h"
@@ -43,7 +44,10 @@ xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_re
 
     if (is_make_relay_chain()) {
         m_resource_plugin = std::make_shared<xrelayblock_plugin_t>();
-    } else {
+    } else if(is_evm_table_chain()) {
+        m_resource_plugin = std::make_shared<xtable_cross_plugin_t>();
+    }
+    else {
         m_resource_plugin = std::make_shared<xblock_resource_plugin_face_t>();
     }
 }
@@ -210,6 +214,23 @@ void xtable_maker_t::resource_plugin_make_txs(bool is_leader, statectx::xstatect
         }
     }
 }
+
+std::vector<xcons_transaction_ptr_t> xtable_maker_t::plugin_make_txs_after_execution(statectx::xstatectx_ptr_t const& statectx_ptr, 
+                                                                                    const data::xblock_consensus_para_t & cs_para, 
+                                                                                    std::vector<txexecutor::xatomictx_output_t> const& pack_outputs, std::error_code & ec) {
+    std::vector<data::xcons_transaction_ptr_t> contract_txs = m_resource_plugin->make_contract_txs_after_execution(statectx_ptr,  cs_para.get_timestamp(),pack_outputs, ec);
+    if (ec) {
+        xerror("xtable_maker_t::plugin_make_txs_after_execution fail-make_contract_txs %s,ec=%s",
+            cs_para.dump().c_str(), ec.message().c_str());
+        return {};
+    }
+    if (!contract_txs.empty()) {
+        for (auto & tx : contract_txs) {
+            xinfo("xtable_maker_t::plugin_make_txs_after_execution %s,tx=%s",cs_para.dump().c_str(),tx->dump().c_str());
+        }
+    }
+    return contract_txs;
+}
 void xtable_maker_t::rerource_plugin_make_resource(bool is_leader, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t & lighttable_para, std::error_code & ec) {
     xblock_resource_description_t block_resource = m_resource_plugin->make_resource(cs_para, ec);
     if (ec) {
@@ -291,6 +312,28 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         return nullptr;
     }
 
+    // local txs no need take by leader to backups
+    std::vector<xcons_transaction_ptr_t> local_txs_after = plugin_make_txs_after_execution(statectx_ptr, cs_para, execute_output.pack_outputs, ec);
+    if (ec) {
+        table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+        xwarn("xtable_maker_t::make_light_table_v2 plugin_make_txs_after_execution error code: %s.", ec.message().c_str());
+        return nullptr;
+    }
+    if (!local_txs_after.empty()) {
+        txexecutor::xexecute_output_t execute_output_after;
+        execute_txs(is_leader, cs_para, statectx_ptr, local_txs_after, execute_output_after, ec);
+        if (ec || execute_output_after.pack_outputs.size() != local_txs_after.size()) {
+            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+            xerror("xtable_maker_t::make_light_table_v2 plugin_make_txs_after_execution tx error:%s. pack_outputs size%ld, local_txs_after size%ld. ", ec.message().c_str(),
+                                                                                                    execute_output_after.pack_outputs.size(),
+                                                                                                    local_txs_after.size());
+            return nullptr;
+        }
+        for (auto & txout : execute_output_after.pack_outputs) {
+            execute_output.pack_outputs.push_back(txout);
+        }
+    }
+
     batch_unit_and_index = make_units_v2(is_leader, cs_para, statectx_ptr, execute_output, ec);
     if (ec) {
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
@@ -301,20 +344,19 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     // TODO(jimmy) update confirm ids in table state
     update_receiptid_state(table_para, statectx_ptr);
 
-    evm_common::xh256_t state_root;
     std::shared_ptr<state_mpt::xstate_mpt_t> table_mpt = nullptr;
 
     table_mpt = create_new_mpt(cs_para, statectx_ptr, batch_unit_and_index);
     if (table_mpt == nullptr) {
+        xerror("xtable_maker_t::make_light_table_v2 fail-create mpt. %s", cs_para.dump().c_str());
         return nullptr;
     }
-    auto root_hash = table_mpt->get_root_hash(ec);
+    evm_common::xh256_t state_root = table_mpt->get_root_hash(ec);
     if (ec) {
-        xwarn("xtable_maker_t::make_light_table_v2 get mpt root hash fail.");
+        xerror("xtable_maker_t::make_light_table_v2 fail-get mpt root. %s, ec=%s", cs_para.dump().c_str(), ec.message().c_str());
         return nullptr;
     }
-    xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), root_hash.hex().c_str());
-    state_root = evm_common::xh256_t(root_hash.to_bytes());
+    xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), state_root.hex().c_str());
 
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, state_root, execute_output.pack_outputs));
 
@@ -681,6 +723,10 @@ bool xtable_maker_t::can_make_next_empty_block(const data::xblock_consensus_para
 
 bool xtable_maker_t::is_make_relay_chain() const {
     return get_zone_index() == base::enum_chain_zone_relay_index;
+}
+
+bool xtable_maker_t::is_evm_table_chain() const {
+    return get_zone_index() == base::enum_chain_zone_evm_index;
 }
 
 std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const data::xblock_consensus_para_t & cs_para,

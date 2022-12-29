@@ -15,7 +15,7 @@
 #include <trezor-crypto/sha3.h>
 #include <secp256k1/secp256k1.h>
 #include <secp256k1/secp256k1_recovery.h>
-
+#include <limits>
 
 using namespace top;
 using namespace top::base;
@@ -524,7 +524,7 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_tx_block)
 
     xbytes_t rlp_block_header_data = block_dst.streamRLP_header_to_contract();
     std::string hex_result_dst = top::evm_common::toHex(rlp_block_header_data);
-    std::cout << "serialize_xrelay_block_without_signature: header_hash  "  << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
+    //std::cout << "serialize_xrelay_block_without_signature: header_hash  "  << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
     block_dst.get_block_hash() << " signature hash " <<  block_src.build_signature_hash().hex() << " streamRLP_to_contract hex_result_dst   " << hex_result_dst << std::endl;
 }
 
@@ -541,7 +541,7 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_poly_block)
 
     xbytes_t rlp_block_header_data_dst = block_dst.streamRLP_header_to_contract();
     std::string hex_result_dst = top::evm_common::toHex(rlp_block_header_data_dst);
-    std::cout << "serialize_xrelay_block_with_poly_block: header_hash  "  << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
+    //std::cout << "serialize_xrelay_block_with_poly_block: header_hash  "  << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
     block_dst.get_block_hash() << " signature hash " <<  block_src.build_signature_hash().hex() << " streamRLP_to_contract hex_result_dst   " << hex_result_dst << std::endl;
 }
 
@@ -558,7 +558,7 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_election_block)
 
     xbytes_t rlp_block_header_data_dst = block_dst.streamRLP_header_to_contract();
     std::string hex_result_dst = top::evm_common::toHex(rlp_block_header_data_dst);
-    std::cout << "serialize_xrelay_block_with_election_block: header_hash  " << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
+    //std::cout << "serialize_xrelay_block_with_election_block: header_hash  " << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
     block_dst.get_block_hash() << " signature hash " <<  block_src.build_signature_hash().hex() << " streamRLP_to_contract hex_result_dst   " << hex_result_dst << std::endl;
 }
 
@@ -576,8 +576,47 @@ TEST_F(test_relay_block, serialize_xrelay_block_without_signature)
     xbytes_t rlp_block_header_data_ds = block_dst.streamRLP_header_to_contract();
     std::string hex_result_dst = top::evm_common::toHex(rlp_block_header_data_ds);
 
-    std::cout << "serialize_xrelay_block_without_signature: header_hash  " << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
+    //std::cout << "serialize_xrelay_block_without_signature: header_hash  " << block_dst.get_header().get_header_hash().hex() << " block_hash " << \
     block_dst.get_block_hash() << " signature hash " <<  block_src.build_signature_hash().hex() << " streamRLP_to_contract hex_result_dst   " << hex_result_dst << std::endl;
+}
+
+
+TEST_F(test_relay_block, serialize_xrelay_block_extend_data)
+{
+    std::error_code ec;
+    xrelay_block block_src = xrelay_block_create(cache_poly_tx_block, true);
+
+    std::vector<uint64_t> tx_block_height_vec;
+    std::vector<evm_common::h256> tx_block_hash_vec;
+    evm_common::u256 chain_bits = 0;
+    for (uint32_t i = 0; i < 3; i++) {
+        tx_block_height_vec.push_back(i);
+        chain_bits |= (1 << i);
+    }
+    tx_block_hash_vec.push_back(test_topics1);
+    tx_block_hash_vec.push_back(test_topics2);
+    tx_block_hash_vec.push_back(test_topics3);
+
+    block_src.set_chain_bits(chain_bits);
+    block_src.set_tx_blocks_info_and_make_block_merkle_root(tx_block_height_vec, tx_block_hash_vec);
+
+    xbytes_t rlp_block = block_src.encodeBytes();
+    xrelay_block block_dst;
+    block_dst.decodeBytes(rlp_block, ec);
+
+    check_relay_block_compare(block_src, block_dst);
+    auto dst_blocks_map = block_dst.get_blocks_from_poly();
+    EXPECT_EQ(dst_blocks_map.size(), 3);
+    for (uint32_t i = 0; i < 3; i++) {
+        auto iter = dst_blocks_map.find(i);
+        EXPECT_TRUE(iter != dst_blocks_map.end());
+        EXPECT_TRUE(dst_blocks_map[i] == tx_block_hash_vec[i]);
+    }
+
+    EXPECT_TRUE(block_dst.get_chain_bits() == chain_bits);
+    xbytes_t rlp_block_header_data_dst = block_dst.streamRLP_header_to_contract();
+    std::string hex_result_dst = top::evm_common::toHex(rlp_block_header_data_dst);
+    //std::cout << "serialize_xrelay_block_with_poly_block: header_hash  " << block_dst.get_header().get_header_hash().hex() << " block_hash " << block_dst.get_block_hash() << " signature hash " << block_src.build_signature_hash().hex() << " streamRLP_to_contract hex_result_dst   " << hex_result_dst << std::endl;
 }
 
 #if 0

@@ -179,6 +179,8 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_tx_list);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_gasprice_list);
 
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
@@ -216,6 +218,9 @@ XDEFINE_CONFIGURATION(evm_relay_txs_collection_interval);
 XDEFINE_CONFIGURATION(relayblock_batch_tx_max_num);
 XDEFINE_CONFIGURATION(max_relay_poly_interval);
 XDEFINE_CONFIGURATION(max_relay_tx_block_interval);
+XDEFINE_CONFIGURATION(max_relay_tx_block_interval_fast);
+XDEFINE_CONFIGURATION(max_relay_poly_interval_fast);
+XDEFINE_CONFIGURATION(relayblock_batch_tx_max_num_fast);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);

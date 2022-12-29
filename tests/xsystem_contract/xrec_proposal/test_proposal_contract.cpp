@@ -352,9 +352,55 @@ TEST_F(test_proposal_contract, test_check_bwlist) {
     }            
 }
 
+TEST_F(test_proposal_contract, test_check_cross_chain_contract_tx_list_proposal) {
+    xrec_proposal_contract api { common::xnetwork_id_t { 1 } };
 
+    {
+        auto right_config = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c:0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735:1:0xaaa";
+        EXPECT_NO_THROW(api.check_cross_chain_contract_tx_list_proposal(right_config));
+    }
 
+    {
+        auto right_config = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c:0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735:0:0XFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+        EXPECT_NO_THROW(api.check_cross_chain_contract_tx_list_proposal(right_config));
+    }
 
+    {
+        auto error_config = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c:0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735:0:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+        EXPECT_ANY_THROW(api.check_cross_chain_contract_tx_list_proposal(error_config));
+    }
 
+    {
+        auto error_config = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c:0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735:A:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+        EXPECT_ANY_THROW(api.check_cross_chain_contract_tx_list_proposal(error_config));
+    }
 
+    {
+        auto error_config = "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735:A:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+        EXPECT_ANY_THROW(api.check_cross_chain_contract_tx_list_proposal(error_config));
+    }
+}
 
+TEST_F(test_proposal_contract, test_check_cross_chain_gasprice_list_proposal) {
+    xrec_proposal_contract api { common::xnetwork_id_t { 1 } };
+
+    {
+        auto right_config = "0xaaa:19000";
+        EXPECT_NO_THROW(api.check_cross_chain_gasprice_list_proposal(right_config));
+    }
+
+    {
+        auto right_config = "0XFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:19000";
+        EXPECT_NO_THROW(api.check_cross_chain_gasprice_list_proposal(right_config));
+    }
+
+    {
+        auto error_config = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:19000";
+        EXPECT_ANY_THROW(api.check_cross_chain_gasprice_list_proposal(error_config));
+    }
+
+    {
+        auto error_config = "19000";
+        EXPECT_ANY_THROW(api.check_cross_chain_gasprice_list_proposal(error_config));
+    }
+}

@@ -32,16 +32,6 @@ bool xrelay_packer2::close(bool force_async) {
     return true;
 }
 
-bool xrelay_packer2::on_timer_fire(const int32_t thread_id,
-                                  const int64_t timer_id,
-                                  const int64_t current_time_ms,
-                                  const int32_t start_timeout_ms,
-                                  int32_t & in_out_cur_interval_ms) {
-    // XTODO relay-table should be slowly, no need timely try to make proposal    
-    // xbatch_packer::on_timer_fire(thread_id, timer_id, current_time_ms, start_timeout_ms, in_out_cur_interval_ms);                             
-    return true;
-}
-
 int32_t xrelay_packer2::set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) {
     top::uint256_t hash_0;
     if (hash == hash_0) {
