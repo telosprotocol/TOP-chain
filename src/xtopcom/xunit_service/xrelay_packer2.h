@@ -19,12 +19,6 @@ public:
 
 public:
     virtual bool close(bool force_async = true) override;  // must call close before release object,otherwise object never be cleanup
-    virtual bool on_timer_fire(const int32_t thread_id,
-                               const int64_t timer_id,
-                               const int64_t current_time_ms,
-                               const int32_t start_timeout_ms,
-                               int32_t & in_out_cur_interval_ms) override;
-
     virtual bool verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, std::string & result) override;
     virtual void add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, const std::string & result) override;
     virtual bool proc_vote_complate(base::xvblock_t * proposal_block) override;
