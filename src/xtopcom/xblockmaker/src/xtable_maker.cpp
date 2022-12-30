@@ -458,12 +458,9 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     xblock_ptr_t current_block = prev_block;
     xassert(current_block->get_height() > 0);
     _form_highest_blocks.push_back(current_block);
-    if (false == get_blockstore()->load_block_input(*this, current_block.get())) {
-        xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block input.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
-        return false;        
-    }
-    if (false == get_blockstore()->load_block_output(*this, current_block.get())) {
-        xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block output.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+    // input for txs count, output for tgas ledger balance
+    if (false == get_blockstore()->load_block_body(*this, current_block.get(), base::enum_xvblock_body_type_input_output)) {
+        xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block body.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
         return false;        
     }
 
@@ -475,14 +472,10 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
             return false;
         }
         current_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
-        if (false == get_blockstore()->load_block_input(*this, current_block.get())) {
+        if (false == get_blockstore()->load_block_body(*this, current_block.get(), base::enum_xvblock_body_type_input_output)) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block input.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
             return false;        
         }
-        if (false == get_blockstore()->load_block_output(*this, current_block.get())) {
-            xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block output.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
-            return false;        
-        }        
         blocks.push_back(current_block);
     }
 

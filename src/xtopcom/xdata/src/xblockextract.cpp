@@ -393,11 +393,11 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
         return;
     }
 
-    if (!_block->is_body_and_offdata_ready(false)) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_subblocks input and output should ready. %s", _block->dump().c_str());
-        return;
-    }
+    // if (!_block->is_body_and_offdata_ready(false)) {
+    //     ec = common::error::xerrc_t::invalid_block;
+    //     xerror("xblockextract_t::unpack_subblocks input and output should ready. %s", _block->dump().c_str());
+    //     return;
+    // }
 
     if (base::xvblock_fork_t::is_block_older_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
         sublocks = xlighttable_build_t::unpack_units_from_table(_block);

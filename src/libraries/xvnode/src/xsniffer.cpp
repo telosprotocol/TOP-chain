@@ -96,8 +96,7 @@ bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock
         if (validator_xip.slot_id() == m_vnode->vnetwork_driver()->address().slot_id()) {
             // load full block input and output
             base::xvaccount_t _vaccount(block_address);
-            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, vblock.get()) ||
-                false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, vblock.get())) {
+            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaccount, vblock.get(), base::enum_xvblock_body_type_all)) {
                 xerror("[xtop_vnode::sniff_broadcast] fail-load block input output, block=%s", vblock->dump().c_str());
                 return false;
             }

@@ -637,7 +637,7 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
               non_nil_commit_block->get_height() + 2);
         return false;
     }
-    if (false == get_blockstore()->load_block_input(_table_vaccount, non_nil_commit_block.get())) {
+    if (false == get_blockstore()->load_block_body(_table_vaccount, non_nil_commit_block.get(), base::enum_xvblock_body_type_input)) {
         xwarn("xstatestore_impl_t::get_receiptid_state_and_prove fail-load input.table:%s, cert height:%llu",
               table_address.to_string().c_str(),
               non_nil_commit_block->get_height() + 2);

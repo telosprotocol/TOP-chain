@@ -70,7 +70,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         const data::xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
         base::xvaccount_t _vaccount(block->get_account());
         // TODO(jimmy) load block input for get raw tx nonce
-        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get(), metrics::blockstore_access_from_txpool_on_block_event)) {
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaccount, block.get(), base::enum_xvblock_body_type_input)) {
             xerror("xtxpool_service_mgr::on_block_to_db_event fail-load block input output, block=%s", block->dump().c_str());
             return true;
         }

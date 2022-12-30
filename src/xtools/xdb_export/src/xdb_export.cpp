@@ -1379,7 +1379,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
             continue;
         } else {
             table_info.light_table_block_num++;
-            m_blockstore->load_block_input(account, vblock.get());
+            m_blockstore->load_block_body(account, vblock.get(), base::enum_xvblock_body_type_input);
         }
         auto units_index = block->get_subblocks_index();
         table_info.total_unit_block_num += units_index.size();
@@ -1518,10 +1518,6 @@ void xdb_export_tools_t::query_block_info(std::string const & account, const uin
     }
     if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
         std::cout << "account: " << account << ", height: " << h << " block genesis && nil && non-stored" << std::endl;
-        return;
-    }
-    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp)) {
-        std::cout << "account: " << account << ", height: " << h << " load_block_input failed" << std::endl;
         return;
     }
     root = dynamic_cast<xrpc::xrpc_query_manager *>(m_getblock.get())->get_block_json(bp);

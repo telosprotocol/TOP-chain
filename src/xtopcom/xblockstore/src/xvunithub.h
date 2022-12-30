@@ -86,10 +86,10 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load,const int atag = 0) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load,const int atag = 0) override; //just return the highest viewid of matched flag
             virtual std::vector<base::xvblock_ptr_t>  load_block_object(const std::string & tx_hash,const base::enum_transaction_subtype type,const int atag = 0) override;
-
-            virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
-            virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
-            virtual bool                load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
+            virtual bool                load_block_body(const base::xvaccount_t & account,base::xvblock_t* block, base::enum_xvblock_body_type body_type) override;
+            // virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
+            // virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
+            // virtual bool                load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
 
@@ -165,6 +165,7 @@ namespace top
             virtual bool                on_object_close() override;
             int                         load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height);
             bool                        should_store_units(int zone_index) const;
+            bool                        load_block_body_unlock(base::xvbindex_t* target_index,base::xvblock_t* target_block, base::enum_xvblock_body_type body_type);
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             std::string                        m_store_path;

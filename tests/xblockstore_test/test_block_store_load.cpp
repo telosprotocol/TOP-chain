@@ -211,8 +211,7 @@ TEST_F(test_block_store_load, load_units_BENCH) {
             for (uint64_t height = 1; height <= unit_height; height++) {
                 base::xvaccount_t _vaddr(mockunit.get_account());
                 auto _block = blockstore->load_block_object(_vaddr, height, 0, false);
-                blockstore->load_block_input(_vaddr, _block.get());
-                blockstore->load_block_output(_vaddr, _block.get());
+                blockstore->load_block_body(_vaddr, _block.get(), base::enum_xvblock_body_type_all);
             }
         }
         auto end_time = std::chrono::system_clock::now();

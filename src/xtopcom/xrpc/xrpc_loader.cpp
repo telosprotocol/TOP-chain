@@ -41,6 +41,10 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
         xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
         return nullptr;
     }
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaddress, _block.get(), base::enum_xvblock_body_type_input)) {
+        xerror("xrpc_loader_t::load_tx_indx_detail,fail to load block input for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
+        return nullptr;
+    }
     data::xlightunit_action_ptr_t txaction = data::xblockextract_t::unpack_one_txaction(_block.get(), raw_tx_hash);
     if (txaction == nullptr) {
         xerror("xrpc_loader_t::load_tx_indx_detail,fail to load action for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
@@ -49,7 +53,7 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
     uint64_t transaction_index = 0; // TODO(jimmy)
     xtxindex_detail_ptr_t index_detail = std::make_shared<xtxindex_detail_t>(txindex, _block->get_block_hash(), *txaction, transaction_index);
     if (type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send) {
-        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, _block.get())) {
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaddress, _block.get(), base::enum_xvblock_body_type_input)) {
             xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block input for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
             return nullptr;
         }
@@ -164,6 +168,11 @@ xtxindex_detail_ptr_t xrpc_loader_t::load_ethtx_indx_detail(const std::string & 
         return nullptr;
     }
 
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaddress, _block.get(), base::enum_xvblock_body_type_input)) {
+        xerror("xrpc_loader_t::load_ethtx_indx_detail,fail to load block input for block:%s", _block->dump().c_str());
+        return nullptr;
+    }
+
     // TODO(jimmy) performance optimize transaction_index put to xvtxindex ?
     data::xlightunit_action_ptr_t txaction_ptr = nullptr;
     std::vector<data::xlightunit_action_t> eth_txactions = data::xblockextract_t::unpack_eth_txactions(_block.get());
@@ -181,7 +190,7 @@ xtxindex_detail_ptr_t xrpc_loader_t::load_ethtx_indx_detail(const std::string & 
     }
     xtxindex_detail_ptr_t index_detail = std::make_shared<xtxindex_detail_t>(txindex, _block->get_block_hash(), *txaction_ptr, transaction_index);
     if (type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send) {
-        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, _block.get())) {
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaddress, _block.get(), base::enum_xvblock_body_type_input)) {
             xerror("xrpc_loader_t::load_ethtx_indx_detail,fail to load input hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
             return nullptr;
         }

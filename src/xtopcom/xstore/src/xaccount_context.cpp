@@ -1317,7 +1317,7 @@ xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t heig
     base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, false);
     if (_block != nullptr) {
         // system contract only need input for full-table
-        base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddr, _block.get());
+        base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaddr, _block.get(), base::enum_xvblock_body_type_input);
         _block->add_ref();
         return dynamic_cast<data::xblock_t*>(_block.get());
     }
@@ -1333,7 +1333,7 @@ xaccount_context_t::get_next_full_block(const std::string & owner, const uint64_
     xdbg("xaccount_context_t::get_next_full_block owner=%s,cur_height=%llu,next_full_height=%llu", owner.c_str(), cur_full_height, next_full_height);
 
     if (block != nullptr && block->get_block_level() == base::enum_xvblock_level_table && block->get_block_class() == base::enum_xvblock_class_full) {
-        base::xvchain_t::instance().get_xblockstore()->load_block_input(vaddr, block.get());
+        base::xvchain_t::instance().get_xblockstore()->load_block_body(vaddr, block.get(), base::enum_xvblock_body_type_input);
         block->add_ref();
         return dynamic_cast<data::xblock_t*>(block.get());
     }

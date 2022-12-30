@@ -681,25 +681,11 @@ namespace top
                     {
                         xinfo("xBFTRules::add_cert_block,proposal certified now cert(%s),at node=0x%llx",_target_block->dump().c_str(),get_xip2_addr().low_addr);
 
-                        if(  (_target_block->should_has_input_data()) //link resoure data
-                           &&(_target_block->has_input_data() == false) ) //but dont have resource _target_block now
-                        {
-                            //_local_block need reload input resource
-                            get_vblockstore()->load_block_input(*this, _target_block);
-                            xassert(_target_block->has_input_data());
-                        }
-                        
-                        if(  (_target_block->should_has_output_data()) //link resoure data
-                           &&(_target_block->has_output_data() == false) ) //but dont have resource avaiable now
-                        {
-                            //_local_block need reload output resource
-                            get_vblockstore()->load_block_output(*this, _target_block);
-                            xassert(_target_block->has_output_data());
-                        }
-
-                        get_vblockstore()->load_block_output_offdata(*this, _target_block);
-       
-                        fire_proposal_finish_event(_target_block, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
+                        if (get_vblockstore()->load_block_body(*this, _target_block, base::enum_xvblock_body_type_all)) {
+                            fire_proposal_finish_event(_target_block, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
+                        } else {
+                            xerror("xBFTRules::add_cert_block,fail-load block body %s",_target_block->dump().c_str());
+                        }                               
                     }
                     _to_remove->release_ref();
                 }

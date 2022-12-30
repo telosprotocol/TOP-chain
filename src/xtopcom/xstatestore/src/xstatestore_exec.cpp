@@ -495,7 +495,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
     alocker global_lock(m_global_execute_lock, is_first_mpt); // XTODO first mpt will use too much memory, so add global lock
 
     if (current_block->get_block_class() == base::enum_xvblock_class_light) {
-        if (false == m_statestore_base.get_blockstore()->load_block_output(m_table_vaddr, current_block)) {
+        if (false == m_statestore_base.get_blockstore()->load_block_body(m_table_vaddr, current_block, base::enum_xvblock_body_type_output)) {
             ec = error::xerrc_t::statestore_load_tableblock_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load output for block(%s)",current_block->dump().c_str());
             return nullptr;
@@ -585,14 +585,10 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
     if (true == base::xvchain_t::instance().has_other_node() && account_indexs.get_account_indexs().size() > 0) {
-        if (false == m_statestore_base.get_blockstore()->load_block_input(m_table_vaddr, current_block)) {
+        // units in output offdata
+        if (false == m_statestore_base.get_blockstore()->load_block_body(m_table_vaddr, current_block, base::enum_xvblock_body_type_outputoffdata)) {
             ec = error::xerrc_t::statestore_load_tableblock_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load input for block(%s)",current_block->dump().c_str());
-            return nullptr;
-        }
-        if (false == m_statestore_base.get_blockstore()->load_block_output_offdata(m_table_vaddr, current_block)) {
-            ec = error::xerrc_t::statestore_load_tableblock_err;
-            xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load output offdata for block(%s)",current_block->dump().c_str());
             return nullptr;
         }
 
@@ -782,7 +778,7 @@ data::xunitstate_ptr_t xstatestore_executor_t::make_state_from_current_unit(comm
 
     current_state = make_object_ptr<base::xvbstate_t>(*current_block);
     if (current_block->get_block_class() != base::enum_xvblock_class_nil) {
-        if (false == m_statestore_base.get_blockstore()->load_block_output(unit_addr.vaccount(), current_block)) {
+        if (false == m_statestore_base.get_blockstore()->load_block_body(unit_addr.vaccount(), current_block, base::enum_xvblock_body_type_output)) {
             ec = error::xerrc_t::statestore_db_read_abnormal_err;
             xerror("xstatestore_executor_t::make_state_from_current_unit,fail-load block output for block(%s)",current_block->dump().c_str());
             return nullptr;
@@ -816,7 +812,7 @@ data::xunitstate_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_un
 
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *prev_bstate->get_bstate());
     if (current_block->get_block_class() == base::enum_xvblock_class_light) {
-        if (false == m_statestore_base.get_blockstore()->load_block_output(unit_addr.vaccount(), current_block)) {
+        if (false == m_statestore_base.get_blockstore()->load_block_body(unit_addr.vaccount(), current_block, base::enum_xvblock_body_type_output)) {
             ec = error::xerrc_t::statestore_db_read_abnormal_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_unit fail-load output for block(%s)",current_block->dump().c_str());
             return nullptr;

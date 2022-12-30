@@ -46,7 +46,6 @@ public:
 private:
     bool strategy_permission(common::xbool_strategy_t const & strategy) const noexcept;
     std::vector<base::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type);
-    std::vector<base::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height);
 private:
     mutable std::mutex m_node_type_mutex{};
     common::xnode_type_t m_combined_node_type;

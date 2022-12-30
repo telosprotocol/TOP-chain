@@ -337,16 +337,11 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
         return;
     }
 
-    // TODO(jimmy) block size need load input and output. transactions hash need load input
+    // TODO(jimmy) block size need load all body. transactions hash need load input
     if (block->get_block_class() != base::enum_xvblock_class_nil) {
-        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, block.get())) {
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaddress, block.get(), base::enum_xvblock_body_type_all)) {
             ec = common::error::xerrc_t::invalid_db_load;
-            xerror("xrpc_eth_query_manager::set_block_result,fail to load block input for block:%s", block->dump().c_str());
-            return;
-        }
-        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaddress, block.get())) {
-            ec = common::error::xerrc_t::invalid_db_load;
-            xerror("xrpc_eth_query_manager::set_block_result,fail to load block output for block:%s", block->dump().c_str());
+            xerror("xrpc_eth_query_manager::set_block_result,fail to load block body for block:%s", block->dump().c_str());
             return;
         }
     }
@@ -982,6 +977,11 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
         xobject_ptr_t<base::xvblock_t> block = m_block_store->load_block_object(_table_addr, i, base::enum_xvblock_flag_authenticated, false);
         if (block == nullptr) {
             xwarn("xrpc_eth_query_manager::get_log, load_block_object fail:%llu", i);
+            continue;
+        }
+
+        if (false == m_block_store->load_block_body(_table_addr, block.get(), base::enum_xvblock_body_type_input)) {
+            xerror("xrpc_eth_query_manager::get_log,fail to load block input for block:%s", block->dump().c_str());
             continue;
         }
 

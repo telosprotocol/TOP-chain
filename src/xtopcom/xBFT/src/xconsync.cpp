@@ -318,47 +318,22 @@ namespace top
 
                 _local_block->serialize_to_string(block_object_bin);
 
+                if (false == get_vblockstore()->load_block_body(*this, _local_block, base::enum_xvblock_body_type_all)) {
+                    xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load block body for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_bad_packet;
+                }
+                base::enum_xvblock_body_type _body_type = base::enum_xvblock_body_type_none;
                 if(sync_targets & enum_xsync_target_block_input)
                 {
-                    if(  (_local_block->should_has_input_data()) //link resoure data
-                       &&(_local_block->has_input_data() == false) ) //but dont have resource avaiable now
-                    {
-                        //_local_block need reload input resource
-                        get_vblockstore()->load_block_input(*this, _local_block);
-                        if (!_local_block->has_input_data()) {
-                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load input for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
-                            return enum_xconsensus_error_bad_packet;
-                        }
-                    }
                     input_resource = _local_block->get_input_data();
                 }
                 
                 if(sync_targets & enum_xsync_target_block_output)
                 {
-                    if(  (_local_block->should_has_output_data()) //link resoure data
-                       &&(_local_block->has_output_data() == false) ) //but dont have resource avaiable now
-                    {
-                        //_local_block need reload output resource
-                        get_vblockstore()->load_block_output(*this, _local_block);
-                        if (!_local_block->has_output_data()) {
-                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load output for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
-                            return enum_xconsensus_error_bad_packet;
-                        }
-                    }
                     output_resource = _local_block->get_output_data();
                 }
 
                 if (sync_targets & enum_xsync_target_block_output_offdata) {
-                    if(  (_local_block->get_output_offdata_hash().empty() == false) //link offdata data
-                       &&(_local_block->get_output_offdata().empty() == true) ) //but dont have offdata avaiable now
-                    {
-                        //_local_block need reload output offdata
-                        get_vblockstore()->load_block_output_offdata(*this, _local_block);
-                        if (_local_block->get_output_offdata().empty()) {
-                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load output offdata for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
-                            return enum_xconsensus_error_bad_packet;
-                        }
-                    }
                     output_offdata = _local_block->get_output_offdata();
                 }
 

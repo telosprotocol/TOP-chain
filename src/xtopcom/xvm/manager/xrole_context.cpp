@@ -101,10 +101,8 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
 
                 // load full block input and output
                 base::xvaccount_t _vaccount(block->get_account());
-                if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get())
-                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, block.get())
-                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output_offdata(_vaccount, block.get())) {
-                    xerror("xrole_context_t::on_block_to_db fail-load block input output, block=%s", block->dump().c_str());
+                if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(_vaccount, block.get(), base::enum_xvblock_body_type_all)) {
+                    xerror("xrole_context_t::on_block_to_db fail-load block body, block=%s", block->dump().c_str());
                     return;
                 }
 

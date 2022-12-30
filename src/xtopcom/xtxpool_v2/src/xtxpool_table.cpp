@@ -281,8 +281,7 @@ void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint
 // }
 
 void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool update_txmgr) {
-    base::xvaccount_t _vaccount(table_block->get_account());
-    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, table_block, metrics::blockstore_access_from_txpool_refresh_table)) {
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(m_xtable_info, table_block, base::enum_xvblock_body_type_input)) {
         xerror("xtxpool_table_t::deal_commit_table_block fail-load block input output, block=%s", table_block->dump().c_str());
         return;
     }
@@ -661,7 +660,7 @@ xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t pe
         return nullptr;
     }
 
-    m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get());
+    m_para->get_vblockstore()->load_block_body(m_xtable_info, commit_block.get(), base::enum_xvblock_body_type_input);
 
     auto tx = xblocktool_t::create_one_txreceipt(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(cert_block.get()), peer_table_sid, receipt_id, subtype);
     xassert(tx != nullptr);
@@ -748,8 +747,7 @@ void xtxpool_table_t::get_min_keep_height(std::string & table_addr, uint64_t & h
 }
 
 void xtxpool_table_t::move_uncommit_txs(base::xvblock_t * block) {
-    base::xvaccount_t _vaccount(block->get_account());
-    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block, metrics::blockstore_access_from_txpool_refresh_table)) {
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_body(m_xtable_info, block, base::enum_xvblock_body_type_input)) {
         xerror("xtxpool_table_t::move_uncommit_txs fail-load block input output, block=%s", block->dump().c_str());
         return;
     }

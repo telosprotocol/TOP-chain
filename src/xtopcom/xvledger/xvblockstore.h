@@ -194,9 +194,10 @@ namespace top
             //virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account, const uint64_t height, bool ask_full_load, const int atag = 0) = 0;
             virtual std::vector<base::xvblock_ptr_t> load_block_object(const std::string & tx_hash,const enum_transaction_subtype type,const int atag = 0) = 0;
 
-            virtual bool                  load_block_input(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
-            virtual bool                  load_block_output(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
-            virtual bool                  load_block_output_offdata(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
+            // virtual bool                  load_block_input(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
+            // virtual bool                  load_block_output(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
+            // virtual bool                  load_block_output_offdata(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
+            virtual bool                  load_block_body(const xvaccount_t & account,xvblock_t* block, base::enum_xvblock_body_type body_type) = 0;
 
             virtual bool                  store_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0)  = 0;
             virtual bool                  delete_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;

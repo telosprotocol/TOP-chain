@@ -794,7 +794,7 @@ void xbatch_packer::send_receipts(base::xvblock_t *vblock) {
     base::xauto_ptr<base::xvblock_t> commit_block =
         m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_us_on_proposal_finish);
     if (commit_block != nullptr) {
-        m_para->get_resources()->get_vblockstore()->load_block_input(*this, commit_block.get());
+        m_para->get_resources()->get_vblockstore()->load_block_body(*this, commit_block.get(), base::enum_xvblock_body_type_input);
         make_receipts_and_send(dynamic_cast<data::xblock_t *>(commit_block.get()), dynamic_cast<data::xblock_t *>(vblock));
     }
 }

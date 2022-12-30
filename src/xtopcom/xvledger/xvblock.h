@@ -102,6 +102,18 @@ namespace top
             enum_xvblock_type_batch     = 10,//that is a batch group(like table or book)
         };
 
+        //three body type
+        enum enum_xvblock_body_type
+        {
+            enum_xvblock_body_type_input            = 0x0001,
+            enum_xvblock_body_type_output           = 0x0002,
+            enum_xvblock_body_type_outputoffdata    = 0x0004,
+            enum_xvblock_body_type_none             = 0,
+            enum_xvblock_body_type_input_output     = enum_xvblock_body_type_input|enum_xvblock_body_type_output,
+            enum_xvblock_body_type_output_outputoffdata = enum_xvblock_body_type_output|enum_xvblock_body_type_outputoffdata,
+            enum_xvblock_body_type_all              = enum_xvblock_body_type_input|enum_xvblock_body_type_output|enum_xvblock_body_type_outputoffdata,
+        };
+
         //total 2bits = max 4 definition
         enum enum_xvblock_character // for future definition
         {

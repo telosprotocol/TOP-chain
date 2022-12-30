@@ -146,14 +146,7 @@ public:
         return {};
     }
 
-    bool load_block_input(const base::xvaccount_t &, base::xvblock_t *,const int atag = 0) override {
-        return false;
-    }
-
-    bool load_block_output(const base::xvaccount_t &, base::xvblock_t *,const int atag = 0) override {
-        return false;
-    }
-    bool load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override {
+    bool load_block_body(const base::xvaccount_t &, base::xvblock_t *, base::enum_xvblock_body_type body_type) override {
         return false;
     }
 
