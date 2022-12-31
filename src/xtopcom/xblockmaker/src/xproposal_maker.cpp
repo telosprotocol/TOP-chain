@@ -215,21 +215,9 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
     data::xtablestate_ptr_t tablestate = proposal_para.get_cert_table_state();
-    if (nullptr == tablestate) {
-        xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", proposal_para.dump().c_str(), latest_cert_block->get_height());
-        XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_state, 1);
-        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
-        return nullptr;
-    }
-
     data::xtablestate_ptr_t tablestate_commit = proposal_para.get_commit_table_state();
-    if (tablestate_commit == nullptr) {
-        xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,commit_height=%" PRIu64 "", proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->get_height());
-        XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_state, 1);
-        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
-        return nullptr;
-    }
-
+    xassert(nullptr != tablestate);
+    xassert(nullptr != tablestate_commit);
     xtablemaker_para_t table_para(tablestate, tablestate_commit);
     // get batch txs
     update_txpool_txs(proposal_para, table_para);

@@ -299,11 +299,13 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
 
     execute_txs(is_leader, cs_para, statectx_ptr, input_txs, execute_output, ec);
     for (auto & txout : execute_output.drop_outputs) {  // drop tx from txpool
+        set_packtx_metrics(txout.m_tx, false);
         xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
         get_txpool()->pop_tx(txinfo);
     }
     // set pack origin tx to proposal
     for (auto & txout : execute_output.pack_outputs) {
+        set_packtx_metrics(txout.m_tx, true);
         table_para.push_tx_to_proposal(txout.m_tx);
     }
     if (ec || execute_output.pack_outputs.empty()) {
