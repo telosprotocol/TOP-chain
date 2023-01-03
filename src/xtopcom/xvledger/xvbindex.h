@@ -234,8 +234,8 @@ namespace top
             inline xvblock_t*          get_block()   const {return m_block;}//it always be valid before xvbnode_t release
             inline xvheader_t*         get_header()  const {return m_block->get_header();}  //raw ptr of xvheader_t
             inline xvqcert_t*          get_cert()    const {return m_block->get_cert();}    //raw ptr of xvqcert_t
-            inline xvinput_t *         get_input()   const {return m_block->get_input();}   //raw ptr of xvinput_t,might be nullptr
-            inline xvoutput_t*         get_output()  const {return m_block->get_output();}  //raw ptr of xvoutput_t,might be nullptr
+            // inline xvinput_t *         get_input()   const {return m_block->get_input();}   //raw ptr of xvinput_t,might be nullptr
+            // inline xvoutput_t*         get_output()  const {return m_block->get_output();}  //raw ptr of xvoutput_t,might be nullptr
 
             inline bool                is_valid(bool deeptest)  {return m_block->is_valid(deeptest);}
             inline bool                is_deliver(bool deeptest){return m_block->is_deliver(deeptest);}

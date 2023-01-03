@@ -9,6 +9,7 @@
 #include "../xvstate.h"
 #include "../xvblock.h"
 #include "xmetrics/xmetrics.h"
+#include "xvledger/xerror.h"
 
 #ifdef DEBUG
     #define __DEBUG_BLOCK_CONTENT__
@@ -274,7 +275,18 @@ namespace top
          
             return (begin_size - stream.size());
         }
-        
+
+        std::string   xvheader_t::dump() const  //just for debug purpose
+        {
+            char local_param_buf[256];
+
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvheader:t=%d,v=%u,c=%u,h=%" PRIu64 ",w=%" PRIu64 ",l=%" PRIu64 ",a=%s,c=%s,,i=%" PRIu64 ",o=%" PRIu64 ",l=%" PRIu64 ",f=%" PRIu64 "}",
+            m_types,m_versions,m_chainid,m_height,m_weight,m_last_full_block_height,m_account.c_str(),m_comments.c_str(),
+            base::xhash64_t::digest(m_input_hash),base::xhash64_t::digest(m_output_hash),base::xhash64_t::digest(m_last_block_hash),base::xhash64_t::digest(m_last_full_block_hash));
+           
+            return std::string(local_param_buf);
+        }
+
         //---------------------------------xvqcert_t---------------------------------//
         xvqcert_t::xvqcert_t()
         : xdataunit_t((enum_xdata_type)enum_xobject_type_vqccert)
@@ -1307,7 +1319,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1324,7 +1335,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1479,7 +1489,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
              
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
          
@@ -1536,7 +1545,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
             *this = other;
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1551,8 +1559,6 @@ namespace top
                 m_vinput_ptr->release_ref();
             if(m_voutput_ptr != NULL)
                 m_voutput_ptr->release_ref();
-            if(m_vbstate_ptr != NULL)
-                m_vbstate_ptr->release_ref();
             
             m_cert_hash         = other.m_cert_hash;
             m_vheader_ptr       = other.m_vheader_ptr;
@@ -1561,7 +1567,6 @@ namespace top
             m_next_block        = other.m_next_block;
             m_vinput_ptr        = other.m_vinput_ptr;
             m_voutput_ptr       = other.m_voutput_ptr;
-            m_vbstate_ptr       = other.m_vbstate_ptr;
             m_parent_account    = other.m_parent_account;
             m_next_next_viewid  = other.m_next_next_viewid;
             m_vote_extend_data   = other.m_vote_extend_data;
@@ -1578,8 +1583,6 @@ namespace top
                 m_vinput_ptr->add_ref();
             if(m_voutput_ptr != NULL)
                 m_voutput_ptr->add_ref();
-            if(m_vbstate_ptr != NULL)
-                m_vbstate_ptr->add_ref();
             
             if(m_prev_block != NULL)
                 m_prev_block->add_ref();
@@ -1608,10 +1611,6 @@ namespace top
             if(m_voutput_ptr != NULL){
                 m_voutput_ptr->close();
                 m_voutput_ptr->release_ref();
-            }
-            if(m_vbstate_ptr != NULL){
-                m_vbstate_ptr->close();
-                m_vbstate_ptr->release_ref();
             }
 
             if(m_prev_block != NULL)
@@ -1652,32 +1651,7 @@ namespace top
             m_dump_info = dump();
             return m_dump_info;
         }
-        
-        std::string xvblock_t::detail_dump() const //just for debug purpose
-        {
-#ifdef DEBUG  // only for debug
-            std::string input_bin;
-            std::string output_bin;
-            std::string header_bin;
-            get_input()->serialize_to_string(input_bin);
-            get_output()->serialize_to_string(output_bin);
-            get_header()->serialize_to_string(header_bin);
-            uint64_t header_64 = base::xhash64_t::digest(header_bin);
-            uint64_t input_64 = base::xhash64_t::digest(input_bin);
-            uint64_t output_64 = base::xhash64_t::digest(output_bin);
-            uint64_t input_root_64 = base::xhash64_t::digest(get_input_root_hash());
-            uint64_t output_root_64 = base::xhash64_t::digest(get_output_root_hash());
-            uint64_t sign_hash_64 = base::xhash64_t::digest(get_cert()->get_hash_to_sign());
-            uint64_t justify_hash_64 = base::xhash64_t::digest(get_cert()->get_justify_cert_hash());
-            char local_param_buf[512];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{header=%" PRIx64 ",input=%" PRIx64 ",output=%" PRIx64 ",inroot=%" PRIx64 ",outroot=%" PRIx64 ",sign=%" PRIx64 ",justify=%" PRIx64 "",
-                    header_64,input_64,output_64,input_root_64,output_root_64,sign_hash_64,justify_hash_64);
-            return std::string(local_param_buf);
-#else
-            return {};
-#endif
-        }
-    
+
         xauto_ptr<xvblock_t> xvblock_t::clone_block() const
         {
             xobject_t* object = xcontext_t::create_xobject((enum_xobject_type)get_obj_type());
@@ -1710,8 +1684,6 @@ namespace top
                 if(m_voutput_ptr != NULL)
                     m_voutput_ptr->close();
                 
-                if(m_vbstate_ptr != NULL)
-                    m_vbstate_ptr->close();
             }
             return true;
         }
@@ -1799,37 +1771,6 @@ namespace top
             return false;
         }
     
-        bool  xvblock_t::reset_block_state(xvbstate_t * _new_state_ptr)//return false if hash or height not match
-        {
-            if(_new_state_ptr == m_vbstate_ptr) //same one
-                return true;
-            
-            if(_new_state_ptr != NULL)
-            {
-                if(    (get_height()  != _new_state_ptr->get_block_height())
-                    || (get_viewid()  != _new_state_ptr->get_block_viewid())
-                    || (get_account() != _new_state_ptr->get_address())
-                    )
-                {
-                    xerror("xvblock_t::reset_block_state,this block'info(%s) not match state(%s)",dump().c_str(), _new_state_ptr->dump().c_str());
-                    return false;
-                }
-                _new_state_ptr->add_ref();
-                xvbstate_t * old_ptr =  xatomic_t::xexchange(m_vbstate_ptr, _new_state_ptr);
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-                
-                return true;
-            }
-            else
-            {
-                xvbstate_t * old_ptr =  xatomic_t::xexchange(m_vbstate_ptr, (xvbstate_t*)NULL);
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-                
-                return true;
-            }
-        }
      
         void    xvblock_t::set_next_next_cert(xvqcert_t * next_next_vqcert_ptr)
         { 
@@ -1958,10 +1899,6 @@ namespace top
         
         const std::string xvblock_t::get_full_state()
         {
-            if (!m_offblock_snapshot.empty())
-            {
-                return m_offblock_snapshot;
-            }
             std::string state_hash = get_fullstate_hash();
             if (!state_hash.empty())
             {
@@ -1981,22 +1918,6 @@ namespace top
             return false;
         }
         
-        bool xvblock_t::set_offblock_snapshot(const std::string & snapshot)
-        {
-            if (!m_offblock_snapshot.empty())
-            {
-                xassert(m_offblock_snapshot == snapshot);
-                return true;
-            }
-            if (snapshot.empty())
-            {
-                xassert(false);
-                return false;
-            }
-            m_offblock_snapshot = snapshot;
-            return true;
-        }
-
         uint64_t xvblock_t::get_block_size() {
             std::string block_object_bin;
             serialize_to_string(block_object_bin);
