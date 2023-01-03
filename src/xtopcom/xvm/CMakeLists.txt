@@ -31,7 +31,12 @@ aux_source_directory(./xsystem_contracts/deploy system_contracts_deploy)
 aux_source_directory(./xsystem_contracts/src system_contracts_src)
 aux_source_directory(./xsystem_contracts/xeth system_contracts_xeth)
 
-add_library(xvm STATIC ${xvm} ${manager} ${xcontract} ${xserialization} ${xerror} ${system_contracts_deploy} ${system_contracts_src} ${system_contracts_xeth})
+if (XBUILD_CONSORTIUM)
+    aux_source_directory(./xsystem_contracts/consortium system_contracts_consortium)
+    add_library(xvm STATIC ${xvm} ${manager} ${xcontract} ${xserialization} ${xerror} ${system_contracts_deploy} ${system_contracts_src} ${system_contracts_xeth} ${system_contracts_consortium})
+else()
+    add_library(xvm STATIC ${xvm} ${manager} ${xcontract} ${xserialization} ${xerror} ${system_contracts_deploy} ${system_contracts_src} ${system_contracts_xeth})
+endif()
 
 add_dependencies(xvm xstatestore xconfig xstore xverifier xdata xcommon xcodec xbasic xxbase xcertauth xchain_upgrade)
 

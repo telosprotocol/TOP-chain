@@ -13,7 +13,7 @@
 #include "xelection/xcache/xdata_accessor.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xcontract_helper.h"
-#include "xvm/xsystem_contracts/node_manage/xnode_manage_contract.h"
+#include "xvm/xsystem_contracts/consortium/xnode_manage_contract.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include <gtest/gtest.h>
 

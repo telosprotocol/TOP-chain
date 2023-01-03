@@ -215,7 +215,6 @@ public:
     bool nodeInfoRootCaReplace(const user_info & uinfo,const std::string & root_account, const std::string & cert_str, std::ostringstream & out_str, std::function<void(NodeRegResult *)> func = nullptr);
     bool nodeInfoAuthConfig(const user_info & uinfo,std::string const& check_type, std::string const& check_flag, std::ostringstream & out_str, 
                                     std::function<void(NodeRegResult *)> func = nullptr);
-    bool nodeInfoAccountQuery(const user_info & uinfo,  std::ostringstream & out_str, std::function<void(GetBlockResult *)> func = nullptr);
 #endif 
 private:
     bool hash_signature(top::data::xtransaction_t * trans_action, const std::array<uint8_t, PRI_KEY_LEN> & private_key);

@@ -122,25 +122,10 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
             return xverifier_error::xverifier_error_addr_invalid;
         }
 
-        // consortium: check transfer address
-        if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == true) {
-            
-            if(verify_check_genesis_account(src_addr) ||  verify_check_genesis_account(dst_addr)) {
-                return xverifier_error::xverifier_success;
-            }
-             auto const sender_addr = common::xaccount_address_t{src_addr};
-            if (data::is_sys_contract_address(sender_addr)) {
-                return xverifier_error::xverifier_success;
-            }
-
-            std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
-            std::set<std::string> node_sets;
-            top::SplitString(nodes, ',', node_sets);
-            if (node_sets.find(src_addr) == node_sets.end() && node_sets.find(dst_addr) == node_sets.end() ) {
-                xwarn("[global_trace][xtx_verifier][address_verify] check whitelist address fail, tx:%s", trx->dump().c_str());
-                return xverifier_error::xverifier_error_addr_invalid;
-            }
-        }        
+        if(verify_check_transaction_whitelist(src_addr, dst_addr) != xverifier_error::xverifier_success) {
+           xwarn("[global_trace][xtx_verifier][address_verify]verify_check_transaction_whitelist addr invalid , tx:%s", trx->dump().c_str());
+           return xverifier_error::xverifier_error_addr_invalid;
+        }
     }
 
     return xverifier_error::xverifier_success;
@@ -270,22 +255,9 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         }
     }
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == true) {
-        if (verify_check_genesis_account(source_addr) || verify_check_genesis_account(target_addr)) {
-            return xverifier_error::xverifier_success;
-        }
-
-        if (data::is_sys_contract_address(sender_addr)) {
-            return xverifier_error::xverifier_success;
-        }
-
-        std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
-        std::set<std::string> node_sets;
-        top::SplitString(nodes, ',', node_sets);
-        if (node_sets.find(source_addr) == node_sets.end() && node_sets.find(target_addr) == node_sets.end()) {
-            xwarn("[xtx_verifier][sys_contract_tx_check] check whitelist address fail, tx:%s", trx_ptr->dump().c_str());
-            return xverifier_error::xverifier_error_addr_invalid;
-        }
+    if(verify_check_transaction_whitelist(source_addr, target_addr) != xverifier_error::xverifier_success) {
+        xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
+        return xverifier_error::xverifier_error_addr_invalid;
     }
 
     if (source_is_user_addr && target_is_sys_contract_addr) {
@@ -465,6 +437,30 @@ bool xtx_verifier::verify_check_genesis_account(const std::string& account)
     }
 
     return false;
+}
+
+ // consortium: check transfer address
+ bool xtx_verifier::verify_check_transaction_whitelist(const std::string& src_addr, const std::string& dst_addr) {
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == true) {
+        
+        if(verify_check_genesis_account(src_addr) ||  verify_check_genesis_account(dst_addr)) {
+            return xverifier_error::xverifier_success;
+        }
+        
+        auto const sender_addr = common::xaccount_address_t{src_addr};
+        if (data::is_sys_contract_address(sender_addr)) {
+            return xverifier_error::xverifier_success;
+        }
+
+        std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+        std::set<std::string> node_sets;
+        top::SplitString(nodes, ',', node_sets);
+        if (node_sets.find(src_addr) == node_sets.end() && node_sets.find(dst_addr) == node_sets.end() ) {
+            xwarn("[global_trace][xtx_verifier][address_verify] check whitelist address fail, src_addr:%s dst_addr:%s.", src_addr.c_str(), dst_addr.c_str());
+            return xverifier_error::xverifier_error_addr_invalid;
+        }
+    }
+    return xverifier_error::xverifier_success;
 }
 
 NS_END2

@@ -204,9 +204,7 @@ int32_t xtransaction_face_t::source_service_fee_exec() {
     int32_t ret = xsuccess;
     if (m_fee.get_service_fee() > 0) {
         ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_BURN, base::vtoken_t(m_fee.get_service_fee()));
-#if defined(XBUILD_CONSORTIUM)
         m_account_ctx->cacl_total_gas_burn(m_fee.get_service_fee());
-#endif 
     }
     return ret;
 }

@@ -16,24 +16,24 @@
 
 #include <string>
 
-NS_BEG4(top, xvm, system_contracts, rec)
+NS_BEG3(top, xvm, consortium)
 
-class xtop_rec_standby_pool_contract final : public xcontract::xcontract_base {
+class xtop_rec_consortium_standby_pool_contract final : public xcontract::xcontract_base {
     using xbase_t = xcontract::xcontract_base;
 
 public:
-    XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_rec_standby_pool_contract);
-    XDECLARE_DEFAULTED_OVERRIDE_DESTRUCTOR(xtop_rec_standby_pool_contract);
+    XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_rec_consortium_standby_pool_contract);
+    XDECLARE_DEFAULTED_OVERRIDE_DESTRUCTOR(xtop_rec_consortium_standby_pool_contract);
 
-    explicit xtop_rec_standby_pool_contract(common::xnetwork_id_t const & network_id);
+    explicit xtop_rec_consortium_standby_pool_contract(common::xnetwork_id_t const & network_id);
 
-    xcontract::xcontract_base * clone() override { return new xtop_rec_standby_pool_contract(network_id()); }
+    xcontract::xcontract_base * clone() override { return new xtop_rec_consortium_standby_pool_contract(network_id()); }
 
     void setup();
 
-    BEGIN_CONTRACT_WITH_PARAM(xtop_rec_standby_pool_contract)
-    CONTRACT_FUNCTION_PARAM(xtop_rec_standby_pool_contract, nodeJoinNetwork2);
-    CONTRACT_FUNCTION_PARAM(xtop_rec_standby_pool_contract, on_timer);
+    BEGIN_CONTRACT_WITH_PARAM(xtop_rec_consortium_standby_pool_contract)
+    CONTRACT_FUNCTION_PARAM(xtop_rec_consortium_standby_pool_contract, nodeJoinNetwork2);
+    CONTRACT_FUNCTION_PARAM(xtop_rec_consortium_standby_pool_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
 private:
@@ -63,7 +63,15 @@ private:
 
     bool update_activated_state(data::election::xstandby_network_storage_result_t & standby_network_storage_result,
                                 data::system_contract::xactivation_record const & activation_record);
-};
-using xrec_standby_pool_contract_t = xtop_rec_standby_pool_contract;
 
-NS_END4
+    /**
+     * @brief  
+     * @note   
+     * @param  account_str: 
+     * @retval 
+     */
+    bool check_node_valid(std::string const &account_str);
+};
+using xrec_consortium_standby_pool_contract_t = xtop_rec_consortium_standby_pool_contract;
+
+NS_END3

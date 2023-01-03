@@ -69,9 +69,7 @@ bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const
         auto token = std::min(balance, detail.m_state_burn_balance);
         unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(token));
         unitstate->token_deposit(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(token));
-#if defined(XBUILD_CONSORTIUM)
         total_burn_out += token;
-#endif 
     }
     if (detail.m_state_lock_balance > 0) {
         auto balance = unitstate->balance();

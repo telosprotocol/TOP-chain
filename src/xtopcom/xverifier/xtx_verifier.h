@@ -112,6 +112,7 @@ public:
     static int32_t verify_local_tx(data::xtransaction_t const * trx);
     static int32_t verify_shard_contract_addr(data::xtransaction_t const * trx_ptr);
     static bool    verify_register_whitelist(const std::string& account);
+    static bool    verify_check_transaction_whitelist(const std::string& src_addr, const std::string& dst_addr);
 };
 
 

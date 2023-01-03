@@ -10,7 +10,7 @@
 #include "xvm/xcontract/xcontract_exec.h"
 #include "xvm/xcontract_helper.h"
 
-NS_BEG2(top, xstake)
+NS_BEG3(top, xvm, consortium)
 
 using namespace xvm;
 using namespace xvm::xcontract;
@@ -21,8 +21,8 @@ struct xreward_cons_property_param_t {
     std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> map_nodes;
 };
 
-class xzec_consortium_reward_contract : public xcontract_base {
-    using xbase_t = xcontract_base;
+class xzec_consortium_reward_contract : public xcontract::xcontract_base {
+    using xbase_t = xcontract::xcontract_base;
 
 public:
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xzec_consortium_reward_contract);
@@ -303,4 +303,4 @@ private:
         uint64_t& next_read_height);
 };
 
-NS_END2
+NS_END3

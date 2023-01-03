@@ -12,14 +12,14 @@
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
 
-NS_BEG3(top, xvm, xcontract)
+NS_BEG3(top, xvm, consortium)
 
 /**
  * @brief the table slash contract
  *
  */
-class xtable_statistic_cons_contract : public xcontract_base {
-    using xbase_t = xcontract_base;
+class xtable_statistic_cons_contract : public xcontract::xcontract_base {
+    using xbase_t = xcontract::xcontract_base;
 
 public:
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtable_statistic_cons_contract);

@@ -612,11 +612,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     xassert(sender() == contract_state()->state_account_address());
     xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
-#if !defined(XBUILD_CONSORTIUM)
     if (sender().to_string() == sys_contract_zec_reward_addr) {
-#else 
-    if (sender().to_string() == sys_contract_zec_consortium_reward_addr) {
-#endif
         xdbg("[xtop_contract_execution_context::execute_default_source_action] reward contract issue, ignore");
         return {};
     }
@@ -801,7 +797,7 @@ void xtop_contract_execution_context::update_tgas_disk_sender(bool is_contract, 
     if (ec) {
         return;
     }
-    tgas_self_usage = tgas_usage - tgas_deposit_usage / g_tx_deposit_fee;
+    tgas_self_usage = tgas_usage - tgas_deposit_usage / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_tgas, tgas_self_usage));
     fee_change.insert(std::make_pair(contract_common::xcontract_execution_fee_option_t::used_deposit, tgas_deposit_usage));
     xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] tgas_self_usage: %" PRIu64 ", tgas_deposit_usage: %" PRIu64, tgas_self_usage, tgas_deposit_usage);
@@ -812,7 +808,7 @@ void xtop_contract_execution_context::update_tgas_disk_sender(bool is_contract, 
     // step3: frozen tgas
     auto const available_tgas = calc_available_tgas();
     auto const lock_tgas = contract_state()->lock_tgas();
-    auto const frozen_tgas = std::min((tx_deposit - tgas_deposit_usage) / g_tx_deposit_fee, available_tgas - lock_tgas);
+    auto const frozen_tgas = std::min((tx_deposit - tgas_deposit_usage) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio), available_tgas - lock_tgas);
     xdbg("[xtop_contract_execution_context::update_tgas_disk_sender] frozen_tgas: %" PRIu64 ", available_tgas: %" PRIu64 ", lock_tgas: %" PRIu64,
          frozen_tgas,
          available_tgas,
@@ -836,7 +832,7 @@ void xtop_contract_execution_context::calc_used_tgas(uint64_t deposit, uint64_t 
          cur_tgas_usage,
          deposit);
     auto available_tgas = calc_available_tgas();
-    if (cur_tgas_usage > (available_tgas + deposit / g_tx_deposit_fee)) {
+    if (cur_tgas_usage > (available_tgas + deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio))) {
         xwarn("[xtop_contract_execution_context::calc_used_tgas] not enough pledge token tgas, cur_tgas_usage: %" PRIu64 ", available_tgas: %" PRIu64 ", deposit: %" PRIu64,
               cur_tgas_usage,
               available_tgas,
@@ -845,7 +841,7 @@ void xtop_contract_execution_context::calc_used_tgas(uint64_t deposit, uint64_t 
         cur_tgas_usage = available_tgas;
         ec = error::xenum_errc::transaction_not_enough_pledge_token_tgas;
     } else if (cur_tgas_usage > available_tgas) {
-        deposit_usage = (cur_tgas_usage - available_tgas) * g_tx_deposit_fee;
+        deposit_usage = (cur_tgas_usage - available_tgas) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
         cur_tgas_usage = available_tgas;
         xdbg("[xtop_contract_execution_context::calc_used_tgas] available_tgas: %" PRIu64 ", cur_tgas_usage: %" PRIu64 ", tx_deposit_usage: %" PRIu64 ", deposit: %" PRIu64,
              available_tgas,

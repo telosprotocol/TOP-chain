@@ -2178,9 +2178,9 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
     xJson::Value j;
 
     std::string xissue_detail_str;
-    if (statestore::xstatestore_hub_t::instance()->get_string_property(zec_reward_consortium_contract_addr, height, data::system_contract::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
+    if (statestore::xstatestore_hub_t::instance()->get_string_property(zec_reward_contract_address, height, data::system_contract::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
         xwarn("[grpc::getConsortiumReward] contract_address: %s, height: %llu, property_name: %s",
-              sys_contract_zec_consortium_reward_addr,
+              sys_contract_zec_reward_addr,
               height,
               data::system_contract::XPROPERTY_REWARD_DETAIL);
         return;
@@ -2205,7 +2205,7 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
 
     xJson::Value jw1;
-    common::xaccount_address_t contract_addr{sys_contract_zec_consortium_reward_addr};
+    common::xaccount_address_t contract_addr{sys_contract_zec_reward_addr};
     std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
     get_zec_workload_map(contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw1);
     if (jw1[prop_name].empty()) {
@@ -2228,16 +2228,6 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
             jr.append(node_reward_json);
         } else {
             std::stringstream ss;
-                /*<< "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-               << static_cast<uint32_t>(node_reward.second.m_edge_reward % data::system_contract::REWARD_PRECISION)
-               << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
-               << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_archive_reward % data::system_contract::REWARD_PRECISION)
-               << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
-               << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_validator_reward % data::system_contract::REWARD_PRECISION)
-               << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
-               << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION)
-               << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
-               << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_vote_reward % data::system_contract::REWARD_PRECISION)*/
              ss << " self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
                << static_cast<uint32_t>(node_reward.second.m_self_reward % data::system_contract::REWARD_PRECISION);
             jr[node_reward.first] = ss.str();
@@ -2260,32 +2250,22 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
     }
 }
 
-void xrpc_query_manager::nodeInfoAccountQuery(xJson::Value& js_req, xJson::Value& js_rsp, std::string& strResult, uint32_t& nErrorCode)
-{
-    std::string type = js_req["type"].asString();
-    std::string owner = js_req["account_addr"].asString();
+// void xrpc_query_manager::queryConsortiumNodeReward(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+//     xJson::Value jv;
+//     std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
+//     std::string target = js_req["node_account_addr"].asString();
+//     std::string version = js_req["version"].asString();
+//     if (version.empty()) {
+//         version = RPC_VERSION_V1;
+//     }
+//     // add top address check
+//     if (!target.empty()) {
+//         ADDRESS_CHECK_VALID(target)
+//     }
 
-    xJson::Value jm;
-    std::map<std::string, std::string> node_info_detail_map;
-    if (statestore::xstatestore_hub_t::instance()->map_copy_get(rec_node_manage_address, data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, node_info_detail_map) != 0) {
-        xwarn("[grpc::nodeInfoAccountQuery] node_info_detail size %d", node_info_detail_map.size());
-    } else {
-        xJson::Value jr_node;
-        for (auto info_detail : node_info_detail_map) {
-            jr_node["account"] = info_detail.first;
-            auto detail = info_detail.second;
-            data::system_contract::xnode_manage_account_info_t node_info;
-            base::xstream_t _stream { xcontext_t::instance(), (uint8_t*)detail.data(), static_cast<uint32_t>(detail.size()) };
-            node_info.serialize_from(_stream);
-            jr_node["reg_time"] = (xJson::UInt64)node_info.reg_time;
-            jr_node["expiry_time"] = (xJson::UInt64)node_info.expiry_time;
-            jr_node["expiry_time"] = (xJson::UInt64)node_info.cert_time;
-            jm.append(jr_node);
-        } 
-    }
+//     js_rsp = parse_sharding_reward(target, prop_name, version, sys_contract_sharding_reward_claiming_addr);
+// }
 
-    js_rsp["value"] = jm;
-}
 #endif 
 }  // namespace chain_info
 }  // namespace top
