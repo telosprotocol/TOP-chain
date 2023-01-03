@@ -320,11 +320,11 @@ namespace top
         bool  xvexegroup_t::remove_all_child_unit()
         {
             std::lock_guard<std::recursive_mutex> locker(m_lock);
-            for(auto it = m_child_units.begin(); it != m_child_units.end(); it++)
+            for(auto it = m_child_units.begin(); it != m_child_units.end(); )
             {
                 it->second->set_parent_unit(NULL);
                 it->second->release_ref();
-                m_child_units.erase(it);
+                it = m_child_units.erase(it);
             }
             return true;
         }
