@@ -127,7 +127,6 @@ namespace top
         class xvheader_t : public xobject_t
         {
             friend class xvblock_t;
-            friend class xvbbuild_t;
             friend class xvblockstore_t;
             friend class xvblockbuild_t;
         public:
@@ -162,6 +161,7 @@ namespace top
             virtual bool               is_equal(const xvheader_t & other) const;
             virtual void*              query_interface(const int32_t _enum_xobject_type_) override final;//caller need to cast (void*) to related ptr
             virtual xauto_ptr<xvheader_t> clone() const;
+            virtual std::string        dump() const override;  //just for debug purpose
         public:
             //[0][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_state_mode] =  [1][3][3][7][2] = 16bits
             inline enum_xvblock_level          get_block_level()  const {return (enum_xvblock_level)((m_types >> 12) & 0x07);}
@@ -307,7 +307,6 @@ namespace top
         class xvqcert_t : public xdataunit_t
         {
             friend class xvblock_t;
-            friend class xvbbuild_t;
             friend class xvblockstore_t;
             friend class xvblockbuild_t;
         public:
@@ -473,7 +472,6 @@ namespace top
         class xvinput_t : public xvexemodule_t
         {
             friend class xvblock_t;
-            friend class xvbbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvinput");}
             static  constexpr char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
@@ -519,7 +517,6 @@ namespace top
         class xvoutput_t : public xvexemodule_t
         {
             friend class xvblock_t;
-            friend class xvbbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvoutput");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -618,7 +615,6 @@ namespace top
 
         class xvblock_t : public xdataobj_t
         {
-            friend class xvbbuild_t;
             friend class xvblockbuild_t;
             friend class xvblockstore_t;
         public:
@@ -706,7 +702,6 @@ namespace top
 
             inline  xvheader_t*         get_header()      const {return m_vheader_ptr;}  //raw ptr of xvheader_t
             inline  xvqcert_t *         get_cert()        const {return m_vqcert_ptr;}   //raw ptr of xvqcert_t
-            inline  xvbstate_t*         get_state()       const {return m_vbstate_ptr;}  //raw ptr of xvbstate
 
             const   std::string         get_block_path()  const; //a base and relative dir of vblock at DB/disk
             const   std::string         get_header_path() const; //header include vcert part as well under get_block_path()
@@ -722,7 +717,6 @@ namespace top
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose
             const   std::string&        dump2();  //just for debug and trace purpose with better performance
-            std::string                 detail_dump() const;  //just for debug purpose
         public:
             xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
@@ -737,7 +731,6 @@ namespace top
             const std::string           get_full_state();
             const std::string           get_binlog() {return get_output()->get_binlog();}
             const std::string &         get_output_offdata() const {return m_output_offdata;}
-            bool                        set_offblock_snapshot(const std::string & snapshot);
             bool                        is_full_state_block();  // used for full-block sync
             uint64_t                    get_block_size();
 
@@ -765,7 +758,6 @@ namespace top
             bool                        reset_prev_block(xvblock_t * _new_prev_block);
             bool                        reset_next_block(xvblock_t * _new_next_block);
             //return false if hash or height not match
-            bool                        reset_block_state(xvbstate_t * _new_state_ptr);
             void                        set_next_next_cert(xvqcert_t * next_next_vqcert_ptr);//reset ptr of next next cert
 
         public: //associated information about parent block(e.g. tableblock)
@@ -822,7 +814,6 @@ namespace top
 
         private://just using them at running and stored in sepereated place than xvblock_t.
             std::string                 m_dump_info;        //pre-print debug inforatmion and just for performance
-            std::string                 m_offblock_snapshot;  // for sync set and cache
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_vote_extend_data;

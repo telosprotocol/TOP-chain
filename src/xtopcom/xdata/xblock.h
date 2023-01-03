@@ -56,7 +56,6 @@ class xblock_t : public base::xvblock_t {
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
     static void  txs_to_receiptids(const std::vector<xlightunit_tx_info_ptr_t> & txs_info, base::xreceiptid_check_t & receiptid_check);
-    static std::string dump_header(base::xvheader_t* header);
     static void  register_object(base::xcontext_t & _context);
 public:
     xblock_t(enum_xdata_type type);
@@ -91,11 +90,6 @@ public:
     inline bool     is_fulltable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_full;}
     inline bool     is_lighttable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_light;}
     inline bool     is_emptytable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_nil;}
-    std::string     get_block_hash_hex_str() const;
-    std::string     dump_header() const;
-    std::string     dump_cert() const;
-    virtual std::string     dump_body() const;
-    std::string     dump_cert(base::xvqcert_t* qcert) const;
 
  public:
     virtual int64_t                     get_pledge_balance_change_tgas() const {return 0;}

@@ -322,23 +322,9 @@ uint64_t xstatestore_executor_t::update_execute_from_execute_height(bool force_u
 xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_current_table(base::xvblock_t* current_block, std::error_code & ec) const {
     xobject_ptr_t<base::xvbstate_t> current_state = nullptr;
     // try make state form block self
-    if ( (current_block->get_height() != 0) && (current_block->get_block_class() != base::enum_xvblock_class_full) ) {
+    if ( current_block->get_height() != 0 ) {
         // it is normal case
         return nullptr;
-    }
-
-    if (current_block->get_block_class() == base::enum_xvblock_class_full) {
-        if (false == m_statestore_base.get_blockstore()->load_block_output(m_table_vaddr, current_block)) {
-            ec = error::xerrc_t::statestore_db_read_abnormal_err;
-            xerror("xstatestore_executor_t::make_state_from_current_table,fail-load block output for block(%s)",current_block->dump().c_str());
-            return nullptr;
-        }
-        if (current_block->get_full_state().empty()) {
-            // it is normal case
-            // ec = error::xerrc_t::statestore_load_unitblock_err;
-            // xwarn("xstatestore_executor_t::make_state_from_current_table,fail-block has no full-state.block=%s", current_block->dump().c_str());
-            return nullptr;
-        }
     }
 
     current_state = make_object_ptr<base::xvbstate_t>(*current_block);

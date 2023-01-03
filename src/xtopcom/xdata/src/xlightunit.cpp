@@ -13,6 +13,7 @@
 #include "xdata/xaction_parse.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xblockextract.h"
 #include "xvledger/xvledger.h"
 
 NS_BEG2(top, data)
@@ -130,30 +131,8 @@ void xlightunit_block_t::parse_to_json(xJson::Value & root, const std::string & 
     }
 }
 
-std::string xlightunit_block_t::dump_body() const {
-    std::stringstream ss;
-    ss << "{";
-    ss << "input=" << get_input()->dump();
-    ss << "output=" << get_output()->dump();
-    ss << "}";
-    return ss.str();
-}
-
 const std::vector<xlightunit_action_ptr_t> xlightunit_block_t::get_txs() const {
-    std::vector<xlightunit_action_ptr_t> txactions;
-    base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
-    if (primary_input_entity == nullptr) {
-        return txactions;
-    }
-    const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
-    for (auto & action : actions) {
-        if (action.get_org_tx_hash().empty()) {
-            continue;
-        }
-        xlightunit_action_ptr_t txaction = std::make_shared<xlightunit_action_t>(action);
-        txactions.push_back(txaction);
-    }
-    return txactions;
+    return {}; // TODO(jimmy) unit not include txs any more
 }
 
 NS_END2

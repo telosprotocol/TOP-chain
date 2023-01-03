@@ -102,14 +102,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_memory_total_size,
 
     // consensus
-    cons_drand_leader_finish_succ,// TODO(jimmy) delete future
-    cons_drand_backup_finish_succ,// TODO(jimmy) delete future
-    cons_drand_leader_finish_fail,// TODO(jimmy) delete future
-    cons_drand_backup_finish_fail,// TODO(jimmy) delete future
-    cons_tableblock_leader_finish_succ,  // TODO(jimmy) delete future
-    cons_tableblock_backup_finish_succ, // TODO(jimmy) delete future
-    cons_tableblock_leader_finish_fail, // TODO(jimmy) delete future
-    cons_tableblock_backup_finish_fail, // TODO(jimmy) delete future
     cons_drand_leader_succ,
     cons_drand_backup_succ,
     cons_tableblock_leader_succ,
