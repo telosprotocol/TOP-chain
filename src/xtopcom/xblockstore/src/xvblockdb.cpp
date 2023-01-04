@@ -578,19 +578,13 @@ namespace top
         int    xvblockdb_t::write_block_input_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr)
         {
             if(block_ptr == NULL)
-                return -1; //invalid params
-            
-            if(block_ptr->get_input() == NULL)
-            {
-                xassert(0);
-                return -1; //invalid params
-            }
+                return -1; //invalid params           
             
             if(index_ptr->check_store_flag(base::enum_index_store_flag_input_resource) == false)
             {
-                if(block_ptr->get_input()->get_resources_hash().empty() == false)
+                if(block_ptr->should_has_input_data())
                 {
-                    const std::string input_res_bin = block_ptr->get_input()->get_resources_data();
+                    const std::string input_res_bin = block_ptr->get_input_data();
                     if(input_res_bin.empty() == false)
                     {
                         update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_input_res, input_res_bin.size());
@@ -622,53 +616,44 @@ namespace top
             if(block_ptr == NULL)
                 return false;
             
-            if(block_ptr->get_input() != NULL) //now has valid input
+            if(  (block_ptr->should_has_input_data()) //link resoure data
+                &&(block_ptr->has_input_data() == false) ) //but dont have resource avaiable now
             {
-                if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
-                   &&(block_ptr->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
+                #if defined(ENABLE_METRICS)
+                XMETRICS_GAUGE(metrics::store_block_input_read, 1);
+                #endif
+                //which means resource are stored at seperatedly
+                const std::string input_resource_key = create_block_input_resource_key(index_ptr);
+                
+                const std::string input_resource_bin = from_db->get_value(input_resource_key);
+                if(input_resource_bin.empty()) //that possible happen actually
                 {
-                    #if defined(ENABLE_METRICS)
-                    XMETRICS_GAUGE(metrics::store_block_input_read, 1);
-                    #endif
-                    //which means resource are stored at seperatedly
-                    const std::string input_resource_key = create_block_input_resource_key(index_ptr);
-                    
-                    const std::string input_resource_bin = from_db->get_value(input_resource_key);
-                    if(input_resource_bin.empty()) //that possible happen actually
+                    xwarn_err("xvblockdb_t::read_block_input_from_db,fail to read resource from db for path(%s)",input_resource_key.c_str());
+                    return false;
+                }
+                if(block_ptr->has_input_data() == false) //double check again
+                {
+                    //set_input_data is thread safe as default implementation
+                    //subclass of input need guanree this promise as well
+                    if(block_ptr->set_input_data(input_resource_bin, false) == false)
                     {
-                        xwarn_err("xvblockdb_t::read_block_input_from_db,fail to read resource from db for path(%s)",input_resource_key.c_str());
+                        xerror("xvblockdb_t::read_block_input_from_db,load bad input-resource for key(%s)",input_resource_key.c_str());
                         return false;
                     }
-                    if(block_ptr->get_input()->has_resource_data() == false) //double check again
-                    {
-                        //set_input_resources is thread safe as default implementation
-                        //subclass of input need guanree this promise as well
-                        if(block_ptr->set_input_resources(input_resource_bin) == false)
-                        {
-                            xerror("xvblockdb_t::read_block_input_from_db,load bad input-resource for key(%s)",input_resource_key.c_str());
-                            return false;
-                        }
-                    }
-                    xdbg("xvblockdb_t::read_block_input_from_db,read block-input resource,block(%s) ",block_ptr->dump().c_str());
                 }
+                xdbg("xvblockdb_t::read_block_input_from_db,read block-input resource,block(%s) ",block_ptr->dump().c_str());
             }
-            return (block_ptr->get_input() != NULL);
+           return true;
         }
         
         int    xvblockdb_t::write_block_output_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr)
         {
             if(block_ptr == NULL)
                 return -1; //invalid params
-            
-            if(block_ptr->get_output() == NULL)
-            {
-                xassert(0);
-                return -1; //invalid params
-            }
-            
+
             if(index_ptr->check_store_flag(base::enum_index_store_flag_output_resource) == false)
             {
-                if(block_ptr->get_output()->get_resources_hash().empty() == false)
+                if(block_ptr->should_has_output_data())
                 {
                     // XTODO write output offdata with output resource
                     if (block_ptr->get_output_offdata_hash().empty() == false)
@@ -692,7 +677,7 @@ namespace top
                     }
 
 
-                    const std::string output_res_bin = block_ptr->get_output()->get_resources_data();
+                    const std::string output_res_bin = block_ptr->get_output_data();
                     if(output_res_bin.empty() == false)
                     {
                         const std::string output_res_key = create_block_output_resource_key(index_ptr);
@@ -724,74 +709,68 @@ namespace top
             if(NULL == block_ptr)
                 return false;
             
-            if(block_ptr->get_output() != NULL) //now has valid output
+            if(  (block_ptr->should_has_output_data()) //link resoure data
+                &&(block_ptr->has_output_data() == false) ) //but dont have resource avaiable now
             {
-                if(  (block_ptr->get_output()->get_resources_hash().empty() == false) //link resoure data
-                   &&(block_ptr->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
+                #if defined(ENABLE_METRICS)
+                XMETRICS_GAUGE(metrics::store_block_output_read, 1);
+                #endif
+                //which means resource are stored at seperatedly
+                const std::string output_resource_key = create_block_output_resource_key(index_ptr);
+                
+                const std::string output_resource_bin = from_db->get_value(output_resource_key);
+                if(output_resource_bin.empty()) //that possible happen actually
                 {
-                    #if defined(ENABLE_METRICS)
-                    XMETRICS_GAUGE(metrics::store_block_output_read, 1);
-                    #endif
-                    //which means resource are stored at seperatedly
-                    const std::string output_resource_key = create_block_output_resource_key(index_ptr);
-                    
-                    const std::string output_resource_bin = from_db->get_value(output_resource_key);
-                    if(output_resource_bin.empty()) //that possible happen actually
+                    xwarn_err("xvblockdb_t::read_block_output_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
+                    return false;
+                }
+                if(block_ptr->has_output_data() == false)//double check again
+                {
+                    //set_output_data is thread safe as default implementation
+                    //subclass of output need guanree this promise as well
+                    if(block_ptr->set_output_data(output_resource_bin, false) == false)
                     {
-                        xwarn_err("xvblockdb_t::read_block_output_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
+                        xerror("xvblockdb_t::read_block_output_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
                         return false;
                     }
-                    if(block_ptr->get_output()->has_resource_data() == false)//double check again
-                    {
-                        //set_output_resources is thread safe as default implementation
-                        //subclass of output need guanree this promise as well
-                        if(block_ptr->set_output_resources(output_resource_bin) == false)
-                        {
-                            xerror("xvblockdb_t::read_block_output_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
-                            return false;
-                        }
-                    }
-                    xdbg("xvblockdb_t::read_block_output_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
                 }
+                xdbg("xvblockdb_t::read_block_output_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
             }
-            return (block_ptr->get_output() != NULL);
+            return true;
         }
         bool    xvblockdb_t::read_block_output_offdata_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db)
         {
             if(NULL == block_ptr)
                 return false;
             
-            if(block_ptr->get_output() != NULL) //now has valid output
+            if(  (block_ptr->should_has_output_offdata()) //link resoure data
+                &&(block_ptr->has_output_offdata() == false) ) //but dont have resource avaiable now
             {
-                if(  (block_ptr->get_output_offdata_hash().empty() == false) //link resoure data
-                   &&(block_ptr->get_output_offdata().empty() == true) ) //but dont have resource avaiable now
+                #if defined(ENABLE_METRICS)
+                XMETRICS_GAUGE(metrics::store_block_output_read, 1);
+                #endif
+                //which means resource are stored at seperatedly
+                const std::string output_resource_key = create_block_output_offdata_key(index_ptr);
+                
+                const std::string output_resource_bin = from_db->get_value(output_resource_key);
+                if(output_resource_bin.empty()) //that possible happen actually
                 {
-                    #if defined(ENABLE_METRICS)
-                    XMETRICS_GAUGE(metrics::store_block_output_read, 1);
-                    #endif
-                    //which means resource are stored at seperatedly
-                    const std::string output_resource_key = create_block_output_offdata_key(index_ptr);
-                    
-                    const std::string output_resource_bin = from_db->get_value(output_resource_key);
-                    if(output_resource_bin.empty()) //that possible happen actually
+                    xwarn("xvblockdb_t::read_block_output_offdata_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
+                    return false;
+                }
+                if(block_ptr->has_output_offdata() == false)//double check again
+                {
+                    //set_output_data is thread safe as default implementation
+                    //subclass of output need guanree this promise as well
+                    if(block_ptr->set_output_offdata(output_resource_bin, false) == false)
                     {
-                        xwarn("xvblockdb_t::read_block_output_offdata_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
+                        xerror("xvblockdb_t::read_block_output_offdata_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
                         return false;
                     }
-                    if(block_ptr->get_output_offdata().empty() == true)//double check again
-                    {
-                        //set_output_resources is thread safe as default implementation
-                        //subclass of output need guanree this promise as well
-                        if(block_ptr->set_output_offdata(output_resource_bin) == false)
-                        {
-                            xerror("xvblockdb_t::read_block_output_offdata_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
-                            return false;
-                        }
-                    }
-                    xdbg("xvblockdb_t::read_block_output_offdata_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
                 }
+                xdbg("xvblockdb_t::read_block_output_offdata_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
             }
-            return (block_ptr->get_output() != NULL);
+            return true;
         }        
 
         //note: caller need release block ptr

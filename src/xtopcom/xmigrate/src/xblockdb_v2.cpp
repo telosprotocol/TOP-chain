@@ -191,33 +191,31 @@ namespace top
                 return true;
             
             base::xvblock_t * block_ptr = index_ptr->get_this_block();
-            if(block_ptr->get_input() != NULL) //now has valid input
+            if(  (block_ptr->should_has_input_data()) //link resoure data
+                &&(block_ptr->has_input_data() == false) ) //but dont have resource avaiable now
             {
-                if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
-                   &&(block_ptr->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
+                //which means resource are stored at seperatedly
+                const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*index_ptr,index_ptr->get_block_hash());
+                const std::string input_resource_bin = get_xdbstore()->get_value(input_resource_key);
+                if(input_resource_bin.empty()) //that possible happen actually
                 {
-                    //which means resource are stored at seperatedly
-                    const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*index_ptr,index_ptr->get_block_hash());
-                    const std::string input_resource_bin = get_xdbstore()->get_value(input_resource_key);
-                    if(input_resource_bin.empty()) //that possible happen actually
+                    xwarn_err("xvblockdb_t::read_block_input_from_db,fail to read resource from db for path(%s)",input_resource_key.c_str());
+                    return false;
+                }
+                if(block_ptr->has_input_data() == false) //double check again
+                {
+                    //set_input_data is thread safe as default implementation
+                    //subclass of input need guanree this promise as well
+                    if(block_ptr->set_input_data(input_resource_bin) == false)
                     {
-                        xwarn_err("xvblockdb_t::read_block_input_from_db,fail to read resource from db for path(%s)",input_resource_key.c_str());
+                        xerror("xvblockdb_t::read_block_input_from_db,load bad input-resource for key(%s)",input_resource_key.c_str());
                         return false;
                     }
-                    if(block_ptr->get_input()->has_resource_data() == false) //double check again
-                    {
-                        //set_input_resources is thread safe as default implementation
-                        //subclass of input need guanree this promise as well
-                        if(block_ptr->set_input_resources(input_resource_bin) == false)
-                        {
-                            xerror("xvblockdb_t::read_block_input_from_db,load bad input-resource for key(%s)",input_resource_key.c_str());
-                            return false;
-                        }
-                    }
-                    xdbg("xvblockdb_t::read_block_input_from_db,read block-input resource,block(%s) ",block_ptr->dump().c_str());
                 }
+                xdbg("xvblockdb_t::read_block_input_from_db,read block-input resource,block(%s) ",block_ptr->dump().c_str());
             }
-            return (block_ptr->get_input() != NULL);
+
+            return true;
         }
 
         bool    xblockdb_v2_t::load_block_output(base::xvbindex_t* index_ptr)
@@ -228,33 +226,32 @@ namespace top
             
             base::xvblock_t * block_ptr = index_ptr->get_this_block();
             xdbg("xvblockdb_t::load_block_output,target index(%s)",index_ptr->dump().c_str());
-            if(block_ptr->get_output() != NULL) //now has valid output
+
+            if(  (block_ptr->should_has_output_data()) //link resoure data
+                &&(block_ptr->has_output_data() == false) ) //but dont have resource avaiable now
             {
-                if(  (block_ptr->get_output()->get_resources_hash().empty() == false) //link resoure data
-                   &&(block_ptr->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
+                //which means resource are stored at seperatedly
+                const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*index_ptr,index_ptr->get_block_hash());                    
+                const std::string output_resource_bin = get_xdbstore()->get_value(output_resource_key);
+                if(output_resource_bin.empty()) //that possible happen actually
                 {
-                    //which means resource are stored at seperatedly
-                    const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*index_ptr,index_ptr->get_block_hash());                    
-                    const std::string output_resource_bin = get_xdbstore()->get_value(output_resource_key);
-                    if(output_resource_bin.empty()) //that possible happen actually
+                    xwarn_err("xvblockdb_t::read_block_output_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
+                    return false;
+                }
+                if(block_ptr->has_output_data() == false)//double check again
+                {
+                    //set_output_data is thread safe as default implementation
+                    //subclass of output need guanree this promise as well
+                    if(block_ptr->set_output_data(output_resource_bin) == false)
                     {
-                        xwarn_err("xvblockdb_t::read_block_output_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
+                        xerror("xvblockdb_t::read_block_output_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
                         return false;
                     }
-                    if(block_ptr->get_output()->has_resource_data() == false)//double check again
-                    {
-                        //set_output_resources is thread safe as default implementation
-                        //subclass of output need guanree this promise as well
-                        if(block_ptr->set_output_resources(output_resource_bin) == false)
-                        {
-                            xerror("xvblockdb_t::read_block_output_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
-                            return false;
-                        }
-                    }
-                    xdbg("xvblockdb_t::read_block_output_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
                 }
+                xdbg("xvblockdb_t::read_block_output_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
             }
-            return (block_ptr->get_output() != NULL);
+
+            return true;
         }
     
         bool   xblockdb_v2_t::load_blocks(const base::xvaccount_t & account,const uint64_t target_height, std::vector<xobject_ptr_t<base::xvblock_t>> & blocks)

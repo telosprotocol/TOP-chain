@@ -27,10 +27,10 @@ namespace top
                 return false;
             
             const std::string _input_path    = store_path + block_ptr->get_input_path();
-            set_value(_input_path,block_ptr->get_input()->get_resources_data());
+            set_value(_input_path,block_ptr->get_input_data());
             
             const std::string _output_path    = store_path + block_ptr->get_output_path();
-            set_value(_output_path,block_ptr->get_output()->get_resources_data());
+            set_value(_output_path,block_ptr->get_output_data());
             
             std::string       _header_cert_bin;
             const std::string _header_cert_path  = store_path + block_ptr->get_header_path();
@@ -65,13 +65,13 @@ namespace top
                     const std::string _input_content = get_value(full_input_path);
                     if(false == _input_content.empty())
                     {
-                        block_ptr->set_input_resources(_input_content);
+                        block_ptr->set_input_data(_input_content);
                     }
                     const std::string full_output_path = store_path + block_ptr->get_output_path();
                     const std::string _output_content = get_value(full_output_path);
                     if(false == _output_content.empty())
                     {
-                        block_ptr->set_output_resources(_output_content);
+                        block_ptr->set_output_data(_output_content);
                     }
                 }
             }
@@ -101,7 +101,7 @@ namespace top
                 const std::string _input_content = get_value(full_input_path);
                 if(false == _input_content.empty())
                 {
-                    block_ptr->set_input_resources(_input_content);
+                    block_ptr->set_input_data(_input_content);
                 }
             }
             return true;
@@ -117,7 +117,7 @@ namespace top
                 const std::string _output_content = get_value(full_output_path);
                 if(false == _output_content.empty())
                 {
-                    block_ptr->set_output_resources(_output_content);
+                    block_ptr->set_output_data(_output_content);
                 }
             }
             return true;

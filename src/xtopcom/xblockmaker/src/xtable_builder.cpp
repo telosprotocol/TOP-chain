@@ -63,12 +63,9 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     int64_t tgas_balance_change_total = 0;
     for(auto & block : blocks) {
         if (block->get_block_class() == base::enum_xvblock_class_light) {
-            auto out_entity = block->get_output()->get_primary_entity();
-            if (out_entity != nullptr) {
-                int64_t tgas_balance_change = base::xstring_utl::toint64(out_entity->query_value(base::xvoutentity_t::key_name_tgas_pledge_change()));
-                tgas_balance_change_total += tgas_balance_change;
-                xdbg("tgas_balance_change_total=%lld, cur=%lld, account=%s", tgas_balance_change_total, tgas_balance_change, block->dump().c_str());
-            }
+            int64_t tgas_balance_change = block->get_pledge_balance_change_tgas();
+            tgas_balance_change_total += tgas_balance_change;
+            xdbg("tgas_balance_change_total=%lld, cur=%lld, account=%s", tgas_balance_change_total, tgas_balance_change, block->dump().c_str());
         }
     }
 

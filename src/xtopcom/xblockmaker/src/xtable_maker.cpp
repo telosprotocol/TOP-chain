@@ -458,12 +458,22 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     xblock_ptr_t current_block = prev_block;
     xassert(current_block->get_height() > 0);
     _form_highest_blocks.push_back(current_block);
+    if (false == get_blockstore()->load_block_input(*this, current_block.get())
+        || false == get_blockstore()->load_block_output(*this, current_block.get()) ) {
+        xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block body.account=%s,height=%ld", get_account().c_str(), current_block->get_height());
+        return false;
+    }
 
     while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() > 1) {
         // only mini-block is enough
         base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_table);
         if (_block == nullptr) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+            return false;
+        }
+        if (false == get_blockstore()->load_block_input(*this, _block.get())
+            || false == get_blockstore()->load_block_output(*this, _block.get()) ) {
+            xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block body.account=%s,height=%ld", get_account().c_str(), _block->get_height());
             return false;
         }
         current_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
@@ -620,25 +630,12 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
     }
 
     bool bret = false;
-    if (proposal_block->get_block_class() != base::enum_xvblock_class_nil) {
-        std::string vinput_bin;
-        local_block->get_input()->serialize_to_string(vinput_bin);
-        std::string voutput_bin;
-        local_block->get_output()->serialize_to_string(voutput_bin);
-
-        bret = proposal_block->set_input_output(vinput_bin, voutput_bin);
-        if (!bret) {
-            xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input fail");
-            return false;
-        }        
-    }
-
-    bret = proposal_block->set_output_resources(local_block->get_output()->get_resources_data());
+    bret = proposal_block->set_output_data(local_block->get_output_data());
     if (!bret) {
         xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block output resource fail");
         return false;
     }
-    bret = proposal_block->set_input_resources(local_block->get_input()->get_resources_data());
+    bret = proposal_block->set_input_data(local_block->get_input_data());
     if (!bret) {
         xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input resource fail");
         return false;

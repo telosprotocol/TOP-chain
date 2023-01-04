@@ -10,6 +10,7 @@
 #include "xventity.h"
 #include "xvtransact.h"
 #include "xvblock_fork.h"
+#include "xvledger/xvblock_extra.h"
 
 namespace top
 {
@@ -101,6 +102,18 @@ namespace top
             enum_xvblock_type_batch     = 10,//that is a batch group(like table or book)
         };
 
+        //three body type
+        enum enum_xvblock_body_type
+        {
+            enum_xvblock_body_type_input            = 0x0001,
+            enum_xvblock_body_type_output           = 0x0002,
+            enum_xvblock_body_type_outputoffdata    = 0x0004,
+            enum_xvblock_body_type_none             = 0,
+            enum_xvblock_body_type_input_output     = enum_xvblock_body_type_input|enum_xvblock_body_type_output,
+            enum_xvblock_body_type_output_outputoffdata = enum_xvblock_body_type_output|enum_xvblock_body_type_outputoffdata,
+            enum_xvblock_body_type_all              = enum_xvblock_body_type_input|enum_xvblock_body_type_output|enum_xvblock_body_type_outputoffdata,
+        };
+
         //total 2bits = max 4 definition
         enum enum_xvblock_character // for future definition
         {
@@ -168,6 +181,7 @@ namespace top
             inline enum_xvblock_class          get_block_class()  const {return (enum_xvblock_class)((m_types >> 9) & 0x07);}
             inline enum_xvblock_type           get_block_type()   const {return (enum_xvblock_type) ((m_types >> 2) & 0x7F);}
             inline int                         get_block_characters()const {return (m_types & 0x03);}
+            inline bool                        is_character_cert_header_only() const {return get_block_characters() & enum_xvblock_character_certify_header_only;}
             inline const uint16_t              get_block_raw_types() const {return m_types;}
 
             //common information for this block
@@ -379,8 +393,6 @@ namespace top
             inline   uint32_t                  get_modified_count()const {return m_modified_count;}
             uint32_t                           add_modified_count();
 
-            //may remove set_gmtime soon
-            void                set_gmtime(const uint64_t gmtime_seconds_now);//gmtime_now could be get from
         public: //note: not allow do any modify once m_verify_signature/m_audit_signature is valid or  m_parent_cert is valid
             bool                 is_allow_modify() const;  //whether allow to change some content before has valid signature
             void                 reset_block_flags(); //clean all flags related block
@@ -629,8 +641,8 @@ namespace top
             static xvblock_t*          create_block_object(const std::string  & vblock_serialized_data, bool check_input_output = true);
             static xvheader_t*         create_header_object(const std::string & vheader_serialized_data);
             static xvqcert_t*          create_qcert_object(const std::string  & vqcert_serialized_data);
-            static xvinput_t*          create_input_object(const std::string  & vinput_serialized_data);
-            static xvoutput_t*         create_output_object(const std::string & voutput_serialized_data);
+            static xvinput_t*          create_input_object(bool include_resource, const std::string  & vinput_serialized_data);
+            static xvoutput_t*         create_output_object(bool include_resource, const std::string & voutput_serialized_data);
             static xvbindex_t*         create_index_object(const std::string & vindex_serialized_data);
             static xvbstate_t*         create_state_object(const std::string & serialized_data);
 
@@ -638,7 +650,7 @@ namespace top
             virtual std::string        get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vblock};//allow xbase create xvblock_t object from xdataobj_t::read_from()
             //check whether those qcert,header,input,output etc are constist and pass test of hash
-            static  bool  prepare_block(xvqcert_t & _vcert,xvheader_t & _vheader,xvinput_t * _vinput,xvoutput_t * _voutput);
+            bool  prepare_block(xvqcert_t & _vcert,xvheader_t & _vheader,xvinput_t * _vinput,xvoutput_t * _voutput);
             static  void                register_object(xcontext_t & _context); //internal use only
         public:
             xvblock_t(const xvblock_t & obj,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vblock);
@@ -663,6 +675,7 @@ namespace top
             virtual bool                is_equal(const xvblock_t & other)   const;//compare everyting except certification
             virtual void*               query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
 
+        public://header&cert get apis
             //note:m_height,m_networkid,m_account are copy from m_vheader_ptr,so PLEASE update_header() when xvheader_t changed them(rare case)
             inline  uint64_t            get_viewid()      const {return m_vqcert_ptr->get_viewid();}
             inline  uint32_t            get_viewtoken()   const {return m_vqcert_ptr->get_viewtoken();}
@@ -674,7 +687,7 @@ namespace top
             inline  enum_xvblock_type   get_block_type()  const {return m_vheader_ptr->get_block_type();}
             inline  enum_xvblock_level  get_block_level() const {return m_vheader_ptr->get_block_level();}
             inline  uint64_t            get_timestamp()   const {return m_vqcert_ptr->get_gmtime();}  // default timestamp is clock level gmtime, which is used for tx execute
-            virtual uint64_t            get_second_level_gmtime() const {return 0;}  // table-block has second level gmtime used for performance statistics
+            uint64_t                    get_second_level_gmtime() const;  // table-block has second level gmtime used for performance statistics
 
             //note:block'hash actually = cert'hash
             inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}
@@ -718,28 +731,17 @@ namespace top
             virtual std::string         dump() const override;  //just for debug purpose
             const   std::string&        dump2();  //just for debug and trace purpose with better performance
         public:
-            xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
-            xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
             virtual std::vector<base::xvaction_t> get_tx_actions() const {return std::vector<base::xvaction_t>{};}
             virtual std::vector<base::xvaction_t> get_one_tx_action(const std::string & txhash) const {return std::vector<base::xvaction_t>{};}
             virtual std::vector<xvsubblock_index_t> get_subblocks_index() const {return std::vector<xvsubblock_index_t>{};}
 
-            const std::string           get_fullstate_hash();
-            const std::string           get_account_indexs() const {return get_output()->get_account_indexs();}
-            const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
-            const std::string           get_output_offdata_hash() const {return get_output()->get_output_offdata_hash();}
-            const std::string           get_full_state();
-            const std::string           get_binlog() {return get_output()->get_binlog();}
-            const std::string &         get_output_offdata() const {return m_output_offdata;}
-            bool                        is_full_state_block();  // used for full-block sync
+            const std::string           get_fullstate_hash() const;
+            const std::string           get_account_indexs() const;
+            const std::string           get_binlog_hash() const;            
+            const std::string           get_full_state() const;
+            const std::string           get_binlog() const;
             uint64_t                    get_block_size();
-
-            bool                        set_input_output(const std::string & input_data, const std::string & output_data);
-
-            //check whether match hash of resource first
-            bool                        set_input_resources(const std::string & raw_resource_data);
-            bool                        set_output_resources(const std::string & raw_resource_data);
-            bool                        set_output_offdata(const std::string & raw_data);
+            int64_t                     get_pledge_balance_change_tgas() const;
 
             //only open for xvblock_t object to set them after verify singature by CA(xvcertauth_t)
             void                        set_verify_signature(const std::string & proof);
@@ -776,6 +778,35 @@ namespace top
             void  set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer) {m_excontainer = excontainer;}
             const std::shared_ptr<xvblock_excontainer_base> & get_excontainer() const {return m_excontainer;}
 
+        public: // input&output public apis
+            xobject_ptr_t<xvinput_t>    load_input(std::error_code & ec)  const;//load input on-demand
+            xobject_ptr_t<xvoutput_t>   load_output(std::error_code & ec) const;//load output on-demand
+            std::string                 query_input_resource(std::string const & key) const;
+            std::string                 query_output_resource(std::string const & key) const;
+            std::string                 query_output_entity(std::string const & key) const;
+
+            std::string const&          get_input_data_hash() const;
+            std::string const&          get_output_data_hash() const;
+            std::string                 get_output_offdata_hash() const;
+
+            std::string const&          get_input_data() const {return m_vinput_data;}
+            std::string const&          get_output_data() const {return m_voutput_data;}
+            std::string const&          get_output_offdata() const {return m_output_offdata;}            
+            inline bool                 has_input_data() const {return !m_vinput_data.empty();}
+            inline bool                 has_output_data() const {return !m_voutput_data.empty();}
+            inline bool                 has_output_offdata() const {return !m_output_offdata.empty();}
+            bool                        should_has_input_data() const;
+            bool                        should_has_output_data() const;
+            bool                        should_has_output_offdata() const;
+
+            bool                        set_input_data(const std::string & input_data, bool check_hash=true);
+            bool                        set_output_data(const std::string & output_data, bool check_hash=true);            
+            bool                        set_input_output(const std::string & input_data, const std::string & output_data, bool check_hash);
+            bool                        set_output_offdata(const std::string & raw_data, bool check_hash=true);
+        private: // input&output private apis
+            xvinput_t*                  get_input()  const;//raw ptr of xvinput_t
+            xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
+
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
             //path like :   chainid/account/height/name
@@ -798,9 +829,11 @@ namespace top
             xvheader_t*                 m_vheader_ptr;      //note: it must be valid at all time
             xvqcert_t *                 m_vqcert_ptr;       //note: it must be valid at all time
 
-            xvinput_t*                  m_vinput_ptr;       //note: it must be valid at all time,even a empty input
-            xvoutput_t*                 m_voutput_ptr;      //note: it must be valid at all time,even a empty output
-            xvbstate_t*                 m_vbstate_ptr;      //note: it might be empty. point to current state of this block
+            mutable xvinput_t*          m_vinput_ptr;       //note: it must be valid at all time,even a empty input
+            mutable xvoutput_t*         m_voutput_ptr;      //note: it must be valid at all time,even a empty output
+            std::string                 m_vinput_data;      //note: on demand load input object
+            std::string                 m_voutput_data;     //note: on demand load input object
+            std::string                 m_output_offdata;
             uint64_t                    m_next_next_viewid; //persist store viewid of next and next hqc
 
         private://not serialized to db.
@@ -817,7 +850,6 @@ namespace top
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_vote_extend_data;
-            std::string                 m_output_offdata;
             std::shared_ptr<xvblock_excontainer_base> m_excontainer{nullptr};
             std::string                 m_proposal;    //raw proposal
             bool                        m_not_serialize_input_output{false};

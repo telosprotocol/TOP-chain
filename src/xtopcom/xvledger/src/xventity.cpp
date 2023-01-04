@@ -552,34 +552,34 @@ namespace top
             return true;
         }
     
-        int32_t   xvexemodule_t::serialize_to_string(std::string & bin_data)
+        int32_t   xvexemodule_t::serialize_to_string(bool include_resource,std::string & bin_data)
         {
             base::xautostream_t<1024> _stream(base::xcontext_t::instance());
-            const int result = serialize_to(_stream);
+            const int result = serialize_to(include_resource,_stream);
             if(result > 0)
                 bin_data.assign((const char*)_stream.data(),_stream.size());
             
             return result;
         }
         
-        int32_t   xvexemodule_t::serialize_to(xstream_t & stream)
+        int32_t   xvexemodule_t::serialize_to(bool include_resource,xstream_t & stream)
         {
-            return do_write(stream);
+            return do_write(include_resource, stream);
         }
         
-        int32_t   xvexemodule_t::serialize_from_string(const std::string & bin_data) //wrap function fo serialize_from(stream)
+        int32_t   xvexemodule_t::serialize_from_string(bool include_resource,const std::string & bin_data) //wrap function fo serialize_from(stream)
         {
             base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
-            const int result = serialize_from(_stream);
+            const int result = serialize_from(include_resource,_stream);
             return result;
         }
         
-        int32_t   xvexemodule_t::serialize_from(xstream_t & stream)//not allow subclass change behavior
+        int32_t   xvexemodule_t::serialize_from(bool include_resource,xstream_t & stream)//not allow subclass change behavior
         {
-            return do_read(stream);
+            return do_read(include_resource,stream);
         }
         
-        int32_t     xvexemodule_t::do_write(xstream_t & stream)//not allow subclass change behavior
+        int32_t     xvexemodule_t::do_write(bool include_resource,xstream_t & stream)//not allow subclass change behavior
         {
             const int32_t begin_size = stream.size();
             stream.write_tiny_string(m_resources_hash);
@@ -592,10 +592,14 @@ namespace top
             {
                 item->serialize_to(stream);
             }
+            if (include_resource) {
+                std::string resource = get_resources_data();
+                stream.write_compact_var(resource);
+            }
             return (stream.size() - begin_size);
         }
         
-        int32_t     xvexemodule_t::do_read(xstream_t & stream) //not allow subclass change behavior
+        int32_t     xvexemodule_t::do_read(bool include_resource,xstream_t & stream) //not allow subclass change behavior
         {
             const int32_t begin_size = stream.size();
             stream.read_tiny_string(m_resources_hash);
@@ -613,6 +617,18 @@ namespace top
                     return enum_xerror_code_bad_stream;
                 }
                 m_entitys.push_back(entity);
+            }
+            if (include_resource) {
+                if (stream.size() <= 0) {
+                    xerror("xvexemodule_t::do_read,fail to read resource from stream");
+                    return enum_xerror_code_bad_stream;
+                }
+                std::string resource;
+                stream.read_compact_var(resource);
+                if (false == set_resources_data(resource)) {
+                    xerror("xvexemodule_t::do_read,fail set resource from stream");
+                    return enum_xerror_code_bad_stream;                    
+                }
             }
             return (begin_size - stream.size());
         }

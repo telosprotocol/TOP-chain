@@ -232,10 +232,8 @@ base::xvblock_t*  xblocktool_t::create_next_fullunit(const xfullunit_block_para_
 }
 
 base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
-    xlighttable_build_t bbuild(prev_block, bodypara, cs_para);
-    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
-    _new_block->add_ref();
-    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+    assert(false);
+    return nullptr; // TODO(jimmy) delete
 }
 
 base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
@@ -503,7 +501,9 @@ std::vector<xcons_transaction_ptr_t> xblocktool_t::create_txreceipts(base::xvblo
         return {};
     }
     // get all leafs firstly for performance
-    std::vector<std::string> all_leafs = base::xvblockmaker_t::get_input_merkle_leafs(commit_block->get_input());
+    std::error_code ec;
+    auto input_object = commit_block->load_input(ec);    
+    std::vector<std::string> all_leafs = base::xvblockmaker_t::get_input_merkle_leafs(input_object.get());
 
     base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(all_leafs);
     // #3 calc leaf path and make rceipt
@@ -521,7 +521,7 @@ std::vector<xcons_transaction_ptr_t> xblocktool_t::create_txreceipts(base::xvblo
         // _receipt_ptr.attach(_receipt);
         std::string orgtx_bin;
         if (action.is_send_tx()) {
-            orgtx_bin = commit_block->get_input()->query_resource(action.get_org_tx_hash());// only sendtx has origin raw tx bin
+            orgtx_bin = commit_block->query_input_resource(action.get_org_tx_hash());// only sendtx has origin raw tx bin
             xassert(!orgtx_bin.empty());
         }
         base::xfull_txreceipt_t full_txreceipt(_receipt_ptr, orgtx_bin);
