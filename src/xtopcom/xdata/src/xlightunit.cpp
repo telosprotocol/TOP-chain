@@ -132,7 +132,13 @@ void xlightunit_block_t::parse_to_json(xJson::Value & root, const std::string & 
 }
 
 const std::vector<xlightunit_action_ptr_t> xlightunit_block_t::get_txs() const {
-    return {}; // TODO(jimmy) unit not include txs any more
+    auto _txactions = data::xblockextract_t::unpack_txactions((base::xvblock_t*)this);
+    std::vector<xlightunit_action_ptr_t> txactions;
+    for (auto & action : _txactions) {
+        xlightunit_action_ptr_t txaction = std::make_shared<xlightunit_action_t>(action);
+        txactions.push_back(txaction);
+    }
+    return txactions;
 }
 
 NS_END2
