@@ -129,6 +129,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_memo(const std::string & memo) override { };
     virtual const std::string & get_memo() const override { return strNull; }
     virtual bool is_evm_tx() const override {return m_transaction_type != xtransaction_type_transfer;}
+    virtual int32_t get_object_size() const override;
 public:
     virtual xbytes_t const& get_data() const override { return m_ethtx.get_data(); }
     virtual const top::evm_common::u256 get_gaslimit() const override {return m_ethtx.get_gas(); }

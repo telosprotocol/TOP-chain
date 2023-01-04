@@ -120,8 +120,10 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
 
  public:
     xobject_ptr_t<base::xvqcert_t> get_receipt_prove_cert_and_account(std::string & account) const;
-    void                           set_not_need_confirm();
+    void                    set_not_need_confirm();
     void                    set_inner_table_flag();
+
+    int32_t                 get_object_size() const;
 
  private:
     void                    set_tx_subtype(enum_transaction_subtype _subtype);
@@ -141,6 +143,9 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint64_t                    m_push_pool_timestamp{0};
     xtransaction_exec_state_t   m_execute_state;
     std::string                 m_dump_str;
+#ifdef CACHE_SIZE_STATISTIC
+    mutable int32_t                     m_object_size{0};
+#endif
 };
 
 using xcons_transaction_ptr_t = xobject_ptr_t<xcons_transaction_t>;

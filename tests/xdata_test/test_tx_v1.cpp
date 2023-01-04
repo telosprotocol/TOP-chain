@@ -3,6 +3,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xconfig_register.h"
 #include "xbase/xmem.h"
+#include "xevm_common/common.h"
 
 using namespace top;
 using namespace top::base;
@@ -80,4 +81,25 @@ TEST_F(test_tx_v1, serialize_by_base_transfer) {
     EXPECT_EQ(tx_r->get_target_addr(), target_addr);
     EXPECT_EQ(tx_r->get_deposit(), min_tx_deposit);
     EXPECT_EQ(tx_r->get_authorization(), authorization);
+}
+
+// class test_class_t : public xbase_dataunit_t<test_class_t, xdata_type_transaction> {
+// public:
+//     virtual int32_t    do_write(base::xstream_t & stream) override {return 0;}
+//     virtual int32_t    do_read(base::xstream_t & stream) override {return 0;}
+//     uint256_t m_hash{};
+// };
+
+class test_class_t {
+public:
+    // std::string a;
+    // top::evm_common::u256 hash;
+    // uint256_t m_hash{};
+    std::array<uint8_t, 20> raw_address_;
+
+};
+
+TEST_F(test_tx_v1, object_size) {
+    test_class_t t;
+    std::cout << "test_class_t size :" << sizeof(t) << std::endl;
 }

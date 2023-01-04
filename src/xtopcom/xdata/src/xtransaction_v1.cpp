@@ -5,6 +5,7 @@
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
+#include "xbasic/xbasic_size.hpp"
 #include "xutility/xhash.h"
 #include "xcrypto/xckey.h"
 
@@ -599,6 +600,15 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
     }
 
     return 0;
+}
+
+int32_t xtransaction_v1_t::get_object_size() const {
+    int32_t total_size = sizeof(*this);
+    // add string member variable alloc size.
+    total_size += get_size(m_challenge_proof) + get_size(m_ext) + get_size(m_memo) + get_size(m_authorization) + get_size(m_edge_nodeid) + get_size(m_target_addr) + get_size(m_transaction_hash_str);
+    // add string member variable in xaction_t alloc size
+    total_size += m_source_action.get_ex_alloc_size() + m_target_action.get_ex_alloc_size();
+    return total_size;   
 }
 
 }  // namespace data

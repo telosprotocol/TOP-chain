@@ -17,12 +17,36 @@ namespace xtxpool_v2 {
 
 using namespace top::data;
 
+xreceipt_queue_internal_t::~xreceipt_queue_internal_t() {
+#ifdef CACHE_SIZE_STATISTIC
+    int32_t recv_size = 0;
+    int32_t confirm_size = 0;
+    uint32_t recv_tx_num = 0;
+    for (const auto & tx_ent : m_tx_queue) {
+        if (tx_ent->get_tx()->is_recv_tx()) {
+            recv_size += tx_ent->get_tx()->get_object_size();
+            recv_tx_num++;
+        } else {
+            confirm_size += tx_ent->get_tx()->get_object_size();
+        }
+    }
+    // here gauge twice to match count of txpool_recv_tx_cur and txpool_confirm_tx_cur.
+    XMETRICS_GAUGE(metrics::cachesize_receipt_queue, -recv_size);
+    XMETRICS_GAUGE(metrics::cachesize_receipt_queue, -confirm_size);
+    // xdbg("~xreceipt_queue_internal_t recv dec num =%u, confirm dec num =%u", recv_tx_num, m_tx_queue.size() - recv_tx_num);
+#endif
+}
+
 void xreceipt_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_tx_queue.insert(tx_ent);
     m_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->tx_inc(tx_ent->get_tx()->get_tx_subtype(), 1);
+#ifdef CACHE_SIZE_STATISTIC
+    auto size = tx_ent->get_tx()->get_object_size();
+    XMETRICS_GAUGE(metrics::cachesize_receipt_queue, size);
+#endif
     xtxpool_info("xreceipt_queue_internal_t::insert_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
@@ -37,7 +61,10 @@ void xreceipt_queue_internal_t::erase_tx(const std::string & hash_str) {
         } else {
             XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_confirm, delay);
         }
-
+#ifdef CACHE_SIZE_STATISTIC
+        auto size = tx_ent->get_tx()->get_object_size();
+        XMETRICS_GAUGE(metrics::cachesize_receipt_queue, -size);
+#endif
         m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), 1);
         m_tx_queue.erase(it_tx_map->second);
         m_tx_map.erase(it_tx_map);

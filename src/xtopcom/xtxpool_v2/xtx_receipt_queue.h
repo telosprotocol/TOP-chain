@@ -43,6 +43,7 @@ class xreceipt_queue_internal_t {
 public:
     xreceipt_queue_internal_t(xtxpool_table_info_t * xtable_info) : m_xtable_info(xtable_info) {
     }
+    ~xreceipt_queue_internal_t();
     void insert_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void erase_tx(const std::string & hash);
     const std::shared_ptr<xtx_entry> find(const std::string & hash_str) const;

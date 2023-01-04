@@ -7,6 +7,7 @@
 #include <string>
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
+#include "xbasic/xbasic_size.hpp"
 #include "xutility/xhash.h"
 #include "xdata/xdatautil.h"
 #include "json/json.h"
@@ -107,6 +108,10 @@ class xaction_t {
     const std::string & get_action_ext() const {return m_action_ext;};
     void set_action_authorization(const std::string & action_authorization) {m_action_authorization = action_authorization;};
     const std::string & get_action_authorization() const {return m_action_authorization;};
+    int32_t get_ex_alloc_size() const {
+        return get_size(m_account_addr) + get_size(m_action_name) + get_size(m_action_param) + get_size(m_action_ext) + get_size(m_action_authorization);
+    }
+
 private:
     uint32_t           m_action_hash{0};   // whole action content'xxhash32
     enum_xaction_type  m_action_type{enum_xaction_type::xaction_type_asset_out};  // type

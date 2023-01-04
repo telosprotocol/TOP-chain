@@ -191,6 +191,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DETH2_SEPOLIA=ON"
         echo "BUILD WITH ETH2_SEPOLIA"
     ;;
+    cache_size_statistic)
+        CMAKE_EXTRA_OPTIONS+=" -DCACHE_SIZE_STATISTIC=ON"
+        echo "BUILD WITH CACHE_SIZE_STATISTIC"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;

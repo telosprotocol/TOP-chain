@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbasic/xbasic_size.hpp"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvcontract.h"
@@ -124,7 +125,15 @@ namespace top
             return xvcontract_t::get_contract_address(m_tx_action.get_contract_uri());
         }
 
+        int32_t xtx_receipt_t::get_object_size() const {
+            int32_t total_size = sizeof(*this);
+            total_size += get_size(m_tx_action.get_org_tx_hash())/* + m_tx_action.get_ex_alloc_size()*/;
+            if (m_tx_action_prove != nullptr) {
+                total_size += m_tx_action_prove->get_object_size();
+            }
 
+            return total_size;
+        }
 
         xtx_receipt_ptr_t xtxreceipt_build_t::create_table_input_primary_action_receipt(xvblock_t* commit_block, xvblock_t* cert_block) {
             if (commit_block == nullptr || cert_block == nullptr) {

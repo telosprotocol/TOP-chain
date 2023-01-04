@@ -46,6 +46,7 @@ namespace top
             std::string                     get_contract_address() const;
             std::string                     get_caller() const {return m_tx_action.get_caller();}
             const base::xvaction_t &        get_action() const {return m_tx_action;}
+            int32_t                          get_object_size() const;
 
         private:
             base::xvaction_t                m_tx_action;

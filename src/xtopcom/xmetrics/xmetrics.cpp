@@ -670,7 +670,14 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(prune_block_contract);
         RETURN_METRICS_NAME(prune_state_unitstate);
 
+        //eth
         RETURN_METRICS_NAME(ethtx_get_from);
+
+#ifdef CACHE_SIZE_STATISTIC
+        //cache size statistic
+        RETURN_METRICS_NAME(cachesize_send_tx_queue);
+        RETURN_METRICS_NAME(cachesize_receipt_queue);
+#endif
 
         default: assert(false); return nullptr;
     }

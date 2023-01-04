@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "xbasic/xbasic_size.hpp"
 #include "xvledger/xprovecert.h"
 #include "xmetrics/xmetrics.h"
 
@@ -76,6 +77,15 @@ namespace top
                 xerror("xprove_cert_t::is_valid prove type not valid. type=%d", cert_type);
             }
             return root_hash;
+        }
+
+        int32_t xprove_cert_t::get_object_size() const {
+            int32_t total_size = sizeof(*this);
+            if (m_prove_cert != nullptr) {
+                total_size += m_prove_cert->get_object_size();
+            }
+            total_size += get_size(m_prove_path);
+            return total_size;
         }
 
     }  // namespace base

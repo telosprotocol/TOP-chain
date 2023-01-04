@@ -726,7 +726,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     prune_block_contract,
     prune_state_unitstate,
 
+    //eth
     ethtx_get_from,
+
+#ifdef CACHE_SIZE_STATISTIC
+    //cache size statistic
+    cachesize_send_tx_queue,
+    cachesize_receipt_queue,
+#endif
+
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;

@@ -5,6 +5,7 @@
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
 #include "xbase/xhash.h"
+#include "xbasic/xbasic_size.hpp"
 #include "xbasic/xmodule_type.h"
 #include "xbasic/xhex.h"
 #include "xdata/xaction_parse.h"
@@ -298,6 +299,14 @@ int32_t xtransaction_v3_t::parse(enum_xaction_type source_type, enum_xaction_typ
     // TODO(jimmy)
     xerror("xtransaction_v3_t::parse not support!tx:%s", dump().c_str());
     return xchain_error_action_param_empty;
+}
+
+int32_t xtransaction_v3_t::get_object_size() const {
+    int32_t total_size = sizeof(*this);
+    // add string member variable alloc size.
+    total_size += get_size(m_source_addr) + get_size(m_target_addr) + get_size(m_authorization) + m_ethtx.get_to().get_ex_alloc_size() +
+                  m_ethtx.get_from().get_ex_alloc_size() + m_ethtx.get_data().capacity() + m_ethtx.get_accesslist().capacity()*sizeof(xeth_accesstuple_t);
+    return total_size;
 }
 
 }  // namespace data

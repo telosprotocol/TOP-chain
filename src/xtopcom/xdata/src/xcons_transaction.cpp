@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbasic/xbasic_size.hpp"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xgenesis_data.h"
@@ -462,6 +463,35 @@ base::xtable_shortid_t xcons_transaction_t::get_peer_tableid() const {
         base::xvaccount_t _vaddr(get_target_addr());
         return _vaddr.get_short_table_id();
     }
+}
+
+int32_t xcons_transaction_t::get_object_size() const {
+#ifdef CACHE_SIZE_STATISTIC
+    if (m_object_size != 0) {
+        return m_object_size;
+    }
+
+    int32_t total_size = sizeof(*this);
+    if (m_tx != nullptr) {
+        total_size += m_tx->get_object_size();
+    }
+
+    if (m_receipt != nullptr) {
+        total_size += m_receipt->get_object_size();
+    }
+    
+    const auto & map_para = m_execute_state.get_map_para();
+    for (auto & para : map_para) {
+        total_size += get_size(para.first);
+        total_size += get_size(para.second);
+        total_size += 32; // alloc by each node in the map.
+    }
+
+    m_object_size = total_size;
+    return total_size;
+#else
+    return 0;
+#endif
 }
 
 
