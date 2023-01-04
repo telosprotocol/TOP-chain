@@ -85,6 +85,10 @@ xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::
     return ret;
 }
 
+xtop_node_id xtop_node_id::build_from(xaccount_base_address_t const & account_base_address) {
+    return build_from(account_base_address.to_string());
+}
+
 bool xtop_node_id::empty() const noexcept {
     return m_account_base_address.empty();
 }

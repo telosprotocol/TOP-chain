@@ -515,7 +515,7 @@ uint64_t xrpc_query_manager::get_timer_clock() const {
     }
 }
 
-void xrpc_query_manager::parse_run_contract(xJson::Value & j, const xaction_t & action) {
+void xrpc_query_manager::parse_run_contract(xJson::Value & j, const xaction_t & action, data::xtransaction_t const * tx) {
     if (is_sys_contract_address(common::xaccount_address_t{action.get_account_addr()})) {
         j["paras"] = to_hex_str(action.get_action_param());
         // xdbg("get_block shard contract: %s", source_action.get_account_addr().c_str());
@@ -756,7 +756,7 @@ void xrpc_query_manager::parse_redeem_token_vote(xJson::Value & j, const xaction
     }
 }
 
-xJson::Value xrpc_query_manager::parse_action(const xaction_t & action) {
+xJson::Value xrpc_query_manager::parse_action(const xaction_t & action, data::xtransaction_t const * tx) {
     xJson::Value j;
 
     switch (action.get_action_type()) {

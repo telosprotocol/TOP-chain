@@ -80,6 +80,7 @@ public:
     static xtop_node_id build_from(std::string const & account_string);
     static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type, std::error_code & ec);
     static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type);
+    static xtop_node_id build_from(xaccount_base_address_t const & account_base_address);
 
     bool empty() const noexcept;
     bool has_value() const noexcept;

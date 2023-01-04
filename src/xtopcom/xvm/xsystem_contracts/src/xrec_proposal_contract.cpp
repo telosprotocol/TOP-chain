@@ -76,7 +76,7 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
          type,
          effective_timer_height);
 
-    XCONTRACT_ENSURE(common::is_t0(src_account) || common::is_t8(src_account), "only T0 or T8 account is allowed to submit proposal");
+    XCONTRACT_ENSURE(common::is_t0_address(src_account) || common::is_t8_address(src_account), "only T0 or T8 account is allowed to submit proposal");
 
     proposal_info proposal;
     switch (type)
@@ -229,7 +229,7 @@ void xrec_proposal_contract::tccVote(std::string & proposal_id, bool option) {
     auto const src_account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xdbg("[xrec_proposal_contract::tccVote] tccVote start, proposal_id: %s, account: %s vote: %d", proposal_id.c_str(), src_account.to_string().c_str(), option);
 
-    XCONTRACT_ENSURE(common::is_t0(src_account) || common::is_t8(src_account), "only T0 or T8 account is allowed to vote for a proposal");
+    XCONTRACT_ENSURE(common::is_t0_address(src_account) || common::is_t8_address(src_account), "only T0 or T8 account is allowed to vote for a proposal");
 
     // check if the voting client address exists in initial comittee
     if (!voter_in_committee(src_account.to_string())) {

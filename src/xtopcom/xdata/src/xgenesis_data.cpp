@@ -26,11 +26,11 @@ static bool check_address_type_and_zone(common::xaccount_address_t const & addr,
 }
 
 bool is_account_address(common::xaccount_address_t const & addr) {
-    return is_t0(addr) || is_t6(addr) || is_t8(addr);
+    return is_t0_address(addr) || is_t6_address(addr) || is_t8_address(addr);
 }
 
 bool is_sys_contract_address(common::xaccount_address_t const & addr)  {
-    return is_t2(addr);
+    return is_t2_address(addr);
 }
 
 bool is_black_hole_address(common::xaccount_address_t const & addr)  {

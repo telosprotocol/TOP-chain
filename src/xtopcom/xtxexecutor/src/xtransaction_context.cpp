@@ -235,7 +235,7 @@ int32_t xtransaction_run_contract::source_fee_exec() {
 
 int32_t xtransaction_run_contract::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }
@@ -347,7 +347,7 @@ int32_t xtransaction_pledge_token_vote::source_fee_exec(){
 
 int32_t xtransaction_pledge_token_vote::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }
@@ -379,7 +379,7 @@ int32_t xtransaction_redeem_token_vote::source_fee_exec(){
 
 int32_t xtransaction_redeem_token_vote::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }
@@ -403,7 +403,7 @@ int32_t xtransaction_vote::source_fee_exec(){
 
 int32_t xtransaction_vote::source_action_exec() {
     auto const account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xinfo("only T0 or T8 is allowed to vote");
         return -1;
     }
@@ -430,7 +430,7 @@ int32_t xtransaction_abolish_vote::source_fee_exec() {
 
 int32_t xtransaction_abolish_vote::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }

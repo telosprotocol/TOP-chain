@@ -239,7 +239,7 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
 
     auto const sender_addr = common::xaccount_address_t{source_addr};
     auto const recver_addr = common::xaccount_address_t{target_addr};
-    if (common::is_t6(sender_addr) && common::is_t2(recver_addr)) {
+    if (common::is_t6_address(sender_addr) && common::is_t2_address(recver_addr)) {
         xinfo("T6 account is not allowed to call system contract");
         return xverifier_error::xverifier_error_t6_not_allowed_to_call_contract;
     }
