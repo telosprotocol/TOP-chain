@@ -18,10 +18,11 @@
 #include "xconfig/xconfig_register.h"
 #include "xevm_common/address.h"
 #include "xevm_common/data.h"
+#include "xstatistic/xstatistic.h"
 
 namespace top { namespace data {
 
-class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_transaction_v3>, public xtransaction_t {
+class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_transaction_v3>, public xtransaction_t, public xstatistic::xstatistic_obj_face_t {
  public:
     xtransaction_v3_t();
     xtransaction_v3_t(xeth_transaction_t const& ethtx);
@@ -137,6 +138,7 @@ public:
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const override {return m_ethtx;}
 
 private:
+    virtual int32_t get_object_size_real() const override;
     void    update_cache();
 private:
     uint8_t             m_version{0};

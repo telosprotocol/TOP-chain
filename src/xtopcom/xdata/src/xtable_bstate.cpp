@@ -4,18 +4,20 @@
 
 #include <string>
 #include "xbasic/xmodule_type.h"
+#include "xbasic/xbasic_size.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, data)
 
 xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, bool readonly)
-: xbstate_ctx_t(bstate, readonly) {
+: xbstate_ctx_t(bstate, readonly), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_table_bstate) {
     cache_receiptid(bstate); // TODO(jimmy) delete future
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, 1);
 }
 
 xtable_bstate_t::~xtable_bstate_t() {
+    statistic_del();
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, -1);
 }
 
@@ -154,6 +156,19 @@ bool xtable_bstate_t::set_receiptid_pair(base::xtable_shortid_t sid, const base:
 
     int32_t ret = map_set(XPROPERTY_TABLE_RECEIPTID, field, value);
     return ret == xsuccess;
+}
+
+int32_t xtable_bstate_t::get_object_size_real() const {
+    int32_t total_size = sizeof(*this);
+    int32_t cache_receiptid_size = 0;
+    if (m_cache_receiptid != nullptr) {
+        cache_receiptid_size = m_cache_receiptid->get_object_size_real();
+    }
+
+    total_size += cache_receiptid_size;
+
+    xdbg("-----cache size----- xtable_bstate_t this:%d,cache_receiptid_size:%d", sizeof(*this), cache_receiptid_size);
+    return total_size;
 }
 
 NS_END2

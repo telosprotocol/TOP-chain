@@ -194,6 +194,9 @@ do
     build_consortium)
         CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CONSORTIUM=ON"
         echo "Build Consortium testnet"
+    cache_size_statistic)
+        CMAKE_EXTRA_OPTIONS+=" -DCACHE_SIZE_STATISTIC=ON"
+        echo "BUILD WITH CACHE_SIZE_STATISTIC"
     ;;
     *)
         echo "unknown build option: "$option

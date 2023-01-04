@@ -298,6 +298,10 @@ if (ETH2_SEPOLIA)
     add_definitions(-DETH2_SEPOLIA)
 endif()
 
+if (CACHE_SIZE_STATISTIC)
+    add_definitions(-DCACHE_SIZE_STATISTIC)
+endif()
+
 if (PERIOD_MOCK)
     add_definitions(-DPERIOD_MOCK)
 endif()

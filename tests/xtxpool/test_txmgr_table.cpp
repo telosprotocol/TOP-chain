@@ -7,6 +7,7 @@
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xverifier/xverifier_utl.h"
 #include "xtxpool_v2/xtxpool_para.h"
+#include "xstatistic/xstatistic.h"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -15,6 +16,7 @@ using namespace top::base;
 using namespace std;
 using namespace top::utl;
 using namespace top::mock;
+using namespace top::xstatistic;
 
 class test_txmgr_table : public testing::Test {
 protected:
@@ -476,8 +478,6 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 
-    xreceipt_queue_new_t receipt_queue(&table_para, &resource);
-
     uint32_t tx_num = 5;
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
     mocktable.push_txs(send_txs);
@@ -494,3 +494,254 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     bool is_repeat = txmgr_table.is_repeat_tx(tx_ent);
     ASSERT_EQ(is_repeat, true);
 }
+
+#ifdef CACHE_SIZE_STATISTIC
+TEST_F(test_txmgr_table, sendtx_mem_loss) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string sender = unit_addrs[0];
+    std::string receiver = unit_addrs[1];
+
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
+    xtxpool_statistic_t statistic;
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
+    xtx_para_t para;
+
+    uint32_t tx_num = 1;
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
+
+    // deliberately memory loss
+    xcons_transaction_t * tx = send_txs[0].get();
+    tx->add_ref();
+
+    usleep(2000);
+    xstatistic_t::instance().refresh();
+#ifdef ENABLE_METRICS
+    auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
+    ASSERT_EQ(obj_num, 1);
+    auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);
+    std::cout << "statistic_tx_v2_size : " << obj_size << std::endl;
+#endif
+}
+
+TEST_F(test_txmgr_table, receipt_mem_loss) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string sender = unit_addrs[0];
+    std::string receiver = unit_addrs[1];
+
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
+    xtxpool_statistic_t statistic;
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
+    xtx_para_t para;
+
+    uint32_t tx_num = 1;
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
+    mocktable.push_txs(send_txs);
+    xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();
+
+    xdbg("receipt_mem_loss send_tx:%p", send_txs[0].get());
+
+    std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
+    xassert(recv_txs.size() == send_txs.size());
+
+    // deliberately memory loss
+    xcons_transaction_t * tx = recv_txs[0].get();
+    tx->add_ref();
+
+    xdbg("receipt_mem_loss recv_tx:%p", recv_txs[0].get());
+
+    usleep(1000);
+    xstatistic_t::instance().refresh();
+#ifdef ENABLE_METRICS
+    auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_num);
+    ASSERT_EQ(obj_num, 1);
+    auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_size);
+    std::cout << "statistic_receipt_size : " << obj_size << std::endl;
+#endif
+}
+
+TEST_F(test_txmgr_table, xvaction_mem_loss) {
+    xvaction_t * action = new xvaction_t("1", "12", "123", "1234");
+}
+
+TEST_F(test_txmgr_table, large_number_of_send_tx) {
+    uint32_t tx_num = 16;
+    uint32_t loop_num = 1024/tx_num;
+    xtxpool_statistic_t statistic;
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtx_para_t para;
+
+    mock::xdatamock_table mocktable(1, loop_num + 1);
+    std::string table_addr = mocktable.get_account();
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
+
+    mock::xdatamock_table mocktable2(2, loop_num + 1);
+    std::string table_addr2 = mocktable2.get_account();
+    xtable_state_cache_t table_state_cache2(nullptr, table_addr2);
+    xtxpool_table_info_t table_para2(table_addr2, &shard, &statistic, &table_state_cache2);
+    xtxmgr_table_t txmgr_table2(&table_para2, &resource);
+    
+    mock::xdatamock_table mocktable3(3, loop_num + 1);
+    std::string table_addr3 = mocktable3.get_account();
+    xtable_state_cache_t table_state_cache3(nullptr, table_addr3);
+    xtxpool_table_info_t table_para3(table_addr3, &shard, &statistic, &table_state_cache3);
+    xtxmgr_table_t txmgr_table3(&table_para3, &resource);
+
+    mock::xdatamock_table mocktable4(4, loop_num + 1);
+    std::string table_addr4 = mocktable4.get_account();
+    xtable_state_cache_t table_state_cache4(nullptr, table_addr4);
+    xtxpool_table_info_t table_para4(table_addr4, &shard, &statistic, &table_state_cache4);
+    xtxmgr_table_t txmgr_table4(&table_para4, &resource);
+
+    mock::xdatamock_table mocktable5(5, loop_num + 1);
+    std::string table_addr5 = mocktable5.get_account();
+    xtable_state_cache_t table_state_cache5(nullptr, table_addr5);
+    xtxpool_table_info_t table_para5(table_addr5, &shard, &statistic, &table_state_cache5);
+    xtxmgr_table_t txmgr_table5(&table_para5, &resource);
+
+    {
+        std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+        for (uint32_t i = 0; i < loop_num; i++) {
+            std::string sender = unit_addrs[i];
+            std::string receiver = unit_addrs[loop_num];
+            std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
+            // push txs by inverted order, high nonce with high charge score
+            for (auto & tx : send_txs) {
+                xtx_para_t para;
+                std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
+                int32_t ret = txmgr_table.push_send_tx(tx_ent, 0);
+                ASSERT_EQ(0, ret);
+            }
+        }
+
+        usleep(1000);
+        xstatistic_t::instance().refresh();
+#ifdef ENABLE_METRICS
+        auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
+        ASSERT_EQ(obj_num, 1024);
+        auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);
+        std::cout << "statistic_tx_v2_size : " << obj_size << std::endl;
+#endif
+    }
+    {
+        std::vector<std::string> unit_addrs = mocktable2.get_unit_accounts();
+        for (uint32_t i = 0; i < loop_num; i++) {
+            std::string sender = unit_addrs[i];
+            std::string receiver = unit_addrs[loop_num];
+            std::vector<xcons_transaction_ptr_t> send_txs = mocktable2.create_send_txs(sender, receiver, tx_num);
+            // push txs by inverted order, high nonce with high charge score
+            for (auto & tx : send_txs) {
+                xtx_para_t para;
+                std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
+                int32_t ret = txmgr_table2.push_send_tx(tx_ent, 0);
+                ASSERT_EQ(0, ret);
+            }
+        }
+        usleep(1000);
+        xstatistic_t::instance().refresh();
+#ifdef ENABLE_METRICS
+        auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
+        ASSERT_EQ(obj_num, 1024*2);
+        auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);
+        std::cout << "statistic_tx_v2_size : " << obj_size << std::endl;
+#endif
+    }
+
+    {
+        std::vector<std::string> unit_addrs = mocktable3.get_unit_accounts();
+        for (uint32_t i = 0; i < loop_num; i++) {
+            std::string sender = unit_addrs[i];
+            std::string receiver = unit_addrs[loop_num];
+            std::vector<xcons_transaction_ptr_t> send_txs = mocktable3.create_send_txs(sender, receiver, tx_num);
+            // push txs by inverted order, high nonce with high charge score
+            for (auto & tx : send_txs) {
+                xtx_para_t para;
+                std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
+                int32_t ret = txmgr_table3.push_send_tx(tx_ent, 0);
+                ASSERT_EQ(0, ret);
+            }
+        }
+        usleep(1000);
+        xstatistic_t::instance().refresh();
+#ifdef ENABLE_METRICS
+        auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
+        ASSERT_EQ(obj_num, 1024*3);
+        auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);
+        std::cout << "statistic_tx_v2_size : " << obj_size << std::endl;
+#endif
+    }
+
+    {
+        std::vector<std::string> unit_addrs = mocktable4.get_unit_accounts();
+        for (uint32_t i = 0; i < loop_num; i++) {
+            std::string sender = unit_addrs[i];
+            std::string receiver = unit_addrs[loop_num];
+            std::vector<xcons_transaction_ptr_t> send_txs = mocktable4.create_send_txs(sender, receiver, tx_num);
+            // push txs by inverted order, high nonce with high charge score
+            for (auto & tx : send_txs) {
+                xtx_para_t para;
+                std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
+                int32_t ret = txmgr_table4.push_send_tx(tx_ent, 0);
+                ASSERT_EQ(0, ret);
+            }
+        }
+        usleep(1000);
+        xstatistic_t::instance().refresh();
+#ifdef ENABLE_METRICS
+        auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
+        ASSERT_EQ(obj_num, 1024*4);
+        auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);
+        std::cout << "statistic_tx_v2_size : " << obj_size << std::endl;
+#endif
+    }
+
+    {
+        std::vector<std::string> unit_addrs = mocktable5.get_unit_accounts();
+        for (uint32_t i = 0; i < loop_num; i++) {
+            std::string sender = unit_addrs[i];
+            std::string receiver = unit_addrs[loop_num];
+            std::vector<xcons_transaction_ptr_t> send_txs = mocktable5.create_send_txs(sender, receiver, tx_num);
+            // push txs by inverted order, high nonce with high charge score
+            for (auto & tx : send_txs) {
+                xtx_para_t para;
+                std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
+                int32_t ret = txmgr_table5.push_send_tx(tx_ent, 0);
+                ASSERT_EQ(0, ret);
+            }
+        }
+        usleep(1000);
+        xstatistic_t::instance().refresh();
+#ifdef ENABLE_METRICS
+        auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
+        ASSERT_EQ(obj_num, 1024*5);
+        auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);
+        std::cout << "statistic_tx_v2_size : " << obj_size << std::endl;
+#endif
+    }
+
+    // uint32_t ddd = 0;
+    // while(1) {
+    //     ddd ++;
+    // }
+}
+#endif

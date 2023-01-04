@@ -6,6 +6,7 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
+#include "xbasic/xbasic_size.hpp"
 #include "../xvcanvas.h"
 
 #ifdef DEBUG
@@ -278,11 +279,11 @@ namespace top
             return enum_xerror_code_fail;
         }
 
-        xvcanvas_t::xvcanvas_t()
+        xvcanvas_t::xvcanvas_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vcanvas)
         {
         }
     
-        xvcanvas_t::xvcanvas_t(const xvcanvas_t & obj)
+        xvcanvas_t::xvcanvas_t(const xvcanvas_t & obj) : xstatistic::xstatistic_obj_face_t(obj)
         {
             for(auto & rec : obj.m_records)
             {
@@ -290,13 +291,14 @@ namespace top
             }
         }
         
-        xvcanvas_t::xvcanvas_t(const std::string & bin_log)
+        xvcanvas_t::xvcanvas_t(const std::string & bin_log) : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vcanvas)
         {
             xvcanvas_t::decode_from(bin_log,m_records);
         }
 
         xvcanvas_t::~xvcanvas_t()
         {
+            statistic_del();
             m_lock.lock();
             m_records.clear();
             m_lock.unlock();
@@ -368,6 +370,45 @@ namespace top
                 full_content += rd.dump();
                 full_content += "\n";
             }
+        }
+
+        int32_t xvcanvas_t::get_object_size_real() const {
+            int32_t total_size = sizeof(*this);
+
+            // deque alloc 64+504 Bytes.
+            total_size += 568;
+            for (uint32_t i = 0; i > m_records.size(); i++) {
+                auto & record = m_records[i];
+                auto method_result = record.get_method_result();
+                if (method_result != nullptr) {
+                    total_size += sizeof(xvalue_t);
+                    xdbg("-----cache size----- xvalue size:%d", sizeof(xvalue_t));
+                    uint8_t cast_value_type = (uint8_t)method_result->get_type();
+                    uint8_t container_type = cast_value_type&0x70;
+                    uint8_t value_type = cast_value_type & 0x0F;
+                    xdbg("-----cache size----- xvcanvas_t record[%d] container_type:%d,value_type:%d,xvalue:%s", i, cast_value_type, value_type, method_result->dump().c_str());
+                    if (container_type == base::xvalue_t::enum_xvalue_type_map || value_type == base::xvalue_t::enum_xvalue_type_string) {
+                        auto container_ptr = method_result->get_map<std::string>();
+                        for (auto & pair : *container_ptr) {
+                            auto key_size = get_size(pair.first);
+                            auto value_size = get_size(pair.second);
+                            // each map node alloc 48B
+                            total_size += (key_size + value_size + 48);
+                            xdbg("-----cache size----- xvcanvas_t record[%d] xvalue key:%d,value:%d,node:48", i, key_size, value_size);
+                        }
+                        // root node alloc 48B
+                        xdbg("-----cache size----- xvalue root node:48");
+                        total_size += 48;
+                    }
+                }
+
+                // deque alloc 64+504 Bytes.
+                total_size += 568;
+                auto & method_params = record.get_method_params();
+                total_size += method_params.size()*48; //see map_utl<std::string>::copy_from(xvmethod.h:291)
+                xdbg("------cache size------- xvcanvas_t record[%d] method_params size:%u*48, deque:64+504", i, method_params.size());
+            }
+            return total_size;
         }
 
     };//end of namespace of base

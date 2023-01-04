@@ -7,6 +7,7 @@
 #include "../xvblock.h"
 #include "../xventity.h"
 #include "xbase/xcontext.h"
+#include "xbasic/xbasic_size.hpp"
 #include "xmetrics/xmetrics.h"
  
 namespace top
@@ -522,6 +523,35 @@ namespace top
         {
             m_resources_hash = raw_resources_hash;
             return true;
+        }
+
+        int32_t xvexemodule_t::get_ex_alloc_size() const {
+            int32_t ex_size = 0;
+            ex_size += m_entitys.capacity() * sizeof(xventity_t*);
+            for (auto & entity : m_entitys) {
+                if (entity != nullptr) {
+                    ex_size += sizeof(xventity_t);
+                    xdbg("xvexemodule_t::get_ex_alloc_size ------cache size------- entity_size:%d", sizeof(xventity_t));
+                }
+            }
+
+            if (m_resources_obj != nullptr) {
+                auto & str_map = m_resources_obj->get_map();
+                for (auto & pair : str_map) {
+                    auto key_size = get_size(pair.first);
+                    auto value_size = get_size(pair.second);
+                    // each map node alloc 48B
+                    ex_size += (key_size + value_size + 48);
+                    xdbg("-----cache size----- xvexemodule_t key:%d,value:%d,node:48", key_size, value_size);
+                }
+                // // root node alloc 48B
+                // xdbg("-----cache size----- xvexemodule_t root node:48");
+                // ex_size += 48;
+            }
+
+            ex_size += get_size(m_resources_hash);
+            xdbg("xvexemodule_t::get_ex_alloc_size ------cache size------- m_resources_hash:%d", get_size(m_resources_hash));
+            return ex_size;
         }
         
         //xvblock has verifyed that raw_resource_data matched by raw_resource_hash

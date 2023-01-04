@@ -4,6 +4,7 @@
 
 #include "xcommon/xeth_address.h"
 
+#include "xbasic/xbasic_size.hpp"
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xhex.h"
 #include "xbasic/xstring.h"
@@ -153,6 +154,10 @@ bool xtop_eth_address::operator==(xtop_eth_address const & rhs) const noexcept {
 
 bool xtop_eth_address::operator!=(xtop_eth_address const & rhs) const noexcept {
     return !(*this == rhs);
+}
+
+int32_t xtop_eth_address::get_ex_alloc_size() const {
+    return get_size(hex_string_);
 }
 
 NS_END2
