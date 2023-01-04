@@ -1335,6 +1335,8 @@ xaccount_context_t::get_next_full_block(const std::string & owner, const uint64_
     if (block != nullptr && block->get_block_level() == base::enum_xvblock_level_table && block->get_block_class() == base::enum_xvblock_class_full) {
         base::xvchain_t::instance().get_xblockstore()->load_block_input(vaddr, block.get());
         block->add_ref();
+        // XTODO get_pledge_balance_change_tgas need load block output
+        base::xvchain_t::instance().get_xblockstore()->load_block_output(vaddr, block.get());
         return dynamic_cast<data::xblock_t*>(block.get());
     }
     return nullptr;
