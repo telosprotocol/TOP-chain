@@ -670,7 +670,36 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(prune_block_contract);
         RETURN_METRICS_NAME(prune_state_unitstate);
 
+        //eth
         RETURN_METRICS_NAME(ethtx_get_from);
+
+#ifdef CACHE_SIZE_STATISTIC
+        RETURN_METRICS_NAME(statistic_tx_v2_num);
+        RETURN_METRICS_NAME(statistic_tx_v3_num);
+        RETURN_METRICS_NAME(statistic_receipt_num);
+        RETURN_METRICS_NAME(statistic_vqcert_num);
+        RETURN_METRICS_NAME(statistic_vblock_num);
+        RETURN_METRICS_NAME(statistic_table_bstate_num);
+        RETURN_METRICS_NAME(statistic_unit_bstate_num);
+        RETURN_METRICS_NAME(statistic_block_header_num);
+        RETURN_METRICS_NAME(statistic_vinput_num);
+        RETURN_METRICS_NAME(statistic_voutput_num);
+        RETURN_METRICS_NAME(statistic_vbstate_num);
+        RETURN_METRICS_NAME(statistic_vcanvas_num);
+        RETURN_METRICS_NAME(statistic_tx_v2_size);
+        RETURN_METRICS_NAME(statistic_tx_v3_size);
+        RETURN_METRICS_NAME(statistic_receipt_size);
+        RETURN_METRICS_NAME(statistic_vqcert_size);
+        RETURN_METRICS_NAME(statistic_vblock_size);
+        RETURN_METRICS_NAME(statistic_table_bstate_size);
+        RETURN_METRICS_NAME(statistic_unit_bstate_size);
+        RETURN_METRICS_NAME(statistic_block_header_size);
+        RETURN_METRICS_NAME(statistic_vinput_size);
+        RETURN_METRICS_NAME(statistic_voutput_size);
+        RETURN_METRICS_NAME(statistic_vbstate_size);
+        RETURN_METRICS_NAME(statistic_vcanvas_size);
+        RETURN_METRICS_NAME(statistic_total_size);
+#endif
 
         default: assert(false); return nullptr;
     }

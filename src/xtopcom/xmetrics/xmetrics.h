@@ -726,7 +726,39 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     prune_block_contract,
     prune_state_unitstate,
 
+    //eth
     ethtx_get_from,
+
+#ifdef CACHE_SIZE_STATISTIC
+    statistic_tx_v2_num,
+    statistic_tx_v3_num,
+    statistic_receipt_num,
+    statistic_vqcert_num,
+    statistic_vblock_num,
+    statistic_table_bstate_num,
+    statistic_unit_bstate_num,
+    statistic_block_header_num,
+    statistic_vinput_num,
+    statistic_voutput_num,
+    statistic_vbstate_num,
+    statistic_vcanvas_num,
+
+    statistic_tx_v2_size,
+    statistic_tx_v3_size,
+    statistic_receipt_size,
+    statistic_vqcert_size,
+    statistic_vblock_size,
+    statistic_table_bstate_size,
+    statistic_unit_bstate_size,
+    statistic_block_header_size,
+    statistic_vinput_size,
+    statistic_voutput_size,
+    statistic_vbstate_size,
+    statistic_vcanvas_size,
+
+    statistic_total_size,
+#endif
+
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;

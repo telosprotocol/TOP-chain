@@ -9,6 +9,7 @@ if (BUILD_METRICS)
 endif()
 
 target_link_libraries(xvledger PRIVATE
+    xstatistic
     xxbase
     xconfig
     jsoncpp

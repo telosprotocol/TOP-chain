@@ -47,6 +47,7 @@ namespace top
             inline  const std::string&  get_unit_name()     const {return m_unit_name;}
             inline  const std::string&  get_execute_uri()   const {return m_execute_uri;}
             inline  xvexeunit_t*        get_parent_unit()   const {return m_parent_unit;}
+            int32_t                     get_ex_alloc_size() const;
              
         protected:
             bool                 register_method(const uint8_t method_type,const uint8_t method_id,const xvstdfunc_t & api_function);
@@ -82,6 +83,8 @@ namespace top
             virtual bool            close(bool force_async = false) override;
             //virtual xvexeunit_t*    clone() override;
             std::recursive_mutex&   get_mutex() const {return m_lock;}
+
+            int32_t                 get_ex_alloc_size() const;
             
         protected:
             bool                clone_units_from(const xvexegroup_t & source);

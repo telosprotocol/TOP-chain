@@ -49,6 +49,7 @@ namespace top
             inline const uint64_t      get_max_tgas()  const {return m_max_tgas;}
             void                       set_max_tgas(const uint64_t max_tgas){ m_max_tgas = max_tgas;}
             void                       set_org_tx_action_id(uint8_t actionid) {m_org_tx_action_id = actionid;}
+            int32_t                    get_ex_alloc_size() const;
 
         protected:
             //serialize header and object,return how many bytes is writed

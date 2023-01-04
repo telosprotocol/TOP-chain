@@ -251,6 +251,7 @@ namespace top
             //just wrap function for serialize_to(),but assign data to string and return
             int32_t     serialize_to_string(std::string & bin_data);
             int32_t     serialize_from_string(const std::string & bin_data);
+            int32_t     get_ex_alloc_size() const;
             
         protected: //for subclass or friend class
             virtual int32_t     do_write(xstream_t & stream); //not allow subclass change behavior

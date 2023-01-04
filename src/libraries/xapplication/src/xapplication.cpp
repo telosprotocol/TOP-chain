@@ -41,6 +41,7 @@
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvnetwork/xvhost.h"
 #include "xvnode/xvnode_manager.h"
+#include "xstatistic/xstatistic.h"
 
 NS_BEG2(top, application)
 
@@ -59,6 +60,10 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
 
     safebox::xsafebox_proxy::get_instance().add_key_pair(public_key, std::move(sign_key));
+
+#ifdef CACHE_SIZE_STATISTIC
+    xstatistic::xstatistic_hub_t::instance(); // create singleton at very first time.
+#endif
 
     int db_kind = top::db::xdb_kind_kvdb;
     std::vector<db::xdb_path_t> db_data_paths{};
