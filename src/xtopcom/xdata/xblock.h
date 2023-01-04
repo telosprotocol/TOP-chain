@@ -92,9 +92,7 @@ public:
     inline bool     is_emptytable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_nil;}
 
  public:
-    virtual int64_t                     get_pledge_balance_change_tgas() const {return 0;}
     virtual void                        dump_block_data(xJson::Value & json) const {return;}
-    virtual uint64_t                    get_second_level_gmtime() const override;
     xtransaction_ptr_t                  query_raw_transaction(const std::string & txhash) const;
     uint32_t                            query_tx_size(const std::string & txhash) const;
     std::vector<base::xvtxkey_t>        get_txkeys() const;

@@ -36,5 +36,6 @@ extern top::optional<xfork_point_t> v1_7_0_sync_point;
 extern top::optional<xfork_point_t> v1_9_0_state_fork_point;  // unitstate not include tx related info
 extern top::optional<xfork_point_t> xbft_msg_upgrade;
 extern top::optional<xfork_point_t> v1_9_0_vote_contract_update_point;
+extern top::optional<xfork_point_t> v1_10_0_block_fork_point;
 
 NS_END2

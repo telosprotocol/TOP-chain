@@ -585,11 +585,11 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
     if (true == base::xvchain_t::instance().has_other_node() && account_indexs.get_account_indexs().size() > 0) {
-        if (false == m_statestore_base.get_blockstore()->load_block_input(m_table_vaddr, current_block)) {
-            ec = error::xerrc_t::statestore_load_tableblock_err;
-            xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load input for block(%s)",current_block->dump().c_str());
-            return nullptr;
-        }
+        // if (false == m_statestore_base.get_blockstore()->load_block_input(m_table_vaddr, current_block)) {
+        //     ec = error::xerrc_t::statestore_load_tableblock_err;
+        //     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load input for block(%s)",current_block->dump().c_str());
+        //     return nullptr;
+        // }
         if (false == m_statestore_base.get_blockstore()->load_block_output_offdata(m_table_vaddr, current_block)) {
             ec = error::xerrc_t::statestore_load_tableblock_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load output offdata for block(%s)",current_block->dump().c_str());

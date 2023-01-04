@@ -253,6 +253,9 @@ namespace top
                 xassert(_para.m_clock != 0);
                 uint32_t expect_version = base::xvblock_fork_t::instance().get_expect_block_version(_para.m_clock);
                 _header->set_block_version(expect_version);
+                if (expect_version >= enum_xvblock_fork_version_6_0_0) {
+                    _header->set_block_character(base::enum_xvblock_character_certify_header_only);
+                }
             }
             xdbg("xvblockbuild_t::create_header.account=%s,height=%ld,clock=%ld,version=0x%x",_para.m_account.c_str(),_para.m_height,_para.m_clock,_header->get_block_version());
             return _header;
@@ -490,7 +493,9 @@ namespace top
             return true;
         }
         bool    xvblockmaker_t::set_output_entity(const std::string & key, const std::string & value) {
-            m_primary_output_entity->set_value(key, value);
+            if (!value.empty()) {
+                m_primary_output_entity->set_value(key, value);
+            }            
             return true;
         }
 
@@ -728,7 +733,7 @@ namespace top
             enum_xvblock_class _class = target_block->get_block_class();
             if (_class == enum_xvblock_class_nil) {
                 if (!target_block->get_fullstate_hash().empty()
-                    || !target_block->get_binlog_hash().empty()
+                    // || !target_block->get_binlog_hash().empty()
                     || !target_block->get_input_root_hash().empty()
                     || !target_block->get_output_root_hash().empty()) {
                     xassert(false);
@@ -737,11 +742,6 @@ namespace top
             }
 
             if (_class != enum_xvblock_class_nil) {
-                // all non-nilblock has actions and input/output root
-                if (target_block->get_input()->get_action_count() == 0) {
-                    xassert(false);
-                    return false;
-                }
                 if (target_block->get_input_root_hash().empty()) {
                     xassert(false);
                     return false;
@@ -836,29 +836,29 @@ namespace top
                 }
             }
 
-#ifdef VBLOCKBUILD_CHECK_ENALBE // debug for check
-            xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,detail=%s",
-                get_block()->dump().c_str(),get_block()->detail_dump().c_str());
-#endif
-
             if (false == check_block_rules(_block_ptr.get())) {
                 xerror("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s",
                     get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
-                    get_block()->get_input()->dump().c_str(), get_block()->get_output()->dump().c_str());
+                    get_input()->dump().c_str(), get_output()->dump().c_str());
                 return nullptr;
             }
 
-            xdbg("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s,binlog=%zu,fullstate=%zu,offdata=%zu,%s",
-                get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
-                get_block()->get_input()->dump().c_str(), get_block()->get_output()->dump().c_str(), get_block()->get_binlog().size(), get_block()->get_full_state().size(),
-                get_output_offdata().size(),base::xstring_utl::to_hex(get_block()->get_output_offdata_hash()).c_str());
+            if (get_block()->get_block_class() != base::enum_xvblock_class_nil) {
+                xdbg("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s,binlog=%zu,fullstate=%zu,offdata=%zu",
+                    get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
+                    get_input()->dump().c_str(), get_output()->dump().c_str(), get_block()->get_binlog().size(), get_block()->get_full_state().size(),
+                    get_output_offdata().size());
+            } else {
+                xdbg("xvblockmaker_t::build_new_block,done,%s", get_block()->dump().c_str());                
+            }
+
             return _block_ptr;
         }
 
         //----------------------------------------xtable_unit_resource_t-------------------------------------//
         xtable_unit_resource_t::xtable_unit_resource_t(xvblock_t* _block) {
-            m_unit_input_resources = _block->get_input()->get_resources_data();
-            m_unit_output_resources = _block->get_output()->get_resources_data();
+            m_unit_input_resources = _block->get_input_data();
+            m_unit_output_resources = _block->get_output_data();
         }
         xtable_unit_resource_t::~xtable_unit_resource_t() {
 
@@ -952,18 +952,19 @@ namespace top
 
         }
         bool xvtableblock_maker_t::set_batch_units(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units) {
-            if (!m_batch_units.empty()) {
-                xassert(false);
-                return false;
-            }
-            m_batch_units = _batch_units;
+            // if (!m_batch_units.empty()) {
+            //     xassert(false);
+            //     return false;
+            // }
+            // m_batch_units = _batch_units;
 
-            uint32_t count = (uint32_t)_batch_units.size();
-            for (uint32_t index = 0; index < count; index++) {
-                auto & _unit = _batch_units[index];
-                merge_input_resource(_unit->get_input()->get_resources());
-                merge_output_resource(_unit->get_output()->get_resources());
-            }
+            // uint32_t count = (uint32_t)_batch_units.size();
+            // for (uint32_t index = 0; index < count; index++) {
+            //     auto & _unit = _batch_units[index];
+            //     merge_input_resource(_unit->get_input()->get_resources());
+            //     merge_output_resource(_unit->get_output()->get_resources());
+            // }
+            assert(false);
             return true;
         }
 
@@ -983,22 +984,7 @@ namespace top
 
         bool xvtableblock_maker_t::units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent) {
             std::vector<std::string> out_leafs = get_table_out_merkle_leafs(units);
-#ifdef  VBLOCKBUILD_CHECK_ENALBE // for debug check
-            {
-                std::string root_hash = xvblockbuild_t::build_mpt_root(out_leafs);
-                if (root_hash != parent->get_cert()->get_output_root_hash()) {
-                    xwarn("xvtableblock_maker_t::units_set_parent_cert,tableblock=%s,detail=%s",
-                        parent->dump().c_str(),parent->detail_dump().c_str());
-                    for (auto & unit : units) {
-                        xwarn("xvtableblock_maker_t::units_set_parent_cert,unit=%s,detail=%s",
-                            unit->dump().c_str(),unit->detail_dump().c_str());
-                    }
-                    xerror("xvtableblock_maker_t::units_set_parent_cert unmatch units and parent,newroot=%ld,oldroot=%ld",
-                        base::xhash64_t::digest(root_hash),base::xhash64_t::digest(parent->get_cert()->get_output_root_hash()));
-                    return false;
-                }
-            }
-#endif
+
             std::string parent_cert_bin;
             parent->get_cert()->serialize_to_string(parent_cert_bin);
             xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(out_leafs);
@@ -1032,7 +1018,7 @@ namespace top
         xtable_unit_resource_ptr_t xvtableblock_maker_t::query_unit_resource(const base::xvblock_t* _tableblock, uint32_t index) {
             xassert(index != 0);  // index#0 is table primary
             std::string _res_key = "u" + base::xstring_utl::tostring(index);
-            std::string _res_value = _tableblock->get_input()->query_resource(_res_key);
+            std::string _res_value = _tableblock->query_input_resource(_res_key);
             xassert(!_res_value.empty());
 
             xtable_unit_resource_ptr_t _unit_res = std::make_shared<xtable_unit_resource_t>();
@@ -1041,63 +1027,67 @@ namespace top
         }
 
         xauto_ptr<xvinput_t> xvtableblock_maker_t::make_input() {
-            std::vector<xventity_t*> all_input_entities;
-            get_input_entity()->add_ref();
-            all_input_entities.push_back(get_input_entity());
+            // std::vector<xventity_t*> all_input_entities;
+            // get_input_entity()->add_ref();
+            // all_input_entities.push_back(get_input_entity());
 
-            const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
-            for (auto & _unit : _batch_units) {
-                auto & unit_input_entitys = _unit->get_input()->get_entitys();
-                std::string extend_bin;
-                xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert());
-                extend.serialize_to_string(extend_bin);
+            // const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
+            // for (auto & _unit : _batch_units) {
+            //     auto & unit_input_entitys = _unit->get_input()->get_entitys();
+            //     std::string extend_bin;
+            //     xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert());
+            //     extend.serialize_to_string(extend_bin);
 
-                xvinentity_t* new_entity = nullptr;
-                if (unit_input_entitys.empty()) {
-                    new_entity = new xvinentity_t(extend_bin,std::vector<xvaction_t>{});
-                } else {
-                    xassert(unit_input_entitys.size() == 1);
-                    new_entity = new xvinentity_t(extend_bin,((xvinentity_t*)unit_input_entitys[0])->get_actions());
-                }
-                all_input_entities.push_back(new_entity);
-            }
-            xauto_ptr<xvinput_t>input_obj(new xvinput_t(all_input_entities, *get_input_resource()));
-            for (auto & v : all_input_entities) {  // should release entitys after make obj
-                v->release_ref();
-            }
-            return input_obj;
+            //     xvinentity_t* new_entity = nullptr;
+            //     if (unit_input_entitys.empty()) {
+            //         new_entity = new xvinentity_t(extend_bin,std::vector<xvaction_t>{});
+            //     } else {
+            //         xassert(unit_input_entitys.size() == 1);
+            //         new_entity = new xvinentity_t(extend_bin,((xvinentity_t*)unit_input_entitys[0])->get_actions());
+            //     }
+            //     all_input_entities.push_back(new_entity);
+            // }
+            // xauto_ptr<xvinput_t>input_obj(new xvinput_t(all_input_entities, *get_input_resource()));
+            // for (auto & v : all_input_entities) {  // should release entitys after make obj
+            //     v->release_ref();
+            // }
+            // return input_obj;
+            assert(false);
+            return nullptr;
         }
 
         xauto_ptr<xvoutput_t> xvtableblock_maker_t::make_output() {
-            // light-table set full-state hash to primary output entity, other block set full-state hash to output root hash
-            if (!get_full_state_hash().empty()) {
-                set_output_entity(xvoutentity_t::key_name_state_hash(), get_full_state_hash());
-            } else {
-                xassert(false);
-                return nullptr;
-            }
+            // // light-table set full-state hash to primary output entity, other block set full-state hash to output root hash
+            // if (!get_full_state_hash().empty()) {
+            //     set_output_entity(xvoutentity_t::key_name_state_hash(), get_full_state_hash());
+            // } else {
+            //     xassert(false);
+            //     return nullptr;
+            // }
 
-            std::vector<xventity_t*> all_output_entities;
-            get_output_entity()->add_ref();
-            all_output_entities.push_back(get_output_entity());
+            // std::vector<xventity_t*> all_output_entities;
+            // get_output_entity()->add_ref();
+            // all_output_entities.push_back(get_output_entity());
 
-            const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
-            for (auto & _unit : _batch_units) {
-                auto & unit_output_entitys = _unit->get_output()->get_entitys();
-                xvoutentity_t* new_entity = nullptr;
-                if (unit_output_entitys.empty()) {
-                    new_entity = new xvoutentity_t();  // must has related output entity with input entity
-                } else {
-                    xassert(unit_output_entitys.size() == 1);
-                    new_entity = new xvoutentity_t(*((xvoutentity_t*)unit_output_entitys[0]));  // table entity is same with unit entity
-                }
-                all_output_entities.push_back(new_entity);//transfered owner of ptr to vector
-            }
-            xauto_ptr<xvoutput_t>output_obj(new xvoutput_t(all_output_entities, *get_output_resource()));
-            for (auto & v : all_output_entities) {  // should release entitys after make obj
-                v->release_ref();
-            }
-            return output_obj;
+            // const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
+            // for (auto & _unit : _batch_units) {
+            //     auto & unit_output_entitys = _unit->get_output()->get_entitys();
+            //     xvoutentity_t* new_entity = nullptr;
+            //     if (unit_output_entitys.empty()) {
+            //         new_entity = new xvoutentity_t();  // must has related output entity with input entity
+            //     } else {
+            //         xassert(unit_output_entitys.size() == 1);
+            //         new_entity = new xvoutentity_t(*((xvoutentity_t*)unit_output_entitys[0]));  // table entity is same with unit entity
+            //     }
+            //     all_output_entities.push_back(new_entity);//transfered owner of ptr to vector
+            // }
+            // xauto_ptr<xvoutput_t>output_obj(new xvoutput_t(all_output_entities, *get_output_resource()));
+            // for (auto & v : all_output_entities) {  // should release entitys after make obj
+            //     v->release_ref();
+            // }
+            // return output_obj;
+            assert(false);
+            return nullptr;
         }
 
         bool    xvtableblock_maker_t::make_output_root(xvoutput_t* output_obj) {

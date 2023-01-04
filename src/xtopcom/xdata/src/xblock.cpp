@@ -162,15 +162,15 @@ int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
     this->serialize_to_string(block_object_bin);
     stream << block_object_bin;
     if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-        stream << get_input()->get_resources_data();
-        stream << get_output()->get_resources_data();
+        stream << get_input_data();
+        stream << get_output_data();
         if (!get_output_offdata_hash().empty()) {
             stream << get_output_offdata();
         }
     }
 
     xdbg("xblock_t::full_block_serialize_to,succ.block=%s,size=%zu,%zu,%zu,%zu,%d",
-        dump().c_str(), block_object_bin.size(), get_input()->get_resources_data().size(), get_output()->get_resources_data().size(), get_output_offdata().size(), stream.size());
+        dump().c_str(), block_object_bin.size(), get_input_data().size(), get_output_data().size(), get_output_offdata().size(), stream.size());
     return CALC_LEN();
 }
 
@@ -189,13 +189,13 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
         std::string _output_content;
         stream >> _input_content;
         stream >> _output_content;
-        if (false == new_block->set_input_resources(_input_content)) {
-            xerror("xblock_t::full_block_read_from set_input_resources fail.block=%s,ir=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_input_content));
+        if (false == new_block->set_input_data(_input_content)) {
+            xerror("xblock_t::full_block_read_from set_input_data fail.block=%s,ir=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_input_content));
             new_block->release_ref();
             return nullptr;
         }
-        if (false == new_block->set_output_resources(_output_content)) {
-            xerror("xblock_t::full_block_read_from set_output_resources failblock=%s,or=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_output_content));
+        if (false == new_block->set_output_data(_output_content)) {
+            xerror("xblock_t::full_block_read_from set_output_data failblock=%s,or=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_output_content));
             new_block->release_ref();
             return nullptr;
         }
@@ -219,7 +219,7 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
 }
 
 xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) const {
-    std::string value = get_input()->query_resource(txhash);
+    std::string value = query_input_resource(txhash);
     if (!value.empty()) {
         xtransaction_ptr_t raw_tx;
         xtransaction_t::set_tx_by_serialized_data(raw_tx, value);
@@ -229,7 +229,7 @@ xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) 
 }
 
 uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
-    std::string value = get_input()->query_resource(txhash);
+    std::string value = query_input_resource(txhash);
     return value.size();
 }
 
@@ -246,27 +246,6 @@ std::vector<base::xvtxkey_t> xblock_t::get_txkeys() const {
     xunitheader_extra_t he;
     he.serialize_from_string(extra_str);
     return he.get_txkeys();
-}
-
-uint64_t xblock_t::get_second_level_gmtime() const {
-    // only table-block has second_level_gmtime
-    if (get_block_level() != base::enum_xvblock_level_table) {
-        xassert(false);
-        return 0;
-    }
-    uint64_t gmtime = 0;
-    auto & extra_str = get_header()->get_extra_data();
-    // second level gmtime is introduced after v3.0.0 
-    if (!extra_str.empty()) {
-        xtableheader_extra_t he;
-        he.deserialize_from_string(extra_str);
-        gmtime = he.get_second_level_gmtime();
-    }
-
-    if (0 == gmtime) {
-        return get_timestamp(); // XTODO return clock level gmtime for old version
-    }
-    return gmtime;
 }
 
 NS_END2

@@ -241,20 +241,20 @@ namespace top
             const xstrmap_t     *     get_resources() const {return m_resources_obj;}
             
             virtual const std::string get_resources_data(); //combine whole extend resource into one single string
-            const   std::string       get_resources_hash() const {return m_resources_hash;}//m_resource_hash for raw_resources
+            const   std::string &     get_resources_hash() const {return m_resources_hash;}//m_resource_hash for raw_resources
             bool                      has_resource_data()  const {return (m_resources_obj != NULL);}
             
         public:
-            int32_t     serialize_to(xstream_t & stream);        //serialize header and object,return how many bytes is writed
-            int32_t     serialize_from(xstream_t & stream);      //serialize header and object,return how many bytes is readed
+            int32_t     serialize_to(bool include_resource, xstream_t & stream);        //serialize header and object,return how many bytes is writed
+            int32_t     serialize_from(bool include_resource,xstream_t & stream);      //serialize header and object,return how many bytes is readed
             
             //just wrap function for serialize_to(),but assign data to string and return
-            int32_t     serialize_to_string(std::string & bin_data);
-            int32_t     serialize_from_string(const std::string & bin_data);
+            int32_t     serialize_to_string(bool include_resource,std::string & bin_data);
+            int32_t     serialize_from_string(bool include_resource,const std::string & bin_data);
             
         protected: //for subclass or friend class
-            virtual int32_t     do_write(xstream_t & stream); //not allow subclass change behavior
-            virtual int32_t     do_read(xstream_t & stream); //not allow subclass change behavior
+            virtual int32_t     do_write(bool include_resource,xstream_t & stream); //not allow subclass change behavior
+            virtual int32_t     do_read(bool include_resource,xstream_t & stream); //not allow subclass change behavior
             
         private:  //not allow override any more
             //set_resources_data only open to xvblock where may verify hash first

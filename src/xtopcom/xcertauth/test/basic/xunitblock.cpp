@@ -485,7 +485,7 @@ namespace top
                 return false;
             }
             xinfo("xvblockstore_t::load_block_input,loaded it for block:[chainid:%u->account(%s)->height(%llu)->viewid(%llu) at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_store_path().c_str());
-            return block_ptr->set_input_resources(_content);
+            return block_ptr->set_input_data(_content);
         }
         
         bool    xunitblockstore_t::load_block_output(base::xvblock_t* block_ptr) //load and assign body data into  xvblock_t
@@ -502,7 +502,7 @@ namespace top
                 return false;
             }
             xinfo("xvblockstore_t::load_block_output,loaded it for block:[chainid:%u->account(%s)->height(%llu)->viewid(%llu) at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_store_path().c_str());
-            return block_ptr->set_output_resources(_content);
+            return block_ptr->set_output_data(_content);
         }
 
         bool    xunitblockstore_t::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks) //better performance
@@ -553,10 +553,10 @@ namespace top
             }
         
             const std::string _input_path    = get_store_path() + block_ptr->get_input_path();
-            store_value_by_path(_input_path,block_ptr->get_input()->get_resources_data());
+            store_value_by_path(_input_path,block_ptr->get_input_data());
             
             const std::string _output_path    = get_store_path() + block_ptr->get_output_path();
-            store_value_by_path(_output_path,block_ptr->get_output()->get_resources_data());
+            store_value_by_path(_output_path,block_ptr->get_output_data());
             
             const std::string _block_path  = get_store_path() + block_ptr->get_header_path();
             std::string vblock_bin;

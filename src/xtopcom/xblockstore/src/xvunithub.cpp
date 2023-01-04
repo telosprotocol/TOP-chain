@@ -620,8 +620,8 @@ namespace top
                 return false;
             }
             if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
-               || block->get_input()->get_resources_hash().empty() //resources hash empty means has no resoure data
-               || block->get_input()->has_resource_data() )  //already has resource data
+               || false == block->should_has_input_data() //resources hash empty means has no resoure data
+               || block->has_input_data() )  //already has resource data
             {
                 return true;
             }
@@ -645,8 +645,8 @@ namespace top
                 return false;
             }
             if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
-               || block->get_output()->get_resources_hash().empty() //resources hash empty means has no resoure data
-               || block->get_output()->has_resource_data() )  //already has resource data
+               || false == block->should_has_output_data() //resources hash empty means has no resoure data
+               || block->has_output_data() )  //already has resource data
             {
                 return true;
             }
@@ -670,16 +670,13 @@ namespace top
                 return false;
             }
             if(  (block->get_block_class() == base::enum_xvblock_class_nil)  // nil block has no input
-               || block->get_output_offdata_hash().empty() ) // hash empty means has no data
+               || false == block->should_has_output_offdata()
+               || block->has_output_offdata() ) // hash empty means has no data
             {
                 return true;
             }
-            if (!block->get_output_offdata().empty()) {
-                xdbg("xvblockstore_impl::load_block_output_offdata,succ-load cache.%s",block->dump().c_str());
-                return true;
-            }
 
-            load_block_output(account, block, atag);  // should load output firstly
+            // load_block_output(account, block, atag);  // should load output firstly
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             
@@ -688,15 +685,17 @@ namespace top
                 xerror("xvblockstore_impl::load_block_output_offdata,fail-index null %s",block->dump().c_str());
                 return false;
             }
-            if(existing_index)
-            {
-                if (get_blockdb_ptr()->load_block_output_offdata(existing_index(),block)) {
-                    xassert(!block->get_output_offdata().empty());
-                    xdbg("xvblockstore_impl::load_block_output_offdata,succ-load offdata.%s",block->dump().c_str());
-                    return true;
-                }
+            if (get_blockdb_ptr()->load_block_output_offdata(existing_index.get(),block)) {
+                xassert(!block->get_output_offdata().empty());
+                xdbg("xvblockstore_impl::load_block_output_offdata,succ-load offdata.%s",block->dump().c_str());
+                return true;
             }
 
+            // TODO(jimmy) load units to make output offdata
+            if (false == get_blockdb_ptr()->load_block_output(existing_index.get(),block)) {
+                xerror("xvblockstore_impl::load_block_output_offdata,fail-load block output.%s",block->dump().c_str());
+                return false;
+            }
             // secondly try to load offdata by subblocks
             std::vector<base::xvblock_ptr_t> subblocks;
             auto account_indexs_str = block->get_account_indexs();
@@ -1255,6 +1254,10 @@ namespace top
                     base::xauto_ptr<base::xvblock_t> target_block = load_block_from_index_for_raw_index(target_account, index_ptr, index_ptr->get_height(), false); // TODO(jimmy) false
                     // target_account->load_block_object(index_ptr);
                     // target_account->load_block_input(index_ptr->get_this_block());
+                    if (false == load_block_input(*target_account->get_account_obj(), index_ptr->get_this_block())) {
+                        xerror("xvblockstore_impl::store_txs_to_db,fail-load tableblock input.index=%s",index_ptr->dump().c_str());
+                        return false;                    
+                    }
                     // target_account->load_block_output(index_ptr->get_this_block());
                     auto ret = base::xvchain_t::instance().get_xtxstore()->store_txs(target_block.get());
                     if(ret)

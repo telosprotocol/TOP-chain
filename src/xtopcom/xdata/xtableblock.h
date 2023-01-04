@@ -31,7 +31,6 @@ class xtable_block_t : public xblock_t {
     virtual std::vector<base::xvsubblock_index_t> get_subblocks_index() const override;
 
  public:  // implement block common api
-    int64_t         get_pledge_balance_change_tgas() const override;
     virtual bool    extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
     bool extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
  private:
