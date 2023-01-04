@@ -1996,7 +1996,7 @@ namespace top
                 if (m_voutput_ptr == nullptr) {//create output on-demand
                     if (m_voutput_data.empty()) {
                         ec = error::xerrc_t::block_input_output_data_not_exist;
-                        xassert(false);
+                        xerror("xvblock_t::load_output fail-data empty.%s",dump().c_str());
                         return nullptr;
                     }
                     
@@ -2059,7 +2059,9 @@ namespace top
                 if (nullptr != output_object) {
                     return output_object->query_resource(key);
                 }
-                assert(false);
+                if (ec) {
+                    xerror("xvblock_t::query_output_resource fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
             }
             return {};
         }
@@ -2070,7 +2072,9 @@ namespace top
                 if (nullptr != output_object) {
                     return output_object->get_primary_entity()->query_value(key);
                 }
-                assert(false);
+                if (ec) {
+                    xerror("xvblock_t::query_output_entity fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
             }
             return {};
         }
@@ -2095,6 +2099,7 @@ namespace top
             return query_output_entity(xvoutentity_t::key_name_binlog_hash());
         }
         int64_t xvblock_t::get_pledge_balance_change_tgas() const {
+            // TODO(jimmy) move to block header
             int64_t tgas_balance_change = 0;
             std::string value = query_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change());
             if (!value.empty()) {
