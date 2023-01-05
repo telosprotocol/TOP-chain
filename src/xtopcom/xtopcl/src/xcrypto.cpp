@@ -585,6 +585,7 @@ std::vector<std::string> scan_key_dir(const std::string & path) {
             keys.push_back(std::string(filename->d_name));
         }
     }
+    closedir(dir);
     return keys;
 }
 

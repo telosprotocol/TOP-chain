@@ -308,6 +308,7 @@ bool IsDirEmpty(const char * dirname) {
         }
 
         if (n > 0) {
+            closedir(dir);
             return false;
         }
     }
@@ -1247,6 +1248,7 @@ int db_download(const std::string datadir, const std::string& download_addr, std
         found = out.find('/');
         if (found == std::string::npos) {
             printf("extract database error.\n");
+            pclose(output);
             return 1;
         }
         pclose(output);
