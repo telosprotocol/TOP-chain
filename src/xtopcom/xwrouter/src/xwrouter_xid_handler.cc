@@ -267,12 +267,12 @@ void WrouterXidHandler::SendBroadcast(transport::protobuf::RoutingMessage & mess
     RootRoutingTablePtr routing_table;
     routing_table = FindRootRoutingTable();
 
-    xdbg("sendgossip routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
-
     if (!routing_table) {
         ec = xwrouter::xwrouter_error_t::not_find_routing_table, xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
+
+    xdbg("sendgossip routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
 
     // return GossipBroadcast(message, routing_table);
 
