@@ -503,7 +503,7 @@ std::vector<xcons_transaction_ptr_t> xblocktool_t::create_txreceipts(base::xvblo
     // get all leafs firstly for performance
     std::error_code ec;
     auto input_object = commit_block->load_input(ec);    
-    std::vector<std::string> all_leafs = base::xvblockmaker_t::get_input_merkle_leafs(input_object.get());
+    std::vector<std::string> all_leafs = base::xvblockmaker_t::get_input_merkle_leafs(input_object);
 
     base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(all_leafs);
     // #3 calc leaf path and make rceipt
