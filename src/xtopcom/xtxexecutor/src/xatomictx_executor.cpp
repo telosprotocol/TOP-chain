@@ -44,9 +44,9 @@ bool xatomictx_executor_t::update_nonce_and_hash(const data::xaccountstate_ptr_t
         }
 
         accountstate->increase_tx_nonce();  // set to account index
-        xdbg("xatomictx_executor_t::update_nonce_and_hash succ-nonce increase.tx=%s", tx->dump().c_str());
+        xdbg("xatomictx_executor_t::update_nonce_and_hash succ-nonce increase.tx=%s,nonce=%ld", tx->dump().c_str(),accountstate->get_tx_nonce());
         // TODO(jimmy) add fork to not set
-        bool forked = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_sync_point, m_para.get_clock());
+        bool forked = chain_fork::xutility_t::is_forked(fork_points::v1_9_0_state_fork_point, m_para.get_clock());
         if (!forked) {
             accountstate->get_unitstate()->set_tx_info_latest_sendtx_num(tx_nonce);
             std::string transaction_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
