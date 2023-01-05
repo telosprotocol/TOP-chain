@@ -162,6 +162,15 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
 
 void catch_system_signals()
 {
+#if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO)
+    #define DISABLE_SIGNAL_CAPTURE
+#endif
+
+#ifdef DISABLE_SIGNAL_CAPTURE
+    printf("catch_system_signals disable signal capture\n");
+    xwarn("catch_system_signals disable signal capture");
+#endif
+
 #ifndef DISABLE_SIGNAL_CAPTURE
     static struct sigaction _sys_sigact;
     memset(&_sys_sigact, 0, sizeof(_sys_sigact));
