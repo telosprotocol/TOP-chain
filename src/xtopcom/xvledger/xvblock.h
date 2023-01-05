@@ -779,8 +779,8 @@ namespace top
             const std::shared_ptr<xvblock_excontainer_base> & get_excontainer() const {return m_excontainer;}
 
         public: // input&output public apis
-            xobject_ptr_t<xvinput_t>    load_input(std::error_code & ec)  const;//load input on-demand
-            xobject_ptr_t<xvoutput_t>   load_output(std::error_code & ec) const;//load output on-demand
+            xvinput_t*                  load_input(std::error_code & ec)  const;//load input on-demand
+            xvoutput_t*                 load_output(std::error_code & ec) const;//load output on-demand
             std::string                 query_input_resource(std::string const & key) const;
             std::string                 query_output_resource(std::string const & key) const;
             std::string                 query_output_entity(std::string const & key) const;

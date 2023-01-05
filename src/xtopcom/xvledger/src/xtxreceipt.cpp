@@ -140,8 +140,8 @@ namespace top
             }
             // get all leafs firstly for performance
             std::error_code ec;
-            auto input_object = commit_block->load_input(ec);            
-            std::vector<std::string> all_leafs = xvblockmaker_t::get_input_merkle_leafs(input_object.get());
+            auto input_object = commit_block->load_input(ec);          
+            std::vector<std::string> all_leafs = xvblockmaker_t::get_input_merkle_leafs(input_object);
 
             auto primary_entity = input_object->get_primary_entity();
             if (primary_entity == nullptr) {

@@ -163,7 +163,9 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
 void catch_system_signals()
 {
 #if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO)
-    #define DISABLE_SIGNAL_CAPTURE
+    #ifndef DISABLE_SIGNAL_CAPTURE
+        #define DISABLE_SIGNAL_CAPTURE
+    #endif
 #endif
 
 #ifdef DISABLE_SIGNAL_CAPTURE
