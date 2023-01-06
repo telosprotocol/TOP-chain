@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <cinttypes>
 #include "xbase/xutl.h"
+#include "xbasic/xbasic_size.hpp"
 #include "../xvstate.h"
 #include "../xvblock.h"
 #include "xmetrics/xmetrics.h"
@@ -721,7 +722,23 @@ namespace top
             }
             xassert(0);
         }
-        
+
+        int32_t xvqcert_t::get_object_size() const {
+            int32_t total_size = sizeof(*this);
+            total_size += get_size(m_header_hash) + get_size(m_input_root_hash) + get_size(m_output_root_hash) + get_size(m_justify_cert_hash) +
+                            get_size(m_verify_signature) + get_size(m_audit_signature) + get_size(m_extend_data) + get_size(m_extend_cert);
+            xdbg("-----nathan test----- xvqcert_t:%d,:%d,:%d,:%d,:%d,:%d,:%d,:%d",
+                    get_size(m_header_hash),
+                    get_size(m_input_root_hash),
+                    get_size(m_output_root_hash),
+                    get_size(m_justify_cert_hash),
+                    get_size(m_verify_signature),
+                    get_size(m_audit_signature),
+                    get_size(m_extend_data),
+                    get_size(m_extend_cert));
+            return total_size;
+        }
+    
         bool    xvqcert_t::is_allow_modify() const
         {
             if( (m_verify_signature.empty() == false) || (m_audit_signature.empty() == false) || (m_extend_cert.empty() == false) )

@@ -127,7 +127,7 @@ namespace top
 
         int32_t xtx_receipt_t::get_object_size() const {
             int32_t total_size = sizeof(*this);
-            total_size += get_size(m_tx_action.get_org_tx_hash())/* + m_tx_action.get_ex_alloc_size()*/;
+            total_size += m_tx_action.get_ex_alloc_size();
             if (m_tx_action_prove != nullptr) {
                 total_size += m_tx_action_prove->get_object_size();
             }

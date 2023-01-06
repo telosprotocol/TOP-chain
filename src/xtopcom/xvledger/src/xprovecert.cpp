@@ -85,6 +85,7 @@ namespace top
                 total_size += m_prove_cert->get_object_size();
             }
             total_size += get_size(m_prove_path);
+            xdbg("-----nathan test----- xprove_cert_t this:%d,m_prove_path:%d", sizeof(*this), get_size(m_prove_path));
             return total_size;
         }
 

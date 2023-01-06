@@ -435,6 +435,7 @@ bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
         receiptid_pair.set_confirm_rsp_id_max(current_rsp_id);
     }
     // update receipt id info to tx action result
+    xdbg("nathan test tx:%p", tx.get());
     tx->set_current_receipt_id(self_tableid, peer_tableid, current_receipt_id);
     if (current_rsp_id != 0) {
         tx->set_current_rsp_id(current_rsp_id);

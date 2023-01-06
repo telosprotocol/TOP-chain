@@ -431,12 +431,7 @@ namespace top
 
             void                set_extend_data(const std::string& extention);
             void                set_extend_cert(const std::string & _cert_bin);
-            int32_t get_object_size() const {
-                int32_t total_size = sizeof(*this);
-                total_size += m_header_hash.capacity() + m_input_root_hash.capacity() + m_output_root_hash.capacity() + m_justify_cert_hash.capacity() +
-                              m_verify_signature.capacity() + m_audit_signature.capacity() + m_extend_data.capacity() + m_extend_cert.capacity();
-                return total_size;
-            }
+            int32_t             get_object_size() const;
 
         private: //m_modified_count not serialized into binary,put here make alignment of this class better
             uint32_t            m_modified_count;   //count how many times modified since last save,it is 0 if nothing changed

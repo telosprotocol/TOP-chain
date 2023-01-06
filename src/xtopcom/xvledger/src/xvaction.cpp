@@ -6,6 +6,7 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
+#include "xbasic/xbasic_size.hpp"
 #include "../xvinstruction.h"
 #include "../xvaction.h"
 #include "xmetrics/xmetrics.h"
@@ -170,6 +171,46 @@ namespace top
                 return true;
             }
             return false;
+        }
+
+        int32_t xvaction_t::get_ex_alloc_size() const {
+            int32_t ex_size = get_size(m_org_tx_hash) + get_size(get_caller()) + get_size(get_contract_uri()) + get_size(get_method_name());
+            auto method_result = get_method_result();
+            if (method_result != nullptr) {
+                ex_size += sizeof(xvalue_t);
+                uint8_t cast_value_type = (uint8_t)method_result->get_type();
+                uint8_t container_type = cast_value_type&0x70;
+                uint8_t value_type = cast_value_type & 0x0F;
+                xdbg("-----nathan test----- xvalue container_type:%d,value_type:%d,xvalue:%s", cast_value_type, value_type, method_result->dump().c_str());
+                if (container_type == base::xvalue_t::enum_xvalue_type_map || value_type == base::xvalue_t::enum_xvalue_type_string) {
+                    auto container_ptr = method_result->get_map<std::string>();
+                    for (auto & pair : *container_ptr) {
+                        auto key_size = get_size(pair.first);
+                        auto value_size = get_size(pair.second);
+                        // each map node alloc 48B
+                        ex_size += (key_size + value_size + 48);
+                        xdbg("-----nathan test----- xvalue key:%d,value:%d,node:48", key_size, value_size);
+                    }
+                    // root node alloc 48B
+                    xdbg("-----nathan test----- xvalue root node:48");
+                    ex_size += 48;
+                }
+            }
+
+            xdbg("-----nathan test----- xvaction_t m_org_tx_hash:%d,get_caller:%d,contract_uri:%d,method_name:%d,method_result:%d",
+                 get_size(m_org_tx_hash),
+                 get_size(get_caller()),
+                 get_size(get_contract_uri()),
+                 get_size(get_method_name()),
+                 (method_result != nullptr)?sizeof(xvalue_t):0);
+
+            // deque alloc 64+504 Bytes.
+            ex_size += 568;
+            auto & method_params = get_method_params();
+            ex_size += method_params.size()*48; //see map_utl<std::string>::copy_from(xvmethod.h:291)
+            xdbg("------nathan test------- method_params size:%u*48, deque:64+504", method_params.size());
+
+            return ex_size;
         }
 
         //----------------------------------------xvactions_t-------------------------------------//

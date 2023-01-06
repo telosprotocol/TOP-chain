@@ -24,6 +24,7 @@ void xtransaction_exec_state_t::set_tx_exec_status(enum_xunit_tx_exec_status val
 }
 
 void xtransaction_exec_state_t::set_receipt_id(base::xtable_shortid_t self_tableid, base::xtable_shortid_t peer_tableid, uint64_t receiptid) {
+    xdbg("nathan test set_receipt_id");
     set_value(XTX_RECEIPT_ID, receiptid);
     set_value(XTX_RECEIPT_ID_SELF_TABLE_ID, self_tableid);
     set_value(XTX_RECEIPT_ID_PEER_TABLE_ID, peer_tableid);

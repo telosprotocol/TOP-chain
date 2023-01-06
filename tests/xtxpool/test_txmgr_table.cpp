@@ -476,8 +476,6 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 
-    xreceipt_queue_new_t receipt_queue(&table_para, &resource);
-
     uint32_t tx_num = 5;
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
     mocktable.push_txs(send_txs);
@@ -495,7 +493,8 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     ASSERT_EQ(is_repeat, true);
 }
 
-TEST_F(test_txmgr_table, loss_test) {
+#ifdef CACHE_SIZE_STATISTIC
+TEST_F(test_txmgr_table, sendtx_mem_loss) {
     mock::xvchain_creator creator;
     base::xvblockstore_t * blockstore = creator.get_blockstore();
 
@@ -513,17 +512,65 @@ TEST_F(test_txmgr_table, loss_test) {
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 
-    xreceipt_queue_new_t receipt_queue(&table_para, &resource);
-
     uint32_t tx_num = 1;
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
+
+    // deliberately memory loss
     xcons_transaction_t * tx = send_txs[0].get();
     tx->add_ref();
 
     std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(send_txs[0], para);
     int32_t ret = txmgr_table.push_send_tx(tx_ent, 0);
+    ASSERT_EQ(ret, 0);
     auto send_tx_cache_size = XMETRICS_GAUGE_GET_VALUE(metrics::cachesize_send_tx_queue);
     std::cout << "send_tx_cache_size : " << send_tx_cache_size << std::endl;
+}
+
+TEST_F(test_txmgr_table, receipt_mem_loss) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string sender = unit_addrs[0];
+    std::string receiver = unit_addrs[1];
+
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
+    xtxpool_statistic_t statistic;
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
+    xtx_para_t para;
+
+    uint32_t tx_num = 1;
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);
+    mocktable.push_txs(send_txs);
+    xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();
+
+    xdbg("nathan test send_tx:%p", send_txs[0].get());
+
+    std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
+    xassert(recv_txs.size() == send_txs.size());
+
+    // deliberately memory loss
+    xcons_transaction_t * tx = recv_txs[0].get();
+    tx->add_ref();
+
+    xdbg("nathan test recv_tx:%p", recv_txs[0].get());
+
+    std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(recv_txs[0], para);
+    int32_t ret = txmgr_table.push_receipt(tx_ent);
+    ASSERT_EQ(ret, 0);
+    auto receipt_cache_size = XMETRICS_GAUGE_GET_VALUE(metrics::cachesize_receipt_queue);
+    std::cout << "receipt_cache_size : " << receipt_cache_size << std::endl;
+}
+
+TEST_F(test_txmgr_table, xvaction_mem_loss) {
+    xvaction_t * action = new xvaction_t("1", "12", "123", "1234");
 }
 
 TEST_F(test_txmgr_table, large_number_of_send_tx) {
@@ -658,3 +705,4 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
     //     ddd ++;
     // }
 }
+#endif
