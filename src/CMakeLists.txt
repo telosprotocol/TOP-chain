@@ -23,6 +23,6 @@ add_compile_options(
 
 add_subdirectory(xtopcom)
 add_subdirectory(libraries)
-add_subdirectory(programs/xtopchain)
+add_subdirectory(programs)
 add_subdirectory(services)
 add_subdirectory(xtools)
