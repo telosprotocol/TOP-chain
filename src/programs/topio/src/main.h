@@ -58,7 +58,6 @@ typedef struct {
     void (*handler)(int signo, siginfo_t * siginfo, void * ucontext);
 } xnode_signal_t;
 
-int init_log();
 bool check_process_running(const std::string & pid_file);
 void xnode_signal_handler(int signo, siginfo_t * siginfo, void * ucontext);
 int load_lib(config_t & config);
@@ -72,10 +71,7 @@ void CheckReStartXtopchain(config_t & config);
 int start_worker_monitor_thread(config_t & config);
 // datadir valid check and init subdir log
 bool datadir_check_init(config_t & config);
-// get simple version, such as 0.0.0.0
-std::string get_simple_version();
-bool process_version_operation(int cmd_type, config_t & config);
-bool scan_keystore_dir(const std::string & path, std::vector<std::map<std::string, std::string>> & keystore_vec);
+
 bool load_keystore(config_t & config);
 bool generate_extra_config(config_t & config);
 
@@ -88,7 +84,7 @@ bool isDirExist(std::string dirPath);
 bool isFileExist(const std::string & name);
 
 std::string get_working_path();
-int load_commandline(config_t & config, int argc, char * argv[]);
+
 bool get_default_miner(config_t & config, std::map<std::string, std::string> & default_miner);
 
 int StartNodeWithConfig(config_t & config);

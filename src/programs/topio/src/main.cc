@@ -240,10 +240,6 @@ int load_lib(config_t & config) {
     return init_res;
 }
 
-int init_log() {
-    return 0;
-}
-
 // use to check if a file exists
 bool isFileExist(const std::string & name) {
     struct stat buffer;
@@ -259,70 +255,6 @@ bool isDirExist(std::string dirPath) {
     } else {
         return false;
     }
-}
-
-bool scan_keystore_dir(const std::string & path, std::vector<std::map<std::string, std::string>> & keystore_vec) {
-    std::vector<std::string> keystore_file;
-    DIR * dir = opendir(path.c_str());
-    if (dir == nullptr) {
-        std::cout << "open directory:" << path << " failed" << std::endl;
-        return false;
-    }
-    struct dirent * filename;
-    while ((filename = readdir(dir)) != nullptr) {
-        if (strcmp(filename->d_name, ".") == 0 || strcmp(filename->d_name, "..") == 0) {
-            continue;
-        }
-        std::string keyfile_path = path + "/" + std::string(filename->d_name);
-        keystore_file.push_back(keyfile_path);
-    }
-
-    for (const auto & kfile : keystore_file) {
-        std::ifstream keyfile(kfile);
-        if (!keyfile.is_open()) {
-            continue;
-        }
-
-        json reader;
-        try {
-            keyfile >> reader;
-        } catch (json::parse_error & e) {
-            keyfile.close();
-            continue;
-        }
-        keyfile.close();
-
-        std::map<std::string, std::string> key_info_map = {{"account", ""}, {"public_key", ""}, {"path", ""}, {"key_type", ""}};
-
-        for (const auto & el : reader.items()) {
-            if (el.key() == "account address" || el.key() == "account_address") {
-                key_info_map["account"] = el.value().get<std::string>();
-            }
-            if (el.key() == "public_key") {
-                key_info_map["public_key"] = el.value().get<std::string>();
-            }
-            if (el.key() == "key_type") {
-                key_info_map["key_type"] = el.value().get<std::string>();
-            }
-        }
-        if (key_info_map.at("account").empty() || key_info_map.at("public_key").empty() || key_info_map.at("key_type").empty()) {
-            std::cout << "ignore invalid keystore:" << kfile << std::endl;
-            continue;
-        }
-        key_info_map["path"] = kfile;
-
-        keystore_vec.push_back(key_info_map);
-    }
-    closedir(dir);
-    if (keystore_vec.empty()) {
-        return false;
-    }
-    return true;
-}
-
-bool process_version_operation(config_t & config) {
-    load_lib(config);
-    return true;
 }
 
 // start daemon
@@ -942,10 +874,6 @@ bool datadir_check_init(config_t & config) {
     return true;
 }
 
-std::string get_simple_version() {
-    return std::string(PROGRAM_VERSION);
-}
-
 // get current dir
 std::string get_working_path() {
     char temp[256];
@@ -1240,14 +1168,6 @@ int filter_node_commandline(config_t & config, int argc, char * argv[]) {
     app.ignore_case();
     // require at least one command
     app.require_subcommand(1);
-    /*
-    auto version_func =  [&]() -> void {
-        config.so_func_name = "get_version";
-        process_version_operation(config);
-        exit(0);
-    };
-    app.add_flag_callback("-v,--version", version_func, "topio version");
-    */
 
     // node
     auto node = app.add_subcommand("node", "node command");
