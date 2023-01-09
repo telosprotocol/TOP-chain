@@ -1566,7 +1566,7 @@ namespace top
         }
 
         void xblockacct_t::fully_update_cp_connect() {
-            if( (0 == m_meta->_highest_cp_connect_block_height) && m_meta->_highest_cp_connect_block_hash.empty())
+            if(0 == m_meta->_highest_cp_connect_block_height)
             {
                 xwarn("fully_update_cp_connect uninitialized meta account:%s", get_account().c_str());
                 if (0 == load_index(0))
@@ -1580,6 +1580,7 @@ namespace top
                     {
                         return;
                     }
+                    // update cp block hash from genesis block in db
                     m_meta->_highest_cp_connect_block_hash = genesis_index->get_block_hash();
                 }
             }
