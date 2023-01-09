@@ -60,6 +60,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_mpt_state_object);
         RETURN_METRICS_NAME(dataobject_mpt_trie_node_cnt);
 
+        //data 
+        RETURN_METRICS_NAME(data_relay_release_input);
+        RETURN_METRICS_NAME(data_relay_release_output);
+        RETURN_METRICS_NAME(data_relay_release_resource);
+
         // dbkeys
         RETURN_METRICS_NAME(db_key_tx);
         RETURN_METRICS_NAME(db_key_block_index);

@@ -1865,24 +1865,8 @@ namespace top
                     return false;
                 }
             }
-            if (get_header()->is_character_cert_header_only()) {
-                if (m_vinput_ptr != nullptr) {
-                    return true;
-                }
-                if (get_header()->get_input_hash().empty()) {
-                    return true;
-                }
-                xvinput_t* input_ptr = create_input_object(true, input_data);
-                if (nullptr == input_ptr) {
-                    xassert(false);
-                    return false;
-                }
-                xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,input_ptr);
-                if(old_ptr != NULL){
-                    xerror("xvblock_t::set_input_data release old ptr");
-                    old_ptr->release_ref();
-                }                
-            } else {
+            // set immediately for old version
+            if (false == get_header()->is_character_cert_header_only()) {
                 if (m_vinput_ptr == nullptr) {
                     xassert(false);
                     return false;
@@ -1891,8 +1875,10 @@ namespace top
                     xassert(false);
                     return false;
                 }
-            }            
-            m_vinput_data = input_data;
+            }
+            if (m_vinput_data != input_data) {
+                m_vinput_data = input_data;
+            }
             return true;
         }
 
@@ -1908,24 +1894,8 @@ namespace top
                 }
             }
 
-            if (get_header()->is_character_cert_header_only()) {
-                if (m_voutput_ptr != nullptr) {
-                    return true;
-                }
-                if (get_header()->get_output_hash().empty()) {
-                    return true;
-                }
-                xvoutput_t* output_ptr = create_output_object(true, output_data);
-                if (nullptr == output_ptr) {
-                    xassert(false);
-                    return false;
-                }
-                xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,output_ptr);
-                if(old_ptr != NULL){
-                    xerror("xvblock_t::set_output_data release old ptr");
-                    old_ptr->release_ref();
-                }
-            } else {
+            // set immediately for old version
+            if (false == get_header()->is_character_cert_header_only()) {
                 if (m_voutput_ptr == nullptr) {
                     xassert(false);
                     return false;
@@ -1935,8 +1905,9 @@ namespace top
                     return false;
                 }
             }
-
-            m_voutput_data = output_data;
+            if (m_voutput_data != output_data) {
+                m_voutput_data = output_data;
+            }            
             return true;
         }
 
@@ -1985,7 +1956,29 @@ namespace top
 
         xvinput_t* xvblock_t::load_input(std::error_code & ec)  const
         {
-            return m_vinput_ptr;
+            if (nullptr != m_vinput_ptr) {
+                return m_vinput_ptr;
+            }
+            // create input output object on demand for new version
+            if (m_vinput_data.empty()) {
+                if (false == should_has_input_data()) {
+                    ec = error::xerrc_t::block_input_output_data_not_exist;
+                    xassert(false);
+                }
+                return nullptr;
+            }
+            xvinput_t* input_ptr = create_input_object(true, m_vinput_data);
+            if (nullptr == input_ptr) {
+                ec = error::xerrc_t::block_input_output_create_object_fail;
+                xassert(false);
+                return nullptr;
+            }
+            xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,input_ptr);
+            if(old_ptr != NULL){
+                xcontext_t::instance().delay_release_object(old_ptr);
+                XMETRICS_GAUGE(metrics::data_relay_release_input, 1);
+            }
+            return m_vinput_ptr;      
             // if (get_block_class() == base::enum_xvblock_class_nil) {
             //     return nullptr;
             // }
@@ -2043,6 +2036,28 @@ namespace top
 
         xvoutput_t* xvblock_t::load_output(std::error_code & ec)  const
         {
+            if (nullptr != m_voutput_ptr) {
+                return m_voutput_ptr;
+            }
+            // create input output object on demand for new version
+            if (m_voutput_data.empty()) {
+                if (should_has_output_data()) {
+                    ec = error::xerrc_t::block_input_output_data_not_exist;
+                    xassert(false);
+                }
+                return nullptr;
+            }            
+            xvoutput_t* output_ptr = create_output_object(true, m_voutput_data);
+            if (nullptr == output_ptr) {
+                ec = error::xerrc_t::block_input_output_create_object_fail;
+                xassert(false);
+                return nullptr;
+            }
+            xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,output_ptr);
+            if(old_ptr != NULL){
+                xcontext_t::instance().delay_release_object(old_ptr);
+                XMETRICS_GAUGE(metrics::data_relay_release_output, 1);
+            }
             return m_voutput_ptr;
             // if (get_block_class() == base::enum_xvblock_class_nil) {
             //     return nullptr;
@@ -2106,7 +2121,9 @@ namespace top
                 if (nullptr != input_object) {
                     return input_object->query_resource(key);
                 }
-                xerror("xvblock_t::query_input_resource fail.%s,key=%s",dump().c_str(),key.c_str());
+                if (ec) {
+                    xerror("xvblock_t::query_input_resource fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
             }
             return {};
         }
@@ -2117,7 +2134,9 @@ namespace top
                 if (nullptr != output_object) {
                     return output_object->query_resource(key);
                 }
-                xerror("xvblock_t::query_output_resource fail.%s,key=%s",dump().c_str(),key.c_str());
+                if (ec) {
+                    xerror("xvblock_t::query_output_resource fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
             }
             return {};
         }
@@ -2128,7 +2147,9 @@ namespace top
                 if (nullptr != output_object) {
                     return output_object->get_primary_entity()->query_value(key);
                 }
-                xerror("xvblock_t::query_output_entity fail.%s,key=%s",dump().c_str(),key.c_str());
+                if (ec) {
+                    xerror("xvblock_t::query_output_entity fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
             }
             return {};
         }
