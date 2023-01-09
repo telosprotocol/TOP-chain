@@ -134,6 +134,8 @@ void xconfig_register_t::init_static_config() {
 
     XADD_OFFCHAIN_PARAMETER(table_fork_info_interval);
 
+    XADD_OFFCHAIN_PARAMETER(calculate_size_delay_time);
+
     m_param_lock.release_write();
 }
 

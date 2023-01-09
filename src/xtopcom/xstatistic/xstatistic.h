@@ -15,8 +15,8 @@ NS_BEG2(top, xstatistic)
 enum enum_statistic_class_type {
     enum_statistic_none = 0,
     enum_statistic_send_tx = 1,
-    // enum_statistic_receipts = 1,
-    // enum_statistic_qcert = 2,
+    enum_statistic_receipts = 2,
+    // enum_statistic_qcert = 3,
     enum_statistic_max,
 };
 
@@ -50,8 +50,12 @@ public:
     }
 };
 
+using xnot_calc_object_set_t = std::multiset<xstatistic_obj_face_t *, xstatistic_obj_comp>;
+using xnot_calc_object_map_t = std::map<xstatistic_obj_face_t *, xnot_calc_object_set_t::iterator>;
+
 class xobject_statistic_base_t {
 public:
+    xobject_statistic_base_t(int64_t delay_time) : m_delay_time(delay_time) {}
     void add_object(xstatistic_obj_face_t * object);
     void del_object(xstatistic_obj_face_t * object);
     void refresh();
@@ -60,15 +64,25 @@ private:
     virtual metrics::E_SIMPLE_METRICS_TAG get_num_metrics_tag() const = 0;
     virtual metrics::E_SIMPLE_METRICS_TAG get_size_metrics_tag() const = 0;
 private:
-    std::multiset<xstatistic_obj_face_t *, xstatistic_obj_comp> m_not_calc_object_set;
-    
+    xnot_calc_object_set_t m_not_calc_object_set;
+    xnot_calc_object_map_t m_not_calc_object_map;
+    int64_t m_delay_time;
     mutable std::mutex m_mutex;
 };
-
 class xobject_statistic_send_tx_t : public xobject_statistic_base_t {
+public:
+    xobject_statistic_send_tx_t(int64_t delay_time) : xobject_statistic_base_t(delay_time) {}
 private:
     virtual metrics::E_SIMPLE_METRICS_TAG get_num_metrics_tag() const override {return metrics::statistic_send_tx_num;}
     virtual metrics::E_SIMPLE_METRICS_TAG get_size_metrics_tag() const override {return metrics::statistic_send_tx_size;}
+};
+
+class xobject_statistic_receipt_t : public xobject_statistic_base_t {
+public:
+    xobject_statistic_receipt_t(int64_t delay_time) : xobject_statistic_base_t(delay_time) {}
+private:
+    virtual metrics::E_SIMPLE_METRICS_TAG get_num_metrics_tag() const override {return metrics::statistic_receipt_num;}
+    virtual metrics::E_SIMPLE_METRICS_TAG get_size_metrics_tag() const override {return metrics::statistic_receipt_size;}
 };
 
 class xstatistic_t {

@@ -611,6 +611,10 @@ XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 256);
 
 XDECLARE_CONFIGURATION(table_fork_info_interval, xinterval_t, 10);
 
+#ifdef CACHE_SIZE_STATISTIC
+XDECLARE_CONFIGURATION(calculate_size_delay_time, xinterval_t, 900);
+#endif
+
 #undef XDECLARE_CONFIGURATION
 
 NS_END2
