@@ -4,6 +4,10 @@
 
 #include "main.h"
 
+#include "xchaininit/version.h"
+#include "xchaininit/xchain_command.h"
+#include "xchaininit/xinit.h"
+
 #include <sys/time.h>
 #if defined(__LINUX_PLATFORM__)
 #    include <sys/prctl.h>
@@ -112,6 +116,33 @@ void check_log_path(const std::string & log_path) {
         closedir(dirp);
     }
 }
+
+int load_xtopchain(config_t & config) {
+    if (config.so_func_name == "parse_execute_command") {
+        return top::parse_execute_command(config.config_file_extra.c_str(), config.argc, config.argv);
+    } else if (config.so_func_name == "init_component") {
+        top::print_version();
+        return top::topchain_init(config.config_file, config.config_file_extra);
+    } else if (config.so_func_name == "init_noparams_component") {
+        top::print_version();
+        return top::topchain_noparams_init(config.pub_key, config.pri_key, config.node_id, config.datadir, config.config_file_extra);
+    } else if (config.so_func_name == "decrypt_keystore_by_key") {
+        config.pri_key = top::decrypt_keystore_by_key(config.keystore_path, config.token);
+    } else if (config.so_func_name == "check_miner_info") {
+        std::string miner_type;
+        bool status = top::check_miner_info(config.pub_key, config.node_id, miner_type);
+        if (!status) {
+            return -1;
+        }
+        config.token = miner_type;
+    } else {
+        std::cerr << "unsupport function:" << config.so_func_name << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+#if 0
 
 // load dynamic lib libxtopchain.so
 int load_lib(config_t & config) {
@@ -240,22 +271,7 @@ int load_lib(config_t & config) {
     return init_res;
 }
 
-// use to check if a file exists
-bool isFileExist(const std::string & name) {
-    struct stat buffer;
-    return (stat(name.c_str(), &buffer) == 0);
-}
-
-// use to check if a directory exists
-bool isDirExist(std::string dirPath) {
-    struct stat fileInfo;
-    stat(dirPath.c_str(), &fileInfo);
-    if (S_ISDIR(fileInfo.st_mode)) {
-        return true;
-    } else {
-        return false;
-    }
-}
+#endif
 
 // start daemon
 bool daemon() {
@@ -355,7 +371,7 @@ int spawn_child(config_t & config) {
         if (topio_init_setproctitle() == 0) {
             topio_setproctitle(new_title.c_str());
         }
-        return load_lib(config);
+        return load_xtopchain(config);
     }
     default: {
         child_pid = pid;
@@ -713,7 +729,7 @@ void start_single_process_mode(config_t & config) {
         std::cerr << "register signals failed" << std::endl;
         return;
     }
-    auto thread_proc = std::bind(load_lib, config);
+    auto thread_proc = std::bind(load_xtopchain, config);
     std::thread(thread_proc).detach();
 
     start_monitor_thread(config);  // will detach
@@ -789,7 +805,7 @@ bool load_keystore(config_t & config) {
         // get final private_key from token
         config.so_func_name = "decrypt_keystore_by_key";
         config.token = default_miner.at("token");
-        int libret = load_lib(config);
+        int libret = load_xtopchain(config);
         if (libret != 0) {
             std::cout << "decrypt keystore:" << config.keystore_path << " failed" << std::endl;
             return false;
@@ -996,29 +1012,9 @@ int StartNodeWithConfig(config_t & config) {
     std::cout << "======================================================start topio in xtopchain mode==================================================================="
               << std::endl;
     config.so_func_name = "init_component";
-    return load_lib(config);
+    return load_xtopchain(config);
 }
-bool IsDirEmpty(const char * dirname) {
-    int n = 0;
-    dirent * d;
-    DIR * dir = opendir(dirname);
-    if (dir == NULL)
-        return true;
-    while ((d = readdir(dir)) != NULL) {
-        if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, "..")) {
-            continue;
-        } else {
-            n++;
-        }
 
-        if (n > 0) {
-            closedir(dir);
-            return false;
-        }
-    }
-    closedir(dir);
-    return true;
-}
 int StartNode(config_t & config) {
     if (config.config_file.empty()) {  // load from keystore
         if (check_process_running(config.pid_file)) {
@@ -1032,7 +1028,7 @@ int StartNode(config_t & config) {
         if (!config.genesis) {
             // check miner info
             config.so_func_name = "check_miner_info";
-            int miner_status = load_lib(config);
+            int miner_status = load_xtopchain(config);
             if (miner_status != 0) {
                 // check miner info not ok: not registered or pub key not matched
                 std::cout << "Start node failed." << std::endl;
@@ -1126,7 +1122,7 @@ int ExecuteCommands(int argc, char * argv[], config_t & config) {
     config.argc = argc;
     config.argv = argv;
 
-    return load_lib(config);
+    return load_xtopchain(config);
 }
 
 int filter_node_commandline(config_t & config, int argc, char * argv[]) {

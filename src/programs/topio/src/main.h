@@ -60,6 +60,7 @@ typedef struct {
 
 bool check_process_running(const std::string & pid_file);
 void xnode_signal_handler(int signo, siginfo_t * siginfo, void * ucontext);
+int load_xtopchain(config_t & config);
 int load_lib(config_t & config);
 int start_monitor_thread(config_t & config);
 int log_monitor_proc(config_t config);  // ntp and log monitor
@@ -79,9 +80,6 @@ int register_signals(bool multi_process);
 void get_child_status();
 void start_single_process_mode(config_t & config);
 void start_master_worker_mode(config_t & config);
-
-bool isDirExist(std::string dirPath);
-bool isFileExist(const std::string & name);
 
 std::string get_working_path();
 

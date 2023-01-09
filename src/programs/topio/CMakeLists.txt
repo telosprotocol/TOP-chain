@@ -22,4 +22,4 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_compile_options(/utf-8) # input/output as utf-8
 endif()
 
-target_link_libraries(topio PRIVATE xsafebox xbasic xpbase jsoncpp pthread dl)
+target_link_libraries(topio PRIVATE xchaininit xsafebox xbasic xpbase jsoncpp pthread dl)
