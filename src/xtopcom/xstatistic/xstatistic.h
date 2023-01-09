@@ -13,25 +13,32 @@
 NS_BEG2(top, xstatistic)
 
 enum enum_statistic_class_type {
-    enum_statistic_send_tx = 0,
+    enum_statistic_none = 0,
+    enum_statistic_send_tx = 1,
     // enum_statistic_receipts = 1,
     // enum_statistic_qcert = 2,
     enum_statistic_max,
 };
 
+// template <int type_value>
 class xstatistic_obj_face_t {
+// protected:
+//     enum { class_type_value = type_value };
 public:
-    xstatistic_obj_face_t();  // push "this" ptr to statistic set.
+    xstatistic_obj_face_t(enum_statistic_class_type type);
+    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj);
+    
     ~xstatistic_obj_face_t(); // remove "this" ptr from statistic set.
 #ifdef CACHE_SIZE_STATISTIC
     int64_t create_time() const {return m_create_time;}
     const int32_t get_object_size() const;
-    virtual enum_statistic_class_type get_class_type() const = 0;
+    int32_t get_class_type() const {return m_type;}
 private:
     virtual const int32_t get_object_size_real() const = 0;
 private:
     int64_t m_create_time{0};
-    mutable uint64_t m_size{0};
+    enum_statistic_class_type m_type{enum_statistic_none};
+    mutable uint32_t m_size{0};
 #endif
 };
 
@@ -53,7 +60,8 @@ private:
     virtual metrics::E_SIMPLE_METRICS_TAG get_num_metrics_tag() const = 0;
     virtual metrics::E_SIMPLE_METRICS_TAG get_size_metrics_tag() const = 0;
 private:
-    std::set<xstatistic_obj_face_t *, xstatistic_obj_comp> m_not_calc_object_set;
+    std::multiset<xstatistic_obj_face_t *, xstatistic_obj_comp> m_not_calc_object_set;
+    
     mutable std::mutex m_mutex;
 };
 

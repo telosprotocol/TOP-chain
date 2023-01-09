@@ -22,25 +22,32 @@ protected:
 #ifdef CACHE_SIZE_STATISTIC
 class test_class_t : public xstatistic_obj_face_t {
 public:
-    test_class_t(uint32_t n){}
-    virtual enum_statistic_class_type get_class_type() const override {
-        return enum_statistic_send_tx;
+    test_class_t(uint32_t x) : xstatistic_obj_face_t(enum_statistic_send_tx), n(x) {
+        // std::cout << "test_class_t this : " << this << std::endl;
     }
+    ~test_class_t() {
+    }
+    uint32_t n{0};
 private:
     virtual const int32_t get_object_size_real() const override {
         return sizeof(*this);
     }
-    uint32_t n{0};
 };
 
 TEST_F(test_statistic, basic) {
     std::vector<test_class_t> obj_vec;
 
-    uint32_t num = 100;
+    uint32_t num = 2;
     for (uint32_t i = 0; i < num; i++){
         obj_vec.push_back(test_class_t(i));
     }
 
+    for (auto & obj : obj_vec) {
+        std::cout << "obj.n : " << obj.n << std::endl;
+    }
+
+    sleep(1);
+    std::cout << "sleep 1 second." << std::endl;
     xstatistic_hub_t::instance()->refresh();
 
     auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_send_tx_num);

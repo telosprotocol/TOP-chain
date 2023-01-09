@@ -8,7 +8,7 @@
 
 NS_BEG2(top, xstatistic)
 
-#define CALCULATE_SIZE_DELAY_TIME_MS (1000)
+#define CALCULATE_SIZE_DELAY_TIME_MS (900)
 
 #ifdef CACHE_SIZE_STATISTIC
 xstatistic_t * xstatistic_hub_t::_static_statistic = nullptr;
@@ -22,15 +22,33 @@ xstatistic_t* xstatistic_hub_t::instance() {
 }
 #endif
 
-xstatistic_obj_face_t::xstatistic_obj_face_t() {
+// xstatistic_obj_face_t::xstatistic_obj_face_t() {
+// #ifdef CACHE_SIZE_STATISTIC
+//     m_create_time = base::xtime_utl::gmttime_ms();
+//     xstatistic_hub_t::instance()->add_object(this);
+// #endif
+// }
+
+xstatistic_obj_face_t::xstatistic_obj_face_t(enum_statistic_class_type type) : m_type(type) {
 #ifdef CACHE_SIZE_STATISTIC
     m_create_time = base::xtime_utl::gmttime_ms();
     xstatistic_hub_t::instance()->add_object(this);
 #endif
 }
 
+xstatistic_obj_face_t::xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {
+#ifdef CACHE_SIZE_STATISTIC
+    // std::cout << "xstatistic_obj_face_t copy this : " << this << " obj : " << &obj << std::endl;
+    m_create_time = obj.m_create_time;
+    m_type = obj.m_type;
+    m_size = obj.m_size;
+    xstatistic_hub_t::instance()->add_object(this);
+#endif
+}
+
 xstatistic_obj_face_t::~xstatistic_obj_face_t() {
 #ifdef CACHE_SIZE_STATISTIC
+    // std::cout << "~xstatistic_obj_face_t this : " << this << std::endl;
     xstatistic_hub_t::instance()->del_object(this);
 #endif
 }
@@ -51,13 +69,17 @@ void xobject_statistic_base_t::add_object(xstatistic_obj_face_t * object) {
 
 void xobject_statistic_base_t::del_object(xstatistic_obj_face_t * object) {
     std::lock_guard<std::mutex> lck(m_mutex);
-    auto iter = m_not_calc_object_set.find(object);
-    if (iter != m_not_calc_object_set.end()) {
-        m_not_calc_object_set.erase(iter);
-    } else {
-        XMETRICS_GAUGE(get_num_metrics_tag(), -1);
-        XMETRICS_GAUGE(get_size_metrics_tag(), -object->get_object_size());
+    auto ret = m_not_calc_object_set.equal_range(object);
+    for (auto it = ret.first; it != ret.second; it++) {
+        if ((*it) == object) {
+            m_not_calc_object_set.erase(it);
+            refresh_inner(base::xtime_utl::gmttime_ms());
+            return;
+        }
     }
+
+    XMETRICS_GAUGE(get_num_metrics_tag(), -1);
+    XMETRICS_GAUGE(get_size_metrics_tag(), -object->get_object_size());
     refresh_inner(base::xtime_utl::gmttime_ms());
 }
 
@@ -84,12 +106,12 @@ xstatistic_t::xstatistic_t() {
 }
 
 void xstatistic_t::add_object(xstatistic_obj_face_t * object) {
-    uint32_t idx = (uint32_t)object->get_class_type();
+    uint32_t idx = (uint32_t)object->get_class_type() - 1;
     m_object_statistic_vec[idx]->add_object(object);
 }
 
 void xstatistic_t::del_object(xstatistic_obj_face_t * object) {
-    uint32_t idx = (uint32_t)object->get_class_type();
+    uint32_t idx = (uint32_t)object->get_class_type() - 1;
     m_object_statistic_vec[idx]->del_object(object);
 }
 
