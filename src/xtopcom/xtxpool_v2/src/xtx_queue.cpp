@@ -22,16 +22,16 @@ using namespace top::data;
 
 #define account_send_tx_queue_size_max (16)
 
-xsend_tx_queue_internal_t::~xsend_tx_queue_internal_t() {
-#ifdef CACHE_SIZE_STATISTIC
-    int32_t size = 0;
-    for (const auto & tx_ent : m_tx_set) {
-        size += tx_ent->get_tx()->get_object_size();
-    }
-    XMETRICS_GAUGE(metrics::cachesize_send_tx_queue, -size);
-    // xdbg("~xsend_tx_queue_internal_t dec num =%u", m_tx_set.size());
-#endif
-}
+// xsend_tx_queue_internal_t::~xsend_tx_queue_internal_t() {
+// #ifdef CACHE_SIZE_STATISTIC
+//     int32_t size = 0;
+//     for (const auto & tx_ent : m_tx_set) {
+//         size += tx_ent->get_tx()->get_object_size();
+//     }
+//     XMETRICS_GAUGE(metrics::cachesize_send_tx_queue, -size);
+//     xdbg("~xsend_tx_queue_internal_t dec num =%u", m_tx_set.size());
+// #endif
+// }
 
 void xsend_tx_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -42,10 +42,10 @@ void xsend_tx_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_
     xsed_tx_set_iters_t iters(it, it_timeout_queue);
     m_tx_map[tx_ent->get_tx()->get_tx_hash()] = iters;
     m_xtable_info->send_tx_inc(1);
-#ifdef CACHE_SIZE_STATISTIC
-    auto size = tx_ent->get_tx()->get_object_size();
-    XMETRICS_GAUGE(metrics::cachesize_send_tx_queue, size);
-#endif
+// #ifdef CACHE_SIZE_STATISTIC
+//     auto size = tx_ent->get_tx()->get_object_size();
+//     XMETRICS_GAUGE(metrics::cachesize_send_tx_queue, size);
+// #endif
     xtxpool_info("xsend_tx_queue_internal_t::insert_tx push tx to send queue,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
@@ -59,10 +59,10 @@ void xsend_tx_queue_internal_t::erase_tx(const uint256_t & hash) {
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
                      delay);
-#ifdef CACHE_SIZE_STATISTIC
-        auto size = tx_ent->get_tx()->get_object_size();
-        XMETRICS_GAUGE(metrics::cachesize_send_tx_queue, -size);
-#endif
+// #ifdef CACHE_SIZE_STATISTIC
+//         auto size = tx_ent->get_tx()->get_object_size();
+//         XMETRICS_GAUGE(metrics::cachesize_send_tx_queue, -size);
+// #endif
         XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_send, delay);
         m_tx_set.erase(it_ready->second.m_send_tx_set_iter);
         m_tx_time_order_set.erase(it_ready->second.m_send_tx_time_order_set_iter);

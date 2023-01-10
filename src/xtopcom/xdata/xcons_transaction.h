@@ -123,7 +123,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_not_need_confirm();
     void                    set_inner_table_flag();
 
-    int32_t                 get_object_size() const;
+   //  int32_t                 get_object_size() const;
 
  private:
     void                    set_tx_subtype(enum_transaction_subtype _subtype);

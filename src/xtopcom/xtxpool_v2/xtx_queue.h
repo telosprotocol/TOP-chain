@@ -65,7 +65,7 @@ class xsend_tx_queue_internal_t {
 public:
     xsend_tx_queue_internal_t(xtxpool_table_info_t * xtable_info) : m_xtable_info(xtable_info) {
     }
-    ~xsend_tx_queue_internal_t();
+    // ~xsend_tx_queue_internal_t();
     void insert_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void erase_tx(const uint256_t & hash);
     const std::shared_ptr<xtx_entry> find(const std::string & hash) const;

@@ -17,12 +17,23 @@ NS_BEG2(top, xstatistic)
 enum enum_statistic_class_type {
     enum_statistic_none = 0,
     enum_statistic_begin = 1,
-    enum_statistic_send_tx = enum_statistic_begin,
-    enum_statistic_receipts,
-    // enum_statistic_qcert = 3,
+    enum_statistic_tx_v2 = enum_statistic_begin,
+    enum_statistic_tx_v3,
+    enum_statistic_receipt,
+    enum_statistic_vqcert,
     enum_statistic_max,
 };
 
+#ifndef CACHE_SIZE_STATISTIC
+class xstatistic_obj_face_t {
+public:
+    xstatistic_obj_face_t(enum_statistic_class_type type) {}
+    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
+    ~xstatistic_obj_face_t(){}
+private:
+    virtual int32_t get_object_size_real() const = 0;
+};
+#else
 // template <int type_value>
 class xstatistic_obj_face_t {
 // protected:
@@ -31,21 +42,21 @@ public:
     xstatistic_obj_face_t(enum_statistic_class_type type);
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj);
     
-    ~xstatistic_obj_face_t(); // remove "this" ptr from statistic set.
-#ifdef CACHE_SIZE_STATISTIC
+    ~xstatistic_obj_face_t();
+
     int64_t create_time() const {return m_create_time;}
     const int32_t get_object_size() const;
     int32_t get_class_type() const {return m_type;}
+
 private:
-    virtual const int32_t get_object_size_real() const = 0;
+    virtual int32_t get_object_size_real() const = 0;
+
 private:
     int64_t m_create_time{0};
     enum_statistic_class_type m_type{enum_statistic_none};
     mutable int32_t m_size{0};
-#endif
 };
 
-#ifdef CACHE_SIZE_STATISTIC
 class xstatistic_obj_comp {
 public:
     bool operator()(const xstatistic_obj_face_t * left, const xstatistic_obj_face_t * right) const {

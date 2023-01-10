@@ -12,13 +12,14 @@
 #include "xvledger/xprovecert.h"
 #include "xvledger/xmerkle.hpp"
 #include "xvledger/xvaction.h"
+#include "xstatistic/xstatistic.h"
 
 namespace top
 {
     namespace base
     {
         class xtxreceipt_build_t;
-        class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_receipt> {
+        class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_receipt>, public xstatistic::xstatistic_obj_face_t {
             friend class xtxreceipt_build_t;
         public:
             xtx_receipt_t();
@@ -46,7 +47,7 @@ namespace top
             std::string                     get_contract_address() const;
             std::string                     get_caller() const {return m_tx_action.get_caller();}
             const base::xvaction_t &        get_action() const {return m_tx_action;}
-            int32_t                          get_object_size() const;
+            virtual int32_t                 get_object_size_real() const override;
 
         private:
             base::xvaction_t                m_tx_action;

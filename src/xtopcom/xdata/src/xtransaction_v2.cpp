@@ -23,7 +23,7 @@ namespace top { namespace data {
 
 using namespace top::base;
 
-xtransaction_v2_t::xtransaction_v2_t() {
+xtransaction_v2_t::xtransaction_v2_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_tx_v2) {
     MEMCHECK_ADD_TRACE(this, "tx_create");
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, 1);
 }
@@ -552,7 +552,7 @@ int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_typ
     return 0;
 }
 
-int32_t xtransaction_v2_t::get_object_size() const {
+int32_t xtransaction_v2_t::get_object_size_real() const {
     int32_t total_size = sizeof(*this);
     // add string member variable alloc size.
     xdbg("xtransaction_v2_t::get_object_size ------nathan test---------this:%d,m_source_addr:%d,m_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",

@@ -675,12 +675,16 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
 #ifdef CACHE_SIZE_STATISTIC
         //cache size statistic
-        RETURN_METRICS_NAME(cachesize_send_tx_queue);
-        RETURN_METRICS_NAME(cachesize_receipt_queue);
-        RETURN_METRICS_NAME(statistic_send_tx_num);
+        // RETURN_METRICS_NAME(cachesize_send_tx_queue);
+        // RETURN_METRICS_NAME(cachesize_receipt_queue);
+        RETURN_METRICS_NAME(statistic_tx_v2_num);
+        RETURN_METRICS_NAME(statistic_tx_v3_num);
         RETURN_METRICS_NAME(statistic_receipt_num);
-        RETURN_METRICS_NAME(statistic_send_tx_size);
+        RETURN_METRICS_NAME(statistic_vqcert_num);
+        RETURN_METRICS_NAME(statistic_tx_v2_size);
+        RETURN_METRICS_NAME(statistic_tx_v3_size);
         RETURN_METRICS_NAME(statistic_receipt_size);
+        RETURN_METRICS_NAME(statistic_vqcert_size);
 #endif
 
         default: assert(false); return nullptr;

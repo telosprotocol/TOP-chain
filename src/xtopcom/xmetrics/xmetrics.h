@@ -731,12 +731,17 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
 #ifdef CACHE_SIZE_STATISTIC
     //cache size statistic
-    cachesize_send_tx_queue,
-    cachesize_receipt_queue,
-    statistic_send_tx_num,
+    // cachesize_send_tx_queue,
+    // cachesize_receipt_queue,
+    statistic_tx_v2_num,
+    statistic_tx_v3_num,
     statistic_receipt_num,
-    statistic_send_tx_size,
+    statistic_vqcert_num,
+
+    statistic_tx_v2_size,
+    statistic_tx_v3_size,
     statistic_receipt_size,
+    statistic_vqcert_size,
 #endif
 
     e_simple_total,

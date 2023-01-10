@@ -26,12 +26,12 @@ namespace top { namespace data {
 
 using namespace top::base;
 
-xtransaction_v3_t::xtransaction_v3_t() {
+xtransaction_v3_t::xtransaction_v3_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_tx_v3) {
     MEMCHECK_ADD_TRACE(this, "tx_create");
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, 1);
 }
 xtransaction_v3_t::xtransaction_v3_t(xeth_transaction_t const& ethtx)
-: m_ethtx(ethtx) {
+: xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_tx_v3), m_ethtx(ethtx) {
     MEMCHECK_ADD_TRACE(this, "tx_create");
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, 1);
     update_cache();
@@ -301,7 +301,7 @@ int32_t xtransaction_v3_t::parse(enum_xaction_type source_type, enum_xaction_typ
     return xchain_error_action_param_empty;
 }
 
-int32_t xtransaction_v3_t::get_object_size() const {
+int32_t xtransaction_v3_t::get_object_size_real() const {
     int32_t total_size = sizeof(*this);
     // add string member variable alloc size.
     total_size += get_size(m_source_addr) + get_size(m_target_addr) + get_size(m_authorization) + m_ethtx.get_to().get_ex_alloc_size() +

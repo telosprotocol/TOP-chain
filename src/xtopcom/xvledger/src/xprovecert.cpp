@@ -81,9 +81,10 @@ namespace top
 
         int32_t xprove_cert_t::get_object_size() const {
             int32_t total_size = sizeof(*this);
-            if (m_prove_cert != nullptr) {
-                total_size += m_prove_cert->get_object_size();
-            }
+            // avoid double counting.
+            // if (m_prove_cert != nullptr) {
+            //     total_size += m_prove_cert->get_object_size();
+            // }
             total_size += get_size(m_prove_path);
             xdbg("-----nathan test----- xprove_cert_t this:%d,m_prove_path:%d", sizeof(*this), get_size(m_prove_path));
             return total_size;

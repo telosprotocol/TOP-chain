@@ -12,11 +12,12 @@
 #include "xdata/xtransaction.h"
 #include "xdata/xdatautil.h"
 #include "xcommon/xaddress.h"
+#include "xstatistic/xstatistic.h"
 #include "xvledger/xvaccount.h"
 
 namespace top { namespace data {
 
-class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_transaction_v2>, public xtransaction_t {
+class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_transaction_v2>, public xtransaction_t, public xstatistic::xstatistic_obj_face_t {
  public:
     xtransaction_v2_t();
  protected:
@@ -134,7 +135,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void set_memo(const std::string & memo) override {m_memo = memo;};
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual bool is_evm_tx() const override {return false;}
-    virtual int32_t get_object_size() const override;
+    virtual int32_t get_object_size_real() const override;
 
 private:
     std::string m_source_addr;

@@ -189,7 +189,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const;
-    virtual int32_t get_object_size() const = 0;
+    // virtual int32_t get_object_size() const = 0;
 };
 
 }  // namespace data

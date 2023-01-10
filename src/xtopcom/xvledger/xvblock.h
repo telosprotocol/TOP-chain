@@ -10,6 +10,7 @@
 #include "xventity.h"
 #include "xvtransact.h"
 #include "xvblock_fork.h"
+#include "xstatistic/xstatistic.h"
 
 namespace top
 {
@@ -304,7 +305,7 @@ namespace top
         //3bit = max 8 definition for enum_xhash_type
 
         //xCertificate like CA Cetification that support hierarchy sign and verify
-        class xvqcert_t : public xdataunit_t
+        class xvqcert_t : public xdataunit_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
             friend class xvbbuild_t;
@@ -431,7 +432,7 @@ namespace top
 
             void                set_extend_data(const std::string& extention);
             void                set_extend_cert(const std::string & _cert_bin);
-            int32_t             get_object_size() const;
+            virtual int32_t     get_object_size_real() const override;
 
         private: //m_modified_count not serialized into binary,put here make alignment of this class better
             uint32_t            m_modified_count;   //count how many times modified since last save,it is 0 if nothing changed

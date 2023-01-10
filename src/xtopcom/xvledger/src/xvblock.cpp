@@ -278,7 +278,7 @@ namespace top
         
         //---------------------------------xvqcert_t---------------------------------//
         xvqcert_t::xvqcert_t()
-        : xdataunit_t((enum_xdata_type)enum_xobject_type_vqccert)
+        : xdataunit_t((enum_xdata_type)enum_xobject_type_vqccert), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vqcert)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
@@ -302,7 +302,7 @@ namespace top
         }
         
         xvqcert_t::xvqcert_t(const std::string header_hash,enum_xdata_type type)
-        : xdataunit_t(type)
+        : xdataunit_t(type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vqcert)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
@@ -328,7 +328,7 @@ namespace top
         }
         
         xvqcert_t::xvqcert_t(const xvqcert_t & other,enum_xdata_type type)
-        : xdataunit_t(type)
+        : xdataunit_t(type), xstatistic::xstatistic_obj_face_t(other)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
@@ -723,7 +723,7 @@ namespace top
             xassert(0);
         }
 
-        int32_t xvqcert_t::get_object_size() const {
+        int32_t xvqcert_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             total_size += get_size(m_header_hash) + get_size(m_input_root_hash) + get_size(m_output_root_hash) + get_size(m_justify_cert_hash) +
                             get_size(m_verify_signature) + get_size(m_audit_signature) + get_size(m_extend_data) + get_size(m_extend_cert);

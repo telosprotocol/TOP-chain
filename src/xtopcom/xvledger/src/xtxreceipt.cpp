@@ -15,16 +15,16 @@ namespace top
     namespace base
     {
         xtx_receipt_t::xtx_receipt_t()
-        : m_tx_action({},{},{},"invalid") {  // TODO(jimmy)
+        : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receipt), m_tx_action({},{},{},"invalid") {  // TODO(jimmy)
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
         xtx_receipt_t::xtx_receipt_t(const base::xvaction_t & txaction, base::xvqcert_t* prove_cert, const std::string & path, enum_xprove_cert_type type)
-        : m_tx_action(txaction) {
+        : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receipt), m_tx_action(txaction) {
             m_tx_action_prove = make_object_ptr<xprove_cert_t>(prove_cert, type, path);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
         xtx_receipt_t::xtx_receipt_t(const base::xvaction_t & txaction)
-        : m_tx_action(txaction) {
+        : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receipt), m_tx_action(txaction) {
             m_tx_action_prove = nullptr;
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
@@ -125,7 +125,7 @@ namespace top
             return xvcontract_t::get_contract_address(m_tx_action.get_contract_uri());
         }
 
-        int32_t xtx_receipt_t::get_object_size() const {
+        int32_t xtx_receipt_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             total_size += m_tx_action.get_ex_alloc_size();
             if (m_tx_action_prove != nullptr) {

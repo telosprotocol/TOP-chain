@@ -465,39 +465,39 @@ base::xtable_shortid_t xcons_transaction_t::get_peer_tableid() const {
     }
 }
 
-int32_t xcons_transaction_t::get_object_size() const {
-#ifdef CACHE_SIZE_STATISTIC
-    if (m_object_size != 0) {
-        return m_object_size;
-    }
+// int32_t xcons_transaction_t::get_object_size() const {
+// #ifdef CACHE_SIZE_STATISTIC
+//     if (m_object_size != 0) {
+//         return m_object_size;
+//     }
 
-    int32_t total_size = sizeof(*this);
-    if (m_tx != nullptr) {
-        total_size += m_tx->get_object_size();
-    }
+//     int32_t total_size = sizeof(*this);
+//     if (m_tx != nullptr) {
+//         total_size += m_tx->get_object_size();
+//     }
 
-    if (m_receipt != nullptr) {
-        total_size += m_receipt->get_object_size();
-    }
+//     if (m_receipt != nullptr) {
+//         total_size += m_receipt->get_object_size();
+//     }
     
-    const auto & map_para = m_execute_state.get_map_para();
-    xdbg("-----nathan test-----this:%p m_execute_state.get_map_para().size():%d,dump_execute_state:%s", this, m_execute_state.get_map_para().size(), dump_execute_state().c_str());
-    for (auto & para : map_para) {
-        total_size += get_size(para.first);
-        total_size += get_size(para.second);
-        xdbg("-----nathan test----- m_execute_state key:%d,value:%d", get_size(para.first), get_size(para.second));
-        // total_size += 32; // alloc by each node in the map.
-    }
+//     const auto & map_para = m_execute_state.get_map_para();
+//     xdbg("-----nathan test-----this:%p m_execute_state.get_map_para().size():%d,dump_execute_state:%s", this, m_execute_state.get_map_para().size(), dump_execute_state().c_str());
+//     for (auto & para : map_para) {
+//         total_size += get_size(para.first);
+//         total_size += get_size(para.second);
+//         xdbg("-----nathan test----- m_execute_state key:%d,value:%d", get_size(para.first), get_size(para.second));
+//         // total_size += 32; // alloc by each node in the map.
+//     }
 
-    total_size += get_size(m_dump_str);
-    xdbg("-----nathan test----- xcons_transaction_t:%d,m_dump_str:%d", sizeof(*this), get_size(m_dump_str));
+//     total_size += get_size(m_dump_str);
+//     xdbg("-----nathan test----- xcons_transaction_t:%d,m_dump_str:%d", sizeof(*this), get_size(m_dump_str));
 
-    m_object_size = total_size;
-    return total_size;
-#else
-    return 0;
-#endif
-}
+//     m_object_size = total_size;
+//     return total_size;
+// #else
+//     return 0;
+// #endif
+// }
 
 
 }  // namespace data
