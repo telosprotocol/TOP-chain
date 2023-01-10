@@ -43,49 +43,5 @@ private:
     xuser_params() = default;
 };
 
-class xplatform_params {
-public:
-    xplatform_params()                                = default;
-    xplatform_params(xplatform_params const &)             = delete;
-    xplatform_params & operator=(xplatform_params const &) = delete;
-    xplatform_params(xplatform_params &&)                  = delete;
-    xplatform_params & operator=(xplatform_params &&)      = delete;
-    static xplatform_params& get_instance() {
-        static xplatform_params instance;
-        return instance;
-    }
-    void get_seed_edge_host(std::set<std::string>& seed_edge_host_set);
-    // parse seed_edge_host from outsider
-    void set_seed_edge_host(const std::string endpoints);
-
-    std::string                           local_ip {};
-    uint16_t                              local_port {9000};
-    std::string                           log_path {};
-    std::string                           public_endpoints {};
-    std::string                           url_endpoints {};
-    std::set<std::string>                 edge_endpoints {}; // just ip
-    uint32_t                              zone_id {static_cast<uint32_t>(-1)};
-    std::string                           db_path {};
-    std::string                           country { "US" };
-};
-
-struct xstaticec_params {
-    int32_t total_working_advance_nodes {4};  // 3 - 9
-    int32_t total_working_consensus_nodes {21};  // 3 - 21
-    int32_t current_working_consensus_nodes {9};  // 3 - total
-    int32_t round_consensus_nodes {3}; // 1 - current
-    int32_t round_consensus_interval {60}; // >= 30
-    int32_t total_working_edge_nodes {3};  // 1 - 3
-    xJson::Value custom;
-
-    static xstaticec_params& get_instance() {
-        static xstaticec_params instance;
-        return instance;
-    }
-
-    // init again
-    xstaticec_params();
-};
-
 }  // namespace data
 }  // namespace top

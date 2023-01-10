@@ -25,7 +25,7 @@ public:
     MultilayerNetwork & operator=(MultilayerNetwork &&) = delete;
     ~MultilayerNetwork() override = default;
 
-    int HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config);
+    void TryCombineP2PEndpoints();
 
     bool Init(const base::Config & config);
     bool Run(const base::Config & config);

@@ -21,13 +21,10 @@
 namespace top {
 
 using data::xuser_params;
-using data::xplatform_params;
-using data::xstaticec_params;
 using data::node_info_t;
 
 void xchain_params::initconfig_using_configcenter() {
     load_user_config();
-    load_platform_config();
 }
 
 
@@ -66,12 +63,6 @@ void xchain_params::load_user_config() {
     }
 #endif
     return;
-}
-
-void xchain_params::load_platform_config() {
-    xplatform_params& platform_params = xplatform_params::get_instance();
-    auto& config_register = top::config::xconfig_register_t::get_instance();
-
 }
 
 int xchain_params::get_uuid(std::string& uuid) {

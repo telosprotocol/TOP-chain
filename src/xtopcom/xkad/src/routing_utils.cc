@@ -27,14 +27,9 @@ namespace top {
 
 namespace kadmlia {
 
-void GetPublicEndpointsConfig(const top::base::Config & config, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
-    std::string public_endpoints;
-    if (!config.Get("node", "public_endpoints", public_endpoints)) {
-        TOP_INFO("get node.public_endpoints failed");
-        return;
-    }
-
-    top::base::ParseEndpoints(public_endpoints, boot_endpoints);
+void GetPublicEndpointsConfig(const top::base::Config &, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
+    std::string p2p_endpoints = XGET_CONFIG(p2p_endpoints);
+    top::base::ParseEndpoints(p2p_endpoints, boot_endpoints);
 }
 
 bool CreateGlobalXid(const base::Config & config) try {

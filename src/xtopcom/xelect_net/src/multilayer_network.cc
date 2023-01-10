@@ -44,20 +44,8 @@ MultilayerNetwork::MultilayerNetwork(common::xnode_id_t const & node_id, const s
 }
 
 void MultilayerNetwork::start() {
-    auto & platform_params = data::xplatform_params::get_instance();
-
     top::base::Config config;
-    if (HandleParamsAndConfig(platform_params, config) != 0) {
-        xerror("load platform config failed");
-        throw std::runtime_error{"HandleParamsAndConfig: load platform config failed"};
-    }
-
-    std::string public_endpoints;
-    if (!config.Get("node", "public_endpoints", public_endpoints)) {
-        xerror("get node public_endpoints from config failed!");
-        throw std::runtime_error{"config.Get: get node public_endpoints from config failed!"};
-    }
-    platform_params.set_seed_edge_host(public_endpoints);
+    TryCombineP2PEndpoints();
 
     if (!Init(config)) {
         xerror("start elect main init failed!");
@@ -187,83 +175,45 @@ std::shared_ptr<elect::xnetwork_driver_face_t> MultilayerNetwork::GetEcVhost(con
     return std::static_pointer_cast<elect::xnetwork_driver_face_t>(ifind->second);
 }
 
-int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config) {
-    if (!edge_config.Set("log", "path", platform_param.log_path)) {
-        xerror("set config failed [log][log_path][%s]", platform_param.log_path.c_str());
-        return 1;
-    }
+void MultilayerNetwork::TryCombineP2PEndpoints() {
+    std::string settled_p2p_endpoints = XGET_CONFIG(p2p_endpoints);
+    xinfo("config get settled_p2p_endpoints %s", settled_p2p_endpoints.c_str());
 
-    if (!edge_config.Set("node", "country", platform_param.country)) {
-        xerror("set config failed [node][country][%s]", platform_param.country.c_str());
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "zone_id", platform_param.zone_id)) {
-        xerror("set config failed [node][zone_id][%d]", platform_param.zone_id);
-        return 1;
-    }
-
-    std::string public_endpoints = XGET_CONFIG(p2p_endpoints);
-    xinfo("config get public_endpoints %s", public_endpoints.c_str());
-
-    std::string final_public_endpoints;
-    final_public_endpoints = public_endpoints;
-
-    edge_config.Set("node", "public_endpoints", final_public_endpoints);
-    xinfo("config set final public_endpoints %s", final_public_endpoints.c_str());
-
-    bool endpoints_status = false;
-    if (final_public_endpoints.empty()) {
-        endpoints_status = true;
-        xwarn("config get no public_endpoints %s", final_public_endpoints.c_str());
-    }
-
+    std::string combined_p2p_endpoints = settled_p2p_endpoints;
     std::string url_endpoints = XGET_CONFIG(p2p_url_endpoints);
-    if (url_endpoints.find("http") == std::string::npos) { 
-        // not http url
-        return endpoints_status;
-    }
     xinfo("[seeds] url_endpoints url:%s", url_endpoints.c_str());
+    if (url_endpoints.find("http") == std::string::npos) {
+        // url not support nothing todo.
+        return;
+    }
 
+    // fetch using http
     std::vector<std::string> url_seeds;
     if (url_endpoints.find("https://") != std::string::npos) {
         HttpsSeedFetcher seed_fetcher{url_endpoints};
         if (!seed_fetcher.GetSeeds(url_seeds)) {
             xwarn("[seeds] get public endpoints failed from url:%s", url_endpoints.c_str());
-            return endpoints_status;
+            return;
         }
     } else {  // http scheme
         HttpSeedFetcher seed_fetcher{url_endpoints};
         if (!seed_fetcher.GetSeeds(url_seeds)) {
             xwarn("[seeds] get public endpoints failed from url:%s", url_endpoints.c_str());
-            return endpoints_status;
+            return;
         }
     }
 
-    std::string bootstrap_nodes;
+    // combine url's endpoints together.
     for (const auto & item : url_seeds) {
-        bootstrap_nodes += item;
-        bootstrap_nodes += ",";
+        combined_p2p_endpoints += item;
+        combined_p2p_endpoints += ",";
     }
+    if (!combined_p2p_endpoints.empty() && combined_p2p_endpoints.back() == ',') {
+        combined_p2p_endpoints.pop_back();
+    }
+    xinfo("config get combined_p2p_endpoints %s", combined_p2p_endpoints.c_str());
 
-    if (bootstrap_nodes.back() == ',') {
-        bootstrap_nodes.pop_back();
-    }
-    xinfo("[seeds] fetch url:%s bootstrap_nodes:%s", url_endpoints.c_str(), bootstrap_nodes.c_str());
-    if (bootstrap_nodes.empty()) {
-        return endpoints_status;
-    }
-
-    if (!final_public_endpoints.empty()) {
-        final_public_endpoints += ",";
-        final_public_endpoints += bootstrap_nodes;
-    } else {
-        final_public_endpoints = bootstrap_nodes;
-    }
-
-    edge_config.Set("node", "public_endpoints", final_public_endpoints);
-    xinfo("[seeds] config set final public_endpoints %s", final_public_endpoints.c_str());
-    return 0;
+    XSET_CONFIG(p2p_endpoints, combined_p2p_endpoints);
 }
 
 int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> transport,
