@@ -223,7 +223,7 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
         return 1;
     }
 
-    std::string public_endpoints(platform_param.public_endpoints);
+    std::string public_endpoints = XGET_CONFIG(p2p_endpoints);
     xinfo("config get public_endpoints %s", public_endpoints.c_str());
 
     std::string final_public_endpoints;
@@ -286,7 +286,7 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
 
 int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> transport,
                                          const top::base::Config & config,
-                                         const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config) {
+                                         const std::set<std::pair<std::string, uint16_t>> & p2p_endpoints_config) {
     xinfo("enter CreateRootManager");
     top::base::Config new_config = config;
     if (!new_config.Set("edge", "service_list", "")) {
@@ -315,10 +315,10 @@ int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> t
 }
 
 int MultilayerNetwork::ResetRootRouting(std::shared_ptr<transport::Transport> transport, const base::Config & config) {
-    std::set<std::pair<std::string, uint16_t>> public_endpoints_config;
-    kadmlia::GetPublicEndpointsConfig(config, public_endpoints_config);
+    std::set<std::pair<std::string, uint16_t>> p2p_endpoints_config;
+    kadmlia::GetPublicEndpointsConfig(config, p2p_endpoints_config);
 
-    return CreateRootManager(transport, config, public_endpoints_config);
+    return CreateRootManager(transport, config, p2p_endpoints_config);
 }
 
 std::vector<std::string> MultilayerNetwork::GetServiceNeighbours(const common::xip2_t & xip2) {

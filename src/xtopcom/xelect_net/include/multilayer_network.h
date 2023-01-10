@@ -58,7 +58,7 @@ protected:
 private:
     int CreateRootManager(std::shared_ptr<transport::Transport> transport,
                           const top::base::Config & config,
-                          const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config);
+                          const std::set<std::pair<std::string, uint16_t>> & p2p_endpoints_config);
 
 private:
     mutable std::mutex vhost_map_mutex_;

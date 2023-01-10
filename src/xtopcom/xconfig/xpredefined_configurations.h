@@ -586,35 +586,35 @@ XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnetwork
 #else 
 #if defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "192.168.50.155:9921,192.168.50.156:9921,192.168.50.157:9921,192.168.50.158:9921,192.168.50.159:9921,192.168.50.160:9921,192.168.50.121:9921,192.168.50.119:9921");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnetwork.org/");
 XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #elif defined(XBUILD_DEV)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "127.0.0.1:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://unreachable.org/");
 XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #elif defined(XBUILD_GALILEO)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "206.189.201.14:9000,167.172.128.168:9000,206.189.194.250:9000,134.122.123.81:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://galileo.seed.topnetwork.org/");
 XDECLARE_CONFIGURATION(root_hash, char const *, "a450ce6a875d55024f60b7ac2a1e9984689ccc6b5de1690890c3b59d588a2ad0");
 #elif defined(XBUILD_BOUNTY)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "161.35.98.159:9000,137.184.102.85:9000,137.184.68.56:9000,143.198.189.238:9000,147.182.173.6:9000,137.184.106.236:9000,137.184.106.135:9000,137.184.21.161:9000,137.184.66.111:9000,137.184.106.34:9000,138.197.15.200:9000,159.203.163.160:9000,142.93.73.113:9000,142.93.65.231:9000,159.89.184.201:9000,159.89.178.45:9000,159.65.45.247:9000,142.93.73.207:9000,167.71.110.183:9000,142.93.73.67:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://bounty.seed.topnetwork.org/");
 XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #else
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_mainnet);
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "206.189.227.204:9000,206.189.238.224:9000,206.189.205.198:9000,204.48.27.142:9000,206.81.0.133:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnet.seed.topnetwork.org/");

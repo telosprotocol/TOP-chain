@@ -490,15 +490,14 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     std::string bootnodes;
     config_center.get("bootnodes", bootnodes);
     if (!bootnodes.empty()) {
-        std::string default_bootnodes;
-        config_center.get(config::xplatform_public_endpoints_configuration_t::name, default_bootnodes);
+        std::string default_bootnodes = XGET_CONFIG(p2p_endpoints);
         if (!default_bootnodes.empty()) {
             if (bootnodes.back() != ',') {
                 bootnodes += ",";
             }
             bootnodes += default_bootnodes;
         }
-        config_center.set(config::xplatform_public_endpoints_configuration_t::name, bootnodes);
+        XSET_CONFIG(p2p_endpoints, bootnodes);
     }
 
     //init data_path into xvchain instance
