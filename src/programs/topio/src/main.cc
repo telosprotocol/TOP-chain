@@ -7,6 +7,7 @@
 #include "xchaininit/version.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xinit.h"
+#include "xchaininit/xconfig.h"
 
 #include <sys/time.h>
 #if defined(__LINUX_PLATFORM__)
@@ -20,7 +21,6 @@
 #include "xcommon/xrole_type.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmonitor.h"
-#include "xnode/xconfig.h"
 #include "xsafebox/safebox_http_client.h"
 #include "xsafebox/safebox_http_server.h"
 
@@ -1047,7 +1047,7 @@ int StartNode(config_t & config) {
 #endif
         }
     } else {  // read from config
-        auto & topio_config = top::topio::xtopio_config_t::get_instance();
+        auto & topio_config = top::xtopio_config_t::get_instance();
         topio_config.load_config_file(config.config_file);
         config.node_id = topio_config.get_string("node_id");
         config.pub_key = topio_config.get_string("public_key");
