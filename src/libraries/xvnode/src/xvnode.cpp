@@ -54,7 +54,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_sync_obj{sync_obj}
   , m_grpc_mgr{grpc_mgr}
   , m_txpool{txpool}
-  , m_dev_params{make_observer(std::addressof(data::xdev_params::get_instance()))}
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost, m_election_cache_data_accessor,

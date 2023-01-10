@@ -23,14 +23,12 @@
 namespace top {
 
 using data::xuser_params;
-using data::xdev_params;
 using data::xplatform_params;
 using data::xstaticec_params;
 using data::node_info_t;
 
 void xchain_params::initconfig_using_configcenter() {
     load_user_config();
-    load_dev_config();
     load_platform_config();
 }
 
@@ -70,15 +68,6 @@ void xchain_params::load_user_config() {
     }
 #endif
     return;
-}
-
-void xchain_params::load_dev_config() {
-    xdev_params& dev_params = xdev_params::get_instance();
-    auto& config_register = top::config::xconfig_register_t::get_instance();
-
-    if (!config_register.get("seed_edge_host", dev_params.seed_edge_host)) {
-        //assert(0);
-    }
 }
 
 void xchain_params::load_platform_config() {

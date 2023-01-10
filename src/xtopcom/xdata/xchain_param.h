@@ -43,21 +43,6 @@ private:
     xuser_params() = default;
 };
 
-class xdev_params {
-public:
-    xdev_params()                                = default;
-    xdev_params(xdev_params const &)             = delete;
-    xdev_params & operator=(xdev_params const &) = delete;
-    xdev_params(xdev_params &&)                  = delete;
-    xdev_params & operator=(xdev_params &&)      = delete;
-    static xdev_params& get_instance() {
-        static xdev_params instance;
-        return instance;
-    }
-
-    std::string                           seed_edge_host;
-};
-
 class xplatform_params {
 public:
     xplatform_params()                                = default;
