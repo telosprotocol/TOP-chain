@@ -47,11 +47,7 @@ bool CreateGlobalXid(const base::Config & config) try {
 }
 
 LocalNodeInfoPtr CreateLocalInfoFromConfig(const base::Config & config, base::KadmliaKeyPtr kad_key) try {
-    std::string local_ip;
-    if (!config.Get("node", "local_ip", local_ip)) {
-        TOP_ERROR("get node local_ip from config failed!");
-        return nullptr;
-    }
+    std::string local_ip = XGET_CONFIG(ip);
     uint16_t local_port = XGET_CONFIG(node_p2p_port);
 
     kadmlia::LocalNodeInfoPtr local_node_ptr = nullptr;

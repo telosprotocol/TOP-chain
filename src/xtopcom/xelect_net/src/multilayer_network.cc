@@ -114,11 +114,7 @@ bool MultilayerNetwork::Init(const base::Config & config) {
     }
     multi_message_handler_->Init();
 
-    std::string local_ip;
-    if (!config.Get("node", "local_ip", local_ip)) {
-        xerror("get node local_ip from config failed!");
-        return false;
-    }
+    std::string local_ip = XGET_CONFIG(ip);
     uint16_t local_port = XGET_CONFIG(node_p2p_port);
     if (!core_transport_->Init(local_ip, local_port, multi_message_handler_.get())) {
         xerror("MultilayerNetwork::Init udptransport init failed");
@@ -204,11 +200,6 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
 
     if (!edge_config.Set("node", "zone_id", platform_param.zone_id)) {
         xerror("set config failed [node][zone_id][%d]", platform_param.zone_id);
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "local_ip", platform_param.local_ip)) {
-        xerror("set config failed [node][local_ip][%s]", platform_param.local_ip.c_str());
         return 1;
     }
 

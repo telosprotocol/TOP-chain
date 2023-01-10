@@ -72,8 +72,6 @@ void xchain_params::load_platform_config() {
     xplatform_params& platform_params = xplatform_params::get_instance();
     auto& config_register = top::config::xconfig_register_t::get_instance();
 
-    // TODO(smaug) maybe we should use the real local_ip (for p2p nat)
-    platform_params.local_ip = XGET_CONFIG(ip);
 }
 
 int xchain_params::get_uuid(std::string& uuid) {
