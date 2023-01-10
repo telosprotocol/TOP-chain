@@ -168,9 +168,7 @@ cat > config.tmp << EOF
     },
   "node_p2p_port": ${busPort},
   "p2p_endpoints": "${pubEndPoints}",
-  "platform":{
-      "url_endpoints": "http://unnecessary.org"
-  },
+  "p2p_url_endpoints" : "http://unnecessary.org",
   "root_hash": ""
 }
 EOF

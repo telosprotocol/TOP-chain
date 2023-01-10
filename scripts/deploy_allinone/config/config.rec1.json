@@ -48,8 +48,6 @@
    },
    "node_p2p_port": 9001,
    "p2p_endpoints": "127.0.0.1:9001,127.0.0.2:9002,127.0.0.3:9003,127.0.0.4:9004,127.0.0.5:9005,127.0.0.6:9006",
-   "platform" : {
-      "url_endpoints": "http://unnecessary.org"
-   },
+   "p2p_url_endpoints" : "http://unnecessary.org",
    "root_hash": ""
 }

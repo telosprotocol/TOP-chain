@@ -238,22 +238,24 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
         xwarn("config get no public_endpoints %s", final_public_endpoints.c_str());
     }
 
-    if (platform_param.url_endpoints.find("http") == std::string::npos) {
+    std::string url_endpoints = XGET_CONFIG(p2p_url_endpoints);
+    if (url_endpoints.find("http") == std::string::npos) { 
+        // not http url
         return endpoints_status;
     }
-    xinfo("[seeds] url_endpoints url:%s", platform_param.url_endpoints.c_str());
+    xinfo("[seeds] url_endpoints url:%s", url_endpoints.c_str());
 
     std::vector<std::string> url_seeds;
-    if (platform_param.url_endpoints.find("https://") != std::string::npos) {
-        HttpsSeedFetcher seed_fetcher{platform_param.url_endpoints};
+    if (url_endpoints.find("https://") != std::string::npos) {
+        HttpsSeedFetcher seed_fetcher{url_endpoints};
         if (!seed_fetcher.GetSeeds(url_seeds)) {
-            xwarn("[seeds] get public endpoints failed from url:%s", platform_param.url_endpoints.c_str());
+            xwarn("[seeds] get public endpoints failed from url:%s", url_endpoints.c_str());
             return endpoints_status;
         }
     } else {  // http scheme
-        HttpSeedFetcher seed_fetcher{platform_param.url_endpoints};
+        HttpSeedFetcher seed_fetcher{url_endpoints};
         if (!seed_fetcher.GetSeeds(url_seeds)) {
-            xwarn("[seeds] get public endpoints failed from url:%s", platform_param.url_endpoints.c_str());
+            xwarn("[seeds] get public endpoints failed from url:%s", url_endpoints.c_str());
             return endpoints_status;
         }
     }
@@ -267,7 +269,7 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
     if (bootstrap_nodes.back() == ',') {
         bootstrap_nodes.pop_back();
     }
-    xinfo("[seeds] fetch url:%s bootstrap_nodes:%s", platform_param.url_endpoints.c_str(), bootstrap_nodes.c_str());
+    xinfo("[seeds] fetch url:%s bootstrap_nodes:%s", url_endpoints.c_str(), bootstrap_nodes.c_str());
     if (bootstrap_nodes.empty()) {
         return endpoints_status;
     }
