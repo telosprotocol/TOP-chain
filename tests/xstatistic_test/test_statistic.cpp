@@ -55,18 +55,32 @@ private:
 TEST_F(test_statistic, basic) {
     XSET_CONFIG(calculate_size_delay_time, 1);
     std::vector<test_class_t> obj_vec;
-    // std::vector<test_class1_t> obj1_vec;
 
-    uint32_t num = 100000;
-    // obj_vec.resize(num);
+    uint32_t num = 10000;
     for (uint32_t i = 0; i < num; i++){
         obj_vec.push_back(test_class_t(i));
-        // obj1_vec.push_back(test_class1_t(i, i));
     }
 
-    // for (auto & obj : obj_vec) {
-    //     std::cout << "obj.n : " << obj.n << std::endl;
-    // }
+    usleep(1000);
+    std::cout << "sleep 1 millisecond." << std::endl;
+    xstatistic_hub_t::instance()->refresh();
+
+    auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_send_tx_num);
+    ASSERT_EQ(obj_num, num);
+    auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_send_tx_size);
+    ASSERT_EQ(obj_size, num*sizeof(test_class_t));
+}
+
+TEST_F(test_statistic, 2_obj_type) {
+    XSET_CONFIG(calculate_size_delay_time, 1);
+    std::vector<test_class_t> obj_vec;
+    std::vector<test_class1_t> obj1_vec;
+
+    uint32_t num = 10000;
+    for (uint32_t i = 0; i < num; i++){
+        obj_vec.push_back(test_class_t(i));
+        obj1_vec.push_back(test_class1_t(i, i));
+    }
 
     usleep(1000);
     std::cout << "sleep 1 millisecond." << std::endl;
@@ -77,12 +91,11 @@ TEST_F(test_statistic, basic) {
     auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_send_tx_size);
     ASSERT_EQ(obj_size, num*sizeof(test_class_t));
 
-    // auto obj_num1 = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_num);
-    // ASSERT_EQ(obj_num1, num);
-    // auto obj_size1 = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_size);
-    // ASSERT_EQ(obj_size1, num*sizeof(test_class1_t));
+    auto obj_num1 = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_num);
+    ASSERT_EQ(obj_num1, num);
+    auto obj_size1 = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_size);
+    ASSERT_EQ(obj_size1, num*sizeof(test_class1_t));
 }
-
 
 void thread_push(std::vector<test_class_t> * obj_vec, std::mutex * mutex, bool * stop)
 {
@@ -114,10 +127,9 @@ void thread_pop(std::vector<test_class_t> * obj_vec, std::mutex * mutex, bool * 
     }
 
     obj_vec->clear();
-
 }
 
-TEST_F(test_statistic, multithread_BENCH) {
+TEST_F(test_statistic, multithread_1_boj_type_BENCH) {
     std::vector<test_class_t> obj_vec;
     std::mutex mutex;
     bool stop = false;
@@ -132,6 +144,67 @@ TEST_F(test_statistic, multithread_BENCH) {
     ASSERT_EQ(obj_num, 0);
     auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_send_tx_size);
     ASSERT_EQ(obj_size, obj_num*sizeof(test_class_t));
+}
+
+void thread_push1(std::vector<test_class1_t> * obj_vec, std::mutex * mutex, bool * stop)
+{
+    uint32_t loop_num = 100000;
+    for (uint32_t i = 0; i < loop_num; i++) {
+        std::lock_guard<std::mutex> lck(*mutex);
+        obj_vec->push_back(test_class1_t(i, i));
+
+        // std::cout << "thread_push i : " << i << " , size : " << obj_vec->size() << std::endl;
+
+        if (i % 1000 == 0) {
+            auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_num);
+            auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_size);
+            ASSERT_EQ(obj_size, obj_num*sizeof(test_class1_t));
+        }
+    }
+    *stop = true;
+}
+
+void thread_pop1(std::vector<test_class1_t> * obj_vec, std::mutex * mutex, bool * stop)
+{
+    while(!(*stop)) {
+        std::lock_guard<std::mutex> lck(*mutex);
+        auto size = obj_vec->size();
+        // std::cout << "thread_pop size : " << size << std::endl;
+        if (size > 10) {
+            obj_vec->erase(obj_vec->begin(), obj_vec->begin() + (size - 10));
+        }
+    }
+
+    obj_vec->clear();
+}
+
+TEST_F(test_statistic, multithread_2_boj_type_BENCH) {
+    std::vector<test_class_t> obj_vec;
+    std::vector<test_class1_t> obj_vec1;
+    std::mutex mutex;
+    std::mutex mutex1;
+    bool stop = false;
+    bool stop1 = false;
+
+    std::thread t_push(thread_push, &obj_vec, &mutex, &stop);
+    std::thread t_pop(thread_pop, &obj_vec, &mutex, &stop);
+    std::thread t_push1(thread_push1, &obj_vec1, &mutex1, &stop1);
+    std::thread t_pop1(thread_pop1, &obj_vec1, &mutex1, &stop1);
+
+    t_push.join();
+    t_pop.join();
+    t_push1.join();
+    t_pop1.join();
+
+    auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_send_tx_num);
+    ASSERT_EQ(obj_num, 0);
+    auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_send_tx_size);
+    ASSERT_EQ(obj_size, obj_num*sizeof(test_class_t));
+
+    auto obj_num1 = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_num);
+    ASSERT_EQ(obj_num1, 0);
+    auto obj_size1 = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_size);
+    ASSERT_EQ(obj_size1, obj_num1*sizeof(test_class1_t));
 }
 
 

@@ -678,8 +678,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cachesize_send_tx_queue);
         RETURN_METRICS_NAME(cachesize_receipt_queue);
         RETURN_METRICS_NAME(statistic_send_tx_num);
-        RETURN_METRICS_NAME(statistic_send_tx_size);
         RETURN_METRICS_NAME(statistic_receipt_num);
+        RETURN_METRICS_NAME(statistic_send_tx_size);
         RETURN_METRICS_NAME(statistic_receipt_size);
 #endif
 

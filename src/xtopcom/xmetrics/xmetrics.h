@@ -734,8 +734,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cachesize_send_tx_queue,
     cachesize_receipt_queue,
     statistic_send_tx_num,
-    statistic_send_tx_size,
     statistic_receipt_num,
+    statistic_send_tx_size,
     statistic_receipt_size,
 #endif
 
