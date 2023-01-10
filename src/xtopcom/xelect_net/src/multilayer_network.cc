@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xelect_net/include/multilayer_network.h"
 
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdb/xdb_factory.h"
 #include "xelect_net/include/http_seed_fetcher.h"
 #include "xelect_net/include/https_seed_fetcher.h"
@@ -123,8 +125,7 @@ bool MultilayerNetwork::Init(const base::Config & config) {
         xerror("get node local_ip from config failed!");
         return false;
     }
-    uint16_t local_port = 0;
-    config.Get("node", "local_port", local_port);
+    uint16_t local_port = XGET_CONFIG(node_p2p_port);
     if (!core_transport_->Init(local_ip, local_port, multi_message_handler_.get())) {
         xerror("MultilayerNetwork::Init udptransport init failed");
         return false;
@@ -219,11 +220,6 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
 
     if (!edge_config.Set("node", "local_ip", platform_param.local_ip)) {
         xerror("set config failed [node][local_ip][%s]", platform_param.local_ip.c_str());
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "local_port", platform_param.local_port)) {
-        xerror("set config failed [node][local_port][%d]", platform_param.local_port);
         return 1;
     }
 

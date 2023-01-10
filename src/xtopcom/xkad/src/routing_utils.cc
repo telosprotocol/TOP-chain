@@ -10,6 +10,8 @@
 #endif
 
 #include "xbase/xhash.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xpbase/base/endpoint_util.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
@@ -50,11 +52,7 @@ LocalNodeInfoPtr CreateLocalInfoFromConfig(const base::Config & config, base::Ka
         TOP_ERROR("get node local_ip from config failed!");
         return nullptr;
     }
-    uint16_t local_port = 0;
-    if (!config.Get("node", "local_port", local_port)) {
-        TOP_ERROR("get node local_port from config failed!");
-        return nullptr;
-    }
+    uint16_t local_port = XGET_CONFIG(node_p2p_port);
 
     kadmlia::LocalNodeInfoPtr local_node_ptr = nullptr;
     local_node_ptr.reset(new top::kadmlia::LocalNodeInfo());
