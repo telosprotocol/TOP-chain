@@ -68,6 +68,9 @@ protected:
     xtablestate_ext_ptr_t  execute_block_recursive(base::xvblock_t* current_block, uint32_t & limit, std::error_code & ec) const;
     xtablestate_ext_ptr_t execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, bool bstate_must, std::error_code & ec) const;
 
+    data::xunitstate_ptr_t execute_unitstate_from_prev_state(common::xaccount_address_t const& unit_addr, base::xaccount_index_t const& current_accountindex, 
+                                                            base::xauto_ptr<base::xvheader_t> const& current_header, std::string const& binlog, std::error_code & ec) const;
+
 protected:
     mutable std::mutex          m_execute_lock;  // protect the whole execution
     mutable uint64_t            m_executed_cert_height{0};
