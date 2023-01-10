@@ -252,7 +252,6 @@ XDEFINE_CONFIGURATION(evm_json_rpc_port);
 /* end of offchain parameters */
 XDEFINE_CONFIGURATION(node_p2p_port);
 XDEFINE_CONFIGURATION(p2p_endpoints);
-XDEFINE_CONFIGURATION(platform_db_path);
 XDEFINE_CONFIGURATION(p2p_url_endpoints);
 
 XDEFINE_CONFIGURATION(sync_table_state_height_gap);

@@ -103,12 +103,6 @@ void MultilayerNetwork::stop() {
 }
 
 bool MultilayerNetwork::Init(const base::Config & config) {
-    std::string db_path;
-    if (!config.Get("db", "path", db_path)) {
-        xerror("get db path from conf failed[%s]", db_path.c_str());
-        return false;
-    }
-
     if (!top::kadmlia::CreateGlobalXid(config)) {
         return false;
     }
@@ -198,11 +192,6 @@ std::shared_ptr<elect::xnetwork_driver_face_t> MultilayerNetwork::GetEcVhost(con
 }
 
 int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config) {
-    if (!edge_config.Set("db", "path", platform_param.db_path)) {
-        xerror("set config failed [db][path][%s]", platform_param.db_path.c_str());
-        return 1;
-    }
-
     if (!edge_config.Set("log", "path", platform_param.log_path)) {
         xerror("set config failed [log][log_path][%s]", platform_param.log_path.c_str());
         return 1;

@@ -74,7 +74,6 @@ void xchain_params::load_platform_config() {
 
     // TODO(smaug) maybe we should use the real local_ip (for p2p nat)
     platform_params.local_ip = XGET_CONFIG(ip);
-    platform_params.db_path = XGET_CONFIG(platform_db_path);
 }
 
 int xchain_params::get_uuid(std::string& uuid) {
