@@ -79,7 +79,6 @@ void xchain_params::load_platform_config() {
     platform_params.local_port = XGET_CONFIG(platform_business_port);
     platform_params.public_endpoints = XGET_CONFIG(platform_public_endpoints);
     platform_params.url_endpoints = XGET_CONFIG(platform_url_endpoints);
-    platform_params.show_cmd = XGET_CONFIG(platform_show_cmd);
     platform_params.db_path = XGET_CONFIG(platform_db_path);
 }
 

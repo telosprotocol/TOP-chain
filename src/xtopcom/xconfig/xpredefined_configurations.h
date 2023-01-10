@@ -623,7 +623,6 @@ XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79c
 #endif 
 
 XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
-XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
 XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
 #if defined(XBUILD_CI) || defined(XBUILD_DEV)

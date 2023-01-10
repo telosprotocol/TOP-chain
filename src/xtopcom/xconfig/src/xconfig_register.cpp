@@ -100,7 +100,6 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(platform_business_port);
     XADD_OFFCHAIN_PARAMETER(platform_public_endpoints);
     XADD_OFFCHAIN_PARAMETER(platform_url_endpoints);
-    XADD_OFFCHAIN_PARAMETER(platform_show_cmd);
     XADD_OFFCHAIN_PARAMETER(platform_db_path);
 
     XADD_OFFCHAIN_PARAMETER(min_account_deposit);

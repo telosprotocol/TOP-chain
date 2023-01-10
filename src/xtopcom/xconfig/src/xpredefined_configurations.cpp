@@ -252,7 +252,6 @@ XDEFINE_CONFIGURATION(evm_json_rpc_port);
 /* end of offchain parameters */
 XDEFINE_CONFIGURATION(platform_business_port);
 XDEFINE_CONFIGURATION(platform_public_endpoints);
-XDEFINE_CONFIGURATION(platform_show_cmd);
 XDEFINE_CONFIGURATION(platform_db_path);
 XDEFINE_CONFIGURATION(platform_url_endpoints);
 

@@ -40,7 +40,6 @@
     "chain_name": "galileo",
     "platform": {
         "business_port": 9901,
-        "public_endpoints": "5.5.5.5:8000,127.0.0.1:9000",
-        "show_cmd": false
+        "public_endpoints": "5.5.5.5:8000,127.0.0.1:9000"
     }
 }

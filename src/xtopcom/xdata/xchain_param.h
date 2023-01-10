@@ -64,7 +64,6 @@ public:
     std::string                           public_endpoints {};
     std::string                           url_endpoints {};
     std::set<std::string>                 edge_endpoints {}; // just ip
-    bool                                  show_cmd {false};
     uint32_t                              zone_id {static_cast<uint32_t>(-1)};
     std::string                           db_path {};
     std::string                           country { "US" };
