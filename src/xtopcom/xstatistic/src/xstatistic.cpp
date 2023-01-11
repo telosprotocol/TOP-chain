@@ -43,9 +43,14 @@ xstatistic_obj_face_t::xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) 
     xstatistic_hub_t::instance()->add_object(this);
 }
 
-xstatistic_obj_face_t::~xstatistic_obj_face_t() {
-    xdbg("xstatistic_obj_face_t::~xstatistic_obj_face_t copy this:%p,type:%d", this, m_type);
-    // std::cout << "~xstatistic_obj_face_t this : " << this << std::endl;
+// xstatistic_obj_face_t::~xstatistic_obj_face_t() {
+//     xdbg("xstatistic_obj_face_t::~xstatistic_obj_face_t copy this:%p,type:%d", this, m_type);
+//     // std::cout << "~xstatistic_obj_face_t this : " << this << std::endl;
+//     xstatistic_hub_t::instance()->del_object(this);
+// }
+
+void xstatistic_obj_face_t::statistic_del() {
+    xdbg("xstatistic_obj_face_t::statistic_del copy this:%p,type:%d", this, m_type);
     xstatistic_hub_t::instance()->del_object(this);
 }
 

@@ -30,6 +30,7 @@ namespace top
         }
 
         xtx_receipt_t::~xtx_receipt_t() {
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, -1);
         }
 

@@ -354,6 +354,7 @@ namespace top
         }
         xvqcert_t::~xvqcert_t()
         {
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, -1);
         }
         

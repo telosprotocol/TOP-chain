@@ -38,6 +38,7 @@ xtransaction_v3_t::xtransaction_v3_t(xeth_transaction_t const& ethtx)
 }
 
 xtransaction_v3_t::~xtransaction_v3_t() {
+    statistic_del();
     MEMCHECK_REMOVE_TRACE(this);
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, -1);
 }

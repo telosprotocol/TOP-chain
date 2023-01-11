@@ -29,6 +29,7 @@ xtransaction_v2_t::xtransaction_v2_t() : xstatistic::xstatistic_obj_face_t(xstat
 }
 
 xtransaction_v2_t::~xtransaction_v2_t() {
+    statistic_del();
     MEMCHECK_REMOVE_TRACE(this);
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, -1);
 }
