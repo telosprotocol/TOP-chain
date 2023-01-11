@@ -201,7 +201,10 @@ void xrec_registration_contract::setup() {
 
 common::xminer_type_t legal_archive_address_check(common::xminer_type_t const & miner_type,
                                                   common::xaccount_address_t const & account_address) {
-    static const std::vector<common::xaccount_address_t> legal_archive_address_list{common::xaccount_address_t{""}};
+    static const std::vector<common::xaccount_address_t> legal_archive_address_list{
+        common::xaccount_address_t{"T80000177a0d96ac80803bf5cc0cb82e7df9aa55a35685"},
+        common::xaccount_address_t{"T80000eb29331ece1299a9e1a318384da50c32d2374997"}
+    };
 #if !defined(XENABLE_MOCK_ZEC_STAKE)
     // is archive but not legal, return invalid
     if (miner_type == common::xminer_type_t::archive &&
