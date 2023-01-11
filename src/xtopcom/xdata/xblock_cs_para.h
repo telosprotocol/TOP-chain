@@ -47,6 +47,7 @@ class xblock_consensus_para_t {
     void    set_table_state(xtablestate_ptr_t const& cert_state, xtablestate_ptr_t const& commit_state);
     void    set_need_relay_prove(bool is_need) const {m_need_relay_prove = is_need;}
     void    set_vote_extend_hash(const uint256_t & hash) const {m_vote_extend_hash = hash;}
+    void    set_tgas_height(uint64_t tgas_height) {m_total_lock_tgas_token_property_height = tgas_height;}
 
  public:
     const std::string &     get_random_seed() const {return m_random_seed;}

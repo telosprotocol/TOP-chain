@@ -339,6 +339,7 @@ bool scan_keystore_dir(
 
         keystore_vec.push_back(key_info_map);
     }
+    closedir(dir);
     if (keystore_vec.empty()) {
         return false;
     }
@@ -1115,6 +1116,7 @@ bool IsDirEmpty(const char * dirname) {
         }
 
         if (n > 0) {
+            closedir(dir);
             return false;
         }
     }

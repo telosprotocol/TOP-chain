@@ -117,7 +117,7 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
 
     // check param
     assert(state_ctx);
-    auto state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.address, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
+    auto state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.address, base::enum_vaccount_addr_type_secp256k1_evm_user_account));
     if (state == nullptr) {
         xwarn("[xtop_evm_crosschain_syscontract_face::execute] state nullptr");
         return false;

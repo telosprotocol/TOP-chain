@@ -7,6 +7,7 @@
 #include "xdata/xunit_bstate.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction_v1.h"
+#include "xdata/xtransaction_v2.h"
 // #include "xstore/xaccount_context.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_address.hpp"
@@ -57,12 +58,12 @@ class xdatamock_unit {
     }
 
  public:
-    xtransaction_ptr_t make_transfer_tx(uint256_t last_tx_hash, uint64_t last_tx_nonce, const std::string & from, const std::string & to,
+    xtransaction_ptr_t make_transfer_tx(uint64_t last_tx_nonce, const std::string & from, const std::string & to,
         uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit) {
-        xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
+        xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
         data::xproperty_asset asset(amount);
         tx->make_tx_transfer(asset);
-        tx->set_last_trans_hash_and_nonce(last_tx_hash, last_tx_nonce);
+        tx->set_last_nonce(last_tx_nonce);
         tx->set_different_source_target_address(from, to);
         tx->set_fire_timestamp(firestamp);
         tx->set_expire_duration(duration);
@@ -99,26 +100,27 @@ class xdatamock_unit {
         uint64_t amount = enum_default_transfer_amount;
         uint32_t deposit = enum_default_tx_deposit;
 
-        uint256_t last_tx_hash = m_unit_bstate->account_send_trans_hash();
-        uint64_t last_tx_nonce = m_unit_bstate->account_send_trans_number();
+        uint64_t last_tx_nonce = m_last_tx_nonce;
 
         std::vector<xcons_transaction_ptr_t> txs;
         for (uint32_t i = 0; i < count; i++) {
-            xtransaction_ptr_t tx = make_transfer_tx(last_tx_hash, last_tx_nonce, get_account(), to, amount, (uint64_t)val.tv_sec, enum_default_tx_duration, deposit);
+            xtransaction_ptr_t tx = make_transfer_tx(last_tx_nonce, get_account(), to, amount, (uint64_t)val.tv_sec, enum_default_tx_duration, deposit);
             xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(tx.get());
             txs.push_back(constx);
-            last_tx_hash = tx->digest();
             last_tx_nonce = tx->get_tx_nonce();
         }
         return txs;
     }
 
     void on_unit_finish(const xblock_ptr_t & block) {
+        xassert(!block->get_block_hash().empty());
         // std::cout << "-----on_unit_finish-:" << block->dump() << std::endl; 
         if (block->get_height() > 0) {
             xassert(block->get_account() == get_account());
             xassert(block->get_height() == (m_history_units.back()->get_height() + 1));
-            xassert(block->get_last_block_hash() == (m_history_units.back()->get_block_hash()));
+            if (block->get_last_block_hash() != (m_history_units.back()->get_block_hash())) {
+                xerror(" hash last_hash=%s,cur_hash=%s", base::xstring_utl::to_hex(block->get_last_block_hash()).c_str(), base::xstring_utl::to_hex(m_history_units.back()->get_block_hash()).c_str());
+            }
         }
         m_history_units.push_back(block);
         execute_block(block);
@@ -174,6 +176,7 @@ class xdatamock_unit {
     std::string                             m_account;
     std::vector<xblock_ptr_t>               m_history_units;
     data::xunitstate_ptr_t                  m_unit_bstate{nullptr};
+    uint64_t                                m_last_tx_nonce{0};
 };
 
 

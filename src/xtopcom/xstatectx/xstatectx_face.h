@@ -32,9 +32,10 @@ class xstatectx_para_t {
 class xstatectx_face_t {
  public:
     virtual const data::xtablestate_ptr_t &     get_table_state() const = 0;
-    virtual data::xunitstate_ptr_t  load_unit_state(const base::xvaccount_t & addr) = 0;
-    virtual data::xunitstate_ptr_t  load_commit_unit_state(const base::xvaccount_t & addr) {return nullptr;}  // TODO(jimmy) just for accountcontext
-    virtual data::xunitstate_ptr_t  load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) {return nullptr;}  // TODO(jimmy) just for accountcontext
+    virtual data::xaccountstate_ptr_t           load_account_state(common::xaccount_address_t const& address) = 0;
+    virtual data::xunitstate_ptr_t  load_unit_state(common::xaccount_address_t const& address) = 0;
+    virtual data::xunitstate_ptr_t  load_commit_unit_state(common::xaccount_address_t const& address) {return nullptr;}  // TODO(jimmy) just for accountcontext
+    virtual data::xunitstate_ptr_t  load_commit_unit_state(common::xaccount_address_t const& address, uint64_t height) {return nullptr;}  // TODO(jimmy) just for accountcontext
     virtual bool                    do_rollback() = 0;
     virtual size_t                  do_snapshot() = 0;
     virtual void                    do_commit(base::xvblock_t* current_block) {return;}  // TODO(jimmy) do commit changed state to db

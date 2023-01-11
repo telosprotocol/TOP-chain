@@ -6,15 +6,17 @@ NS_BEG2(top, evm_common)
 
 struct xvalidators_snapshot_t {
     bool init_with_epoch(const xeth_header_t & header);
+    bool init_with_double_epoch(const xeth_header_t & header1, const xeth_header_t & header2);
     h256 digest() const;
     bool apply(const xeth_header_t & header, bool check);
     bool apply_with_chainid(const xeth_header_t & header, const bigint chainid, bool check_inturn);
-    bool inturn(uint64_t number, xbytes_t validator);
+    bool inturn(uint64_t number, xbytes_t validator, bool use_old);
     void print() const;
 
     uint64_t number{0};
     h256 hash;
     std::set<xbytes_t> validators;
+    std::set<xbytes_t> last_validators;
     std::map<uint64_t, xbytes_t> recents;
 };
 

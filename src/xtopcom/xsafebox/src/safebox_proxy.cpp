@@ -47,6 +47,7 @@ public:
         EC_GROUP_precompute_mult(m_ec_group, NULL);
     }
     ~xsafebox_curve() {
+        BN_free(m_bn_order);
         EC_GROUP_clear_free(m_ec_group);
     }
 
@@ -151,6 +152,24 @@ public:
 
         return bn_str;
     }
+
+    // serialize BIGNUM to str ( used for private key only)
+    // BIGNUM -> string
+    std::string pri_BN_to_fixed_string(BIGNUM const * const bn) {
+        assert(nullptr != bn);
+        const int len = BN_num_bytes(bn);
+        xassert(len <= 32);
+
+        uint8_t bin_data[32];
+        memset(bin_data, 0, sizeof(bin_data));
+
+        if (BN_bn2bin(bn, &bin_data[32 - len]) != len) {
+            xassert(false);
+            return std::string();  // error
+        }
+        return std::string((const char *)bin_data, 32);
+    }
+
     // serialize EC_POINT to str
     // EC_POINT -> string
     std::string EC_POINT_serialize(EC_POINT * ec_point) {
@@ -186,7 +205,9 @@ public:
     xsafebox_private_key & operator=(xsafebox_private_key const &) = delete;
     xsafebox_private_key(xsafebox_private_key &&) = default;
     xsafebox_private_key & operator=(xsafebox_private_key &&) = default;
-    ~xsafebox_private_key() = default;
+    ~xsafebox_private_key() {
+        BN_free(m_data);
+    }
 
     xsafebox_private_key(std::string && sign_key) {
         assert(sign_key.size() != 0);
@@ -210,7 +231,10 @@ public:
     xsafebox_signature & operator=(xsafebox_signature const &) = delete;
     xsafebox_signature(xsafebox_signature &&) = default;
     xsafebox_signature & operator=(xsafebox_signature &&) = default;
-    ~xsafebox_signature() = default;
+    ~xsafebox_signature() {
+        EC_POINT_free(m_point);
+        BN_free(m_data);
+    };
 
     xsafebox_signature(BIGNUM * object, BIGNUM const * const prikey) {
         BIGNUM * rand{nullptr};
@@ -236,6 +260,8 @@ public:
 
         } while (BN_is_zero(m_data));
         m_point = xsafebox_schnor::get_instance().generate_point_with_bn(rand);
+        BN_free(rand);
+        BN_free(object);
     }
 
     std::pair<std::string, std::string> output_data() {
@@ -267,7 +293,7 @@ std::string xsafebox_proxy::get_proxy_secp256_signature(std::string const & publ
         return "";
     }
 
-    auto prikey_str = xsafebox_schnor::get_instance().BN_serialize(m_key_map.at(public_key)->prikey_key());
+    auto prikey_str = xsafebox_schnor::get_instance().pri_BN_to_fixed_string(m_key_map.at(public_key)->prikey_key());
     uint8_t priv_content[32];
     memcpy(priv_content, prikey_str.data(), prikey_str.size());
     top::utl::xecprikey_t ecpriv(priv_content);

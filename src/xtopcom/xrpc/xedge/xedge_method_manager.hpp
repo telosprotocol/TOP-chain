@@ -258,7 +258,7 @@ shared_ptr<xrpc_msg_request_t> xedge_method_base<T>::generate_request(const xvno
     if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_query_type) {
         edge_msg_ptr = std::make_shared<xrpc_msg_request_t>(type(), json_proc.m_tx_type, source_address, uuid, client_id, account, json_proc.get_request());
     } else if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
-        base::xstream_t stream(xcontext_t::instance());
+        base::xautostream_t<1024> stream(xcontext_t::instance());
         // json_proc.m_tx_ptr->add_modified_count();
         json_proc.m_tx_ptr->serialize_to(stream);
         std::string metric_name = "edge_txout_v" + std::to_string(json_proc.m_tx_ptr->get_tx_version()) + "_type" + std::to_string(json_proc.m_tx_ptr->get_tx_type());

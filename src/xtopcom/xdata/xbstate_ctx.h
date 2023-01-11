@@ -51,6 +51,9 @@ public:
     std::string         take_binlog();
     size_t              get_canvas_records_size() const;
 
+public:
+    bool    reset_state(const std::string & snapshot);
+
 public: // APIs for property operation with error code return
     int32_t string_create(const std::string& key);
     int32_t string_set(const std::string& key, const std::string& value);

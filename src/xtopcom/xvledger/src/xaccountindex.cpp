@@ -170,6 +170,14 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     return (begin_size - stream.size());
 }
 
+void xaccount_index_t::set_tx_nonce(uint64_t txnonce) {
+    m_latest_tx_nonce = txnonce;
+}
+
+void xaccount_index_t::reset_unit_hash(std::string const& unithash) {
+    m_unit_hash = unithash;
+}
+
 // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
 void xaccount_index_t::set_latest_unit_class(base::enum_xvblock_class _class) {
     m_account_flag = (m_account_flag & 0x3FFF) | (_class << 13);

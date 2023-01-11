@@ -27,8 +27,13 @@ class xstatestore_impl_t : public xstatestore_face_t {
     // query accountindex
     virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & index) const override;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const override;
+    virtual bool                    get_accountindex(const std::string& table_height, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const override;
+    virtual bool                        get_accountindex(xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const override;
+    virtual data::xaccountstate_ptr_t   get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const override;
+    virtual std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const override;
 
     // query unitstate
+    virtual data::xunitstate_ptr_t      get_unitstate(xblock_number_t number, common::xaccount_address_t const & account_address) const override;
     virtual data::xunitstate_ptr_t  get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const override;
     virtual data::xunitstate_ptr_t  get_unit_latest_connectted_state(common::xaccount_address_t const & account_address) const override;
     virtual data::xunitstate_ptr_t  get_unit_committed_changed_state(common::xaccount_address_t const & account_address, uint64_t max_height) const override;
@@ -72,6 +77,8 @@ class xstatestore_impl_t : public xstatestore_face_t {
     void                         on_state_sync_result(mbus::xevent_state_sync_ptr_t state_sync_event);
     common::xnode_type_t         get_node_type() const;
     bool                         is_archive_node() const;
+    void                         on_table_block_committed(const mbus::xevent_ptr_t & event) const;
+    xtablestate_ext_ptr_t        get_tablestate_ext_from_block_inner(base::xvblock_t* target_block, bool bstate_must) const;
 
 private:
     std::map<std::string, xstatestore_table_ptr_t> m_table_statestore;
@@ -79,7 +86,6 @@ private:
     xstatestore_timer_t * m_timer;
     uint32_t m_store_block_listen_id;
     uint32_t m_state_sync_listen_id;
-    common::xnode_type_t m_combined_node_type{common::xnode_type_t::invalid};
     bool m_started{false};
     xobject_ptr_t<statestore_prune_dispatcher_t> m_prune_dispather{nullptr};
     std::shared_ptr<xstatestore_resources_t> m_para;

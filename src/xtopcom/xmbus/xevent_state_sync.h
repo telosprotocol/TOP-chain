@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
+#include "xcommon/xaccount_address.h"
+#include "xevm_common/xfixed_hash.h"
 #include "xmbus/xevent.h"
-#include "xdata/xdata_common.h"
-#include "xdata/xblock.h"
+
+#include <string>
 
 NS_BEG2(top, mbus)
 
@@ -22,9 +22,9 @@ public:
     xevent_state_sync_t(
             const common::xaccount_address_t & _table_addr,
             const uint64_t h,
-            const xhash256_t & _table_block_hash,
-            const xhash256_t & _table_state_hash,
-            const xhash256_t & _root_hash,
+            const evm_common::xh256_t & _table_block_hash,
+            const evm_common::xh256_t & _table_state_hash,
+            const evm_common::xh256_t & _root_hash,
             std::error_code _ec,
             direction_type dir = to_listener,
             bool _sync = true) :
@@ -42,9 +42,9 @@ public:
 
     common::xaccount_address_t table_addr;
     uint64_t height{0};
-    xhash256_t table_block_hash;
-    xhash256_t table_state_hash;
-    xhash256_t root_hash;
+    evm_common::xh256_t table_block_hash;
+    evm_common::xh256_t table_state_hash;
+    evm_common::xh256_t root_hash;
     std::error_code ec;
 };
 

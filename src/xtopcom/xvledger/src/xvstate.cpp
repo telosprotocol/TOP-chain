@@ -918,6 +918,65 @@ namespace top
             xerror("xvexestate_t::do_renew_property,fail del property(%s) at xbstate(%s)",property_name.get_string().c_str(),dump().c_str());
             return xvalue_t(enum_xerror_code_fail);
         }
+        std::string xvexestate_t::export_state()
+        {
+            base::xstream_t _stream(base::xcontext_t::instance());            
+            uint8_t version = 0;
+            _stream << version;
+            int32_t ret = xvexestate_t::do_write(_stream); // not include xvbstate do_write
+            if (ret <= 0) {
+                xerror("xvexestate_t::reset_state fail-serialize.error=%d",ret);
+                return std::string();
+            }
+            std::string state_bin((char*)_stream.data(), _stream.size());
+            return state_bin;
+        }
+
+        bool xvexestate_t::reset_state(const std::string & snapshot, xvcanvas_t * canvas)
+        {
+            xvalue_t param_state(snapshot);
+            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function,enum_xvinstruct_state_method_reset_state,param_state);
+
+            const xvalue_t result(execute(instruction,canvas)); //excute the instruction
+            if(result.get_error() == enum_xcode_successful) {
+                xdbg("xvexestate_t::reset_state succ.uri=%s",get_execute_uri().c_str());
+                return true;
+            }                
+            
+            xwarn("xvexestate_t::reset_state fail.error=%d",result.get_error());
+            return false;            
+        }
+
+        const xvalue_t  xvexestate_t::do_reset_state(const xvmethod_t & op,xvcanvas_t * canvas)
+        {
+            xdbg("xvexestate_t::do_reset_state op=%s",op.dump().c_str());
+            if(op.get_method_type() != enum_xvinstruct_class_state_function)
+                return xvalue_t(enum_xerror_code_bad_type);
+            
+            if(op.get_method_id() != enum_xvinstruct_state_method_reset_state)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if(op.get_params_count() != 1) //reset must carry new value
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            const xvalue_t & state_value  = op.get_method_params().at(0);
+            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)state_value.get_string().data(),(int32_t)state_value.get_string().size());
+            uint8_t version = 0;
+            _stream >> version;
+
+            if (version != 0) {
+                xerror("xvexestate_t::do_reset_state,fail version invalid.version=%d,value_size=%zu at xbstate(%s)",version,state_value.get_string().size(), dump().c_str());
+                return xvalue_t(enum_xerror_code_fail);
+            }
+
+            remove_all_child_unit();
+            int32_t ret = xvexestate_t::do_read(_stream);
+            if (ret > 0)
+                return xvalue_t(enum_xcode_successful);
+            
+            xerror("xvexestate_t::do_reset_state,fail reset.value_size=%zu at xbstate(%s),ret=%d",state_value.get_string().size(), dump().c_str(), ret);
+            return xvalue_t(enum_xerror_code_fail);            
+        }
             
         const std::string  xvbstate_t::make_unit_name(const std::string & account, const uint64_t blockheight)
         {

@@ -13,8 +13,8 @@
 
 NS_BEG2(top, txexecutor)
 
-xaccount_vm_t::xaccount_vm_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx) {
-    m_account_context = std::make_shared<store::xaccount_context_t>(unitstate, statectx);
+xaccount_vm_t::xaccount_vm_t(const data::xaccountstate_ptr_t & accountstate, const statectx::xstatectx_face_ptr_t & statectx) {
+    m_account_context = std::make_shared<store::xaccount_context_t>(accountstate->get_unitstate(), statectx, accountstate->get_tx_nonce());
 }
 
 int32_t xaccount_vm_t::exec_one_tx(store::xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx) {
@@ -61,7 +61,7 @@ int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, cons
             return xunit_contract_exec_no_property_change;
         }
     }
-    xinfo("xaccount_vm_t::exec_tx succ.tx=%s,state=%s",tx->dump().c_str(),tx->dump_execute_state().c_str());
+    // xinfo("xaccount_vm_t::exec_tx succ.tx=%s,state=%s",tx->dump().c_str(),tx->dump_execute_state().c_str());
 
     // copy create txs from account context
     std::vector<xcons_transaction_ptr_t> create_txs = account_context->get_create_txs();
@@ -83,8 +83,7 @@ int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, cons
             contract_create_txs.push_back(new_tx);  // return create tx for unit pack
         }
     }
-    xinfo("xaccount_vm_t::exec_tx succ. tx=%s,tx_state=%s",
-        tx->dump().c_str(), tx->dump_execute_state().c_str());
+    xinfo("xaccount_vm_t::exec_tx succ. tx=%s,tx_state=%s", tx->dump().c_str(), tx->dump_execute_state().c_str());
     return xsuccess;
 }
 

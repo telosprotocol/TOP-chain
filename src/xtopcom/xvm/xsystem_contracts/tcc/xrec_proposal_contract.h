@@ -127,6 +127,22 @@ private:
      */
     template <typename value_type>
     bool get_value_map(const std::string& map_key_id, const std::string& proposal_id, std::map<std::string, value_type>& result);
+
+    /**
+     * @brief  
+     * @note   
+     * @param  tx_list_config_str: 
+     * @retval None
+     */
+    void check_cross_chain_contract_tx_list_proposal(std::string const& tx_list_config_str);
+
+    /**
+     * @brief  
+     * @note   
+     * @param  gasprice_list_str: 
+     * @retval None
+     */
+    void check_cross_chain_gasprice_list_proposal(std::string const& gasprice_list_str);
 };
 
 // REGISTER_NAME_CONTRACT(sys_contract_rec_tcc_addr, xrec_proposal_contract);

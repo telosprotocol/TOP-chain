@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <gsl/span>
+
 #include <string>
 #include <stdexcept>
 #include <vector>
@@ -59,17 +61,19 @@ class xdb_face_t {
  public:
     virtual bool open() = 0;
     virtual bool close() = 0;
-    virtual bool read(const std::string& key, std::string& value) const = 0;
+    virtual bool read(const std::string& key, std::string & value) const = 0;
     virtual bool exists(const std::string& key) const = 0;
     virtual bool write(const std::string& key, const std::string& value) = 0;
     virtual bool write(const std::string& key, const char* data, size_t size) = 0;
     virtual bool write(const std::map<std::string, std::string>& batches) = 0;
     virtual bool erase(const std::string& key) = 0;
     virtual bool erase(const std::vector<std::string>& keys) = 0;
+    virtual bool erase(std::vector<gsl::span<char const>> const & keys) = 0;
     virtual xdb_meta_t  get_meta() = 0;
     
     //batch mode for multiple keys with multiple ops
     virtual bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) = 0;
+    virtual bool batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys) = 0;
     
     //prefix must start from first char of key
     virtual bool read_range(const std::string& prefix, std::vector<std::string>& values) = 0;

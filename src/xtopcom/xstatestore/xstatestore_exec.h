@@ -22,6 +22,7 @@ public:
 
 class xstatestore_executor_t {
 public:
+    static constexpr uint32_t               push_execute_limit{32};
     static constexpr uint32_t               execute_update_limit{32};
     static constexpr uint32_t               execute_unit_limit_demand{100};  // execute unit for unitstate on demand to fullunit
     static std::mutex   m_global_execute_lock;
@@ -35,6 +36,7 @@ public:
     xtablestate_ext_ptr_t   get_latest_executed_tablestate_ext() const;
     xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
     void                    on_table_block_committed(base::xvblock_t* block) const;
+    bool                    on_table_block_committed_by_height(uint64_t height, const std::string & block_hash) const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
 
     void    execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const;
@@ -47,12 +49,14 @@ public:
     uint64_t get_need_sync_state_block_height() const;
 
 protected:
-    uint64_t update_execute_from_execute_height(uint64_t old_execute_height) const;
-    void    set_latest_executed_info(uint64_t height,const std::string & blockhash) const;
+    uint64_t update_execute_from_execute_height(bool force_update) const;
+    void    set_latest_executed_info(bool is_commit_block, uint64_t height) const;
     void    set_need_sync_state_block_height(uint64_t height) const;
-    void    update_latest_executed_info(base::xvblock_t* block) const;
     void    recover_execute_height(uint64_t old_executed_height);
     bool    need_store_unitstate() const;
+    inline uint64_t get_cert_executed_height_inner() const {return m_executed_cert_height;}
+    inline uint64_t get_commit_executed_height_inner() const {return m_executed_height;}
+    inline uint64_t get_need_sync_state_height_inner() const {return m_need_all_state_sync_height;}
     xtablestate_ext_ptr_t write_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
 
     data::xunitstate_ptr_t make_state_from_current_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, std::error_code & ec) const;
@@ -62,19 +66,18 @@ protected:
     xtablestate_ext_ptr_t  make_state_from_current_table(base::xvblock_t* current_block, std::error_code & ec) const;
     xtablestate_ext_ptr_t  make_state_from_prev_state_and_table(base::xvblock_t* current_block, xtablestate_ext_ptr_t const& prev_state, std::error_code & ec) const;
     xtablestate_ext_ptr_t  execute_block_recursive(base::xvblock_t* current_block, uint32_t & limit, std::error_code & ec) const;
-    xtablestate_ext_ptr_t  create_tablestate_ext(base::xvblock_t* current_block, std::shared_ptr<state_mpt::xstate_mpt_t> const& current_prev_mpt, xhash256_t const& block_state_root,
-                                                xobject_ptr_t<base::xvbstate_t> const& current_state,
-                                                std::error_code & ec) const;
     xtablestate_ext_ptr_t execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, bool bstate_must, std::error_code & ec) const;
 
 protected:
     mutable std::mutex          m_execute_lock;  // protect the whole execution
-    mutable std::mutex          m_execute_height_lock;
+    mutable uint64_t            m_executed_cert_height{0};
     mutable uint64_t            m_executed_height{0};
     mutable uint64_t            m_need_all_state_sync_height{0};
+    mutable uint32_t            m_force_push_execute_count{0};
     common::xaccount_address_t  m_table_addr;
+    base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
     xstatestore_base_t          m_statestore_base;
-    xstatestore_accessor_t      m_state_accessor;
+    mutable xstatestore_accessor_t m_state_accessor;
     xexecute_listener_face_t *  m_execute_listener{nullptr};
 };
 

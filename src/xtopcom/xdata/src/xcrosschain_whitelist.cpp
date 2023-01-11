@@ -58,7 +58,9 @@ XINLINE_CONSTEXPR char const * g_crosschain_whitelist =
 {
     "whitelist": [
         "0x8b587045c7fcd6faddf022fdf8e09756f2fd6cc6",
-        "0x0dbbae16e5afb599e0243b0f339431b9f73c7a75"
+        "0xc065890044d21efa7e276362747bb9a93a45d6f7",
+        "0xacfa3f7b7d261ff09e99afe0dc550562fa35591b",
+        "0x1637dcbc6afccfc77f8ef1c618a21d6e831a7316"
     ]
 }
 )T";

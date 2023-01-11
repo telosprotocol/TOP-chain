@@ -16,9 +16,16 @@ TEST_F(xbatch_packer_test, pack_strategy) {
     uint32_t high_tps_num = 30;
     uint32_t middle_tps_num = 20;
     uint32_t low_tps_num = 10;
+    // uint32_t high_tps_num = 180;
+    // uint32_t middle_tps_num = 100;
+    // uint32_t low_tps_num = 50;
     xpack_strategy_t pack_strategy;
 
-    ASSERT_EQ(pack_strategy.get_timer_interval(), 30);
+    #define TRY_HIGH_TPS_TIME_WINDOW (400)
+    #define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (700)
+    #define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (1000)
+
+    ASSERT_EQ(pack_strategy.get_timer_interval(), 50);
 
     for (uint32_t i = 0; i < 5; i++) {
         pack_strategy.clear();
@@ -31,27 +38,27 @@ TEST_F(xbatch_packer_test, pack_strategy) {
         ASSERT_EQ(tx_num, high_tps_num);
         tx_num = pack_strategy.get_tx_num_threshold(1000 + r);
         ASSERT_EQ(tx_num, high_tps_num);
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 250);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_HIGH_TPS_TIME_WINDOW);
         ASSERT_EQ(tx_num, high_tps_num);
 
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 251);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_HIGH_TPS_TIME_WINDOW + 1);
         ASSERT_EQ(tx_num, middle_tps_num);
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 250 + r);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_HIGH_TPS_TIME_WINDOW + r);
         ASSERT_EQ(tx_num, middle_tps_num);
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 500);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW);
         ASSERT_EQ(tx_num, middle_tps_num);
 
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 501);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW + 1);
         ASSERT_EQ(tx_num, low_tps_num);
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 500 + r);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW + r);
         ASSERT_EQ(tx_num, low_tps_num);
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 750);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW);
         ASSERT_EQ(tx_num, low_tps_num);
 
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 751);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW + 1);
         ASSERT_EQ(tx_num, 0);
         r = rand();
-        tx_num = pack_strategy.get_tx_num_threshold(1000 + 750 + r);
+        tx_num = pack_strategy.get_tx_num_threshold(1000 + TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW + r);
         ASSERT_EQ(tx_num, 0);
     }
 }

@@ -260,7 +260,7 @@ std::string xblock_t::dump_header() const {
     ss << ",last_h:" << base::xhash64_t::digest(get_header()->get_last_block_hash());
     ss << ",input_h=" << base::xhash64_t::digest(get_header()->get_input_hash());
     ss << ",output_h=" << base::xhash64_t::digest(get_header()->get_output_hash());
-    if (get_block_class() != base::enum_xvblock_class_nil) {
+    if (get_block_class() != base::enum_xvblock_class_nil && get_input() != nullptr && get_output() != nullptr) {
         std::string     _input_bin;
         std::string     _output_bin;
         get_input()->serialize_to_string(_input_bin);

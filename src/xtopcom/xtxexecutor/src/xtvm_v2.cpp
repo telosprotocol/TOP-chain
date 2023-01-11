@@ -22,7 +22,7 @@ enum_execute_result_type xtvm_v2_t::execute(const xvm_input_t & input, xvm_outpu
     xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
     xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
-    data::xunitstate_ptr_t unitstate = statectx->load_unit_state(tx->get_account_addr());
+    data::xunitstate_ptr_t unitstate = statectx->load_unit_state(common::xaccount_address_t(tx->get_account_addr()));
     if (nullptr == unitstate) {
         xwarn("[xtvm_v2_t::execute] fail-load unit state. tx=%s", tx->dump().c_str());
         return enum_exec_error_load_state;
@@ -105,7 +105,7 @@ contract_runtime::xtransaction_execution_result_t xtvm_v2_t::execute_one_tx(cons
     contract_runtime::xtransaction_execution_result_t result;
 
     // build context
-    auto unitstate = statectx->load_unit_state(tx->get_account_addr());
+    auto unitstate = statectx->load_unit_state(common::xaccount_address_t(tx->get_account_addr()));
     contract_common::xstateless_contract_execution_context_t ctx{make_observer(unitstate.get())};
     // set context
     ctx.set_action_stage(tx->get_tx_subtype());
@@ -153,7 +153,7 @@ void xtvm_v2_t::fill_transfer_context(const statectx::xstatectx_face_ptr_t & sta
     if (tx->get_inner_table_flag() || tx->is_self_tx()) {
         // one stage
         if (ctx.action_stage() == data::xconsensus_action_stage_t::send || ctx.action_stage() == data::xconsensus_action_stage_t::self) {
-            auto recver_unitstate = statectx->load_unit_state(tx->get_transaction()->get_target_addr());
+            auto recver_unitstate = statectx->load_unit_state(common::xaccount_address_t(tx->get_transaction()->get_target_addr()));
             ctx.set_unitstate_other(make_observer(recver_unitstate.get()));
             ctx.set_action_name("transfer");
         } else {

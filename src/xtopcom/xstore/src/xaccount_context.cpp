@@ -57,13 +57,11 @@ do {\
     }\
 }while(0)
 
-xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx) {
+xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx, uint64_t tx_nonce) {
     m_account = unitstate;
 
-    m_latest_exec_sendtx_nonce = m_account->get_latest_send_trans_number();
-    m_latest_exec_sendtx_hash = m_account->account_send_trans_hash();
+    m_latest_exec_sendtx_nonce = tx_nonce;
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
-    m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = unitstate->get_canvas();
     m_statectx = statectx;
     xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
@@ -72,10 +70,8 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate,
 xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate) {
     m_account = unitstate;
 
-    m_latest_exec_sendtx_nonce = m_account->get_latest_send_trans_number();
-    m_latest_exec_sendtx_hash = m_account->account_send_trans_hash();
+    m_latest_exec_sendtx_nonce = 0;  // TODO(jimmy) for test
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
-    m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = make_object_ptr<base::xvcanvas_t>();
     xinfo(
         "create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
@@ -406,7 +402,7 @@ int32_t xaccount_context_t::lock_token(const uint256_t &tran_hash, uint64_t amou
         xerror("xaccount_context_t::lock_token failed, same tx hash %s", hash_str.c_str());
         return xaccount_property_lock_token_key_same;
     }
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     stream << m_timer_height;
     stream << tran_params;
     std::string record_str = std::string((char *)stream.data(), stream.size());
@@ -740,28 +736,6 @@ int32_t xaccount_context_t::available_balance_to_other_balance(const std::string
 }
 
 
-
-// ================== tx related info apis ======================
-void xaccount_context_t::set_tx_info_unconfirm_tx_num(uint32_t num) {
-    std::string value = base::xstring_utl::tostring(num);
-    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, value);
-    xassert(ret == xsuccess);
-}
-void xaccount_context_t::set_tx_info_latest_sendtx_num(uint64_t num) {
-    std::string value = base::xstring_utl::tostring(num);
-    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, value);
-    xassert(ret == xsuccess);
-}
-void xaccount_context_t::set_tx_info_latest_sendtx_hash(const std::string & hash) {
-    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, hash);
-    xassert(ret == xsuccess);
-}
-void xaccount_context_t::set_tx_info_recvtx_num(uint64_t num) {
-    std::string value = base::xstring_utl::tostring(num);
-    int32_t ret = map_set(data::XPROPERTY_TX_INFO, data::XPROPERTY_TX_INFO_RECVTX_NUM, value);
-    xassert(ret == xsuccess);
-}
-
 // ================== basic operation apis ======================
 
 const xobject_ptr_t<base::xvbstate_t> & xaccount_context_t::get_bstate() const {
@@ -778,8 +752,8 @@ xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::strin
         xassert(false);
         return nullptr;
     }
-    base::xvaccount_t _vaddr(other_addr);
-    auto other_unitstate = m_statectx->load_commit_unit_state(_vaddr);
+
+    auto other_unitstate = m_statectx->load_commit_unit_state(common::xaccount_address_t(other_addr));
     if (other_unitstate == nullptr) {
         xerror("xaccount_context_t::load_bstate,fail-get latest connectted state.account=%s", other_addr.c_str());
         return nullptr;
@@ -790,7 +764,7 @@ xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::strin
 }
 xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::string& other_addr, uint64_t height) {
     std::string query_addr = other_addr.empty() ? get_address() : other_addr;
-    base::xvaccount_t _vaddr(query_addr);
+    common::xaccount_address_t _vaddr(query_addr);
     auto commit_unitstate = m_statectx->load_commit_unit_state(_vaddr, height);
 
     if (commit_unitstate == nullptr) {
@@ -1245,78 +1219,12 @@ bool xaccount_context_t::add_transaction(const data::xcons_transaction_ptr_t & t
             return false;
         }
         m_latest_exec_sendtx_nonce = trans->get_transaction()->get_tx_nonce();
-        m_latest_exec_sendtx_hash = trans->get_tx_hash_256();
 
         // try update latest create nonce
         update_latest_create_nonce_hash(trans);  // self tx may create contract tx
     }
     xdbg("xaccount_context_t::add_transaction account=%s,height=%ld,tx=%s", get_address().c_str(), get_chain_height(), trans->dump(true).c_str());
     m_currect_transaction = trans;
-    return true;
-}
-bool xaccount_context_t::finish_exec_all_txs(const std::vector<data::xcons_transaction_ptr_t> & txs) {
-    xassert(m_currect_transaction != nullptr);
-
-    // update account create time propertys
-    set_account_create_time();
-
-    // update tx related propertys
-    if (get_chain_height() > 0) { // no need set for genesis block
-        uint64_t new_sendtx_nonce = m_account->get_latest_send_trans_number();
-        uint256_t new_sendtx_hash = m_account->account_send_trans_hash();
-        uint32_t recv_tx_num = 0;
-        uint32_t confirm_tx_num = 0;
-        uint32_t send_tx_num = 0;
-        for (auto & tx : txs) {
-            if (tx->is_self_tx() || tx->is_send_tx()) {
-                if (new_sendtx_nonce != tx->get_transaction()->get_last_nonce()) {
-                    xerror("xaccount_context_t::finish_exec_all_txs fail-match send nonce hash.last_nonce=%ld,tx_nonce=%ld",
-                        new_sendtx_nonce, tx->get_transaction()->get_last_nonce());
-                    return false;
-                }
-                xassert(new_sendtx_nonce == tx->get_transaction()->get_last_nonce());
-                new_sendtx_nonce = tx->get_transaction()->get_tx_nonce();
-                new_sendtx_hash = tx->get_tx_hash_256();
-            }
-            if (tx->is_send_tx()) {
-                send_tx_num++;
-            }
-            if (tx->is_recv_tx()) {
-                recv_tx_num++;
-            }
-            if (tx->is_confirm_tx()) {
-                confirm_tx_num++;
-            }
-        }
-
-        // set latest sendtx nonce and hash
-        if (new_sendtx_nonce != m_account->get_latest_send_trans_number()) {
-            set_tx_info_latest_sendtx_num(new_sendtx_nonce);
-            std::string transaction_hash_str = std::string(reinterpret_cast<char*>(new_sendtx_hash.data()), new_sendtx_hash.size());
-            set_tx_info_latest_sendtx_hash(transaction_hash_str);
-        }
-
-        // set recvtx total number
-        if (recv_tx_num > 0) {
-            uint64_t recv_num = m_account->account_recv_trans_number();
-            set_tx_info_recvtx_num(recv_num + recv_tx_num);
-        }
-
-        // set unconfirm sendtx number
-        uint32_t old_unconfirm_num = m_account->get_unconfirm_sendtx_num();
-        if (old_unconfirm_num + send_tx_num < confirm_tx_num) {
-            xerror("xaccount_context_t::finish_exec_all_txs fail-unconfirm num unmatch.old_unconfirm_num=%d,send_tx_num=%d,confirm_tx_num=%d",
-                old_unconfirm_num, send_tx_num, confirm_tx_num);
-            return false;
-        }
-        uint32_t new_unconfirm_new = old_unconfirm_num + send_tx_num - confirm_tx_num;
-        if (new_unconfirm_new != old_unconfirm_num) {
-            set_tx_info_unconfirm_tx_num(new_unconfirm_new);
-        }
-        xdbg_info("xaccount_context_t::finish_exec_all_txs,account=%s,height=%ld,recv_tx_num=%d,send_tx_num=%d,confirm_tx_num=%d,new_sendtx_nonce=%ld",
-            get_address().c_str(), get_chain_height(), recv_tx_num, send_tx_num, confirm_tx_num, new_sendtx_nonce);
-    }
-
     return true;
 }
 
@@ -1336,9 +1244,8 @@ const data::xaction_asset_out& xaccount_context_t::get_source_pay_info() {
     return m_source_pay_info;
 }
 
-void xaccount_context_t::get_latest_create_nonce_hash(uint64_t & nonce, uint256_t & hash) {
+void xaccount_context_t::get_latest_create_nonce_hash(uint64_t & nonce) {
     nonce = m_latest_create_sendtx_nonce;
-    hash = m_latest_create_sendtx_hash;
 }
 
 void xaccount_context_t::update_latest_create_nonce_hash(const data::xcons_transaction_ptr_t & tx) {
@@ -1346,7 +1253,6 @@ void xaccount_context_t::update_latest_create_nonce_hash(const data::xcons_trans
     // maybe not need update, it's ok
     if (m_latest_create_sendtx_nonce == tx->get_tx_last_nonce()) {
         m_latest_create_sendtx_nonce = tx->get_tx_nonce();
-        m_latest_create_sendtx_hash = tx->get_tx_hash_256();
     }
 }
 
@@ -1359,10 +1265,9 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
     //}
 
     uint64_t latest_sendtx_nonce;
-    uint256_t latest_sendtx_hash;
-    get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
+    get_latest_create_nonce_hash(latest_sendtx_nonce);
 
-    data::xtransaction_ptr_t tx = data::xtx_factory::create_contract_subtx_transfer(get_address(), receiver, latest_sendtx_nonce, latest_sendtx_hash, amount, m_timestamp);
+    data::xtransaction_ptr_t tx = data::xtx_factory::create_contract_subtx_transfer(get_address(), receiver, latest_sendtx_nonce, amount, m_timestamp);
     data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(tx.get());
 
     uint32_t contract_call_contracts_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
@@ -1386,11 +1291,10 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
     //}
 
     uint64_t latest_sendtx_nonce;
-    uint256_t latest_sendtx_hash;
-    get_latest_create_nonce_hash(latest_sendtx_nonce, latest_sendtx_hash);
+    get_latest_create_nonce_hash(latest_sendtx_nonce);
 
     data::xtransaction_ptr_t tx =
-        data::xtx_factory::create_contract_subtx_call_contract(get_address(), target_addr, latest_sendtx_nonce, latest_sendtx_hash, func_name, func_param, m_timestamp);
+        data::xtx_factory::create_contract_subtx_call_contract(get_address(), target_addr, latest_sendtx_nonce, func_name, func_param, m_timestamp);
     data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     uint32_t contract_call_contracts_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
     if (m_contract_txs.size() >= contract_call_contracts_num) {

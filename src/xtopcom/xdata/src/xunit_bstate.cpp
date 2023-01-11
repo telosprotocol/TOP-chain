@@ -208,7 +208,7 @@ std::string xunit_bstate_t::get_storage(const std::string& index_str) const {
         evm_common::h256 value;
         //js_rsp["result"] = std::string("0x") + evm_common::toHex(value);
         //return;
-        value_str = std::string((char*)value.data(), value.size);
+        value_str = std::string((char*)value.data(), value.size());
     }
     return value_str;
 }
@@ -722,6 +722,33 @@ int32_t xunit_bstate_t::vote_balance(uint64_t new_vote_balance) {
 
 int32_t xunit_bstate_t::lock_balance(uint64_t new_lock_balance) {
     return set_token_balance(XPROPERTY_BALANCE_LOCK, static_cast<base::vtoken_t>(new_lock_balance));
+}
+
+
+xaccount_state_t::xaccount_state_t(xunitstate_ptr_t const& unitstate, base::xaccount_index_t const& accountindex)
+: m_unitstate(unitstate), m_accountindex(accountindex),m_nonce_snapshot(accountindex.get_latest_tx_nonce())  {
+
+}
+
+void xaccount_state_t::increase_tx_nonce() {
+    m_accountindex.set_tx_nonce(m_accountindex.get_latest_tx_nonce()+1);
+}
+void xaccount_state_t::set_tx_nonce(uint64_t txnonce) {    
+    m_accountindex.set_tx_nonce(txnonce);
+}
+void xaccount_state_t::update_account_index(base::xaccount_index_t const& accountindex) {
+    m_accountindex = accountindex;
+}
+
+bool xaccount_state_t::do_rollback() {
+    if (m_nonce_snapshot < m_accountindex.get_latest_tx_nonce()) {
+        m_accountindex.set_tx_nonce(m_nonce_snapshot);
+    }
+    return m_unitstate->do_rollback();
+}
+size_t xaccount_state_t::do_snapshot() {
+    m_nonce_snapshot = m_accountindex.get_latest_tx_nonce();
+    return m_unitstate->do_snapshot();
 }
 
 }  // namespace data

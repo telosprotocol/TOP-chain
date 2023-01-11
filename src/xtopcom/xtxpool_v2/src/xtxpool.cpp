@@ -101,14 +101,11 @@ const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
     if (table == nullptr) {
         return nullptr;
     }
-    auto tx_ent = table->pop_tx(txinfo, true);
-    if (tx_ent == nullptr) {
-        return nullptr;
-    }
-    return tx_ent->get_tx();
+    return table->pop_tx(txinfo, true);
 }
 
 xpack_resource xtxpool_t::get_pack_resource(const xtxs_pack_para_t & pack_para) {
+    XMETRICS_TIME_RECORD("txpool_get_pack_resource_cost");
     auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
     if (table == nullptr) {
         return {};
@@ -116,7 +113,7 @@ xpack_resource xtxpool_t::get_pack_resource(const xtxs_pack_para_t & pack_para) 
     return table->get_pack_resource(pack_para);
 }
 
-const std::shared_ptr<xtx_entry> xtxpool_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
+data::xcons_transaction_ptr_t xtxpool_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
     auto table = get_txpool_table_by_addr(account_addr);
     if (table == nullptr) {
         xtxpool_warn("xtxpool_t::query_tx table not found, account:%s", account_addr.c_str());
@@ -223,6 +220,15 @@ void xtxpool_t::on_block_confirmed(xblock_t * block) {
     table->on_block_confirmed(block);
 }
 
+bool xtxpool_t::on_block_confirmed(const std::string table_addr, base::enum_xvblock_class blk_class, uint64_t height) {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return true;
+    }
+
+    return table->on_block_confirmed(blk_class, height);
+}
+
 int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
     auto table = get_txpool_table_by_addr(account);
     if (table == nullptr) {
@@ -246,15 +252,24 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 //     }
 // }
 
-void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
+void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr,
+                                   const data::xtablestate_ptr_t & table_state) {
     xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->account_address().to_string().c_str(), table_state->height());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
-    auto table = get_txpool_table_by_addr(table_state->account_address().to_string().c_str());
+    auto table = get_txpool_table_by_addr(table_state->account_address().to_string());
     if (table == nullptr) {
         return;
     }
     m_para->get_receiptid_state_cache().update_table_receiptid_state(property_prove_ptr, table_state->get_receiptid_state());
     table->update_table_state(table_state);
+}
+
+void xtxpool_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) {
+    auto table = get_txpool_table_by_addr(_lock_block->get_account());
+    if (table == nullptr) {
+        return;
+    }
+    table->update_uncommit_txs(_lock_block, _cert_block);
 }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const {
@@ -334,6 +349,14 @@ xtransaction_ptr_t xtxpool_t::get_raw_tx(const std::string & account_addr, base:
 
 const std::set<base::xtable_shortid_t> & xtxpool_t::get_all_table_sids() const {
     return m_all_table_sids;
+}
+
+uint32_t xtxpool_t::get_tx_cache_size(const std::string & table_addr) const {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return 0;
+    }
+    return table->get_tx_cache_size();
 }
 
 void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,

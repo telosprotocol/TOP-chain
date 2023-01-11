@@ -174,14 +174,14 @@ void xtransaction_v1_t::adjust_target_address(uint32_t table_id) {
 }
 
 void xtransaction_v1_t::set_digest() {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     do_write_without_hash_signature(stream, true);
     m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
     XMETRICS_GAUGE(metrics::cpu_hash_256_xtransaction_v1_calc, 1);
 }
 
 void xtransaction_v1_t::set_len() {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
     serialize_write(stream, false);
     int32_t action_len = m_source_action.serialize_write(stream, false);
@@ -194,7 +194,7 @@ void xtransaction_v1_t::set_len() {
 }
 
 bool xtransaction_v1_t::digest_check() const {
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
     do_write_without_hash_signature(stream, true);
     uint256_t hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
     XMETRICS_GAUGE(metrics::cpu_hash_256_xtransaction_v1_calc, 1);
@@ -237,7 +237,7 @@ bool xtransaction_v1_t::transaction_len_check() const {
         xwarn("xtransaction_v1_t::transaction_len_check memo size too long.size:%d", get_memo().size());
         return false;
     }
-    base::xstream_t stream(base::xcontext_t::instance());
+    base::xautostream_t<1024> stream(base::xcontext_t::instance());
 
     const int32_t begin_pos = stream.size();
     serialize_write(stream, true);

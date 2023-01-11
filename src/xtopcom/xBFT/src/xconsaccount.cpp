@@ -123,6 +123,7 @@ namespace top
                 _evt_obj->set_to_xip(get_xip2_addr());//correct target address to make sure it always be this address
             }
             if(   (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) //replica get proposal from leader
+               || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal_v2)
                || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_commit) ) //try sync first for commit msg
             {
                 if(get_child_node() != NULL)
@@ -197,6 +198,7 @@ namespace top
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
                 //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+                XMETRICS_TIME_RECORD("cons_store_block_cost");
                 get_vblockstore()->store_block(*this,_target_cert_block); //just store cert only
                 xdbg("xcsaccount_t::on_proposal_finish _target_cert_block:%s", _target_cert_block->dump().c_str());
             }

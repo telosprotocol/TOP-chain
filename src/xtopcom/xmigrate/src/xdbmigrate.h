@@ -34,8 +34,9 @@ namespace top
             virtual bool                set_value(const std::string & key, const std::string& value) override;
             virtual bool                set_values(const std::map<std::string, std::string> & batch) override;
             virtual bool                delete_value(const std::string & key) override;
-            virtual const std::string   get_value(const std::string & key) const override;
+            virtual std::string   get_value(const std::string & key) const override;
             virtual bool                delete_values(const std::vector<std::string> & to_deleted_keys) override;
+            virtual bool delete_values(std::vector<gsl::span<char const>> const & to_deleted_keys) override;
             
         public:
             //prefix must start from first char of key

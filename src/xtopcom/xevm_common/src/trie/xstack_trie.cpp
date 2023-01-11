@@ -32,8 +32,8 @@ void xtop_stack_trie::Update(xbytes_t const & key, xbytes_t const & value) {
 }
 
 void xtop_stack_trie::TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
-    auto k = keybytesToHex(key);
-    if (value.size() == 0) {
+    auto k = key_bytes_to_hex(key);
+    if (value.empty()) {
         xerror("stack trie not support delete");
         return;
     }
@@ -219,7 +219,7 @@ void xtop_stack_trie::hash() {
         } else {
             valuenode = std::make_shared<xtrie_hash_node_t>(m_children[0]->m_val);
         }
-        auto key = hexToCompact(m_key);
+        auto key = hex_to_compact(m_key);
         xbytes_t encoded;
         append(encoded, key);
         append(encoded, xtrie_node_rlp::EncodeToBytes(valuenode));
@@ -228,9 +228,9 @@ void xtop_stack_trie::hash() {
         xdbg("xtop_stack_trie hash extNode buffer: %s", top::to_hex(hash_buffer).c_str());
     }
     case xstack_trie_node_type_t::leafNode: {
-        m_key.insert(m_key.end(), xbyte_t(16));
-        auto sz = hexToCompactInPlace(m_key);
-        auto key = xbytes_t{m_key.begin(), m_key.begin() + sz};
+        m_key.insert(m_key.end(), static_cast<xbyte_t>(16));
+        auto const sz = hex_to_compact_inplace(m_key);
+        auto const key = xbytes_t{m_key.begin(), m_key.begin() + sz};
         xbytes_t encoded;
         append(encoded, key);
         append(encoded, m_val);
@@ -265,7 +265,7 @@ void xtop_stack_trie::hash() {
     }
 }
 
-xhash256_t xtop_stack_trie::Hash() {
+xh256_t xtop_stack_trie::Hash() {
     hash();
     if (m_val.size() != 32) {
         // If the node's RLP isn't 32 bytes long, the node will not
@@ -275,15 +275,15 @@ xhash256_t xtop_stack_trie::Hash() {
         utl::xkeccak256_t hasher;
         hasher.update(m_val.data(), m_val.size());
         hasher.get_hash(res);
-        return xhash256_t{res};
+        return xh256_t{res};
     }
-    return xhash256_t{m_val};
+    return xh256_t{m_val};
 }
 
-xhash256_t xtop_stack_trie::Commit(std::error_code & ec) {
+xh256_t xtop_stack_trie::Commit(std::error_code & ec) {
     if (m_db = nullptr) {
         ec = error::xerrc_t::trie_db_not_provided;
-        return xhash256_t{};
+        return xh256_t{};
     }
     if (m_val.size() != 32) {
         // If the node's RLP isn't 32 bytes long, the node will not
@@ -294,9 +294,9 @@ xhash256_t xtop_stack_trie::Commit(std::error_code & ec) {
         hasher.update(m_val.data(), m_val.size());
         hasher.get_hash(res);
         m_db->Put(res, m_val, ec);
-        return xhash256_t{res};
+        return xh256_t{res};
     }
-    return xhash256_t{m_val};
+    return xh256_t{m_val};
 }
 
 std::shared_ptr<xtop_stack_trie> xtop_stack_trie::newLeaf(xbytes_t const & key, xbytes_t const & val) {

@@ -98,8 +98,9 @@ void xrpc_query_manager::getAccount(xJson::Value & js_req, xJson::Value & js_rsp
 
 xJson::Value xrpc_query_manager::parse_account(const std::string & account, string & strResult, uint32_t & nErrorCode) {
     xJson::Value result_json;
-    data::xunitstate_ptr_t account_ptr = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(account));
-    if (account_ptr != nullptr && (!account_ptr->is_empty_state())) {
+    data::xaccountstate_ptr_t accountstate_ptr = statestore::xstatestore_hub_t::instance()->get_accountstate(LatestConnectBlock, common::xaccount_address_t(account));
+    if (accountstate_ptr != nullptr && (!accountstate_ptr->get_unitstate()->is_empty_state())) {
+        data::xunitstate_ptr_t account_ptr = accountstate_ptr->get_unitstate();
         // string freeze_fee{};
         result_json["account_addr"] = account;
         result_json["created_time"] = static_cast<xJson::UInt64>(account_ptr->get_account_create_time());
@@ -112,13 +113,13 @@ xJson::Value xrpc_query_manager::parse_account(const std::string & account, stri
         // result_json["lock_gas"] = static_cast<xJson::UInt64>(account_ptr->lock_tgas());
         result_json["burned_token"] = static_cast<xJson::UInt64>(account_ptr->burn_balance());
         result_json["unused_vote_amount"] = static_cast<xJson::UInt64>(account_ptr->unvote_num());
-        result_json["nonce"] = static_cast<xJson::UInt64>(account_ptr->account_send_trans_number());
-        uint256_t last_hash = account_ptr->account_send_trans_hash();
-        result_json["latest_tx_hash"] = uint_to_str(last_hash.data(), last_hash.size());
-        uint64_t last_hash_xxhash64 = static_cast<xJson::UInt64>(utl::xxh64_t::digest(last_hash.data(), last_hash.size()));
-        result_json["latest_tx_hash_xxhash64"] = uint64_to_str(last_hash_xxhash64);
+        result_json["nonce"] = static_cast<xJson::UInt64>(accountstate_ptr->get_tx_nonce()); // XTODO disable static_cast<xJson::UInt64>(accountstate_ptr->account_send_trans_number());
+        // uint256_t last_hash = account_ptr->account_send_trans_hash();
+        result_json["latest_tx_hash"] = std::string();  // XTODO disable uint_to_str(last_hash.data(), last_hash.size());
+        // uint64_t last_hash_xxhash64 = static_cast<xJson::UInt64>(utl::xxh64_t::digest(last_hash.data(), last_hash.size()));
+        result_json["latest_tx_hash_xxhash64"] = std::string(); // XTODO disable uint64_to_str(last_hash_xxhash64);
         result_json["latest_unit_height"] = static_cast<xJson::UInt64>(account_ptr->height());
-        result_json["recv_tx_num"] = static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
+        result_json["recv_tx_num"] = 0; // XTODO disable static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
 
         auto timer_height = get_timer_height();
         auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
@@ -637,9 +638,7 @@ void xrpc_query_manager::update_tx_state(xJson::Value & result_json, const xJson
     }
 }
 
-int xrpc_query_manager::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & rpc_version, xJson::Value& result_json, std::string & strResult, uint32_t & nErrorCode) {
-    std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
-    xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
+int xrpc_query_manager::parse_tx(const std::string & tx_hash_str, xtransaction_t * cons_tx_ptr, xtxindex_detail_ptr_t const& sendindex, const std::string & rpc_version, xJson::Value& result_json, std::string & strResult, uint32_t & nErrorCode) {
     xJson::Value cons;
     if (sendindex != nullptr) {
         auto ori_tx_info = parse_tx(sendindex->get_raw_tx().get(), rpc_version);
@@ -808,7 +807,7 @@ void xrpc_query_manager::getTransaction(xJson::Value & js_req, xJson::Value & js
         version = RPC_VERSION_V1;
     }
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    xdbg("xarc_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash_str.c_str(), version.c_str());
+    xdbg("xarc_query_manager::getTransaction account: %s, tx hash: %s, version: %s", account.c_str(), js_req["tx_hash"].asString().c_str(), version.c_str());
 
     // add top address check
     if (!account.empty()) {
@@ -846,60 +845,63 @@ void xrpc_query_manager::getTransaction(xJson::Value & js_req, xJson::Value & js
         }
     }
 
-    xtransaction_t * tx_ptr = nullptr;
-    xcons_transaction_ptr_t cons_tx_ptr = nullptr;
-    if (m_txpool_service != nullptr) {
-        cons_tx_ptr = m_txpool_service->query_tx(account, hash);
-        if (cons_tx_ptr != nullptr) {
-            tx_ptr = cons_tx_ptr->get_transaction();
-        }
-    }
-
     xJson::Value result_json;
-    if (get_transaction_on_demand(account, tx_ptr, version, hash, result_json, strResult, nErrorCode) == 0)
+    if (get_transaction_on_demand(account, version, hash, result_json, strResult, nErrorCode) == 0)
         js_rsp = result_json;
 }
 
 int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
-                                                  xtransaction_t * tx_ptr,
                                                   const string & version,
                                                   const uint256_t & tx_hash,
                                                   xJson::Value & result_json,
                                                   std::string & strResult,
                                                   uint32_t & nErrorCode) {
     std::string strHash((char *)tx_hash.data(), tx_hash.size());
-    if (!m_exchange_flag) {
-        if (parse_tx(tx_hash, tx_ptr, version, result_json, strResult, nErrorCode) == 0) {  // find tx
-            base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(strHash, base::enum_transaction_subtype_all);
-            if (tx_store_ptr != nullptr) {
-                if (tx_store_ptr->get_raw_tx() != nullptr) {
-                    auto tx = dynamic_cast<xtransaction_t *>(tx_store_ptr->get_raw_tx());
-                    tx->add_ref();
-                    xtransaction_ptr_t tx_ptr;
-                    tx_ptr.attach(tx);
+    xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(strHash, base::enum_transaction_subtype_send);
+    xcons_transaction_ptr_t cons_tx_ptr = nullptr;
+    data::xtransaction_t* txpool_raw_tx = nullptr;
+    if (nullptr == sendindex) {
+        if (m_txpool_service != nullptr) {
+            cons_tx_ptr = m_txpool_service->query_tx(account, tx_hash);
+            if (nullptr != cons_tx_ptr) {
+                txpool_raw_tx = cons_tx_ptr->get_transaction();
+            }
+        }
+    }
 
-                    data::xaction_t action;
-                    action.set_account_addr(tx->get_source_addr());
-                    action.set_action_type(tx->get_source_action_type());
-                    action.set_action_name(tx->get_source_action_name());
-                    action.set_action_param(tx->get_source_action_para());
-                    auto jsa = parse_action(action);
+    int parse_tx_ret = parse_tx(strHash, txpool_raw_tx, sendindex, version, result_json, strResult, nErrorCode);
+    if (parse_tx_ret == 0) {
+        if (sendindex != nullptr) {
+            if (sendindex->get_raw_tx() != nullptr) {
+                auto tx = sendindex->get_raw_tx();
 
-                    action.set_account_addr(tx->get_origin_target_addr());
-                    action.set_action_type(tx->get_target_action_type());
-                    action.set_action_name(tx->get_target_action_name());
-                    action.set_action_param(tx->get_target_action_para());
-                    auto jta = parse_action(action);
+                data::xaction_t action;
+                action.set_account_addr(tx->get_source_addr());
+                action.set_action_type(tx->get_source_action_type());
+                action.set_action_name(tx->get_source_action_name());
+                action.set_action_param(tx->get_source_action_para());
+                auto jsa = parse_action(action);
 
-                    if (version == RPC_VERSION_V2) {
-                        result_json["original_tx_info"]["sender_action_param"] = jsa;
-                        result_json["original_tx_info"]["receiver_action_param"] = jta;
-                    } else {
-                        result_json["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
-                        result_json["original_tx_info"]["tx_action"]["receiver_action"]["action_param"] = jta;
-                    }
+                action.set_account_addr(tx->get_origin_target_addr());
+                action.set_action_type(tx->get_target_action_type());
+                action.set_action_name(tx->get_target_action_name());
+                action.set_action_param(tx->get_target_action_para());
+                auto jta = parse_action(action);
+
+                if (version == RPC_VERSION_V2) {
+                    result_json["original_tx_info"]["sender_action_param"] = jsa;
+                    result_json["original_tx_info"]["receiver_action_param"] = jta;
+                } else {
+                    result_json["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
+                    result_json["original_tx_info"]["tx_action"]["receiver_action"]["action_param"] = jta;
                 }
             }
+        }
+    }
+
+
+    if (!m_exchange_flag) {
+        if (parse_tx_ret == 0) {  // find tx
             return 0;
         }
         strResult = "account address or transaction hash error/does not exist";
@@ -907,43 +909,12 @@ int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
         return -1;
     }
 
-    if (parse_tx(tx_hash, tx_ptr, version, result_json, strResult, nErrorCode) != 0) {  // not find tx
+    if (parse_tx_ret != 0) {  // not find tx
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(account, strHash, "unit_lack");
         base::xvchain_t::instance().get_xevmbus()->push_event(ev);
         strResult = "account address or transaction hash error/does not exist";
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
         return -1;
-    }
-
-    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(strHash, base::enum_transaction_subtype_all);
-    if (tx_store_ptr != nullptr) {
-        if (tx_store_ptr->get_raw_tx() != nullptr) {
-            auto tx = dynamic_cast<xtransaction_t *>(tx_store_ptr->get_raw_tx());
-            tx->add_ref();
-            xtransaction_ptr_t tx_ptr;
-            tx_ptr.attach(tx);
-
-            data::xaction_t action;
-            action.set_account_addr(tx->get_source_addr());
-            action.set_action_type(tx->get_source_action_type());
-            action.set_action_name(tx->get_source_action_name());
-            action.set_action_param(tx->get_source_action_para());
-            auto jsa = parse_action(action);
-
-            action.set_account_addr(tx->get_origin_target_addr());
-            action.set_action_type(tx->get_target_action_type());
-            action.set_action_name(tx->get_target_action_name());
-            action.set_action_param(tx->get_target_action_para());
-            auto jta = parse_action(action);
-
-            if (version == RPC_VERSION_V2) {
-                result_json["original_tx_info"]["sender_action_param"] = jsa;
-                result_json["original_tx_info"]["receiver_action_param"] = jta;
-            } else {
-                result_json["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
-                result_json["original_tx_info"]["tx_action"]["receiver_action"]["action_param"] = jta;
-            }
-        }
     }
 
     if (result_json["tx_state"] != "pending" && result_json["tx_state"] != "queue") {
@@ -1814,18 +1785,19 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
 }
 
 void xrpc_query_manager::set_fullunit_state(xJson::Value & j_fu, data::xblock_t * bp) {
-    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(bp);
-    if (nullptr == unitstate) {
-        xwarn("xrpc_query_manager::set_fullunit_state get target state fail.block=%s", bp->dump().c_str());
-        return;
-    }
+    // TODO(jimmy)
+    // data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(bp);
+    // if (nullptr == unitstate) {
+    //     xwarn("xrpc_query_manager::set_fullunit_state get target state fail.block=%s", bp->dump().c_str());
+    //     return;
+    // }
 
-    j_fu["latest_send_trans_number"] = static_cast<unsigned long long>(unitstate->account_send_trans_number());
-    j_fu["latest_send_trans_hash"] = to_hex_str(unitstate->account_send_trans_hash());
-    j_fu["latest_recv_trans_number"] = static_cast<unsigned long long>(unitstate->account_recv_trans_number());
-    j_fu["account_balance"] = static_cast<unsigned long long>(unitstate->balance());
-    j_fu["burned_amount_change"] = static_cast<unsigned long long>(unitstate->burn_balance());
-    j_fu["account_create_time"] = static_cast<unsigned long long>(unitstate->get_account_create_time());
+    j_fu["latest_send_trans_number"] = 0;  // TODO(jimmy) static_cast<unsigned long long>(unitstate->account_send_trans_number());
+    j_fu["latest_send_trans_hash"] = std::string(); // TODO(jimmy) unitstate->account_send_trans_hash());
+    j_fu["latest_recv_trans_number"] = 0; // TODO(jimmy) static_cast<unsigned long long>(unitstate->account_recv_trans_number());
+    j_fu["account_balance"] = 0; // TODO(jimmy) static_cast<unsigned long long>(unitstate->balance());
+    j_fu["burned_amount_change"] = 0;// TODO(jimmy) static_cast<unsigned long long>(unitstate->burn_balance());
+    j_fu["account_create_time"] = 0;// TODO(jimmy) static_cast<unsigned long long>(unitstate->get_account_create_time());
 }
 
 void xrpc_query_manager::set_body_info(xJson::Value & body, xblock_t * bp, const std::string & rpc_version) {

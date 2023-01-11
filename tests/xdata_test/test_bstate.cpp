@@ -115,3 +115,130 @@ TEST_F(test_bstate, empty_state) {
     ASSERT_FALSE(unitstate->is_empty_state());
 }
 }
+
+TEST_F(test_bstate, state_reset_1) {
+    std::string account = "T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30";    
+    base::xauto_ptr<base::xvblock_t> unit1 = data::xblocktool_t::create_genesis_lightunit(account, 10000);
+
+    xobject_ptr_t<base::xvbstate_t> bstate1 = make_object_ptr<base::xvbstate_t>(*unit1);
+    data::xunitstate_ptr_t unitstate1 = std::make_shared<data::xunit_bstate_t>(bstate1.get(), false);
+    unitstate1->get_bstate()->apply_changes_of_binlog(unit1->get_binlog());
+    ASSERT_EQ(unitstate1->balance(), 10000);
+    size_t propertys_size = unitstate1->get_bstate()->get_all_property_names().size();
+    std::string state_bin = unitstate1->get_bstate()->export_state();
+
+    xobject_ptr_t<base::xvbstate_t> bstate1_clone = make_object_ptr<base::xvbstate_t>(*unit1, *bstate1.get());
+    data::xunitstate_ptr_t unitstate1_clone = std::make_shared<data::xunit_bstate_t>(bstate1_clone.get(), false);
+    ASSERT_EQ(unitstate1_clone->balance(), 10000);
+
+    // make new version state
+    ASSERT_EQ(0, unitstate1->token_deposit(XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(20000)));
+    ASSERT_EQ(unitstate1->balance(), 10000 + 20000);
+    ASSERT_EQ(0, unitstate1->string_create("@1"));
+    ASSERT_EQ(0, unitstate1->string_set("@1", "aaa"));
+    ASSERT_EQ(unitstate1->get_bstate()->get_all_property_names().size(), propertys_size+1);
+    // new version state reset to old snapshot
+    // ASSERT_EQ(true, unitstate1->reset_state(state_bin));
+    std::string binlog = unitstate1->take_binlog();
+    ASSERT_TRUE(binlog.size() > 0);
+
+    unitstate1_clone->get_bstate()->apply_changes_of_binlog(binlog);
+    xobject_ptr_t<base::xvbstate_t> bstate1_clone2 = make_object_ptr<base::xvbstate_t>(*unit1, *unitstate1_clone->get_bstate());
+    data::xunitstate_ptr_t unitstate1_clone2 = std::make_shared<data::xunit_bstate_t>(bstate1_clone2.get(), false);
+    ASSERT_EQ(unitstate1_clone2->balance(), 10000 + 20000);
+
+    ASSERT_TRUE(unitstate1_clone->reset_state(state_bin));
+    ASSERT_EQ(unitstate1_clone->get_bstate()->get_all_property_names().size(), propertys_size);
+    ASSERT_EQ(unitstate1_clone->balance(), 10000);
+    ASSERT_EQ("", unitstate1_clone->string_get("@1"));
+
+    std::string binlog2 = unitstate1_clone->take_binlog();
+    ASSERT_TRUE(unitstate1_clone2->get_bstate()->apply_changes_of_binlog(binlog2));
+    ASSERT_EQ(unitstate1_clone2->get_bstate()->get_all_property_names().size(), propertys_size);
+    ASSERT_EQ(unitstate1_clone2->balance(), 10000);
+    ASSERT_EQ("", unitstate1_clone2->string_get("@1"));    
+}
+
+TEST_F(test_bstate, state_reset_2) {
+    std::string account = "T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30";    
+    base::xauto_ptr<base::xvblock_t> unit1 = data::xblocktool_t::create_genesis_lightunit(account, 10000);
+
+    xobject_ptr_t<base::xvbstate_t> bstate1 = make_object_ptr<base::xvbstate_t>(*unit1);
+    data::xunitstate_ptr_t unitstate1 = std::make_shared<data::xunit_bstate_t>(bstate1.get(), false);
+    unitstate1->get_bstate()->apply_changes_of_binlog(unit1->get_binlog());
+    ASSERT_EQ(unitstate1->balance(), 10000);
+    size_t propertys_size = unitstate1->get_bstate()->get_all_property_names().size();
+    // make new version state
+    ASSERT_EQ(0, unitstate1->token_deposit(XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(20000)));
+    ASSERT_EQ(0, unitstate1->string_create("@1"));
+    ASSERT_EQ(0, unitstate1->string_set("@1", "aaa"));
+    ASSERT_EQ(unitstate1->get_bstate()->get_all_property_names().size(), propertys_size+1);
+
+    std::string binlog = unitstate1->take_binlog();
+    ASSERT_TRUE(binlog.size() > 0);
+    std::string state_bin = unitstate1->get_bstate()->export_state();
+    std::string snapshot = unitstate1->take_snapshot();
+    std::cout << "propertys size " << unitstate1->get_bstate()->get_all_property_names().size() << std::endl;
+    std::cout << "state_bin size " << state_bin.size() << std::endl;
+    std::cout << "snapshot size " << snapshot.size() << std::endl;
+}
+
+TEST_F(test_bstate, state_reset_3) {
+    std::string account = "T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30";    
+    base::xauto_ptr<base::xvblock_t> unit1 = data::xblocktool_t::create_genesis_lightunit(account, 10000);
+
+    xobject_ptr_t<base::xvbstate_t> bstate1 = make_object_ptr<base::xvbstate_t>(*unit1);
+    data::xunitstate_ptr_t unitstate1 = std::make_shared<data::xunit_bstate_t>(bstate1.get(), false);
+    unitstate1->get_bstate()->apply_changes_of_binlog(unit1->get_binlog());
+    ASSERT_EQ(unitstate1->balance(), 10000);
+    std::string state_bin = unitstate1->get_bstate()->export_state();
+
+    base::xvheader_t _header;
+    _header.set_height(1);
+    _header.set_account(account);
+    xobject_ptr_t<base::xvbstate_t> bstate1_clone = make_object_ptr<base::xvbstate_t>(_header, *bstate1.get());
+    data::xunitstate_ptr_t unitstate1_clone = std::make_shared<data::xunit_bstate_t>(bstate1_clone.get(), false);
+    ASSERT_EQ(unitstate1_clone->balance(), 10000);
+    ASSERT_EQ(unitstate1_clone->height(), 1);
+    ASSERT_EQ(true, unitstate1_clone->reset_state(state_bin));
+    ASSERT_EQ(unitstate1_clone->height(), 1);
+}
+
+
+TEST_F(test_bstate, state_reset_4) {
+    std::string account = "T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30";    
+    base::xauto_ptr<base::xvblock_t> unit1 = data::xblocktool_t::create_genesis_lightunit(account, 10000);
+
+    xobject_ptr_t<base::xvbstate_t> bstate1 = make_object_ptr<base::xvbstate_t>(*unit1);
+    data::xunitstate_ptr_t unitstate1 = std::make_shared<data::xunit_bstate_t>(bstate1.get(), false);
+    unitstate1->get_bstate()->apply_changes_of_binlog(unit1->get_binlog());
+    ASSERT_EQ(unitstate1->balance(), 10000);
+    size_t propertys_size = unitstate1->get_bstate()->get_all_property_names().size();
+    std::string state_bin = unitstate1->get_bstate()->export_state();
+
+    xobject_ptr_t<base::xvbstate_t> bstate1_clone = make_object_ptr<base::xvbstate_t>(*unit1, *bstate1.get());
+    data::xunitstate_ptr_t unitstate1_clone = std::make_shared<data::xunit_bstate_t>(bstate1_clone.get(), false);
+    ASSERT_EQ(unitstate1_clone->balance(), 10000);
+
+    // make new version state
+    ASSERT_EQ(0, unitstate1->token_deposit(XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(20000)));
+    ASSERT_EQ(unitstate1->balance(), 10000 + 20000);
+    ASSERT_EQ(0, unitstate1->string_create("@1"));
+    ASSERT_EQ(0, unitstate1->string_set("@1", "aaa"));
+    ASSERT_EQ(unitstate1->get_bstate()->get_all_property_names().size(), propertys_size+1);
+    // new version state reset to old snapshot
+    // ASSERT_EQ(true, unitstate1->reset_state(state_bin));
+    std::string binlog = unitstate1->take_binlog();
+    ASSERT_TRUE(binlog.size() > 0);
+
+    unitstate1_clone->get_bstate()->apply_changes_of_binlog(binlog);
+    xobject_ptr_t<base::xvbstate_t> bstate1_clone2 = make_object_ptr<base::xvbstate_t>(*unit1, *unitstate1_clone->get_bstate());
+    data::xunitstate_ptr_t unitstate1_clone2 = std::make_shared<data::xunit_bstate_t>(bstate1_clone2.get(), false);
+    ASSERT_EQ(unitstate1_clone2->balance(), 10000 + 20000);
+
+    ASSERT_TRUE(unitstate1_clone2->reset_state(state_bin));
+    ASSERT_EQ(unitstate1_clone2->get_bstate()->get_all_property_names().size(), propertys_size);
+    ASSERT_EQ(unitstate1_clone2->balance(), 10000);
+    ASSERT_EQ("", unitstate1_clone2->string_get("@1"));
+    ASSERT_EQ("aaa", unitstate1_clone->string_get("@1"));
+}

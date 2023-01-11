@@ -12,16 +12,17 @@
 
 NS_BEG3(top, evm_common, trie)
 
-std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(xtrie_node_face_ptr_t node, bool const force) {
+std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(xtrie_node_face_ptr_t const & node, bool const force) {
     {
         auto const & cached = node->cache();
         if (cached.hash_node() != nullptr) {
             return std::make_pair(cached.hash_node(), node);
         }
     }
+
     switch (node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::shortnode: {
-        auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
+        auto const n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(n != nullptr);
 
         auto result = hashShortNodeChildren(n);
@@ -35,8 +36,9 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
 
         return std::make_pair(hashed, result.second);
     }
+
     case xtrie_node_type_t::fullnode: {
-        auto n = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
+        auto const n = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
         assert(n != nullptr);
 
         auto result = hashFullNodeChildren(n);
@@ -49,16 +51,19 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
         }
         return std::make_pair(hashed, result.second);
     }
+
     case xtrie_node_type_t::valuenode:
         XATTRIBUTE_FALLTHROUGH;
     case xtrie_node_type_t::hashnode: {
         return {node, node};
     }
+
     default:
         assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         xerror("xtrie_hasher::hash reach unreachable code");
     }
-    __builtin_unreachable();
+
+    unreachable();
 }
 
 xtrie_hash_node_ptr_t xtop_trie_hasher::hashData(xbytes_t const & input) const {
@@ -75,34 +80,36 @@ xtrie_hash_node_ptr_t xtop_trie_hasher::hashData(xbytes_t const & input) const {
 std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::proofHash(xtrie_node_face_ptr_t node) {
     switch (node->type()) {
     case xtrie_node_type_t::shortnode: {
-        auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
+        auto const n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(n != nullptr);
 
-        xtrie_short_node_ptr_t sn;
-        xtrie_short_node_ptr_t _;
-        std::tie(sn, _) = hashShortNodeChildren(n);
+        // xtrie_short_node_ptr_t sn;
+        // xtrie_short_node_ptr_t _;
+        auto sn = hashShortNodeChildren(n).first;
         return std::make_pair(sn, shortnodeToHash(sn, false));
     }
+
     case xtrie_node_type_t::fullnode: {
-        auto n = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
+        auto const n = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
         assert(n != nullptr);
 
-        xtrie_full_node_ptr_t fn;
-        xtrie_full_node_ptr_t _;
-        std::tie(fn, _) = hashFullNodeChildren(n);
+        // xtrie_full_node_ptr_t fn;
+        // xtrie_full_node_ptr_t _;
+        auto fn = hashFullNodeChildren(n).first;
         return std::make_pair(fn, fullnodeToHash(fn, false));
     }
+
     default:
         // Value and hash nodes don't have children so they're left as were
         return std::make_pair(node, node);
     }
 }
 
-std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> xtop_trie_hasher::hashShortNodeChildren(xtrie_short_node_ptr_t node) {
+std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> xtop_trie_hasher::hashShortNodeChildren(xtrie_short_node_ptr_t const & node) {
     auto collapsed = node->clone();
     auto cached = node->clone(); // must be cloned?
 
-    collapsed->key = hexToCompact(node->key);
+    collapsed->key = hex_to_compact(node->key);
 
     if (node->val->type() == xtrie_node_type_t::shortnode || node->val->type() == xtrie_node_type_t::fullnode) {
         auto res = hash(node->val, false);
@@ -113,7 +120,7 @@ std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> xtop_trie_hasher::hash
     return std::make_pair(collapsed, cached);
 }
 
-std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> xtop_trie_hasher::hashFullNodeChildren(xtrie_full_node_ptr_t node) {
+std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> xtop_trie_hasher::hashFullNodeChildren(xtrie_full_node_ptr_t const & node) {
     auto collapsed = node->clone();
     auto cached = node->clone();    // must be cloned?
 
@@ -122,21 +129,22 @@ std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> xtop_trie_hasher::hashFu
     // ...
     // else{
     for (std::size_t index = 0; index < 16; ++index) {
-        auto child = node->Children[index];
+        auto child = node->children[index];
         if (child != nullptr) {
             auto res = hash(child, false);
-            collapsed->Children[index] = std::move(res.first);
-            cached->Children[index] = std::move(res.second);
+            collapsed->children[index] = std::move(res.first);
+            cached->children[index] = std::move(res.second);
         } else {
-            collapsed->Children[index] = std::make_shared<xtrie_value_node_t>(nilValueNode);
+            collapsed->children[index] = std::make_shared<xtrie_value_node_t>(nilValueNode);
         }
     }
     // }
     return std::make_pair(collapsed, cached);
 }
 
-xtrie_node_face_ptr_t xtop_trie_hasher::shortnodeToHash(xtrie_short_node_ptr_t node, bool force) {
+xtrie_node_face_ptr_t xtop_trie_hasher::shortnodeToHash(xtrie_short_node_ptr_t node, bool const force) {
     tmp.Reset();
+    tmp.data().reserve(1024);
 
     std::error_code ec;
     node->EncodeRLP(tmp.data(), ec);
@@ -146,10 +154,12 @@ xtrie_node_face_ptr_t xtop_trie_hasher::shortnodeToHash(xtrie_short_node_ptr_t n
     if (tmp.len() < 32 && !force) {
         return node;  // Nodes smaller than 32 bytes are stored inside their parent
     }
-    return hashData(tmp.data());
+    auto hash_node = hashData(tmp.data());
+    tmp.Reset();
+    return hash_node;
 }
 
-xtrie_node_face_ptr_t xtop_trie_hasher::fullnodeToHash(xtrie_full_node_ptr_t node, bool force) {
+xtrie_node_face_ptr_t xtop_trie_hasher::fullnodeToHash(xtrie_full_node_ptr_t node, bool const force) {
     tmp.Reset();
 
     std::error_code ec;
@@ -160,7 +170,9 @@ xtrie_node_face_ptr_t xtop_trie_hasher::fullnodeToHash(xtrie_full_node_ptr_t nod
     if (tmp.len() < 32 && !force) {
         return node;  // Nodes smaller than 32 bytes are stored inside their parent
     }
-    return hashData(tmp.data());
+    auto hash_node = hashData(tmp.data());
+    tmp.Reset();
+    return hash_node;
 }
 
 NS_END3

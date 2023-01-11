@@ -20,7 +20,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xchain_fork/xutility.h"
 
-#define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
+#define METRICS_TAG(tag, val)    // TODO(jimmy) no use XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 
 
 namespace top
@@ -389,6 +389,11 @@ namespace top
             METRICS_TAG(atag, 1);
             return account_obj->get_latest_cert_block_height();
         }
+        uint64_t xvblockstore_impl::get_latest_full_block_height(const base::xvaccount_t & account, const int atag) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, account);
+            METRICS_TAG(atag, 1);
+            return account_obj->get_latest_full_block_height();
+        }
 
         uint64_t xvblockstore_impl::get_latest_connected_block_height(const base::xvaccount_t & account,const int atag)
         {
@@ -738,20 +743,19 @@ namespace top
 
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
         {            
-            bool is_store_units = should_store_units(container_account->get_account_obj()->get_zone_index());
-            xdbg("xvblockstore_impl::store_block enter,store block(%s),is_store_units=%d", container_block->dump().c_str(), is_store_units);
+            xdbg("xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
 
             //first do store sub-blocks
             bool is_subblocks_store = false;
-            if( is_store_units
-               &&(container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+            if( (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
                &&(container_block->get_block_level() == base::enum_xvblock_level_table)
-               &&(container_block->get_height() != 0) )
+               &&(container_block->get_height() != 0)
+               && should_store_units(container_account->get_account_obj()->get_zone_index()) )
             {
                 base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
                 if( (nullptr == existing_index) || (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
                 {
-                    xassert(container_block->is_body_and_offdata_ready(false));
+                    xdbgassert(container_block->is_body_and_offdata_ready(false));
 
                     std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;  
                     if (false == container_block->extract_sub_blocks(sub_blocks)) {
@@ -829,14 +833,6 @@ namespace top
                 ret = store_block(account_obj,block);
             }
 
-            // XTODO only tabletable need execute immediately after stored
-            // if (block->get_block_level() == base::enum_xvblock_level_table) {
-            //     // TODO(jimmy) commit tableblock try to update table state
-            //     base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-            // // base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
-            //     statestore::xstatestore_hub_t::instance()->execute_table_block(block);
-            // }
-
             return ret;
         }
 
@@ -882,73 +878,6 @@ namespace top
         base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->recover_and_load_commit_index(height);
-        }
-
-        base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag)
-        {
-            //XTODO:tx always not cache now
-            base::xvtransaction_store_ptr_t txstore = make_object_ptr<base::xvtransaction_store_t>();
-            METRICS_TAG(atag, 1);
-
-            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send)
-            {
-                base::xvtxindex_ptr send_txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_send);
-                if(nullptr == send_txindex)
-                {
-                    xwarn("xvblockstore_impl::query_tx fail-send tx index not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
-                }
-                base::xvaccount_t _vaddr(send_txindex->get_block_addr());
-                base::xauto_ptr<base::xvblock_t> unit_block = load_block_object(_vaddr, send_txindex->get_block_height(), base::enum_xvblock_flag_committed, true); // TODO(jimmy) false+input
-                if (nullptr == unit_block)
-                {
-                    xwarn("xvblockstore_impl::query_tx fail-send unit not find.account=%s,tx=%s", send_txindex->get_block_addr().c_str(), base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
-                }
-                std::string orgtx_bin = unit_block->get_input()->query_resource(txhash);
-                if (orgtx_bin.empty())
-                {
-                    xerror("xvblockstore_impl::query_tx fail-query tx from send unit.account=%s,tx=%s", send_txindex->get_block_addr().c_str(), base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
-                }
-                base::xauto_ptr<base::xdataunit_t> raw_tx = base::xdataunit_t::read_from(orgtx_bin);
-                if(nullptr == raw_tx)
-                {
-                    xerror("xvblockstore_impl::query_tx fail-tx content read from fail.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
-                }
-                txstore->set_raw_tx(raw_tx.get());
-                txstore->set_send_block_info(send_txindex);
-                if(send_txindex->is_self_tx())
-                {
-                    xdbg("xvblockstore_impl::query_tx self tx");  //self tx no need query more
-                    txstore->set_recv_block_info(send_txindex);
-                    txstore->set_confirm_block_info(send_txindex);
-                    return txstore;
-                }
-            }
-            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_recv)
-            {
-                base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_recv);
-                if(txindex == nullptr)
-                {
-                    xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
-                }
-                txstore->set_recv_block_info(txindex);
-            }
-            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_confirm)
-            {
-                base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_confirm);
-                if(txindex == nullptr)
-                {
-                    xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
-                }
-                txstore->set_confirm_block_info(txindex);
-            }
-
-            return txstore;
         }
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid,const int atag)
@@ -1215,8 +1144,8 @@ namespace top
                 return false;
             }
 
-            xassert(container_block->is_input_ready(true));
-            xassert(container_block->is_output_ready(true));
+            xdbgassert(container_block->is_input_ready(true));
+            xdbgassert(container_block->is_output_ready(true));
 
             std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
             if(container_block->extract_sub_blocks(sub_blocks))

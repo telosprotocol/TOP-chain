@@ -156,16 +156,4 @@ const std::vector<xlightunit_action_ptr_t> xlightunit_block_t::get_txs() const {
     return txactions;
 }
 
-uint32_t xlightunit_block_t::get_unconfirm_sendtx_num() const {
-    base::xvoutentity_t* outentity = get_output()->get_primary_entity();
-    if (outentity != nullptr) {
-        std::string unconfirm_tx_num_str = outentity->query_value(base::xvoutentity_t::key_name_unconfirm_tx_count());
-        if (!unconfirm_tx_num_str.empty()) {
-            return base::xstring_utl::touint32(unconfirm_tx_num_str);
-        }
-    }
-    // key_name_unconfirm_tx_count will be unusable after block 2.0.0
-    return 0;
-}
-
 NS_END2

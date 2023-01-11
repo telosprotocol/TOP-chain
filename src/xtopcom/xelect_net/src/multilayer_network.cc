@@ -130,6 +130,11 @@ bool MultilayerNetwork::Init(const base::Config & config) {
         return false;
     }
 
+    wrouter::SmallNetNodes::Instance()->Init();
+    xinfo("Init SmallNetNodes for Elect Network");
+    wrouter::ServiceNodes::Instance()->Init();
+    xinfo("Init ServiceNodes for cache nodes");
+
     core_transport_->register_on_receive_callback(std::bind(&wrouter::Wrouter::recv, wrouter::Wrouter::Instance(), std::placeholders::_1, std::placeholders::_2));
     // attention: Wrouter::Instance()->Init must put befor core_transport->Start
     wrouter::Wrouter::Instance()->Init(core_transport_);
@@ -139,11 +144,6 @@ bool MultilayerNetwork::Init(const base::Config & config) {
         return false;
     }
     core_transport_->RegisterOfflineCallback(kadmlia::HeartbeatManagerIntf::OnHeartbeatCallback);
-
-    wrouter::SmallNetNodes::Instance()->Init();
-    xinfo("Init SmallNetNodes for Elect Network");
-    wrouter::ServiceNodes::Instance()->Init();
-    xinfo("Init ServiceNodes for cache nodes");
 
     if (!ec_netcard_) {
         xerror("ec_netcard creat failed");

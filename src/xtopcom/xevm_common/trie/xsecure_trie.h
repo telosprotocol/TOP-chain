@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_face.h"
 
@@ -42,7 +43,7 @@ public:
     // Loaded nodes are kept around until their 'cache generation' expires.
     // A new cache generation is created by each call to Commit.
     // cachelimit sets the number of past cache generations to keep.
-    static std::shared_ptr<xtop_secure_trie> build_from(xhash256_t root, xtrie_db_ptr_t db, std::error_code & ec);
+    static std::shared_ptr<xtop_secure_trie> build_from(xh256_t const & root, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // Get returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
@@ -91,11 +92,11 @@ public:
     //
     // Committing flushes nodes from memory. Subsequent Get calls will load nodes
     // from the database.
-    std::pair<xhash256_t, int32_t> commit(std::error_code & ec) override;
+    std::pair<xh256_t, int32_t> commit(std::error_code & ec) override;
 
     // Hash returns the root hash of SecureTrie. It does not write to the
     // database and can be used even if the trie doesn't have one.
-    xhash256_t hash() override;
+    xh256_t hash() override;
 
     std::shared_ptr<xtop_secure_trie> copy() {
         return std::make_shared<xtop_secure_trie>(*this);
@@ -113,9 +114,11 @@ public:
         return m_trie->prove(key, fromLevel, proofDB, ec);
     }
 
-    void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) override;
+    void prune(xh256_t const & old_trie_root_hash, std::error_code & ec) override;
+    void prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) override;
 
     void commit_pruned(std::error_code & ec) override;
+    void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) override;
 
 private:
     // hashKey returns the hash of key as an ephemeral buffer.

@@ -60,15 +60,16 @@ TEST_F(test_create_block, create_time_clock) {
     xassert(tableblocks.size() == max_block_height + 1);
 
     auto _block = tableblocks[1];
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
-    xassert(bstate != nullptr);
+    auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
+    // base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
+    // xassert(bstate != nullptr);
 
-    if (false == bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {
+    if (false == unitstate->get_bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {
         uint64_t clock_height = 100;
-        auto propobj = bstate()->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, nullptr);
+        auto propobj = unitstate->get_bstate()->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, nullptr);
         propobj->set(clock_height, nullptr);
 
-        data::xunitstate_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t account = std::make_shared<xunit_bstate_t>(unitstate->get_bstate().get());
         auto create_time = account->get_account_create_time();
         EXPECT_EQ(create_time, clock_height * 10 + TOP_BEGIN_GMTIME);
     }
@@ -85,15 +86,16 @@ TEST_F(test_create_block, create_time_gmt) {
     xassert(tableblocks.size() == max_block_height + 1);
 
     auto _block = tableblocks[1];
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
-    xassert(bstate != nullptr);
+    auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
+    // base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
+    // xassert(bstate != nullptr);
 
-    if (false == bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {
+    if (false == unitstate->get_bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {
         uint64_t gmt = TOP_BEGIN_GMTIME + 1000;
-        auto propobj = bstate()->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, nullptr);
+        auto propobj = unitstate->get_bstate()->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, nullptr);
         propobj->set(gmt, nullptr);
 
-        data::xunitstate_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t account = std::make_shared<xunit_bstate_t>(unitstate->get_bstate().get());
         auto create_time = account->get_account_create_time();
         EXPECT_EQ(create_time, gmt);
     }

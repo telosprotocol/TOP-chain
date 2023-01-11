@@ -23,7 +23,7 @@ public:
         return {};
     }
     std::vector<xcons_transaction_ptr_t> get_pack_resource(const xtxs_pack_para_t & pack_para) = 0;
-    const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash) const override {
+    data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     }
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) override {
@@ -33,6 +33,8 @@ public:
     void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) override {
     }
     void on_block_confirmed(xblock_t * block) override {
+    }
+    bool on_block_confirmed(const std::string table_addr, base::enum_xvblock_class blk_class, uint64_t height) override {
     }
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) override {
         return 0;
@@ -72,6 +74,11 @@ public:
         return m_all_table_sids;
     }
 
+    uint32_t get_tx_cache_size(const std::string & table_addr) const override {
+        return 0;
+    }
+
+    void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) override {}
 private:
     std::set<base::xtable_shortid_t> m_all_table_sids;
 };

@@ -185,7 +185,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_invoke_sync_state_count,
     cons_invoke_sync_block_count,
 
-
     clock_aggregate_height,
     clock_leader_broadcast_height,
     clock_received_height,
@@ -411,6 +410,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_receiver_unconfirm_cache,
     txpool_height_record_cache,
     txpool_table_unconfirm_raw_txs,
+    txpool_pack_nonce_expired,
+    txpool_pack_nonce_uncontinuous,
     // txstore
     txstore_request_origin_tx,
     txstore_cache_origin_tx,
@@ -714,6 +715,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     mpt_total_pruned_trie_node_cnt,
     mpt_cached_pruned_trie_node_cnt,
+    mpt_trie_cache_visit,
+    mpt_trie_cache_miss,
+
     //prune
     prune_block_table,
     prune_block_unit,
@@ -721,6 +725,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     prune_block_timer,
     prune_block_contract,
     prune_state_unitstate,
+
+    ethtx_get_from,
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;

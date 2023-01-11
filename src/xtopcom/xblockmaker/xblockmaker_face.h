@@ -19,6 +19,7 @@
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xstatectx/xstatectx.h"
+#include "xtxexecutor/xatomictx_executor.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -29,7 +30,6 @@ class xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const = 0;
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
     virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
-    virtual base::xvblkstatestore_t*    get_xblkstatestore() const = 0;
     virtual base::xvcertauth_t*         get_certauth() const {return m_ca;}
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {m_ca = _ca;}
  private:
@@ -47,7 +47,6 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
-    virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}
 
  private:
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
@@ -238,10 +237,12 @@ struct xblock_resource_description_t {
 };
 class xblock_resource_plugin_face_t {
  public:
-    virtual std::string                             get_face_name() const {return std::string();}
-    virtual void                                    init(statectx::xstatectx_ptr_t const& statectx_ptr, std::error_code & ec) {}
-    virtual std::vector<xcons_transaction_ptr_t>    make_contract_txs(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {return {};}
-    virtual xblock_resource_description_t           make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const {return {};}
+    virtual std::string                                 get_face_name() const {return std::string();}
+    virtual void                                        init(statectx::xstatectx_ptr_t const& statectx_ptr, std::error_code & ec) {}
+    virtual std::vector<xcons_transaction_ptr_t>        make_contract_txs(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {return {};}
+    virtual xblock_resource_description_t               make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const {return {};}
+    virtual std::vector<data::xcons_transaction_ptr_t>  make_contract_txs_after_execution(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp,
+                                                                              std::vector<top::txexecutor::xatomictx_output_t> const& pack_outputs, std::error_code& ec) {return {};}
 };
 using xblock_resource_plugin_face_ptr_t = std::shared_ptr<xblock_resource_plugin_face_t>;
 

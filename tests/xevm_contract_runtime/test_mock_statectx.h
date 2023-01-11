@@ -13,8 +13,13 @@ public:
         return m_table_state;
     }
 
-    data::xunitstate_ptr_t load_unit_state(const base::xvaccount_t & addr) override {
+    data::xunitstate_ptr_t load_unit_state(common::xaccount_address_t const& address) override {
         return m_unit_state;
+    }
+
+    data::xaccountstate_ptr_t           load_account_state(common::xaccount_address_t const& address) override {
+        xassert(false);
+        return nullptr;
     }
 
     bool do_rollback() override {

@@ -294,7 +294,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num, uint16_t, normal, 1, 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_votes_pernode_num, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 
-
 // reward:
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio, uint32_t, critical, 8, 0, 100);   // mean 8%
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(mining_annual_ratio_from_reserve_pool, uint32_t, critical, 8, 0, 100);   // mean 8%
@@ -445,6 +444,10 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len, std::ui
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num, std::uint32_t, critical, 25, 1, std::numeric_limits<uint32_t>::max());
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list, char const *, critical, "", "", ""); // format: "cross_addrss1:topic1:chain_bits_shift1,cross_addrss2:topic2:chain_bits_shift2"
+ // format: "cross_addrss1:topic1:tx_speed_flag:chain_bits_1,cross_addrss2:topic2:tx_speed_flag:chain_bits_2"
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_tx_list, char const *, critical, "", "", "");
+  //format: "chain_bit:gasprice,chain_bit:gasprice"
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_gasprice_list, char const *, critical, "", "", ""); 
 
 /* begin of offchain parameters */
 XDECLARE_CONFIGURATION(zone_count, std::uint32_t, 1);
@@ -510,11 +513,17 @@ XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1); // 1 
 XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 2);
 XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 60);
 XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 10);
+XDECLARE_CONFIGURATION(max_relay_tx_block_interval_fast, int32_t, 0);
+XDECLARE_CONFIGURATION(max_relay_poly_interval_fast, int32_t, 0); 
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num_fast, std::int32_t, 60);
 #else
 XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1);
 XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 40);
 XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 2880);     // 8 hours
 XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 360);  // 1 hour
+XDECLARE_CONFIGURATION(max_relay_tx_block_interval_fast, int32_t, 0);
+XDECLARE_CONFIGURATION(max_relay_poly_interval_fast, int32_t, 0); 
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num_fast, std::int32_t, 60);
 #endif
 
 

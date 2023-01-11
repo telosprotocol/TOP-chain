@@ -5,13 +5,14 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-#include "xbasic/xhash.hpp"
 #include "xevm_common/rlp/xrlp_encodable.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
+#include "xevm_common/xfixed_hash.h"
 
 #include <array>
 #include <memory>
 #include <string>
+#include <utility>
 
 NS_BEG3(top, evm_common, trie)
 
@@ -93,7 +94,7 @@ using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;
 // value&&hash node
 class xtop_trie_hash_node : public xtrie_node_face_t {
 private:
-    xbytes_t m_data{};
+    xh256_t hash_{};
 
 public:
     xtop_trie_hash_node() = default;
@@ -103,13 +104,11 @@ public:
     xtop_trie_hash_node & operator=(xtop_trie_hash_node &&) = default;
     ~xtop_trie_hash_node() override = default;
 
-    explicit xtop_trie_hash_node(xbytes_t data);
-    explicit xtop_trie_hash_node(xhash256_t const & hash);
+    explicit xtop_trie_hash_node(xbytes_t const & hash_data);
+    explicit xtop_trie_hash_node(gsl::span<xbyte_t const> hash_data);
 
-public:
-    xbytes_t const & data() const noexcept;
+    xh256_t const & data() const noexcept;
 
-public:
     std::string fstring(std::string const & ind) const override;
     xtrie_node_cached_data_t cache() const override;
     xtrie_node_type_t type() const noexcept override;
@@ -131,10 +130,8 @@ public:
 
     explicit xtop_trie_value_node(xbytes_t data);
 
-public:
     xbytes_t const & data() const noexcept;
 
-public:
     std::string fstring(std::string const & ind) const override;
     xtrie_node_cached_data_t cache() const override;
     xtrie_node_type_t type() const noexcept override;
@@ -163,15 +160,12 @@ public:
 
     xtop_trie_short_node(xbytes_t key, xtrie_node_face_ptr_t val, xnode_flag_t flag);
 
-public:
     std::shared_ptr<xtop_trie_short_node> clone() const;
 
-public:
     std::string fstring(std::string const & ind) const override;
     xtrie_node_cached_data_t cache() const override;
     xtrie_node_type_t type() const noexcept override;
 
-public:
     void EncodeRLP(xbytes_t & buf, std::error_code & ec) override;
 };
 using xtrie_short_node_t = xtop_trie_short_node;
@@ -183,28 +177,25 @@ class xtop_trie_full_node
   : public xtrie_node_face_t
   , public rlp::xrlp_encodable_t<xtop_trie_full_node> {
 public:
-    std::array<xtrie_node_face_ptr_t, 17> Children;
+    std::array<xtrie_node_face_ptr_t, 17> children;
     xnode_flag_t flags;
 
 public:
     xtop_trie_full_node() = default;
+    xtop_trie_full_node(xtop_trie_full_node const &) = default;
+    xtop_trie_full_node & operator=(xtop_trie_full_node const &) = default;
+    xtop_trie_full_node(xtop_trie_full_node &&) = default;
+    xtop_trie_full_node & operator=(xtop_trie_full_node &&) = default;
+    ~xtop_trie_full_node() override = default;
 
-    explicit xtop_trie_full_node(xnode_flag_t const & f) {
-        flags = f;
-    }
+    explicit xtop_trie_full_node(xnode_flag_t f);
 
-private:
-public:
-    std::shared_ptr<xtop_trie_full_node> clone() const {
-        return std::make_shared<xtop_trie_full_node>(*this);
-    }
+    std::shared_ptr<xtop_trie_full_node> clone() const;
 
-public:
     std::string fstring(std::string const & ind) const override;
     xtrie_node_cached_data_t cache() const override;
     xtrie_node_type_t type() const noexcept override;
 
-public:
     void EncodeRLP(xbytes_t & buf, std::error_code & ec) override;
 };
 using xtrie_full_node_t = xtop_trie_full_node;
@@ -289,7 +280,7 @@ public:
     xtrie_node_face_ptr_t Val;
 
 public:
-    xtop_trie_raw_short_node(xbytes_t const & key, xtrie_node_face_ptr_t val) : Key{key}, Val{val} {
+    xtop_trie_raw_short_node(xbytes_t key, xtrie_node_face_ptr_t val) : Key{std::move(key)}, Val{std::move(val)} {
     }
 
 public:

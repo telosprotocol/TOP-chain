@@ -35,7 +35,8 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
     return std::make_shared<xtop_trie_db>(std::move(diskdb));
 }
 
-void xtop_trie_db::insert(xhash256_t hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
+void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
+    std::lock_guard<std::mutex> lck(mutex);
     // If the node's already cached, skip
     if (dirties_.find(hash) != dirties_.end()) {
         return;
@@ -43,54 +44,58 @@ void xtop_trie_db::insert(xhash256_t hash, int32_t const size, xtrie_node_face_p
 
     // todo mark size.
 
-    auto entry = xtrie_cache_node_t{simplify_node(node), static_cast<uint16_t>(size), newest_};
-    entry.forChilds([&](xhash256_t const & child) {
+    auto entry = xtrie_cache_node_t{simplify_node(node), static_cast<uint16_t>(size)/*, newest_*/};
+    entry.forChilds([&](xh256_t const & child) {
         if (this->dirties_.find(child) != this->dirties_.end()) {
             this->dirties_.at(child).parents_++;
         }
     });
-    xdbg("xtop_trie_db::insert %s size:%d", hash.as_hex_str().c_str(), size);
+    xdbg("xtop_trie_db::insert %s size:%d", hash.hex().c_str(), size);
     dirties_.insert({hash, entry});
 
-    if (oldest_ == xhash256_t{}) {
-        oldest_ = hash;
-    } else {
-        dirties_.at(newest_).flush_next_ = hash;
-    }
-    newest_ = hash;
+    //if (oldest_.empty()) {
+    //    oldest_ = hash;
+    //} else {
+    //    dirties_.at(newest_).flush_next_ = hash;
+    //}
+    //newest_ = hash;
 
     // todo dirties size;
 }
 
-void xtop_trie_db::insertPreimage(xhash256_t hash, xbytes_t const & preimage) {
+void xtop_trie_db::insertPreimage(xh256_t const & hash, xbytes_t const & preimage) {
+    std::lock_guard<std::mutex> lck(mutex);
     preimages_.insert({hash, preimage});
     // todo cal preimage size metrics.
 }
 
-xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
+xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
+    std::lock_guard<std::mutex> lck(mutex);
+    XMETRICS_GAUGE(metrics::mpt_trie_cache_visit, 1);
     // todo:
     xbytes_t value;
     if (cleans_.get(hash, value)) {
         // todo clean mark hit
-        return xtrie_node_rlp::mustDecodeNode(hash, value);
+        return xtrie_node_rlp::must_decode_node(hash, value);
     }
     if (dirties_.find(hash) != dirties_.end()) {
         // todo dirty mark hit
         return dirties_.at(hash).obj(hash);
     }
     // todo mark miss hit
-
+    XMETRICS_GAUGE(metrics::mpt_trie_cache_miss, 1);
     // retrieve from disk db
-    auto enc = ReadTrieNode(diskdb_, hash);
+    auto const & enc = ReadTrieNode(diskdb_, hash);
     if (enc.empty()) {
         return nullptr;
     }
     // put into clean cache
-    cleans_.insert({hash, enc});
-    return xtrie_node_rlp::mustDecodeNode(hash, enc);
+    cleans_.put(hash, enc);
+    return xtrie_node_rlp::must_decode_node(hash, enc);
 }
 
-xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
+xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
     // It doesn't make sense to retrieve the metaroot
     if (hash.empty()) {
         ec = error::xerrc_t::trie_db_not_found;
@@ -115,24 +120,27 @@ xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
         return xbytes_t{};
     }
     // put into clean cache
-    cleans_.insert({hash, enc});
+    cleans_.put(hash, enc);
     return enc;
 }
 
-xbytes_t xtop_trie_db::preimage(xhash256_t hash) const {
+xbytes_t xtop_trie_db::preimage(xh256_t const & hash) const {
+    std::lock_guard<std::mutex> lck(mutex);
     if (preimages_.find(hash) != preimages_.end()) {
         return preimages_.at(hash);
     }
     // could put this diskdb->Get into trie_kv_db_face :: ReadPreimage
     std::error_code ec;
-    auto result = diskdb_->Get(preimage_key(hash), ec);
+    auto result = diskdb_->get(preimage_key(hash), ec);
     if (ec) {
-        xwarn("xtrie_db Get preimage %s failed: %s", hash.as_hex_str().c_str(), ec.message().c_str());
+        xwarn("xtrie_db Get preimage %s failed: %s", hash.hex().c_str(), ec.message().c_str());
     }
     return result;
 }
 
-void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec) {
+void xtop_trie_db::Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
+
     // what we can optimize here:
     // 1. use batch writer to sum all <k,v> into db with once writeDB operation
     // 2. db.preimages for secure trie
@@ -142,13 +150,13 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
     for (auto const & preimage : preimages_) {
         diskdb_->Put(preimage_key(preimage.first), preimage.second, ec);
         if (ec) {
-            xwarn("xtrie_db Commit diskdb error at preimage %s, err: %s", preimage.first.as_hex_str().c_str(), ec.message().c_str());
+            xwarn("xtrie_db Commit diskdb error at preimage %s, err: %s", preimage.first.hex().c_str(), ec.message().c_str());
             // return;
         }
         // todo could add some metrics here.
     }
 
-    std::map<xbytes_t, xbytes_t> batch;
+    std::map<xh256_t, xbytes_t> batch;
     commit(hash, batch, cb, ec);
     if (ec) {
         xerror("xtop_trie_db::Commit error: %s, %s", ec.category().name(), ec.message().c_str());
@@ -160,21 +168,21 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
     // todos: noted to remove size of dirty cache.
     // todos: change link-list of flush-list Next/Prev Node ptr
     // for now : we can simplily erase it:
-    newest_ = {};
-    oldest_ = {};
+    //newest_ = {};
+    //oldest_ = {};
 
     // clean preimages:
     preimages_.clear();
 }
 
-void xtop_trie_db::commit(xhash256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec) {
+void xtop_trie_db::commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec) {
     // If the node does not exist, it's a previously committed node
     if (dirties_.find(hash) == dirties_.end()) {
         return;
     }
 
     auto node = dirties_.at(hash);
-    node.forChilds([&](xhash256_t child) {
+    node.forChilds([&](xh256_t const & child) {
         if (!ec) {
             this->commit(child, data, cb, ec);
         }
@@ -185,9 +193,9 @@ void xtop_trie_db::commit(xhash256_t hash, std::map<xbytes_t, xbytes_t> & data, 
 
     // put it into batch
     auto enc = node.rlp();
-    auto const hash_bytes = to_bytes(hash);
-    xdbg("xtop_trie_db::Commit write node %s, size %zu", top::to_hex(hash_bytes).c_str(), enc.size());
-    data.emplace(std::make_pair(hash.to_bytes(), enc));
+    // auto const hash_bytes = to_bytes(hash);
+    xdbg("xtop_trie_db::Commit write node %s, size %zu", top::to_hex(hash).c_str(), enc.size());
+    data.emplace(std::make_pair(hash, enc));
 
     if (cb) {
         cb(hash);
@@ -201,30 +209,55 @@ void xtop_trie_db::commit(xhash256_t hash, std::map<xbytes_t, xbytes_t> & data, 
     dirties_.erase(hash);
 
     // and move it to cleans:
-    cleans_.insert({hash, enc});
+    cleans_.put(hash, enc);
     // todo mark size everywhere with cleans/dirties' insert/erase/...
 }
 
-void xtop_trie_db::prune(xhash256_t const & hash, std::error_code & ec) {
-    if (pruned_hashes_.find(hash) != std::end(pruned_hashes_)) {
-        return;
+void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
+    {
+        XMETRICS_TIME_RECORD("mpt_prune_time");
+        XMETRICS_CPU_TIME_RECORD("mpt_prune_time_cpu");
+        if (pruned_hashes_.find(hash) != std::end(pruned_hashes_)) {
+            return;
+        }
+
+        cleans_.erase(hash);
+
+        assert(dirties_.find(hash) == dirties_.end());
+
+        pruned_hashes_.insert(hash);
     }
+    // xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
+    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
+}
 
-    cleans_.erase(hash);
+void xtop_trie_db::prune(xh256_t const & hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
+    {
+        XMETRICS_TIME_RECORD("mpt_prune_time");
+        XMETRICS_CPU_TIME_RECORD("mpt_prune_time_cpu");
+        if (pruned_hashes.find(hash) != std::end(pruned_hashes)) {
+            return;
+        }
 
-    assert(dirties_.find(hash) == dirties_.end());
-
-    pruned_hashes_.insert(hash);
-    xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
+        pruned_hashes.insert(hash);
+    }
     XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
 }
 
 void xtop_trie_db::commit_pruned(std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
+
+    XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
+    XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
     assert(!ec);
 
-    std::vector<xbytes_t> pruned_keys;
+    std::vector<gsl::span<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes_.size());
-    std::transform(std::begin(pruned_hashes_), std::end(pruned_hashes_), std::back_inserter(pruned_keys), [](xhash256_t const & hash) { return hash.to_bytes(); });
+    // std::transform(std::begin(pruned_hashes_), std::end(pruned_hashes_), std::back_inserter(pruned_keys), [](xh256_t const & hash) { return hash; });
+    for (auto const & pruned_hash : pruned_hashes_) {
+        pruned_keys.emplace_back(pruned_hash);
+    }
     diskdb_->DeleteBatch(pruned_keys, ec);
     if (ec) {
         xwarn("pruning MPT nodes failed. %s", ec.message().c_str());
@@ -238,7 +271,48 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
     pruned_hashes_.clear();
 }
 
-xbytes_t xtop_trie_db::preimage_key(xhash256_t const & hash_key) const {
+void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) {
+    std::lock_guard<std::mutex> lck(mutex);
+
+    XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
+    XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
+    assert(!ec);
+
+    std::vector<gsl::span<xbyte_t const>> pruned_keys;
+    pruned_keys.reserve(pruned_hashes.size());
+    for (auto const & hash : pruned_hashes) {
+        cleans_.erase(hash);
+        assert(dirties_.find(hash) == dirties_.end());
+        pruned_keys.emplace_back(hash);
+    }
+    // std::transform(std::begin(pruned_hashes), std::end(pruned_hashes), std::back_inserter(pruned_keys), [](xh256_t const & hash) { return hash; });
+    diskdb_->DeleteBatch(pruned_keys, ec);
+    if (ec) {
+        xwarn("pruning MPT nodes failed. %s", ec.message().c_str());
+        return;
+    }
+
+    xkinfo("%zu keys pruned from disk", pruned_hashes_.size());
+    XMETRICS_GAUGE(metrics::mpt_total_pruned_trie_node_cnt, pruned_hashes_.size());
+    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, -static_cast<int32_t>(pruned_hashes_.size()));
+
+    // cleans_.clear();
+    pruned_hashes_.clear();
+}
+
+//void xtop_trie_db::clear_cleans() {
+//    std::lock_guard<std::mutex> lck(mutex);
+//    for(;;) {
+//        xh256_t k;
+//        xbytes_t _;
+//        if (false == cleans_.back(k, _)) {
+//            break;
+//        }
+//        cleans_.erase(k);
+//    }
+//}
+
+xbytes_t xtop_trie_db::preimage_key(xh256_t const & hash_key) const {
     xbytes_t res;
     res.insert(res.begin(), PreimagePrefix.begin(), PreimagePrefix.end());
     res.insert(res.end(), hash_key.begin(), hash_key.end());
@@ -259,7 +333,7 @@ xbytes_t xtrie_cache_node_t::rlp() {
     return xtrie_node_rlp::EncodeToBytes(node_);
 }
 
-xtrie_node_face_ptr_t xtrie_cache_node_t::obj(xhash256_t hash) {
+xtrie_node_face_ptr_t xtrie_cache_node_t::obj(xh256_t const & hash) {
     if (node_ == nullptr) {
         return node_;
     }
@@ -267,7 +341,7 @@ xtrie_node_face_ptr_t xtrie_cache_node_t::obj(xhash256_t hash) {
         auto n = std::dynamic_pointer_cast<xtrie_raw_node_t>(node_);
         assert(n != nullptr);
 
-        return xtrie_node_rlp::mustDecodeNode(hash, n->data());
+        return xtrie_node_rlp::must_decode_node(hash, n->data());
     }
     return expandNode(std::make_shared<xtrie_hash_node_t>(hash), node_);
 }
@@ -303,10 +377,10 @@ void xtrie_cache_node_t::forGatherChildren(xtrie_node_face_ptr_t n, onChildFunc 
         return;
     }
     case xtrie_node_type_t::hashnode: {
-        auto nn = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
+        auto const nn = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
         assert(nn != nullptr);
 
-        f(xhash256_t{nn->data()});
+        f(nn->data());
         return;
     }
     case xtrie_node_type_t::valuenode:
@@ -335,7 +409,7 @@ xtrie_node_face_ptr_t simplify_node(xtrie_node_face_ptr_t const & n) {
         auto const node = std::dynamic_pointer_cast<xtrie_full_node_t>(n);
         assert(node != nullptr);
 
-        auto raw_fullnode_ptr = std::make_shared<xtrie_raw_full_node_t>(node->Children);
+        auto raw_fullnode_ptr = std::make_shared<xtrie_raw_full_node_t>(node->children);
         for (std::size_t i = 0; i < raw_fullnode_ptr->Children.size(); ++i) {
             if (raw_fullnode_ptr->Children[i] != nullptr) {
                 raw_fullnode_ptr->Children[i] = simplify_node(raw_fullnode_ptr->Children[i]);
@@ -359,22 +433,22 @@ xtrie_node_face_ptr_t simplify_node(xtrie_node_face_ptr_t const & n) {
     }
 }
 
-xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> hash, xtrie_node_face_ptr_t n) {
+xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> const & hash, xtrie_node_face_ptr_t n) {
     switch (n->type()) {
     case xtrie_node_type_t::rawshortnode: {
         auto node = std::dynamic_pointer_cast<xtrie_raw_short_node_t>(n);
         assert(node != nullptr);
 
-        return std::make_shared<xtrie_short_node_t>(compactToHex(node->Key), expandNode(nullptr, node->Val), xnode_flag_t{hash});
+        return std::make_shared<xtrie_short_node_t>(compact_to_hex(node->Key), expandNode(nullptr, node->Val), xnode_flag_t{hash});
     }
     case xtrie_node_type_t::rawfullnode: {
         auto node = std::dynamic_pointer_cast<xtrie_raw_full_node_t>(n);
         assert(node != nullptr);
 
         auto fullnode_ptr = std::make_shared<xtrie_full_node_t>(xnode_flag_t{hash});
-        for (std::size_t i = 0; i < fullnode_ptr->Children.size(); ++i) {
+        for (std::size_t i = 0; i < fullnode_ptr->children.size(); ++i) {
             if (node->Children[i] != nullptr) {
-                fullnode_ptr->Children[i] = expandNode(nullptr, node->Children[i]);
+                fullnode_ptr->children[i] = expandNode(nullptr, node->Children[i]);
             }
         }
         return fullnode_ptr;

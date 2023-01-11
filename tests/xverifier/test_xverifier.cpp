@@ -7,6 +7,7 @@
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xtransaction_v1.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xverifier/xtx_verifier.h"
@@ -161,7 +162,8 @@ data::xtransaction_ptr_t make_a_normal_transfer_tx() {
 
     uint256_t last_hash;
     uint64_t last_nonce = 0;
-    data::xtransaction_ptr_t trx_ptr = data::xtransaction_maker::make_transfer_tx(src_addr, last_hash, last_nonce, target_addr, 100, 0, 0, 0);
+
+    data::xtransaction_ptr_t trx_ptr = data::xtransaction_maker::make_transfer_tx_v1(src_addr, last_nonce, target_addr, 100, 0, 0, 0);
     return trx_ptr;
 }
 
