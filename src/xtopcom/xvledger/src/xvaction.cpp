@@ -181,7 +181,7 @@ namespace top
                 uint8_t cast_value_type = (uint8_t)method_result->get_type();
                 uint8_t container_type = cast_value_type&0x70;
                 uint8_t value_type = cast_value_type & 0x0F;
-                xdbg("-----nathan test----- xvalue container_type:%d,value_type:%d,xvalue:%s", cast_value_type, value_type, method_result->dump().c_str());
+                xdbg("-----cache size----- xvalue container_type:%d,value_type:%d,xvalue:%s", cast_value_type, value_type, method_result->dump().c_str());
                 if (container_type == base::xvalue_t::enum_xvalue_type_map || value_type == base::xvalue_t::enum_xvalue_type_string) {
                     auto container_ptr = method_result->get_map<std::string>();
                     for (auto & pair : *container_ptr) {
@@ -189,15 +189,15 @@ namespace top
                         auto value_size = get_size(pair.second);
                         // each map node alloc 48B
                         ex_size += (key_size + value_size + 48);
-                        xdbg("-----nathan test----- xvalue key:%d,value:%d,node:48", key_size, value_size);
+                        xdbg("-----cache size----- xvalue key:%d,value:%d,node:48", key_size, value_size);
                     }
                     // root node alloc 48B
-                    xdbg("-----nathan test----- xvalue root node:48");
+                    xdbg("-----cache size----- xvalue root node:48");
                     ex_size += 48;
                 }
             }
 
-            xdbg("-----nathan test----- xvaction_t m_org_tx_hash:%d,get_caller:%d,contract_uri:%d,method_name:%d,method_result:%d",
+            xdbg("-----cache size----- xvaction_t m_org_tx_hash:%d,get_caller:%d,contract_uri:%d,method_name:%d,method_result:%d",
                  get_size(m_org_tx_hash),
                  get_size(get_caller()),
                  get_size(get_contract_uri()),
@@ -208,7 +208,7 @@ namespace top
             ex_size += 568;
             auto & method_params = get_method_params();
             ex_size += method_params.size()*48; //see map_utl<std::string>::copy_from(xvmethod.h:291)
-            xdbg("------nathan test------- method_params size:%u*48, deque:64+504", method_params.size());
+            xdbg("------cache size------- method_params size:%u*48, deque:64+504", method_params.size());
 
             return ex_size;
         }

@@ -72,6 +72,8 @@ class xreceiptid_pairs_t {
     const std::map<xtable_shortid_t, xreceiptid_pair_t> & get_all_pairs() const {return m_all_pairs;}
     size_t          get_size() const{return m_all_pairs.size();}
 
+    int32_t         get_object_size_real() const;
+
  private:
     std::map<xtable_shortid_t, xreceiptid_pair_t>   m_all_pairs;
 };
@@ -100,6 +102,8 @@ class xreceiptid_state_t {
     bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) const;
     void        add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
     const xreceiptid_pairs_ptr_t & get_all_receiptid_pairs() const {return m_binlog;}
+
+    int32_t     get_object_size_real() const;
 
  private:
     xreceiptid_pairs_ptr_t  m_binlog{nullptr};

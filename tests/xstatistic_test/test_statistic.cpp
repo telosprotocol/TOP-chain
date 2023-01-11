@@ -4,8 +4,6 @@
 #include "xbase/xutl.h"
 #include "xmetrics/xmetrics.h"
 #include "xstatistic/xstatistic.h"
-#include "xconfig/xconfig_register.h"
-#include "xconfig/xpredefined_configurations.h"
 
 
 using namespace top;
@@ -53,7 +51,6 @@ private:
 };
 
 TEST_F(test_statistic, basic) {
-    XSET_CONFIG(calculate_size_delay_time, 1);
     std::vector<test_class_t> obj_vec;
 
     uint32_t num = 10000;
@@ -72,7 +69,6 @@ TEST_F(test_statistic, basic) {
 }
 
 TEST_F(test_statistic, 2_obj_type) {
-    XSET_CONFIG(calculate_size_delay_time, 1);
     std::vector<test_class_t> obj_vec;
     std::vector<test_class1_t> obj1_vec;
 

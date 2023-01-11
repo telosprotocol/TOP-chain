@@ -135,6 +135,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void set_memo(const std::string & memo) override {m_memo = memo;};
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual bool is_evm_tx() const override {return false;}
+private:
     virtual int32_t get_object_size_real() const override;
 
 private:

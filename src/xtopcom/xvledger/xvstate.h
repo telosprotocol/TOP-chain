@@ -139,7 +139,7 @@ namespace top
 
         class xvblock_t;
         //xvbstate_t is the block-based state-object,which manage all properties on the specific block(specified block height and viewid)
-        class xvbstate_t : public xvexestate_t
+        class xvbstate_t : public xvexestate_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
             friend class xvblockstore_t;
@@ -208,6 +208,8 @@ namespace top
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             virtual int32_t         do_write(xstream_t & stream) override;//allow subclass extend behavior
             virtual int32_t         do_read(xstream_t & stream)  override;//allow subclass extend behavior
+        private:
+            virtual int32_t         get_object_size_real() const override;
 
         private:
             //belong to current block

@@ -21,6 +21,14 @@ enum enum_statistic_class_type {
     enum_statistic_tx_v3,
     enum_statistic_receipt,
     enum_statistic_vqcert,
+    enum_statistic_vblock,
+    enum_statistic_table_bstate,
+    enum_statistic_unit_bstate,
+    enum_statistic_block_header,
+    enum_statistic_vinput,
+    enum_statistic_voutput,
+    enum_statistic_vbstate,
+    enum_statistic_vcanvas,
     enum_statistic_max,
 };
 
@@ -29,7 +37,7 @@ class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type type) {}
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
-    virtual ~xstatistic_obj_face_t(){}
+    virtual ~xstatistic_obj_face_t() {}
     void statistic_del() {}
 private:
     virtual int32_t get_object_size_real() const = 0;

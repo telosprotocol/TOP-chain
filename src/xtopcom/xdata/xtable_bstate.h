@@ -10,6 +10,7 @@
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xreceiptid.h"
 #include "xdata/xbstate_ctx.h"
+#include "xstatistic/xstatistic.h"
 
 NS_BEG2(top, data)
 
@@ -18,7 +19,7 @@ XINLINE_CONSTEXPR char const * XPROPERTY_TABLE_RECEIPTID            = "@T2";
 
 
 // xtable_bstate_t is a wrap of xvbstate_t for table state
-class xtable_bstate_t : public xbstate_ctx_t {
+class xtable_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_face_t {
  public:
     xtable_bstate_t(base::xvbstate_t* bstate, bool readonly = true);
     ~xtable_bstate_t();
@@ -45,6 +46,8 @@ class xtable_bstate_t : public xbstate_ctx_t {
     bool                    set_account_index(const std::string & account, const base::xaccount_index_t & account_index);
     bool                    set_receiptid_pair(base::xtable_shortid_t sid, const base::xreceiptid_pair_t & pair, base::xvcanvas_t* canvas);
     bool                    set_receiptid_pair(base::xtable_shortid_t sid, const base::xreceiptid_pair_t & pair);
+
+    virtual int32_t         get_object_size_real() const override;
 
  protected:
     void                    cache_receiptid(base::xvbstate_t* bstate);

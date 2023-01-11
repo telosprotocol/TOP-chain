@@ -4,6 +4,8 @@
 #include "xmetrics/xmetrics.h"
 #include "xutility/xhash.h"
 #include "xdata/xrootblock.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 
 #include <gtest/gtest.h>
 
@@ -36,6 +38,7 @@ int main(int argc, char * argv[]) {
     xset_log_level(enum_xlog_level_debug);
     new xhashtest_t();
 
+    XSET_CONFIG(calculate_size_delay_time, 1);
     data::xrootblock_para_t para;
     data::xrootblock_t::init(para);
 

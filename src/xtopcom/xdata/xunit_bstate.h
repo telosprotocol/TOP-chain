@@ -12,6 +12,7 @@
 #include "xdata/xsystem_contract/xallowance.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xstatistic/xstatistic.h"
 #include "xvledger/xvstate.h"
 
 #include <string>
@@ -25,7 +26,7 @@ enum class xtop_allowance_update_op {
 };
 using xallowance_update_op_t = xtop_allowance_update_op;
 
-class xunit_bstate_t : public xbstate_ctx_t {
+class xunit_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_face_t {
  public:
     xunit_bstate_t(base::xvbstate_t* bstate, bool readonly = true);
     
@@ -99,6 +100,8 @@ private:
     xbytes_t raw_owner(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_controller(std::error_code & ec) const;
     xbytes_t raw_controller(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
+
+    virtual int32_t get_object_size_real() const override;
 
 private:  // TODO(jimmy) this apis will be droped in future
     uint32_t            get_unconfirm_sendtx_num() const;

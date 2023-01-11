@@ -60,7 +60,7 @@ const int32_t xstatistic_obj_face_t::get_object_size() const {
             m_size = get_object_size_real();
         }catch (std::exception & eh) {
             std::cerr << "xstatistic_obj_face_t::get_object_size failed. exception: " << eh.what() << std::endl;
-            xerror("xstatistic_obj_face_t::get_object_size failed with exception: %s,this:%p", eh.what(), this);
+            xerror("xstatistic_obj_face_t::get_object_size failed with exception: %s,this:%p, type:%d", eh.what(), this, m_type);
         }
     }
     return m_size;
@@ -76,7 +76,7 @@ void xobject_statistic_base_t::add_object(xstatistic_obj_face_t * object) {
     m_not_calc_object_map[object] = iter;
 #endif
     // xdbg("xobject_statistic_base_t::add_object object:%p,create_time:%llu", object, object->create_time());
-    xdbg("xobject_statistic_base_t::add_object object:%p", object);
+    xdbg("xobject_statistic_base_t::add_object object:%p, type:%d", object, object->get_class_type());
 }
 
 void xobject_statistic_base_t::del_object(xstatistic_obj_face_t * object) {
@@ -84,9 +84,9 @@ void xobject_statistic_base_t::del_object(xstatistic_obj_face_t * object) {
 #ifdef USE_MULTISET_ONLY
     auto ret = m_not_calc_object_set.equal_range(object);
     for (auto it = ret.first; it != ret.second; it++) {
-        xdbg("xobject_statistic_base_t::del_object it:%p, object:%p", (*it), object);
+        xdbg("xobject_statistic_base_t::del_object it:%p, object:%p, type:%d", (*it), object, object->get_class_type());
         if ((*it) == object) {
-            xdbg("xobject_statistic_base_t::del_object erase object:%p", object);
+            xdbg("xobject_statistic_base_t::del_object erase object:%p, type:%d", object, object->get_class_type());
             m_not_calc_object_set.erase(it);
             refresh_inner(base::xtime_utl::gmttime_ms());
             return;
@@ -98,10 +98,11 @@ void xobject_statistic_base_t::del_object(xstatistic_obj_face_t * object) {
 #else
     auto it_map = m_not_calc_object_map.find(object);
     if (it_map != m_not_calc_object_map.end()) {
-        xdbg("xobject_statistic_base_t::del_object object:%p", object);
+        xdbg("xobject_statistic_base_t::del_object from map object:%p, type:%d", object, object->get_class_type());
         m_not_calc_object_set.erase(it_map->second);
         m_not_calc_object_map.erase(it_map);
     } else {
+        xdbg("xobject_statistic_base_t::del_object del size object:%p, type:%d", object, object->get_class_type());
         update_metrics(object->get_class_type(), -1, -object->get_object_size());
     }
     
@@ -117,10 +118,16 @@ void xobject_statistic_base_t::refresh() {
 
 void xobject_statistic_base_t::refresh_inner(int64_t now) {
     for (auto iter = m_not_calc_object_set.begin(); iter != m_not_calc_object_set.end();) {
+        xdbg("xobject_statistic_base_t::refresh_inner object:%p, type:%d, create time:%llu, m_delay_time:%llu, now:%llu",
+             (*iter),
+             (*iter)->get_class_type(),
+             (*iter)->create_time(),
+             m_delay_time,
+             now);
         if ((*iter)->create_time() + m_delay_time <= now) {
             auto size = (*iter)->get_object_size();
             update_metrics((*iter)->get_class_type(), 1, size);
-            xdbg("xobject_statistic_base_t::refresh_inner object:%p, size:%d", (*iter), size);
+            xdbg("xobject_statistic_base_t::refresh_inner object:%p, size:%d, type:%d", (*iter), size, (*iter)->get_class_type());
 #ifndef USE_MULTISET_ONLY
             m_not_calc_object_map.erase(*iter);
 #endif
@@ -140,6 +147,7 @@ void xobject_statistic_base_t::update_metrics(int32_t type, int32_t change_num, 
 
 xstatistic_t::xstatistic_t() {
     int64_t delay_time = XGET_CONFIG(calculate_size_delay_time);
+    xdbg("xstatistic_t::xstatistic_t delay_time:%d", delay_time);
     for (uint32_t i = enum_statistic_begin; i < enum_statistic_max; i++) {
         m_object_statistic_vec.push_back(new xobject_statistic_base_t(delay_time));
     }
@@ -157,6 +165,7 @@ void xstatistic_t::del_object(xstatistic_obj_face_t * object) {
 
 void xstatistic_t::refresh() {
     for (auto & object_statistic : m_object_statistic_vec) {
+        xdbg("xstatistic_t::refresh");
         object_statistic->refresh();
     }
 }
