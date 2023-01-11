@@ -42,7 +42,7 @@ class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type type);
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj);
-    virtual ~xstatistic_obj_face_t();
+    virtual ~xstatistic_obj_face_t() {}
     void statistic_del();
 
     int64_t create_time() const {return m_create_time;}
