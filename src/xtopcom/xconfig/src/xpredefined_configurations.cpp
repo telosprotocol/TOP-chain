@@ -252,7 +252,9 @@ XDEFINE_CONFIGURATION(prune_table_state_max);
 
 XDEFINE_CONFIGURATION(table_fork_info_interval);
 
+#ifdef CACHE_SIZE_STATISTIC
 XDEFINE_CONFIGURATION(calculate_size_delay_time);
+#endif
 
 #    undef XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER
 #    undef XDEFINE_CONFIGURATION
