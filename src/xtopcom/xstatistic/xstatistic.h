@@ -30,7 +30,7 @@ public:
     xstatistic_obj_face_t(enum_statistic_class_type type) {}
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
     virtual ~xstatistic_obj_face_t(){}
-    void statistic_del();
+    void statistic_del() {}
 private:
     virtual int32_t get_object_size_real() const = 0;
 };
