@@ -53,7 +53,8 @@
 #include "xstatestore/xstatestore_face.h"
 
 using namespace top::data;
-
+// Error(message)
+static const uint32_t abi_error = 0x08c379a0;
 namespace top {
 namespace xrpc {
 using namespace std;
@@ -552,7 +553,19 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
         if (output.m_tx_result.extra_msg.empty())
             output.m_tx_result.extra_msg = "0x";
         js_rsp["result"] = output.m_tx_result.extra_msg;
-    } else {
+    } else if (output.m_tx_result.status == evm_common::Revert) {
+        auto const & extra_msg = output.m_tx_result.extra_msg;
+        js_rsp["error"]["message"] = "execution reverted";
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["data"] = extra_msg; 
+        if (false == extra_msg.empty() && extra_msg != "0x"){
+            auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg);
+            auto selector = t.extract<evm_common::xfunction_selector_t>();
+            if (selector.method_id == abi_error) {
+                js_rsp["error"]["message"] = "execution reverted: " + t.extract<std::string>();
+            }
+        }
+    }else {
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["message"] = "execution reverted";
     }
@@ -668,7 +681,8 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);              
         return;
     }
-    xinfo("eth_estimateGas call: %d, %d, %s, %llu", ret, output.m_tx_result.status, output.m_tx_result.extra_msg.c_str(), output.m_tx_result.used_gas);
+    auto const & extra_msg = output.m_tx_result.extra_msg;
+    xinfo("eth_estimateGas call: %d, %d, %s, %llu", ret, output.m_tx_result.status, extra_msg.c_str(), output.m_tx_result.used_gas);
 
     switch (output.m_tx_result.status) {
     case evm_common::Success: {
@@ -684,10 +698,19 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         break;
     }
 
-    case evm_common::Revert:
-        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+    case evm_common::Revert: {
         js_rsp["error"]["message"] = "execution reverted";
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["data"] = extra_msg;
+        if (false == extra_msg.empty() && extra_msg != "0x"){
+            auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg);
+            auto selector = t.extract<evm_common::xfunction_selector_t>();
+            if (selector.method_id == abi_error) {
+                js_rsp["error"]["message"] = "execution reverted: " + t.extract<std::string>();
+            }
+        }       
         break;
+    }
 
     case evm_common::OutOfGas:
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
