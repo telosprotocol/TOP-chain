@@ -23,7 +23,8 @@ public:
                                         uint64_t tgas_height,
                                         uint64_t gmtime,
                                         const std::string & eth_header,
-                                        const std::string & output_offdata_hash);
+                                        const std::string & output_offdata_hash,
+                                        const std::string & pledge_balance_change_tgas);
 };
 
 class xextra_map_base_t {
@@ -179,7 +180,7 @@ class xfulltable_build_t : public base::xvblockmaker_t {
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 
  private:
-    bool build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height);
+    bool build_block_body(const xfulltable_block_para_t & para, const xblock_consensus_para_t & cs_para);
 };
 
 class xrootblock_build_t : public base::xvblockmaker_t {

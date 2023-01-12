@@ -731,8 +731,6 @@ namespace top
             virtual std::string         dump() const override;  //just for debug purpose
             const   std::string&        dump2();  //just for debug and trace purpose with better performance
         public:
-            virtual std::vector<base::xvaction_t> get_tx_actions() const {return std::vector<base::xvaction_t>{};}
-            virtual std::vector<base::xvaction_t> get_one_tx_action(const std::string & txhash) const {return std::vector<base::xvaction_t>{};}
             virtual std::vector<xvsubblock_index_t> get_subblocks_index() const {return std::vector<xvsubblock_index_t>{};}
 
             const std::string           get_fullstate_hash() const;

@@ -2174,9 +2174,20 @@ namespace top
             return query_output_entity(xvoutentity_t::key_name_binlog_hash());
         }
         int64_t xvblock_t::get_pledge_balance_change_tgas() const {
-            // TODO(jimmy) move to block header
             int64_t tgas_balance_change = 0;
-            std::string value = query_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change());
+            std::string value;
+            if (get_block_class() != base::enum_xvblock_class_nil) {
+                if (get_header()->is_character_cert_header_only()) {
+                    auto & extra_str = get_header()->get_extra_data();
+                    if (!extra_str.empty()) {
+                        xtableheader_extra_t header_extra;
+                        header_extra.deserialize_from_string(get_header()->get_extra_data());
+                        value = header_extra.get_pledge_balance_change_tgas();
+                    }
+                } else {
+                    value = query_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change());
+                }
+            }
             if (!value.empty()) {
                 tgas_balance_change = base::xstring_utl::toint64(value);
             }
@@ -2553,7 +2564,9 @@ namespace top
             stream.write_compact_var(vqcert_bin);
         
             stream.write_compact_var(vheader_bin);
-            if(get_block_class() != enum_xvblock_class_nil && !get_header()->is_character_cert_header_only())
+            if(get_block_class() != enum_xvblock_class_nil 
+                && !m_not_serialize_input_output
+                && !get_header()->is_character_cert_header_only())
             {
                 std::string vinput_bin;
                 get_input()->serialize_to_string(false,vinput_bin);
@@ -2665,7 +2678,6 @@ namespace top
             std::string vinput_bin;
             std::string voutput_bin;
             if(get_block_class() != enum_xvblock_class_nil 
-                && false == m_not_serialize_input_output
                 && false == get_header()->is_character_cert_header_only())
             {
                 if (stream.size() == 0) {

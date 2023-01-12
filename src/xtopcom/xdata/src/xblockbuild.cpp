@@ -33,7 +33,8 @@ std::string xtableheader_extra_build_t::build_extra_string(base::xvheader_t * _t
                                                      uint64_t tgas_height,
                                                      uint64_t gmtime,
                                                      const std::string & eth_header,
-                                                     const std::string & output_offdata_hash) {
+                                                     const std::string & output_offdata_hash,
+                                                     const std::string & pledge_balance_change_tgas) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
@@ -50,6 +51,8 @@ std::string xtableheader_extra_build_t::build_extra_string(base::xvheader_t * _t
     }
     // after version_6_0_0, set output offdata hash to header extra data
     header_extra.set_output_offdata_hash(output_offdata_hash);
+    // after version_6_0_0, set pledge_balance_change_tgas to header extra data
+    header_extra.set_pledge_balance_change_tgas(pledge_balance_change_tgas);
 
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
@@ -372,7 +375,7 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block, const xblo
     }
     init_header_qcert(build_para);
     if ((prev_block->get_block_level() == base::enum_xvblock_level_table)) {
-        std::string _extra_data = xtableheader_extra_build_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(), {});
+        std::string _extra_data = xtableheader_extra_build_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(), {}, {});
         set_header_extra(_extra_data);
     }
 }
@@ -711,11 +714,14 @@ bool xtable_build2_t::build_block_body(const xtable_block_para_t & para, const x
     std::string header_extra_data;
     if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_6_0_0)) {
         header_extra_data =  xtableheader_extra_build_t::build_extra_string(
-        get_header(), cs_para.get_tgas_height(), cs_para.get_gmtime(), cs_para.get_ethheader(), {});
+        get_header(), cs_para.get_tgas_height(), cs_para.get_gmtime(), cs_para.get_ethheader(), {}, {});
         set_output_entity(base::xvoutentity_t::key_name_output_offdata_hash(), output_offdata_hash);
+        std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
+        set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);        
     } else {
+        std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());       
         header_extra_data =  xtableheader_extra_build_t::build_extra_string(
-        get_header(), cs_para.get_tgas_height(), cs_para.get_gmtime(), cs_para.get_ethheader(), output_offdata_hash);        
+        get_header(), cs_para.get_tgas_height(), cs_para.get_gmtime(), cs_para.get_ethheader(), output_offdata_hash, tgas_balance_change);
     }
     set_header_extra(header_extra_data);
 
@@ -773,9 +779,6 @@ bool xtable_build2_t::build_block_body(const xtable_block_para_t & para, const x
         // set_output_entity(base::xvoutentity_t::key_name_state_hash(), full_state_hash);
     }
 
-    std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
-    set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
-
     if (!account_indexs_str.empty()) {
         set_output_resource(base::xvoutput_t::RESOURCE_ACCOUNT_INDEXS, account_indexs_str);
     }
@@ -800,22 +803,31 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
                                     para.get_drand_height(), para.get_justify_cert_hash());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    std::string _extra_data = xtableheader_extra_build_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(), {});
-    set_header_extra(_extra_data);    
-    build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
+    build_block_body(bodypara, para);
 }
 
-bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height) {
+bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, const xblock_consensus_para_t & cs_para) {
+    base::xvaccount_t _vaccount(get_header()->get_account());
+    std::string header_extra_data;
+    if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_6_0_0)) {
+        header_extra_data =  xtableheader_extra_build_t::build_extra_string(
+        get_header(), cs_para.get_tgas_height(), cs_para.get_gmtime(), cs_para.get_ethheader(), {}, {});
+        std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
+        set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);        
+    } else {
+        std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());       
+        header_extra_data =  xtableheader_extra_build_t::build_extra_string(
+        get_header(), cs_para.get_tgas_height(), cs_para.get_gmtime(), cs_para.get_ethheader(), {}, tgas_balance_change);
+    }
+    set_header_extra(header_extra_data);
+
     // #1 set input entitys and resources
-    base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
+    base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), _vaccount.get_short_table_id(), get_header()->get_height());
     set_input_entity(_action);
-    xdbg("xfulltable_build_t::build_block_body,account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
+    xdbg("xfulltable_build_t::build_block_body,account=%s,height=%ld,version=0x%x", get_header()->get_account().c_str(), get_header()->get_height(), get_header()->get_block_version());
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
     set_output_full_state(full_state_bin);
-
-    std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
-    set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
 
     const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
     auto const & serialized_data = statistics_data.serialize_based_on<base::xstream_t>();

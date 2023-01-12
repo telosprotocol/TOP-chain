@@ -458,8 +458,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     xblock_ptr_t current_block = prev_block;
     xassert(current_block->get_height() > 0);
     _form_highest_blocks.push_back(current_block);
-    if (false == get_blockstore()->load_block_input(*this, current_block.get())
-        || false == get_blockstore()->load_block_output(*this, current_block.get()) ) {
+    if (false == get_blockstore()->load_block_input(*this, current_block.get())) {
         xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block body.account=%s,height=%ld", get_account().c_str(), current_block->get_height());
         return false;
     }
@@ -471,8 +470,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
             return false;
         }
-        if (false == get_blockstore()->load_block_input(*this, _block.get())
-            || false == get_blockstore()->load_block_output(*this, _block.get()) ) {
+        if (false == get_blockstore()->load_block_input(*this, _block.get()) ) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block body.account=%s,height=%ld", get_account().c_str(), _block->get_height());
             return false;
         }

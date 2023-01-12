@@ -59,9 +59,9 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
-            base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, true);
+            base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, false);
             // XTODO get_pledge_balance_change_tgas need load block output
-            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(base::xvaccount_t{block_owner}, full_block.get())) {
+            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t{block_owner}, full_block.get())) {
                 xerror("xrole_context_t::on_block_to_db fail-load block output.%s",full_block->dump().c_str());
                 return;
             }

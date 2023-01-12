@@ -95,6 +95,12 @@ namespace top
             set_value(enum_extra_data_type_output_offdata_hash, value);
         }
 
+        std::string xtableheader_extra_t::get_pledge_balance_change_tgas() const {
+            return get_value(enum_extra_data_type_pledge_balance_change_tgas);
+        }
+        void xtableheader_extra_t::set_pledge_balance_change_tgas(const std::string & value) {
+            set_value(enum_extra_data_type_pledge_balance_change_tgas, value);
+        }
     }//end of namespace of base
 
 }//end of namespace top

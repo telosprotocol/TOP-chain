@@ -18,6 +18,7 @@ namespace top
                 enum_extra_data_type_tgas_second_level_gmtime               = 1,
                 enum_extra_data_type_eth_header                             = 2,
                 enum_extra_data_type_output_offdata_hash                    = 3,
+                enum_extra_data_type_pledge_balance_change_tgas             = 4,
             };
         protected:
             int32_t do_write(base::xstream_t & stream) const override;
@@ -37,6 +38,8 @@ namespace top
             void     set_ethheader(const std::string & value);
             std::string get_output_offdata_hash() const;
             void     set_output_offdata_hash(const std::string & value);
+            std::string get_pledge_balance_change_tgas() const;
+            void     set_pledge_balance_change_tgas(const std::string & value);            
         private:
             std::map<uint16_t, std::string>  m_paras;
         };
