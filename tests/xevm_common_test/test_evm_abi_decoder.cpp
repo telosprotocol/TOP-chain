@@ -80,6 +80,19 @@ TEST(test_abi, integer_only_3) {
     ASSERT_EQ(su, (u256)54321);
 }
 
+TEST(test_abi, error_string) {
+    std::error_code ec;
+    auto t = xabi_decoder_t::build_from_hex_string(
+        "0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000135472616e7366657231204e6f74204f77"
+        "6e657200000000000000000000000000",
+        ec);
+    ASSERT_TRUE(!ec);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0x08c379a0);
+    auto fs = t.extract<std::string>(ec);
+    ASSERT_EQ(fs, "Transfer1 Not Owner");
+}
+
 TEST(test_abi, address_only) {
     // function addr(address a, address[] memory aa) public pure {}
     // 0x4dce5c8961e283786cb31ad7fc072347227d7ea2, ["0x9251e7932e2c941e0ee1f370a1c387754af9cfdb","0x96932b7a373d8586c4a2d3c98517803ff2818cec"]
