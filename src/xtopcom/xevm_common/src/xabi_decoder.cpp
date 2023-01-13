@@ -41,6 +41,13 @@ xtop_abi_decoder xtop_abi_decoder::build_from_hex_string(std::string const & inp
     return {};
 }
 
+xtop_abi_decoder xtop_abi_decoder::build_from_hex_string(std::string const & input_hex_string) {
+    std::error_code ec;
+    auto ret = build_from_hex_string(input_hex_string, ec);
+    top::error::throw_error(ec);
+    return ret;
+}
+
 xtop_abi_decoder xtop_abi_decoder::build_from(xbytes_t const & input, std::error_code & ec) {
     try {
         return xtop_abi_decoder{input};
@@ -135,6 +142,14 @@ evm_common::xfunction_selector_t xtop_abi_decoder::extract<evm_common::xfunction
 }
 
 template <>
+evm_common::xfunction_selector_t xtop_abi_decoder::extract<evm_common::xfunction_selector_t>() {
+    std::error_code ec;
+    auto ret = extract<evm_common::xfunction_selector_t>(ec);
+    top::error::throw_error(ec);
+    return ret;
+}
+
+template <>
 common::xeth_address_t xtop_abi_decoder::extract<common::xeth_address_t>(std::error_code & ec) {
     assert(!ec);
 
@@ -226,6 +241,14 @@ std::string xtop_abi_decoder::extract<std::string>(std::error_code & ec) {
     assert(!ec);
 
     return decode_string(ec);
+}
+
+template <>
+std::string xtop_abi_decoder::extract<std::string>() {
+    std::error_code ec;
+    auto ret = extract<std::string>(ec);
+    top::error::throw_error(ec);
+    return ret;
 }
 
 template <>

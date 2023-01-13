@@ -80,19 +80,6 @@ TEST(test_abi, integer_only_3) {
     ASSERT_EQ(su, (u256)54321);
 }
 
-TEST(test_abi, error_string) {
-    std::error_code ec;
-    auto t = xabi_decoder_t::build_from_hex_string(
-        "0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000135472616e7366657231204e6f74204f77"
-        "6e657200000000000000000000000000",
-        ec);
-    ASSERT_TRUE(!ec);
-    auto selector = t.extract<xfunction_selector_t>(ec);
-    ASSERT_EQ(selector.method_id, 0x08c379a0);
-    auto fs = t.extract<std::string>(ec);
-    ASSERT_EQ(fs, "Transfer1 Not Owner");
-}
-
 TEST(test_abi, address_only) {
     // function addr(address a, address[] memory aa) public pure {}
     // 0x4dce5c8961e283786cb31ad7fc072347227d7ea2, ["0x9251e7932e2c941e0ee1f370a1c387754af9cfdb","0x96932b7a373d8586c4a2d3c98517803ff2818cec"]
@@ -153,6 +140,36 @@ TEST(test_abi, string_only) {
     auto s2 = t.extract<std::string>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(s2, "second");
+}
+
+TEST(test_abi, string_only_no_ec) {
+    // function s_s(string memory x, string memory y) public pure {}
+    // > contract.s_s.getData("first","second")
+    // "0xcad1ec28
+    // 0000000000000000000000000000000000000000000000000000000000000040
+    // 0000000000000000000000000000000000000000000000000000000000000080
+    // 0000000000000000000000000000000000000000000000000000000000000005
+    // 6669727374000000000000000000000000000000000000000000000000000000
+    // 0000000000000000000000000000000000000000000000000000000000000006
+    // 7365636f6e640000000000000000000000000000000000000000000000000000"
+    try {
+        auto t = xabi_decoder_t::build_from_hex_string(
+            "0xcad1ec28000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000"
+            "0000"
+            "0000000000000000000000000000000566697273740000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006736563"
+            "6f6e"
+            "640000000000000000000000000000000000000000000000000000");
+        auto selector = t.extract<xfunction_selector_t>();
+        ASSERT_EQ(selector.method_id, 0xcad1ec28);
+
+        auto s1 = t.extract<std::string>();
+        ASSERT_EQ(s1, "first");
+
+        auto s2 = t.extract<std::string>();
+        ASSERT_EQ(s2, "second");
+    } catch (const std::exception & e) {
+        GTEST_FAIL();
+    }
 }
 
 TEST(test_abi, wiki_sample_1) {

@@ -679,11 +679,10 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
 
     case evm_common::Revert: {
         std::string revert_msg;
-        std::error_code ec;
-        auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg, ec);
-        auto selector = t.extract<evm_common::xfunction_selector_t>(ec);
+        auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg);
+        auto selector = t.extract<evm_common::xfunction_selector_t>();
         if (selector.method_id == abi_error) {
-           revert_msg = ": " + t.extract<std::string>(ec);
+           revert_msg = ": " + t.extract<std::string>();
         }
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["data"] = extra_msg;
