@@ -28,8 +28,6 @@ pwd
 echo_and_run() { echo "$*" ; "$@" ; }
 
 echo_and_run echo "rm -f /usr/bin/topio" | bash -
-echo_and_run echo "rm -f /lib/libxtopchain.so*" | bash -
-
 
 echo "uninstall topio done"
 exit 0

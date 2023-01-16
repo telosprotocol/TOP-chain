@@ -36,10 +36,8 @@ else
 fi
 
 debug_build_topio_path="./cbuild/bin/Linux/topio"
-debug_build_libxtopchain_so_path="./cbuild/lib/Linux/libxtopchain.so.$topio_version"
 
 release_build_topio_path="./cbuild_release/bin/Linux/topio"
-release_build_libxtopchain_so_path="./cbuild_release/lib/Linux/libxtopchain.so.$topio_version"
 
 topio_install_sh_path="./src/xtopcom/xnode/install.sh"
 topio_uninstall_sh_path="./src/xtopcom/xnode/uninstall.sh"
@@ -55,7 +53,6 @@ if [ "debug" == $debug_release_mode ]; then
     tmp_debug_tar_path="topio-$topio_version-debug"
     mkdir -p $tmp_debug_tar_path
     echo_and_run echo "cp $debug_build_topio_path                   $tmp_debug_tar_path" |bash -
-    echo_and_run echo "cp $debug_build_libxtopchain_so_path         $tmp_debug_tar_path" |bash -
     echo_and_run echo "cp $topio_install_sh_path                    $tmp_debug_tar_path" |bash -
     echo_and_run echo "cp $topio_setup_sh_path                      $tmp_debug_tar_path" |bash -
     #echo_and_run echo "cp $topio_readme_path                        $tmp_debug_tar_path" |bash -
@@ -68,7 +65,6 @@ elif [ "release" == $debug_release_mode ]; then
     tmp_release_tar_path="topio-$topio_version-release"
     mkdir -p $tmp_release_tar_path
     echo_and_run echo "cp $release_build_topio_path                 $tmp_release_tar_path" |bash -
-    echo_and_run echo "cp $release_build_libxtopchain_so_path       $tmp_release_tar_path" |bash -
     echo_and_run echo "cp $topio_install_sh_path                    $tmp_release_tar_path" |bash -
     echo_and_run echo "cp $topio_setup_sh_path                      $tmp_release_tar_path" |bash -
     #echo_and_run echo "cp $topio_readme_path                        $tmp_release_tar_path" |bash -

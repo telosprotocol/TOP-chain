@@ -41,8 +41,6 @@ fi
 echo_and_run() { echo "$*" ; "$@" ; }
 
 topio_name='topio'
-libxtopchain_name=`ls libxtopchain.so*`
-libxtopchain_short_name='libxtopchain.so'
 
 osinfo=`awk -F= '/^NAME/{print $2}' /etc/os-release |awk -F ' ' '{print $1}' |awk -F '\"' '{print $2}'`
 osname=`uname`
@@ -142,11 +140,6 @@ if [ ! -x "$topio_name" ]; then
     return
 fi
 
-if [ ! -x "$libxtopchain_name" ]; then
-    echo "not found $libxtopchain_name"
-    return
-fi
-
 INSTALL_TOPIO_BIN_PATH="/usr/bin/"
 INSTALL_TOPIO_LIB_PATH="/lib/"
 mkdir -p ${INSTALL_TOPIO_BIN_PATH}
@@ -154,12 +147,8 @@ mkdir -p ${INSTALL_TOPIO_LIB_PATH}
 
 if [ $osname = ${osname_linux} ]; then
     echo_and_run echo "cp -f $topio_name ${INSTALL_TOPIO_BIN_PATH}" |bash
-    echo_and_run echo "cp -f $libxtopchain_name ${INSTALL_TOPIO_LIB_PATH}" |bash -
-    echo_and_run echo "ln -sf ${INSTALL_TOPIO_LIB_PATH}${libxtopchain_name} ${INSTALL_TOPIO_LIB_PATH}${libxtopchain_short_name}"  |bash -
 elif [ $osname = ${osname_darwin} ]; then
     echo_and_run echo "cp -f $topio_name ${INSTALL_TOPIO_BIN_PATH}" |bash
-    echo_and_run echo "cp -f $libxtopchain_name ${INSTALL_TOPIO_LIB_PATH}" |bash -
-    echo_and_run echo "ln -sf ${INSTALL_TOPIO_LIB_PATH}${libxtopchain_name} ${INSTALL_TOPIO_LIB_PATH}${libxtopchain_short_name}"  |bash -
 fi
 
 ldconfig
