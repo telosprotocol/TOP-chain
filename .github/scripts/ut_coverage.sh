@@ -145,4 +145,4 @@ sed -i 's#<!--content_summary-->#<div class="step"><table><tbody><tr><td class="
 
 #tar report
 cd ${PROJECT_DIR}
-tar -zcvf ut_coverage.tar.gz ${UT_REPORT_DIR} ${COVER_DIR}
+tar -zcvf ut_coverage.tar.gz ./${REPORT_DIR}
