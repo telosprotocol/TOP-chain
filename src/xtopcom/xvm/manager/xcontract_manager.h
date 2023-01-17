@@ -162,7 +162,7 @@ public:
                            xjson_format_t const json_format,
                            bool compatible_mode,
                            xJson::Value & json) const;
-    void get_contract_data(common::xaccount_address_t const & contract_address, std::string const & property_name, std::string const & key, xjson_format_t const json_format, xJson::Value & json) const;
+    // void get_contract_data(common::xaccount_address_t const & contract_address, std::string const & property_name, std::string const & key, xjson_format_t const json_format, xJson::Value & json) const;
 
     void get_election_data(common::xaccount_address_t const & contract_address, const data::xunitstate_ptr_t unitstate, std::string const & property_name, std::vector<std::pair<xpublic_key_t, uint64_t>> & election_data) const;
 private:
