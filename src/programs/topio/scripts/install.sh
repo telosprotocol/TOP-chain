@@ -141,9 +141,7 @@ if [ ! -x "$topio_name" ]; then
 fi
 
 INSTALL_TOPIO_BIN_PATH="/usr/bin/"
-INSTALL_TOPIO_LIB_PATH="/lib/"
 mkdir -p ${INSTALL_TOPIO_BIN_PATH}
-mkdir -p ${INSTALL_TOPIO_LIB_PATH}
 
 if [ $osname = ${osname_linux} ]; then
     echo_and_run echo "cp -f $topio_name ${INSTALL_TOPIO_BIN_PATH}" |bash
@@ -154,7 +152,6 @@ fi
 ldconfig
 
 # register topio as service
-
 
 echo $username
 
@@ -192,32 +189,6 @@ printf '%s\n' "$TOPIO_SAFEBOX_SERVICE" | tee /lib/systemd/system/topio-safebox.s
 systemctl enable topio-safebox.service
 
 
-TOPIO_SERVICE="
-[Unit]
-Description=the cpp-topnetwork command line interface
-After=network.target
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=forking
-User=$username
-Group=$username
-Environment=TOPIO_HOME=$topio_home
-PIDFile=$topio_home/topio.pid
-ExecStart=/usr/bin/topio node startnode
-ExecStop=/usr/bin/topio node stopnode
-PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target
-"
-
-#printf '%s\n' "$TOPIO_SERVICE"
-printf '%s\n' "$TOPIO_SERVICE" | tee /lib/systemd/system/topio.service
-
-systemctl enable topio.service
-systemctl  daemon-reload
 timedatectl  set-timezone UTC
 
 which $topio_name
@@ -225,16 +196,6 @@ if [ $? != 0 ]; then
     echo "install topio failed"
     return
 fi
-
-#systemctl status topio.service
-#if [ $? != 0 ]; then
-#    echo "install topio failed"
-#    return
-#fi
-
-echo ""
-echo "install topio.service ok"
-echo "now you can use systemctl start/status/stop topio"
 
 echo "install $topio_name done, good luck"
 echo "now run command to check md5:  topio -v"

@@ -39,14 +39,9 @@ debug_build_topio_path="./cbuild/bin/Linux/topio"
 
 release_build_topio_path="./cbuild_release/bin/Linux/topio"
 
-topio_install_sh_path="./src/xtopcom/xnode/install.sh"
-topio_uninstall_sh_path="./src/xtopcom/xnode/uninstall.sh"
-
-topio_setup_sh_path="./src/xtopcom/xnode/set_topio.sh"
-
-topio_readme_path="./src/xtopcom/xnode/README.md"
-topio_service_path="./src/xtopcom/xnode/topio_service.sh"
-
+topio_install_sh_path="./src/programs/topio/scripts/install.sh"
+topio_uninstall_sh_path="./src/programs/topio/scripts/uninstall.sh"
+topio_setup_sh_path="./src/programs/topio/scripts/set_topio.sh"
 
 if [ "debug" == $debug_release_mode ]; then
     echo "pack in debug mode"
@@ -55,8 +50,6 @@ if [ "debug" == $debug_release_mode ]; then
     echo_and_run echo "cp $debug_build_topio_path                   $tmp_debug_tar_path" |bash -
     echo_and_run echo "cp $topio_install_sh_path                    $tmp_debug_tar_path" |bash -
     echo_and_run echo "cp $topio_setup_sh_path                      $tmp_debug_tar_path" |bash -
-    #echo_and_run echo "cp $topio_readme_path                        $tmp_debug_tar_path" |bash -
-    echo_and_run echo "cp $topio_service_path                        $tmp_debug_tar_path" |bash -
     echo_and_run echo "cp $topio_uninstall_sh_path                  $tmp_debug_tar_path" |bash -
     echo_and_run echo "tar zcvf topio-$topio_version-debug.tar.gz   $tmp_debug_tar_path" |bash -
     /usr/bin/rm -rf $tmp_debug_tar_path
@@ -67,8 +60,6 @@ elif [ "release" == $debug_release_mode ]; then
     echo_and_run echo "cp $release_build_topio_path                 $tmp_release_tar_path" |bash -
     echo_and_run echo "cp $topio_install_sh_path                    $tmp_release_tar_path" |bash -
     echo_and_run echo "cp $topio_setup_sh_path                      $tmp_release_tar_path" |bash -
-    #echo_and_run echo "cp $topio_readme_path                        $tmp_release_tar_path" |bash -
-    echo_and_run echo "cp $topio_service_path                        $tmp_release_tar_path" |bash -
     echo_and_run echo "cp $topio_uninstall_sh_path                  $tmp_release_tar_path" |bash -
     echo_and_run echo "tar zcvf topio-$topio_version-release.tar.gz   $tmp_release_tar_path" |bash -
     /usr/bin/rm -rf $tmp_release_tar_path
