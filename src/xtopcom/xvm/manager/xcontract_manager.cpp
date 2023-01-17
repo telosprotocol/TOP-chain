@@ -1223,6 +1223,67 @@ static void get_proposal_voting_map(common::xaccount_address_t const & contract_
     }
 }
 
+static void get_ineffective_votes_map_impl(std::map<std::string, std::string> const & raw_data, xJson::Value & json) {
+    if (raw_data.empty()) {
+        return;
+    }
+
+    std::map<common::xaccount_address_t, std::map<common::xlogic_time_t, xstake::xtable_vote_contract::vote_info_map_t>> ineffective_votes;
+    xJson::Value json_voter_data;
+    for (auto const & raw_datum : raw_data) {
+        common::xaccount_address_t const voter{raw_datum.first};
+        auto const & ineffective_votes_str = raw_datum.second;
+
+        std::map<common::xlogic_time_t, xstake::xtable_vote_contract::vote_info_map_t> voter_ineffective_data;
+        xstream_t stream{
+            xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(ineffective_votes_str.c_str())), static_cast<uint32_t>(ineffective_votes_str.size())};
+        stream >> voter_ineffective_data;
+
+        xJson::Value json_voter_ineffective;
+        for (auto const & ineffective_datum : voter_ineffective_data) {
+            auto const effective_logic_time = top::get<common::xlogic_time_t const>(ineffective_datum);
+            auto const & tickets_detail = top::get<xstake::xtable_vote_contract::vote_info_map_t>(ineffective_datum);
+
+            xJson::Value json_tickets_detail;
+            for (auto const & ticket_datum : tickets_detail) {
+                json_tickets_detail[top::get<std::string const>(ticket_datum)] = static_cast<xJson::UInt64>(top::get<uint64_t>(ticket_datum));
+            }
+
+            json_voter_ineffective[std::to_string(effective_logic_time)] = json_tickets_detail;
+        }
+        json_voter_data[voter.to_string()] = json_voter_ineffective;
+    }
+
+    json["ineffective_vote_data"] = json_voter_data;
+}
+
+static void get_ineffective_votes_map(common::xaccount_address_t const & contract_address, std::string const & property_name, xJson::Value & json) {
+    assert(property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY);
+
+    std::map<std::string, std::string> raw_data;
+    if (statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, raw_data) != 0) {
+        return;
+    }
+
+    get_ineffective_votes_map_impl(raw_data, json);
+}
+
+static void get_ineffective_votes_map(common::xaccount_address_t const &,
+                                      std::string const & property_name,
+                                      data::xunitstate_ptr_t const & unitstate,
+                                      const xjson_format_t,
+                                      xJson::Value & json) {
+    assert(property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY);
+
+    std::map<std::string, std::string> const raw_data = unitstate->map_get(property_name);
+    xJson::Value json_voter_data;
+    if (raw_data.empty()) {
+        return;
+    }
+
+    get_ineffective_votes_map_impl(raw_data, json);
+}
+
 static void get_other_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
                                                  xJson::Value & json) {
@@ -1233,14 +1294,11 @@ static void get_other_map(common::xaccount_address_t const & contract_address,
     }
 }
 
-
 static void get_sharding_statistic_contract_property(std::string const & sharding_contract_addr,
                                                     std::string const & property_name,
                                                     uint64_t const height,
                                                     xJson::Value & json,
-                                                    std::error_code & ec
-                                                    ) {
-
+                                                    std::error_code & ec) {
     assert(!ec);
 
     std::map<std::string, std::string> result;
@@ -1782,6 +1840,9 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_proposal_map(contract_address, property_name, json);
     } else if (property_name == VOTE_MAP_ID) {
         return get_proposal_voting_map(contract_address, property_name, json);
+    }
+    if (contract_address.base_address() == table_vote_contract_base_address && property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY) {
+        return get_ineffective_votes_map(contract_address, property_name, json);
     }
 }
 
@@ -2618,6 +2679,9 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_current_sync_committee(contract_address, property_name, unitstate, json_format, json);
     } else if (property_name == data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE) {
         return get_next_sync_committee(contract_address, property_name, unitstate, json_format, json);
+    }
+    if (contract_address.base_address() == table_vote_contract_base_address && property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY) {
+        return get_ineffective_votes_map(contract_address, property_name, unitstate, json_format, json);
     }
 }
 

@@ -99,6 +99,7 @@ bool xrpc_query_func::is_prop_name_not_set_property(const std::string & prop_nam
                                                    data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER,
                                                    data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE,
                                                    data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE,
+                                                   data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY,
                                                    PROPOSAL_MAP_ID,
                                                    VOTE_MAP_ID};
 
@@ -114,7 +115,8 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
         top::contract::xcontract_manager_t::instance().get_contract_data(
             top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jph);
         return true;
-    } else if (is_prop_name_not_set_property(prop_name)) {
+    }
+    if (is_prop_name_not_set_property(prop_name)) {
         xJson::Value jm;
         top::contract::xcontract_manager_t::instance().get_contract_data(
             top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jm);
