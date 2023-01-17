@@ -89,6 +89,7 @@ void xtable_vote_contract::setup() {
 
 // vote related
 void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
+    XCONTRACT_ENSURE(false, "voteNode is disabled for now");
     XMETRICS_TIME_RECORD("sysContract_tableVote_vote_node");
     auto const timestamp = TIME();
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
@@ -115,6 +116,8 @@ void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
 }
 
 void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
+    XCONTRACT_ENSURE(false, "unvoteNode is disabled for now");
+
     XMETRICS_TIME_RECORD("sysContract_tableVote_unvote_node");
     auto const timestamp = TIME();
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
