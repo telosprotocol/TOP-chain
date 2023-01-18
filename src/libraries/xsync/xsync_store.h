@@ -146,8 +146,8 @@ private:
     std::string m_vnode_id;
     observer_ptr<base::xvblockstore_t> m_blockstore{};
     xsync_store_shadow_t *m_shadow;
-    bool m_remove_empty_unit_forked{false};
-    bool m_sync_forked{false};
+    bool m_remove_empty_unit_forked{true};
+    bool m_sync_forked{true};
 };
 
 NS_END2

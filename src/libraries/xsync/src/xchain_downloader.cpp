@@ -23,7 +23,7 @@ NS_BEG2(top, sync)
 using namespace mbus;
 using namespace data;
 
-#define BATCH_SIZE 20
+#define BATCH_SIZE 5 //20
 
 xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
                                  xsync_store_face_t * sync_store,
