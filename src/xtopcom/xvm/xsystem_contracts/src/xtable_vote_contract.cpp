@@ -498,6 +498,12 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
                 continue;
             }
 
+            xdbg("reset data: table address %s tableid %" PRIu16 " voter %s tableid %" PRIu16,
+                 contract_address.to_string().c_str(),
+                 contract_address.table_id().value(),
+                 voter.to_string().c_str(),
+                 voter.table_id().value());
+
             reset_touched = true;
 
             auto const & voter_data = top::get<vote_info_map_t>(voter_and_data);
@@ -549,6 +555,12 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
             if (contract_address.table_id() != voter.table_id()) {
                 continue;
             }
+
+            xdbg("clear data: table address %s tableid %" PRIu16 " voter %s tableid %" PRIu16,
+                 contract_address.to_string().c_str(),
+                 contract_address.table_id().value(),
+                 voter.to_string().c_str(),
+                 voter.table_id().value());
 
             reset_touched = true;
 
@@ -608,7 +620,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
 
                     xstream_t stream{xcontext_t::instance(),
                                      reinterpret_cast<uint8_t *>(const_cast<char *>(raw_auditor_tickets_data.data())),
-                                     static_cast<uint32_t>(auditor_tickets_data.size())};
+                                     static_cast<uint32_t>(raw_auditor_tickets_data.size())};
                     stream >> detail;
 
                     for (auto const & ticket_data : detail) {

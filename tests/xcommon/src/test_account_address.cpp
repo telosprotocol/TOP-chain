@@ -2,12 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <sstream>
+
+#include <gtest/gtest.h>
+
 #include "xbasic/xerror/xerror.h"
 #include "xcommon/xaccount_address.h"
 #include "xdata/xnative_contract_address.h"
 #include "xvledger/xvaccount.h"
-
-#include <gtest/gtest.h>
 
 NS_BEG3(top, tests, common)
 
@@ -191,6 +193,14 @@ TEST(account_address, size) {
     EXPECT_EQ(32, sizeof(top::common::xaccount_address_t));
     EXPECT_EQ(16, sizeof(top::common::xaccount_base_address_t));
     EXPECT_EQ(56, sizeof(top::base::xvaccount_t));
+}
+
+TEST(account_address, table_id) {
+    top::common::xaccount_address_t const address{"T8000065f5442ab7d7b778394aa83747cb076e089cff0d"};
+    EXPECT_EQ(static_cast<uint16_t>(38), address.table_id().value());
+
+    top::common::xaccount_address_t const another{"T80000fa17a9505fb337f7b664e44880f6e0dad3d921a1"};
+    EXPECT_EQ(static_cast<uint16_t>(30), another.table_id().value());
 }
 
 NS_END3
