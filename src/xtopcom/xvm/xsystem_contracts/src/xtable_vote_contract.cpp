@@ -634,20 +634,23 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
             lambda(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY3);
             lambda(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY4);
 
-            for (auto const & adv_get_votes : auditor_tickets_data) {
-                MAP_SET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_get_votes.first, base::xstring_utl::tostring(adv_get_votes.second));
-            }
-
             if (!auditor_tickets_data.empty()) {
                 xkinfo("table %s re-calculating property %s adv count %zu",
                        contract_address.to_string().c_str(),
                        data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY,
                        auditor_tickets_data.size());
-            }
-        }
 
-        STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_reset_tickets);
-        xdbg("table %s sets reset flag", contract_address.to_string().c_str());
+                for (auto const & adv_get_votes : auditor_tickets_data) {
+                    MAP_SET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_get_votes.first, base::xstring_utl::tostring(adv_get_votes.second));
+                }
+            } else {
+                xkinfo("table %s clean property %s", contract_address.to_string().c_str(), data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY);
+                MAP_CLEAR(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY);
+            }
+
+            STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_reset_tickets);
+            xdbg("table %s sets reset flag", contract_address.to_string().c_str());
+        }
     }
 
     auto const & source_addr = SOURCE_ADDRESS();
