@@ -87,6 +87,7 @@ extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
 extern common::xaccount_address_t const sharding_fork_info_contract_address;
+extern common::xaccount_base_address_t const table_vote_contract_base_address;
 
 extern common::xaccount_address_t const eth_fork_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;

@@ -479,7 +479,7 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
         if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
             // password not right.
             out_str << "Old password wrong," << get_keystore_hint(keystore_info) << std::endl;
-            // out_str << 
+            // out_str <<
             out_str << "Reset password failed." << std::endl;
             return;
         }
