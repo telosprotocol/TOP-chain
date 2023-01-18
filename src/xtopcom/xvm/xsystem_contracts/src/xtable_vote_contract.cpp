@@ -502,6 +502,27 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
 
             auto property_name = calc_voter_tickets_storing_property_name(voter);
 
+            {
+                std::string old_data;
+                MAP_GET2(property_name, voter.to_string(), old_data);
+                if (old_data.empty()) {
+                    xwarn("voter %s old data: none", voter.to_string().c_str());
+                } else {
+                    xstream_t old_data_stream{xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(old_data.data())), static_cast<uint32_t>(old_data.size())};
+                    vote_info_map_t old_tickets_data;
+                    std::string log_old_data = std::string{"voter "} + voter.to_string() + " old data: ";
+                    while (old_data_stream.size() > 0) {
+                        old_data_stream >> old_tickets_data;
+
+                        for (auto const & ticket_info : old_tickets_data) {
+                            log_old_data += top::get<std::string const>(ticket_info) + ":" + std::to_string(top::get<uint64_t>(ticket_info)) + ";";
+                        }
+                    }
+                    xwarn("%s", log_old_data.c_str());
+                }
+            }
+
+            // All voting data for reset user are moved into @XPORPERTY_CONTRACT_VOTES_KEYX which needs to clear corresponding XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY
             xstream_t stream{xcontext_t::instance()};
             stream << voter_data;
             MAP_SET(property_name, voter.to_string(), std::string{static_cast<char const *>(reinterpret_cast<char *>(stream.data())), static_cast<size_t>(stream.size())});
@@ -520,12 +541,37 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
 
             auto const & property_name = calc_voter_tickets_storing_property_name(voter);
 
+            {
+                std::string old_data;
+                MAP_GET2(property_name, voter.to_string(), old_data);
+                if (old_data.empty()) {
+                    xwarn("voter %s old data: none", voter.to_string().c_str());
+                } else {
+                    xstream_t old_data_stream{xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(old_data.data())), static_cast<uint32_t>(old_data.size())};
+                    vote_info_map_t old_tickets_data;
+                    std::string log_old_data = std::string{"voter "} + voter.to_string() + " old data: ";
+                    while (old_data_stream.size() > 0) {
+                        old_data_stream >> old_tickets_data;
+
+                        for (auto const & ticket_info : old_tickets_data) {
+                            log_old_data += top::get<std::string const>(ticket_info) + ":" + std::to_string(top::get<uint64_t>(ticket_info)) + ";";
+                        }
+                    }
+                    xwarn("%s", log_old_data.c_str());
+                }
+            }
+
+            // All voting data for clear user are cleared from @XPORPERTY_CONTRACT_VOTES_KEYX and meanwhile need to be cleaned from corresponding XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY
             if (MAP_FIELD_EXIST(property_name, voter.to_string())) {
                 MAP_REMOVE(property_name, voter.to_string());
             }
+
+            if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY, voter.to_string())) {
+                MAP_REMOVE(data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY, voter.to_string());
+            }
         }
 
-        if (reset_touched) {
+        if (reset_touched) {    // re-calculating aggregated table ticket data (XPORPERTY_CONTRACT_POLLABLE_KEY).
             vote_info_map_t auditor_tickets_data;
             auto lambda = [&auditor_tickets_data, this](std::string const & property_name) {
                 std::map<std::string, std::string> data;
@@ -533,6 +579,10 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
                 MAP_COPY_GET(property_name, data);
                 for (auto const & datum : data) {
                     auto const & raw_auditor_tickets_data = datum.second;
+                    if (raw_auditor_tickets_data.empty()) {
+                        xwarn("reset: reading property %s: empty", property_name.c_str());
+                        continue;
+                    }
                     vote_info_map_t detail;
 
                     xstream_t stream{xcontext_t::instance(),
@@ -615,41 +665,48 @@ std::map<common::xaccount_address_t, xtable_vote_contract::vote_info_map_t> xtab
         auto const & voter = p.first;
         auto const & ineffective_votes_str = p.second;
 
-        std::map<std::uint64_t, vote_info_map_t> all_time_ineffective_votes;
-        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)ineffective_votes_str.c_str(), (uint32_t)ineffective_votes_str.size());
-        stream >> all_time_ineffective_votes;
-
-#if defined(DEBUG)
-        {
-            for (auto const & d : all_time_ineffective_votes) {
-                xwarn("voter %s current read ineffective data: voteTime: %" PRIu64, voter.c_str(), d.first);
-                for (auto const & detail : d.second) {
-                    xwarn("\tadv:%s tickets:%" PRIu64, detail.first.c_str(), detail.second);
-                }
-            }
+        if (ineffective_votes_str.empty()) {
+            xwarn("voter %s property %s empty", voter.c_str(), data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY);
         }
 
-        if (stream.size()) {
-            xwarn("voter %s stream has extra data", voter.c_str());
+        std::map<std::uint64_t, vote_info_map_t> all_time_ineffective_votes;
+        if (!ineffective_votes_str.empty()) {
+            base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)ineffective_votes_str.c_str(), (uint32_t)ineffective_votes_str.size());
+            stream >> all_time_ineffective_votes;
 
-            auto const * ptr = stream.data();
-            size_t const sz = stream.size();
-
-            xbytes_t data{ptr, ptr + sz};
-            xstream_t stream_cp(base::xcontext_t::instance(), data.data(), (uint32_t)data.size());
-            std::map<std::uint64_t, vote_info_map_t> extra_data;
-            while (stream_cp.size()) {
-                stream_cp >> extra_data;
-
-                for (auto const & d : extra_data) {
-                    xwarn("\tvoteTime: %" PRIu64, d.first);
+#if defined(DEBUG)
+            {
+                for (auto const & d : all_time_ineffective_votes) {
+                    xwarn("voter %s current read ineffective data: voteTime: %" PRIu64, voter.c_str(), d.first);
                     for (auto const & detail : d.second) {
-                        xwarn("\t\tadv:%s tickets:%" PRIu64, detail.first.c_str(), detail.second);
+                        xwarn("\tadv:%s tickets:%" PRIu64, detail.first.c_str(), detail.second);
                     }
                 }
             }
-        }
+
+            if (stream.size() > 0) {
+                xwarn("voter %s stream has extra data", voter.c_str());
+
+                auto const * ptr = stream.data();
+                size_t const sz = stream.size();
+
+                xbytes_t data{ptr, ptr + sz};
+                xstream_t stream_cp(base::xcontext_t::instance(), data.data(), (uint32_t)data.size());
+                std::map<std::uint64_t, vote_info_map_t> extra_data;
+                while (stream_cp.size() > 0) {
+                    stream_cp >> extra_data;
+
+                    for (auto const & d : extra_data) {
+                        xwarn("\tvoteTime: %" PRIu64, d.first);
+                        for (auto const & detail : d.second) {
+                            xwarn("\t\tadv:%s tickets:%" PRIu64, detail.first.c_str(), detail.second);
+                        }
+                    }
+                }
+            }
 #endif
+
+        }
 
         vote_info_map_t effective_votes;
         for (auto it = all_time_ineffective_votes.begin(); it != all_time_ineffective_votes.end();) {
