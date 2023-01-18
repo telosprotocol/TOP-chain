@@ -6,6 +6,7 @@
 
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
+#include "xbasic/xhex.h"
 #include "xchain_fork/xutility.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xcommon/xrole_type.h"
@@ -454,6 +455,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
 
     auto const & contract_address = SELF_ADDRESS();
     auto const & flag = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY);
+    xdbg("table %s read flag %s", contract_address.to_string().c_str(), flag.c_str());
 
     if (flag == flag_upload_tickets_legacy || flag == flag_withdraw_tickets_legacy) {
 #if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
@@ -525,9 +527,20 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
             // All voting data for reset user are moved into @XPORPERTY_CONTRACT_VOTES_KEYX which needs to clear corresponding XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY
             xstream_t stream{xcontext_t::instance()};
             stream << voter_data;
-            MAP_SET(property_name, voter.to_string(), std::string{static_cast<char const *>(reinterpret_cast<char *>(stream.data())), static_cast<size_t>(stream.size())});
+            std::string voter_data_str{static_cast<char const *>(reinterpret_cast<char *>(stream.data())), static_cast<size_t>(stream.size())};
+            MAP_SET(property_name, voter.to_string(), voter_data_str);
+
+            xdbg("table %s reset property %s with data %s size %zu",
+                 contract_address.to_string().c_str(),
+                 property_name.c_str(),
+                 top::to_hex_prefixed(voter_data_str).c_str(),
+                 voter_data_str.size());
 
             if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY, voter.to_string())) {
+                xdbg("table %s cleared property %s for voter %s",
+                     contract_address.to_string().c_str(),
+                     data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY,
+                     voter.to_string().c_str());
                 MAP_REMOVE(data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY, voter.to_string());
             }
         }
@@ -563,10 +576,18 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
 
             // All voting data for clear user are cleared from @XPORPERTY_CONTRACT_VOTES_KEYX and meanwhile need to be cleaned from corresponding XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY
             if (MAP_FIELD_EXIST(property_name, voter.to_string())) {
+                xdbg("table %s cleared property %s for voter %s",
+                     contract_address.to_string().c_str(),
+                     property_name.c_str(),
+                     voter.to_string().c_str());
                 MAP_REMOVE(property_name, voter.to_string());
             }
 
             if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY, voter.to_string())) {
+                xdbg("table %s cleared property %s for voter %s",
+                     contract_address.to_string().c_str(),
+                     data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY,
+                     voter.to_string().c_str());
                 MAP_REMOVE(data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY, voter.to_string());
             }
         }
@@ -604,9 +625,17 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
             for (auto const & adv_get_votes : auditor_tickets_data) {
                 MAP_SET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_get_votes.first, base::xstring_utl::tostring(adv_get_votes.second));
             }
+
+            if (!auditor_tickets_data.empty()) {
+                xkinfo("table %s re-calculating property %s adv count %zu",
+                       contract_address.to_string().c_str(),
+                       data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY,
+                       auditor_tickets_data.size());
+            }
         }
 
         STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_reset_tickets);
+        xdbg("table %s sets reset flag", contract_address.to_string().c_str());
     }
 
     auto const & source_addr = SOURCE_ADDRESS();
@@ -640,11 +669,17 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     // get update data
     std::map<std::string, std::string> adv_votes;
     MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_votes);
+    xdbg("xtable_vote_contract::on_timer: table %s property %s read %zu adv",
+         contract_address.to_string().c_str(),
+         data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY,
+         adv_votes.size());
+
     // call other contracts
     split_and_report(sys_contract_rec_registration_addr, "update_batch_stake_v2", adv_votes);
     split_and_report(sys_contract_zec_vote_addr, "on_receive_shard_votes_v2", adv_votes);
     xinfo("[xtable_vote_contract::on_timer] split table vote finish, time: %lu", timestamp);
     STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_upload_tickets);
+    xdbg("table %s sets upload flag", contract_address.to_string().c_str());
 }
 
 std::map<common::xaccount_address_t, xtable_vote_contract::vote_info_map_t> xtable_vote_contract::get_and_update_all_effective_votes_of_all_account(uint64_t const timestamp) {
