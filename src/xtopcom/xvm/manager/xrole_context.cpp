@@ -157,11 +157,6 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
             }
         }
 
-        if (m_contract_info->address.base_address() == table_vote_contract_base_address) {
-            xwarn("table vote contract on_timer is disabled for now");
-            return;
-        }
-
         if (info != nullptr) {
             bool do_call{false};
             uint64_t block_timestamp{0};
