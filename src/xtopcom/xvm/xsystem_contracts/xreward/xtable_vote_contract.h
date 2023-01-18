@@ -7,16 +7,16 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
-#include "xvm/xcontract_helper.h"
+
+#include <string>
 
 NS_BEG2(top, xstake)
 
-using namespace xvm;
-using namespace xvm::xcontract;
-
 const std::size_t XVOTE_TRX_LIMIT = 1000;  // ~= 50K/(40+8)
 
-class xtable_vote_contract : public xcontract_base {
+std::string calc_voter_tickets_storage_property_name(common::xaccount_address_t const & voter);
+
+class xtable_vote_contract : public xvm::xcontract::xcontract_base {
     using xbase_t = xcontract_base;
 
 public:
@@ -36,10 +36,30 @@ public:
     void setup();
 
     BEGIN_CONTRACT_WITH_PARAM(xtable_vote_contract)
-    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, voteNode);
-    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, unvoteNode);
-    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, on_timer);
+    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, voteNode)
+    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, unvoteNode)
+    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, on_timer)
     END_CONTRACT_WITH_PARAM
+
+    std::string flag() const;
+    std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> tickets_data(std::string const & property_name) const;
+    std::map<common::xaccount_address_t, std::map<common::xlogic_time_t, std::map<common::xaccount_address_t, uint64_t>>> ineffective_data() const;
+
+    static std::string const flag_upload_tickets_legacy;
+    static std::string const flag_withdraw_tickets_legacy;
+    static std::string const flag_reset_tickets;
+    static std::string const flag_upload_tickets_10901;
+    static std::string const flag_withdraw_tickets_10901;
+    static std::string const flag_upload_tickets_10902;
+    static std::string const flag_withdraw_tickets_10902;
+
+#if defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+    static constexpr common::xlogic_time_t ineffective_period{1};
+#elif defined(XBUILD_DEV)
+    static constexpr common::xlogic_time_t ineffective_period{90};
+#else
+    static constexpr common::xlogic_time_t ineffective_period{8640};
+#endif
 
 private:
     /**
@@ -85,8 +105,6 @@ private:
      * @param account voter account
      * @param vote_info vote info map, <node account, votes> format
      * @param b_vote true - vote, false - unvote
-     * @return true
-     * @return false
      */
     void handle_votes(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
 
@@ -171,7 +189,7 @@ private:
      *
      * @brief split algorithm helper
      *
-     * @param report_contect the report content
+     * @param report_content the report content
      * @param limit the vote trx limit
      *
      * @return std::vector<std::map<std::string, std::string>>  splited map array
@@ -184,6 +202,20 @@ private:
     void set_all_time_ineffective_votes(common::xaccount_address_t const & account, std::map<std::uint64_t, vote_info_map_t> const & all_time_ineffective_votes);
     void add_all_time_ineffective_votes(uint64_t const timestamp, vote_info_map_t const & vote_info, std::map<std::uint64_t, vote_info_map_t> & all_time_ineffective_votes);
     void del_all_time_ineffective_votes(vote_info_map_t & vote_info_to_del, std::map<std::uint64_t, vote_info_map_t> & all_time_ineffective_votes);
+
+    bool reset_v10901(std::string const & flag,
+                      std::map<common::xaccount_address_t, vote_info_map_t> const & contract_ticket_reset_data,
+                      std::vector<common::xaccount_address_t> const & contract_ticket_clear_data);
+    void set_vote_info_v10901(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
+
+    bool reset_v10902(std::string const & flag,
+                      std::map<common::xaccount_address_t, vote_info_map_t> const & contract_ticket_reset_data,
+                      std::vector<common::xaccount_address_t> const & contract_ticket_clear_data);
+    void set_vote_info_v10902(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
+
+    void read_tickets_property_raw_data(std::string const & property_name, std::vector<std::string> & raw_data) const;
+    vote_info_map_t get_origin_pollable_reset_data(std::vector<std::string> const & serialized_origin_data);
+    void reset_pollable_property(vote_info_map_t const & reset_data);
 };
 
 NS_END2

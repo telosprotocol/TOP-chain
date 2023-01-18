@@ -3,11 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include <string>
-#include <assert.h>
-#include <system_error>
+
+
 #include "xbase/xns_macro.h"
 #include "xbasic/xmodule_type.h"
+
+#include <string>
+#include <cassert>
+#include <system_error>
 
 NS_BEG2(top, xvm)
 
