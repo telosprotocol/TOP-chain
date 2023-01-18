@@ -650,17 +650,24 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     xinfo("[xtable_vote_contract::on_timer] timer: %lu, account: %s", timestamp, self_addr.c_str());
 
     auto const all_effective_votes = get_and_update_all_effective_votes_of_all_account(timestamp);
-    if (all_effective_votes.empty()) {
-        if (flag == flag_upload_tickets || flag == flag_upload_tickets_legacy) {
-            xinfo("[xtable_vote_contract::on_timer] no vote to upload && last operation is not remove");
-            return;
-        }
+    do {
+        if (all_effective_votes.empty()) {
+            auto const & flag_l = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY);
 
-        if (flag != flag_reset_tickets) {
-            xinfo("[xtable_vote_contract::on_timer] no vote to upload && last operation is not reset");
+            if (flag_l == flag_withdraw_tickets || flag_l == flag_withdraw_tickets_legacy) {
+                xinfo("xtable_vote_contract::on_timer: table %s effective votes empty but needs to be uploaded %s", contract_address.to_string().c_str(), flag_l.c_str());
+                break;
+            }
+
+            if (flag_l == flag_reset_tickets) {
+                xinfo("xtable_vote_contract::on_timer: table %s effective votes empty but needs to be uploaded %s", contract_address.to_string().c_str(), flag_l.c_str());
+                break;
+            }
+
+            xinfo("[xtable_vote_contract::on_timer] no vote to upload. flag %s", flag_l.c_str());
             return;
         }
-    }
+    } while (false);
 
     for (auto const & v : all_effective_votes) {
         handle_votes(v.first, v.second, true);
