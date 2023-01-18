@@ -456,6 +456,10 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     auto const & flag = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY);
 
     if (flag == flag_upload_tickets_legacy || flag == flag_withdraw_tickets_legacy) {
+#if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+        std::map<common::xaccount_address_t, vote_info_map_t> const contract_ticket_reset_data{};
+        std::vector<common::xaccount_address_t> const contract_ticket_clear_data{};
+#else
         std::map<common::xaccount_address_t, vote_info_map_t> const contract_ticket_reset_data{
             std::pair<common::xaccount_address_t, vote_info_map_t>{
                 common::xaccount_address_t{"T80000e419a25a278984bbdc9fd13b9a1124c31b7b9d8f"},  // voter
@@ -482,6 +486,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
         std::vector<common::xaccount_address_t> const contract_ticket_clear_data{
             common::xaccount_address_t{"T800003821c220de1dd1d282a1f9d32dfcabb8345b4be1"},  // voter
         };
+#endif
 
         bool reset_touched{false};
 

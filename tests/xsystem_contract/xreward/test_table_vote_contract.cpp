@@ -553,7 +553,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote) {
     EXPECT_EQ(ret[advs[1]], 1902);
     EXPECT_EQ(ret[advs[2]], 3000);
     EXPECT_EQ(ret[advs[3]], 0);
-    EXPECT_EQ(contract.STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY), xstring_utl::tostring(1));
+    EXPECT_EQ(contract.STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY), "4");
 }
 
 TEST_F(xtest_table_vote_contract_dev_t, test_get_and_update_all_effective_votes_of_all_account) {
