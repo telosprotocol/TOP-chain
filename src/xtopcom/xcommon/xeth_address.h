@@ -7,7 +7,6 @@
 #include "xcommon/xaccount_address_fwd.h"
 #include "xcommon/xeth_address_fwd.h"
 #include "xbasic/xbyte_buffer.h"
-#include "xbasic/xbasic_size.hpp"
 
 #include <array>
 #include <cstdint>
@@ -66,7 +65,7 @@ public:
     bool operator==(xeth_address_t const & rhs) const noexcept;
     bool operator!=(xeth_address_t const & rhs) const noexcept;
 
-    int32_t get_ex_alloc_size() const {return get_size(hex_string_);}
+    int32_t get_ex_alloc_size() const;
 };
 
 NS_END2

@@ -522,7 +522,7 @@ TEST_F(test_txmgr_table, sendtx_mem_loss) {
     tx->add_ref();
 
     usleep(2000);
-    xstatistic_hub_t::instance()->refresh();
+    xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
     auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
     ASSERT_EQ(obj_num, 1);
@@ -568,7 +568,7 @@ TEST_F(test_txmgr_table, receipt_mem_loss) {
     xdbg("receipt_mem_loss recv_tx:%p", recv_txs[0].get());
 
     usleep(1000);
-    xstatistic_hub_t::instance()->refresh();
+    xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
     auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_receipt_num);
     ASSERT_EQ(obj_num, 1);
@@ -635,7 +635,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
         }
 
         usleep(1000);
-        xstatistic_hub_t::instance()->refresh();
+        xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
         auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
         ASSERT_EQ(obj_num, 1024);
@@ -658,7 +658,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
             }
         }
         usleep(1000);
-        xstatistic_hub_t::instance()->refresh();
+        xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
         auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
         ASSERT_EQ(obj_num, 1024*2);
@@ -682,7 +682,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
             }
         }
         usleep(1000);
-        xstatistic_hub_t::instance()->refresh();
+        xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
         auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
         ASSERT_EQ(obj_num, 1024*3);
@@ -706,7 +706,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
             }
         }
         usleep(1000);
-        xstatistic_hub_t::instance()->refresh();
+        xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
         auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
         ASSERT_EQ(obj_num, 1024*4);
@@ -730,7 +730,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
             }
         }
         usleep(1000);
-        xstatistic_hub_t::instance()->refresh();
+        xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
         auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
         ASSERT_EQ(obj_num, 1024*5);

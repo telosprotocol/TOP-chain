@@ -62,7 +62,7 @@ TEST_F(test_statistic, basic) {
 
     usleep(10000);
     std::cout << "sleep 1 millisecond." << std::endl;
-    xstatistic_hub_t::instance()->refresh();
+    xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
     auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
     ASSERT_EQ(obj_num, num);
@@ -83,7 +83,7 @@ TEST_F(test_statistic, 2_obj_type) {
 
     usleep(10000);
     std::cout << "sleep 1 millisecond." << std::endl;
-    xstatistic_hub_t::instance()->refresh();
+    xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
     auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
     ASSERT_EQ(obj_num, num);
@@ -182,7 +182,6 @@ void thread_pop1(std::vector<test_class1_t> * obj_vec, std::mutex * mutex, bool 
 }
 
 TEST_F(test_statistic, multithread_2_boj_type_BENCH) {
-    xstatistic_hub_t::instance(); // create singleton at very first time.
     std::vector<test_class_t> obj_vec;
     std::vector<test_class1_t> obj_vec1;
     std::mutex mutex;

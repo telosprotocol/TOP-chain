@@ -18,22 +18,11 @@ NS_BEG2(top, xstatistic)
 #define STATISTIC_DELAY_TIME (900)  // delay 900 um to calculate object size.
 #endif
 
-xstatistic_t * xstatistic_hub_t::_static_statistic = nullptr;
-
-xstatistic_t* xstatistic_hub_t::instance() {
-    if(_static_statistic)
-        return _static_statistic;
-
-    xdbg("xstatistic_hub_t::instance");
-    _static_statistic = new xstatistic_t();
-    return _static_statistic;
-}
-
 xstatistic_obj_face_t::xstatistic_obj_face_t(enum_statistic_class_type type) {
     m_type = type;
     xdbg("xstatistic_obj_face_t::xstatistic_obj_face_t this:%p,type:%d", this, type);
     m_create_time = base::xtime_utl::gmttime_ms();
-    xstatistic_hub_t::instance()->add_object(this);
+    xstatistic_t::instance().add_object(this);
 }
 
 xstatistic_obj_face_t::xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {
@@ -42,12 +31,12 @@ xstatistic_obj_face_t::xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) 
     m_create_time = obj.m_create_time;
     m_type = obj.m_type;
     m_size = obj.m_size;
-    xstatistic_hub_t::instance()->add_object(this);
+    xstatistic_t::instance().add_object(this);
 }
 
 void xstatistic_obj_face_t::statistic_del() {
     xdbg("xstatistic_obj_face_t::statistic_del copy this:%p,type:%d", this, m_type);
-    xstatistic_hub_t::instance()->del_object(this);
+    xstatistic_t::instance().del_object(this);
 }
 
 const int32_t xstatistic_obj_face_t::get_object_size() const {
@@ -140,26 +129,25 @@ void xobject_statistic_base_t::update_metrics(int32_t type, int32_t change_num, 
     XMETRICS_GAUGE(metrics::statistic_total_size, change_size);
 }
 
-xstatistic_t::xstatistic_t() {
-    for (uint32_t i = enum_statistic_begin; i < enum_statistic_max; i++) {
-        m_object_statistic_vec.push_back(new xobject_statistic_base_t());
-    }
+xstatistic_t & xstatistic_t::instance() {
+    static xstatistic_t statistic;
+    return statistic;
 }
 
 void xstatistic_t::add_object(xstatistic_obj_face_t * object) {
     uint32_t idx = (uint32_t)object->get_class_type();
-    m_object_statistic_vec[idx]->add_object(object);
+    m_object_statistic_arr[idx].add_object(object);
 }
 
 void xstatistic_t::del_object(xstatistic_obj_face_t * object) {
     uint32_t idx = (uint32_t)object->get_class_type();
-    m_object_statistic_vec[idx]->del_object(object);
+    m_object_statistic_arr[idx].del_object(object);
 }
 
 void xstatistic_t::refresh() {
-    for (auto & object_statistic : m_object_statistic_vec) {
+    for (auto & object_statistic : m_object_statistic_arr) {
         xdbg("xstatistic_t::refresh");
-        object_statistic->refresh();
+        object_statistic.refresh();
     }
 }
 #endif

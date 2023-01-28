@@ -1,6 +1,3 @@
-#add_compile_options(-static -Wall -Werror)
-add_compile_options(-static)
-
 include_directories(.)
 include_directories(./src)
 

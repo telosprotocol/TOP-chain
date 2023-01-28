@@ -37,6 +37,7 @@ void xreceipt_queue_internal_t::erase_tx(const std::string & hash_str) {
         } else {
             XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_confirm, delay);
         }
+
         m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), 1);
         m_tx_queue.erase(it_tx_map->second);
         m_tx_map.erase(it_tx_map);

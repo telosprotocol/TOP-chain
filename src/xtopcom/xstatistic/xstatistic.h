@@ -10,7 +10,7 @@
 #include <atomic>
 #include <string>
 
-// #define USE_MULTISET_ONLY
+#define USE_MULTISET_ONLY   // use multiset only won the best performance.  for test case test_statistic.basic, multiset cost 57ms, multiset+map cost 65ms, set cost 1272ms.
 
 NS_BEG2(top, xstatistic)
 
@@ -37,7 +37,6 @@ class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type type) {}
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
-    virtual ~xstatistic_obj_face_t() {}
     void statistic_del() {}
 private:
     virtual int32_t get_object_size_real() const = 0;
@@ -50,7 +49,6 @@ class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type type);
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj);
-    virtual ~xstatistic_obj_face_t() {}
     void statistic_del();
 
     int64_t create_time() const {return m_create_time;}
@@ -95,21 +93,14 @@ private:
 
 class xstatistic_t {
 public:
-    xstatistic_t();
-    ~xstatistic_t();
+    static xstatistic_t & instance();
     void add_object(xstatistic_obj_face_t * object);
     void del_object(xstatistic_obj_face_t * object);
     void refresh();
 private:
-    std::vector<xobject_statistic_base_t *> m_object_statistic_vec;
+    xobject_statistic_base_t m_object_statistic_arr[enum_statistic_max - enum_statistic_begin];
 };
 
-class xstatistic_hub_t {
-public:
-    static xstatistic_t* instance();
-private:
-    static xstatistic_t * _static_statistic;
-};
 #endif
 
 NS_END2
