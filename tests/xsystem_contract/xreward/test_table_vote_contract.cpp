@@ -864,6 +864,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_not_in_the_contra
 
     EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, contract_ticket_reset_data, {}));
     EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, {}, {voter}));
+
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data.empty());
 }
 
 TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_in_the_contract_table_with_reset_data) {
@@ -912,6 +916,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_in_the_contract_t
         auto const & voter_data = tickets_data.at(voter);
         EXPECT_EQ(voter_data.size(), recvers.size());
         EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
     }
 
     // reset again
@@ -932,6 +940,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_in_the_contract_t
         auto const & voter_data = tickets_data.at(voter);
         EXPECT_EQ(voter_data.size(), recvers2.size());
         EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
     }
 }
 
@@ -963,11 +975,18 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_in_the_contract_t
 
     contract.reset_v10901(xtable_vote_contract::flag_withdraw_tickets_10900, contract_ticket_reset_data, {});
 
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data == expected_voting_data);
+
     EXPECT_TRUE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, {}, {voter}));
     auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
     EXPECT_TRUE(tickets_data.empty());
     auto const & ineffective_data = contract.ineffective_data();
     EXPECT_TRUE(ineffective_data.find(voter) == std::end(ineffective_data));
+
+    contract.reset_table_tickets_data();
+    EXPECT_TRUE(contract.table_tickets_data().empty());
 }
 
 #endif
@@ -1014,6 +1033,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_not_in_the_contra
 
     EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, contract_ticket_reset_data, {}));
     EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, {}, {voter}));
+
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data.empty());
 }
 
 TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_in_the_contract_table_with_reset_data) {
@@ -1062,6 +1085,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_in_the_contract_t
         auto const & voter_data = tickets_data.at(voter);
         EXPECT_EQ(voter_data.size(), recvers.size());
         EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
     }
 
     // reset again
@@ -1082,6 +1109,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_in_the_contract_t
         auto const & voter_data = tickets_data.at(voter);
         EXPECT_EQ(voter_data.size(), recvers2.size());
         EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
     }
 }
 
@@ -1113,11 +1144,18 @@ TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_in_the_contract_t
 
     contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10901, contract_ticket_reset_data, {});
 
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data == expected_voting_data);
+
     EXPECT_TRUE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, {}, {voter}));
     auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
     EXPECT_TRUE(tickets_data.empty());
     auto const & ineffective_data = contract.ineffective_data();
     EXPECT_TRUE(ineffective_data.find(voter) == std::end(ineffective_data));
+
+    contract.reset_table_tickets_data();
+    EXPECT_TRUE(contract.table_tickets_data().empty());
 }
 
 #endif

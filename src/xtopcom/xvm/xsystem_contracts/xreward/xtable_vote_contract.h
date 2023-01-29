@@ -44,6 +44,7 @@ public:
     std::string flag() const;
     std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> tickets_data(std::string const & property_name) const;
     std::map<common::xaccount_address_t, std::map<common::xlogic_time_t, std::map<common::xaccount_address_t, uint64_t>>> ineffective_data() const;
+    std::map<common::xaccount_address_t, uint64_t> table_tickets_data() const;
 
     static std::string const flag_upload_tickets_10900;
     static std::string const flag_withdraw_tickets_10900;
@@ -213,7 +214,8 @@ private:
 
     void read_tickets_property_raw_data(std::string const & property_name, std::vector<std::string> & raw_data) const;
     vote_info_map_t get_origin_pollable_reset_data(std::vector<std::string> const & serialized_origin_data) const;
-    void reset_pollable_property(vote_info_map_t const & reset_data);
+    void reset_table_tickets_data(vote_info_map_t const & reset_data);
+    void reset_table_tickets_data();
 };
 
 NS_END2

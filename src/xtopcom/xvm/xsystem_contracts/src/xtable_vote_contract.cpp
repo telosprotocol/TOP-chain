@@ -571,14 +571,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     } while (false);
 
     if (reset_touched) {    // re-calculating aggregated table ticket data (XPORPERTY_CONTRACT_POLLABLE_KEY).
-        std::vector<std::string> raw_data;
-        read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY1, raw_data);
-        read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY2, raw_data);
-        read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY3, raw_data);
-        read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY4, raw_data);
-
-        auto const & auditor_tickets_data = get_origin_pollable_reset_data(raw_data);
-        reset_pollable_property(auditor_tickets_data);
+        reset_table_tickets_data();
 
         flag = flag_reset_tickets;
         xdbg("table %s sets reset flag", contract_address.to_string().c_str());
@@ -915,6 +908,23 @@ std::map<common::xaccount_address_t, std::map<common::xlogic_time_t, std::map<co
     return result;
 }
 
+std::map<common::xaccount_address_t, uint64_t> xtable_vote_contract::table_tickets_data() const {
+    std::map<std::string, std::string> adv_votes;
+    try {
+        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_votes);
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("table_tickets_data fail to get XPORPERTY_CONTRACT_POLLABLE_KEY. msg %s", eh.what());
+        return {};
+    }
+
+    std::map<common::xaccount_address_t, uint64_t> result;
+    for (auto const & datum : adv_votes) {
+        result[common::xaccount_address_t{datum.first}] = base::xstring_utl::touint64(datum.second);
+    }
+
+    return result;
+}
+
 bool xtable_vote_contract::reset_v10901(std::string const & flag,
                                         std::map<common::xaccount_address_t, vote_info_map_t> const & contract_ticket_reset_data,
                                         std::vector<common::xaccount_address_t> const & contract_ticket_clear_data) {
@@ -1191,7 +1201,7 @@ xtable_vote_contract::vote_info_map_t xtable_vote_contract::get_origin_pollable_
     return result;
 }
 
-void xtable_vote_contract::reset_pollable_property(vote_info_map_t const & reset_data) {
+void xtable_vote_contract::reset_table_tickets_data(vote_info_map_t const & reset_data) {
     auto const & contract_address = SELF_ADDRESS();
 
     MAP_CLEAR(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY);
@@ -1207,5 +1217,17 @@ void xtable_vote_contract::reset_pollable_property(vote_info_map_t const & reset
         xkinfo("table %s clean property %s", contract_address.to_string().c_str(), data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY);
     }
 }
+
+void xtable_vote_contract::reset_table_tickets_data() {
+    std::vector<std::string> raw_data;
+    read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY1, raw_data);
+    read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY2, raw_data);
+    read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY3, raw_data);
+    read_tickets_property_raw_data(data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY4, raw_data);
+
+    auto const & auditor_tickets_data = get_origin_pollable_reset_data(raw_data);
+    reset_table_tickets_data(auditor_tickets_data);
+}
+
 
 NS_END2
