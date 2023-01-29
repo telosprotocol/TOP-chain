@@ -188,7 +188,7 @@ void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
 
 void xtable_vote_contract::set_vote_info(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool const b_vote) {
     // votes process
-    handle_votes(account, vote_info, b_vote);
+    handle_votes(account, vote_info, b_vote, true);
     // check update time interval
     if (!is_expire(TIME())) {
         xdbg("[xtable_vote_contract::set_vote_info]  is not expire pid: %d, b_vote: %d\n", getpid(), b_vote);
@@ -238,7 +238,7 @@ void xtable_vote_contract::set_vote_info_v2(common::xaccount_address_t const & a
         auto vote_info_to_del = vote_info;
         del_all_time_ineffective_votes(vote_info_to_del, all_time_ineffective_votes);
         if (!vote_info_to_del.empty()) {
-            handle_votes(account, vote_info_to_del, b_vote);
+            handle_votes(account, vote_info_to_del, b_vote, true);
         }
     } else {
         add_all_time_ineffective_votes(TIME(), vote_info, all_time_ineffective_votes);
@@ -282,19 +282,18 @@ std::map<std::string, uint64_t> xtable_vote_contract::get_table_votes_detail(com
     return votes_table;
 }
 
-void xtable_vote_contract::handle_votes(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool const b_vote) {
+void xtable_vote_contract::handle_votes(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool const b_vote, bool const check_tickets_recver) {
     std::map<std::string, uint64_t> votes_table = get_table_votes_detail(account);
 
-    auto pid = getpid();
     for (auto const & entity : vote_info) {
         auto const & adv_account = entity.first;
         auto const & votes = entity.second;
 
-        xinfo("[xtable_vote_contract::handle_votes] b_vote: %d, voter: %s, node: %s, votes: %u, pid: %d\n", b_vote, account.to_string().c_str(), adv_account.c_str(), votes, pid);
+        xinfo("[xtable_vote_contract::handle_votes] b_vote: %d, voter: %s, node: %s, votes: %u", b_vote, account.to_string().c_str(), adv_account.c_str(), votes);
         common::xaccount_address_t address{adv_account};
-        if(b_vote){
+        if (b_vote && check_tickets_recver) {
             data::system_contract::xreg_node_info node_info;
-            auto ret = get_node_info(address, node_info);
+            auto const ret = get_node_info(address, node_info);
             XCONTRACT_ENSURE(ret == 0, "xtable_vote_contract::handle_votes: node not exist");
             XCONTRACT_ENSURE(node_info.has<common::xminer_type_t::advance>(), "xtable_vote_contract::handle_votes: only auditor can be voted");
         }
@@ -305,7 +304,7 @@ void xtable_vote_contract::handle_votes(common::xaccount_address_t const & accou
     update_table_votes_detail(account, votes_table);
 }
 
-void xtable_vote_contract::calc_advance_tickets(common::xaccount_address_t const & adv_account, uint64_t votes, std::map<std::string, uint64_t> & votes_table, bool b_vote, uint64_t & node_total_votes){
+void xtable_vote_contract::calc_advance_tickets(common::xaccount_address_t const & adv_account, uint64_t const votes, std::map<std::string, uint64_t> & votes_table, bool const b_vote, uint64_t & node_total_votes){
     uint64_t old_vote_tickets = 0;
     if (!b_vote) {
         auto iter = votes_table.find(adv_account.to_string());
@@ -606,7 +605,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     } while (false);
 
     for (auto const & v : all_effective_votes) {
-        handle_votes(v.first, v.second, true);
+        handle_votes(v.first, v.second, true, false);
     }
 
     // get update data
@@ -799,6 +798,19 @@ void xtable_vote_contract::set_all_time_ineffective_votes(common::xaccount_addre
 }
 
 void xtable_vote_contract::add_all_time_ineffective_votes(uint64_t const timestamp, vote_info_map_t const & vote_info, std::map<std::uint64_t, vote_info_map_t> & all_time_ineffective_votes) {
+    for (auto const & entity : vote_info) {
+        auto const & adv_account = entity.first;
+        auto const votes = entity.second;
+
+        xinfo("[xtable_vote_contract::add_all_time_ineffective_votes] adv account: %s, votes: %u", adv_account.c_str(), votes);
+        {
+            data::system_contract::xreg_node_info node_info;
+            auto const ret = get_node_info(common::xaccount_address_t{adv_account}, node_info);
+            XCONTRACT_ENSURE(ret == 0, "xtable_vote_contract::add_all_time_ineffective_votes: node not exist");
+            XCONTRACT_ENSURE(node_info.has<common::xminer_type_t::advance>(), "xtable_vote_contract::add_all_time_ineffective_votes: only auditor can be voted");
+        }
+    }
+
     if (all_time_ineffective_votes.count(timestamp)) {
         auto & vote_infos = all_time_ineffective_votes.at(timestamp);
         for (auto const & v : vote_info) {

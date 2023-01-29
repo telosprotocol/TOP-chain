@@ -107,7 +107,7 @@ private:
      * @param vote_info vote info map, <node account, votes> format
      * @param b_vote true - vote, false - unvote
      */
-    void handle_votes(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
+    void handle_votes(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote, bool check_tickets_recver);
 
     /**
      * @brief add vote info

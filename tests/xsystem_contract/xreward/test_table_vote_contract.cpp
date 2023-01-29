@@ -501,7 +501,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote) {
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
         map[advs[4]] = 5000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
     for (auto i = 0u; i < voters.size(); ++i) {
         std::map<common::xlogic_time_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
@@ -611,7 +611,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_on_timer_not_fork) {
         map[advs[1]] = 2000;
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
     {
         m_account_index->m_timer_height = fork_time + 100;
@@ -665,7 +665,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_vote_on_timer) {
         map[advs[1]] = 2000;
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
     {
         xtable_vote_contract::vote_info_map_t map;
@@ -673,7 +673,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_vote_on_timer) {
         map[advs[1]] = 4000;
         map[advs[2]] = 6000;
         map[advs[3]] = 8000;
-        contract.handle_votes(common::xaccount_address_t{voters[1]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[1]}, map, true, true);
     }
     {
         m_account_index->m_timer_height = fork_time + 100;
@@ -748,7 +748,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote_on_timer) {
         map[advs[1]] = 2000;
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
     {
         m_account_index->m_timer_height = fork_time + 100;
@@ -809,7 +809,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_vote_bug) {
     {
         xtable_vote_contract::vote_info_map_t map;
         map[adv] = 100;
-        contract.handle_votes(common::xaccount_address_t{voter}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voter}, map, true, true);
 
         std::map<std::uint64_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
         xtable_vote_contract::vote_info_map_t map1;
