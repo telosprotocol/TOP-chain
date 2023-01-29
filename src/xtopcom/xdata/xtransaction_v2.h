@@ -22,9 +22,6 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     xtransaction_v2_t();
  protected:
     ~xtransaction_v2_t() override;
- private:
-    xtransaction_v2_t(const xtransaction_v2_t &);
-    xtransaction_v2_t & operator = (const xtransaction_v2_t &);
  public:
     virtual int32_t    do_write(base::xstream_t & stream) override;
     virtual int32_t    do_read(base::xstream_t & stream) override;
@@ -138,6 +135,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void set_memo(const std::string & memo) override {m_memo = memo;};
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual bool is_evm_tx() const override {return false;}
+    virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_tx_v2;}
 private:
     virtual int32_t get_object_size_real() const override;
 

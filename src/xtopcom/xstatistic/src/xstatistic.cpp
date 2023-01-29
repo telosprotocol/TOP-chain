@@ -32,11 +32,11 @@ xstatistic_obj_face_t::xstatistic_obj_face_t(enum_statistic_class_type class_typ
     xstatistic_t::instance().add_object(this, class_type);
 }
 
-xstatistic_obj_face_t::xstatistic_obj_face_t(const xstatistic_obj_face_t & obj, enum_statistic_class_type class_type) {
-    // xdbg("xstatistic_obj_face_t::xstatistic_obj_face_t copy this:%p from:%p", this, &obj, class_type);
+xstatistic_obj_face_t::xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {
+    // xdbg("xstatistic_obj_face_t::xstatistic_obj_face_t copy this:%p from:%p", this, &obj, obj.get_class_type());
     m_create_time = relative_time();
     m_size = 0;
-    xstatistic_t::instance().add_object(this, class_type);
+    xstatistic_t::instance().add_object(this, obj.get_class_type());
 }
 
 xstatistic_obj_face_t & xstatistic_obj_face_t::operator = (const xstatistic_obj_face_t & obj) {
@@ -44,9 +44,9 @@ xstatistic_obj_face_t & xstatistic_obj_face_t::operator = (const xstatistic_obj_
     return *this;
 }
 
-void xstatistic_obj_face_t::statistic_del(enum_statistic_class_type class_type) {
+void xstatistic_obj_face_t::statistic_del() {
     // xdbg("xstatistic_obj_face_t::statistic_del copy this:%p,type:%d", this, class_type);
-    xstatistic_t::instance().del_object(this, class_type);
+    xstatistic_t::instance().del_object(this, get_class_type());
 }
 
 const int32_t xstatistic_obj_face_t::get_object_size() const {

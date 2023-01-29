@@ -1139,7 +1139,7 @@ namespace top
         }
         
         xvbstate_t::xvbstate_t(const xvbstate_t & obj)
-            :xvexestate_t(obj), xstatistic::xstatistic_obj_face_t(obj, xstatistic::enum_statistic_vbstate)
+            :xvexestate_t(obj), xstatistic::xstatistic_obj_face_t(obj)
         {
             m_block_types    = obj.m_block_types;
             m_block_versions = obj.m_block_versions;
@@ -1162,7 +1162,7 @@ namespace top
         
         xvbstate_t::~xvbstate_t()
         {
-            statistic_del(xstatistic::enum_statistic_vbstate);
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, -1);
         }
         

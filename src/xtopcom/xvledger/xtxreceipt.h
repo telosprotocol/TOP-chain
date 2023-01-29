@@ -48,6 +48,8 @@ namespace top
             std::string                     get_caller() const {return m_tx_action.get_caller();}
             const base::xvaction_t &        get_action() const {return m_tx_action;}
 
+            virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_receipt;}
+
         private:
             virtual int32_t                 get_object_size_real() const override;
 

@@ -33,8 +33,9 @@ enum enum_statistic_class_type {
 class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type class_type) {}
-    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj, enum_statistic_class_type class_type) {}
-    void statistic_del(enum_statistic_class_type class_type) {}
+    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
+    void statistic_del() {}
+    virtual uint32_t get_class_type() const = 0;
 private:
     virtual int32_t get_object_size_real() const = 0;
 };
@@ -42,12 +43,14 @@ private:
 class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type class_type);
-    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj, enum_statistic_class_type class_type);
+    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj);
     xstatistic_obj_face_t & operator = (const xstatistic_obj_face_t & obj);
-    void statistic_del(enum_statistic_class_type class_type);
+    void statistic_del();
 
     int32_t create_time() const {return m_create_time;}
     const int32_t get_object_size() const;
+
+    virtual uint32_t get_class_type() const = 0;
 
 private:
     virtual int32_t get_object_size_real() const = 0;

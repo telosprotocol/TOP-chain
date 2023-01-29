@@ -26,19 +26,14 @@ public:
     test_class_t(uint32_t x) : xstatistic_obj_face_t(enum_statistic_tx_v2), n(x) {
         // std::cout << "test_class_t this : " << this << std::endl;
     }
-    test_class_t(const test_class_t & obj) : xstatistic_obj_face_t(obj, enum_statistic_tx_v2) {
-        n = obj.n;
-    }
     ~test_class_t() {
-        statistic_del(enum_statistic_tx_v2);
+        statistic_del();
     }
+    virtual uint32_t get_class_type() const override {return enum_statistic_tx_v2;}
     uint32_t n{0};
 private:
     virtual int32_t get_object_size_real() const override {
-        // std::cout << "test_class_t size:" << sizeof(*this) << std::endl;
-        int32_t total_size = sizeof(*this);
-        assert(total_size == 24);
-        return total_size;
+        return sizeof(*this);
     }
 };
 
@@ -47,15 +42,12 @@ public:
     test_class1_t(uint32_t x, uint32_t y) : xstatistic_obj_face_t(enum_statistic_tx_v3), n(x), m(y) {
         // std::cout << "test_class_t this : " << this << std::endl;
     }
-    test_class1_t(const test_class1_t & obj) : xstatistic_obj_face_t(obj, enum_statistic_tx_v3) {
-        n = obj.n;
-        m = obj.m;
-    }
     ~test_class1_t() {
-        statistic_del(enum_statistic_tx_v3);
+        statistic_del();
     }
     uint32_t n{0};
     uint32_t m{0};
+    virtual uint32_t get_class_type() const override {return enum_statistic_tx_v3;}
 private:
     virtual int32_t get_object_size_real() const override {
         return sizeof(*this);
@@ -119,8 +111,7 @@ void thread_push(std::vector<test_class_t> * obj_vec, std::mutex * mutex, bool *
         if (i % 1000 == 0) {
             auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
             auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);
-            // ASSERT_EQ(obj_size, obj_num*sizeof(test_class_t));
-            assert(obj_size == obj_num*sizeof(test_class_t));
+            ASSERT_EQ(obj_size, obj_num*sizeof(test_class_t));
         }
 #endif
     }

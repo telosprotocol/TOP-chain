@@ -283,7 +283,7 @@ namespace top
         {
         }
     
-        xvcanvas_t::xvcanvas_t(const xvcanvas_t & obj) : xstatistic::xstatistic_obj_face_t(obj, xstatistic::enum_statistic_vcanvas)
+        xvcanvas_t::xvcanvas_t(const xvcanvas_t & obj) : xstatistic::xstatistic_obj_face_t(obj)
         {
             for(auto & rec : obj.m_records)
             {
@@ -298,7 +298,7 @@ namespace top
 
         xvcanvas_t::~xvcanvas_t()
         {
-            statistic_del(xstatistic::enum_statistic_vcanvas);
+            statistic_del();
             m_lock.lock();
             m_records.clear();
             m_lock.unlock();
