@@ -17,7 +17,7 @@ xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, bool readonly)
 }
 
 xtable_bstate_t::~xtable_bstate_t() {
-    statistic_del();
+    statistic_del(xstatistic::enum_statistic_table_bstate);
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, -1);
 }
 
@@ -194,7 +194,7 @@ int32_t xtable_bstate_t::get_object_size_real() const {
 
     total_size += cache_receiptid_size;
 
-    xdbg("-----cache size----- xtable_bstate_t this:%d,cache_receiptid_size:%d", sizeof(*this), cache_receiptid_size);
+    xdbg("------cache size------ xtable_bstate_t total_size:%d this:%d,cache_receiptid_size:%d", total_size, sizeof(*this), cache_receiptid_size);
     return total_size;
 }
 

@@ -38,7 +38,7 @@ xtransaction_v3_t::xtransaction_v3_t(xeth_transaction_t const& ethtx)
 }
 
 xtransaction_v3_t::~xtransaction_v3_t() {
-    statistic_del();
+    statistic_del(xstatistic::enum_statistic_tx_v3);
     MEMCHECK_REMOVE_TRACE(this);
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, -1);
 }
@@ -307,6 +307,7 @@ int32_t xtransaction_v3_t::get_object_size_real() const {
     // add string member variable alloc size.
     total_size += get_size(m_source_addr) + get_size(m_target_addr) + get_size(m_authorization) + m_ethtx.get_to().get_ex_alloc_size() +
                   m_ethtx.get_from().get_ex_alloc_size() + m_ethtx.get_data().capacity() + m_ethtx.get_accesslist().capacity()*sizeof(xeth_accesstuple_t);
+    xdbg("------cache size------ xtransaction_v3_t total_size:%d", total_size);
     return total_size;
 }
 

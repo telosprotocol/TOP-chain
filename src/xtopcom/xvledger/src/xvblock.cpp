@@ -52,12 +52,12 @@ namespace top
         
         xvheader_t::~xvheader_t()
         {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_block_header);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvheader, -1);
         }
         
         xvheader_t::xvheader_t(const xvheader_t & other)
-            :xobject_t(enum_xobject_type_vheader), xstatistic::xstatistic_obj_face_t(other)
+            :xobject_t(enum_xobject_type_vheader), xstatistic::xstatistic_obj_face_t(other, xstatistic::enum_statistic_block_header)
         {
             *this = other;
         }
@@ -279,9 +279,12 @@ namespace top
 
         int32_t xvheader_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
+            total_size += get_size(m_account) + get_size(m_comments) + get_size(m_input_hash) + get_size(m_output_hash) + get_size(m_last_block_hash) +
+                          get_size(m_last_full_block_hash) + get_size(m_extra_data);
             xdbg(
-                "xvheader_t::get_object_size_real ------cache "
-                "size------this:%d,m_account:%d,m_comments:%d,m_input_hash:%d,m_output_hash:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,m_extra_data:%d",
+                "------cache size------ xvheader_t total_size:%d "
+                "this:%d,m_account:%d,m_comments:%d,m_input_hash:%d,m_output_hash:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,m_extra_data:%d",
+                total_size,
                 sizeof(*this),
                 get_size(m_account),
                 get_size(m_comments),
@@ -290,9 +293,6 @@ namespace top
                 get_size(m_last_block_hash),
                 get_size(m_last_full_block_hash),
                 get_size(m_extra_data));
-
-            total_size += get_size(m_account) + get_size(m_comments) + get_size(m_input_hash) + get_size(m_output_hash) + get_size(m_last_block_hash) +
-                          get_size(m_last_full_block_hash) + get_size(m_extra_data);
             return total_size;
         }
         
@@ -348,7 +348,7 @@ namespace top
         }
         
         xvqcert_t::xvqcert_t(const xvqcert_t & other,enum_xdata_type type)
-        : xdataunit_t(type), xstatistic::xstatistic_obj_face_t(other)
+        : xdataunit_t(type), xstatistic::xstatistic_obj_face_t(other, xstatistic::enum_statistic_vqcert)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
@@ -374,7 +374,7 @@ namespace top
         }
         xvqcert_t::~xvqcert_t()
         {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_vqcert);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, -1);
         }
         
@@ -748,7 +748,8 @@ namespace top
             int32_t total_size = sizeof(*this);
             total_size += get_size(m_header_hash) + get_size(m_input_root_hash) + get_size(m_output_root_hash) + get_size(m_justify_cert_hash) + get_size(m_verify_signature) +
                           get_size(m_audit_signature) + get_size(m_extend_data) + get_size(m_extend_cert);
-            xdbg("-----cache size----- this:%d,xvqcert_t:%d,:%d,:%d,:%d,:%d,:%d,:%d,:%d",
+            xdbg("-----cache size----- xvqcert_t total_size:%d this:%d,xvqcert_t:%d,:%d,:%d,:%d,:%d,:%d,:%d,:%d",
+                 total_size,
                  sizeof(*this),
                  get_size(m_header_hash),
                  get_size(m_input_root_hash),
@@ -1168,7 +1169,7 @@ namespace top
     
         xvinput_t::~xvinput_t()
         {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_vinput);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, -1);
         }
     
@@ -1212,8 +1213,8 @@ namespace top
         int32_t xvinput_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             int32_t ex_alloc_aize = get_ex_alloc_size();
-            xdbg("xvinput_t::get_object_size_real ------cache size---------this:%d,m_root_hash:%d,ex_alloc_size:%d", sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             total_size += get_size(m_root_hash) + ex_alloc_aize;
+            xdbg("xvinput_t::get_object_size_real ------cache size---------total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d", total_size, sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             return total_size;
         }
 
@@ -1244,7 +1245,7 @@ namespace top
     
         xvoutput_t::~xvoutput_t()
         {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_voutput);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvoutput, -1);
         }
         
@@ -1333,11 +1334,15 @@ namespace top
         int32_t xvoutput_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             int32_t ex_alloc_aize = get_ex_alloc_size();
-            xdbg("xvoutput_t::get_object_size_real ------cache size---------this:%d,m_root_hash:%d,ex_alloc_size:%d", sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             total_size += get_size(m_root_hash) + ex_alloc_aize;
+            xdbg("------cache size------ xvoutput_t total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d",
+                 total_size,
+                 sizeof(*this),
+                 get_size(m_root_hash),
+                 ex_alloc_aize);
             return total_size;
         }
- 
+
         //---------------------------------xvblock_t---------------------------------//
         const std::string  xvblock_t::create_block_path(const std::string & account,const uint64_t height) //path pointed to vblock at DB/disk
         {
@@ -1581,7 +1586,7 @@ namespace top
         }
 
         xvblock_t::xvblock_t(const xvblock_t & other,enum_xdata_type type)
-        : xdataobj_t(type), xstatistic::xstatistic_obj_face_t(other)
+        : xdataobj_t(type), xstatistic::xstatistic_obj_face_t(other, xstatistic::enum_statistic_vblock)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvblock, 1);
             m_next_next_viewid  = 0;
@@ -1649,7 +1654,7 @@ namespace top
         
         xvblock_t::~xvblock_t()
         {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_vblock);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvblock, -1);
             if(m_vheader_ptr != NULL){
                 m_vheader_ptr->close();
@@ -2878,9 +2883,13 @@ namespace top
 
         int32_t xvblock_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
+
+            total_size += get_size(m_cert_hash) + get_size(m_dump_info) + get_size(m_offblock_snapshot) + get_size(m_parent_account) + get_size(m_vote_extend_data) +
+                          get_size(m_output_offdata) + get_size(m_proposal);
             xdbg(
-                "xvblock_t::get_object_size_real ------cache "
-                "size------ this:%d,m_cert_hash:%d,m_dump_info:%d,m_offblock_snapshot:%d,m_parent_account:%d,m_vote_extend_data:%d,m_output_offdata:%d,m_proposal:%d,m_excontainer:%d",
+                "------cache size------ xvblock_t total_size:%d "
+                "this:%d,m_cert_hash:%d,m_dump_info:%d,m_offblock_snapshot:%d,m_parent_account:%d,m_vote_extend_data:%d,m_output_offdata:%d,m_proposal:%d,m_excontainer:%d",
+                total_size,
                 sizeof(*this),
                 get_size(m_cert_hash),
                 get_size(m_dump_info),
@@ -2891,9 +2900,6 @@ namespace top
                 get_size(m_proposal),
                 (m_excontainer != nullptr) ? sizeof(m_excontainer) : 0);
 
-            total_size += get_size(m_cert_hash) + get_size(m_dump_info) + get_size(m_offblock_snapshot) + get_size(m_parent_account) + get_size(m_vote_extend_data) +
-                          get_size(m_output_offdata) + get_size(m_proposal);
-            
             // todo add m_excontainer alloc size.
             // avoid double counting for m_vheader_ptr, m_vinput_ptr, m_voutput_ptr and m_vbstate_ptr, _vqcert_ptr, m_prev_block, m_next_block and m_next_next_qcert
             return total_size;

@@ -10,8 +10,6 @@
 #include <atomic>
 #include <string>
 
-#define USE_MULTISET_ONLY   // use multiset only won the best performance.  for test case test_statistic.basic, multiset cost 57ms, multiset+map cost 65ms, set cost 1272ms.
-
 NS_BEG2(top, xstatistic)
 
 enum enum_statistic_class_type {
@@ -29,38 +27,33 @@ enum enum_statistic_class_type {
     enum_statistic_vbstate,
     enum_statistic_vcanvas,
     enum_statistic_max,
-    enum_statistic_invalid = enum_statistic_max,
 };
 
 #ifndef CACHE_SIZE_STATISTIC
 class xstatistic_obj_face_t {
 public:
-    xstatistic_obj_face_t(enum_statistic_class_type type) {}
-    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
-    void statistic_del() {}
+    xstatistic_obj_face_t(enum_statistic_class_type class_type) {}
+    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj, enum_statistic_class_type class_type) {}
+    void statistic_del(enum_statistic_class_type class_type) {}
 private:
     virtual int32_t get_object_size_real() const = 0;
 };
 #else
-// template <int type_value>
 class xstatistic_obj_face_t {
-// protected:
-//     enum { class_type_value = type_value };
 public:
-    xstatistic_obj_face_t(enum_statistic_class_type type);
-    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj);
-    void statistic_del();
+    xstatistic_obj_face_t(enum_statistic_class_type class_type);
+    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj, enum_statistic_class_type class_type);
+    xstatistic_obj_face_t & operator = (const xstatistic_obj_face_t & obj);
+    void statistic_del(enum_statistic_class_type class_type);
 
-    int64_t create_time() const {return m_create_time;}
+    int32_t create_time() const {return m_create_time;}
     const int32_t get_object_size() const;
-    int32_t get_class_type() const {return m_type;}
 
 private:
     virtual int32_t get_object_size_real() const = 0;
 
 private:
-    int64_t m_create_time{0};
-    enum_statistic_class_type m_type{enum_statistic_invalid};
+    int32_t m_create_time{0};   // Attention: time unit is millisecond, expression range of int32 is [-2147483648, 2147483647], max time is about 596 hours. It's enough for testing, but not for main net.
     mutable int32_t m_size{0};
 };
 
@@ -77,25 +70,23 @@ using xnot_calc_object_map_t = std::map<xstatistic_obj_face_t *, xnot_calc_objec
 class xobject_statistic_base_t {
 public:
     xobject_statistic_base_t() {}
-    void add_object(xstatistic_obj_face_t * object);
-    void del_object(xstatistic_obj_face_t * object);
-    void refresh();
+    void add_object(xstatistic_obj_face_t * object, uint32_t class_type);
+    void del_object(xstatistic_obj_face_t * object, uint32_t class_type);
+    void refresh(uint32_t class_type);
 private:
-    void refresh_inner(int64_t now);
+    void refresh_inner(uint32_t class_type, int64_t now);
     void update_metrics(int32_t type, int32_t change_num, int32_t change_size);
 private:
+    // use multiset only won the best performance.  for test case test_statistic.basic, multiset cost 57ms, multiset+map cost 65ms, set cost 1272ms.
     xnot_calc_object_set_t m_not_calc_object_set;
-#ifndef USE_MULTISET_ONLY
-    xnot_calc_object_map_t m_not_calc_object_map;
-#endif
     mutable std::mutex m_mutex;
 };
 
 class xstatistic_t {
 public:
     static xstatistic_t & instance();
-    void add_object(xstatistic_obj_face_t * object);
-    void del_object(xstatistic_obj_face_t * object);
+    void add_object(xstatistic_obj_face_t * object, uint32_t class_type);
+    void del_object(xstatistic_obj_face_t * object, uint32_t class_type);
     void refresh();
 private:
     xobject_statistic_base_t m_object_statistic_arr[enum_statistic_max - enum_statistic_begin];

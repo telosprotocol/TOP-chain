@@ -283,7 +283,7 @@ namespace top
         {
         }
     
-        xvcanvas_t::xvcanvas_t(const xvcanvas_t & obj) : xstatistic::xstatistic_obj_face_t(obj)
+        xvcanvas_t::xvcanvas_t(const xvcanvas_t & obj) : xstatistic::xstatistic_obj_face_t(obj, xstatistic::enum_statistic_vcanvas)
         {
             for(auto & rec : obj.m_records)
             {
@@ -298,7 +298,7 @@ namespace top
 
         xvcanvas_t::~xvcanvas_t()
         {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_vcanvas);
             m_lock.lock();
             m_records.clear();
             m_lock.unlock();
@@ -408,6 +408,7 @@ namespace top
                 total_size += method_params.size()*48; //see map_utl<std::string>::copy_from(xvmethod.h:291)
                 xdbg("------cache size------- xvcanvas_t record[%d] method_params size:%u*48, deque:64+504", i, method_params.size());
             }
+            xdbg("------cache size------ xvcanvas_t total_size:%d", total_size);
             return total_size;
         }
 

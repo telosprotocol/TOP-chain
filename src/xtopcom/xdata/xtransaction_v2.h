@@ -22,6 +22,9 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     xtransaction_v2_t();
  protected:
     ~xtransaction_v2_t() override;
+ private:
+    xtransaction_v2_t(const xtransaction_v2_t &);
+    xtransaction_v2_t & operator = (const xtransaction_v2_t &);
  public:
     virtual int32_t    do_write(base::xstream_t & stream) override;
     virtual int32_t    do_read(base::xstream_t & stream) override;

@@ -24,6 +24,10 @@ class xtable_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_
     xtable_bstate_t(base::xvbstate_t* bstate, bool readonly = true);
     ~xtable_bstate_t();
 
+   private:
+      xtable_bstate_t(const xtable_bstate_t &);
+      xtable_bstate_t & operator = (const xtable_bstate_t &);
+
  public:
     static std::string                      get_receiptid_property_name() {return XPROPERTY_TABLE_RECEIPTID;}
     static std::string                      get_receiptid_property_bin(base::xvbstate_t* bstate);
@@ -47,6 +51,7 @@ class xtable_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_
     bool                    set_receiptid_pair(base::xtable_shortid_t sid, const base::xreceiptid_pair_t & pair, base::xvcanvas_t* canvas);
     bool                    set_receiptid_pair(base::xtable_shortid_t sid, const base::xreceiptid_pair_t & pair);
 
+private:
     virtual int32_t         get_object_size_real() const override;
 
  protected:

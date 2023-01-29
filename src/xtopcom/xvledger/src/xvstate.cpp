@@ -1139,7 +1139,7 @@ namespace top
         }
         
         xvbstate_t::xvbstate_t(const xvbstate_t & obj)
-            :xvexestate_t(obj), xstatistic::xstatistic_obj_face_t(obj)
+            :xvexestate_t(obj), xstatistic::xstatistic_obj_face_t(obj, xstatistic::enum_statistic_vbstate)
         {
             m_block_types    = obj.m_block_types;
             m_block_versions = obj.m_block_versions;
@@ -1162,7 +1162,7 @@ namespace top
         
         xvbstate_t::~xvbstate_t()
         {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_vbstate);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, -1);
         }
         
@@ -1317,12 +1317,13 @@ namespace top
         int32_t xvbstate_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             auto ex_size = get_ex_alloc_size();
-            xdbg("xvbstate_t::get_object_size_real ------cache size---------this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,ex_size:%d",
+            total_size += get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + ex_size;
+            xdbg("------cache size------ xvbstate_t total_size:%d this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,ex_size:%d",
+                 total_size,
                  sizeof(*this),
                  get_size(m_last_block_hash),
                  get_size(m_last_full_block_hash),
                  ex_size);
-            total_size += get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + ex_size;
             return total_size;
         }
     };

@@ -54,6 +54,7 @@ namespace top
  
             size_t     get_op_records_size() const {return m_records.size();}
 
+        private:
             virtual int32_t get_object_size_real() const override;
             
         public://debug purpose only

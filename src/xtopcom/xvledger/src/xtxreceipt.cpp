@@ -30,7 +30,7 @@ namespace top
         }
 
         xtx_receipt_t::~xtx_receipt_t() {
-            statistic_del();
+            statistic_del(xstatistic::enum_statistic_receipt);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, -1);
         }
 
@@ -133,6 +133,7 @@ namespace top
                 total_size += m_tx_action_prove->get_object_size();
             }
 
+            xdbg("------cache size------ xtx_receipt_t total_size:%d", total_size);
             return total_size;
         }
 
