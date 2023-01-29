@@ -6,7 +6,7 @@
 #include <cinttypes>
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvblock.h"
 #include "../xvstate.h"
 #include "../xvstatestore.h"
@@ -1317,12 +1317,17 @@ namespace top
         int32_t xvbstate_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             auto ex_size = get_ex_alloc_size();
-            xdbg("xvbstate_t::get_object_size_real ------cache size---------this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,ex_size:%d",
+            total_size +=
+                get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + get_size(get_xvid_str()) + get_size(get_address()) + get_size(get_storage_key()) + ex_size;
+            xdbg("------cache size------ xvbstate_t total_size:%d this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,xvid_str:%d,address:%d,storage_key:%d,ex_size:%d",
+                 total_size,
                  sizeof(*this),
                  get_size(m_last_block_hash),
                  get_size(m_last_full_block_hash),
+                 get_size(get_xvid_str()),
+                 get_size(get_address()),
+                 get_size(get_storage_key()),
                  ex_size);
-            total_size += get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + ex_size;
             return total_size;
         }
     };

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xvblock.h"
+#include "xstatistic/xstatistic.h"
 
 #ifndef STORE_UNIT_BLOCK
 #define STORE_UNIT_BLOCK
@@ -30,7 +31,7 @@ namespace top
             enum_index_store_flags_mask           = 0xFF, //Mask to keep them
             //note:all bit has been used up, not allow add more
         };
-        class xvbindex_t : public xvaccount_t
+        class xvbindex_t : public xvaccount_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
         public:
@@ -117,9 +118,11 @@ namespace top
 
             int32_t            serialize_to(std::string & bin_data);   //write whole object to binary
             int32_t            serialize_from(const std::string & bin_data);  //read from binary and regeneate content of
+            virtual int32_t    get_class_type() const override {return xstatistic::enum_statistic_bindex;}
         private:
             void               init(); //init object
             bool               reset_next_block(xvbindex_t * _new_next_ptr);//return false if hash or height not match
+            virtual int32_t    get_object_size_real() const override;
 
         private://not serialized to db
             xvbindex_t*     m_prev_index;

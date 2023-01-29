@@ -171,6 +171,13 @@ if ((BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC) AND XUSE_JEMALLOC)
     message(FATAL_ERROR "Not allowed to enable tcmalloc and jemalloc at the same time")
 endif()
 
+if (ENABLE_JEPROF)
+    if (NOT XUSE_JEMALLOC)
+        message(FATAL_ERROR "should define use_jemalloc before enable_jeprof")
+    endif()
+    add_definitions(-DENABLE_JEPROF)
+endif()
+
 if (ADDRESS_SANITIZER)
     add_compile_options(-fsanitize=address)
 endif()
@@ -300,6 +307,10 @@ endif()
 
 if (CACHE_SIZE_STATISTIC)
     add_definitions(-DCACHE_SIZE_STATISTIC)
+endif()
+
+if (CACHE_SIZE_STATISTIC_MORE_DETAIL)
+    add_definitions(-DCACHE_SIZE_STATISTIC_MORE_DETAIL)
 endif()
 
 if (PERIOD_MOCK)

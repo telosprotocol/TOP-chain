@@ -495,7 +495,7 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     ASSERT_EQ(is_repeat, true);
 }
 
-#ifdef CACHE_SIZE_STATISTIC
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
 TEST_F(test_txmgr_table, sendtx_mem_loss) {
     mock::xvchain_creator creator;
     base::xvblockstore_t * blockstore = creator.get_blockstore();

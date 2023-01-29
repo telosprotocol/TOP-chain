@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvcontract.h"
@@ -133,6 +133,7 @@ namespace top
                 total_size += m_tx_action_prove->get_object_size();
             }
 
+            xdbg("------cache size------ xtx_receipt_t total_size:%d", total_size);
             return total_size;
         }
 

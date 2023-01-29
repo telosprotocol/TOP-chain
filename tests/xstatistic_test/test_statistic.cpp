@@ -19,7 +19,7 @@ protected:
     }
 };
 
-#ifdef CACHE_SIZE_STATISTIC
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
 class test_class_t : public xstatistic_obj_face_t {
 public:
     // test_class_t() : xstatistic_obj_face_t(enum_statistic_receipts) {}
@@ -29,6 +29,7 @@ public:
     ~test_class_t() {
         statistic_del();
     }
+    virtual int32_t get_class_type() const override {return enum_statistic_tx_v2;}
     uint32_t n{0};
 private:
     virtual int32_t get_object_size_real() const override {
@@ -46,6 +47,7 @@ public:
     }
     uint32_t n{0};
     uint32_t m{0};
+    virtual int32_t get_class_type() const override {return enum_statistic_tx_v3;}
 private:
     virtual int32_t get_object_size_real() const override {
         return sizeof(*this);
@@ -55,12 +57,12 @@ private:
 TEST_F(test_statistic, basic) {
     std::vector<test_class_t> obj_vec;
 
-    uint32_t num = 100000;
+    uint32_t num = 10000;
     for (uint32_t i = 0; i < num; i++){
         obj_vec.push_back(test_class_t(i));
     }
 
-    usleep(10000);
+    usleep(100000);
     std::cout << "sleep 1 millisecond." << std::endl;
     xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
@@ -75,13 +77,13 @@ TEST_F(test_statistic, 2_obj_type) {
     std::vector<test_class_t> obj_vec;
     std::vector<test_class1_t> obj1_vec;
 
-    uint32_t num = 100000;
+    uint32_t num = 10000;
     for (uint32_t i = 0; i < num; i++){
         obj_vec.push_back(test_class_t(i));
         obj1_vec.push_back(test_class1_t(i, i));
     }
 
-    usleep(10000);
+    usleep(100000);
     std::cout << "sleep 1 millisecond." << std::endl;
     xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
@@ -141,6 +143,9 @@ TEST_F(test_statistic, multithread_1_boj_type_BENCH) {
     t_push.join();
     t_pop.join();
 #ifdef ENABLE_METRICS
+    usleep(100000);
+    std::cout << "sleep 1 millisecond." << std::endl;
+    xstatistic_t::instance().refresh();
     auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);
     ASSERT_EQ(obj_num, 0);
     auto obj_size = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_size);

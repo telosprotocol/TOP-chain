@@ -8,9 +8,11 @@
 #include "xdb/xdb_factory.h"
 #include "xdb/xdb_face.h"
 #include "xvledger/xvdbkey.h"
+#include "xmetrics/xmetrics.h"
 
 using namespace top::db;
 using namespace std;
+using namespace top::metrics;
 
 static string DB_NAME  = "./test_db_1/";
 
@@ -63,6 +65,85 @@ void test_db_performance_write_read_different_key(const std::shared_ptr<xdb_face
     std::cout << "test_db_write_read_different_key count:" << count << " ms:" << end-begin << " qps:" << count*1000/(end-begin) << std::endl;
 }
 
+int parseLine(char *line) {
+    // This assumes that a digit will be found and the line ends in " Kb".
+    int i = strlen(line);
+    const char *p = line;
+    while (*p < '0' || *p > '9') p++;
+    line[i - 3] = '\0';
+    i = atoi(p);
+    return i;
+}
+typedef struct {
+    uint32_t virtualMem;
+    uint32_t physicalMem;
+} processMem_t;
+
+processMem_t GetProcessMemory() {
+    FILE *file = fopen("/proc/self/status", "r");
+    char line[128];
+    processMem_t processMem;
+
+    bool found_vmsize = false;
+    bool found_vmRSS = false;
+    while (fgets(line, 128, file) != NULL) {
+        if (!found_vmsize) {
+            if (strncmp(line, "VmSize:", 7) == 0) {
+                processMem.virtualMem = parseLine(line);
+                found_vmsize = true;
+            }            
+        }
+
+        if (!found_vmRSS) {
+            if (strncmp(line, "VmRSS:", 6) == 0) {
+                processMem.physicalMem = parseLine(line);
+                found_vmRSS = true;
+            }
+        }
+
+        if (found_vmsize && found_vmRSS) {
+            break;
+        }
+    }
+    fclose(file);
+    return processMem;
+}
+
+TEST_F(test_performance, db_write_endless_BENCH) {
+    string db_dir = DB_NAME;
+    std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
+    ASSERT_NE(db, nullptr);
+
+	int64_t begin = top::base::xtime_utl::gmttime_ms();
+	string key;
+	std::string value(256, 'A');
+    int64_t lasttime = begin;
+    uint32_t i = 0;
+    while(1) {
+		key = "key"+to_string(i);
+		db->write(key, value);
+        if (i%1000000 == 0) {
+            int64_t cur = top::base::xtime_utl::gmttime_ms();
+            auto mem = GetProcessMemory();
+#ifdef ENABLE_METRICS
+            db->GetDBMemStatus();
+            uint32_t mem_block_all = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_block_cache);
+            uint32_t mem_reader_memtable_all = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_table_readers);
+            uint32_t all_mem_tables = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_all_mem_tables);
+            uint32_t pinned = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_cache_pinned);
+            uint32_t total = mem_block_all + mem_reader_memtable_all + all_mem_tables + pinned;
+            std::cout << "i:" << i << ", timecost(ms):" << (cur - lasttime) << ", time begin-cur(s):" << ((cur - begin) / 1000) << ", block:" << mem_block_all
+                      << ", reader_memtable:" << mem_reader_memtable_all << ", all_mem_tables:" << all_mem_tables << ", pinned:" << pinned << ", total:" << total
+                      << ", physicalMem:" << mem.physicalMem << ", virtualMem:" << mem.virtualMem << std::endl;
+#else
+            std::cout << "i:" << i << ", timecost(ms):" << (cur - lasttime) << ", time begin-cur(s):" << ((cur - begin) / 1000) << ", physicalMem:" << mem.physicalMem
+                      << ", virtualMem:" << mem.virtualMem << std::endl;
+#endif
+            lasttime = cur;
+        }
+        i++;
+    }
+}
 
 TEST_F(test_performance, db_write_BENCH) {
     string db_dir = DB_NAME;

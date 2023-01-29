@@ -7,7 +7,7 @@
 #include "../xvblock.h"
 #include "../xventity.h"
 #include "xbase/xcontext.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xmetrics/xmetrics.h"
  
 namespace top

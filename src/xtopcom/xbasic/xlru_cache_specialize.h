@@ -5,12 +5,14 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
+#include "xbase/xbase.h"
 
 #include <cassert>
 #include <list>
 #include <mutex>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 NS_BEG2(top, basic)
 // from https://stackoverflow.com/questions/2504178/lru-cache-design
@@ -131,30 +133,40 @@ public:
     xtop_lru_cache(size_t const max_size) : max_size_{max_size} {
     }
 
-    void put(const KeyT & key, const ValueT & value) {
+    std::vector<std::pair<KeyT, ValueT>> put(const KeyT & key, const ValueT & value) {
         std::lock_guard<MutexT> lock(mutex_);
 
+        std::vector<std::pair<KeyT, ValueT>> erased_vec;
         auto it = item_map_.find(key);
         if (it != item_map_.end()) {
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
+            erased_vec.push_back({key, it->second->second});
+#endif
             item_list_.erase(it->second);
             item_map_.erase(it);
         }
         item_list_.push_front({key, value});
         item_map_.insert({key, item_list_.begin()});
-        clean_with_lock_hold();
+        clean_with_lock_hold(erased_vec);
+        return erased_vec;
     }
 
-    void put(const KeyT & key, ValueT && value) {
+    std::vector<std::pair<KeyT, ValueT>> put(const KeyT & key, ValueT && value) {
         std::lock_guard<MutexT> lock(mutex_);
 
+        std::vector<std::pair<KeyT, ValueT>> erased_vec;
         auto it = item_map_.find(key);
         if (it != item_map_.end()) {
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
+            erased_vec.push_back({key, it->second->second});
+#endif
             item_list_.erase(it->second);
             item_map_.erase(it);
         }
         item_list_.push_front({key, std::move(value)});
         item_map_.insert({key, item_list_.begin()});
-        clean_with_lock_hold();
+        clean_with_lock_hold(erased_vec);
+        return erased_vec;
     }
 
 
@@ -186,13 +198,18 @@ public:
     //    return true;
     //}
 
-    void erase(const KeyT & key) {
+    std::vector<std::pair<KeyT, ValueT>> erase(const KeyT & key) {
         std::lock_guard<MutexT> lock{mutex_};
+        std::vector<std::pair<KeyT, ValueT>> erased_vec;
         auto it = item_map_.find(key);
         if (it != item_map_.end()) {
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
+            erased_vec.push_back({key, it->second->second});
+#endif
             item_list_.erase(it->second);
             item_map_.erase(it);
         }
+        return erased_vec;
     }
 
     bool contains(KeyT const & key) const {
@@ -207,10 +224,13 @@ public:
     }
 
 private:
-    void clean_with_lock_hold() {
+    void clean_with_lock_hold(std::vector<std::pair<KeyT, ValueT>> & erased_vec) {
         while (item_map_.size() > max_size_) {
             auto last_it = item_list_.end();
             --last_it;
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
+            erased_vec.push_back({last_it->first, last_it->second});
+#endif
             item_map_.erase(last_it->first);
             item_list_.pop_back();
         }

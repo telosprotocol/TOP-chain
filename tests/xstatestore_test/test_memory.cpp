@@ -56,9 +56,9 @@ void print_metrics() {
         std::cout << "db_write " << XMETRICS_GAUGE_GET_VALUE(metrics::db_write) << std::endl;
         std::cout << "db_read " << XMETRICS_GAUGE_GET_VALUE(metrics::db_read) << std::endl;
         base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
-        std::cout << "db_block_cache_size " << XMETRICS_GAUGE_GET_VALUE(metrics::db_block_cache_size) << std::endl;
-        std::cout << "db_memtable_cache_size " << XMETRICS_GAUGE_GET_VALUE(metrics::db_memtable_cache_size) << std::endl;
-        std::cout << "db_memory_total_size " << XMETRICS_GAUGE_GET_VALUE(metrics::db_memory_total_size) << std::endl;
+        std::cout << "db_rocksdb_block_cache " << XMETRICS_GAUGE_GET_VALUE(metrics::db_rocksdb_block_cache) << std::endl;
+        std::cout << "db_rocksdb_table_readers " << XMETRICS_GAUGE_GET_VALUE(metrics::db_rocksdb_table_readers) << std::endl;
+        std::cout << "db_rocksdb_total " << XMETRICS_GAUGE_GET_VALUE(metrics::db_rocksdb_total) << std::endl;
     #endif
     }
 }
@@ -255,7 +255,7 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
             << " xvaccountobj=" << XMETRICS_GAUGE_GET_VALUE(metrics::dataobject_xvaccountobj)
             << " xvblock=" << XMETRICS_GAUGE_GET_VALUE(metrics::dataobject_xvblock)
             << " lightunit=" << XMETRICS_GAUGE_GET_VALUE(metrics::dataobject_block_lightunit)
-            << " db_cache=" << XMETRICS_GAUGE_GET_VALUE(metrics::db_memory_total_size)
+            << " db_cache=" << XMETRICS_GAUGE_GET_VALUE(metrics::db_rocksdb_total)
             << " trie_node=" << XMETRICS_GAUGE_GET_VALUE(metrics::dataobject_mpt_trie_node_cnt)
     #endif
             << std::endl;

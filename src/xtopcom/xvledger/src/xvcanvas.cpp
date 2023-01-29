@@ -6,7 +6,7 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvcanvas.h"
 
 #ifdef DEBUG
@@ -408,6 +408,7 @@ namespace top
                 total_size += method_params.size()*48; //see map_utl<std::string>::copy_from(xvmethod.h:291)
                 xdbg("------cache size------- xvcanvas_t record[%d] method_params size:%u*48, deque:64+504", i, method_params.size());
             }
+            xdbg("------cache size------ xvcanvas_t total_size:%d", total_size);
             return total_size;
         }
 

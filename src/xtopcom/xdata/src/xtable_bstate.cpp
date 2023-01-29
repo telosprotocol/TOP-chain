@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbasic/xmodule_type.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xmetrics/xmetrics.h"
 
@@ -167,7 +167,7 @@ int32_t xtable_bstate_t::get_object_size_real() const {
 
     total_size += cache_receiptid_size;
 
-    xdbg("-----cache size----- xtable_bstate_t this:%d,cache_receiptid_size:%d", sizeof(*this), cache_receiptid_size);
+    xdbg("------cache size------ xtable_bstate_t total_size:%d this:%d,cache_receiptid_size:%d", total_size, sizeof(*this), cache_receiptid_size);
     return total_size;
 }
 

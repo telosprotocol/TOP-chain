@@ -137,6 +137,8 @@ public:
 
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const override {return m_ethtx;}
 
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_tx_v3;}
+
 private:
     virtual int32_t get_object_size_real() const override;
     void    update_cache();

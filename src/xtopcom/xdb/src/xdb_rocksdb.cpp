@@ -990,15 +990,21 @@ void xdb::xdb_impl::GetDBMemStatus() const
   if (m_db != nullptr) {   
         uint64_t  mem_block_all  = 0;   
         uint64_t  mem_reader_memtable_all = 0; 
+        uint64_t  all_memtable_size = 0; 
+        uint64_t  cache_pinned_size = 0; 
         uint64_t  mem_memory_all = 0; 
         m_db->GetAggregatedIntProperty("rocksdb.block-cache-usage", &mem_block_all);
         m_db->GetAggregatedIntProperty("rocksdb.estimate-table-readers-mem", &mem_reader_memtable_all);
-        mem_memory_all = mem_block_all + mem_reader_memtable_all;
-        xinfo("rocksdb mem_block_all: %lld, reader_memtable_all %lld mem_memory_all %lld", mem_block_all, 
-              mem_reader_memtable_all, mem_memory_all);     
-        XMETRICS_GAUGE_SET_VALUE(metrics::db_block_cache_size, mem_block_all);
-        XMETRICS_GAUGE_SET_VALUE(metrics::db_memtable_cache_size, mem_reader_memtable_all);
-        XMETRICS_GAUGE_SET_VALUE(metrics::db_memory_total_size, mem_memory_all);
+        m_db->GetAggregatedIntProperty("rocksdb.cur-size-all-mem-tables", &all_memtable_size);
+        m_db->GetAggregatedIntProperty("rocksdb.block-cache-pinned-usage", &cache_pinned_size);
+        mem_memory_all = mem_block_all + mem_reader_memtable_all + all_memtable_size + cache_pinned_size;
+        xinfo("rocksdb mem_block_all: %lld, reader_memtable_all %lld all_memtable_size %lld cache_pinned_size %lld mem_memory_all %lld", mem_block_all, 
+              mem_reader_memtable_all, all_memtable_size, cache_pinned_size, mem_memory_all);     
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_rocksdb_block_cache, mem_block_all);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_rocksdb_table_readers, mem_reader_memtable_all);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_rocksdb_all_mem_tables, all_memtable_size);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_rocksdb_cache_pinned, cache_pinned_size);
+        XMETRICS_GAUGE_SET_VALUE(metrics::db_rocksdb_total, mem_memory_all);
   }
 }
 

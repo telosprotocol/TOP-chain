@@ -4,7 +4,7 @@
 
 #include "xcommon/xeth_address.h"
 
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xhex.h"
 #include "xbasic/xstring.h"

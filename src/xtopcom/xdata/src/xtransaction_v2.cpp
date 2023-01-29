@@ -7,7 +7,7 @@
 #include "xdata/xtransaction_v2.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xdata/xaction_parse.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xgenesis_data.h"
@@ -556,7 +556,7 @@ int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_typ
 int32_t xtransaction_v2_t::get_object_size_real() const {
     int32_t total_size = sizeof(*this);
     // add string member variable alloc size.
-    xdbg("xtransaction_v2_t::get_object_size ------cache size---------this:%d,m_source_addr:%d,m_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",
+    xdbg("------cache size------xtransaction_v2_t this:%d,m_source_addr:%d,m_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",
          sizeof(*this),
          get_size(m_source_addr),
          get_size(m_target_addr),
@@ -565,8 +565,8 @@ int32_t xtransaction_v2_t::get_object_size_real() const {
          get_size(m_authorization),
          get_size(m_edge_nodeid));
     xdbg(
-        "xtransaction_v2_t::get_object_size ------cache "
-        "size---------m_source_action_name:%d,m_source_action_para:%d,m_target_action_name:%d,m_target_action_para:%d,m_transaction_hash_str:%d,m_adjust_target_addr:%d",
+        "------cache size------ xtransaction_v2_t "
+        "m_source_action_name:%d,m_source_action_para:%d,m_target_action_name:%d,m_target_action_para:%d,m_transaction_hash_str:%d,m_adjust_target_addr:%d",
         get_size(m_source_action_name),
         get_size(m_source_action_para),
         get_size(m_target_action_name),
@@ -578,6 +578,7 @@ int32_t xtransaction_v2_t::get_object_size_real() const {
     total_size += get_size(m_source_addr) + get_size(m_target_addr) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
                   get_size(m_edge_nodeid) + get_size(m_source_action_name) + get_size(m_source_action_para) + get_size(m_target_action_name) + get_size(m_target_action_para) +
                   get_size(m_transaction_hash_str) + get_size(m_adjust_target_addr);
+    xdbg("------cache size------ xtransaction_v2_t total_size:%d", total_size);
     return total_size;
 }
 

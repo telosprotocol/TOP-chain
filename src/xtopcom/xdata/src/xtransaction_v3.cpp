@@ -5,7 +5,7 @@
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
 #include "xbase/xhash.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xbasic/xmodule_type.h"
 #include "xbasic/xhex.h"
 #include "xdata/xaction_parse.h"
@@ -307,6 +307,7 @@ int32_t xtransaction_v3_t::get_object_size_real() const {
     // add string member variable alloc size.
     total_size += get_size(m_source_addr) + get_size(m_target_addr) + get_size(m_authorization) + m_ethtx.get_to().get_ex_alloc_size() +
                   m_ethtx.get_from().get_ex_alloc_size() + m_ethtx.get_data().capacity() + m_ethtx.get_accesslist().capacity()*sizeof(xeth_accesstuple_t);
+    xdbg("------cache size------ xtransaction_v3_t total_size:%d", total_size);
     return total_size;
 }
 

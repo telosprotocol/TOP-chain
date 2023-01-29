@@ -9,6 +9,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xbase/xns_macro.h"
 #include "xvledger/xvblock.h"
+#include "xstatistic/xstatistic.h"
 
 NS_BEG2(top, base)
 
@@ -29,7 +30,7 @@ enum enum_xblock_consensus_type {
 };
 
 // account index info is the index info of account unit blockchain
-class xaccount_index_t {
+class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
  public:
     xaccount_index_t();
     xaccount_index_t(uint64_t height,
@@ -77,12 +78,16 @@ class xaccount_index_t {
     void                    set_tx_nonce(uint64_t txnonce);
     void                    reset_unit_hash(std::string const& unithash);
 
+    virtual int32_t         get_class_type() const override {return xstatistic::enum_statistic_account_index;}
+
  private:  // only can be set by constructor function
     // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
     void                    set_latest_unit_class(base::enum_xvblock_class _class);
     void                    set_latest_unit_type(base::enum_xvblock_type _type);
     void                    set_account_index_flag(enum_xaccount_index_flag _flag);
     void                    set_latest_unit_consensus_type(enum_xblock_consensus_type _type);
+
+    virtual int32_t         get_object_size_real() const override;
 
  private:
     uint8_t         m_version{0};

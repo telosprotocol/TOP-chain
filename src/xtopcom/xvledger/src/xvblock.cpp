@@ -6,7 +6,7 @@
 #include <limits.h>
 #include <cinttypes>
 #include "xbase/xutl.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvstate.h"
 #include "../xvblock.h"
 #include "xmetrics/xmetrics.h"
@@ -269,9 +269,12 @@ namespace top
 
         int32_t xvheader_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
+            total_size += get_size(m_account) + get_size(m_comments) + get_size(m_input_hash) + get_size(m_output_hash) + get_size(m_last_block_hash) +
+                          get_size(m_last_full_block_hash) + get_size(m_extra_data);
             xdbg(
-                "xvheader_t::get_object_size_real ------cache "
-                "size------this:%d,m_account:%d,m_comments:%d,m_input_hash:%d,m_output_hash:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,m_extra_data:%d",
+                "------cache size------ xvheader_t total_size:%d "
+                "this:%d,m_account:%d,m_comments:%d,m_input_hash:%d,m_output_hash:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,m_extra_data:%d",
+                total_size,
                 sizeof(*this),
                 get_size(m_account),
                 get_size(m_comments),
@@ -280,9 +283,6 @@ namespace top
                 get_size(m_last_block_hash),
                 get_size(m_last_full_block_hash),
                 get_size(m_extra_data));
-
-            total_size += get_size(m_account) + get_size(m_comments) + get_size(m_input_hash) + get_size(m_output_hash) + get_size(m_last_block_hash) +
-                          get_size(m_last_full_block_hash) + get_size(m_extra_data);
             return total_size;
         }
         
@@ -690,7 +690,8 @@ namespace top
             int32_t total_size = sizeof(*this);
             total_size += get_size(m_header_hash) + get_size(m_input_root_hash) + get_size(m_output_root_hash) + get_size(m_justify_cert_hash) + get_size(m_verify_signature) +
                           get_size(m_audit_signature) + get_size(m_extend_data) + get_size(m_extend_cert);
-            xdbg("-----cache size----- this:%d,xvqcert_t:%d,:%d,:%d,:%d,:%d,:%d,:%d,:%d",
+            xdbg("-----cache size----- xvqcert_t total_size:%d this:%d,xvqcert_t:%d,:%d,:%d,:%d,:%d,:%d,:%d,:%d",
+                 total_size,
                  sizeof(*this),
                  get_size(m_header_hash),
                  get_size(m_input_root_hash),
@@ -1154,8 +1155,8 @@ namespace top
         int32_t xvinput_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             int32_t ex_alloc_aize = get_ex_alloc_size();
-            xdbg("xvinput_t::get_object_size_real ------cache size---------this:%d,m_root_hash:%d,ex_alloc_size:%d", sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             total_size += get_size(m_root_hash) + ex_alloc_aize;
+            xdbg("------cache size------ xvinput_t total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d", total_size, sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             return total_size;
         }
 
@@ -1275,11 +1276,15 @@ namespace top
         int32_t xvoutput_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
             int32_t ex_alloc_aize = get_ex_alloc_size();
-            xdbg("xvoutput_t::get_object_size_real ------cache size---------this:%d,m_root_hash:%d,ex_alloc_size:%d", sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             total_size += get_size(m_root_hash) + ex_alloc_aize;
+            xdbg("------cache size------ xvoutput_t total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d",
+                 total_size,
+                 sizeof(*this),
+                 get_size(m_root_hash),
+                 ex_alloc_aize);
             return total_size;
         }
- 
+
         //---------------------------------xvblock_t---------------------------------//
         const std::string  xvblock_t::create_header_path(const std::string & account,const uint64_t height)
         {
@@ -3025,9 +3030,12 @@ namespace top
 
         int32_t xvblock_t::get_object_size_real() const {
             int32_t total_size = sizeof(*this);
+
             xdbg(
-                "xvblock_t::get_object_size_real ------cache "
-                "size------ this:%d,m_cert_hash:%d,m_dump_info:%d,m_parent_account:%d,m_vote_extend_data:%d,m_output_offdata:%d,m_proposal:%d,m_excontainer:%d",
+                "------cache size------ xvblock_t addr:%s total_size:%d "
+                "this:%d,m_cert_hash:%d,m_dump_info:%d,m_parent_account:%d,m_vote_extend_data:%d,m_output_offdata:%d,m_proposal:%d,m_excontainer:%d",
+                get_account().c_str(),
+                total_size,
                 sizeof(*this),
                 get_size(m_cert_hash),
                 get_size(m_dump_info),
