@@ -28,9 +28,6 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     xtransaction_v3_t(xeth_transaction_t const& ethtx);
  protected:
     ~xtransaction_v3_t() override;
- private:
-    xtransaction_v3_t(const xtransaction_v3_t &);
-    xtransaction_v3_t & operator = (const xtransaction_v3_t &);
  public:
     virtual int32_t    do_write(base::xstream_t & stream) override;
     virtual int32_t    do_read(base::xstream_t & stream) override;
@@ -139,6 +136,8 @@ public:
     virtual const top::evm_common::u256 get_max_fee_per_gas() const override { return m_ethtx.get_max_fee_per_gas(); }
 
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const override {return m_ethtx;}
+
+    virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_tx_v3;}
 
 private:
     virtual int32_t get_object_size_real() const override;

@@ -34,7 +34,7 @@ xunit_bstate_t::xunit_bstate_t(base::xvbstate_t* bstate, bool readonly)
 }
 
 xunit_bstate_t::~xunit_bstate_t() {
-    statistic_del(xstatistic::enum_statistic_unit_bstate);
+    statistic_del();
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_unit_state, -1);
 }
 

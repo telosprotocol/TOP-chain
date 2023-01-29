@@ -52,12 +52,12 @@ namespace top
         
         xvheader_t::~xvheader_t()
         {
-            statistic_del(xstatistic::enum_statistic_block_header);
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvheader, -1);
         }
         
         xvheader_t::xvheader_t(const xvheader_t & other)
-            :xobject_t(enum_xobject_type_vheader), xstatistic::xstatistic_obj_face_t(other, xstatistic::enum_statistic_block_header)
+            :xobject_t(enum_xobject_type_vheader), xstatistic::xstatistic_obj_face_t(other)
         {
             *this = other;
         }
@@ -348,7 +348,7 @@ namespace top
         }
         
         xvqcert_t::xvqcert_t(const xvqcert_t & other,enum_xdata_type type)
-        : xdataunit_t(type), xstatistic::xstatistic_obj_face_t(other, xstatistic::enum_statistic_vqcert)
+        : xdataunit_t(type), xstatistic::xstatistic_obj_face_t(other)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
@@ -374,7 +374,7 @@ namespace top
         }
         xvqcert_t::~xvqcert_t()
         {
-            statistic_del(xstatistic::enum_statistic_vqcert);
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, -1);
         }
         
@@ -1169,7 +1169,7 @@ namespace top
     
         xvinput_t::~xvinput_t()
         {
-            statistic_del(xstatistic::enum_statistic_vinput);
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, -1);
         }
     
@@ -1245,7 +1245,7 @@ namespace top
     
         xvoutput_t::~xvoutput_t()
         {
-            statistic_del(xstatistic::enum_statistic_voutput);
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvoutput, -1);
         }
         
@@ -1586,7 +1586,7 @@ namespace top
         }
 
         xvblock_t::xvblock_t(const xvblock_t & other,enum_xdata_type type)
-        : xdataobj_t(type), xstatistic::xstatistic_obj_face_t(other, xstatistic::enum_statistic_vblock)
+        : xdataobj_t(type), xstatistic::xstatistic_obj_face_t(other)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvblock, 1);
             m_next_next_viewid  = 0;
@@ -1654,7 +1654,7 @@ namespace top
         
         xvblock_t::~xvblock_t()
         {
-            statistic_del(xstatistic::enum_statistic_vblock);
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvblock, -1);
             if(m_vheader_ptr != NULL){
                 m_vheader_ptr->close();
