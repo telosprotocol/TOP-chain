@@ -45,8 +45,8 @@ public:
     std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> tickets_data(std::string const & property_name) const;
     std::map<common::xaccount_address_t, std::map<common::xlogic_time_t, std::map<common::xaccount_address_t, uint64_t>>> ineffective_data() const;
 
-    static std::string const flag_upload_tickets_legacy;
-    static std::string const flag_withdraw_tickets_legacy;
+    static std::string const flag_upload_tickets_10900;
+    static std::string const flag_withdraw_tickets_10900;
     static std::string const flag_reset_tickets;
     static std::string const flag_upload_tickets_10901;
     static std::string const flag_withdraw_tickets_10901;
@@ -206,15 +206,13 @@ private:
     bool reset_v10901(std::string const & flag,
                       std::map<common::xaccount_address_t, vote_info_map_t> const & contract_ticket_reset_data,
                       std::vector<common::xaccount_address_t> const & contract_ticket_clear_data);
-    void set_vote_info_v10901(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
 
     bool reset_v10902(std::string const & flag,
                       std::map<common::xaccount_address_t, vote_info_map_t> const & contract_ticket_reset_data,
                       std::vector<common::xaccount_address_t> const & contract_ticket_clear_data);
-    void set_vote_info_v10902(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
 
     void read_tickets_property_raw_data(std::string const & property_name, std::vector<std::string> & raw_data) const;
-    vote_info_map_t get_origin_pollable_reset_data(std::vector<std::string> const & serialized_origin_data);
+    vote_info_map_t get_origin_pollable_reset_data(std::vector<std::string> const & serialized_origin_data) const;
     void reset_pollable_property(vote_info_map_t const & reset_data);
 };
 

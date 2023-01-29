@@ -35,10 +35,10 @@ extern top::optional<xfork_point_t> v1_7_0_block_fork_point;
 extern top::optional<xfork_point_t> v1_7_0_sync_point;
 extern top::optional<xfork_point_t> v1_9_0_state_fork_point;  // unitstate not include tx related info
 extern top::optional<xfork_point_t> xbft_msg_upgrade;
-extern top::optional<xfork_point_t> v1_9_0_vote_contract_update_point;
-extern top::optional<xfork_point_t> v10901_reset;
+extern top::optional<xfork_point_t> v10900_upgrade_table_tickets_contract;
+extern top::optional<xfork_point_t> v10901_table_tickets_reset;
 extern top::optional<xfork_point_t> v10901_enable_voting;
-extern top::optional<xfork_point_t> v10902_reset;
+extern top::optional<xfork_point_t> v10902_table_tickets_reset;
 extern top::optional<xfork_point_t> v10902_enable_voting;
 
 NS_END2

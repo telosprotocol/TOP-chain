@@ -27,8 +27,8 @@ std::string calc_voter_tickets_storage_property_name(common::xaccount_address_t 
     return std::string{data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY_BASE} + "-" + std::to_string(sub_map_no);
 }
 
-std::string const xtable_vote_contract::flag_upload_tickets_legacy{"0"};
-std::string const xtable_vote_contract::flag_withdraw_tickets_legacy{"1"};
+std::string const xtable_vote_contract::flag_upload_tickets_10900{"0"};
+std::string const xtable_vote_contract::flag_withdraw_tickets_10900{"1"};
 std::string const xtable_vote_contract::flag_reset_tickets{"2"};
 std::string const xtable_vote_contract::flag_upload_tickets_10901{"3"};
 std::string const xtable_vote_contract::flag_withdraw_tickets_10901{"4"};
@@ -103,13 +103,15 @@ void xtable_vote_contract::setup() {
 
 // vote related
 void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
-    if (!chain_fork::xutility_t::is_forked(fork_points::v10901_enable_voting, TIME())) {
-        xinfo("voteNode is not enabled for now");
-        return;
+    auto const timestamp = TIME();
+
+    if (!chain_fork::xutility_t::is_forked(fork_points::v10902_enable_voting, timestamp)) {
+        xkinfo("voteNode is not enabled for now");
+        XCONTRACT_ENSURE(false, "voteNode is not enabled yet");
+        top::unreachable();
     }
 
     XMETRICS_TIME_RECORD("sysContract_tableVote_vote_node");
-    auto const timestamp = TIME();
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xinfo("[xtable_vote_contract::voteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s, pid: %d\n",
           timestamp,
@@ -125,17 +127,9 @@ void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
     XMETRICS_PACKET_INFO("sysContract_tableVote_vote_node", "timer round", std::to_string(timestamp), "voter address", account.to_string());
 
     do {
-        if (chain_fork::xutility_t::is_forked(fork_points::v10902_enable_voting, timestamp)) {
-            set_vote_info_v10902(account, vote_info, true);
-            break;
-        }
-
-        if (chain_fork::xutility_t::is_forked(fork_points::v10901_enable_voting, timestamp)) {
-            set_vote_info_v10901(account, vote_info, true);
-            break;
-        }
-
-        if (chain_fork::xutility_t::is_forked(fork_points::v1_9_0_vote_contract_update_point, timestamp)) {
+        if (chain_fork::xutility_t::is_forked(fork_points::v10902_enable_voting, timestamp) ||
+            chain_fork::xutility_t::is_forked(fork_points::v10901_enable_voting, timestamp) ||
+            chain_fork::xutility_t::is_forked(fork_points::v10900_upgrade_table_tickets_contract, timestamp)) {
             set_vote_info_v2(account, vote_info, true);
             break;
         }
@@ -147,13 +141,15 @@ void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
 }
 
 void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
-    if (!chain_fork::xutility_t::is_forked(fork_points::v10901_enable_voting, TIME())) {
-        xinfo("voteNode is not enabled for now");
-        return;
+    auto const timestamp = TIME();
+
+    if (!chain_fork::xutility_t::is_forked(fork_points::v10902_enable_voting, timestamp)) {
+        xkinfo("voteNode is not enabled for now");
+        XCONTRACT_ENSURE(false, "unvoteNode is not enabled yet");
+        top::unreachable();
     }
 
     XMETRICS_TIME_RECORD("sysContract_tableVote_unvote_node");
-    auto const timestamp = TIME();
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xinfo("[xtable_vote_contract::unvoteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s", timestamp, account.to_string().c_str(), SELF_ADDRESS().to_string().c_str());
 
@@ -164,19 +160,23 @@ void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
                      "xtable_vote_contract::unvoteNode: transaction_type must be xtransaction_type_abolish_vote");
     XMETRICS_PACKET_INFO("sysContract_tableVote_unvote_node", "timer round", std::to_string(timestamp), "unvoter address", account.to_string());
 
+
     do {
         if (chain_fork::xutility_t::is_forked(fork_points::v10902_enable_voting, timestamp)) {
-            set_vote_info_v10902(account, vote_info, false);
+            set_vote_info_v2(account, vote_info, false);
+            STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_withdraw_tickets_10902);
             break;
         }
 
         if (chain_fork::xutility_t::is_forked(fork_points::v10901_enable_voting, timestamp)) {
-            set_vote_info_v10901(account, vote_info, false);
+            set_vote_info_v2(account, vote_info, false);
+            STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_withdraw_tickets_10901);
             break;
         }
 
-        if (chain_fork::xutility_t::is_forked(fork_points::v1_9_0_vote_contract_update_point, timestamp)) {
+        if (chain_fork::xutility_t::is_forked(fork_points::v10900_upgrade_table_tickets_contract, timestamp)) {
             set_vote_info_v2(account, vote_info, false);
+            STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_withdraw_tickets_10900);
             break;
         }
 
@@ -240,7 +240,6 @@ void xtable_vote_contract::set_vote_info_v2(common::xaccount_address_t const & a
         if (!vote_info_to_del.empty()) {
             handle_votes(account, vote_info_to_del, b_vote);
         }
-        STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_withdraw_tickets_legacy);
     } else {
         add_all_time_ineffective_votes(TIME(), vote_info, all_time_ineffective_votes);
     }
@@ -479,7 +478,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     bool reset_touched;
 
     do {
-        if (chain_fork::xutility_t::is_forked(fork_points::v10902_reset, timestamp)) {
+        if (chain_fork::xutility_t::is_forked(fork_points::v10902_table_tickets_reset, timestamp)) {
 #if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
             std::map<common::xaccount_address_t, vote_info_map_t> const contract_ticket_reset_data{};
 #else
@@ -527,7 +526,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
             break;
         }
 
-        if (chain_fork::xutility_t::is_forked(fork_points::v10901_reset, timestamp)) {
+        if (chain_fork::xutility_t::is_forked(fork_points::v10901_table_tickets_reset, timestamp)) {
 #if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
             std::map<common::xaccount_address_t, vote_info_map_t> const contract_ticket_reset_data{};
             std::vector<common::xaccount_address_t> const contract_ticket_clear_data{};
@@ -598,7 +597,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     auto const all_effective_votes = get_and_update_all_effective_votes_of_all_account(timestamp);
     do {
         if (all_effective_votes.empty()) {
-            if (flag == flag_withdraw_tickets_10902 || flag == flag_withdraw_tickets_10901 || flag == flag_withdraw_tickets_legacy) {
+            if (flag == flag_withdraw_tickets_10902 || flag == flag_withdraw_tickets_10901 || flag == flag_withdraw_tickets_10900) {
                 xinfo("xtable_vote_contract::on_timer: table %s effective votes empty but needs to be uploaded %s", contract_address.to_string().c_str(), flag.c_str());
                 break;
             }
@@ -924,7 +923,7 @@ bool xtable_vote_contract::reset_v10901(std::string const & flag,
 
     bool reset_touched{false};
 
-    if (flag == flag_upload_tickets_legacy || flag == flag_withdraw_tickets_legacy) {
+    if (flag == flag_upload_tickets_10900 || flag == flag_withdraw_tickets_10900) {
         for (auto const & voter_and_data : contract_ticket_reset_data) {
             auto const & voter = top::get<common::xaccount_address_t const>(voter_and_data);
             if (contract_address.table_id() != voter.table_id()) {
@@ -1037,38 +1036,6 @@ bool xtable_vote_contract::reset_v10901(std::string const & flag,
     }
 
     return reset_touched;
-}
-
-void xtable_vote_contract::set_vote_info_v10901(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool const b_vote) {
-    auto all_time_ineffective_votes = get_all_time_ineffective_votes(account);
-#if defined(DEBUG)
-    {
-        xdbg("voter %s %s tickets; time:%" PRIu64, account.to_string().c_str(), b_vote ? "deposit" : "withdraw", TIME());
-        for (auto const & d : vote_info) {
-            xdbg("\tadv:%s;tickets:%" PRIu64, d.first.c_str(), d.second);
-        }
-    }
-    {
-        xdbg("voter %s read ineffective votes", account.to_string().c_str());
-        for (auto const & d : all_time_ineffective_votes) {
-            xdbg("\tvoteTime:%" PRIu64 "\n", d.first);
-            for (auto const & detail : d.second) {
-                xdbg("\tadv:%s;tickets:%" PRIu64, detail.first.c_str(), detail.second);
-            }
-        }
-    }
-#endif
-    if (!b_vote) {
-        auto vote_info_to_del = vote_info;
-        del_all_time_ineffective_votes(vote_info_to_del, all_time_ineffective_votes);
-        if (!vote_info_to_del.empty()) {
-            handle_votes(account, vote_info_to_del, b_vote);
-        }
-        STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_withdraw_tickets_10901);
-    } else {
-        add_all_time_ineffective_votes(TIME(), vote_info, all_time_ineffective_votes);
-    }
-    set_all_time_ineffective_votes(account, all_time_ineffective_votes);
 }
 
 bool xtable_vote_contract::reset_v10902(std::string const & flag,
@@ -1194,38 +1161,6 @@ bool xtable_vote_contract::reset_v10902(std::string const & flag,
     return reset_touched;
 }
 
-void xtable_vote_contract::set_vote_info_v10902(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool const b_vote) {
-    auto all_time_ineffective_votes = get_all_time_ineffective_votes(account);
-#if defined(DEBUG)
-    {
-        xdbg("voter %s %s tickets; time:%" PRIu64, account.to_string().c_str(), b_vote ? "deposit" : "withdraw", TIME());
-        for (auto const & d : vote_info) {
-            xdbg("\tadv:%s;tickets:%" PRIu64, d.first.c_str(), d.second);
-        }
-    }
-    {
-        xdbg("voter %s read ineffective votes", account.to_string().c_str());
-        for (auto const & d : all_time_ineffective_votes) {
-            xdbg("\tvoteTime:%" PRIu64 "\n", d.first);
-            for (auto const & detail : d.second) {
-                xdbg("\tadv:%s;tickets:%" PRIu64, detail.first.c_str(), detail.second);
-            }
-        }
-    }
-#endif
-    if (!b_vote) {
-        auto vote_info_to_del = vote_info;
-        del_all_time_ineffective_votes(vote_info_to_del, all_time_ineffective_votes);
-        if (!vote_info_to_del.empty()) {
-            handle_votes(account, vote_info_to_del, b_vote);
-        }
-        STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_withdraw_tickets_10902);
-    } else {
-        add_all_time_ineffective_votes(TIME(), vote_info, all_time_ineffective_votes);
-    }
-    set_all_time_ineffective_votes(account, all_time_ineffective_votes);
-}
-
 void xtable_vote_contract::read_tickets_property_raw_data(std::string const & property_name, std::vector<std::string> & raw_data) const {
     std::map<std::string, std::string> data;
 
@@ -1235,7 +1170,7 @@ void xtable_vote_contract::read_tickets_property_raw_data(std::string const & pr
     }
 }
 
-xtable_vote_contract::vote_info_map_t xtable_vote_contract::get_origin_pollable_reset_data(std::vector<std::string> const & serialized_origin_data) {
+xtable_vote_contract::vote_info_map_t xtable_vote_contract::get_origin_pollable_reset_data(std::vector<std::string> const & serialized_origin_data) const {
     vote_info_map_t result;
 
     for (auto const & raw_auditor_tickets_data : serialized_origin_data) {
