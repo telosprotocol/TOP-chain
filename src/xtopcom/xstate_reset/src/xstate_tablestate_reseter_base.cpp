@@ -49,21 +49,22 @@ void xstate_tablestate_reseter_base::account_set_property(std::string const & ac
         return;
     }
 
-    //if (unit_state->height() == 0) {
-    //    xwarn("xstate_tablestate_reseter_base::account_set_property find genesis unit state object of account %s", account_address.c_str());
-    //    return;
-    //}
-    
+    if (unit_state->height() <= 1) {
+        xwarn("xstate_tablestate_reseter_base::account_set_property find genesis unit state object of account %s", account_address.c_str());
+        return;
+    }
+
     if (property_type == "map") {
         top::unreachable();
     }
 
     if (property_type == "uint64") {
-        xkinfo("account_set_property: account address %s; property name %s; property type %s; value %s",
+        xkinfo("account_set_property: account address %s; property name %s; property type %s; value %s; unit height %" PRIu64,
                account_address.c_str(),
                property_name.c_str(),
                property_type.c_str(),
-               property_value.c_str());
+               property_value.c_str(),
+               unit_state->height());
         unit_state->uint64_set(property_name, base::xstring_utl::touint64(property_value));
     }
 }
