@@ -10,9 +10,6 @@
 
 NS_BEG2(top, state_reset)
 
-// might not be useful.
-typedef enum { invalid, map, list, interger } state_property_type_t;
-
 xstate_tablestate_reseter_continuous_sample::xstate_tablestate_reseter_continuous_sample(statectx::xstatectx_face_ptr_t statectx_ptr, std::string const & fork_name)
   : xstate_tablestate_reseter_base{statectx_ptr}, m_json_parser{statectx_ptr->get_table_address(), fork_name} {
 }

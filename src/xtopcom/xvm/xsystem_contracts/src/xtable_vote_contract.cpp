@@ -480,8 +480,15 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
         if (chain_fork::xutility_t::is_forked(fork_points::v10902_table_tickets_reset, timestamp)) {
 #if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
             std::map<common::xaccount_address_t, vote_info_map_t> const contract_ticket_reset_data{};
+            std::vector<common::xaccount_address_t> const contract_ticket_clear_data{};
 #else
             std::map<common::xaccount_address_t, vote_info_map_t> const contract_ticket_reset_data{
+                std::pair<common::xaccount_address_t, vote_info_map_t>{
+                    common::xaccount_address_t{"T00000LSpJQpbgAX1NVG9Z1xff8Do7yLPeB9bivm"},  // voter
+                    vote_info_map_t{
+                        std::pair<std::string, uint64_t>{"T00000LSpJQpbgAX1NVG9Z1xff8Do7yLPeB9bivm", 21470000}
+                    }
+                },
                 std::pair<common::xaccount_address_t, vote_info_map_t>{
                     common::xaccount_address_t{"T80000e419a25a278984bbdc9fd13b9a1124c31b7b9d8f"},  // voter
                     vote_info_map_t{                                                               // {adv, ticket count}
@@ -512,14 +519,44 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
                    }
                 },
                 std::pair<common::xaccount_address_t, vote_info_map_t>{
+                    common::xaccount_address_t{"T80000174dba8a0f1adedb1d2ec9d7bcf7f365bd5358e9"},  // voter
+                    vote_info_map_t{                                                               // {adv, ticket count}
+                        std::pair<std::string, uint64_t>{"T80000dba88236ddb99ffa1c31a6ca65ca6a8c642109ad", 2060296}
+                   }
+                },
+                std::pair<common::xaccount_address_t, vote_info_map_t>{
+                    common::xaccount_address_t{"T800008de3d618bf8cd6cd95bbf44d5d51f6137f669711"},  // voter
+                    vote_info_map_t{                                                               // {adv, ticket count}
+                        std::pair<std::string, uint64_t>{"T8000027363d7be59b5537a6a5ce7de9dbefa826f70b63", 255431}
+                    }
+                },
+                std::pair<common::xaccount_address_t, vote_info_map_t>{
+                    common::xaccount_address_t{"T80000896640d688ceb552c4b498b32a6cc0acb21e64cf"},  // voter
+                    vote_info_map_t{                                                               // {adv, ticket count}
+                        std::pair<std::string, uint64_t>{"T800000139af69c102783786e46f7cb900a11d8efe0480", 5000},
+                        std::pair<std::string, uint64_t>{"T00000LMBQ52vWWq17L7VCVVZkwMD1m1W4hZZEXR", 200000},
+                        std::pair<std::string, uint64_t>{"T80000b7a8155da635d974d06ea8b25885164ca226d1d5", 11000},
+                        std::pair<std::string, uint64_t>{"T00000LNTsgQq8sGgXmJSNMqEpze9bnqjrTpbk4K", 11000},
+                        std::pair<std::string, uint64_t>{"T00000LLbZMiWkKQdgNbMrsfJ2wW2b2ay6aegco8", 400011},
+                        std::pair<std::string, uint64_t>{"T8000056ab5fa5b3cc76881184119d410826cdc7eb26f6", 4000},
+                        std::pair<std::string, uint64_t>{"T00000LUswbTgsTpUCbgn4Dh1y3seenQwNJD8Gbv", 631000},
+                        std::pair<std::string, uint64_t>{"T00000LPEFL9d7ZXosYfA9XQGWe2z7HRB8DYzFJ6", 458000},
+                        std::pair<std::string, uint64_t>{"T00000LLbUf4MyKSZm6nMqFeL5wH3frCUUssThYH", 1000},
+                        std::pair<std::string, uint64_t>{"T00000LRLZ9dAmzxvtHxEv8fa6cGfKGB3n8b1w7K", 1000},
+                    }
+                },
+                std::pair<common::xaccount_address_t, vote_info_map_t>{
                     common::xaccount_address_t{"T800003821c220de1dd1d282a1f9d32dfcabb8345b4be1"},  // voter
                     vote_info_map_t{                                                               // {adv, ticket count}
                         std::pair<std::string, uint64_t>{"T00000LMBQ52vWWq17L7VCVVZkwMD1m1W4hZZEXR", 1317286}
-                   }
+                    }
                 }
             };
+
+            std::vector<common::xaccount_address_t> const contract_ticket_clear_data{
+                common::xaccount_address_t{"T800001753d40631a3ad31568c3141272cac45692888d1"}
+            };
 #endif
-            std::vector<common::xaccount_address_t> const contract_ticket_clear_data{};
 
             reset_touched = reset_v10902(flag, contract_ticket_reset_data, contract_ticket_clear_data);
             break;

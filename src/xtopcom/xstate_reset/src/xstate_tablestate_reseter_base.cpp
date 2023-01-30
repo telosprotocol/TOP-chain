@@ -42,20 +42,30 @@ void xstate_tablestate_reseter_base::account_set_property(std::string const & ac
                                                           std::string const & property_name,
                                                           std::string const & property_type,
                                                           std::string const & property_value) {
-    auto unit_state = m_statectx_ptr->load_unit_state(common::xaccount_address_t{account_address});
+    auto const unit_state = m_statectx_ptr->load_unit_state(common::xaccount_address_t{account_address});
     assert(unit_state);
     if (unit_state == nullptr) {
         xwarn("xstate_tablestate_reseter_base::account_set_property find empty unit state object of account %s", account_address.c_str());
         return;
     }
-    // unit_state->get_bstate()->get_property_value
+
+    //if (unit_state->height() == 0) {
+    //    xwarn("xstate_tablestate_reseter_base::account_set_property find genesis unit state object of account %s", account_address.c_str());
+    //    return;
+    //}
+    
     if (property_type == "map") {
-        // TODO
-        // unit_state->map_set(property_name,)
+        top::unreachable();
     }
-    // else if (property_type == "string") {
-    //     unit_state->string_set(property_name, property_value);
-    // }
+
+    if (property_type == "uint64") {
+        xkinfo("account_set_property: account address %s; property name %s; property type %s; value %s",
+               account_address.c_str(),
+               property_name.c_str(),
+               property_type.c_str(),
+               property_value.c_str());
+        unit_state->uint64_set(property_name, base::xstring_utl::touint64(property_value));
+    }
 }
 
 void xstate_tablestate_reseter_base::account_set_state(std::string const & account_address, std::string const & hex_state_data) {

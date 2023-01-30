@@ -18,6 +18,8 @@ NS_BEG2(top, state_reset)
 /// while not care how this data come from (no json parse code here)
 class xstate_tablestate_reseter_base {
 public:
+    virtual ~xstate_tablestate_reseter_base() = default;
+
     xstate_tablestate_reseter_base(statectx::xstatectx_face_ptr_t statectx_ptr);
 
     //! In override methods, parameter cnt must have default value = 0;
@@ -29,7 +31,6 @@ protected:
     void account_set_property(std::string const & account_address, std::string const & property_name, std::string const & property_type, std::string const & property_value);
     void account_set_state(std::string const & account_address, std::string const & hex_state_data);
 
-private:
     statectx::xstatectx_face_ptr_t m_statectx_ptr;
     base::xvaccount_t m_table_account;  // todo use xtable_address_t
 };

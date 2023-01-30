@@ -44,6 +44,7 @@ xstate_reseter::xstate_reseter(statectx::xstatectx_face_ptr_t statectx_ptr, std:
 bool xstate_reseter::exec_reset() {
     // 0. if constructor well . might exit more early.
     if (!m_need_fork) {
+        xdbg("xstate_reseter::exec_reset need fork = false");
         return false;
     }
     // 1. check contain contract self-tx. each table && each fork need this check.
@@ -58,17 +59,19 @@ bool xstate_reseter::exec_reset() {
     if (fork_info_contract_unit_state == nullptr) {
         return false;
     }
-    auto fork_properties = fork_info_contract_unit_state->string_get(std::string{data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY});
+    auto const fork_properties = fork_info_contract_unit_state->string_get(std::string{data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY});
 
 #define IS_FORK_POINT_FROM(from_properties, fork_point)                                                                                                                            \
-    (chain_fork::xutility_t::is_forked(fork_points::fork_point, m_current_time_block_height) && fork_properties == from_properties)
+    (chain_fork::xutility_t::is_forked(fork_points::fork_point, m_current_time_block_height) && fork_properties == (from_properties))
 
     /// @brief Sample fork code, one and for all.
-    /// if (IS_FORK_POINT_FROM("", TEST_FORK)) {
-    ///     xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_sample>(m_statectx_ptr, "TEST_FORK");
-    ///     return reseter_ptr->exec_reset_tablestate();
-    /// }
+    if (IS_FORK_POINT_FROM("", v10902_table_tickets_reset)) {
+        xkinfo("xstate_reseter::exec_reset v10902_table_tickets_reset enabled");
+        auto reseter_ptr = top::make_unique<xstate_tablestate_reseter_sample>(m_statectx_ptr, std::string{"v10902_table_tickets_reset"});
+        return reseter_ptr->exec_reset_tablestate();
+    }
 
+    xkinfo("xstate_reseter::exec_reset v10902_table_tickets_reset not enabled");
     /// @brief Sample fork code, continues block 
     /// if (IS_FORK_POINT_FROM("", TEST_FORK)) {
     ///     xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_continuous_sample>(m_statectx_ptr, "TEST_FORK");
@@ -89,7 +92,7 @@ bool xstate_reseter::exec_reset() {
 bool xstate_reseter::check_tx_contains_contract() {
     if (m_corresponse_contract_address.empty() || m_txs_ptr->empty()) {
         return false;
-    };
+    }
     xinfo("xstate_reseter: m_corresponse_contract_address:%s", m_corresponse_contract_address.c_str());
     return std::find_if(m_txs_ptr->begin(), m_txs_ptr->end(), [&](data::xcons_transaction_ptr_t & tx) {
                if (tx->is_self_tx() && tx->get_source_addr() == tx->get_target_addr() && tx->get_source_addr() == m_corresponse_contract_address) {
