@@ -5,7 +5,7 @@
 
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvexeunit.h"
 #include "xmetrics/xmetrics.h"
 

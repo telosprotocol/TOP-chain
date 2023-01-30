@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xvledger/xprovecert.h"
 #include "xmetrics/xmetrics.h"
 

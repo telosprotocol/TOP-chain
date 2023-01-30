@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvcontract.h"

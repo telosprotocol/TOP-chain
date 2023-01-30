@@ -6,7 +6,7 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvinstruction.h"
 #include "../xvaction.h"
 #include "xmetrics/xmetrics.h"

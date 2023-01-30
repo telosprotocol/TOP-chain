@@ -56,7 +56,9 @@ private:
     virtual int32_t get_object_size_real() const = 0;
 
 private:
-    int32_t m_create_time{0};   // Attention: time unit is millisecond, expression range of int32 is [-2147483648, 2147483647], max time is about 596 hours. It's enough for testing, but not for main net.
+    // Attention: time unit is millisecond, expression range of int32 is [-2147483648, 2147483647], max time is about 596 hours.
+    // It's enough for testing, but not for main net.
+    int32_t m_create_time{0};
     mutable int32_t m_size{0};
 };
 

@@ -6,7 +6,7 @@
 #include <limits.h>
 #include <cinttypes>
 #include "xbase/xutl.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvstate.h"
 #include "../xvblock.h"
 #include "xmetrics/xmetrics.h"

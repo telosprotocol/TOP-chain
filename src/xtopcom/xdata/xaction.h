@@ -7,7 +7,7 @@
 #include <string>
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xutility/xhash.h"
 #include "xdata/xdatautil.h"
 #include "json/json.h"

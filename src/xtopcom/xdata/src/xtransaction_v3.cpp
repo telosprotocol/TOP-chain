@@ -5,7 +5,7 @@
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
 #include "xbase/xhash.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xbasic/xmodule_type.h"
 #include "xbasic/xhex.h"
 #include "xdata/xaction_parse.h"

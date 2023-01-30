@@ -7,7 +7,7 @@
 #include "xdata/xtransaction_v2.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xdata/xaction_parse.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xgenesis_data.h"

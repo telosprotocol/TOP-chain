@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbasic/xmodule_type.h"
-#include "xbasic/xbasic_size.hpp"
+#include "xstatistic/xbasic_size.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xmetrics/xmetrics.h"
 
