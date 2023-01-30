@@ -144,7 +144,7 @@ m_store_shadow(shadow){
 
         std::shared_ptr<xevent_monitor_t> monitor = std::make_shared<xevent_monitor_t>(i, make_observer(bus.get()), thread_pool[i], timer, this);
         m_monitor_list.push_back(monitor);
-
+        //rank, why do this? empty object
         std::unordered_map<std::string, xchain_downloader_face_ptr_t> empty_chains;
         m_vector_chains.push_back(empty_chains);
     }

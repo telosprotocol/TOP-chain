@@ -338,6 +338,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         std::vector<common::xnode_address_t> neighbor_addresses;
         std::vector<common::xnode_address_t> archive_addresses;
 
+        //rank, get all info,  and get again at void xsync_peer_keeper_t::add_role(const vnetwork::xvnode_address_t& addr)
         if (common::has<common::xnode_type_t::consensus_validator>(vnetwork_driver->type())) {
             auto const & parents_info = vnetwork_driver->parents_info2();
             for (auto const & info : parents_info) {

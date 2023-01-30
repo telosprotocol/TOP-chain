@@ -21,6 +21,8 @@ print_help(std::string const & executable_name) {
     std::cout << " " << "address type: 0, 6 and 8 are of user type addresses.  others are system addresses." << std::endl;
     std::cout << "  " << "system types includes:" << std::endl;
     std::cout << "   " << "2: system contract type" << std::endl;
+    std::cout << "   " << "3: custom contract type" << std::endl;
+    std::cout << "   " << "a: block address type" << std::endl;
     std::cout << " " << "network id: 0 represents mainnet.  If you don't set it, defaults to mainnet(0)" << std::endl;
     std::cout << " " << "zone index: we have at most 16 zone index." << std::endl;
     std::cout << "  " << "0: consensus zone index" << std::endl;

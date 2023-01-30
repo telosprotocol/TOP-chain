@@ -28,7 +28,7 @@ main(int argc, char * argv[]) {
     new xhashtest_t();
     testing::InitGoogleTest(&argc, argv);
 
-    xinit_log("./a.log", true, true);
+    xinit_log("./xsync_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");

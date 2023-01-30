@@ -29,6 +29,7 @@ public:
     uint64_t lowest_unused_height();
     uint64_t index();
     std::pair<uint64_t, uint64_t> get_continuous_unused_interval(const std::pair<uint64_t, uint64_t> height_interval);
+    bool height_exist(uint64_t height);
 public:
     static uint64_t index(uint64_t height);
     static const int32_t m_quota_of_bitmap = 1024;
