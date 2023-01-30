@@ -686,6 +686,12 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statistic_voutput_num);
         RETURN_METRICS_NAME(statistic_vbstate_num);
         RETURN_METRICS_NAME(statistic_vcanvas_num);
+        RETURN_METRICS_NAME(statistic_mpt_state_object_num);
+        RETURN_METRICS_NAME(statistic_mpt_trie_node_num);
+        RETURN_METRICS_NAME(statistic_mailbox_num);
+        RETURN_METRICS_NAME(statistic_net_send_num);
+        RETURN_METRICS_NAME(statistic_net_recv_num);
+        RETURN_METRICS_NAME(statistic_mpt_node_cache_num);
         RETURN_METRICS_NAME(statistic_tx_v2_size);
         RETURN_METRICS_NAME(statistic_tx_v3_size);
         RETURN_METRICS_NAME(statistic_receipt_size);
@@ -698,6 +704,12 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statistic_voutput_size);
         RETURN_METRICS_NAME(statistic_vbstate_size);
         RETURN_METRICS_NAME(statistic_vcanvas_size);
+        RETURN_METRICS_NAME(statistic_mpt_state_object_size);
+        RETURN_METRICS_NAME(statistic_mpt_trie_node_size);
+        RETURN_METRICS_NAME(statistic_mailbox_size);
+        RETURN_METRICS_NAME(statistic_net_send_size);
+        RETURN_METRICS_NAME(statistic_net_recv_size);
+        RETURN_METRICS_NAME(statistic_mpt_node_cache_size);
         RETURN_METRICS_NAME(statistic_total_size);
 #endif
 

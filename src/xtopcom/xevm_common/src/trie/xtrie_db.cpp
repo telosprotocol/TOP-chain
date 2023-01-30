@@ -90,7 +90,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
         return nullptr;
     }
     // put into clean cache
-    cleans_.put(hash, enc);
+    cleans_put(hash, enc);
     return xtrie_node_rlp::must_decode_node(hash, enc);
 }
 
@@ -120,7 +120,7 @@ xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
         return xbytes_t{};
     }
     // put into clean cache
-    cleans_.put(hash, enc);
+    cleans_put(hash, enc);
     return enc;
 }
 
@@ -209,7 +209,7 @@ void xtop_trie_db::commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & da
     dirties_.erase(hash);
 
     // and move it to cleans:
-    cleans_.put(hash, enc);
+    cleans_put(hash, enc);
     // todo mark size everywhere with cleans/dirties' insert/erase/...
 }
 
@@ -222,7 +222,7 @@ void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
             return;
         }
 
-        cleans_.erase(hash);
+        cleans_erase(hash);
 
         assert(dirties_.find(hash) == dirties_.end());
 
@@ -281,7 +281,7 @@ void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hash
     std::vector<gsl::span<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes.size());
     for (auto const & hash : pruned_hashes) {
-        cleans_.erase(hash);
+        cleans_erase(hash);
         assert(dirties_.find(hash) == dirties_.end());
         pruned_keys.emplace_back(hash);
     }
@@ -317,6 +317,39 @@ xbytes_t xtop_trie_db::preimage_key(xh256_t const & hash_key) const {
     res.insert(res.begin(), PreimagePrefix.begin(), PreimagePrefix.end());
     res.insert(res.end(), hash_key.begin(), hash_key.end());
     return res;
+}
+
+void xtop_trie_db::cleans_put(xh256_t const & hash, xbytes_t const & data) {
+#ifndef CACHE_SIZE_STATISTIC
+    cleans_.put(hash, data);
+#else
+    auto erased_vec = cleans_.put(hash, data);
+    int32_t inc_num = 1 - (int32_t)erased_vec.size();
+    int32_t list_node_size = sizeof(xh256_t) + sizeof(xbytes_t) + 16;
+    int32_t unorderd_map_node_size = 24;
+    int32_t inc_size = (list_node_size + unorderd_map_node_size)*inc_num + data.capacity()*sizeof(xbyte_t);
+    for (auto & erased : erased_vec) {
+        inc_size -= erased.second.capacity()*sizeof(xbyte_t);
+    }
+    XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_num, inc_num);
+    XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_size, inc_size);
+    XMETRICS_GAUGE(metrics::statistic_total_size, inc_size);
+#endif
+}
+
+
+void xtop_trie_db::cleans_erase(xh256_t const & hash) {
+#ifndef CACHE_SIZE_STATISTIC
+    cleans_.erase(hash);
+#else
+    auto erased = cleans_.erase(hash);
+    XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_num, -1);
+    int32_t list_node_size = sizeof(xh256_t) + sizeof(xbytes_t) + 16;
+    int32_t unorderd_map_node_size = 24;
+    int32_t dec_size = (int32_t)(list_node_size + unorderd_map_node_size + erased.second.capacity()*sizeof(xbyte_t));
+    XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_size, -dec_size);
+    XMETRICS_GAUGE(metrics::statistic_total_size, -dec_size);
+#endif
 }
 
 // ============

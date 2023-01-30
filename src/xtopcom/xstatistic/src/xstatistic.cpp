@@ -107,9 +107,6 @@ void xobject_statistic_base_t::update_metrics(int32_t type, int32_t change_num, 
     int num_metrics_tag = metrics::statistic_tx_v2_num + type - enum_statistic_begin;
     int size_metrics_tag = metrics::statistic_tx_v2_size + type - enum_statistic_begin;
 
-    if (type == enum_statistic_tx_v2) {
-        assert(change_size == change_num*24);
-    }
     XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)num_metrics_tag, change_num);
     XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)size_metrics_tag, change_size);
     XMETRICS_GAUGE(metrics::statistic_total_size, change_size);

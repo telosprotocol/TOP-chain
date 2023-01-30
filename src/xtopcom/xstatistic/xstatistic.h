@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbase/xdata.h"
+// #include "xbase/xdata.h"
 #include "xbasic/xmemory.hpp"
 
 #include <atomic>
@@ -26,6 +26,11 @@ enum enum_statistic_class_type {
     enum_statistic_voutput,
     enum_statistic_vbstate,
     enum_statistic_vcanvas,
+    enum_statistic_mpt_state_object,
+    enum_statistic_mpt_trie_node,
+    enum_statistic_mailbox,
+    enum_statistic_net_send,
+    enum_statistic_net_recv,
     enum_statistic_max,
 };
 

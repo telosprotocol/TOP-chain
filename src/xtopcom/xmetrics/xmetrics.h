@@ -730,6 +730,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     ethtx_get_from,
 
 #ifdef CACHE_SIZE_STATISTIC
+    // calculate by xstatistic_t
     statistic_tx_v2_num,
     statistic_tx_v3_num,
     statistic_receipt_num,
@@ -742,7 +743,16 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_voutput_num,
     statistic_vbstate_num,
     statistic_vcanvas_num,
+    statistic_mpt_state_object_num,
+    statistic_mpt_trie_node_num,
+    statistic_mailbox_num,
+    statistic_net_send_num,
+    statistic_net_recv_num,
 
+    // calculate by special way.
+    statistic_mpt_node_cache_num,
+
+    // calculate by xstatistic_t
     statistic_tx_v2_size,
     statistic_tx_v3_size,
     statistic_receipt_size,
@@ -755,6 +765,14 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_voutput_size,
     statistic_vbstate_size,
     statistic_vcanvas_size,
+    statistic_mpt_state_object_size,
+    statistic_mpt_trie_node_size,
+    statistic_mailbox_size,
+    statistic_net_send_size,
+    statistic_net_recv_size,
+
+    // calculate by special way.
+    statistic_mpt_node_cache_size,
 
     statistic_total_size,
 #endif

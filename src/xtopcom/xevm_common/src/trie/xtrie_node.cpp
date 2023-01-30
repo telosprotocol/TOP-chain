@@ -9,6 +9,7 @@
 #if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
 #endif
+#include "xstatistic/xbasic_size.hpp"
 
 #include <cassert>
 #include <sstream>
@@ -41,17 +42,17 @@ void xtop_node_flag::dirty(bool const dirty) noexcept {
     dirty_ = dirty;
 }
 
-#if defined(ENABLE_METRICS)
+// #if defined(ENABLE_METRICS)
 
-xtop_trie_node_face::xtop_trie_node_face() noexcept {
+xtop_trie_node_face::xtop_trie_node_face() noexcept : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_mpt_trie_node) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_mpt_trie_node_cnt, 1);
 }
 
-xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face const &) {
+xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face const & other) : xstatistic::xstatistic_obj_face_t(other) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_mpt_trie_node_cnt, 1);
 }
 
-xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face &&) noexcept {
+xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face &&) noexcept : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_mpt_trie_node) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_mpt_trie_node_cnt, 1);
 }
 
@@ -59,7 +60,11 @@ xtop_trie_node_face::~xtop_trie_node_face() noexcept {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_mpt_trie_node_cnt, -1);
 }
 
-#endif
+// #endif
+
+xtop_trie_hash_node::~xtop_trie_hash_node() {
+    statistic_del();
+}
 
 xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t const & hash_data) : hash_{hash_data} {
 }
@@ -86,6 +91,14 @@ xtrie_node_type_t xtop_trie_hash_node::type() const noexcept {
     return xtrie_node_type_t::hashnode;
 }
 
+int32_t xtop_trie_hash_node::get_object_size_real() const {
+    return sizeof(*this);
+}
+
+xtop_trie_value_node::~xtop_trie_value_node() {
+    statistic_del();
+}
+
 xtop_trie_value_node::xtop_trie_value_node(xbytes_t data)
     : m_data{std::move(data)} {
 }
@@ -107,6 +120,14 @@ xtrie_node_cached_data_t xtop_trie_value_node::cache() const {
 
 xtrie_node_type_t xtop_trie_value_node::type() const noexcept {
     return xtrie_node_type_t::valuenode;
+}
+
+int32_t xtop_trie_value_node::get_object_size_real() const {
+    return sizeof(*this) + m_data.capacity()*sizeof(xbyte_t);
+}
+
+xtop_trie_short_node::~xtop_trie_short_node() {
+    statistic_del();
 }
 
 xtop_trie_short_node::xtop_trie_short_node(xbytes_t _key, xtrie_node_face_ptr_t _val, xnode_flag_t flag)
@@ -168,6 +189,14 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     }
 
     append(buf, RLP::encodeList(encoded));
+}
+
+int32_t xtop_trie_short_node::get_object_size_real() const {
+    return sizeof(*this) + key.capacity()*sizeof(xbyte_t);
+}
+
+xtop_trie_full_node::~xtop_trie_full_node() {
+    statistic_del();
 }
 
 xtop_trie_full_node::xtop_trie_full_node(xnode_flag_t f) : flags{std::move(f)} {
@@ -260,6 +289,22 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     append(buf, RLP::encodeList(encoded));
 }
 
+int32_t xtop_trie_full_node::get_object_size_real() const {
+    return sizeof(*this);
+}
+
+xtop_trie_raw_node::~xtop_trie_raw_node() {
+    statistic_del();
+}
+
+int32_t xtop_trie_raw_node::get_object_size_real() const {
+    return sizeof(*this) + m_data.capacity()*sizeof(xbyte_t);
+}
+
+xtop_trie_raw_full_node::~xtop_trie_raw_full_node() {
+    statistic_del();
+}
+
 void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
     encoded.reserve(1024);
@@ -317,6 +362,14 @@ void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     append(buf, RLP::encodeList(encoded));
 }
 
+int32_t xtop_trie_raw_full_node::get_object_size_real() const {
+    return sizeof(*this);
+}
+
+xtop_trie_raw_short_node::~xtop_trie_raw_short_node() {
+    statistic_del();
+}
+
 void xtop_trie_raw_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
     encoded.reserve(1024);
@@ -360,6 +413,10 @@ void xtop_trie_raw_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     }
 
     append(buf, RLP::encodeList(encoded));
+}
+
+int32_t xtop_trie_raw_short_node::get_object_size_real() const {
+    return sizeof(*this) + Key.capacity()*sizeof(xbyte_t);
 }
 
 NS_END3

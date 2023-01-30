@@ -117,6 +117,10 @@ private:
     void commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec);
 
     xbytes_t preimage_key(xh256_t const & hash_key) const;
+
+    void cleans_put(xh256_t const & hash, xbytes_t const & data);
+
+    void cleans_erase(xh256_t const & hash);
 };
 using xtrie_db_t = xtop_trie_db;
 using xtrie_db_ptr_t = std::shared_ptr<xtrie_db_t>;
