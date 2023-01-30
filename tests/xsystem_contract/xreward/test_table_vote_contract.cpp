@@ -176,6 +176,20 @@ static std::vector<std::string> advs = {
     "T00000LYUST38rkkHeFn7edrYQJWbjhnJDqs58sq",
 };
 
+static std::vector<std::string> validators = {
+    "T80000b2a8697e7a72542637d1b6c696642ad97bec6feb", "T800007395208c7681bf66f74711ea41c766cd4bf1561a", "T80000382fc7b70e7c490f19a20f4a99402d51a984674a",
+    "T80000a36a6d82fa55894ea36d7b043522b808fef45695", "T800009bd1a948541e82c66d9f408a29aa3d28a8501afc", "T80000cb9443e74cc8d362752c88f589c9d1d12feeb5a9",
+    "T8000047af5ada6db181d000a0c90aaa4535e6b78c3804", "T80000a674a507fdd986ad2c40a90b8e9935c440d52893", "T80000bc1769315744f5dd54289f418374f9ef6b6864f5",
+    "T800000c65dd5cce9d7f89079c72c37883a72186d4a3fc", "T80000ce1564070a34cea122a9e64d34ce7b19ef48bf8e", "T800007834238ad4f698e6a2689451468fb55e7b563d3b",
+    "T80000c2a47a2ccd629b6677e0464ab4f61cfc54120e18", "T80000da9e3fa379cd18f396419968dd8f76fd76650c48", "T8000086ead9e12f1acccf291dc916bd20943f45b18695",
+    "T8000019cd5e985a531ad03cfa078b770d33162c7a836b", "T80000421aee1ca67d86a95b7066d564a01208077b080f", "T80000ebfa4f6b30ac91f778a14ac2e2b066d1c347c38a",
+    "T8000021318c50c2d830a6f8909d1586ed2a8b03cc4ee3", "T80000671d45285872bf2a2fbde0bc138b80a00a958eb0", "T8000011e5cb4b3ed7bc3b2aa2d70ea9c5c1c79e30d9e5",
+    "T800002a7130d1de4984bebc04e5912317a758ebb4ab1d", "T80000265adc6da24906bb809abdaf05bbec8e70681fec", "T8000055364f052a0b56aa324e239df04117608159502a",
+    "T80000fc67c750c620e2cca0829a29533f54a3d968e9f5", "T800001360a952acfdc3f8eac6f3733c04e912a423abda", "T80000359bcb3c1a761b373e5217c8047fe75367812e35",
+    "T80000088f898caa66399039e4ef8f43dbe1af110a976a", "T80000a914cc9791057bd77d7d6744135c3e8d2a830533", "T80000caec82f6e880d37d8c6478591a0f317e4ae98b87",
+    "T800006af5f308d4a9ee3d8f0989dc37d6129a894a20f6", "T800009d4560ba28bdb7d2bce559de6b6ffa676764c241",
+};
+
     // m_registered_miner_type
 
     // virtual const data::xtablestate_ptr_t &     get_table_state() const = 0;
@@ -189,23 +203,31 @@ static std::vector<std::string> advs = {
     // virtual std::string             get_table_address() const = 0;
     // virtual bool                    is_state_dirty() const = 0;
 
-class xmock_statectx_t : public statectx::xstatectx_face_t {
+class xmock_statectx_t final : public statectx::xstatectx_face_t {
  public:
     xmock_statectx_t() {
         m_state = make_object_ptr<base::xvbstate_t>(sys_contract_rec_registration_addr, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
         auto canvas = make_object_ptr<base::xvcanvas_t>();
         m_state->new_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, canvas.get());
-        for (auto adv : advs) {
+        for (auto const & adv : advs) {
             data::system_contract::xreg_node_info info;
-            info.m_registered_miner_type = common::xenum_miner_type::advance;
+            info.miner_type(common::xenum_miner_type::advance);
             base::xstream_t stream(base::xcontext_t::instance());
             info.serialize_to(stream);
             m_state->load_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY)->insert(adv, {reinterpret_cast<char *>(stream.data()), static_cast<size_t>(stream.size())}, canvas.get());
         }
+        for (auto const & val : validators) {
+            data::system_contract::xreg_node_info info;
+            info.miner_type(common::xenum_miner_type::validator);
+            base::xstream_t stream(base::xcontext_t::instance());
+            info.serialize_to(stream);
+            m_state->load_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY)
+                ->insert(val, {reinterpret_cast<char *>(stream.data()), static_cast<size_t>(stream.size())}, canvas.get());
+        }
         m_unitstate = std::make_shared<data::xunit_bstate_t>(m_state.get(), false);
     }
 
-    ~xmock_statectx_t() = default;
+    ~xmock_statectx_t() override = default;
 
     const data::xtablestate_ptr_t & get_table_state() const override {
         assert(false);
@@ -220,11 +242,11 @@ class xmock_statectx_t : public statectx::xstatectx_face_t {
         assert(false);
         return nullptr;
     }
-    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr) {
+    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr) override {
         assert(addr.to_string() == sys_contract_rec_registration_addr);
         return m_unitstate;
     }
-    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr, uint64_t height) {
+    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr, uint64_t height) override {
         assert(addr.to_string() == sys_contract_rec_registration_addr);
         return m_unitstate;
     }
@@ -369,6 +391,20 @@ TEST_F(xtest_table_vote_contract_dev_t, test_add_all_time_ineffective_votes_old_
     EXPECT_EQ(all_time_ineffective_votes[1][advs[2]], 4);
     EXPECT_EQ(all_time_ineffective_votes[1][advs[3]], 3);
     EXPECT_EQ(all_time_ineffective_votes[1][advs[4]], 4);
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_add_all_time_ineffective_votes_validator) {
+    std::map<std::uint64_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
+    xtable_vote_contract::vote_info_map_t map;
+    map[validators[2]] = 2;
+    map[validators[4]] = 4;
+    EXPECT_THROW(contract.add_all_time_ineffective_votes(1, map, all_time_ineffective_votes), top::error::xtop_error_t);
+    try {
+        contract.add_all_time_ineffective_votes(1, map, all_time_ineffective_votes);
+    } catch (top::error::xtop_error_t const & eh) {
+        std::string const msg = eh.what();
+        ASSERT_TRUE(msg.find("only auditor can be voted") != std::string::npos);
+    }
 }
 
 TEST_F(xtest_table_vote_contract_dev_t, test_del_all_time_ineffective_votes_del_all) {

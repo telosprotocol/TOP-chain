@@ -41,6 +41,8 @@ class xstatectx_face_t {
     virtual void                    do_commit(base::xvblock_t* current_block) {return;}  // TODO(jimmy) do commit changed state to db
     virtual std::string             get_table_address() const = 0;
     virtual bool                    is_state_dirty() const = 0;
+
+    virtual ~xstatectx_face_t() = default;
 };
 using xstatectx_face_ptr_t = std::shared_ptr<xstatectx_face_t>;
 
