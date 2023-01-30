@@ -71,6 +71,8 @@ void usage() {
     std::cout << "        - db_prune [db_path] " << std::endl;
     std::cout << "        - export <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
     std::cout << "        - export_bstate <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
+    std::cout << "        - db_read_span_account_height " << std::endl;
+    std::cout << "        - db_read_span_account account_height " << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 

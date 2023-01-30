@@ -4,10 +4,13 @@
 #include "common_func.h"
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_store_shadow.h"
+#include "xsync/xchain_downloader.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
 #include "xblockstore/src/xvblockhub.h"
+#include "xdata/xblocktool.h"
+
 
 using namespace top;
 using namespace top::sync;
@@ -36,6 +39,7 @@ public:
     }
 
     void save_block(uint64_t start_height, uint64_t end_height);
+    void save_empty_block();
 
     void test_interval_no_blocks_in_span(uint64_t cp_start_height, uint64_t cp_end_height);
     void test_interval_blocks_in_span(uint64_t cp_start_height, uint64_t cp_end_height, uint64_t check_start_height, uint64_t check_end_height);
@@ -61,6 +65,40 @@ void test_xsync_chain_down::save_block(uint64_t store_start_height, uint64_t sto
         m_height_set.insert(start_height);
         start_height++;
     }
+
+    //auto height =  m_blockstore->update_get_latest_cp_connected_block_height(address);
+    //std::cout << "save_block  height " << height << std::endl;
+}
+
+void test_xsync_chain_down::save_empty_block()
+{
+     std::string address = m_mocktable.get_account();
+     xvaccount_t account(address);
+
+     auto disconnect_block = m_mocktable.generate_tableblock();
+     uint64_t disconnect_height = disconnect_block->get_height();
+
+     m_mocktable.genrate_table_chain(50, m_blockstore);
+     const std::vector<xblock_ptr_t>& tables = m_mocktable.get_history_tables();
+     xassert(tables.size() == (MAX_BLOCK_TEST + 50 + 1));
+
+     /*
+                                  /--meptyblock disconnect_height
+                                 /
+     block(disconnect_height-1)--
+                                 \
+                                  \--block(h=disconnect_height+1)---blocks
+   */
+
+     for (uint64_t i = 0; i < tables.size(); i++) {
+        if (i == (disconnect_height)) {
+            ASSERT_TRUE(m_blockstore->store_block(account, disconnect_block.get()));
+            continue;
+        }
+        m_height_set.insert(i);
+        auto curr_block = tables[i].get();
+        ASSERT_TRUE(m_blockstore->store_block(account, curr_block));
+     }
 }
 
 void test_xsync_chain_down::test_interval_no_blocks_in_span(uint64_t cp_start_height, uint64_t cp_end_height)
@@ -183,5 +221,109 @@ TEST_F(test_xsync_chain_down, test_xsync_1024_test)
 {
     save_block(1, 1100);
     test_interval_blocks_in_span(1000, 1200, 1101, 1200);
+}
+
+TEST_F(test_xsync_chain_down, test_xsync_span_genesis_time_reflash)
+{
+   
+    save_block(1, 6);
+    save_block(7, 2);
+    save_block(11, 4);
+
+    std::string address = m_mocktable.get_account();
+    xvaccount_t account(address);
+
+    std::unique_ptr<xsync_store_shadow_t> store_shadow(top::make_unique<sync::xsync_store_shadow_t>());
+    xsync_store_t sync_store("", make_observer(m_blockstore), store_shadow.get());
+
+    std::shared_ptr<xsync_chain_spans_t> chain_spans_new = std::make_shared<xsync_chain_spans_t>(2, &sync_store, address);
+    chain_spans_new->initialize();
+    uint64_t refresh_time_1 = 0;
+    uint64_t refresh_time_2 = 0;
+    for (auto height : m_height_set) {
+        chain_spans_new->set(height);
+        if(0 == refresh_time_1) {
+            refresh_time_1 = chain_spans_new->genesis_height_refresh_time_ms();
+            refresh_time_2 = chain_spans_new->genesis_height_refresh_time_ms();
+        }
+        sleep(1);
+        if(0 < height && height < 8) {
+            refresh_time_2 = chain_spans_new->genesis_height_refresh_time_ms();
+            ASSERT_NE(refresh_time_1, refresh_time_2);
+        } else if(height == 8) {
+            refresh_time_1 = chain_spans_new->genesis_height_refresh_time_ms();
+        } else { 
+            refresh_time_2 = chain_spans_new->genesis_height_refresh_time_ms();
+            ASSERT_EQ(refresh_time_1, refresh_time_2);
+        }
+    }
+    uint64_t genesis_height = chain_spans_new->genesis_connect_height();
+    ASSERT_EQ(8, genesis_height);
+}
+
+TEST_F(test_xsync_chain_down, test_xsync_cp_reflash_lost)
+{
+    save_block(1, 8);
+    save_block(11, 10);
+
+    std::string address = m_mocktable.get_account();
+    xvaccount_t account(address);
+
+    std::unique_ptr<xsync_store_shadow_t> store_shadow(top::make_unique<sync::xsync_store_shadow_t>());
+    xsync_store_t sync_store("", make_observer(m_blockstore), store_shadow.get());
+
+    std::shared_ptr<xsync_chain_spans_t> chain_spans_new = std::make_shared<xsync_chain_spans_t>(2, &sync_store, address);
+    chain_spans_new->initialize();
+
+    xchain_object_t cp_object;
+    vnetwork::xvnode_address_t self_addr, target_addr;
+
+    for (auto height : m_height_set) {
+        chain_spans_new->set(height);
+        cp_object.set_object_t(height, height + 1, self_addr, target_addr);
+        cp_object.set_height(height);
+    }
+    uint64_t cp_lost_height = sync_store.get_latest_end_block_height(address, (enum_chain_sync_policy)2);
+    ASSERT_EQ(8, cp_lost_height);
+ 
+    // first record
+    cp_object.get_behind_height_real(0, &sync_store, 2, address);
+    int64_t now = 200000;
+    // timeout,reset request height
+    uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
+    ASSERT_EQ(8, cp_connect_height);
+}
+
+TEST_F(test_xsync_chain_down, test_xsync_or_cp_reflash_disconnect)
+{
+    save_empty_block();
+
+    std::string address = m_mocktable.get_account();
+    xvaccount_t account(address);
+
+    std::unique_ptr<xsync_store_shadow_t> store_shadow(top::make_unique<sync::xsync_store_shadow_t>());
+    xsync_store_t sync_store("", make_observer(m_blockstore), store_shadow.get());
+
+    std::shared_ptr<xsync_chain_spans_t> chain_spans_new = std::make_shared<xsync_chain_spans_t>(2, &sync_store, address);
+    chain_spans_new->initialize();
+
+    xchain_object_t cp_object;
+    vnetwork::xvnode_address_t self_addr, target_addr;
+
+    for (auto height : m_height_set) {
+        chain_spans_new->set(height);
+        cp_object.set_object_t(height, height + 1, self_addr, target_addr);
+        cp_object.set_height(height);
+    }
+
+    uint64_t cp_disconnect_height = sync_store.get_latest_end_block_height(address, (enum_chain_sync_policy)2);
+    ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_disconnect_height);
+
+    // first record
+    cp_object.get_behind_height_real(0, &sync_store, 2, address);
+    int64_t now = 200000;
+    // timeout,reset request height
+    uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
+    ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_connect_height);
 }
 

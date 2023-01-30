@@ -174,9 +174,9 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
             return 1;
         }
     }
-
-    if (connect_height == connect_immutable_height) {
-        return connect_height;
+    //connect_height will be 0 first
+    if (connect_height < connect_immutable_height) {
+        return connect_immutable_height;
     } else {
         return connect_height + 2;
     }
