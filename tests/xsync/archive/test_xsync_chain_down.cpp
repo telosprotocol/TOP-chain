@@ -5,6 +5,7 @@
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_store_shadow.h"
 #include "xsync/xchain_downloader.h"
+#include "xsync/xchain_downloader.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
