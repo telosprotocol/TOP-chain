@@ -820,9 +820,17 @@ void xchain_object_t::clear() {
 uint64_t xchain_object_t::get_behind_height_real(const int64_t now, xsync_store_face_t* xsync_store,
                                                  const uint32_t sync_type, const std::string& address)
 {
-    uint64_t request_height = m_current_height;
+    if(m_regular_time == 0) {
+        m_regular_time = now;
+        m_fix_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type);
+    }
 
-    if ((m_regular_time == 0) || (now - m_regular_time > 120000)) {
+    if(m_current_height < m_fix_height ){
+       m_current_height = m_fix_height;
+    }
+
+    uint64_t request_height = m_current_height;
+    if (now - m_regular_time > 120000) {
         m_regular_time = now;
         uint64_t cur_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type);
         if (m_fix_height == cur_height) {
@@ -833,6 +841,7 @@ uint64_t xchain_object_t::get_behind_height_real(const int64_t now, xsync_store_
         } else {
             m_fix_height = cur_height;
         }
+        
     }
 
     xdbg("get_behind_height_real request height account is %s, genesis height %llu", address.c_str(), request_height);
