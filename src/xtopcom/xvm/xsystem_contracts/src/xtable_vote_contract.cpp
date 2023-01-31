@@ -517,13 +517,13 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
                         std::pair<std::string, uint64_t>{"T00000LeW4yvkwMex8LRCjZDTVTz64QzkVsUxAeq", 10000000},
                         std::pair<std::string, uint64_t>{"T00000LfVPF4BQx5hQSP5LpL64gDCedvXjpApPrK", 10000000},
                         std::pair<std::string, uint64_t>{"T00000LhsQ8nti6Eug2FKQ5Wzeosq6q9RDHEf6pZ", 1600000},
-                   }
+                    }
                 },
                 std::pair<common::xaccount_address_t, vote_info_map_t>{
                     common::xaccount_address_t{"T80000174dba8a0f1adedb1d2ec9d7bcf7f365bd5358e9"},  // voter
                     vote_info_map_t{                                                               // {adv, ticket count}
                         std::pair<std::string, uint64_t>{"T80000dba88236ddb99ffa1c31a6ca65ca6a8c642109ad", 2060296}
-                   }
+                    }
                 },
                 std::pair<common::xaccount_address_t, vote_info_map_t>{
                     common::xaccount_address_t{"T800008de3d618bf8cd6cd95bbf44d5d51f6137f669711"},  // voter
@@ -589,7 +589,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
                         std::pair<std::string, uint64_t>{"T00000LLQihYMwRDDeytKptzHM3VxpEoABYz4Qne", 10000000},
                         std::pair<std::string, uint64_t>{"T00000LY2gm2ApdNQTnEuSdnqJRn6zG9gPyptpXJ", 2000000},
                         std::pair<std::string, uint64_t>{"T00000LMBQ52vWWq17L7VCVVZkwMD1m1W4hZZEXR", 1317286}
-                }
+                    }
                 }
             };
 
@@ -607,7 +607,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
 
     } while (false);
 
-    if (reset_touched) {    // re-calculating aggregated table ticket data (XPORPERTY_CONTRACT_POLLABLE_KEY).
+    if (reset_touched) {  // re-calculating aggregated table ticket data (XPORPERTY_CONTRACT_POLLABLE_KEY).
         reset_table_tickets_data();
 
         flag = flag_reset_tickets;
@@ -658,7 +658,13 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     split_and_report(sys_contract_rec_registration_addr, "update_batch_stake_v2", adv_votes);
     split_and_report(sys_contract_zec_vote_addr, "on_receive_shard_votes_v2", adv_votes);
     xinfo("[xtable_vote_contract::on_timer] split table vote finish, time: %lu", timestamp);
-    STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_upload_tickets_10902);
+    if (chain_fork::xutility_t::is_forked(fork_points::v10902_table_tickets_reset, timestamp)) {
+        STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_upload_tickets_10902);
+    } else if (chain_fork::xutility_t::is_forked(fork_points::v10901_table_tickets_reset, timestamp)) {
+        STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_upload_tickets_10901);
+    } else {
+        STRING_SET(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY, flag_upload_tickets_10900);
+    }
     xdbg("table %s sets upload flag", contract_address.to_string().c_str());
 }
 
@@ -1106,9 +1112,10 @@ bool xtable_vote_contract::reset_v10902(std::string const & flag,
 
     bool reset_touched{false};
 
-    if (flag == flag_upload_tickets_10901 || flag == flag_withdraw_tickets_10901 || flag.length() == legacy_flag_length) {  // special check on flag length, since to-be-reset state
-                                                                                                                            // has flag of value with logic time type which is in
-                                                                                                                            // length 7. for example, 9644333.
+    if (flag == flag_upload_tickets_10900 || flag == flag_withdraw_tickets_10900 || flag == flag_upload_tickets_10901 || flag == flag_withdraw_tickets_10901 ||
+        flag.length() == legacy_flag_length) {  // special check on flag length, since to-be-reset state
+                                                // has flag of value with logic time type which is in
+                                                // length 7. for example, 9644333.
         for (auto const & voter_and_data : contract_ticket_reset_data) {
             auto const & voter = top::get<common::xaccount_address_t const>(voter_and_data);
             if (contract_address.table_id() != voter.table_id()) {
