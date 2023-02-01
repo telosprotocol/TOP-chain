@@ -688,6 +688,15 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statistic_vcanvas_num);
         RETURN_METRICS_NAME(statistic_mpt_state_object_num);
         RETURN_METRICS_NAME(statistic_mpt_trie_node_num);
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+        RETURN_METRICS_NAME(statistic_event_num);
+        RETURN_METRICS_NAME(statistic_msg_cons_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_num);
+        RETURN_METRICS_NAME(statistic_msg_block_broadcast_num);
+        RETURN_METRICS_NAME(statistic_msg_state_num);
+#else
         RETURN_METRICS_NAME(statistic_event_account_num);
         RETURN_METRICS_NAME(statistic_event_behind_num);
         RETURN_METRICS_NAME(statistic_event_block_num);
@@ -739,8 +748,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statistic_msg_sync_newblock_push_num);
         RETURN_METRICS_NAME(statistic_msg_sync_block_request_num);
         RETURN_METRICS_NAME(statistic_msg_sync_block_response_num);
-        RETURN_METRICS_NAME(statistic_msg_unknown_num);
-        RETURN_METRICS_NAME(statistic_mpt_node_cache_num);
+#endif
         RETURN_METRICS_NAME(statistic_tx_v2_size);
         RETURN_METRICS_NAME(statistic_tx_v3_size);
         RETURN_METRICS_NAME(statistic_receipt_size);
@@ -755,6 +763,15 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statistic_vcanvas_size);
         RETURN_METRICS_NAME(statistic_mpt_state_object_size);
         RETURN_METRICS_NAME(statistic_mpt_trie_node_size);
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+        RETURN_METRICS_NAME(statistic_event_size);
+        RETURN_METRICS_NAME(statistic_msg_cons_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_size);
+        RETURN_METRICS_NAME(statistic_msg_block_broadcast_size);
+        RETURN_METRICS_NAME(statistic_msg_state_size);
+#else
         RETURN_METRICS_NAME(statistic_event_account_size);
         RETURN_METRICS_NAME(statistic_event_behind_size);
         RETURN_METRICS_NAME(statistic_event_block_size);
@@ -806,7 +823,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statistic_msg_sync_newblock_push_size);
         RETURN_METRICS_NAME(statistic_msg_sync_block_request_size);
         RETURN_METRICS_NAME(statistic_msg_sync_block_response_size);
-        RETURN_METRICS_NAME(statistic_msg_unknown_size);
+#endif
+        RETURN_METRICS_NAME(statistic_mpt_node_cache_num);
         RETURN_METRICS_NAME(statistic_mpt_node_cache_size);
         RETURN_METRICS_NAME(statistic_total_size);
 #endif

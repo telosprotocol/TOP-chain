@@ -302,6 +302,10 @@ if (CACHE_SIZE_STATISTIC)
     add_definitions(-DCACHE_SIZE_STATISTIC)
 endif()
 
+if (CACHE_SIZE_STATISTIC_MORE_DETAIL)
+    add_definitions(-DCACHE_SIZE_STATISTIC_MORE_DETAIL)
+endif()
+
 if (PERIOD_MOCK)
     add_definitions(-DPERIOD_MOCK)
 endif()

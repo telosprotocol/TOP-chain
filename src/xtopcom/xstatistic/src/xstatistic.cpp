@@ -10,10 +10,10 @@
 
 NS_BEG2(top, xstatistic)
 
-#ifdef CACHE_SIZE_STATISTIC
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
 
 #if defined(XBUILD_CI) || defined(XBUILD_DEV)
-#define STATISTIC_DELAY_TIME (10)
+#define STATISTIC_DELAY_TIME (100)
 #else
 #define STATISTIC_DELAY_TIME (900)  // delay 900 um to calculate object size.
 #endif
@@ -33,7 +33,6 @@ xstatistic_obj_face_t::xstatistic_obj_face_t(enum_statistic_class_type class_typ
     }
     m_create_time = relative_time();
     xstatistic_t::instance().add_object(this, class_type);
-    assert(0);
 }
 
 xstatistic_obj_face_t::xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {

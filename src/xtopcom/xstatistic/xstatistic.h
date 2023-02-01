@@ -28,6 +28,29 @@ enum enum_statistic_class_type {
     enum_statistic_vcanvas,
     enum_statistic_mpt_state_object,
     enum_statistic_mpt_trie_node,
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+    enum_statistic_event,
+    enum_statistic_event_account = enum_statistic_event,
+    enum_statistic_event_behind = enum_statistic_event,
+    enum_statistic_event_block = enum_statistic_event,
+    enum_statistic_event_blockfetcher = enum_statistic_event,
+    enum_statistic_event_consensus = enum_statistic_event,
+    enum_statistic_event_sync_executor = enum_statistic_event,
+    enum_statistic_event_network = enum_statistic_event,
+    enum_statistic_event_role = enum_statistic_event,
+    enum_statistic_event_state_sync = enum_statistic_event,
+    enum_statistic_event_store = enum_statistic_event,
+    enum_statistic_event_sync = enum_statistic_event,
+    enum_statistic_event_timer = enum_statistic_event,
+    enum_statistic_event_chain_timer = enum_statistic_event,
+    enum_statistic_event_vnode = enum_statistic_event,
+    enum_statistic_msg_cons,
+    enum_statistic_msg_txpool,
+    enum_statistic_msg_rpc,
+    enum_statistic_msg_sync,
+    enum_statistic_msg_block_broadcast,
+    enum_statistic_msg_state,
+#else
     enum_statistic_event_account,
     enum_statistic_event_behind,
     enum_statistic_event_block,
@@ -79,23 +102,11 @@ enum enum_statistic_class_type {
     enum_statistic_msg_sync_newblock_push,
     enum_statistic_msg_sync_block_request,
     enum_statistic_msg_sync_block_response,
-    enum_statistic_msg_unknown,
+#endif
     enum_statistic_max,
 };
 
-#ifndef CACHE_SIZE_STATISTIC
-class xstatistic_obj_face_t {
-public:
-    xstatistic_obj_face_t(enum_statistic_class_type class_type) {}
-    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
-    void modify_class_type(enum_statistic_class_type class_type) {}
-    void statistic_del() {}
-    virtual int32_t get_class_type() const = 0;
-private:
-    virtual int32_t get_object_size_real() const = 0;
-};
-
-#else
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
 class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type class_type);
@@ -153,7 +164,17 @@ public:
 private:
     xobject_statistic_base_t m_object_statistic_arr[enum_statistic_max - enum_statistic_begin];
 };
-
+#else
+class xstatistic_obj_face_t {
+public:
+    xstatistic_obj_face_t(enum_statistic_class_type class_type) {}
+    xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
+    void modify_class_type(enum_statistic_class_type class_type) {}
+    void statistic_del() {}
+    virtual int32_t get_class_type() const = 0;
+private:
+    virtual int32_t get_object_size_real() const = 0;
+};
 #endif
 
 NS_END2

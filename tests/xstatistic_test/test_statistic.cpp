@@ -19,7 +19,7 @@ protected:
     }
 };
 
-#ifdef CACHE_SIZE_STATISTIC
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
 class test_class_t : public xstatistic_obj_face_t {
 public:
     // test_class_t() : xstatistic_obj_face_t(enum_statistic_receipts) {}
@@ -62,7 +62,7 @@ TEST_F(test_statistic, basic) {
         obj_vec.push_back(test_class_t(i));
     }
 
-    usleep(10000);
+    usleep(100000);
     std::cout << "sleep 1 millisecond." << std::endl;
     xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
@@ -83,7 +83,7 @@ TEST_F(test_statistic, 2_obj_type) {
         obj1_vec.push_back(test_class1_t(i, i));
     }
 
-    usleep(10000);
+    usleep(100000);
     std::cout << "sleep 1 millisecond." << std::endl;
     xstatistic_t::instance().refresh();
 #ifdef ENABLE_METRICS
@@ -143,7 +143,7 @@ TEST_F(test_statistic, multithread_1_boj_type_BENCH) {
     t_push.join();
     t_pop.join();
 #ifdef ENABLE_METRICS
-    usleep(10000);
+    usleep(100000);
     std::cout << "sleep 1 millisecond." << std::endl;
     xstatistic_t::instance().refresh();
     auto obj_num = XMETRICS_GAUGE_GET_VALUE(metrics::statistic_tx_v2_num);

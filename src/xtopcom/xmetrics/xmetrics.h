@@ -745,6 +745,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_vcanvas_num,
     statistic_mpt_state_object_num,
     statistic_mpt_trie_node_num,
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+    statistic_event_num,
+    statistic_msg_cons_num,
+    statistic_msg_txpool_num,
+    statistic_msg_rpc_num,
+    statistic_msg_sync_num,
+    statistic_msg_block_broadcast_num,
+    statistic_msg_state_num,
+#else
     statistic_event_account_num,
     statistic_event_behind_num,
     statistic_event_block_num,
@@ -796,12 +805,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_msg_sync_newblock_push_num,
     statistic_msg_sync_block_request_num,
     statistic_msg_sync_block_response_num,
-    statistic_msg_unknown_num,
+#endif
 
-    // calculate by special way.
-    statistic_mpt_node_cache_num,
-
-    // calculate by xstatistic_t
     statistic_tx_v2_size,
     statistic_tx_v3_size,
     statistic_receipt_size,
@@ -816,6 +821,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_vcanvas_size,
     statistic_mpt_state_object_size,
     statistic_mpt_trie_node_size,
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+    statistic_event_size,
+    statistic_msg_cons_size,
+    statistic_msg_txpool_size,
+    statistic_msg_rpc_size,
+    statistic_msg_sync_size,
+    statistic_msg_block_broadcast_size,
+    statistic_msg_state_size,
+#else
     statistic_event_account_size,
     statistic_event_behind_size,
     statistic_event_block_size,
@@ -867,9 +881,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_msg_sync_newblock_push_size,
     statistic_msg_sync_block_request_size,
     statistic_msg_sync_block_response_size,
-    statistic_msg_unknown_size,
-
+#endif
     // calculate by special way.
+    statistic_mpt_node_cache_num,
     statistic_mpt_node_cache_size,
 
     statistic_total_size,

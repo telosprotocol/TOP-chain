@@ -12,10 +12,31 @@
 
 NS_BEG2(top, xstatistic)
 
-#ifdef CACHE_SIZE_STATISTIC
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
 enum_statistic_class_type message_id_to_class_type(uint32_t msgid) {
     uint32_t message_category = (msgid & 0xFFFF0000) >> 16;
 
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+    switch (message_category) {
+        case (uint32_t)xmessage_category_consensus :
+        case (uint32_t)xmessage_category_timer :
+        case (uint32_t)xmessage_category_relay :
+            return enum_statistic_msg_cons;
+        case (uint32_t)xmessage_category_txpool :
+            return enum_statistic_msg_txpool;
+        case (uint32_t)xmessage_category_rpc :
+            return enum_statistic_msg_rpc;
+        case (uint32_t)xmessage_category_sync :
+            return enum_statistic_msg_sync;
+        case (uint32_t)xmessage_block_broadcast :
+            return enum_statistic_msg_block_broadcast;
+        case (uint32_t)xmessage_category_state_sync :
+            return enum_statistic_msg_state;
+        default :
+            xerror("msgid:%u", msgid);
+            return enum_statistic_undetermined;     
+    }
+#else
     // value of msgid of bft message is added pdu_type, so that here can not directly use xBFT_msg, xTimer_msg and xrelay_BFT_msg.
     switch (message_category) {
         case (uint32_t)xmessage_category_consensus :
@@ -70,13 +91,6 @@ enum_statistic_class_type message_id_to_class_type(uint32_t msgid) {
         case (uint32_t)xtxpool_v2::xtxpool_msg_receipt_id_state :
             return enum_statistic_msg_txpool_receipt_id_state;
 
-        // case (uint32_t)xunit_service::xBFT_msg :
-        //     return enum_statistic_msg_bft;
-        // case (uint32_t)xunit_service::xTimer_msg :
-        //     return enum_statistic_msg_timer;
-        // case (uint32_t)xunit_service::xrelay_BFT_msg :
-        //     return enum_statistic_msg_relay_bft;
-
         case (uint32_t)contract::xmessage_block_broadcast_id :
             return enum_statistic_msg_block_broadcast;
 
@@ -112,9 +126,10 @@ enum_statistic_class_type message_id_to_class_type(uint32_t msgid) {
             return enum_statistic_msg_sync_block_response;
         default: {
             xerror("msgid:%u", msgid);
-            return enum_statistic_msg_unknown;            
+            return enum_statistic_undetermined;            
         }
     }
+#endif
 }
 #endif
 

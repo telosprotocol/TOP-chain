@@ -195,6 +195,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DCACHE_SIZE_STATISTIC=ON"
         echo "BUILD WITH CACHE_SIZE_STATISTIC"
     ;;
+    cache_size_statistic_more_detail)
+        CMAKE_EXTRA_OPTIONS+=" -DCACHE_SIZE_STATISTIC_MORE_DETAIL=ON"
+        echo "BUILD WITH CACHE_SIZE_STATISTIC_MORE_DETAIL"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;
