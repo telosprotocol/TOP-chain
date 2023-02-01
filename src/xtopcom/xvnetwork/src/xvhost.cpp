@@ -129,6 +129,7 @@ void xtop_vhost::send_to_through_frozen(common::xnode_address_t const & src, com
     }
 
     xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
+    xdbg("vmsg.message_id():%u", (uint32_t)vmsg.message_id());
     assert(common::get_message_category(vmsg.message_id()) == xmessage_category_sync);
     auto bytes = codec::msgpack_encode(vmsg);
 

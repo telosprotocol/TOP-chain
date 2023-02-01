@@ -222,7 +222,7 @@ namespace top
             //just wrap function for serialize_to(),but assign data to string and return
             int32_t             serialize_to_string(std::string & bin_data);
 
-            virtual uint32_t    get_class_type() const override {return xstatistic::enum_statistic_block_header;}
+            virtual int32_t    get_class_type() const override {return xstatistic::enum_statistic_block_header;}
         private:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             int32_t             do_write(xstream_t & stream); //not allow subclass change behavior
@@ -437,7 +437,7 @@ namespace top
             void                set_extend_data(const std::string& extention);
             void                set_extend_cert(const std::string & _cert_bin);
 
-            virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_vqcert;}
+            virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vqcert;}
         private:
             virtual int32_t     get_object_size_real() const override;
 
@@ -519,7 +519,7 @@ namespace top
             size_t                      get_action_count() const;
             virtual std::string         dump() const override;
 
-            virtual uint32_t            get_class_type() const override {return xstatistic::enum_statistic_vinput;}
+            virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vinput;}
         private:
             virtual int32_t             get_object_size_real() const override;
 
@@ -563,7 +563,7 @@ namespace top
             base::xvoutentity_t*        get_primary_entity() const;
             virtual std::string         dump() const override;
 
-            virtual uint32_t            get_class_type() const override {return xstatistic::enum_statistic_voutput;}
+            virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_voutput;}
         private:
             virtual int32_t             get_object_size_real() const override;
 
@@ -819,7 +819,7 @@ namespace top
             virtual const std::string   get_proposal() const {return m_proposal;}
             virtual bool                set_proposal(const std::string & proposal){m_proposal = proposal;return true;}
             void                        set_not_serialize_input_output(bool value);
-            virtual uint32_t            get_class_type() const override {return xstatistic::enum_statistic_vblock;}
+            virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vblock;}
         private:
             virtual int32_t             get_object_size_real() const override;
         private:

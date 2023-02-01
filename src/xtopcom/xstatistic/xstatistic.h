@@ -4,7 +4,6 @@
 
 #pragma once
 
-// #include "xbase/xdata.h"
 #include "xbasic/xmemory.hpp"
 
 #include <atomic>
@@ -13,6 +12,7 @@
 NS_BEG2(top, xstatistic)
 
 enum enum_statistic_class_type {
+    enum_statistic_undetermined = -1,
     enum_statistic_begin = 0,
     enum_statistic_tx_v2 = enum_statistic_begin,
     enum_statistic_tx_v3,
@@ -28,9 +28,58 @@ enum enum_statistic_class_type {
     enum_statistic_vcanvas,
     enum_statistic_mpt_state_object,
     enum_statistic_mpt_trie_node,
-    enum_statistic_mailbox,
-    enum_statistic_net_send,
-    enum_statistic_net_recv,
+    enum_statistic_event_account,
+    enum_statistic_event_behind,
+    enum_statistic_event_block,
+    enum_statistic_event_blockfetcher,
+    enum_statistic_event_consensus,
+    enum_statistic_event_sync_executor,
+    enum_statistic_event_network,
+    enum_statistic_event_role,
+    enum_statistic_event_state_sync,
+    enum_statistic_event_store,
+    enum_statistic_event_sync,
+    enum_statistic_event_timer,
+    enum_statistic_event_chain_timer,
+    enum_statistic_event_vnode,
+    enum_statistic_msg_rpc_request,
+    enum_statistic_msg_rpc_response,
+    enum_statistic_msg_rpc_query_request,
+    enum_statistic_msg_rpc_eth_request,
+    enum_statistic_msg_rpc_eth_response,
+    enum_statistic_msg_rpc_eth_query_request,
+    enum_statistic_msg_state_trie_request,
+    enum_statistic_msg_state_trie_response,
+    enum_statistic_msg_state_table_request,
+    enum_statistic_msg_state_table_response,
+    enum_statistic_msg_state_unit_request,
+    enum_statistic_msg_state_unit_response,
+    enum_statistic_msg_txpool_send_receipt,
+    enum_statistic_msg_txpool_recv_receipt,
+    enum_statistic_msg_txpool_pull_recv_receipt,
+    enum_statistic_msg_txpool_push_receipt,
+    enum_statistic_msg_txpool_pull_confirm_receipt,
+    enum_statistic_msg_txpool_receipt_id_state,
+    enum_statistic_msg_bft,
+    enum_statistic_msg_timer,
+    enum_statistic_msg_relay_bft,
+    enum_statistic_msg_block_broadcast,
+    enum_statistic_msg_sync_gossip,
+    enum_statistic_msg_sync_frozen_gossip,
+    enum_statistic_msg_sync_broadcast_chain_state,
+    enum_statistic_msg_sync_frozen_broadcast_chain_state,
+    enum_statistic_msg_sync_response_chain_state,
+    enum_statistic_msg_sync_frozen_response_chain_state,
+    enum_statistic_msg_sync_cross_cluster_chain_state,
+    enum_statistic_msg_sync_chain_snapshot_request,
+    enum_statistic_msg_sync_chain_snapshot_response,
+    enum_statistic_msg_sync_ondemand_chain_snapshot_request,
+    enum_statistic_msg_sync_ondemand_chain_snapshot_response,
+    enum_statistic_msg_sync_query_archive_height,
+    enum_statistic_msg_sync_newblock_push,
+    enum_statistic_msg_sync_block_request,
+    enum_statistic_msg_sync_block_response,
+    enum_statistic_msg_unknown,
     enum_statistic_max,
 };
 
@@ -39,23 +88,26 @@ class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type class_type) {}
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj) {}
+    void modify_class_type(enum_statistic_class_type class_type) {}
     void statistic_del() {}
-    virtual uint32_t get_class_type() const = 0;
+    virtual int32_t get_class_type() const = 0;
 private:
     virtual int32_t get_object_size_real() const = 0;
 };
+
 #else
 class xstatistic_obj_face_t {
 public:
     xstatistic_obj_face_t(enum_statistic_class_type class_type);
     xstatistic_obj_face_t(const xstatistic_obj_face_t & obj);
     xstatistic_obj_face_t & operator = (const xstatistic_obj_face_t & obj);
-    void statistic_del();
+    void modify_class_type(enum_statistic_class_type class_type);
+    void statistic_del();   // derived class must call statistic_del() in destructor, or else will core!!!
 
     int32_t create_time() const {return m_create_time;}
     const int32_t get_object_size() const;
 
-    virtual uint32_t get_class_type() const = 0;
+    virtual int32_t get_class_type() const = 0;
 
 private:
     virtual int32_t get_object_size_real() const = 0;
@@ -80,11 +132,11 @@ using xnot_calc_object_map_t = std::map<xstatistic_obj_face_t *, xnot_calc_objec
 class xobject_statistic_base_t {
 public:
     xobject_statistic_base_t() {}
-    void add_object(xstatistic_obj_face_t * object, uint32_t class_type);
-    void del_object(xstatistic_obj_face_t * object, uint32_t class_type);
-    void refresh(uint32_t class_type);
+    void add_object(xstatistic_obj_face_t * object, int32_t class_type);
+    void del_object(xstatistic_obj_face_t * object, int32_t class_type);
+    void refresh(int32_t class_type);
 private:
-    void refresh_inner(uint32_t class_type, int64_t now);
+    void refresh_inner(int32_t class_type, int64_t now);
     void update_metrics(int32_t type, int32_t change_num, int32_t change_size);
 private:
     // use multiset only won the best performance.  for test case test_statistic.basic, multiset cost 57ms, multiset+map cost 65ms, set cost 1272ms.
@@ -95,8 +147,8 @@ private:
 class xstatistic_t {
 public:
     static xstatistic_t & instance();
-    void add_object(xstatistic_obj_face_t * object, uint32_t class_type);
-    void del_object(xstatistic_obj_face_t * object, uint32_t class_type);
+    void add_object(xstatistic_obj_face_t * object, int32_t class_type);
+    void del_object(xstatistic_obj_face_t * object, int32_t class_type);
     void refresh();
 private:
     xobject_statistic_base_t m_object_statistic_arr[enum_statistic_max - enum_statistic_begin];

@@ -16,6 +16,7 @@ xtop_vnetwork_message::xtop_vnetwork_message(common::xnode_address_t const & snd
     , m_message{ std::move(msg) }
     , m_logic_time{ logic_time }
 {
+    // xdbg("xtop_vnetwork_message constructor m_message.id:%u m_message.payload().capacity():%u", (uint32_t)m_message.id(), m_message.payload().capacity());
 }
 
 common::xnode_address_t const &

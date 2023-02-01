@@ -29,7 +29,7 @@ public:
     ~test_class_t() {
         statistic_del();
     }
-    virtual uint32_t get_class_type() const override {return enum_statistic_tx_v2;}
+    virtual int32_t get_class_type() const override {return enum_statistic_tx_v2;}
     uint32_t n{0};
 private:
     virtual int32_t get_object_size_real() const override {
@@ -47,7 +47,7 @@ public:
     }
     uint32_t n{0};
     uint32_t m{0};
-    virtual uint32_t get_class_type() const override {return enum_statistic_tx_v3;}
+    virtual int32_t get_class_type() const override {return enum_statistic_tx_v3;}
 private:
     virtual int32_t get_object_size_real() const override {
         return sizeof(*this);

@@ -86,7 +86,7 @@ class xunit_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_f
     common::xaccount_address_t tep_token_controller(common::xchain_uuid_t chain_uuid) const;
     void tep_token_controller(common::xchain_uuid_t chain_uuid, common::xaccount_address_t const & new_controller, std::error_code & ec);
 
-    virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_unit_bstate;}
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_unit_bstate;}
 
 private:
     xbytes_t raw_allowance(common::xtoken_id_t const token_id, std::error_code & ec) const;

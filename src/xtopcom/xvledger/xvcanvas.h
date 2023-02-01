@@ -54,7 +54,7 @@ namespace top
  
             size_t     get_op_records_size() const {return m_records.size();}
 
-            virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_vcanvas;}
+            virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vcanvas;}
         private:
             virtual int32_t get_object_size_real() const override;
             

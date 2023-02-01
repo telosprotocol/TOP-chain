@@ -2,11 +2,13 @@
 
 #include "xmbus/xevent.h"
 #include "xdata/xblock.h"
+#include "xstatistic/xbasic_size.hpp"
+#include "xstatistic/xstatistic.h"
 #include "xvnetwork/xaddress.h"
 
 NS_BEG2(top, mbus)
 
-class xevent_blockfetcher_t : public xbus_event_t {
+class xevent_blockfetcher_t : public xbus_event_t, public xstatistic::xstatistic_obj_face_t {
 public:
     enum _minor_type_ {
         none,
@@ -18,12 +20,19 @@ public:
             const vnetwork::xvnode_address_t &_network_self, 
             const vnetwork::xvnode_address_t &_from_address)
     : xbus_event_t(xevent_major_type_blockfetcher, type, to_listener, true),
+    xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_event_blockfetcher),
     network_self(_network_self),
     from_address(_from_address) {
     }
+    ~xevent_blockfetcher_t() {statistic_del();}
 
     vnetwork::xvnode_address_t network_self;
     vnetwork::xvnode_address_t from_address;
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_event_blockfetcher;}
+private:
+    virtual int32_t get_object_size_real() const override {
+        return sizeof(*this) + get_size(get_result_data()) + get_size(network_self.account_election_address().account_address().base_address().to_string()) + get_size(from_address.account_election_address().account_address().base_address().to_string());
+    }
 };
 
 using xevent_blockfetcher_ptr_t = xobject_ptr_t<xevent_blockfetcher_t>;

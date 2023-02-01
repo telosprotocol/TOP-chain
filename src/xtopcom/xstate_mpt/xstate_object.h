@@ -29,7 +29,7 @@ public:
     void set_account_index(const base::xaccount_index_t & new_index);
     void set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit);
 
-    virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_mpt_state_object;}
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_mpt_state_object;}
 
     common::xaccount_address_t account;
     base::xaccount_index_t index;

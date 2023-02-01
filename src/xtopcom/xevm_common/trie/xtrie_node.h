@@ -89,7 +89,7 @@ public:
     virtual xtrie_node_cached_data_t cache() const = 0;
     virtual xtrie_node_type_t type() const noexcept = 0;
 
-    virtual uint32_t get_class_type() const override {return xstatistic::enum_statistic_mpt_trie_node;}
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_mpt_trie_node;}
 };
 using xtrie_node_face_t = xtop_trie_node_face;
 using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;

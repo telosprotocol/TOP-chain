@@ -6,6 +6,7 @@
 #include <sstream>
 #include <msgpack.hpp>
 #include "xrpc_define.h"
+#include "xrpc/xmessage_ids.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xcodec/xmsgpack/xvnode_address_codec.hpp"
 
@@ -47,12 +48,7 @@ struct xrpc_msg_response_t
     }
     MSGPACK_DEFINE(m_type, m_source_address, m_signature_address, m_uuid, m_message_body);
 };
-XDEFINE_MSG_ID(xmessage_category_rpc, rpc_msg_request, 0x00000001);
-XDEFINE_MSG_ID(xmessage_category_rpc, rpc_msg_response, 0x00000002);
-XDEFINE_MSG_ID(xmessage_category_rpc, rpc_msg_query_request, 0x00000003);
-XDEFINE_MSG_ID(xmessage_category_rpc, rpc_msg_eth_request, 0x00000004);
-XDEFINE_MSG_ID(xmessage_category_rpc, rpc_msg_eth_response, 0x00000005);
-XDEFINE_MSG_ID(xmessage_category_rpc, rpc_msg_eth_query_request, 0x00000006);
+
 NS_END2
 MSGPACK_ADD_ENUM(top::xrpc::enum_xrpc_type);
 MSGPACK_ADD_ENUM(top::xrpc::enum_xrpc_tx_type);

@@ -8,13 +8,15 @@
 #include "xmbus/xevent.h"
 #include "xvnetwork/xaddress.h"
 #include "xbase/xobject_ptr.h"
+#include "xstatistic/xbasic_size.hpp"
+#include "xstatistic/xstatistic.h"
 #include "xvledger/xvblock.h"
 
 NS_BEG2(top, mbus)
 
 using namespace top;
 
-class xevent_consensus_t : public xbus_event_t {
+class xevent_consensus_t : public xbus_event_t, public xstatistic::xstatistic_obj_face_t {
 public:
 
     enum _minor_type_ {
@@ -29,7 +31,16 @@ public:
     xevent_major_type_consensus,
     minor_type,
     dir,
-    _sync) {
+    _sync),
+    xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_event_consensus) {
+    }
+
+    ~xevent_consensus_t() {statistic_del();}
+
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_event_consensus;}
+private:
+    virtual int32_t get_object_size_real() const override {
+        return sizeof(*this) + get_size(get_result_data());
     }
 };
 
