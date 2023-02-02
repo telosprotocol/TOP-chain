@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
+#include "xbase/xbase.h"
 
 #include <cassert>
 #include <list>
@@ -139,7 +140,7 @@ public:
         auto it = item_map_.find(key);
         if (it != item_map_.end()) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-            erased_vec.push_back(std::make_pair(key, it->second->second));
+            erased_vec.push_back({key, it->second->second});
 #endif
             item_list_.erase(it->second);
             item_map_.erase(it);
@@ -157,7 +158,7 @@ public:
         auto it = item_map_.find(key);
         if (it != item_map_.end()) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-            erased_vec.push_back(std::make_pair(key, it->second->second));
+            erased_vec.push_back({key, it->second->second});
 #endif
             item_list_.erase(it->second);
             item_map_.erase(it);
@@ -203,7 +204,7 @@ public:
         auto it = item_map_.find(key);
         if (it != item_map_.end()) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-            erased_vec.push_back(std::make_pair(key, it->second->second));
+            erased_vec.push_back({key, it->second->second});
 #endif
             item_list_.erase(it->second);
             item_map_.erase(it);
@@ -228,7 +229,7 @@ private:
             auto last_it = item_list_.end();
             --last_it;
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-            erased_vec.push_back(std::make_pair(last_it->first, last_it->second));
+            erased_vec.push_back({last_it->first, last_it->second});
 #endif
             item_map_.erase(last_it->first);
             item_list_.pop_back();

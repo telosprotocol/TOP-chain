@@ -1214,7 +1214,7 @@ namespace top
             int32_t total_size = sizeof(*this);
             int32_t ex_alloc_aize = get_ex_alloc_size();
             total_size += get_size(m_root_hash) + ex_alloc_aize;
-            xinfo("xvinput_t::get_object_size_real ------cache size---------total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d", total_size, sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
+            xinfo("------cache size------ xvinput_t total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d", total_size, sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             return total_size;
         }
 
@@ -2887,7 +2887,7 @@ namespace top
             total_size += get_size(m_cert_hash) + get_size(m_dump_info) + get_size(m_offblock_snapshot) + get_size(m_parent_account) + get_size(m_vote_extend_data) +
                           get_size(m_output_offdata) + get_size(m_proposal);
             xinfo(
-                "------cache size------ xvblock_t addr:%s total_size:%d "
+                "------cache size------ xvblock_t addr=%s total_size:%d "
                 "this:%d,m_cert_hash:%d,m_dump_info:%d,m_offblock_snapshot:%d,m_parent_account:%d,m_vote_extend_data:%d,m_output_offdata:%d,m_proposal:%d,m_excontainer:%d",
                 get_account().c_str(),
                 total_size,
