@@ -197,21 +197,18 @@ public:
     //    return true;
     //}
 
-    std::pair<KeyT, ValueT> erase(const KeyT & key) {
+    std::vector<std::pair<KeyT, ValueT>> erase(const KeyT & key) {
         std::lock_guard<MutexT> lock{mutex_};
+        std::vector<std::pair<KeyT, ValueT>> erased_vec;
         auto it = item_map_.find(key);
         if (it != item_map_.end()) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-            std::pair<KeyT, ValueT> erased = std::make_pair(key, it->second->second);
-            item_list_.erase(it->second);
-            item_map_.erase(it);
-            return erased;
-#else 
-            item_list_.erase(it->second);
-            item_map_.erase(it);
+            erased_vec.push_back(std::make_pair(key, it->second->second));
 #endif
+            item_list_.erase(it->second);
+            item_map_.erase(it);
         }
-        return {};
+        return erased_vec;
     }
 
     bool contains(KeyT const & key) const {

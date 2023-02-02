@@ -321,13 +321,10 @@ xbytes_t xtop_trie_db::preimage_key(xh256_t const & hash_key) const {
 
 void xtop_trie_db::cleans_put(xh256_t const & hash, xbytes_t const & data) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-    cleans_.put(hash, data);
-#else
     auto erased_vec = cleans_.put(hash, data);
     int32_t inc_num = 1 - (int32_t)erased_vec.size();
     // list_node_size: sizeof(xh256_t) + sizeof(xbytes_t) + 16(pre and next pointer) = 32 + 24 + 16 = 72
     // unorderd_map_node_size : 24
-    int32_t node_size = 96;
     int32_t inc_size = 96*inc_num + data.capacity()*sizeof(xbyte_t);
     for (auto & erased : erased_vec) {
         inc_size -= erased.second.capacity()*sizeof(xbyte_t);
@@ -335,22 +332,26 @@ void xtop_trie_db::cleans_put(xh256_t const & hash, xbytes_t const & data) {
     XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_num, inc_num);
     XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_size, inc_size);
     XMETRICS_GAUGE(metrics::statistic_total_size, inc_size);
+#else
+    cleans_.put(hash, data);
 #endif
 }
 
 
 void xtop_trie_db::cleans_erase(xh256_t const & hash) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-    cleans_.erase(hash);
-#else
-    auto erased = cleans_.erase(hash);
+    auto erased_vec = cleans_.erase(hash);
+    if (erased_vec.empty()) {
+        return;
+    }
     XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_num, -1);
     // list_node_size: sizeof(xh256_t) + sizeof(xbytes_t) + 16(pre and next pointer) = 32 + 24 + 16 = 72
     // unorderd_map_node_size : 24
-    int32_t node_size = 96;
-    int32_t dec_size = (int32_t)(96 + erased.second.capacity()*sizeof(xbyte_t));
+    int32_t dec_size = (int32_t)(96 + erased_vec[0].second.capacity()*sizeof(xbyte_t));
     XMETRICS_GAUGE(metrics::statistic_mpt_node_cache_size, -dec_size);
     XMETRICS_GAUGE(metrics::statistic_total_size, -dec_size);
+#else
+    cleans_.erase(hash);
 #endif
 }
 

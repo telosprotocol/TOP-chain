@@ -729,7 +729,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     //eth
     ethtx_get_from,
 
-#ifdef CACHE_SIZE_STATISTIC
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
     // calculate by xstatistic_t
     statistic_tx_v2_num,
     statistic_tx_v3_num,
