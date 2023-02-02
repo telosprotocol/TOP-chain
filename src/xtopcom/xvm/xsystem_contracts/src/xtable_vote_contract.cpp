@@ -627,7 +627,7 @@ void xtable_vote_contract::on_timer(common::xlogic_time_t const) {
     auto const all_effective_votes = get_and_update_all_effective_votes_of_all_account(timestamp);
     do {
         if (all_effective_votes.empty()) {
-            if (flag == flag_withdraw_tickets_10902 || flag == flag_withdraw_tickets_10901 || flag == flag_withdraw_tickets_10900 || flag.length() == legacy_flag_length) {
+            if (flag == flag_withdraw_tickets_10902 || flag == flag_withdraw_tickets_10901 || flag == flag_withdraw_tickets_10900 || flag.length() >= legacy_flag_length) {
                 xinfo("xtable_vote_contract::on_timer: table %s effective votes empty but needs to be uploaded %s", contract_address.to_string().c_str(), flag.c_str());
                 break;
             }
@@ -1113,7 +1113,7 @@ bool xtable_vote_contract::reset_v10902(std::string const & flag,
     bool reset_touched{false};
 
     if (flag == flag_upload_tickets_10900 || flag == flag_withdraw_tickets_10900 || flag == flag_upload_tickets_10901 || flag == flag_withdraw_tickets_10901 ||
-        flag.length() == legacy_flag_length) {  // special check on flag length, since to-be-reset state
+        flag.length() >= legacy_flag_length) {  // special check on flag length, since to-be-reset state
                                                 // has flag of value with logic time type which is in
                                                 // length 7. for example, 9644333.
         for (auto const & voter_and_data : contract_ticket_reset_data) {
