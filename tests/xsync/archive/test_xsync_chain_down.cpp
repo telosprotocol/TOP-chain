@@ -287,7 +287,7 @@ TEST_F(test_xsync_chain_down, test_xsync_cp_reflash_lost)
     ASSERT_EQ(8, cp_lost_height);
  
     // first record
-    cp_object.get_behind_height_real(0, &sync_store, 2, address);
+    cp_object.get_behind_height_real(1, &sync_store, 2, address);
     int64_t now = 200000;
     // timeout,reset request height
     uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
@@ -320,7 +320,7 @@ TEST_F(test_xsync_chain_down, test_xsync_or_cp_reflash_disconnect)
     ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_disconnect_height);
 
     // first record
-    cp_object.get_behind_height_real(0, &sync_store, 2, address);
+    cp_object.get_behind_height_real(1, &sync_store, 2, address);
     int64_t now = 200000;
     // timeout,reset request height
     uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
