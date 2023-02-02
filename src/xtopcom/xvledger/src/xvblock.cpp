@@ -2887,8 +2887,9 @@ namespace top
             total_size += get_size(m_cert_hash) + get_size(m_dump_info) + get_size(m_offblock_snapshot) + get_size(m_parent_account) + get_size(m_vote_extend_data) +
                           get_size(m_output_offdata) + get_size(m_proposal);
             xinfo(
-                "------cache size------ xvblock_t total_size:%d "
+                "------cache size------ xvblock_t addr:%s total_size:%d "
                 "this:%d,m_cert_hash:%d,m_dump_info:%d,m_offblock_snapshot:%d,m_parent_account:%d,m_vote_extend_data:%d,m_output_offdata:%d,m_proposal:%d,m_excontainer:%d",
+                get_account().c_str(),
                 total_size,
                 sizeof(*this),
                 get_size(m_cert_hash),
