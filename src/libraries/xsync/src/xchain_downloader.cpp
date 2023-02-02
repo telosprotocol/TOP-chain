@@ -95,21 +95,8 @@ bool xchain_downloader_t::on_timer(int64_t now) {
             continue;
         }
 
-        if (index == enum_chain_sync_policy_full) {
-            auto shadow = m_sync_store->get_shadow();
-            uint64_t genesis_height = shadow->genesis_connect_height(m_address);
-            if (genesis_height > m_chain_objects[index].height()) {
-                interval.first = genesis_height + 1;
-            } else {
-                interval.first = m_chain_objects[index].height();
-            }
-        } else if (index == enum_chain_sync_policy_checkpoint) {
-            uint64_t cp_height = m_sync_store->get_latest_end_block_height(m_address, enum_chain_sync_policy_checkpoint);
-            if (cp_height > m_chain_objects[index].height()) {
-                interval.first = cp_height + 1;
-            } else {
-                interval.first = m_chain_objects[index].height();
-            }
+        if (index == enum_chain_sync_policy_full || index == enum_chain_sync_policy_checkpoint) {
+            interval.first = m_chain_objects[index].get_behind_height_real(now, m_sync_store, index, m_address);
         }
 
         m_current_object_index = index;
@@ -250,40 +237,17 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
         return;
     }
 
-    uint64_t height = 0;
-    uint64_t picked_height = 0;
-    height = m_chain_objects[sync_policy].height();
-    picked_height = m_chain_objects[sync_policy].picked_height();
-    m_chain_objects[sync_policy] = xchain_object_t{start_height, end_height, self_addr, target_addr};
-    auto shadow = m_sync_store->get_shadow();
-    if (sync_policy == enum_chain_sync_policy_full) {
-        uint64_t now = base::xtime_utl::gmttime_ms();
-        uint64_t refresh_time = shadow->genesis_height_refresh_time_ms(m_address);
-        if (refresh_time > m_refresh_time) {
-            m_refresh_time = refresh_time;
-        }
-
-        if (now < m_refresh_time) {
-            m_refresh_time = now;
-        }
-
-        if (now - m_refresh_time > 120000) {
-            m_refresh_time = now;
-            uint64_t genesis_height = shadow->genesis_connect_height(m_address);
-            height = genesis_height + 1;
-            xsync_dbg("chain_downloader genesis height sticky too long, account is %s, genesis height %llu", m_address.c_str(), height);
-        }
-    }
+    uint64_t height = m_chain_objects[sync_policy].height();
+    m_chain_objects[sync_policy].set_object_t(start_height, end_height, self_addr, target_addr);
 
     if (height >= start_height) {
         m_chain_objects[sync_policy].set_height(height);
     } else {
         m_chain_objects[sync_policy].set_height(start_height);
     }
-    m_chain_objects[sync_policy].set_picked_height(picked_height);
 
-    xsync_info("chain_downloader on_behind expect start_height=%lu,height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s",
-                start_height,height, end_height, target_addr.to_string().c_str(), sync_policy, m_address.c_str());
+    xsync_info("chain_downloader on_behind expect start_height=%lu,height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s, reason:%s ",
+                start_height, height, end_height, target_addr.to_string().c_str(), sync_policy, m_address.c_str(), reason.c_str());
 }
 
 void xchain_downloader_t::on_block_committed_event(uint64_t height) {
@@ -851,6 +815,37 @@ uint64_t xchain_object_t::picked_height() {
 void xchain_object_t::clear() {
     m_start_height = 0;
     m_end_height = 0;
+}
+
+uint64_t xchain_object_t::get_behind_height_real(const int64_t now, xsync_store_face_t* xsync_store,
+                                                 const uint32_t sync_type, const std::string& address)
+{
+    if(m_regular_time == 0) {
+        m_regular_time = now;
+        m_fix_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type);
+    }
+
+    if(m_current_height < m_fix_height ){
+       m_current_height = m_fix_height;
+    }
+
+    uint64_t request_height = m_current_height;
+    if (now - m_regular_time > 120000) {
+        m_regular_time = now;
+        uint64_t cur_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type);
+        if (m_fix_height == cur_height) {
+            if((m_fix_height + 2) < m_current_height) {
+                xwarn("get_behind_height_real lost height account is %s,m_fix_height %llu m_current_height %llu ", address.c_str(), m_fix_height, m_current_height);
+                request_height = cur_height;
+            }
+        } else {
+            m_fix_height = cur_height;
+        }
+        
+    }
+
+    xdbg("get_behind_height_real request height account is %s, genesis height %llu", address.c_str(), request_height);
+    return request_height;
 }
 
 NS_END2

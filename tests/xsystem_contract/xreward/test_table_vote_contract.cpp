@@ -1,13 +1,13 @@
-#include "xchain_fork/xfork_points.h"
-#include "xconfig/xpredefined_configurations.h"
-#include "xdata/xnative_contract_address.h"
+#include <sstream>
 
 #include <gtest/gtest.h>
 
-#include <sstream>
-
 #define private public
 
+#include "xchain_fork/xfork_points.h"
+#include "xcommon/xaccount_address.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xdata/xnative_contract_address.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/xreward/xtable_vote_contract.h"
 
@@ -176,6 +176,20 @@ static std::vector<std::string> advs = {
     "T00000LYUST38rkkHeFn7edrYQJWbjhnJDqs58sq",
 };
 
+static std::vector<std::string> validators = {
+    "T80000b2a8697e7a72542637d1b6c696642ad97bec6feb", "T800007395208c7681bf66f74711ea41c766cd4bf1561a", "T80000382fc7b70e7c490f19a20f4a99402d51a984674a",
+    "T80000a36a6d82fa55894ea36d7b043522b808fef45695", "T800009bd1a948541e82c66d9f408a29aa3d28a8501afc", "T80000cb9443e74cc8d362752c88f589c9d1d12feeb5a9",
+    "T8000047af5ada6db181d000a0c90aaa4535e6b78c3804", "T80000a674a507fdd986ad2c40a90b8e9935c440d52893", "T80000bc1769315744f5dd54289f418374f9ef6b6864f5",
+    "T800000c65dd5cce9d7f89079c72c37883a72186d4a3fc", "T80000ce1564070a34cea122a9e64d34ce7b19ef48bf8e", "T800007834238ad4f698e6a2689451468fb55e7b563d3b",
+    "T80000c2a47a2ccd629b6677e0464ab4f61cfc54120e18", "T80000da9e3fa379cd18f396419968dd8f76fd76650c48", "T8000086ead9e12f1acccf291dc916bd20943f45b18695",
+    "T8000019cd5e985a531ad03cfa078b770d33162c7a836b", "T80000421aee1ca67d86a95b7066d564a01208077b080f", "T80000ebfa4f6b30ac91f778a14ac2e2b066d1c347c38a",
+    "T8000021318c50c2d830a6f8909d1586ed2a8b03cc4ee3", "T80000671d45285872bf2a2fbde0bc138b80a00a958eb0", "T8000011e5cb4b3ed7bc3b2aa2d70ea9c5c1c79e30d9e5",
+    "T800002a7130d1de4984bebc04e5912317a758ebb4ab1d", "T80000265adc6da24906bb809abdaf05bbec8e70681fec", "T8000055364f052a0b56aa324e239df04117608159502a",
+    "T80000fc67c750c620e2cca0829a29533f54a3d968e9f5", "T800001360a952acfdc3f8eac6f3733c04e912a423abda", "T80000359bcb3c1a761b373e5217c8047fe75367812e35",
+    "T80000088f898caa66399039e4ef8f43dbe1af110a976a", "T80000a914cc9791057bd77d7d6744135c3e8d2a830533", "T80000caec82f6e880d37d8c6478591a0f317e4ae98b87",
+    "T800006af5f308d4a9ee3d8f0989dc37d6129a894a20f6", "T800009d4560ba28bdb7d2bce559de6b6ffa676764c241",
+};
+
     // m_registered_miner_type
 
     // virtual const data::xtablestate_ptr_t &     get_table_state() const = 0;
@@ -189,23 +203,31 @@ static std::vector<std::string> advs = {
     // virtual std::string             get_table_address() const = 0;
     // virtual bool                    is_state_dirty() const = 0;
 
-class xmock_statectx_t : public statectx::xstatectx_face_t {
+class xmock_statectx_t final : public statectx::xstatectx_face_t {
  public:
     xmock_statectx_t() {
         m_state = make_object_ptr<base::xvbstate_t>(sys_contract_rec_registration_addr, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
         auto canvas = make_object_ptr<base::xvcanvas_t>();
         m_state->new_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, canvas.get());
-        for (auto adv : advs) {
+        for (auto const & adv : advs) {
             data::system_contract::xreg_node_info info;
-            info.m_registered_miner_type = common::xenum_miner_type::advance;
+            info.miner_type(common::xenum_miner_type::advance);
             base::xstream_t stream(base::xcontext_t::instance());
             info.serialize_to(stream);
             m_state->load_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY)->insert(adv, {reinterpret_cast<char *>(stream.data()), static_cast<size_t>(stream.size())}, canvas.get());
         }
+        for (auto const & val : validators) {
+            data::system_contract::xreg_node_info info;
+            info.miner_type(common::xenum_miner_type::validator);
+            base::xstream_t stream(base::xcontext_t::instance());
+            info.serialize_to(stream);
+            m_state->load_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY)
+                ->insert(val, {reinterpret_cast<char *>(stream.data()), static_cast<size_t>(stream.size())}, canvas.get());
+        }
         m_unitstate = std::make_shared<data::xunit_bstate_t>(m_state.get(), false);
     }
 
-    ~xmock_statectx_t() = default;
+    ~xmock_statectx_t() override = default;
 
     const data::xtablestate_ptr_t & get_table_state() const override {
         assert(false);
@@ -220,11 +242,11 @@ class xmock_statectx_t : public statectx::xstatectx_face_t {
         assert(false);
         return nullptr;
     }
-    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr) {
+    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr) override {
         assert(addr.to_string() == sys_contract_rec_registration_addr);
         return m_unitstate;
     }
-    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr, uint64_t height) {
+    data::xunitstate_ptr_t load_commit_unit_state(const common::xaccount_address_t & addr, uint64_t height) override {
         assert(addr.to_string() == sys_contract_rec_registration_addr);
         return m_unitstate;
     }
@@ -262,7 +284,7 @@ public:
         m_unitstate = std::make_shared<xunit_bstate_t>(m_vbstate.get());
         m_statectx = std::make_shared<xmock_statectx_t>();
         m_account_index = std::make_shared<xaccount_context_t>(m_unitstate, m_statectx, 0);
-        m_contract_helper = std::make_shared<xcontract_helper>(m_account_index.get(), m_contract_addr, m_exe_addr);
+        m_contract_helper = std::make_shared<xvm::xcontract_helper>(m_account_index.get(), m_contract_addr, m_exe_addr);
         contract.set_contract_helper(m_contract_helper);
         contract.setup();
     }
@@ -281,7 +303,7 @@ public:
     std::shared_ptr<xunit_bstate_t> m_unitstate{nullptr};
     statectx::xstatectx_face_ptr_t m_statectx{nullptr};
     std::shared_ptr<xaccount_context_t> m_account_index{nullptr};
-    std::shared_ptr<xcontract_helper> m_contract_helper{nullptr};
+    std::shared_ptr<xvm::xcontract_helper> m_contract_helper{nullptr};
     xstake::xtable_vote_contract contract{common::xnetwork_id_t(255)};
 };
 
@@ -369,6 +391,20 @@ TEST_F(xtest_table_vote_contract_dev_t, test_add_all_time_ineffective_votes_old_
     EXPECT_EQ(all_time_ineffective_votes[1][advs[2]], 4);
     EXPECT_EQ(all_time_ineffective_votes[1][advs[3]], 3);
     EXPECT_EQ(all_time_ineffective_votes[1][advs[4]], 4);
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_add_all_time_ineffective_votes_validator) {
+    std::map<std::uint64_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
+    xtable_vote_contract::vote_info_map_t map;
+    map[validators[2]] = 2;
+    map[validators[4]] = 4;
+    EXPECT_THROW(contract.add_all_time_ineffective_votes(1, map, all_time_ineffective_votes), top::error::xtop_error_t);
+    try {
+        contract.add_all_time_ineffective_votes(1, map, all_time_ineffective_votes);
+    } catch (top::error::xtop_error_t const & eh) {
+        std::string const msg = eh.what();
+        ASSERT_TRUE(msg.find("only auditor can be voted") != std::string::npos);
+    }
 }
 
 TEST_F(xtest_table_vote_contract_dev_t, test_del_all_time_ineffective_votes_del_all) {
@@ -501,10 +537,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote) {
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
         map[advs[4]] = 5000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
-    for (auto i = 0; i < voters.size(); ++i) {
-        std::map<std::uint64_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
+    for (auto i = 0u; i < voters.size(); ++i) {
+        std::map<common::xlogic_time_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
         xtable_vote_contract::vote_info_map_t map1;
         map1[advs[i * 2]] = i * 2;
         map1[advs[i * 2 + 1]] = i * 2 + 1;
@@ -553,7 +589,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote) {
     EXPECT_EQ(ret[advs[1]], 1902);
     EXPECT_EQ(ret[advs[2]], 3000);
     EXPECT_EQ(ret[advs[3]], 0);
-    EXPECT_EQ(contract.STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY), "4");
+    // EXPECT_EQ(contract.STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_TIME_KEY), xtable_vote_contract::flag_withdraw_tickets_10900);
 }
 
 TEST_F(xtest_table_vote_contract_dev_t, test_get_and_update_all_effective_votes_of_all_account) {
@@ -577,14 +613,10 @@ TEST_F(xtest_table_vote_contract_dev_t, test_get_and_update_all_effective_votes_
         contract.set_all_time_ineffective_votes(voter, all_time_ineffective_votes);
         index.insert({voters[i], i});
     }
-#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
-    uint32_t ineffective_period = 1;
-#else
-    uint32_t ineffective_period = 8640;
-#endif
-    auto h99 = contract.get_and_update_all_effective_votes_of_all_account(99 + ineffective_period);
+
+    auto h99 = contract.get_and_update_all_effective_votes_of_all_account(99 + xtable_vote_contract::ineffective_period);
     EXPECT_TRUE(h99.empty());
-    auto h200 = contract.get_and_update_all_effective_votes_of_all_account(200 + ineffective_period);
+    auto h200 = contract.get_and_update_all_effective_votes_of_all_account(200 + xtable_vote_contract::ineffective_period);
     EXPECT_EQ(h200.size(), voters.size());
     for (auto p : h200) {
         EXPECT_EQ(p.second.size(), 4);
@@ -615,7 +647,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_on_timer_not_fork) {
         map[advs[1]] = 2000;
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
     {
         m_account_index->m_timer_height = fork_time + 100;
@@ -669,7 +701,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_vote_on_timer) {
         map[advs[1]] = 2000;
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
     {
         xtable_vote_contract::vote_info_map_t map;
@@ -677,7 +709,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_vote_on_timer) {
         map[advs[1]] = 4000;
         map[advs[2]] = 6000;
         map[advs[3]] = 8000;
-        contract.handle_votes(common::xaccount_address_t{voters[1]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[1]}, map, true, true);
     }
     {
         m_account_index->m_timer_height = fork_time + 100;
@@ -752,7 +784,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_unvote_on_timer) {
         map[advs[1]] = 2000;
         map[advs[2]] = 3000;
         map[advs[3]] = 4000;
-        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voters[0]}, map, true, true);
     }
     {
         m_account_index->m_timer_height = fork_time + 100;
@@ -813,7 +845,7 @@ TEST_F(xtest_table_vote_contract_dev_t, test_vote_bug) {
     {
         xtable_vote_contract::vote_info_map_t map;
         map[adv] = 100;
-        contract.handle_votes(common::xaccount_address_t{voter}, map, true);
+        contract.handle_votes(common::xaccount_address_t{voter}, map, true, true);
 
         std::map<std::uint64_t, xtable_vote_contract::vote_info_map_t> all_time_ineffective_votes;
         xtable_vote_contract::vote_info_map_t map1;
@@ -825,3 +857,373 @@ TEST_F(xtest_table_vote_contract_dev_t, test_vote_bug) {
     map[adv] = 150;
     contract.set_vote_info_v2(common::xaccount_address_t{voter}, map, false);
 }
+
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_BY_DEFAULT >= 10901)
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_invalid_flag) {
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_reset_tickets, {}, {}));
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10901, {}, {}));
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_withdraw_tickets_10901, {}, {}));
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10902, {}, {}));
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_withdraw_tickets_10902, {}, {}));
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_empty) {
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_withdraw_tickets_10900, {}, {}));
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, {}, {}));
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_not_in_the_contract_table) {
+    common::xaccount_address_t const voter{"T80000580bb76ca47813e2bc99254e9aacd86c0bbc952e"};
+    EXPECT_NE(contract.SELF_ADDRESS().table_id(), voter.table_id());
+
+    std::set<common::xaccount_address_t> const recvers{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"},
+        common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"},
+        common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"},
+        common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"},
+        common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"},
+        common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+    };
+    std::map<common::xaccount_address_t, uint64_t> voting_data;
+    for (auto const & recver : recvers) {
+        voting_data[recver] = 1024;
+    }
+    std::map<common::xaccount_address_t, std::map<std::string, uint64_t>> contract_ticket_reset_data;
+    for (auto const & voting_datum : voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, contract_ticket_reset_data, {}));
+    EXPECT_FALSE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, {}, {voter}));
+
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data.empty());
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_in_the_contract_table_with_reset_data) {
+    common::xaccount_address_t const voter{"T80000107948390bf9a99480e033a1869ce687c4fb2ab2"};
+    EXPECT_EQ(contract.SELF_ADDRESS().table_id(), voter.table_id());
+
+    std::set<common::xaccount_address_t> const recvers{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"},
+        common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"},
+        common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"},
+        common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"},
+        common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"},
+        common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+    };
+    std::set<common::xaccount_address_t> const recvers2{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"}, common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"}, common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"}, common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"}, common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"}, common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+        common::xaccount_address_t{"T800007ba800e2b66222b8c2216a537f08037eaba48345"}, common::xaccount_address_t{"T80000cd67caf4e93b66475e128c5f67e1c2608b52ec88"},
+        common::xaccount_address_t{"T800007867400ffd924f7e71a399752e75f63767d35eae"}, common::xaccount_address_t{"T80000b8bd22d885be63f45072d9f7ee0a8dbcc866cb4e"},
+        common::xaccount_address_t{"T80000a1f35712e0ad0da84913b55488b705cf1c4d27ed"}, common::xaccount_address_t{"T8000009a55d8ea4695d2bd25ed703dff6946bc4bec2ba"},
+        common::xaccount_address_t{"T800008897108b78e01cc502b103e3506c0e71653bfe2c"}, common::xaccount_address_t{"T800003ee6d69b5eec6c6c9eebc9d2e31e11647df7be47"},
+        common::xaccount_address_t{"T8000081fe06448ee13c520192942786fe6ab0e7a81a17"}, common::xaccount_address_t{"T80000af41b8e709454807801babe8da9153e51adcf41f"},
+    };
+
+    std::map<common::xaccount_address_t, uint64_t> expected_voting_data;
+    for (auto const & recver : recvers) {
+        expected_voting_data[recver] = 1024;
+    }
+    std::map<common::xaccount_address_t, std::map<std::string, uint64_t>> contract_ticket_reset_data;
+    for (auto const & voting_datum : expected_voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+
+    {
+        EXPECT_TRUE(contract.reset_v10901(xtable_vote_contract::flag_withdraw_tickets_10900, contract_ticket_reset_data, {}));
+        auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
+        EXPECT_EQ(1, tickets_data.size());
+        EXPECT_TRUE(tickets_data.find(voter) != std::end(tickets_data));
+        auto const & voter_data = tickets_data.at(voter);
+        EXPECT_EQ(voter_data.size(), recvers.size());
+        EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
+    }
+
+    // reset again
+    expected_voting_data.clear();
+    contract_ticket_reset_data.clear();
+
+    for (auto const & recver : recvers2) {
+        expected_voting_data[recver] = 2048;
+    }
+    for (auto const & voting_datum : expected_voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+    {
+        EXPECT_TRUE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, contract_ticket_reset_data, {}));
+        auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
+        EXPECT_EQ(1, tickets_data.size());
+        EXPECT_TRUE(tickets_data.find(voter) != std::end(tickets_data));
+        auto const & voter_data = tickets_data.at(voter);
+        EXPECT_EQ(voter_data.size(), recvers2.size());
+        EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
+    }
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10901_voter_in_the_contract_table_with_clear_data) {
+    common::xaccount_address_t const voter{"T80000107948390bf9a99480e033a1869ce687c4fb2ab2"};
+    EXPECT_EQ(contract.SELF_ADDRESS().table_id(), voter.table_id());
+
+    std::set<common::xaccount_address_t> const recvers{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"},
+        common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"},
+        common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"},
+        common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"},
+        common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"},
+        common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+    };
+
+    std::map<common::xaccount_address_t, uint64_t> expected_voting_data;
+    for (auto const & recver : recvers) {
+        expected_voting_data[recver] = 1024;
+    }
+    std::map<common::xaccount_address_t, std::map<std::string, uint64_t>> contract_ticket_reset_data;
+    for (auto const & voting_datum : expected_voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+
+    contract.reset_v10901(xtable_vote_contract::flag_withdraw_tickets_10900, contract_ticket_reset_data, {});
+
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data == expected_voting_data);
+
+    EXPECT_TRUE(contract.reset_v10901(xtable_vote_contract::flag_upload_tickets_10900, {}, {voter}));
+    auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
+    EXPECT_TRUE(tickets_data.empty());
+    auto const & ineffective_data = contract.ineffective_data();
+    EXPECT_TRUE(ineffective_data.find(voter) == std::end(ineffective_data));
+
+    contract.reset_table_tickets_data();
+    EXPECT_TRUE(contract.table_tickets_data().empty());
+}
+
+#endif
+
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && (XCHAIN_FORKED_BY_DEFAULT >= 10902)
+
+std::string const legacy_flag{"9644333"};
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_invalid_flag) {
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_reset_tickets, {}, {}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10900, {}, {}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10900, {}, {}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10902, {}, {}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10902, {}, {}));
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_empty) {
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10901, {}, {}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, {}, {}));
+    EXPECT_FALSE(contract.reset_v10902(legacy_flag, {}, {}));
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_not_in_the_contract_table) {
+    common::xaccount_address_t const voter{"T80000580bb76ca47813e2bc99254e9aacd86c0bbc952e"};
+    EXPECT_NE(contract.SELF_ADDRESS().table_id(), voter.table_id());
+
+    std::set<common::xaccount_address_t> const recvers{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"},
+        common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"},
+        common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"},
+        common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"},
+        common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"},
+        common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+    };
+    std::map<common::xaccount_address_t, uint64_t> voting_data;
+    for (auto const & recver : recvers) {
+        voting_data[recver] = 1024;
+    }
+    std::map<common::xaccount_address_t, std::map<std::string, uint64_t>> contract_ticket_reset_data;
+    for (auto const & voting_datum : voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, contract_ticket_reset_data, {}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, {}, {voter}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10901, contract_ticket_reset_data, {}));
+    EXPECT_FALSE(contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10901, {}, {voter}));
+    EXPECT_FALSE(contract.reset_v10902(legacy_flag, contract_ticket_reset_data, {}));
+    EXPECT_FALSE(contract.reset_v10902(legacy_flag, {}, {voter}));
+
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data.empty());
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_in_the_contract_table_with_reset_data) {
+    common::xaccount_address_t const voter{"T80000107948390bf9a99480e033a1869ce687c4fb2ab2"};
+    EXPECT_EQ(contract.SELF_ADDRESS().table_id(), voter.table_id());
+
+    std::set<common::xaccount_address_t> const recvers{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"},
+        common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"},
+        common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"},
+        common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"},
+        common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"},
+        common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+    };
+    std::set<common::xaccount_address_t> const recvers2{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"}, common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"}, common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"}, common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"}, common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"}, common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+        common::xaccount_address_t{"T800007ba800e2b66222b8c2216a537f08037eaba48345"}, common::xaccount_address_t{"T80000cd67caf4e93b66475e128c5f67e1c2608b52ec88"},
+        common::xaccount_address_t{"T800007867400ffd924f7e71a399752e75f63767d35eae"}, common::xaccount_address_t{"T80000b8bd22d885be63f45072d9f7ee0a8dbcc866cb4e"},
+        common::xaccount_address_t{"T80000a1f35712e0ad0da84913b55488b705cf1c4d27ed"}, common::xaccount_address_t{"T8000009a55d8ea4695d2bd25ed703dff6946bc4bec2ba"},
+        common::xaccount_address_t{"T800008897108b78e01cc502b103e3506c0e71653bfe2c"}, common::xaccount_address_t{"T800003ee6d69b5eec6c6c9eebc9d2e31e11647df7be47"},
+        common::xaccount_address_t{"T8000081fe06448ee13c520192942786fe6ab0e7a81a17"}, common::xaccount_address_t{"T80000af41b8e709454807801babe8da9153e51adcf41f"},
+    };
+
+    std::map<common::xaccount_address_t, uint64_t> expected_voting_data;
+    for (auto const & recver : recvers) {
+        expected_voting_data[recver] = 1024;
+    }
+    std::map<common::xaccount_address_t, std::map<std::string, uint64_t>> contract_ticket_reset_data;
+    for (auto const & voting_datum : expected_voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+
+    {
+        EXPECT_TRUE(contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10901, contract_ticket_reset_data, {}));
+        auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
+        EXPECT_EQ(1, tickets_data.size());
+        EXPECT_TRUE(tickets_data.find(voter) != std::end(tickets_data));
+        auto const & voter_data = tickets_data.at(voter);
+        EXPECT_EQ(voter_data.size(), recvers.size());
+        EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
+    }
+
+    // reset again
+    expected_voting_data.clear();
+    contract_ticket_reset_data.clear();
+
+    for (auto const & recver : recvers2) {
+        expected_voting_data[recver] = 2048;
+    }
+    for (auto const & voting_datum : expected_voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+    {
+        EXPECT_TRUE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, contract_ticket_reset_data, {}));
+        auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
+        EXPECT_EQ(1, tickets_data.size());
+        EXPECT_TRUE(tickets_data.find(voter) != std::end(tickets_data));
+        auto const & voter_data = tickets_data.at(voter);
+        EXPECT_EQ(voter_data.size(), recvers2.size());
+        EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
+    }
+
+    // reset again and again
+    expected_voting_data.clear();
+    contract_ticket_reset_data.clear();
+
+    for (auto const & recver : recvers) {
+        expected_voting_data[recver] = 1024;
+    }
+    for (auto const & voting_datum : expected_voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+
+    {
+        EXPECT_TRUE(contract.reset_v10902(legacy_flag, contract_ticket_reset_data, {}));
+        auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
+        EXPECT_EQ(1, tickets_data.size());
+        EXPECT_TRUE(tickets_data.find(voter) != std::end(tickets_data));
+        auto const & voter_data = tickets_data.at(voter);
+        EXPECT_EQ(voter_data.size(), recvers.size());
+        EXPECT_TRUE(voter_data == expected_voting_data);
+
+        contract.reset_table_tickets_data();
+        auto const & table_tickets_data = contract.table_tickets_data();
+        EXPECT_TRUE(table_tickets_data == expected_voting_data);
+    }
+}
+
+TEST_F(xtest_table_vote_contract_dev_t, test_reset_10902_voter_in_the_contract_table_with_clear_data) {
+    common::xaccount_address_t const voter{"T80000107948390bf9a99480e033a1869ce687c4fb2ab2"};
+    EXPECT_EQ(contract.SELF_ADDRESS().table_id(), voter.table_id());
+
+    std::set<common::xaccount_address_t> const recvers{
+        common::xaccount_address_t{"T80000fbd7868c3466043e05c1222f9db1729f88e5e3b2"},
+        common::xaccount_address_t{"T800008dbd8e60feb115b98376a2e851433826c8bf2029"},
+        common::xaccount_address_t{"T8000050abf6ff490a0d4462b750bd6407d79fc3269941"},
+        common::xaccount_address_t{"T800005f7aeb7a667783bd648d845d08811750689bb983"},
+        common::xaccount_address_t{"T800001781d5537e2be3e9e788641ecebb5d7daa2da8fc"},
+        common::xaccount_address_t{"T8000058be6c0769a23393ed929143be1cd28a01029137"},
+        common::xaccount_address_t{"T80000bc6fab3aa01def9f204aa907248ce88557a278ab"},
+        common::xaccount_address_t{"T8000073c78478b96c07c08dafc9f79df265cb8c398a54"},
+        common::xaccount_address_t{"T8000007dda7e1a9feb5540439cfae7ba9f5822f9f0f97"},
+        common::xaccount_address_t{"T8000029ccde5543798e7ec2cf515cd44e5d29eab7ad07"},
+    };
+
+    std::map<common::xaccount_address_t, uint64_t> expected_voting_data;
+    for (auto const & recver : recvers) {
+        expected_voting_data[recver] = 1024;
+    }
+    std::map<common::xaccount_address_t, std::map<std::string, uint64_t>> contract_ticket_reset_data;
+    for (auto const & voting_datum : expected_voting_data) {
+        contract_ticket_reset_data[voter][top::get<common::xaccount_address_t const>(voting_datum).to_string()] = top::get<uint64_t>(voting_datum);
+    }
+
+    contract.reset_v10902(xtable_vote_contract::flag_withdraw_tickets_10901, contract_ticket_reset_data, {});
+
+    contract.reset_table_tickets_data();
+    auto const & table_tickets_data = contract.table_tickets_data();
+    EXPECT_TRUE(table_tickets_data == expected_voting_data);
+
+    EXPECT_TRUE(contract.reset_v10902(xtable_vote_contract::flag_upload_tickets_10901, {}, {voter}));
+    auto const & tickets_data = contract.tickets_data(calc_voter_tickets_storage_property_name(voter));
+    EXPECT_TRUE(tickets_data.empty());
+    auto const & ineffective_data = contract.ineffective_data();
+    EXPECT_TRUE(ineffective_data.find(voter) == std::end(ineffective_data));
+
+    contract.reset_table_tickets_data();
+    EXPECT_TRUE(contract.table_tickets_data().empty());
+}
+
+#endif

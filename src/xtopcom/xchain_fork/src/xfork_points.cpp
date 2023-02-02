@@ -15,9 +15,11 @@ optional<xfork_point_t> v1_7_0_block_fork_point     = xfork_point_t{xfork_point_
 optional<xfork_point_t> v1_7_0_sync_point           = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.7 sync protocol fork"};
 optional<xfork_point_t> v1_9_0_state_fork_point     = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9 unitstate fork"};
 optional<xfork_point_t> xbft_msg_upgrade            = xfork_point_t{xfork_point_type_t::logic_time, 0, "xbft msg upgrade"};
-optional<xfork_point_t> v1_9_0_vote_contract_update_point = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9 vote contract update"};
-optional<xfork_point_t> v1_9_0_reset = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9 vote contract data reset"};
-optional<xfork_point_t> v1_9_0_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9 vote contract re-enabling"};
+optional<xfork_point_t> v10900_upgrade_table_tickets_contract = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9 vote contract update"};
+optional<xfork_point_t> v10901_table_tickets_reset = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9 vote contract data reset"};
+optional<xfork_point_t> v10901_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9 vote contract re-enabling"};
+optional<xfork_point_t> v10902_table_tickets_reset = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9.2 vote contract data reset"};
+optional<xfork_point_t> v10902_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.9.2 vote contract re-enabling"};
 
 #else
 
@@ -25,9 +27,11 @@ optional<xfork_point_t> v1_7_0_block_fork_point           = xfork_point_t{xfork_
 optional<xfork_point_t> v1_7_0_sync_point                 = xfork_point_t{xfork_point_type_t::logic_time, 9460080, "v1.7 sync protocol fork"};
 optional<xfork_point_t> v1_9_0_state_fork_point           = xfork_point_t{xfork_point_type_t::logic_time, 10038600, "v1.9 unitstate fork"};
 optional<xfork_point_t> xbft_msg_upgrade                  = xfork_point_t{xfork_point_type_t::logic_time, 10038600, "xbft msg upgrade"};
-optional<xfork_point_t> v1_9_0_vote_contract_update_point = xfork_point_t{xfork_point_type_t::logic_time, 10038600, "v1.9 vote contract update"};
-optional<xfork_point_t> v1_9_0_reset = xfork_point_t{xfork_point_type_t::logic_time, 10087200, "v1.9 vote contract data reset"};
-optional<xfork_point_t> v1_9_0_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 10091880, "v1.9 vote contract re-enabling"};
+optional<xfork_point_t> v10900_upgrade_table_tickets_contract = xfork_point_t{xfork_point_type_t::logic_time, 10038600, "v1.9 vote contract update"};
+optional<xfork_point_t> v10901_table_tickets_reset = xfork_point_t{xfork_point_type_t::logic_time, 10087200, "v1.9 vote contract data reset"};
+optional<xfork_point_t> v10901_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 10091880, "v1.9 vote contract re-enabling"};
+optional<xfork_point_t> v10902_table_tickets_reset = xfork_point_t{xfork_point_type_t::logic_time, 10247400, "v1.9.2 vote contract data reset"};
+optional<xfork_point_t> v10902_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 10249200, "v1.9.2 vote contract re-enabling"};
 
 #endif
 

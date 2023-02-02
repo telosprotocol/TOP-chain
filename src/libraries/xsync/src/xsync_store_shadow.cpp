@@ -114,6 +114,17 @@ bool xcommon_span_t::own_to_span(uint64_t height){
     return true;
 }
 
+bool xcommon_span_t::height_exist(uint64_t height)
+{
+    if (own_to_span(height)) {
+        uint64_t offset = height - m_span_index;
+        if ((m_bitmap[SEGMENT_INDEX(offset)] & ((uint64_t)1 << OFFSET_IN_SEGMENT(offset))) != 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::pair<uint64_t, uint64_t> xcommon_span_t::get_continuous_unused_interval(const std::pair<uint64_t, uint64_t> height_interval){
     uint64_t offset = height_interval.first - m_span_index;
     uint64_t unused_start_height = 0;

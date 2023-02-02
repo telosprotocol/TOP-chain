@@ -16,7 +16,7 @@
 
 NS_BEG3(top, xvm, xcontract)
 
-using namespace top::store;
+// using namespace top::store;
 
 /**
  * @brief the enum definition for contract property type
@@ -83,7 +83,7 @@ public:
      *
      * @param contract_helper  the contract helper object
      */
-    virtual void set_contract_helper(shared_ptr<xcontract_helper> contract_helper) final;
+    virtual void set_contract_helper(std::shared_ptr<xcontract_helper> contract_helper) final;
 
     /**
      * @brief Get the exec account object

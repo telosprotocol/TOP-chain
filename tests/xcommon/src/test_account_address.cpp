@@ -201,6 +201,9 @@ TEST(account_address, table_id) {
 
     top::common::xaccount_address_t const another{"T80000fa17a9505fb337f7b664e44880f6e0dad3d921a1"};
     EXPECT_EQ(static_cast<uint16_t>(30), another.table_id().value());
+
+    top::common::xaccount_address_t const a2{"T800001753d40631a3ad31568c3141272cac45692888d1"};
+    EXPECT_EQ(static_cast<uint16_t>(11), a2.table_id().value());
 }
 
 NS_END3

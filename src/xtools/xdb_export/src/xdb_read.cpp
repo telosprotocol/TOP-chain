@@ -6,6 +6,7 @@
 #include "xdata/xblocktool.h"
 #include "xbasic/xhex.h"
 #include "xdata/xnative_contract_address.h"
+#include "xsync/xsync_store_shadow.h"
 
 NS_BEG2(top, db_export)
 
@@ -37,6 +38,8 @@ bool xdb_read_tools_t::is_match_function_name(std::string const & func_name) {
         "db_read_meta",
         "db_data_parse",
         "db_read_all_table_height_lists",
+        "db_read_span_account_height",
+        "db_read_span_account"
     };
 
     for (auto & v : names) {
@@ -64,11 +67,52 @@ bool xdb_read_tools_t::process_function(std::string const & func_name, int argc,
     } else if (func_name == "db_read_all_table_height_lists") {
         if (argc != 5) return false;
         db_read_all_table_height_lists(argv[3], std::stoi(argv[4]));
+    } else if (func_name == "db_read_span_account_height") {
+        if (argc != 4) return false;
+        db_read_span_account_height(argv[3]);
+    } else if (func_name == "db_read_span_account") {
+        if (argc != 5) return false;
+        db_read_span_account(argv[3], std::stoi(argv[4]));
     } else {
         xassert(false);
         return false;
     }
     return true;
+}
+
+void xdb_read_tools_t::db_read_span_account_height(std::string const & account) {
+
+    uint64_t height{0};
+    const std::string key_path = base::xvdbkey_t::create_account_span_genesis_height_key(account);
+    std::string account_height_bin = m_xvdb_ptr->get_value(key_path);
+
+    if (!account_height_bin.empty()) {
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)account_height_bin.c_str(), account_height_bin.size());
+        stream >> height;
+    }
+    std::cout << "db_read_span_account_height account: %s " << account << " height:%lu " << height << std::endl;
+}
+
+void xdb_read_tools_t::db_read_span_account(std::string const& account, const uint64_t height)
+{
+    top::sync::xcommon_span_t span(height);
+    const std::string key_path = base::xvdbkey_t::create_account_span_key(account, span.index());
+    std::string span_bin = m_xvdb_ptr->get_value(key_path);
+
+    std::cout << "db_read_span_account account: %s " << account << " height:%lu " << height;
+    if (!span_bin.empty()) {
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)span_bin.c_str(), span_bin.size());
+        span.serialize_from(stream);
+        span.connect();
+
+        if (span.height_exist(height)) {
+            std::cout << " exist." << std::endl;
+        } else {
+            std::cout << " not exist." << std::endl;
+        }
+    } else {
+        std::cout << " span not exist" << std::endl;
+    }
 }
 
 void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t height) {
