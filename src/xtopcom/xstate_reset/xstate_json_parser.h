@@ -56,15 +56,15 @@ public:
         return m_json_data.cend();
     }
 
-    const_iterator find(key_type const & address) {
+    const_iterator find(key_type const & address) const {
         return m_json_data.find(address);
     }
 
-    const char * table_account_str() {
+    const char * table_account_str() const {
         return m_table_account.get_address().c_str();
     }
 
-    const char * fork_name_str() {
+    const char * fork_name_str() const {
         return m_fork_name.c_str();
     }
 

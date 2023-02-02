@@ -80,11 +80,11 @@ void do_action(T* obj, top::base::xstream_t& stream, Callable&& callable, void (
  * @brief call the func in class with the param
  *
  */
-#define CALL_FUNC_PARAM(class_name, func_name, func, params) \
-if(func_name == #func) {\
-    auto fn = std::mem_fn(&class_name::func);\
-    do_action(this, stream, fn, &class_name::func);\
-    return;\
-}
+#define CALL_FUNC_PARAM(class_name, func_name, func, params)    \
+    if (#func == func_name) {                                   \
+        auto fn = std::mem_fn(&class_name::func);               \
+        do_action(this, stream, fn, &class_name::func);         \
+        return;                                                 \
+    }
 
 NS_END3

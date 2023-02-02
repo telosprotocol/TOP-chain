@@ -36,6 +36,7 @@ static const std::size_t DEFAULT_QUIC_SERVER_PORT_DETLA = 1000;  // quic_port is
 #else
 static const std::size_t DEFAULT_QUIC_SERVER_PORT_DETLA = 1;  // quic_port is greater than p2p_port;
 #endif
+static const int32_t SEND_USE_QUIC_PACKET_SIZE = 2 * 1024 * 1024; // 2MB
 
 const static uint16_t XUDP_RATELIMIT_INTERVAL = 5;                        //  5 minutes
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES = 10;               //  not more than 5 connection times
@@ -184,7 +185,7 @@ int32_t xp2pudp_t::connect_xudp(const std::string & target_ip, const uint16_t ta
 }
 int xp2pudp_t::send(xpacket_t & packet) {
     XMETRICS_GAUGE(metrics::message_transport_send, 1);
-    if (packet.get_size() > 10485760) {
+    if (packet.get_size() > SEND_USE_QUIC_PACKET_SIZE) {
         const std::string src_data((const char *)packet.get_body().data(), packet.get_body().size());
         return quic_node_->send_data(src_data, packet.get_to_ip_addr(), packet.get_to_ip_port() + DEFAULT_QUIC_SERVER_PORT_DETLA);  // xquic server port is greater than p2p port
     }

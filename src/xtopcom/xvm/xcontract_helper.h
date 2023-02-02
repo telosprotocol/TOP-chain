@@ -7,14 +7,16 @@
 #include <string>
 #include <vector>
 
+#include "xbasic/xerror/xerror.h"
 #include "xcommon/xlogic_time.h"
 #include "xstore/xaccount_context.h"
+#include "xvm/xerror/xvm_error_code.h"
 
 NS_BEG2(top, xvm)
 #define XCONTRACT_ENSURE(condition, msg)                                                     \
     do {                                                                                     \
         if (!(condition)) {                                                                  \
-            std::error_code ec{ enum_xvm_error_code::enum_vm_exception };                    \
+            std::error_code ec{ xvm::enum_xvm_error_code::enum_vm_exception };                    \
             top::error::throw_error(ec, msg);                                                \
         }                                                                                    \
     } while (false)

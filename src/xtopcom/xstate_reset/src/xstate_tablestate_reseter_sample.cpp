@@ -10,9 +10,6 @@
 
 NS_BEG2(top, state_reset)
 
-// might not be useful.
-typedef enum { invalid, map, list, interger } state_property_type_t;
-
 xstate_tablestate_reseter_sample::xstate_tablestate_reseter_sample(statectx::xstatectx_face_ptr_t statectx_ptr, std::string const & fork_name)
   : xstate_tablestate_reseter_base{statectx_ptr}, m_json_parser{statectx_ptr->get_table_address(), fork_name} {
 }
@@ -56,24 +53,30 @@ bool xstate_tablestate_reseter_sample::exec_reset_tablestate(std::size_t) {
         }
 
         // properties
-        // if (account_json.find("properties") != account_json.end()) {
-        //     auto const & account_properties_json = account_json.at("properties");
-        //     xinfo("    will reset properties %s", account_properties_json.dump().c_str());
-        //     for (auto properties_iter = account_properties_json.begin(); properties_iter != account_properties_json.end(); ++properties_iter) {
-        //         std::string property_name = properties_iter.key();
-        //         json property_value = properties_iter.value();
-        //         assert(property_value.find("type") != property_value.end());
-        //         assert(property_value.find("data") != property_value.end());
-        //         assert(property_value.at("type").is_string());
-        //         assert(property_value.at("data").is_string());
-        //         std::string property_type = property_value.at("type").get<std::string>();
-        //         std::string property_data = property_value.at("data").get<std::string>();
-        //         xdbg("        property %s ,type: %s, data: %s", property_name.c_str(), property_type.c_str(), property_data.c_str());
-        //         // set unit bstate
-        //         account_set_property(account, property_name, property_type, property_data);
-        //     }
-        // }
+        if (account_json.find("properties") != account_json.end()) {
+            auto const & account_properties_json = account_json.at("properties");
+            xinfo("    will reset properties %s", account_properties_json.dump().c_str());
+            for (auto properties_iter = account_properties_json.begin(); properties_iter != account_properties_json.end(); ++properties_iter) {
+                std::string property_name = properties_iter.key();
+                json property_value = properties_iter.value();
+                assert(property_value.find("type") != property_value.end());
+                assert(property_value.find("data") != property_value.end());
+                assert(property_value.at("type").is_string());
+                assert(property_value.at("data").is_string());
+                std::string property_type = property_value.at("type").get<std::string>();
+                std::string property_data = property_value.at("data").get<std::string>();
+                xdbg("        property %s ,type: %s, data: %s", property_name.c_str(), property_type.c_str(), property_data.c_str());
+                // set unit bstate
+                account_set_property(account, property_name, property_type, property_data);
+            }
+        }
     }
+
+    //common::xaccount_address_t const to_be_reset_account{"T800001753d40631a3ad31568c3141272cac45692888d1"};
+    //if (to_be_reset_account.table_id().value() == m_table_account.get_ledger_subaddr()) {
+    //    account_set_property(to_be_reset_account.to_string(), data::XPROPERTY_UNVOTE_NUM, "uint64", "106537");
+    //}
+
     return true;
 }
 
