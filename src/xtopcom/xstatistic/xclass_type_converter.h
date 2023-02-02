@@ -11,7 +11,7 @@ NS_BEG2(top, xstatistic)
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
 enum_statistic_class_type message_id_to_class_type(uint32_t msgid);
 #else
-#define message_id_to_class_type(msgid) (enum_statistic_max)
+enum_statistic_class_type message_id_to_class_type(uint32_t msgid) {return enum_statistic_max;}
 #endif
 
 NS_END2
