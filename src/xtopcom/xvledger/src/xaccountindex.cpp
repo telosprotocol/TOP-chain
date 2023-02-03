@@ -8,18 +8,20 @@
 #include "xbase/xobject.h"
 #include "xvledger/xaccountindex.h"
 #include "xmetrics/xmetrics.h"
+#include "xstatistic/xbasic_size.hpp"
 
 NS_BEG2(top, base)
 
-xaccount_index_t::xaccount_index_t() {
+xaccount_index_t::xaccount_index_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_account_index) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
 }
 
 xaccount_index_t::~xaccount_index_t() {
+    statistic_del();
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, -1);
 }
 
-xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
+xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) : xstatistic::xstatistic_obj_face_t(left){
     m_latest_tx_nonce    = left.m_latest_tx_nonce;
     m_latest_unit_height = left.m_latest_unit_height;
     m_latest_unit_viewid = left.m_latest_unit_viewid;
@@ -37,7 +39,7 @@ xaccount_index_t::xaccount_index_t(uint64_t height,
                                    base::enum_xvblock_class _unitclass,
                                    base::enum_xvblock_type _unittype,
                                    bool has_unconfirm_tx,
-                                   bool is_account_destroy) {
+                                   bool is_account_destroy) : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_account_index) {
     m_latest_tx_nonce    = nonce;
     m_latest_unit_height = height;
     m_latest_unit_viewid = viewid;
@@ -57,7 +59,8 @@ xaccount_index_t::xaccount_index_t(uint64_t height,
 }
 
 // new version
-xaccount_index_t::xaccount_index_t(uint64_t height, std::string const& unithash, std::string const& statehash, uint64_t nonce) {
+xaccount_index_t::xaccount_index_t(uint64_t height, std::string const & unithash, std::string const & statehash, uint64_t nonce)
+  : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_account_index) {
     m_latest_tx_nonce    = nonce;
     m_latest_unit_height = height;
     m_latest_unit_viewid = 0;
@@ -215,6 +218,11 @@ std::string xaccount_index_t::dump() const {
     return std::string(local_param_buf);
 }
 
+int32_t xaccount_index_t::get_object_size_real() const {
+    int32_t total_size = sizeof(*this) + get_size(m_unit_hash) + get_size(m_state_hash);
+    xdbg("-----cache size----- xvbindex_t total_size:%d this:%d,%d:%d", total_size, sizeof(*this), get_size(m_unit_hash), get_size(m_state_hash));
+    return total_size;
+}
 
 int32_t xaccount_indexs_t::serialize_to_string(std::string & _str) const {
     base::xstream_t _raw_stream(base::xcontext_t::instance());

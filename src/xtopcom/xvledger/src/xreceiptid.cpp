@@ -10,15 +10,17 @@
 
 NS_BEG2(top, base)
 
-xreceiptid_pair_t::xreceiptid_pair_t() {
+xreceiptid_pair_t::xreceiptid_pair_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receiptid_pair) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, 1);
 }
 
 xreceiptid_pair_t::~xreceiptid_pair_t() {
+    statistic_del();
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, -1);
 }
 
-xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id) {
+xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id)
+    : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receiptid_pair)  {
     set_sendid_max(sendid);
     set_confirmid_max(confirmid);
     set_recvid_max(recvid);

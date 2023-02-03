@@ -28,6 +28,9 @@ enum enum_statistic_class_type {
     enum_statistic_vcanvas,
     enum_statistic_mpt_state_object,
     enum_statistic_mpt_trie_node,
+    enum_statistic_bindex,
+    enum_statistic_account_index,
+    enum_statistic_receiptid_pair,
 #ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
     enum_statistic_event,
     enum_statistic_event_account = enum_statistic_event,

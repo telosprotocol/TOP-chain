@@ -730,7 +730,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     ethtx_get_from,
 
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
-    // calculate by xstatistic_t
+    // calculate by xstatistic_t, the order must match with enum_statistic_class_type.
     statistic_tx_v2_num,
     statistic_tx_v3_num,
     statistic_receipt_num,
@@ -745,6 +745,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_vcanvas_num,
     statistic_mpt_state_object_num,
     statistic_mpt_trie_node_num,
+    statistic_bindex_num,
+    statistic_account_index_num,
+    statistic_receiptid_pair_num,
 #ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
     statistic_event_num,
     statistic_msg_cons_num,
@@ -821,6 +824,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statistic_vcanvas_size,
     statistic_mpt_state_object_size,
     statistic_mpt_trie_node_size,
+    statistic_bindex_size,
+    statistic_account_index_size,
+    statistic_receiptid_pair_size,
 #ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
     statistic_event_size,
     statistic_msg_cons_size,
