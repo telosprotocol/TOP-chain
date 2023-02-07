@@ -44,7 +44,7 @@ xbatch_packer::xbatch_packer(base::xtable_index_t                             &t
                              std::shared_ptr<xblock_maker_face> const &       block_maker,
                              base::xcontext_t &                               _context,
                              const uint32_t                                   target_thread_id)
-  : xcsaccount_t(_context, target_thread_id, account_id), m_tableid(tableid), m_last_view_id(0), m_para(para), m_table_addr(account_id) {
+  : xcsaccount_t(_context, target_thread_id, account_id), m_tableid(tableid), m_last_view_id(0), m_para(para), m_table_addr(common::xtable_address_t::build_from(account_id)) {
     auto cert_auth = m_para->get_resources()->get_certauth();
     m_last_xip2.high_addr = -1;
     m_last_xip2.low_addr = -1;
@@ -362,7 +362,7 @@ bool xbatch_packer::do_state_sync(uint64_t sync_height) {
     evm_common::xh256_t const table_bstate_hash(top::to_bytes(table_bstate_hash_str));
     evm_common::xh256_t const sync_block_hash(top::to_bytes(sync_block->get_block_hash()));
     xinfo("xbatch_packer::do_state_sync sync state begin.table:%s,height:%llu,root:%s", get_account().c_str(), sync_height, state_root.hex().c_str());
-    get_resources()->get_state_downloader()->sync_state(m_table_addr, sync_height, sync_block_hash, table_bstate_hash, state_root, true, ec);
+    get_resources()->get_state_downloader()->sync_state(common::xaccount_address_t::build_from(m_table_addr.to_string()), sync_height, sync_block_hash, table_bstate_hash, state_root, true, ec);
     if (ec) {
         xwarn("xbatch_packer::do_state_sync sync state fail.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), sync_height, state_root.hex().c_str(), ec.message().c_str());
     }

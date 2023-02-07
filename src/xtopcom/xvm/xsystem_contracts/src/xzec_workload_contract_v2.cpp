@@ -144,7 +144,7 @@ std::vector<xobject_ptr_t<data::xblock_t>> xzec_workload_contract_v2::get_fullbl
     uint64_t last_read_height = get_table_height(table_id);
     uint64_t cur_read_height = last_read_height;
     // calc table address
-    auto const & table_owner = common::xaccount_address_t{data::xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, table_id)};
+    auto const & table_owner = common::xaccount_address_t{data::xdatautil::serialize_owner_str(common::con_table_base_address.to_string(), table_id)};
     // get block
     std::vector<xobject_ptr_t<data::xblock_t>> res;
     uint64_t time_interval = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes{10}).count() / XGLOBAL_TIMER_INTERVAL_IN_SECONDS;

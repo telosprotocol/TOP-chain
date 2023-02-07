@@ -71,7 +71,7 @@ const std::vector<std::string> & xtablestate_and_offdata_prune_info_t::get_offda
     return m_offdata_keys;
 }
 
-xstatestore_prune_t::xstatestore_prune_t(common::xaccount_address_t const & table_addr, std::shared_ptr<xstatestore_resources_t> para) : m_table_addr(table_addr), m_table_vaddr(table_addr.vaccount()), m_para(para) {
+xstatestore_prune_t::xstatestore_prune_t(common::xtable_address_t const & table_addr, std::shared_ptr<xstatestore_resources_t> para) : m_table_addr(table_addr), m_table_vaddr(table_addr.vaccount()), m_para(para) {
     init();
 }
 

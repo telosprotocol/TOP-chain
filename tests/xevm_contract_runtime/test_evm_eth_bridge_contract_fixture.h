@@ -49,7 +49,7 @@ public:
 
     data::xtablestate_ptr_t table_state{nullptr};
     data::xunitstate_ptr_t ustate{nullptr};
-    std::string table_address{eth_table_address.to_string()};
+    std::string table_address{common::eth_table_base_address.to_string()};
 };
 
 class xcontract_fixture_t : public testing::Test {

@@ -31,6 +31,12 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::invalid_account_type:
         return "invalid account type";
 
+    case xerrc_t::invalid_table_type:
+        return "invalid table type";
+
+    case xerrc_t::invalid_zone_index:
+        return "invalid zone index";
+
     case xerrc_t::token_not_used:
         return "token not found";
 
@@ -67,6 +73,15 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::table_id_mismatch:
         return "table id mismatched";
 
+    case xerrc_t::table_base_address_is_empty:
+        return "empty table base address";
+
+    case xerrc_t::invalid_table_base_address:
+        return "invalid table base address";
+
+    case xerrc_t::invalid_table_address:
+        return "invalid table address";
+
     default:
         assert(false);
         return "unknown common category error";
@@ -81,7 +96,7 @@ std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition{ static_cast<int>(errc), common_category() };
 }
 
-class xtop_common_category : public std::error_category {
+class xtop_common_category final : public std::error_category {
 public:
     const char * name() const noexcept override {
         return "common";
@@ -91,6 +106,8 @@ public:
         auto const ec = static_cast<xerrc_t>(errc);
         return errc_to_string(ec);
     }
+
+    ~xtop_common_category() override = default;
 };
 using xcommon_category_t = xtop_common_category;
 

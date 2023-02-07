@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
-#include "xcommon/xnode_id.h"
+#include "xcommon/xtable_address.h"
 #include "xevm_common/trie/xsecure_trie.h"
 #include "xevm_common/xfixed_hash.h"
 #include "xstate_mpt/xstate_mpt_store_fwd.h"
@@ -39,7 +39,7 @@ public:
     /// @param db Db interface.
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occurred if cannot find root in db.
-    static std::shared_ptr<xtop_state_mpt> create(const common::xaccount_address_t & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
+    static std::shared_ptr<xtop_state_mpt> create(common::xtable_address_t const & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
 
 public:
     /// @brief Get index of specific account.
@@ -112,7 +112,7 @@ private:
     /// @param root Root hash of MPT.
     /// @param db Db interface.
     /// @param ec Log the error code.
-    void init(const common::xaccount_address_t & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
+    void init(common::xtable_address_t const & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
 
     /// @brief Get or create state object of specific account.
     /// @param account Account string.
@@ -144,7 +144,7 @@ private:
 
     std::shared_ptr<xstate_object_t> query_state_object(common::xaccount_address_t const& account) const;
 
-    common::xaccount_address_t m_table_address;
+    common::xtable_address_t m_table_address;
 
     std::shared_ptr<evm_common::trie::xtrie_face_t> m_trie{nullptr};
     observer_ptr<evm_common::trie::xtrie_db_t> m_trie_db{nullptr};

@@ -323,7 +323,7 @@ bool xtop_contract_manager::is_need_process_commit_event(const xevent_store_bloc
     }
 
     auto & addr = store_event->owner;
-    if (addr.find(sys_contract_beacon_table_block_addr) != addr.npos || addr.find(sys_contract_zec_table_block_addr) != addr.npos ||
+    if (addr.find(common::rec_table_base_address.to_string()) != addr.npos || addr.find(common::zec_table_base_address.to_string()) != addr.npos ||
         addr == sys_contract_eth_table_block_addr_with_suffix) {
         return true;
     }

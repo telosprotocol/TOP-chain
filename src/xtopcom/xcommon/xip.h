@@ -25,9 +25,7 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xenable_to_string.h"
 #include "xbasic/xextended.h"
-#include "xbasic/xhashable.hpp"
 #include "xbasic/xid.hpp"
 #include "xcommon/xnode_type.h"
 #include "xcommon/xversion.h"

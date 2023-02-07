@@ -298,7 +298,7 @@ public:
         for (auto i = 0; i < enum_vledger_const::enum_vbucket_has_tables_count; i++) {
         // for (auto i = 0; i < 10; i++) {
             // calc table address
-            auto table_owner = common::xaccount_address_t{xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, i)};
+            auto table_owner = common::xaccount_address_t{xdatautil::serialize_owner_str(common::con_table_base_address.to_string(), i)};
             {
                 std::string value_str;
                 statestore::xstatestore_hub_t::instance()->map_get(zec_workload_contract_address, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);

@@ -37,8 +37,8 @@ static xstate_mpt_caching_db_t & get_caching_db(base::xvdbstore_t * db) {
     return container;
 }
 
-std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_address_t & table,
-                                                       const evm_common::xh256_t & root,
+std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(common::xtable_address_t const & table,
+                                                       evm_common::xh256_t const & root,
                                                        base::xvdbstore_t * db,
                                                        std::error_code & ec) {
     assert(!ec);
@@ -52,7 +52,7 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_ad
     return mpt;
 }
 
-void xtop_state_mpt::init(const common::xaccount_address_t & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
+void xtop_state_mpt::init(common::xtable_address_t const & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
     assert(!ec);
 
     m_table_address = table;

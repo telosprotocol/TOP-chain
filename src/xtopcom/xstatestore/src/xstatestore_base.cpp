@@ -33,28 +33,28 @@ void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared
         return;
     }
 
-    mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{block->get_account()}, state_root, base::xvchain_t::instance().get_xdbstore(), ec);
+    mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{block->get_account()}.table_address(), state_root, base::xvchain_t::instance().get_xdbstore(), ec);
 }
 
-void xstatestore_base_t::set_latest_executed_info(common::xaccount_address_t const& table_addr, uint64_t height,const std::string & blockhash) const {
+void xstatestore_base_t::set_latest_executed_info(common::xtable_address_t const& table_addr, uint64_t height,const std::string & blockhash) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
     account_obj->set_latest_executed_block(height, blockhash);
 }
-uint64_t xstatestore_base_t::get_latest_executed_block_height(common::xaccount_address_t const& table_addr) const {
+uint64_t xstatestore_base_t::get_latest_executed_block_height(common::xtable_address_t const& table_addr) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
     return account_obj->get_latest_executed_block_height();
 }
 
-void xstatestore_base_t::set_lowest_executed_block_height(common::xaccount_address_t const& table_addr, uint64_t height) const {
+void xstatestore_base_t::set_lowest_executed_block_height(common::xtable_address_t const& table_addr, uint64_t height) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
     account_obj->set_lowest_executed_block_height(height);
 }
-uint64_t xstatestore_base_t::get_lowest_executed_block_height(common::xaccount_address_t const& table_addr) const {
+uint64_t xstatestore_base_t::get_lowest_executed_block_height(common::xtable_address_t const& table_addr) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
     return account_obj->get_lowest_executed_block_height();
 }
 
-uint64_t xstatestore_base_t::get_latest_committed_block_height(common::xaccount_address_t const& table_addr) const {
+uint64_t xstatestore_base_t::get_latest_committed_block_height(common::xtable_address_t const& table_addr) const {
     uint64_t _highest_commit_block_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(table_addr.vaccount());
     return _highest_commit_block_height;
 }
@@ -67,5 +67,27 @@ base::xvdbstore_t* xstatestore_base_t::get_dbstore() const {
     return base::xvchain_t::instance().get_xdbstore();
 }
 
+void xstatestore_base_t::set_latest_executed_info(common::xaccount_address_t const & account_address, uint64_t height, const std::string & blockhash) const {
+    base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(account_address.vaccount()));
+    account_obj->set_latest_executed_block(height, blockhash);
+}
+uint64_t xstatestore_base_t::get_latest_executed_block_height(common::xaccount_address_t const & account_address) const {
+    base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(account_address.vaccount()));
+    return account_obj->get_latest_executed_block_height();
+}
+
+void xstatestore_base_t::set_lowest_executed_block_height(common::xaccount_address_t const & account_address, uint64_t height) const {
+    base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(account_address.vaccount()));
+    account_obj->set_lowest_executed_block_height(height);
+}
+uint64_t xstatestore_base_t::get_lowest_executed_block_height(common::xaccount_address_t const & account_address) const {
+    base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(account_address.vaccount()));
+    return account_obj->get_lowest_executed_block_height();
+}
+
+uint64_t xstatestore_base_t::get_latest_committed_block_height(common::xaccount_address_t const & account_address) const {
+    uint64_t _highest_commit_block_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(account_address.vaccount());
+    return _highest_commit_block_height;
+}
 
 NS_END2

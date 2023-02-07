@@ -111,7 +111,7 @@ private:
     xvip2_t                                  m_faded_xip2{};
     // record last xip in case of consensus success but leader xip changed.
     xvip2_t                                  m_last_xip2{};
-    common::xaccount_address_t               m_table_addr;
+    common::xtable_address_t               m_table_addr;
     xpack_strategy_t                         m_pack_strategy;
 };
 

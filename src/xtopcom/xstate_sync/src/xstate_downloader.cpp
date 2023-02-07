@@ -22,7 +22,7 @@ xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db,
   : m_db(db), m_store(store), m_executor_thread(executor_thread), m_syncer_thread(syncer_thread), m_bus(msg_bus) {
 }
 
-bool xtop_state_downloader::is_syncing(const common::xaccount_address_t & table) const {
+bool xtop_state_downloader::is_syncing(const common::xtable_address_t & table) const {
     std::lock_guard<std::mutex> lock(m_table_dispatch);
     return m_running_tables.count(table);
 }
@@ -46,20 +46,20 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
     }
     // verify if exist already
     {
-        auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, table);
+        auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, table.table_address());
         if (evm_common::trie::HasTrieNode(kv_db, root_hash)) {
             xwarn("xtop_state_downloader::sync_state table: %s root: %s already in db", table.to_string().c_str(), root_hash.hex().c_str());
             return;
         }
     }
     std::lock_guard<std::mutex> lock(m_table_dispatch);
-    if (m_running_tables.count(table)) {
+    if (m_running_tables.count(table.table_address())) {
         xwarn("xtop_state_downloader::sync_state table %s is running sync", table.to_string().c_str());
         ec = error::xerrc_t::downloader_is_running;
         return;
     }
     auto executer = std::make_shared<xtop_download_executer>(make_observer(m_syncer_thread), execution_overtime);
-    m_running_tables.emplace(table, executer);
+    m_running_tables.emplace(table.table_address(), executer);
 
     auto peers_func = [this](common::xtable_id_t const & table) { return latest_peers(table); };
     auto track_func = [weak_executer = std::weak_ptr<xdownload_executer_t>(executer)](state_req const & sr) {
@@ -100,8 +100,8 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
 
 void xtop_state_downloader::process_trie_finish(const sync_result & res) {
     std::lock_guard<std::mutex> lock(m_table_dispatch);
-    if (m_running_tables.count(res.account)) {
-        m_running_tables.erase(res.account);
+    if (m_running_tables.count(res.account.table_address())) {
+        m_running_tables.erase(res.account.table_address());
         if (res.ec) {
             xwarn("xtop_state_downloader::sync_finish table: %s, height: %lu, root: %s, error: %s, %s, out from running task",
                   res.account.to_string().c_str(),
@@ -125,7 +125,7 @@ void xtop_state_downloader::process_trie_finish(const sync_result & res) {
     }
 }
 
-void xtop_state_downloader::sync_cancel(const common::xaccount_address_t & table) const {
+void xtop_state_downloader::sync_cancel(const common::xtable_address_t & table) const {
     std::lock_guard<std::mutex> lock(m_table_dispatch);
     if (m_running_tables.count(table)) {
         m_running_tables.at(table)->cancel();
@@ -229,7 +229,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
     stream >> id;
     stream >> nodes_hashes;
     stream >> units_hashes;
-    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, common::xaccount_address_t{table});
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, common::xtable_address_t::build_from(xstring_view_t{table.data(), table.size()}));
     auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     for (auto const & hash : nodes_hashes) {
         std::error_code ec;
@@ -296,8 +296,8 @@ void xtop_state_downloader::process_trie_response(const vnetwork::xmessage_t & m
     stream >> res.units;
     auto account = common::xaccount_address_t{addr};
     std::lock_guard<std::mutex> lock(m_table_dispatch);
-    if (m_running_tables.count(account)) {
-        auto executer = m_running_tables.at(account);
+    if (m_running_tables.count(account.table_address())) {
+        auto executer = m_running_tables.at(account.table_address());
         executer->push_state_pack(res);
     }
     xinfo("xtop_state_downloader::process_trie_response table: %s, id: %u, size: %zu, %zu", account.to_string().c_str(), res.id, res.nodes.size(), res.units.size());
@@ -356,7 +356,7 @@ void xtop_state_downloader::process_table_response(const vnetwork::xmessage_t & 
     stream >> value;
     res.nodes.emplace_back(value);
     xinfo("xtop_state_downloader::process_table_response table: %s, id: %u, data size: %zu", table.c_str(), res.id, value.size());
-    auto table_account = common::xaccount_address_t{table};
+    auto const table_account = common::xtable_address_t::build_from(xstring_view_t{table.data(), table.size()});
     std::lock_guard<std::mutex> lock(m_table_dispatch);
     if (m_running_tables.count(table_account)) {
         auto & executer = m_running_tables.at(table_account);

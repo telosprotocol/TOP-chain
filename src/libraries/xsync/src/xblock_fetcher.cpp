@@ -59,9 +59,9 @@ void xblock_fetcher_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_
 
                 if (!data::xdatautil::extract_parts(bme->block->get_account(), address_prefix, table_id))
                     return;
-                if (address_prefix == sys_contract_beacon_table_block_addr) {
+                if (address_prefix == common::rec_table_base_address.to_string()) {
                     discard = false;
-                } else if (address_prefix == sys_contract_zec_table_block_addr) {
+                } else if (address_prefix == common::zec_table_base_address.to_string()) {
                     discard = false;
                 }
             }
