@@ -194,9 +194,6 @@ class xtransaction_transfer : public xtransaction_face_t{
                 ret = m_account_ctx->token_transfer_out(get_asset(), get_amount_256(), 0);
             } else {
                 ret = m_account_ctx->available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(transfer_amount));
-#if defined(XBUILD_CONSORTIUM)
-                m_account_ctx->cacl_total_gas_burn(transfer_amount);
-#endif
             }
         }
         return ret;

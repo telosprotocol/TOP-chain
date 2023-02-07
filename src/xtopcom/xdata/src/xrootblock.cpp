@@ -84,7 +84,6 @@ const uint64_t xrootblock_input_t::get_account_balance(const std::string& accoun
     }
 }
 
-
 bool xrootblock_input_t::set_extend_data_map(std::map<std::string, std::string> const& extend_data_map) {
     m_extend_data_map = extend_data_map;
     return true;

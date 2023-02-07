@@ -85,7 +85,6 @@ XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_ELECT_PACK_HEIGHT = "@170";
 XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_WRAP_PHASE = "@171";
 XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_STR = "@172";
 
-
 XINLINE_CONSTEXPR const char * XPROPERTY_NODE_CHECK_OPTION_KEY = "@173";
 XINLINE_CONSTEXPR const char * XPROPERTY_NODE_ROOT_ACCOUNT_KEY = "@174";
 XINLINE_CONSTEXPR const char * XPROPERTY_NODE_ROOT_CA_KEY = "@175";
@@ -672,7 +671,6 @@ private:
      */
     std::int32_t do_read(base::xstream_t & stream) override;
 };
-
 
 struct xgroup_cons_reward_t final : public xserializable_based_on<void> {
     std::string group_address_str;

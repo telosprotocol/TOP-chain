@@ -2,14 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvm/xsystem_contracts/xslash/xtable_consortium_statistic_contract.h"
+
+#include "xtable_consortium_statistic_contract.h"
 
 #include "xbase/xmem.h"
 #include "xcertauth/xcertauth_face.h"
 #include "xcommon/xip.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xmetrics/xmetrics.h"
 #include "xvm/manager/xcontract_manager.h"
 
@@ -17,7 +17,7 @@ using namespace top::base;
 using namespace top::data;
 using namespace top::data::system_contract;
 
-NS_BEG3(top, xvm, xcontract)
+NS_BEG3(top, xvm, consortium)
 
 #define FULLTABLE_NUM "FULLTABLE_NUM"
 #define FULLTABLE_HEIGHT "FULLTABLE_HEIGHT"
@@ -54,7 +54,7 @@ void xtable_statistic_cons_contract::on_collect_statistic_info_cons(xstatistics_
     xdbg("[xtable_statistic_cons_contract][on_collect_statistic_info_cons] self_account %s, source_addr %s, base_addr %s\n", account.to_string().c_str(), 
         source_addr.c_str(), base_addr.c_str());
     XCONTRACT_ENSURE(source_addr == account.to_string(), "invalid source addr's call!");
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_consortium_table_statistic_addr || source_addr == top::sys_contract_consortium_eth_table_statistic_addr, "invalid source base's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || source_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source base's call!");
 
     // check if the block processed
     uint64_t cur_statistic_height = 0;
@@ -183,7 +183,7 @@ void xtable_statistic_cons_contract::update_reward(std::map<common::xgroup_addre
         for (auto const& leader_workload : cons_reward.m_leader_reward) {
             auto const& leader = leader_workload.first;
             auto const& reward = leader_workload.second;
-            total_reward.m_leader_reward[leader] += (reward / g_tx_deposit_fee);
+            total_reward.m_leader_reward[leader] += (reward / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
 
             xdbg("[xtable_statistic_cons_contract::update_reward] group: %u, leader: %s, reward: %d, total_reward: %d",
                 group_address.group_id().value(),
@@ -242,7 +242,7 @@ void xtable_statistic_cons_contract::report_summarized_statistic_info(common::xl
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xtable_statistic_cons_contract][report_summarized_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.to_string().c_str(), source_addr.c_str(), base_addr.c_str());
     XCONTRACT_ENSURE(source_addr == account.to_string(), "invalid source addr's call!");
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_consortium_table_statistic_addr || source_addr == top::sys_contract_consortium_eth_table_statistic_addr, "invalid source base's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || source_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source base's call!");
 
     uint32_t summarize_fulltableblock_num = 0;
     std::string value_str;
@@ -369,7 +369,7 @@ void xtable_statistic_cons_contract::upload_reward()
             xstream_t stream(xcontext_t::instance());
             stream << group_workload_upload_str;
             //new contrace
-            CALL(common::xaccount_address_t { sys_contract_zec_consortium_reward_addr }, "on_receive_reward", std::string((char*)stream.data(), stream.size()));
+            CALL(common::xaccount_address_t { sys_contract_zec_reward_addr }, "on_receive_reward", std::string((char*)stream.data(), stream.size()));
             group_workload_upload.clear();
         }
 

@@ -7,8 +7,6 @@
 #include "xbase/xns_macro.h"
 #include <stdint.h>
 #include <string.h>
-#include "openssl/evp.h"
-#include "openssl/x509.h"
 
 
 NS_BEG2(top, ca_auth)
@@ -48,15 +46,14 @@ public:
     uint64_t get_cert_expiry_time() const { return m_expiry_timer; }
 
 private:
-    int verify_cert(X509* leaf_cert);
-    //X509* load_cert_from_file(std::string cert_file, int type);
-    X509* load_cert_from_buffer(const char* cert_buff, int type, int len =0);
-    void set_cert_expiry_time(X509* leaf_cert);
+    int   verify_cert(void* leaf_cert);
+    void* load_cert_from_buffer(const char* cert_buff, int type, int len =0);
+    void  set_cert_expiry_time(void* leaf_cert);
 
 private:
-    X509_STORE_CTX* m_ca_store_ctx { NULL };
-    STACK_OF(X509) * m_root_certs_stack { NULL };
-    X509_STORE* m_ca_store { NULL };
+    void* m_ca_store_ctx { NULL };
+    void* m_root_certs_stack { NULL };
+    void* m_ca_store { NULL };
     uint64_t m_expiry_timer { 0 };
 };
 

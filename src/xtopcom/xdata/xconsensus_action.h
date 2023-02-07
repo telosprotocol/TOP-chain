@@ -144,7 +144,7 @@ template <xtop_action_type_t ActionTypeV>
 uint64_t xtop_consensus_action<ActionTypeV>::max_gas_amount() const {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
-    return g_tx_deposit_fee * tx->get_transaction()->get_deposit(); // TODO free tgas is missing here.
+    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio) * tx->get_transaction()->get_deposit(); // TODO free tgas is missing here.
 }
 
 template <xtop_action_type_t ActionTypeV>

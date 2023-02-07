@@ -14,7 +14,7 @@ namespace top { namespace data {
 bool xtransaction_t::transaction_type_check() const {
     switch (get_tx_type()) {
 #ifdef ENABLE_CREATE_USER  // debug use
-            case xtransaction_type_create_user_account:
+        case xtransaction_type_create_user_account:
 #endif
             case xtransaction_type_deploy_evm_contract:
             case xtransaction_type_run_contract:

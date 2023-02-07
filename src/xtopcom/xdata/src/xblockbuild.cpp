@@ -130,9 +130,9 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t * _tablehe
     if (!base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_compatible_eth) && !eth_header.empty()) {
         header_extra.set_ethheader(eth_header);
     }
-#if defined(XBUILD_CONSORTIUM)
-    header_extra.set_total_burn_gas(burn_gas);
-#endif 
+    if(burn_gas > 0) {
+        header_extra.set_total_burn_gas(burn_gas);
+    }
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
     return extra_string;
@@ -836,7 +836,7 @@ xtable_build2_t::xtable_build2_t(base::xvblock_t* prev_block, const xtable_block
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
     std::string _extra_data = xtableheader_extra_t::build_extra_string(
-        get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(),para.get_total_burn_gas());
+        get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(), para.get_total_burn_gas());
     set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
@@ -996,7 +996,9 @@ bool xrootblock_build_t::build_block_body(const xrootblock_para_t & para) {
     input->set_genesis_funds_accounts(para.m_geneis_funds_accounts);
     input->set_genesis_tcc_accounts(para.m_tcc_accounts);
     input->set_genesis_nodes(para.m_genesis_nodes);
-    input->set_extend_data_map(para.m_extend_data_map);
+    if(para.m_extend_data_map.size() > 0) {
+        input->set_extend_data_map(para.m_extend_data_map);
+    }
     // TODO(jimmy) use bstate
     std::string resource_bin;
     input->serialize_to_string(resource_bin);

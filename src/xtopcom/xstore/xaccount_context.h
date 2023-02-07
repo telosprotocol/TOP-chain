@@ -79,7 +79,6 @@ class xaccount_context_t {
     uint64_t get_total_tgas() const ;
     uint64_t get_available_tgas() const ;
     uint64_t get_total_gas_burn() const { return m_total_gas_burn;}
-    void     cacl_total_gas_burn(uint64_t gas);
 
     int32_t  calc_resource(uint64_t& tgas, uint32_t deposit, uint32_t& used_deposit);
 

@@ -20,13 +20,13 @@ static std::string const g_ci_consortium_genesis_config =
             },
             "tcc":{
                 "T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB":{
-                    "balance":"1000000000"
+                    "balance":"100000000000"
                 },
                 "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy":{
-                    "balance":"1000000000"
+                    "balance":"100000000000"
                 },
                 "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo":{
-                    "balance":"1000000000"
+                    "balance":"100000000000"
                 }
             }
         },
@@ -66,13 +66,13 @@ static std::string const  g_dev_consortium_genesis_config =
         "accounts": {
             "tcc": {
                 "T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB": {
-                    "balance": "1000000000"
+                    "balance": "100000000000"
                 },
                 "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy": {
-                    "balance": "1000000000"
+                    "balance": "100000000000"
                 },
                 "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo": {
-                    "balance": "1000000000"
+                    "balance": "100000000000"
                 }
             },
             "genesis_funds_account": {

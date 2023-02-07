@@ -112,7 +112,6 @@ public:
         REGISTER_QUERY_METHOD(getCrossReceiptIds);
 #if defined(XBUILD_CONSORTIUM)
         REGISTER_QUERY_METHOD(getConsortiumReward);
-        REGISTER_QUERY_METHOD(nodeInfoAccountQuery);
 #endif 
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -153,12 +152,10 @@ public:
     xJson::Value parse_sharding_reward(const std::string & target, const std::string & prop_name, string & version);
     void getChainId(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-
 #if defined(XBUILD_CONSORTIUM)
-    //consortium function
     void getConsortiumReward(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
-    void nodeInfoAccountQuery(xJson::Value& js_req, xJson::Value& js_rsp, std::string& strResult, uint32_t& nErrorCode);
 #endif 
+
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getProperty(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);

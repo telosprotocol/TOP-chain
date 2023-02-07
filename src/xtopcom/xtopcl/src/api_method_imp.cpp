@@ -1332,6 +1332,7 @@ static void set_user_info(task_info_callback<T> * info,
     // info->params[top::xChainRPC::xrpc_signature::version_key_] = uinfo.sign_version;
 }
 #if defined(XBUILD_CONSORTIUM)
+
 bool api_method_imp::nodeInfoReg(const user_info & uinfo, const std::string & account_name, uint64_t expiry_time, const std::string & account_cert,
                                 std::ostringstream & out_str, std::function<void(NodeRegResult *)> func) {
     auto info = new task_info_callback<NodeRegResult>();
@@ -1358,7 +1359,6 @@ bool api_method_imp::nodeInfoReg(const user_info & uinfo, const std::string & ac
     out_str << rpc_response;
     return true;
 }
-
 
 bool api_method_imp::nodeInfoUnreg(const user_info & uinfo, const std::string & account_name, std::ostringstream & out_str, 
                                     std::function<void(NodeRegResult *)> func) {
@@ -1387,7 +1387,6 @@ bool api_method_imp::nodeInfoUnreg(const user_info & uinfo, const std::string & 
     return true;
 }
 
-
 bool api_method_imp::nodeInfoRootCaReplace(const user_info & uinfo,const std::string & root_account,  const std::string & cert_str, std::ostringstream & out_str, 
                                     std::function<void(NodeRegResult *)> func) {
     auto info = new task_info_callback<NodeRegResult>();
@@ -1414,7 +1413,6 @@ bool api_method_imp::nodeInfoRootCaReplace(const user_info & uinfo,const std::st
     out_str << rpc_response;
     return true;
 }
-
  
 bool api_method_imp::nodeInfoAuthConfig(const user_info & uinfo,std::string const& check_type, std::string const& check_flag, std::ostringstream & out_str, 
                                     std::function<void(NodeRegResult *)> func) {
@@ -1436,23 +1434,6 @@ bool api_method_imp::nodeInfoAuthConfig(const user_info & uinfo,std::string cons
         return false;
     }
 
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
-
-    auto rpc_response = task_dispatcher::get_instance()->get_result();
-    out_str << rpc_response;
-    return true;
-}
-
-bool api_method_imp::nodeInfoAccountQuery(const user_info & uinfo,  std::ostringstream & out_str, std::function<void(GetBlockResult *)> func) {
-    if (uinfo.account.empty()) {
-        CONSOLE("uinfo.account.empty()=", uinfo.account.empty());
-        return false;
-    }
-
-    auto info = new task_info_callback<GetBlockResult>();
-    set_user_info(info, uinfo, CMD_QUERY_ROOT_CA, func, false);
-
-    info->callback_ = func;
     task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
 
     auto rpc_response = task_dispatcher::get_instance()->get_result();

@@ -1,6 +1,5 @@
-#if defined(XBUILD_CONSORTIUM)
 
-#include "xvm/xsystem_contracts/node_manage/xnode_manage_contract.h"
+#include "xnode_manage_contract.h"
 
 #include "xbase/xmem.h"
 #include "xbasic/xhex.h"
@@ -15,7 +14,7 @@
 using namespace top::data::system_contract;
 using top::base::xcontext_t;
 
-NS_BEG4(top, xvm, system_contracts, rec)
+NS_BEG3(top, xvm, consortium)
 
 #if !defined(XNODE_MANAGE_CONTRACT_MODULE)
 #define XNODE_MANAGE_CONTRACT_MODULE "sysContract_"
@@ -294,6 +293,5 @@ void xnode_manage_contract::nodeInfoCaRebase()
     }
 }
 
-NS_END4
 
-#endif 
+NS_END3

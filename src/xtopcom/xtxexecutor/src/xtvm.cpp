@@ -36,9 +36,8 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
             xwarn("xtvm_t::execute fail-vm execute.tx=%s,ret=%s", tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return enum_exec_error_vm_execute;
         }
-#if defined(XBUILD_CONSORTIUM)
         output.m_total_gas_burn = accountvm.get_total_gas_burn();
-#endif 
+
         xdbg("xtvm_t::execute succ vm execute.tx=%s burn_gas= %ld", tx->dump().c_str(), output.m_total_gas_burn);
     }
     // execute the second inner table tx

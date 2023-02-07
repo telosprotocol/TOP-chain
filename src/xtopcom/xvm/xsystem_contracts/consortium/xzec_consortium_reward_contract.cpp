@@ -1,22 +1,19 @@
 
-#include "xvm/xsystem_contracts/xreward/xzec_consortium_reward_contract.h"
 
+#include "xzec_consortium_reward_contract.h"
 #include "xbase/xutl.h"
 #include "xbasic/xuint.hpp"
 #include "xbasic/xutility.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xstore/xstore_error.h"
-
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xblock_statistics_data.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/manager/xcontract_manager.h"
-
 #include <iomanip>
 
 using top::base::xcontext_t;
@@ -32,7 +29,7 @@ using namespace top::data;
 
 #define CONS_REWARD_CONTRACT XZEC_MODULE XCONTRACT_PREFIX
 
-NS_BEG2(top, xstake)
+NS_BEG3(top, xvm, consortium)
 
 xzec_consortium_reward_contract::xzec_consortium_reward_contract(common::xnetwork_id_t const& network_id)
     : xbase_t { network_id }
@@ -95,7 +92,7 @@ void xzec_consortium_reward_contract::on_receive_reward(std::string const& table
     std::string base_addr;
     uint32_t table_id;
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_address, base_addr, table_id), "source address extract base_addr or table_id error!");
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_consortium_table_statistic_addr || source_address == top::sys_contract_consortium_eth_table_statistic_addr, "invalid source base's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || source_address == top::sys_contract_eth_table_statistic_info_addr, "invalid source base's call!");
 
     xdbg("[xzec_consortium_reward_contract::on_receive_reward]  call from %s, pid: %d, ", source_address.c_str(), getpid());
 
@@ -309,7 +306,7 @@ void xzec_consortium_reward_contract::get_reward_param(const common::xlogic_time
     }
     
     issue_detail.onchain_timer_round = current_time;
-    issue_detail.m_zec_reward_contract_height = get_blockchain_height(sys_contract_zec_consortium_reward_addr);
+    issue_detail.m_zec_reward_contract_height = get_blockchain_height(sys_contract_zec_reward_addr);
     issue_detail.m_auditor_group_count = property_param.map_node_reward_detail.size();
 
     xdbg("[xzec_consortium_reward_contract::get_reward_param] auditor_group_count: %d", issue_detail.m_auditor_group_count);
@@ -821,7 +818,7 @@ bool xzec_consortium_reward_contract::check_reg_contract_read_time(const uint64_
     return false;
 }
 
-NS_END2
+NS_END3
 
 #undef CONS_REWARD_CONTRACT
 #undef XCONTRACT_PREFIX

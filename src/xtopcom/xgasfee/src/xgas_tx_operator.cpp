@@ -142,12 +142,12 @@ bool xtop_gas_tx_operator::is_one_stage_tx() const {
 }
 
 evm_common::u256 xtop_gas_tx_operator::balance_to_tgas(const evm_common::u256 balance) {
-    xassert(g_tx_deposit_fee > 0);
-    return balance / g_tx_deposit_fee;
+    xassert(XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio) > 0);
+    return balance / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
 evm_common::u256 xtop_gas_tx_operator::tgas_to_balance(const evm_common::u256 tgas) {
-    return tgas * g_tx_deposit_fee;
+    return tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
 }  // namespace gasfee

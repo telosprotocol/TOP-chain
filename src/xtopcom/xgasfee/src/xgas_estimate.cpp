@@ -31,7 +31,7 @@ evm_common::u256 xgas_estimate::flexible_price(const xobject_ptr_t<data::xcons_t
 evm_common::u256 xgas_estimate::estimate_used_gas(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas) {
     xtop_gas_tx_operator op{tx};
     evm_common::u256 total_tgas = op.tx_bandwith_tgas() + op.tx_disk_tgas() + evm_gas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
-    evm_common::u256 total_utop = total_tgas * g_tx_deposit_fee;
+    evm_common::u256 total_utop = total_tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     evm_common::u256 total_wei = op.utop_to_wei(total_utop);
     evm_common::u256 estimate_used_gas = total_wei / base_price();
     return estimate_used_gas;

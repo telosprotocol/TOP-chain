@@ -52,14 +52,9 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
     if (m_contract_info->has_block_monitors()) {
         auto block_owner = block->get_block_owner();
         // table fulltable block process
-#ifndef XBUILD_CONSORTIUM
         bool is_sharding_statistic =
             (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(common::con_table_base_address.to_string()) != std::string::npos);
         bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(common::eth_table_base_address.to_string()) != std::string::npos);
-#else
-        bool is_sharding_statistic = (m_contract_info->address == sharding_statistic_consortium_contract_address) && (block_owner.find(common::con_table_base_address.to_string()) != std::string::npos);
-        bool is_eth_statistic = (m_contract_info->address == eth_statistic_consortium_contract_address) &&  (block_owner.find(common::eth_table_base_address.to_string()) != std::string::npos);
-#endif
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
@@ -187,12 +182,9 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     onchain_timer_round = block->get_height();
                     block_timestamp = block->get_timestamp();
 
-                #if !defined(XBUILD_CONSORTIUM)
-                    if ((m_contract_info->address == sharding_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
-                #else 
-                    if (((m_contract_info->address == sharding_statistic_consortium_contract_address) ||
-                        (m_contract_info->address == eth_statistic_consortium_contract_address)) && valid_call(onchain_timer_round)) {
-                #endif
+
+                    if ((m_contract_info->address == sharding_statistic_info_contract_address || m_contract_info->address == sharding_vote_contract_address 
+                        || m_contract_info->address == eth_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
 
                         int table_num = m_driver->table_ids().size();
                         if (table_num == 0) {

@@ -13,14 +13,14 @@
 #include "xelection/xcache/xdata_accessor.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xcontract_helper.h"
-#include "xvm/xsystem_contracts/node_manage/xnode_manage_contract.h"
+#include "xvm/xsystem_contracts/consortium/xnode_manage_contract.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include <gtest/gtest.h>
 
 using namespace top;
 using namespace top::contract;
 using namespace top::xvm;
-using namespace top::xvm::system_contracts::rec;
+using namespace top::xvm::consortium;
 using top::common::xbroadcast_id_t;
 using top::common::xnode_id_t;
 using top::common::xnode_type_t;
