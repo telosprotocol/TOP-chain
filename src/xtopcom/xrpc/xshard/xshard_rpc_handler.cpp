@@ -72,83 +72,90 @@ void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessa
     m_thread->send_call(asyn_call);
 }
 
-void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg, xjson_proc_t & json_proc) {
-    xinfo_rpc("process msg %d", edge_msg.m_tx_type);
-    xtop_scope_executer on_exit([&edge_msg, &json_proc] {
-        json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
-        json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
-        json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
-    });
+void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg) {
+    // xinfo_rpc("process msg %d", edge_msg.m_tx_type);
+    // xtop_scope_executer on_exit([&edge_msg, &json_proc] {
+    //     json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
+    //     json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
+    //     json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
+    // });
     switch (edge_msg.m_tx_type) {
     case enum_xrpc_tx_type::enum_xrpc_tx_type: {
-        auto ret = data::xtransaction_t::set_tx_by_serialized_data(json_proc.m_tx_ptr, edge_msg.m_message_body);
-        assert(ret == true);
+        data::xtransaction_ptr_t tx_ptr = nullptr;
+        if (false == data::xtransaction_t::set_tx_by_serialized_data(tx_ptr, edge_msg.m_message_body)) {
+            xerror("xshard_rpc_handler::process_msg fail-parse tx from msg");
+            return;
+        }
         // json_proc.m_tx_ptr->m_from = edge_msg.m_advance_address;
         xdbg_rpc("deal tx hash: %s, version: %d, advance addr: %s",
-                 data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size()).c_str(),
-                 json_proc.m_tx_ptr->get_tx_version(),
+                 data::uint_to_str(tx_ptr->digest().data(), tx_ptr->digest().size()).c_str(),
+                 tx_ptr->get_tx_version(),
                  edge_msg.m_advance_address.to_string().c_str());
 
         /*consensus_service::xunit_service_face* unit_src =
             static_cast<consensus_service::xunit_service_face*>(xcontext_t::instance().get_global_object(enum_xtop_global_object_unit_service));
         unit_src->request_transaction_consensus(json_proc.m_tx_ptr);*/
-        std::string tx_hash = data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
-        xkinfo("[global_trace][shard_rpc][push unit_service]%s,%s", tx_hash.c_str(), json_proc.m_tx_ptr->get_source_addr().c_str());
+        std::string tx_hash = data::uint_to_str(tx_ptr->digest().data(), tx_ptr->digest().size());
+        // xkinfo("[global_trace][shard_rpc][push unit_service]%s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
         uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
-        uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
-        if (now < json_proc.m_tx_ptr->get_fire_timestamp()) {
+        uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
+        if (now < tx_ptr->get_fire_timestamp()) {
             XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
         }
         XMETRICS_GAUGE(metrics::txdelay_from_client_to_validator, delay_time_s);
 
-        if (xsuccess != m_txpool_service->request_transaction_consensus(json_proc.m_tx_ptr, false)) {
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx hash or sign error"};
+        if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
+            // throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx hash or sign error"};
+            xwarn("[global_trace][shard_rpc][push unit_service] fail %s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
+        } else {
+            xkinfo("[global_trace][shard_rpc][push unit_service] succ %s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
         }
         break;
     }
     default: {
-        xinfo_rpc("process msg %d no match type", edge_msg.m_tx_type);
-        throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "unknow msg type"};
+        xerror("process msg %d no match type", edge_msg.m_tx_type);
+        // throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "unknow msg type"};
     }
     }
 }
 
 void xshard_rpc_handler::shard_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const uint64_t msghash) {
-    shared_ptr<xrpc_msg_response_t> response_msg_ptr = std::make_shared<xrpc_msg_response_t>(edge_msg);
-    bool send_to_edge = true;
-    xtop_scope_executer on_exit([response_msg_ptr, &msghash, &edge_sender, &send_to_edge, this] {
-        if (send_to_edge) {
-            response_msg_ptr->m_signature_address = vnetwork::address_cast<common::xnode_type_t::group>(this->m_shard_vhost->address());
-            xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
-            xinfo_rpc("xshard_rpc_handler msg recv %" PRIx64 ", send %" PRIx64 ", %s", msghash, msg.hash(), response_msg_ptr->m_message_body.c_str());
-            std::error_code ec;
-            this->m_shard_vhost->send_to(edge_sender, msg, ec);
-            if (ec) {
-                // todo?
-                // assert(false);
-            }
-        }
-    });
-    try {
+    // TODO(jimmy) shard nodes no need send response msg
+    // shared_ptr<xrpc_msg_response_t> response_msg_ptr = std::make_shared<xrpc_msg_response_t>(edge_msg);
+    // bool send_to_edge = true;
+    // xtop_scope_executer on_exit([response_msg_ptr, &msghash, &edge_sender, &send_to_edge, this] {
+    //     if (send_to_edge) {
+    //         response_msg_ptr->m_signature_address = vnetwork::address_cast<common::xnode_type_t::group>(this->m_shard_vhost->address());
+    //         xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
+    //         xinfo_rpc("xshard_rpc_handler msg recv %" PRIx64 ", send %" PRIx64 ", %s", msghash, msg.hash(), response_msg_ptr->m_message_body.c_str());
+    //         std::error_code ec;
+    //         this->m_shard_vhost->send_to(edge_sender, msg, ec);
+    //         if (ec) {
+    //             // todo?
+    //             // assert(false);
+    //         }
+    //     }
+    // });
+    // try {
         if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
             xdbg_rpc("xshard_rpc_handler msg recv tx %" PRIx64 ", send %s", msghash, edge_sender.to_string().c_str());
-            xjson_proc_t json_proc;
-            process_msg(edge_msg, json_proc);
-            response_msg_ptr->m_message_body = json_proc.get_response();
+            // xjson_proc_t json_proc;
+            process_msg(edge_msg);
+            // response_msg_ptr->m_message_body = json_proc.get_response();
         }
-    } catch (const xrpc_error & e) {
-        xinfo_rpc("error %s", e.what());
-        xrpc_error_json error_json(e.code().value(), e.what(), edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    } catch (const std::exception & e) {
-        xinfo_rpc("error %s", e.what());
-        xrpc_error_json error_json(RPC_EXCEPTION_CODE, e.what(), edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    } catch (...) {
-        xinfo_rpc("error !!!!");
-        xrpc_error_json error_json(RPC_ERROR_CODE, RPC_ERROR_MSG, edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    }
+    // } catch (const xrpc_error & e) {
+    //     xwarn_rpc("error %s", e.what());
+    //     xrpc_error_json error_json(e.code().value(), e.what(), edge_msg.m_client_id);
+    //     // response_msg_ptr->m_message_body = error_json.write();
+    // } catch (const std::exception & e) {
+    //     xwarn_rpc("error %s", e.what());
+    //     // xrpc_error_json error_json(RPC_EXCEPTION_CODE, e.what(), edge_msg.m_client_id);
+    //     // response_msg_ptr->m_message_body = error_json.write();
+    // } catch (...) {
+    //     xwarn_rpc("error !!!!");
+    //     // xrpc_error_json error_json(RPC_ERROR_CODE, RPC_ERROR_MSG, edge_msg.m_client_id);
+    //     // response_msg_ptr->m_message_body = error_json.write();
+    // }
 }
 
 void xshard_rpc_handler::start() {

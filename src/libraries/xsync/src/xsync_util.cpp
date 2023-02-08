@@ -86,10 +86,10 @@ std::vector<std::string> convert_blocks_to_stream(uint32_t data_type, const std:
                 stream << block_object_bin;
             }
             if (data_type & enum_sync_data_input) {
-                stream << block->get_input()->get_resources_data();
+                stream << block->get_input_data();
             }
             if (data_type & enum_sync_data_output) {
-                stream << block->get_output()->get_resources_data();
+                stream << block->get_output_data();
             }
             if (data_type & enum_sync_data_offdata) {
                 if (!block->get_output_offdata_hash().empty()) {
@@ -131,8 +131,8 @@ std::vector<data::xblock_ptr_t> convert_stream_to_blocks(uint32_t data_type, con
             if (data_type & enum_sync_data_input) {
                 std::string _input_content;
                 stream >> _input_content;
-                if (false == new_block->set_input_resources(_input_content)) {
-                    xerror("get_all_xblock_ptr set_input_resources fail.block=%s,ir=%ld", new_block->dump().c_str(), base::xhash64_t::digest(_input_content));
+                if (false == new_block->set_input_data(_input_content)) {
+                    xerror("get_all_xblock_ptr set_input_data fail.block=%s,ir=%ld", new_block->dump().c_str(), base::xhash64_t::digest(_input_content));
                     new_block->release_ref();
                     continue;
                 }
@@ -141,8 +141,8 @@ std::vector<data::xblock_ptr_t> convert_stream_to_blocks(uint32_t data_type, con
             if (data_type & enum_sync_data_output) {
                 std::string _output_content;
                 stream >> _output_content;
-                if (false == new_block->set_output_resources(_output_content)) {
-                    xerror("get_all_xblock_ptr set_input_resources fail.block=%s,ir=%ld", new_block->dump().c_str(), base::xhash64_t::digest(_output_content));
+                if (false == new_block->set_output_data(_output_content)) {
+                    xerror("get_all_xblock_ptr set_input_data fail.block=%s,ir=%ld", new_block->dump().c_str(), base::xhash64_t::digest(_output_content));
                     new_block->release_ref();
                     break;
                 }

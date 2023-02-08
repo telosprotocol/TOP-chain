@@ -1038,8 +1038,6 @@ TEST_F(test_tablemaker, table_inner_tx) {
 
         xtablemaker_result_t table_result;
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
-        // auto txs = proposal_block->get_txs();
-        // EXPECT_EQ(txs.size(), tx_cnt);
         EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
 
         xassert(proposal_block != nullptr);
@@ -1295,8 +1293,6 @@ TEST_F(test_tablemaker, proposal_msg_v2) {
 
     xvblock_ptr_t block = tableblocks[max_block_height];
 
-    assert(block->get_input()->get_root_hash() == block->get_cert()->get_input_root_hash() && block->get_output()->get_root_hash() == block->get_cert()->get_output_root_hash());
-
     xconsensus::xproposal_msg_t proposal_msg_old(*(block.get()), nullptr);
     base::xauto_ptr<base::xvblock_t> block1(base::xvblock_t::create_block_object(proposal_msg_old.get_block_object()));
     block1->set_proposal(proposal_msg_old.get_input_proposal());
@@ -1308,22 +1304,21 @@ TEST_F(test_tablemaker, proposal_msg_v2) {
 
     block2->set_proposal(proposal_msg.get_input_proposal());
 
-    std::string vinput_bin;
-    block->get_input()->serialize_to_string(vinput_bin);
-    std::string voutput_bin;
-    block->get_output()->serialize_to_string(voutput_bin);
-
-    auto ret = block2->set_input_output(vinput_bin, voutput_bin);
+    std::error_code ec;
+    std::string vinput_bin = block->get_input_data();    
+    std::string voutput_bin = block->get_output_data();
+    auto ret = block2->set_input_output(block->load_input(ec), block->load_output(ec));
     assert(ret);
 
     //check if block is valid.
     std::string vheader_bin;
     block2->get_header()->serialize_to_string(vheader_bin);
 
-    const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
-    const std::string vheader_input_output_hash = block2->get_cert()->hash(vheader_input_output);
-    assert(block2->get_cert()->get_header_hash() == vheader_input_output_hash);
-
+    if (false == block2->get_header()->is_character_cert_header_only()) {
+        const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
+        const std::string vheader_input_output_hash = block2->get_cert()->hash(vheader_input_output);
+        assert(block2->get_cert()->get_header_hash() == vheader_input_output_hash);
+    }
     auto block_ptr = xblock_t::raw_vblock_to_object_ptr(block2.get());
     assert(block_ptr != nullptr);
 }

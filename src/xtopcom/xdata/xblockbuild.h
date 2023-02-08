@@ -16,41 +16,15 @@
 
 NS_BEG2(top, data)
 
-// XTODO keep old structure for compatibility
-class xtableheader_extra_t : public xserializable_based_on<void> {
- protected:
-    enum xblockheader_extra_data_type : uint16_t {
-        enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
-        enum_extra_data_type_tgas_second_level_gmtime               = 1,
-        enum_extra_data_type_eth_header                             = 2,
-        enum_extra_data_type_burn_gas                               = 3,
-    };
- public:
-     static std::string build_extra_string(base::xvheader_t * _tableheader,
-                                           uint64_t tgas_height,
-                                           uint64_t gmtime,
-                                           const std::string & eth_header,
-                                           uint64_t burn_gas = 0);
-
- protected:
-    int32_t do_write(base::xstream_t & stream) const override;
-    int32_t do_read(base::xstream_t & stream) override;
- public:
-    int32_t deserialize_from_string(const std::string & extra_data);
-    int32_t serialize_to_string(std::string & extra_data);
-
- public:
-    uint64_t get_tgas_total_lock_amount_property_height() const;
-    void     set_tgas_total_lock_amount_property_height(uint64_t height);
-    uint64_t get_second_level_gmtime() const;
-    void     set_second_level_gmtime(uint64_t gmtime);
-    std::string get_ethheader() const;
-    void     set_ethheader(const std::string & value);
-    uint64_t get_total_burn_gas() const;
-    void     set_total_burn_gas(uint64_t burn_gas);
-
- private:
-    std::map<uint16_t, std::string>  m_paras;
+class xtableheader_extra_build_t {
+public:
+    static std::string build_extra_string(base::xvheader_t * _tableheader,
+                                        uint64_t tgas_height,
+                                        uint64_t gmtime,
+                                        const std::string & eth_header,
+                                        const std::string & output_offdata_hash,
+                                        const std::string & pledge_balance_change_tgas,
+                                        uint64_t burn_gas);
 };
 
 class xextra_map_base_t {
@@ -178,17 +152,11 @@ class xunit_build2_t : public base::xvblockmaker_t {
     bool build_block_body(const xunit_block_para_t & para);
 };
 
-class xlighttable_build_t : public base::xvtableblock_maker_t {
+class xlighttable_build_t {
  public:
     static std::vector<xobject_ptr_t<base::xvblock_t>> unpack_units_from_table(const base::xvblock_t* _tableblock);
- public:
-    xlighttable_build_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para);
-
-    base::xauto_ptr<base::xvblock_t> create_new_block() override;
 
  private:
-    bool                build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height);
-    base::xvaction_t    make_action(const std::vector<xobject_ptr_t<base::xvblock_t>> & batch_units);
     static base::xauto_ptr<base::xvinput_t>     make_unit_input_from_table(const base::xvblock_t* _tableblock, const base::xtable_inentity_extend_t & extend, base::xvinentity_t* _table_unit_inentity);
     static base::xauto_ptr<base::xvoutput_t>    make_unit_output_from_table(const base::xvblock_t* _tableblock, const base::xtable_inentity_extend_t & extend, base::xvoutentity_t* _table_unit_outentity);
 };
@@ -202,7 +170,7 @@ class xtable_build2_t : public base::xvblockmaker_t {
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 
  private:
-    bool                build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height);
+    bool                build_block_body(const xtable_block_para_t & para, const xblock_consensus_para_t & cs_para);
 };
 
 class xfulltable_build_t : public base::xvblockmaker_t {
@@ -212,7 +180,7 @@ class xfulltable_build_t : public base::xvblockmaker_t {
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 
  private:
-    bool build_block_body(const xfulltable_block_para_t & para, const base::xvaccount_t & account, uint64_t height);
+    bool build_block_body(const xfulltable_block_para_t & para, const xblock_consensus_para_t & cs_para);
 };
 
 class xrootblock_build_t : public base::xvblockmaker_t {

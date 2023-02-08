@@ -127,7 +127,7 @@ public:
     void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
 
     void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block);
-    uint32_t get_tx_cache_size() const;
+    uint32_t get_tx_cache_size() const;    
 
 private:
     // bool is_account_need_update(const std::string & account_addr) const;
@@ -139,12 +139,13 @@ private:
     bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce);
     void update_id_state(const std::vector<update_id_state_para> & para_vec);
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
-    int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);
+    int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce);
     int32_t push_receipt_real(const std::shared_ptr<xtx_entry> & tx);
     void deal_commit_table_block(xblock_t * table_block, bool update_txmgr);
     xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
     void move_uncommit_txs(base::xvblock_t * block);
     xcons_transaction_ptr_t query_tx(const std::string & account, const std::string & hash_str);
+    int32_t check_send_tx_nonce(const std::shared_ptr<xtx_entry> & tx, uint64_t & latest_nonce);
 
     common::xaccount_address_t m_table_address;
     xtxpool_resources_face * m_para;

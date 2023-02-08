@@ -55,7 +55,7 @@ void xfull_tableblock_t::parse_to_json(xJson::Value & root, const std::string & 
 }
 
 xstatistics_data_t xfull_tableblock_t::get_table_statistics() const {
-    std::string resource_str = get_input()->query_resource(base::xvinput_t::RESOURCE_NODE_SIGN_STATISTICS);
+    std::string resource_str = query_input_resource(base::xvinput_t::RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());
     xstatistics_data_t statistics_data;
     statistics_data.deserialize_based_on<base::xstream_t>({ std::begin(resource_str), std::end(resource_str) });
@@ -63,13 +63,13 @@ xstatistics_data_t xfull_tableblock_t::get_table_statistics() const {
 }
 
 std::string xfull_tableblock_t::get_table_statistics_string() const {
-    std::string resource_str = get_input()->query_resource(base::xvinput_t::RESOURCE_NODE_SIGN_STATISTICS);
+    std::string resource_str = query_input_resource(base::xvinput_t::RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());
     return resource_str;
 }
 
 xstatistics_cons_data_t xfull_tableblock_t::get_table_statistics_cons_data() const {
-    std::string resource_str = get_input()->query_resource(base::xvinput_t::RESOURCE_NODE_SIGN_STATISTICS);
+    std::string resource_str = query_input_resource(base::xvinput_t::RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());
     xstatistics_cons_data_t statistics_data;
     statistics_data.deserialize_based_on<base::xstream_t>({ std::begin(resource_str), std::end(resource_str) });

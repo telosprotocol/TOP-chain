@@ -80,8 +80,8 @@ namespace top
 
             //*****************NOT allow change _header_obj anymore after this line
             xclockblock_t * _block_obj  = new xclockblock_t(*_header_obj,*_cert_obj);
-            _block_obj->set_input_resources(body_input);
-            _block_obj->set_output_resources(body_output);
+            _block_obj->set_input_data(body_input);
+            _block_obj->set_output_data(body_output);
             //*****************Allow contiusely modify xunitcert_t object
 
             //then clean
@@ -114,8 +114,8 @@ namespace top
 
             //*****************NOT allow change _header_obj anymore after this line
             xunitblock_t * _block_obj  = new xunitblock_t(*_header_obj,*_cert_obj);
-            _block_obj->set_input_resources(body_input);
-            _block_obj->set_output_resources(body_output);
+            _block_obj->set_input_data(body_input);
+            _block_obj->set_output_data(body_output);
             //*****************Allow contiusely modify xunitcert_t object
 
             //then clean
@@ -172,7 +172,7 @@ namespace top
                     genesis_block_ptr = xunitblock_t::create_unitblock(account,0,0,0,last_block_hash,last_full_block_hash,0,body_input,body_output);
 
                 genesis_block_ptr->get_cert()->set_viewtoken(-1); //for test only
-                genesis_block_ptr->set_output_resources(body_output);
+                genesis_block_ptr->set_output_data(body_output);
                 xvip2_t _wildaddr{(xvip_t)(-1),(uint64_t)-1};
                 genesis_block_ptr->get_cert()->set_validator(_wildaddr);//genesis block not
                 genesis_block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
@@ -350,7 +350,7 @@ namespace top
                 return false;
             }
             xinfo("xvblockstore_t::load_block_input,loaded it for block:[chainid:%u->account(%s)->height(%llu)->viewid(%llu) at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_store_path().c_str());
-            return block_ptr->set_input_resources(_content);
+            return block_ptr->set_input_data(_content);
         }
 
         bool    xunitblockstore_t::load_block_output(base::xvblock_t* block_ptr) //load and assign body data into  xvblock_t
@@ -367,7 +367,7 @@ namespace top
                 return false;
             }
             xinfo("xvblockstore_t::load_block_output,loaded it for block:[chainid:%u->account(%s)->height(%llu)->viewid(%llu) at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_store_path().c_str());
-            return block_ptr->set_output_resources(_content);
+            return block_ptr->set_output_data(_content);
         }
 
         bool    xunitblockstore_t::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks) //better performance
@@ -417,16 +417,16 @@ namespace top
                 }
             }
 
-            if(block_ptr->get_input()->get_resources_data().empty() == false)
+            if(block_ptr->get_input_data().empty() == false)
             {
                 const std::string _input_path    = get_store_path() + block_ptr->get_input_path();
-                store_value_by_path(_input_path,block_ptr->get_input()->get_resources_data());
+                store_value_by_path(_input_path,block_ptr->get_input_data());
             }
 
-            if(block_ptr->get_output()->get_resources_data().empty() == false)
+            if(block_ptr->get_output_data().empty() == false)
             {
                 const std::string _output_path    = get_store_path() + block_ptr->get_output_path();
-                store_value_by_path(_output_path,block_ptr->get_output()->get_resources_data());
+                store_value_by_path(_output_path,block_ptr->get_output_data());
             }
 
             const std::string _block_path  = get_store_path() + block_ptr->get_header_path();

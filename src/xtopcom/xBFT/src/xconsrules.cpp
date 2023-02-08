@@ -681,20 +681,20 @@ namespace top
                     {
                         xinfo("xBFTRules::add_cert_block,proposal certified now cert(%s),at node=0x%llx",_target_block->dump().c_str(),get_xip2_addr().low_addr);
                         
-                        if(  (_target_block->get_input()->get_resources_hash().empty() == false) //link resoure data
-                           &&(_target_block->get_input()->has_resource_data() == false) ) //but dont have resource _target_block now
+                        if(  (_target_block->should_has_input_data()) //link resoure data
+                           &&(_target_block->has_input_data() == false) ) //but dont have resource _target_block now
                         {
                             //_local_block need reload input resource
                             get_vblockstore()->load_block_input(*this, _target_block);
-                            xassert(_target_block->get_input()->has_resource_data());
+                            xassert(_target_block->has_input_data());
                         }
                         
-                        if(  (_target_block->get_output()->get_resources_hash().empty() == false) //link resoure data
-                           &&(_target_block->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
+                        if(  (_target_block->should_has_output_data()) //link resoure data
+                           &&(_target_block->has_output_data() == false) ) //but dont have resource avaiable now
                         {
                             //_local_block need reload output resource
                             get_vblockstore()->load_block_output(*this, _target_block);
-                            xassert(_target_block->get_output()->has_resource_data());
+                            xassert(_target_block->has_output_data());
                         }
 
                         get_vblockstore()->load_block_output_offdata(*this, _target_block);

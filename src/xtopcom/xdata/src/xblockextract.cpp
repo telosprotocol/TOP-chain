@@ -17,13 +17,17 @@
 
 NS_BEG2(top, data)
 
-void xblockextract_t::extract_sub_txs(base::xvblock_t* _block, std::vector<base::xvtxindex_ptr> & sub_txs) {
+void xblockextract_t::loop_top_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func) {
     if (_block->get_block_class() == base::enum_xvblock_class_nil) {
         return;
     }
 
-    uint32_t count = 0;
-    auto & all_entitys = _block->get_input()->get_entitys();
+    std::error_code ec;
+    auto input_object = _block->load_input(ec);
+    if (nullptr == input_object) {
+        return;
+    }
+    auto & all_entitys = input_object->get_entitys();
     for (auto & entity : all_entitys) {
         // it must be xinentitys
         base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
@@ -33,12 +37,24 @@ void xblockextract_t::extract_sub_txs(base::xvblock_t* _block, std::vector<base:
             if (action.get_org_tx_hash().empty()) {
                 continue;
             }
-            base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*_block, action.get_org_tx_hash(), (base::enum_transaction_subtype)action.get_org_tx_action_id());
-            sub_txs.push_back(tx_index);
+            _func(action);
         }
     }
 
-    base::xvinentity_t* primary_input_entity = _block->get_input()->get_primary_entity();
+    return;
+}
+
+void xblockextract_t::loop_eth_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func) {
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return;
+    }
+
+    std::error_code ec;
+    auto input_object = _block->load_input(ec);
+    if (nullptr == input_object) {
+        return;
+    }
+    base::xvinentity_t* primary_input_entity = input_object->get_primary_entity();
     xassert(primary_input_entity != nullptr);
     if (!primary_input_entity->get_extend_data().empty()) {
         xtable_primary_inentity_extend_t _extend;
@@ -53,11 +69,34 @@ void xblockextract_t::extract_sub_txs(base::xvblock_t* _block, std::vector<base:
                 xassert(false);
                 continue;
             }
-            base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*_block, action.get_org_tx_hash(), (base::enum_transaction_subtype)action.get_org_tx_action_id());
-            sub_txs.push_back(tx_index);
+            _func(action);
         }
     }
 
+    return;
+}
+
+void xblockextract_t::loop_all_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func) {
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return;
+    }
+
+    loop_top_txactions(_block, _func);
+    loop_eth_txactions(_block, _func);
+    return;
+}
+
+void xblockextract_t::extract_sub_txs(base::xvblock_t* _block, std::vector<base::xvtxindex_ptr> & sub_txs) {
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return;
+    }
+
+    auto f = [&sub_txs,&_block](const base::xvaction_t & action) { 
+        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*_block, action.get_org_tx_hash(), (base::enum_transaction_subtype)action.get_org_tx_action_id());
+        sub_txs.push_back(tx_index);
+    };
+    loop_all_txactions(_block, f);
+    xdbg("xblockextract_t::extract_sub_txs block=%s,count=%zu",_block->dump().c_str(),sub_txs.size());
     return;
 }
 
@@ -65,41 +104,12 @@ uint32_t xblockextract_t::get_txactions_count(base::xvblock_t* _block) {
     if (_block->get_block_class() == base::enum_xvblock_class_nil) {
         return 0;
     }
-
     uint32_t count = 0;
-    auto & all_entitys = _block->get_input()->get_entitys();
-    for (auto & entity : all_entitys) {
-        // it must be xinentitys
-        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
-        assert(_inentity != nullptr);
-        auto & all_actions = _inentity->get_actions();
-        for (auto & action : all_actions) {
-            if (action.get_org_tx_hash().empty()) {
-                continue;
-            }
-            count++;
-        }
-    }
-
-    base::xvinentity_t* primary_input_entity = _block->get_input()->get_primary_entity();
-    xassert(primary_input_entity != nullptr);
-    if (!primary_input_entity->get_extend_data().empty()) {
-        xtable_primary_inentity_extend_t _extend;
-        int32_t ret = _extend.serialize_from_string(primary_input_entity->get_extend_data());
-        if (ret <= 0) {
-            xassert(false);
-            return count;
-        }
-        base::xvactions_t _ethreceipt_actions = _extend.get_txactions();
-        for (auto & action : _ethreceipt_actions.get_actions()) {
-            if (action.get_org_tx_hash().empty()) {
-                xassert(false);
-                continue;
-            }
-            count++;
-        }
-    }
-
+    auto f = [&count](const base::xvaction_t & _action) { 
+        count++; 
+    };
+    loop_all_txactions(_block, f);
+    xdbg("xblockextract_t::get_txactions_count block=%s,count=%d",_block->dump().c_str(),count);
     return count;
 }
 
@@ -114,44 +124,13 @@ std::vector<xlightunit_action_t> xblockextract_t::unpack_txactions(base::xvblock
     }
 
     std::vector<xlightunit_action_t> txactions;
-    auto & all_entitys = _block->get_input()->get_entitys();
-    for (auto & entity : all_entitys) {
-        // it must be xinentitys
-        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
-        if (_inentity == nullptr) {
-            xassert(false);
-            return {};
-        }
-        auto & all_actions = _inentity->get_actions();
-        for (auto & action : all_actions) {
-            if (action.get_org_tx_hash().empty()) {
-                continue;
-            }
-            xlightunit_action_t txaction(action);
-            txactions.push_back(txaction);
-        }
-    }
 
-    base::xvinentity_t* primary_input_entity = _block->get_input()->get_primary_entity();
-    xassert(primary_input_entity != nullptr);
-    if (!primary_input_entity->get_extend_data().empty()) {
-        xtable_primary_inentity_extend_t _extend;
-        int32_t ret = _extend.serialize_from_string(primary_input_entity->get_extend_data());
-        if (ret <= 0) {
-            xassert(false);
-            return {};
-        }
-        base::xvactions_t _ethreceipt_actions = _extend.get_txactions();
-        for (auto & action : _ethreceipt_actions.get_actions()) {
-            if (action.get_org_tx_hash().empty()) {
-                xassert(false);
-                continue;
-            }
-            xlightunit_action_t txaction(action);
-            txactions.push_back(txaction);
-        }
-    }
-
+    auto f = [&txactions](const base::xvaction_t & action) { 
+        xlightunit_action_t txaction(action);
+        txactions.push_back(txaction);
+    };
+    loop_all_txactions(_block, f);
+    xdbg("xblockextract_t::unpack_txactions block=%s,count=%zu",_block->dump().c_str(),txactions.size());
     return txactions;
 }
 
@@ -166,38 +145,32 @@ std::vector<xlightunit_action_t> xblockextract_t::unpack_eth_txactions(base::xvb
     }
 
     std::vector<xlightunit_action_t> txactions;
-    base::xvinentity_t* primary_input_entity = _block->get_input()->get_primary_entity();
-    xassert(primary_input_entity != nullptr);
-    if (!primary_input_entity->get_extend_data().empty()) {
-        xtable_primary_inentity_extend_t _extend;
-        int32_t ret = _extend.serialize_from_string(primary_input_entity->get_extend_data());
-        if (ret <= 0) {
-            xassert(false);
-            return {};
-        }
-        base::xvactions_t _ethreceipt_actions = _extend.get_txactions();
-        for (auto & action : _ethreceipt_actions.get_actions()) {
-            if (action.get_org_tx_hash().empty()) {
-                xassert(false);
-                continue;
-            }
-            xlightunit_action_t txaction(action);
-            txactions.push_back(txaction);
-        }
-    }
+    auto f = [&txactions](const base::xvaction_t & action) { 
+        xlightunit_action_t txaction(action);
+        txactions.push_back(txaction);
+    };
+    loop_eth_txactions(_block, f);
     return txactions;
 }
 
 xlightunit_action_ptr_t xblockextract_t::unpack_one_txaction(base::xvblock_t* _block, std::string const& txhash) {
-    std::vector<xlightunit_action_t> txactions = unpack_txactions(_block);
-    for (auto & action : txactions) {
-        if (action.get_org_tx_hash() == txhash) {
-            data::xlightunit_action_ptr_t txaction_ptr = std::make_shared<xlightunit_action_t>(action);
-            return txaction_ptr;
-        }
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return nullptr;
     }
-    xerror("xblockextract_t::unpack_one_txaction fail-find tx.block=%s,tx=%s", _block->dump().c_str(), base::xstring_utl::to_hex(txhash).c_str());
-    return nullptr;
+
+    data::xlightunit_action_ptr_t txaction_ptr = nullptr;
+
+    auto f = [&txaction_ptr, &txhash](const base::xvaction_t & action) { 
+        if (action.get_org_tx_hash() == txhash) {
+            txaction_ptr = std::make_shared<xlightunit_action_t>(action); // TODO(jimmy) return stop 
+        }
+    };
+    loop_all_txactions(_block, f);
+    if (nullptr == txaction_ptr) {
+        xerror("xblockextract_t::unpack_one_txaction fail-find tx.block=%s,tx=%s", _block->dump().c_str(), base::xstring_utl::to_hex(txhash).c_str());
+    }
+
+    return txaction_ptr;
 }
 
 void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec) {
@@ -208,7 +181,7 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
     }
 
     xassert(_block->get_block_level() == base::enum_xvblock_level_table);
-    data::xtableheader_extra_t header_extra;
+    base::xtableheader_extra_t header_extra;
     get_tableheader_extra_from_block(_block, header_extra, ec);
     if (ec) {
         return;
@@ -255,7 +228,7 @@ evm_common::xh256_t xblockextract_t::get_state_root_from_block(base::xvblock_t *
 }
 
 xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
-    std::string orgtx_bin = _block->get_input()->query_resource(txhash);
+    std::string orgtx_bin = _block->query_input_resource(txhash);
     if (orgtx_bin.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_raw_tx fail-query tx resouce._block=%s,tx=%s", _block->dump().c_str(), base::xstring_utl::to_hex(txhash).c_str());
@@ -281,7 +254,7 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_relay_block_from_table(bas
         return nullptr;
     }
 
-    std::string relayblock_resource = _block->get_output()->query_resource(base::xvoutput_t::RESOURCE_RELAY_BLOCK);
+    std::string relayblock_resource = _block->query_output_resource(base::xvoutput_t::RESOURCE_RELAY_BLOCK);
     if (relayblock_resource.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_relay_block_from_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());
@@ -386,7 +359,7 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_rela
     return wrap_relayblock;
 }
 
-void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec) {
+void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, base::xtableheader_extra_t &header_extra, std::error_code & ec) {
     assert(!ec);
 
     auto & header_extra_str = _block->get_header()->get_extra_data();
@@ -420,11 +393,11 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
         return;
     }
 
-    if (!_block->is_body_and_offdata_ready(false)) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_subblocks input and output should ready. %s", _block->dump().c_str());
-        return;
-    }
+    // if (!_block->is_body_and_offdata_ready(false)) {
+    //     ec = common::error::xerrc_t::invalid_block;
+    //     xerror("xblockextract_t::unpack_subblocks input and output should ready. %s", _block->dump().c_str());
+    //     return;
+    // }
 
     if (base::xvblock_fork_t::is_block_older_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
         sublocks = xlighttable_build_t::unpack_units_from_table(_block);

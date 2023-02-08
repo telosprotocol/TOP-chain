@@ -9,6 +9,7 @@
 #include "../xvstate.h"
 #include "../xvblock.h"
 #include "xmetrics/xmetrics.h"
+#include "xvledger/xerror.h"
 
 #ifdef DEBUG
     #define __DEBUG_BLOCK_CONTENT__
@@ -32,21 +33,6 @@ namespace top
             m_height    = 0;
             m_weight    = 1;
             m_last_full_block_height = 0;
-        }
-        
-        xvheader_t::xvheader_t(const std::string & intput_hash,const std::string & output_hash)
-            :xobject_t(enum_xobject_type_vheader)
-        {
-            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvheader, 1);
-            m_types     = 0;
-            m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
-            m_chainid   = 0;
-            m_height    = 0;
-            m_weight    = 1;
-            m_last_full_block_height = 0;
-            
-            m_input_hash  = intput_hash;
-            m_output_hash = output_hash;
         }
         
         xvheader_t::~xvheader_t()
@@ -208,13 +194,6 @@ namespace top
         {
             return do_write(stream);
         }
-    
-        int32_t   xvheader_t::serialize_from_string(const std::string & bin_data) //wrap function fo serialize_from(stream)
-        {
-            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
-            const int result = serialize_from(_stream);
-            return result;
-        }
             
         int32_t   xvheader_t::serialize_from(xstream_t & stream)//not allow subclass change behavior
         {
@@ -274,7 +253,18 @@ namespace top
          
             return (begin_size - stream.size());
         }
-        
+
+        std::string   xvheader_t::dump() const  //just for debug purpose
+        {
+            char local_param_buf[256];
+
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvheader:t=%d,v=%u,c=%u,h=%" PRIu64 ",w=%" PRIu64 ",l=%" PRIu64 ",a=%s,c=%s,,i=%" PRIu64 ",o=%" PRIu64 ",l=%" PRIu64 ",f=%" PRIu64 "}",
+            m_types,m_versions,m_chainid,m_height,m_weight,m_last_full_block_height,m_account.c_str(),m_comments.c_str(),
+            base::xhash64_t::digest(m_input_hash),base::xhash64_t::digest(m_output_hash),base::xhash64_t::digest(m_last_block_hash),base::xhash64_t::digest(m_last_full_block_hash));
+           
+            return std::string(local_param_buf);
+        }
+
         //---------------------------------xvqcert_t---------------------------------//
         xvqcert_t::xvqcert_t()
         : xdataunit_t((enum_xdata_type)enum_xobject_type_vqccert)
@@ -294,32 +284,6 @@ namespace top
             m_consensus = 0;
             m_cryptos   = 0;
             m_modified_count = 0;
-            m_nonce      = (uint64_t)-1;
-            m_view_token = 0; // xtime_utl::get_fast_randomu();
-            
-            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
-        }
-        
-        xvqcert_t::xvqcert_t(const std::string header_hash,enum_xdata_type type)
-        : xdataunit_t(type)
-        {
-            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvqcert, 1);
-            m_viewid    = 0;
-            m_view_token= 0;
-            m_clock     = 0;
-            m_drand_height = 0;
-            m_parent_height = 0;
-            m_parent_viewid = 0;
-            m_expired   = (uint32_t)-1;
-            m_validator.low_addr    = 0;
-            m_validator.high_addr   = 0;
-            m_auditor.low_addr      = 0;
-            m_auditor.high_addr     = 0;
-            m_consensus = 0;
-            m_cryptos   = 0;
-            m_modified_count = 0;
-            
-            m_header_hash = header_hash;
             m_nonce      = (uint64_t)-1;
             m_view_token = 0; // xtime_utl::get_fast_randomu();
             
@@ -474,28 +438,6 @@ namespace top
             if(is_allow_modify())
             {
                 m_clock  = global_clock_round;
-                add_modified_count();
-                return;
-            }
-            xassert(0);
-        }
-        
-        void    xvqcert_t::set_expired(const  uint64_t global_clock_round)
-        {
-            if(is_allow_modify())
-            {
-                if(global_clock_round > m_clock)
-                {
-                    const uint64_t duration = global_clock_round - m_clock;
-                    if(duration >= UINT_MAX)
-                        m_expired = (uint32_t)-1;
-                    else
-                        m_expired = (uint32_t)duration;
-                }
-                else
-                {
-                    m_expired = 0;
-                }
                 add_modified_count();
                 return;
             }
@@ -1109,11 +1051,11 @@ namespace top
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, 1);
         }
         
-        xvinput_t::xvinput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type)
-            :xvexemodule_t(entitys,raw_resource_data,type)
-        {
-            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, 1);
-        }
+        // xvinput_t::xvinput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type)
+        //     :xvexemodule_t(entitys,raw_resource_data,type)
+        // {
+        //     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, 1);
+        // }
     
         xvinput_t::xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj,enum_xobject_type type)
             :xvexemodule_t(entitys,resource_obj,type)
@@ -1282,12 +1224,6 @@ namespace top
         }
  
         //---------------------------------xvblock_t---------------------------------//
-        const std::string  xvblock_t::create_block_path(const std::string & account,const uint64_t height) //path pointed to vblock at DB/disk
-        {
-            std::string empty_subname;
-            const std::string hash_account = xstring_utl::tostring(xhash64_t::digest(account));
-            return xvblock_t::get_object_path(hash_account, height,empty_subname);
-        }
         const std::string  xvblock_t::create_header_path(const std::string & account,const uint64_t height)
         {
             std::string empty_subname;
@@ -1307,7 +1243,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1324,7 +1259,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1343,14 +1277,16 @@ namespace top
             }
             
             //now header are completely ready
+            bool is_character_cert_header_only = _vheader.get_block_characters() & enum_xvblock_character_certify_header_only;
             std::string vheader_bin;
             std::string vinput_bin;
             std::string voutput_bin;
             if(_vheader.get_block_class() != enum_xvblock_class_nil)
             {
                 //input check
+                if (!is_character_cert_header_only) // cert header only mode not need set resources hash
                 {
-                    //makeup hash for input & output
+                    //makeup hash for input & output resource for compatibility
                     if(_vinput->get_resources_hash().empty() == false)
                     {
                         if(_vinput->get_resources_hash() != _vcert.hash(_vinput->get_resources_data()))
@@ -1363,26 +1299,7 @@ namespace top
                     {
                         _vinput->set_resources_hash(_vcert.hash(_vinput->get_resources_data()));
                     }
-                    //generate root of merkle for input & output if have
-                    if(_vcert.get_input_root_hash().empty() == false)
-                    {
-                        if(_vcert.get_input_root_hash() != _vinput->get_root_hash())
-                        {
-                            xassert(0);
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        _vcert.set_input_root_hash(_vinput->get_root_hash());
-                    }
                     
-                    //now input & output are completely ready,ready to set input&output hash into header
-                    _vinput->serialize_to_string(vinput_bin);
-                }
-           
-                //output check
-                {
                     if(_voutput->get_resources_hash().empty() == false)
                     {
                         if(_voutput->get_resources_hash() != _vcert.hash(_voutput->get_resources_data()))
@@ -1395,24 +1312,44 @@ namespace top
                     {
                         _voutput->set_resources_hash(_vcert.hash(_voutput->get_resources_data()));
                     }
-                    
-                    if(_vcert.get_output_root_hash().empty() == false)
-                    {
-                        if(_vcert.get_output_root_hash() != _voutput->get_root_hash())
-                        {
-                            xassert(0);
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        _vcert.set_output_root_hash(_voutput->get_root_hash());
-                    }
-                    _voutput->serialize_to_string(voutput_bin);
                 }
+
+                //generate root of merkle for input & output if have
+                if(_vcert.get_input_root_hash().empty() == false)
+                {
+                    if(_vcert.get_input_root_hash() != _vinput->get_root_hash())
+                    {
+                        xassert(0);
+                        return false;
+                    }
+                }
+                else
+                {
+                    xassert(!_vinput->get_root_hash().empty());
+                    _vcert.set_input_root_hash(_vinput->get_root_hash());
+                }
+
+                if(_vcert.get_output_root_hash().empty() == false)
+                {
+                    if(_vcert.get_output_root_hash() != _voutput->get_root_hash())
+                    {
+                        xassert(0);
+                        return false;
+                    }
+                }
+                else
+                {
+                    _vcert.set_output_root_hash(_voutput->get_root_hash());
+                }
+
+                _vinput->serialize_to_string(is_character_cert_header_only, vinput_bin);
+                _voutput->serialize_to_string(is_character_cert_header_only, voutput_bin);      
+
+                m_vinput_data = is_character_cert_header_only ? vinput_bin : _vinput->get_resources_data();
+                m_voutput_data = is_character_cert_header_only ? voutput_bin : _voutput->get_resources_data();          
             }
             
-            if(_vheader.get_block_characters() & enum_xvblock_character_certify_header_only)
+            if(is_character_cert_header_only)
             {
                 if(_vheader.get_input_hash().empty() == false)
                 {
@@ -1479,7 +1416,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
              
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
          
@@ -1493,7 +1429,7 @@ namespace top
                 
                 if(NULL == _vinput) //for nil block
                 {
-                    m_vinput_ptr = new xvinput_t();
+                    // m_vinput_ptr = new xvinput_t();
                 }
                 else
                 {
@@ -1503,7 +1439,7 @@ namespace top
 
                 if(NULL == _voutput) //for nil block
                 {
-                    m_voutput_ptr = new xvoutput_t();
+                    // m_voutput_ptr = new xvoutput_t();
                 }
                 else
                 {
@@ -1536,7 +1472,6 @@ namespace top
             m_vqcert_ptr   = NULL;
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
-            m_vbstate_ptr  = NULL;
             *this = other;
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1551,8 +1486,6 @@ namespace top
                 m_vinput_ptr->release_ref();
             if(m_voutput_ptr != NULL)
                 m_voutput_ptr->release_ref();
-            if(m_vbstate_ptr != NULL)
-                m_vbstate_ptr->release_ref();
             
             m_cert_hash         = other.m_cert_hash;
             m_vheader_ptr       = other.m_vheader_ptr;
@@ -1561,7 +1494,6 @@ namespace top
             m_next_block        = other.m_next_block;
             m_vinput_ptr        = other.m_vinput_ptr;
             m_voutput_ptr       = other.m_voutput_ptr;
-            m_vbstate_ptr       = other.m_vbstate_ptr;
             m_parent_account    = other.m_parent_account;
             m_next_next_viewid  = other.m_next_next_viewid;
             m_vote_extend_data   = other.m_vote_extend_data;
@@ -1578,8 +1510,6 @@ namespace top
                 m_vinput_ptr->add_ref();
             if(m_voutput_ptr != NULL)
                 m_voutput_ptr->add_ref();
-            if(m_vbstate_ptr != NULL)
-                m_vbstate_ptr->add_ref();
             
             if(m_prev_block != NULL)
                 m_prev_block->add_ref();
@@ -1608,10 +1538,6 @@ namespace top
             if(m_voutput_ptr != NULL){
                 m_voutput_ptr->close();
                 m_voutput_ptr->release_ref();
-            }
-            if(m_vbstate_ptr != NULL){
-                m_vbstate_ptr->close();
-                m_vbstate_ptr->release_ref();
             }
 
             if(m_prev_block != NULL)
@@ -1652,32 +1578,7 @@ namespace top
             m_dump_info = dump();
             return m_dump_info;
         }
-        
-        std::string xvblock_t::detail_dump() const //just for debug purpose
-        {
-#ifdef DEBUG  // only for debug
-            std::string input_bin;
-            std::string output_bin;
-            std::string header_bin;
-            get_input()->serialize_to_string(input_bin);
-            get_output()->serialize_to_string(output_bin);
-            get_header()->serialize_to_string(header_bin);
-            uint64_t header_64 = base::xhash64_t::digest(header_bin);
-            uint64_t input_64 = base::xhash64_t::digest(input_bin);
-            uint64_t output_64 = base::xhash64_t::digest(output_bin);
-            uint64_t input_root_64 = base::xhash64_t::digest(get_input_root_hash());
-            uint64_t output_root_64 = base::xhash64_t::digest(get_output_root_hash());
-            uint64_t sign_hash_64 = base::xhash64_t::digest(get_cert()->get_hash_to_sign());
-            uint64_t justify_hash_64 = base::xhash64_t::digest(get_cert()->get_justify_cert_hash());
-            char local_param_buf[512];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{header=%" PRIx64 ",input=%" PRIx64 ",output=%" PRIx64 ",inroot=%" PRIx64 ",outroot=%" PRIx64 ",sign=%" PRIx64 ",justify=%" PRIx64 "",
-                    header_64,input_64,output_64,input_root_64,output_root_64,sign_hash_64,justify_hash_64);
-            return std::string(local_param_buf);
-#else
-            return {};
-#endif
-        }
-    
+
         xauto_ptr<xvblock_t> xvblock_t::clone_block() const
         {
             xobject_t* object = xcontext_t::create_xobject((enum_xobject_type)get_obj_type());
@@ -1710,8 +1611,6 @@ namespace top
                 if(m_voutput_ptr != NULL)
                     m_voutput_ptr->close();
                 
-                if(m_vbstate_ptr != NULL)
-                    m_vbstate_ptr->close();
             }
             return true;
         }
@@ -1798,38 +1697,6 @@ namespace top
             }
             return false;
         }
-    
-        bool  xvblock_t::reset_block_state(xvbstate_t * _new_state_ptr)//return false if hash or height not match
-        {
-            if(_new_state_ptr == m_vbstate_ptr) //same one
-                return true;
-            
-            if(_new_state_ptr != NULL)
-            {
-                if(    (get_height()  != _new_state_ptr->get_block_height())
-                    || (get_viewid()  != _new_state_ptr->get_block_viewid())
-                    || (get_account() != _new_state_ptr->get_address())
-                    )
-                {
-                    xerror("xvblock_t::reset_block_state,this block'info(%s) not match state(%s)",dump().c_str(), _new_state_ptr->dump().c_str());
-                    return false;
-                }
-                _new_state_ptr->add_ref();
-                xvbstate_t * old_ptr =  xatomic_t::xexchange(m_vbstate_ptr, _new_state_ptr);
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-                
-                return true;
-            }
-            else
-            {
-                xvbstate_t * old_ptr =  xatomic_t::xexchange(m_vbstate_ptr, (xvbstate_t*)NULL);
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-                
-                return true;
-            }
-        }
      
         void    xvblock_t::set_next_next_cert(xvqcert_t * next_next_vqcert_ptr)
         { 
@@ -1843,96 +1710,478 @@ namespace top
                 old_ptr->release_ref();
         }
 
-        bool   xvblock_t::set_input_output(const std::string & input_data, const std::string & output_data) {
+
+        uint64_t xvblock_t::get_second_level_gmtime() const {
+            // only table-block has second_level_gmtime
+            if (get_block_level() != base::enum_xvblock_level_table) {
+                xassert(false);
+                return 0;
+            }
+            uint64_t gmtime = 0;
+            auto & extra_str = get_header()->get_extra_data();
+            // second level gmtime is introduced after v3.0.0 
+            if (!extra_str.empty()) {
+                base::xtableheader_extra_t he;
+                he.deserialize_from_string(extra_str);
+                gmtime = he.get_second_level_gmtime();
+            }
+
+            if (0 == gmtime) {
+                return get_timestamp(); // XTODO return clock level gmtime for old version
+            }
+            return gmtime;
+        }
+
+        std::string const& xvblock_t::get_input_data_hash() const {            
+            if (get_header()->is_character_cert_header_only()) {
+                return get_header()->get_input_hash();
+            } else {
+                return get_input()->get_resources_hash();
+            }            
+        }
+        bool xvblock_t::should_has_input_data() const {
+            if (get_header()->get_block_class() == base::enum_xvblock_class_nil) {
+                return false;
+            }
+            return false == get_input_data_hash().empty();
+        }
+
+        std::string const& xvblock_t::get_output_data_hash() const {
+            if (get_header()->is_character_cert_header_only()) {
+                return get_header()->get_output_hash();
+            } else {
+                return get_output()->get_resources_hash();
+            }
+        }
+        bool xvblock_t::should_has_output_data() const {
+            if (get_header()->get_block_class() == base::enum_xvblock_class_nil) {
+                return false;
+            }
+            return false == get_output_data_hash().empty();
+        }
+        std::string xvblock_t::get_output_offdata_hash() const {
+            if (get_block_class() == base::enum_xvblock_class_nil) {
+                return {};
+            }            
+            if (get_header()->is_character_cert_header_only()) {
+                auto & extra_str = get_header()->get_extra_data();
+                if (!extra_str.empty()) {
+                    xtableheader_extra_t header_extra;// TODO(jimmy)
+                    header_extra.deserialize_from_string(get_header()->get_extra_data());
+                    return header_extra.get_output_offdata_hash();
+                }
+                return {};
+            } else {
+                return get_output()->get_output_offdata_hash();
+            }
+        }
+        bool xvblock_t::should_has_output_offdata() const {
+            return false == get_output_offdata_hash().empty();
+        }
+        bool xvblock_t::set_input_data(const std::string & input_data, bool check_hash) {
             if (get_block_class() == base::enum_xvblock_class_nil) {
                 return true;
             }
-            std::string vheader_bin;
-            get_header()->serialize_to_string(vheader_bin);
-
-            const std::string vheader_input_output = vheader_bin + input_data + output_data;
-            const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
-            if(get_cert()->get_header_hash() != vheader_input_output_hash)
-            {
-                xerror("xvblock_t::set_input_output, xvheader_t not match with xvqcert,[vheader+vinput+ voutput=%s] but ask %s",vheader_input_output_hash.c_str(), get_header_hash().c_str());
-                return false;
+            if (check_hash) {
+                auto & _hash = get_input_data_hash();
+                if (_hash != get_cert()->hash(input_data)) {
+                    xwarn("xvblock_t::set_input_data fail-hash unmatch");
+                    return false;
+                }
             }
-
-            if (m_vinput_ptr != nullptr) {
-                m_vinput_ptr->close();
-                m_vinput_ptr->release_ref();
+            // set immediately for old version
+            if (false == get_header()->is_character_cert_header_only()) {
+                if (m_vinput_ptr == nullptr) {
+                    xassert(false);
+                    return false;
+                }
+                if (false == m_vinput_ptr->set_resources_data(input_data)) {
+                    xassert(false);
+                    return false;
+                }
             }
-            xvinput_t*  vinput_ptr = xvblock_t::create_input_object(input_data);
-            xassert(vinput_ptr != NULL); //should has value
-            if(vinput_ptr != NULL)
-            {
-                m_vinput_ptr = vinput_ptr;
-            }
-
-            if (m_voutput_ptr != nullptr) {
-                m_voutput_ptr->close();
-                m_voutput_ptr->release_ref();
-            }
-            xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(output_data);
-            xassert(voutput_ptr != NULL); //should has value
-            if(voutput_ptr != NULL)
-            {
-                m_voutput_ptr = voutput_ptr;
+            if (m_vinput_data != input_data) {
+                m_vinput_data = input_data;
             }
             return true;
         }
 
-        bool   xvblock_t::set_input_resources(const std::string & raw_resource_data)//check whether match hash first
-        {
-            if(get_input() == NULL)
-                return false;
-            
-            const std::string hash_to_check = get_cert()->hash(raw_resource_data);
-            if(hash_to_check != get_input()->get_resources_hash() )
-                return false;
-            
-            return get_input()->set_resources_data(raw_resource_data);
-        }
-    
-        bool   xvblock_t::set_output_resources(const std::string & raw_resource_data) //check whether match hash first
-        {
-            if(get_output() == NULL)
-                return false;
-            
-            const std::string hash_to_check = get_cert()->hash(raw_resource_data);
-            if(hash_to_check != get_output()->get_resources_hash() )
-                return false;
-            
-            return get_output()->set_resources_data(raw_resource_data);
+        bool xvblock_t::set_output_data(const std::string & output_data, bool check_hash) {            
+            if (get_block_class() == base::enum_xvblock_class_nil) {
+                return true;
+            }
+            if (check_hash) {
+                auto & _hash = get_output_data_hash();
+                if (_hash != get_cert()->hash(output_data)) {
+                    xwarn("xvblock_t::set_output_data fail-hash unmatch");
+                    return false;
+                }
+            }
+
+            // set immediately for old version
+            if (false == get_header()->is_character_cert_header_only()) {
+                if (m_voutput_ptr == nullptr) {
+                    xassert(false);
+                    return false;
+                }
+                if (false == m_voutput_ptr->set_resources_data(output_data)) {
+                    xassert(false);
+                    return false;
+                }
+            }
+            if (m_voutput_data != output_data) {
+                m_voutput_data = output_data;
+            }            
+            return true;
         }
 
-        bool   xvblock_t::set_output_offdata(const std::string & raw_data) //check whether match hash first
+        bool   xvblock_t::set_output_offdata(const std::string & raw_data, bool check_hash) //check whether match hash first
         {
-            if(get_output() == NULL)
-                return false;
-            
-            const std::string hash_to_check = get_cert()->hash(raw_data);
-            if(hash_to_check != get_output_offdata_hash() ) {
-                return false;
+            if (get_block_class() == base::enum_xvblock_class_nil) {
+                return true;
+            }            
+            if (check_hash) {
+                auto _hash = get_output_offdata_hash();
+                if (_hash != get_cert()->hash(raw_data)) {
+                    xerror("xvblock_t::set_output_offdata fail-hash unmatch");
+                    return false;
+                }
             }
-            
             m_output_offdata = raw_data;
-            xdbg("xvblock_t::set_output_offdata %s,offdata=%zu", dump().c_str(), raw_data.size());
             return true;
         }        
+
+        bool   xvblock_t::set_input_output(base::xvinput_t* _input_object, base::xvoutput_t* _output_object) {
+            if (get_block_class() == base::enum_xvblock_class_nil) {
+                xassert(false);
+                return false;
+            }
+            if (nullptr == _input_object || nullptr == _output_object) {
+                xassert(nullptr != _input_object && nullptr != _output_object);
+                return false;
+            }
+
+            std::string input_data;
+            std::string output_data;
+            if (!get_header()->is_character_cert_header_only()) { // old version check
+                std::string vheader_bin;
+                get_header()->serialize_to_string(vheader_bin);
+
+                std::string input_object_bin;
+                _input_object->serialize_to_string(false, input_object_bin);
+                std::string output_object_bin;
+                _output_object->serialize_to_string(false, output_object_bin);
+
+                const std::string vheader_input_output = vheader_bin + input_object_bin + output_object_bin;
+                const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
+                if(get_cert()->get_header_hash() != vheader_input_output_hash) {
+                    xerror("xvblock_t::set_input_output,header hash unmatch,[vheader+vinput+ voutput=%s] but ask %s",
+                        base::xstring_utl::to_hex(vheader_input_output_hash).c_str(), base::xstring_utl::to_hex(get_header_hash()).c_str());
+                    return false;
+                }
+                if (nullptr == m_vinput_ptr) {
+                    _input_object->add_ref();
+                    xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,_input_object);
+                    if(old_ptr != NULL){
+                        xcontext_t::instance().delay_release_object(old_ptr);
+                        XMETRICS_GAUGE(metrics::data_relay_release_input, 1);
+                    }                    
+                }
+                if (nullptr == m_voutput_ptr) {
+                    _output_object->add_ref();
+                    xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,_output_object);
+                    if(old_ptr != NULL){
+                        xcontext_t::instance().delay_release_object(old_ptr);
+                        XMETRICS_GAUGE(metrics::data_relay_release_output, 1);
+                    }
+                }
+                input_data = _input_object->get_resources_data();
+                output_data = _output_object->get_resources_data();                
+            }
+            else {
+                _input_object->serialize_to_string(true, input_data);
+                _output_object->serialize_to_string(true, output_data);
+                std::string calc_hash = get_cert()->hash(input_data);
+                if (get_header()->get_input_hash() != calc_hash) {
+                    xerror("xvblock_t::set_input_output,input hash unmatch,%s,%s",
+                        base::xstring_utl::to_hex(calc_hash).c_str(), base::xstring_utl::to_hex(get_header()->get_input_hash()).c_str());
+                    return false;
+                }
+                calc_hash = get_cert()->hash(output_data);
+                if (get_header()->get_output_hash() != calc_hash) {
+                    xerror("xvblock_t::set_input_output,output hash unmatch,%s,%s",
+                        base::xstring_utl::to_hex(calc_hash).c_str(), base::xstring_utl::to_hex(get_header()->get_output_hash()).c_str());
+                    return false;
+                }                  
+            }
+
+            m_vinput_data = input_data;
+            m_voutput_data = output_data;
+            return true;
+        }
+
+        xvinput_t* xvblock_t::load_input(std::error_code & ec)  const
+        {
+            if (nullptr != m_vinput_ptr) {
+                return m_vinput_ptr;
+            }
+            // create input output object on demand for new version
+            if (m_vinput_data.empty()) {
+                if (false == should_has_input_data()) {
+                    ec = error::xerrc_t::block_input_output_data_not_exist;
+                    xassert(false);
+                }
+                return nullptr;
+            }
+            xvinput_t* input_ptr = create_input_object(true, m_vinput_data);
+            if (nullptr == input_ptr) {
+                ec = error::xerrc_t::block_input_output_create_object_fail;
+                xassert(false);
+                return nullptr;
+            }
+            xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,input_ptr);
+            if(old_ptr != NULL){
+                xcontext_t::instance().delay_release_object(old_ptr);
+                XMETRICS_GAUGE(metrics::data_relay_release_input, 1);
+            }
+            return m_vinput_ptr;      
+            // if (get_block_class() == base::enum_xvblock_class_nil) {
+            //     return nullptr;
+            // }
+            // if (get_header()->is_character_cert_header_only()) {
+            //     if (get_header()->get_input_hash().empty()) {//has no input
+            //         return nullptr;
+            //     }
+            //     if (m_vinput_ptr == nullptr) {//create input on-demand
+            //         if (m_vinput_data.empty()) {
+            //             ec = error::xerrc_t::block_input_output_data_not_exist;
+            //             xassert(false);
+            //             return nullptr;
+            //         }
+                    
+            //         xvinput_t* input_ptr = create_input_object(true, m_vinput_data);
+            //         if (nullptr == input_ptr) {
+            //             ec = error::xerrc_t::block_input_output_create_object_fail;
+            //             xassert(false);
+            //             return nullptr;
+            //         }
+            //         xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,input_ptr);
+            //         if(old_ptr != NULL){
+            //             old_ptr->release_ref();
+            //             old_ptr = NULL;
+            //         }
+            //     }
+            // } else {
+            //     if (m_vinput_ptr == nullptr) { // should never happen
+            //         ec = error::xerrc_t::block_input_output_create_object_fail;
+            //         xassert(false);
+            //         return nullptr;
+            //     }
+            //     if (!m_vinput_ptr->get_resources_hash().empty()) {
+            //         if (false == m_vinput_ptr->has_resource_data()) {// set input resource on-demand
+            //             if (m_vinput_data.empty()) {
+            //                 ec = error::xerrc_t::block_input_output_data_not_exist;
+            //                 xassert(false);
+            //                 return nullptr;
+            //             }
+            //             if (false == m_vinput_ptr->set_resources_data(m_vinput_data)) {
+            //                 ec = error::xerrc_t::block_input_output_create_object_fail;
+            //                 xassert(false);
+            //                 return nullptr;
+            //             }
+            //         }
+            //     }
+            // }
+
+            // xdbg("xvblock_t::load_input succ.%s",get_header()->dump().c_str());
+            // xobject_ptr_t<xvinput_t> object_ptr;
+            // m_vinput_ptr->add_ref();
+            // object_ptr.attach(m_vinput_ptr);
+            // return object_ptr;
+        }
+
+        xvoutput_t* xvblock_t::load_output(std::error_code & ec)  const
+        {
+            if (nullptr != m_voutput_ptr) {
+                return m_voutput_ptr;
+            }
+            // create input output object on demand for new version
+            if (m_voutput_data.empty()) {
+                if (should_has_output_data()) {
+                    ec = error::xerrc_t::block_input_output_data_not_exist;
+                    xassert(false);
+                }
+                return nullptr;
+            }            
+            xvoutput_t* output_ptr = create_output_object(true, m_voutput_data);
+            if (nullptr == output_ptr) {
+                ec = error::xerrc_t::block_input_output_create_object_fail;
+                xassert(false);
+                return nullptr;
+            }
+            xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,output_ptr);
+            if(old_ptr != NULL){
+                xcontext_t::instance().delay_release_object(old_ptr);
+                XMETRICS_GAUGE(metrics::data_relay_release_output, 1);
+            }
+            return m_voutput_ptr;
+            // if (get_block_class() == base::enum_xvblock_class_nil) {
+            //     return nullptr;
+            // }
+            // if (get_header()->is_character_cert_header_only()) {
+            //     if (get_header()->get_output_hash().empty()) {//has no output
+            //         return nullptr;
+            //     }
+            //     if (m_voutput_ptr == nullptr) {//create output on-demand
+            //         if (m_voutput_data.empty()) {
+            //             ec = error::xerrc_t::block_input_output_data_not_exist;
+            //             xerror("xvblock_t::load_output fail-data empty.%s",dump().c_str());
+            //             return nullptr;
+            //         }
+                    
+            //         xvoutput_t* output_ptr = create_output_object(true, m_voutput_data);
+            //         if (nullptr == output_ptr) {
+            //             ec = error::xerrc_t::block_input_output_create_object_fail;
+            //             xassert(false);
+            //             return nullptr;
+            //         }
+            //         xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,output_ptr);
+            //         if(old_ptr != NULL){
+            //             old_ptr->release_ref();
+            //             old_ptr = NULL;
+            //         }
+            //     }
+            // } else {
+            //     if (m_voutput_ptr == nullptr) { // should never happen
+            //         ec = error::xerrc_t::block_input_output_create_object_fail;
+            //         xassert(false);
+            //         return nullptr;
+            //     }
+            //     if (!m_voutput_ptr->get_resources_hash().empty()) {
+            //         if (false == m_voutput_ptr->has_resource_data()) { // set output resource on-demand
+            //             if (m_voutput_data.empty()) {
+            //                 ec = error::xerrc_t::block_input_output_data_not_exist;
+            //                 xassert(false);
+            //                 return nullptr;
+            //             }
+            //             if (false == m_voutput_ptr->set_resources_data(m_voutput_data)) {
+            //                 ec = error::xerrc_t::block_input_output_create_object_fail;
+            //                 xassert(false);
+            //                 return nullptr;
+            //             }
+            //         }
+            //     }
+            // }
+
+            // xdbg("xvblock_t::load_output succ.%s",get_header()->dump().c_str());
+            // xobject_ptr_t<xvoutput_t> object_ptr;
+            // m_voutput_ptr->add_ref();
+            // object_ptr.attach(m_voutput_ptr);
+            // return object_ptr;
+        }
+
+        std::string xvblock_t::query_input_resource(std::string const & key) const {
+            if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+                std::error_code ec;// TODO(jimmy)
+                auto input_object = load_input(ec);
+                if (nullptr != input_object) {
+                    return input_object->query_resource(key);
+                }
+                if (ec) {
+                    xerror("xvblock_t::query_input_resource fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
+            }
+            return {};
+        }
+        std::string xvblock_t::query_output_resource(std::string const & key) const {
+            if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+                std::error_code ec;// TODO(jimmy)
+                auto output_object = load_output(ec);
+                if (nullptr != output_object) {
+                    return output_object->query_resource(key);
+                }
+                if (ec) {
+                    xerror("xvblock_t::query_output_resource fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
+            }
+            return {};
+        }
+        std::string xvblock_t::query_output_entity(std::string const & key) const {
+            if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+                std::error_code ec;// TODO(jimmy)
+                auto output_object = load_output(ec);
+                if (nullptr != output_object) {
+                    return output_object->get_primary_entity()->query_value(key);
+                }
+                if (ec) {
+                    xerror("xvblock_t::query_output_entity fail.%s,key=%s",dump().c_str(),key.c_str());
+                }
+            }
+            return {};
+        }
+        const std::string xvblock_t::get_account_indexs() const {
+            return query_output_resource(xvoutput_t::RESOURCE_ACCOUNT_INDEXS);
+        }
+        const std::string xvblock_t::get_binlog() const {
+            auto binlog_hash = get_binlog_hash();
+            return query_output_resource(binlog_hash);
+        }
+        const std::string xvblock_t::get_full_state() const {
+            std::string state_hash = get_fullstate_hash();
+            if (!state_hash.empty())
+            {
+                const std::string full_state = query_output_resource(state_hash);
+                return full_state;
+            }
+            return std::string();
+        }
+
+        const std::string xvblock_t::get_binlog_hash() const {
+            return query_output_entity(xvoutentity_t::key_name_binlog_hash());
+        }
+        int64_t xvblock_t::get_pledge_balance_change_tgas() const {
+            int64_t tgas_balance_change = 0;
+            std::string value;
+            if (get_block_class() != base::enum_xvblock_class_nil) {
+                if (get_header()->is_character_cert_header_only()) {
+                    auto & extra_str = get_header()->get_extra_data();
+                    if (!extra_str.empty()) {
+                        xtableheader_extra_t header_extra;
+                        header_extra.deserialize_from_string(get_header()->get_extra_data());
+                        value = header_extra.get_pledge_balance_change_tgas();
+                    }
+                } else {
+                    value = query_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change());
+                }
+            }
+            if (!value.empty()) {
+                tgas_balance_change = base::xstring_utl::toint64(value);
+            }
+            return tgas_balance_change;
+        }
     
-        xvinput_t *  xvblock_t::get_input() const
+        xvinput_t* xvblock_t::get_input() const
         {
             return m_vinput_ptr;
         }
     
-        xvoutput_t*  xvblock_t::get_output() const
+        xvoutput_t* xvblock_t::get_output() const
         {
             return m_voutput_ptr;
         }
         
-        const std::string xvblock_t::get_fullstate_hash()
+        const std::string xvblock_t::get_fullstate_hash() const
         {
+            // XTODO new version, output root = bstate snapshot hash
+            if (get_header()->is_character_cert_header_only()) {
+                #ifdef DEBUG
+                if (get_block_class() != enum_xvblock_class_nil) {
+                    assert(!get_output_root_hash().empty());
+                }
+                #endif
+                return get_output_root_hash();
+            }
+
             if (get_block_class() == enum_xvblock_class_full)
             {
                 // full-block always output root hash = fullstate hash
@@ -1955,47 +2204,8 @@ namespace top
                 return std::string();
             }
         }
-        
-        const std::string xvblock_t::get_full_state()
-        {
-            if (!m_offblock_snapshot.empty())
-            {
-                return m_offblock_snapshot;
-            }
-            std::string state_hash = get_fullstate_hash();
-            if (!state_hash.empty())
-            {
-                const std::string full_state = get_output()->query_resource(state_hash);
-                return full_state;
-            }
-            return std::string();
-        }
-        
-        bool xvblock_t::is_full_state_block() {
-            if (get_block_class() == base::enum_xvblock_class_nil) {
-                return true;
-            }
-            if (!get_full_state().empty()) {
-                return true;
-            }
-            return false;
-        }
-        
-        bool xvblock_t::set_offblock_snapshot(const std::string & snapshot)
-        {
-            if (!m_offblock_snapshot.empty())
-            {
-                xassert(m_offblock_snapshot == snapshot);
-                return true;
-            }
-            if (snapshot.empty())
-            {
-                xassert(false);
-                return false;
-            }
-            m_offblock_snapshot = snapshot;
-            return true;
-        }
+      
+
 
         uint64_t xvblock_t::get_block_size() {
             std::string block_object_bin;
@@ -2004,8 +2214,8 @@ namespace top
             uint64_t block_input_size = 0;
             uint64_t block_output_size = 0;
             if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-                block_input_size = (uint64_t)get_input()->get_resources_data().size();
-                block_output_size = (uint64_t)get_output()->get_resources_data().size();
+                block_input_size = (uint64_t)get_input_data().size();
+                block_output_size = (uint64_t)get_output_data().size();
             }
             xdbg("xvblock_t::get_block_size block=%s header_size=%ld,input_size=%ld,output_size=%ld",dump().c_str(),block_size, block_input_size, block_output_size);
             return block_size + block_input_size + block_output_size;
@@ -2144,88 +2354,46 @@ namespace top
     
         bool  xvblock_t::is_input_ready(bool full_check_resources) const                  //nil-block return true because it dont need input
         {
-            if( (get_header() == NULL) || (get_cert() == NULL) /*|| (get_input() == NULL)*/ ) {
-                xassert(0); //it should not happen,just put assert in case
-                return false;
-            }
-
-            if (get_input() == NULL) {
-                return false;
-            }
-            
-            if(get_header()->get_block_class() == enum_xvblock_class_nil)
+            if (get_header()->get_block_class() == base::enum_xvblock_class_nil) {
                 return true;
-            
-            if(get_input()->get_resources_hash().empty())//if no resources
-                return true;
-
-            if (!get_input()->has_resource_data()) {
-                xwarn("xvblock_t::is_input_ready fail-resources empty.%s", dump().c_str());
-                return false;
             }
-
-            if(full_check_resources)
-            {
-                const std::string _resources_hash = get_cert()->hash(get_input()->get_resources_data());
-                if(_resources_hash != get_input()->get_resources_hash()){
-                    xerror("xvblock_t::is_input_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_input()->get_resources_hash()).c_str());
+            if (!get_header()->is_character_cert_header_only()) {
+                if (get_input() == nullptr) {
+                    xwarn("xvblock_t::is_input_ready fail-has input.%s",dump().c_str()); // may happen in consensus
                     return false;
                 }
             }
-            
+            // XTODO hash already checked when set. delete full_check_resources future
+            if (should_has_input_data()) {
+                return has_input_data();
+            }
             return true;
         }
         
         bool  xvblock_t::is_output_ready(bool full_check_resources) const                  //nil-block return true because it dont need input
         {
-            if( (get_header() == NULL) || (get_cert() == NULL) /*|| (get_output() == NULL)*/) {
-                xassert(0); //it should not happen,just put assert in case
-                return false;
-            }
-
-            if (get_output() == NULL) {
-                return false;
-            }
-            
-            if(get_header()->get_block_class() == enum_xvblock_class_nil)
+            if (get_header()->get_block_class() == base::enum_xvblock_class_nil) {
                 return true;
-            
-            if(get_output()->get_resources_hash().empty())//if no resources
-                return true;
-
-            if (!get_output()->has_resource_data()) {
-                xwarn("xvblock_t::is_output_ready fail-resources empty.%s", dump().c_str());
-                return false;
             }
-
-            if(full_check_resources)
-            {
-                const std::string _resources_hash = get_cert()->hash(get_output()->get_resources_data());
-                if(_resources_hash != get_output()->get_resources_hash()){
-                    xerror("xvblock_t::is_output_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_output()->get_resources_hash()).c_str());
+            if (!get_header()->is_character_cert_header_only()) {
+                if (get_output() == nullptr) {
+                    xwarn("xvblock_t::is_output_ready fail-has output.%s",dump().c_str()); // may happen in consensus
                     return false;
                 }
             }
-            
+            // XTODO hash already checked when set. delete full_check_resources future
+            if (should_has_output_data()) {
+                return has_output_data();
+            }
             return true;
         }
 
         bool  xvblock_t::is_output_offdata_ready(bool full_check_resources) const {
-            if (get_output_offdata_hash().empty())
-                return true;
-            if (get_output_offdata().empty()) {
-                xwarn("xvblock_t::is_output_offdata_ready fail-offdata empty.%s", dump().c_str());
-                return false;                
+            // XTODO hash already checked when set. delete full_check_resources future
+            if (should_has_output_offdata()) {
+                return has_output_offdata();
             }
-            if(full_check_resources)
-            {
-                const std::string _resources_hash = get_cert()->hash(get_output_offdata());
-                if(_resources_hash != get_output_offdata_hash()){
-                    xerror("xvblock_t::is_output_offdata_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_output_offdata_hash()).c_str());
-                    return false;
-                }
-            }
-            return true;   
+            return true;
         }
 
         bool xvblock_t::is_body_and_offdata_ready(bool full_check_resources) const {
@@ -2234,7 +2402,7 @@ namespace top
                 && is_output_offdata_ready(full_check_resources)) {
                 return true;
             }
-            xwarn("xvblock_t::is_body_and_offdata_ready fail.%s", dump().c_str());
+            xwarn("xvblock_t::is_body_and_offdata_ready fail.%s,%d,%d,%d", dump().c_str(),has_input_data(),has_output_data(),has_output_offdata());
             return false;
         }
         
@@ -2312,17 +2480,7 @@ namespace top
             
             return xdataobj_t::query_interface(_enum_xobject_type_);
         }
-        
-        const std::string   xvblock_t::get_block_path() const //path pointed to vblock at DB/disk
-        {
-            if(get_account().empty())
-                return std::string();
-            
-            std::string empty_subname;
-            const std::string hash_account = xstring_utl::tostring(xhash64_t::digest(get_account()));
-            return xvblock_t::get_object_path(hash_account, get_height(),empty_subname);
-        }
-        
+                
         const std::string   xvblock_t::get_header_path() const //path pointed to header and cert
         {
             if(get_account().empty())
@@ -2380,34 +2538,35 @@ namespace top
             stream.write_compact_var(vqcert_bin);
         
             stream.write_compact_var(vheader_bin);
-            xdbg("xvblock_t::do_write block:%s m_not_serialize_input_output:%d", dump().c_str(), m_not_serialize_input_output);
-            if(get_block_class() != enum_xvblock_class_nil && !m_not_serialize_input_output)
+            if(get_block_class() != enum_xvblock_class_nil 
+                && !m_not_serialize_input_output
+                && !get_header()->is_character_cert_header_only())
             {
                 std::string vinput_bin;
-                get_input()->serialize_to_string(vinput_bin);
+                get_input()->serialize_to_string(false,vinput_bin);
                 std::string voutput_bin;
-                get_output()->serialize_to_string(voutput_bin);
+                get_output()->serialize_to_string(false,voutput_bin);
                 
                 stream.write_compact_var(vinput_bin);
                 stream.write_compact_var(voutput_bin);
                 
-                #ifdef __DEBUG_BLOCK_CONTENT__
-                if(get_header()->get_block_characters() & enum_xvblock_character_certify_header_only)
-                {
-                    const std::string vheader_bin_hash = get_cert()->hash(vheader_bin);
-                    const std::string vinput_bin_hash  = get_cert()->hash(vinput_bin);
-                    const std::string voutput_bin_hash = get_cert()->hash(voutput_bin);
-                    xassert(vheader_bin_hash == get_cert()->get_header_hash());
-                    xassert(vinput_bin_hash  == get_input_hash());
-                    xassert(voutput_bin_hash == get_output_hash());
-                }
-                else //qcert.header_hash = hash(header+input+output)
-                {
-                    const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
-                    const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
-                    xassert(vheader_input_output_hash == get_cert()->get_header_hash());
-                }
-                #endif //endif __DEBUG_BLOCK_CONTENT__
+                // #ifdef __DEBUG_BLOCK_CONTENT__  // TODO(jimmy) no need check again
+                // if(get_header()->get_block_characters() & enum_xvblock_character_certify_header_only)
+                // {
+                //     const std::string vheader_bin_hash = get_cert()->hash(vheader_bin);
+                //     const std::string vinput_bin_hash  = get_cert()->hash(vinput_bin);
+                //     const std::string voutput_bin_hash = get_cert()->hash(voutput_bin);
+                //     xassert(vheader_bin_hash == get_cert()->get_header_hash());
+                //     xassert(vinput_bin_hash  == get_input_hash());
+                //     xassert(voutput_bin_hash == get_output_hash());
+                // }
+                // else //qcert.header_hash = hash(header+input+output)
+                // {
+                //     const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
+                //     const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
+                //     xassert(vheader_input_output_hash == get_cert()->get_header_hash());
+                // }
+                // #endif //endif __DEBUG_BLOCK_CONTENT__
             }
             return (stream.size() - begin_size);
         }
@@ -2492,7 +2651,8 @@ namespace top
             //------------------------------read input&output------------------------------//
             std::string vinput_bin;
             std::string voutput_bin;
-            if(get_block_class() != enum_xvblock_class_nil)
+            if(get_block_class() != enum_xvblock_class_nil 
+                && false == get_header()->is_character_cert_header_only())
             {
                 if (stream.size() == 0) {
                     xdbg("xvblock_t::do_read non nil block but no input output data.");
@@ -2507,32 +2667,8 @@ namespace top
                 xassert(voutput_bin.empty() == false);
                 if(voutput_bin.empty())
                     return enum_xerror_code_bad_block;
-            }
-            
-            //------------------------------data verify------------------------------//
-            if(get_header()->get_block_characters() & enum_xvblock_character_certify_header_only)
-            {
-                const std::string vheader_bin_hash = get_cert()->hash(vheader_bin);
-                const std::string vinput_bin_hash  = get_cert()->hash(vinput_bin);
-                const std::string voutput_bin_hash = get_cert()->hash(voutput_bin);
-                if(vheader_bin_hash != get_cert()->get_header_hash()) //check with cert
-                {
-                    xerror("xvblock_t::do_read, xvheader_t not match with xvqcert, vheader_hash:%s but ask %s",vheader_bin_hash.c_str(),get_header_hash().c_str());
-                    return enum_xerror_code_bad_block;
-                }
-                if(vinput_bin_hash != get_input_hash()) //nil block may nil input hash
-                {
-                    xerror("xvblock_t::do_read, corrupt xvinput_t, vinput_bin_hash:%s but ask %s",vinput_bin_hash.c_str(),get_input_hash().c_str());
-                    return enum_xerror_code_bad_block;
-                }
-                if(voutput_bin_hash != get_output_hash())//nil block may nil input hash
-                {
-                    xerror("xvblock_t::do_read, corrupt xvoutput_t, voutput_bin_hash:%s but ask %s",voutput_bin_hash.c_str(),get_output_hash().c_str());
-                    return enum_xerror_code_bad_block;
-                }
-            }
-            else //qcert.header_hash = hash(header+input+output)
-            {
+
+                //------------------------------data verify------------------------------//
                 const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
                 const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
                 if(get_cert()->get_header_hash() != vheader_input_output_hash)
@@ -2540,38 +2676,85 @@ namespace top
                     xerror("xvblock_t::do_read, xvheader_t not match with xvqcert,[vheader+vinput+ voutput=%s] but ask %s",vheader_input_output_hash.c_str(), get_header_hash().c_str());
                     return enum_xerror_code_bad_block;
                 }
-            }
-            //------------------------------create input/output object------------------------------//
-            if(vinput_bin.empty() == false)
-            {
-                xvinput_t*  vinput_ptr = xvblock_t::create_input_object(vinput_bin);
+
+                xvinput_t*  vinput_ptr = xvblock_t::create_input_object(false, vinput_bin);
                 xassert(vinput_ptr != NULL); //should has value
                 if(vinput_ptr != NULL)
                 {
                     m_vinput_ptr = vinput_ptr;
                 }
-            }
-            else //for nil block
-            {
-                m_vinput_ptr = new xvinput_t(); //creat an empty object
-            }
-            
-            if(voutput_bin.empty() == false)
-            {
-                xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(voutput_bin);
+
+                xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(false, voutput_bin);
                 xassert(voutput_ptr != NULL); //should has value
                 if(voutput_ptr != NULL)
                 {
                     m_voutput_ptr = voutput_ptr;
                 }
             }
-            else //for nil block
-            {
-                m_voutput_ptr = new xvoutput_t(); //creat an empty object
-            }
+            
+            //------------------------------data verify------------------------------//
+            // if(get_header()->is_character_cert_header_only())
+            // {
+            //     const std::string vheader_bin_hash = get_cert()->hash(vheader_bin);
+            //     const std::string vinput_bin_hash  = get_cert()->hash(vinput_bin);
+            //     const std::string voutput_bin_hash = get_cert()->hash(voutput_bin);
+            //     if(vheader_bin_hash != get_cert()->get_header_hash()) //check with cert
+            //     {
+            //         xerror("xvblock_t::do_read, xvheader_t not match with xvqcert, vheader_hash:%s but ask %s",vheader_bin_hash.c_str(),get_header_hash().c_str());
+            //         return enum_xerror_code_bad_block;
+            //     }
+            //     if(vinput_bin_hash != get_input_hash()) //nil block may nil input hash
+            //     {
+            //         xerror("xvblock_t::do_read, corrupt xvinput_t, vinput_bin_hash:%s but ask %s",vinput_bin_hash.c_str(),get_input_hash().c_str());
+            //         return enum_xerror_code_bad_block;
+            //     }
+            //     if(voutput_bin_hash != get_output_hash())//nil block may nil input hash
+            //     {
+            //         xerror("xvblock_t::do_read, corrupt xvoutput_t, voutput_bin_hash:%s but ask %s",voutput_bin_hash.c_str(),get_output_hash().c_str());
+            //         return enum_xerror_code_bad_block;
+            //     }
+            // }
+            // else //qcert.header_hash = hash(header+input+output)
+            // {
+            //     const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
+            //     const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
+            //     if(get_cert()->get_header_hash() != vheader_input_output_hash)
+            //     {
+            //         xerror("xvblock_t::do_read, xvheader_t not match with xvqcert,[vheader+vinput+ voutput=%s] but ask %s",vheader_input_output_hash.c_str(), get_header_hash().c_str());
+            //         return enum_xerror_code_bad_block;
+            //     }
+            // // }
+            // //------------------------------create input/output object------------------------------//
+            // if(vinput_bin.empty() == false)
+            // {
+            //     xvinput_t*  vinput_ptr = xvblock_t::create_input_object(vinput_bin);
+            //     xassert(vinput_ptr != NULL); //should has value
+            //     if(vinput_ptr != NULL)
+            //     {
+            //         m_vinput_ptr = vinput_ptr;
+            //     }
+            // }
+            // else //for nil block
+            // {
+            //     m_vinput_ptr = new xvinput_t(); //creat an empty object
+            // }
+            
+            // if(voutput_bin.empty() == false)
+            // {
+            //     xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(voutput_bin);
+            //     xassert(voutput_ptr != NULL); //should has value
+            //     if(voutput_ptr != NULL)
+            //     {
+            //         m_voutput_ptr = voutput_ptr;
+            //     }
+            // }
+            // else //for nil block
+            // {
+            //     m_voutput_ptr = new xvoutput_t(); //creat an empty object
+            // }
             
             //to prevent be attacked by bad data,throw error
-            if( (NULL == m_vheader_ptr) || (NULL == m_vqcert_ptr) ||  (NULL == m_vinput_ptr) || (NULL == m_voutput_ptr) )
+            if( (NULL == m_vheader_ptr) || (NULL == m_vqcert_ptr) ) //||  (NULL == m_vinput_ptr) || (NULL == m_voutput_ptr)
             {
                 return enum_xerror_code_bad_block;
             }
@@ -2694,7 +2877,7 @@ namespace top
             return qcert_ptr;
         }
         
-        xvinput_t*       xvblock_t::create_input_object(const std::string  & serialized_data)
+        xvinput_t*       xvblock_t::create_input_object(bool include_resource, const std::string  & serialized_data)
         {
             if(serialized_data.empty())
                 return NULL;
@@ -2702,7 +2885,7 @@ namespace top
             xstream_t _stream(xcontext_t::instance(),(uint8_t*)serialized_data.data(),(uint32_t)serialized_data.size());
         
             xvinput_t* input_ptr = new xvinput_t();
-            if(input_ptr->serialize_from(_stream) <= 0)
+            if(input_ptr->serialize_from(include_resource, _stream) <= 0)
             {
                 xerror("xvblock_t::create_input_object,bad serialized_data that not follow spec");
                 input_ptr->release_ref();
@@ -2711,7 +2894,7 @@ namespace top
             return input_ptr;
         }
         
-        xvoutput_t*       xvblock_t::create_output_object(const std::string  & serialized_data)
+        xvoutput_t*       xvblock_t::create_output_object(bool include_resource, const std::string  & serialized_data)
         {
             if(serialized_data.empty())
                 return NULL;
@@ -2719,36 +2902,13 @@ namespace top
             xstream_t _stream(xcontext_t::instance(),(uint8_t*)serialized_data.data(),(uint32_t)serialized_data.size());
             
             xvoutput_t* output_ptr = new xvoutput_t();
-            if(output_ptr->serialize_from(_stream) <= 0)
+            if(output_ptr->serialize_from(include_resource, _stream) <= 0)
             {
                 xerror("xvblock_t::create_output_object,bad serialized_data that not follow spec");
                 output_ptr->release_ref();
                 return NULL;
             }
             return output_ptr;
-        }
-    
-        xvbindex_t*       xvblock_t::create_index_object(const std::string & serialized_data)
-        {
-            if(serialized_data.empty())
-                return NULL;
-            
-            xstream_t _stream(xcontext_t::instance(),(uint8_t*)serialized_data.data(),(uint32_t)serialized_data.size());
-            xdataunit_t*  _data_obj_ptr = xdataunit_t::read_from(_stream);
-            if(NULL == _data_obj_ptr)
-            {
-                xerror("xvblock_t::create_index_object,bad serialized_data that not follow spec");
-                return NULL;
-            }
-            xvbindex_t* index_ptr = (xvbindex_t*)_data_obj_ptr->query_interface(enum_xobject_type_vbindex);
-            if(NULL == index_ptr)
-            {
-                xerror("xvblock_t::create_index_object,bad serialized_data is not for xvbindex_t,but for type:%d",_data_obj_ptr->get_obj_type());
-                
-                _data_obj_ptr->release_ref();
-                return NULL;
-            }
-            return index_ptr;
         }
         
         xvbstate_t*     xvblock_t::create_state_object(const std::string & serialized_data)
@@ -2800,55 +2960,10 @@ namespace top
                 _data_obj_ptr->release_ref();
                 return NULL;
             }
-            if(check_input_output && ((block_ptr->get_input() == NULL) || (block_ptr->get_output() == NULL)))
-            {
-                xerror("xvblock_t::create_block_object,bad vblock_serialized_data");
-                _data_obj_ptr->release_ref();
-                return NULL;
-            }
-
-            if (check_input_output && block_ptr->get_block_class() != enum_xvblock_class_nil) {
-                if (block_ptr->get_input()->get_action_count() == 0) {
-                    _data_obj_ptr->release_ref();
-                    return NULL;
-                }
-            }
 
             block_ptr->dump2(); //genereate dump information before return, to improve performance
             return block_ptr;
         }
-
-        // int32_t xrelay_multisign::do_write(base::xstream_t & stream) {
-        //     KEEP_SIZE();
-
-        //     if (!m_multisign.empty()) {
-        //         uint16_t size = m_multisign.size();
-        //         stream << size;
-        //         for (auto & it : m_multisign) {
-        //             stream << it.first;
-        //             stream << it.second;
-        //         }
-        //     }
-
-        //     return CALC_LEN();
-        // }
-
-        // int32_t xrelay_multisign::do_read(base::xstream_t & stream) {
-        //     KEEP_SIZE();
-        //     if (stream.size() != 0) {
-        //         uint16_t size = 0;
-        //         stream >> size;
-        //         for (uint16_t i = 0; i < size; i++) {
-        //             xvip2_t xip;
-        //             std::string vote_data;
-        //             stream >> xip;
-        //             stream >> vote_data;
-        //             m_multisign[xip] = vote_data;
-        //         }
-        //     }
-        //     // restore padding
-        //     return CALC_LEN();
-        // }
 
     };//end of namespace of base
 };//end of namespace of top

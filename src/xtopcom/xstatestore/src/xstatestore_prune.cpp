@@ -57,10 +57,11 @@ void xtablestate_and_offdata_prune_info_t::insert_from_tableblock(base::xvblock_
         m_tablestate_keys.push_back(delete_key);
     }
 
-    if (pune_offdata && table_block->get_block_class() != base::enum_xvblock_class_nil) {
-        const std::string delete_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(table_block->get_account(), table_block->get_height(), table_block->get_viewid());
-        m_offdata_keys.push_back(delete_key);
-    }
+    // TODO(jimmy) not prune offdata
+    // if (pune_offdata && table_block->get_block_class() != base::enum_xvblock_class_nil) {
+    //     const std::string delete_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(table_block->get_account(), table_block->get_height(), table_block->get_viewid());
+    //     m_offdata_keys.push_back(delete_key);
+    // }
 }
 
 const std::vector<std::string> & xtablestate_and_offdata_prune_info_t::get_tablestate_prune_keys() const {

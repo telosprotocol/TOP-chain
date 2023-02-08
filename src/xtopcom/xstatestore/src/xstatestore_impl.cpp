@@ -637,6 +637,13 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
         return false;
     }
 
+    if (false == get_blockstore()->load_block_input(table_address.vaccount(), non_nil_commit_block.get())) {
+        xerror("xstatestore_impl_t::get_receiptid_state_and_prove fail load block input.table:%s, height:%llu",
+              table_address.to_string().c_str(),
+              non_nil_commit_block->get_height());
+        return false;
+    }
+
     auto property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), tablestate->get_bstate().get(), data::XPROPERTY_TABLE_RECEIPTID);
     if (property_prove == nullptr) {
         xwarn("xstatestore_impl_t::get_receiptid_state_and_prove create receipt state fail 2.table:%s, commit height:%llu",

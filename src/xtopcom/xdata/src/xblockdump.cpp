@@ -43,7 +43,9 @@ void  xblockdump_t::dump_output_entity(std::string const& prefix_str, base::xvou
 }
 
 void  xblockdump_t::dump_input_entitys(base::xvblock_t* block) {
-    const std::vector<base::xventity_t*> & _entitys = block->get_input()->get_entitys();
+    std::error_code ec;
+    auto input_object = block->load_input(ec);
+    const std::vector<base::xventity_t*> & _entitys = input_object->get_entitys();
     uint32_t _input_entitys_count = _entitys.size();
     std::cout << "input_entitys_count:" << _input_entitys_count << std::endl;
     for (uint32_t index = 0; index < _input_entitys_count; index++) {
@@ -56,7 +58,9 @@ void  xblockdump_t::dump_input_entitys(base::xvblock_t* block) {
 }
 
 void  xblockdump_t::dump_output_entitys(base::xvblock_t* block) {
-    const std::vector<base::xventity_t*> & _entitys = block->get_output()->get_entitys();
+    std::error_code ec;
+    auto output_object = block->load_output(ec);    
+    const std::vector<base::xventity_t*> & _entitys = output_object->get_entitys();
     uint32_t _input_entitys_count = _entitys.size();
     std::cout << "output_entitys_count:" << _input_entitys_count << std::endl;
     for (uint32_t index = 0; index < _input_entitys_count; index++) {
@@ -66,7 +70,9 @@ void  xblockdump_t::dump_output_entitys(base::xvblock_t* block) {
 }
 
 void  xblockdump_t::dump_input_resources(base::xvblock_t* block) {
-    auto resources = block->get_input()->get_resources();
+    std::error_code ec;
+    auto input_object = block->load_input(ec);
+    auto resources = input_object->get_resources();
     const std::map<std::string, std::string>& _map = resources->get_map();
     std::cout << "input_resources_count:" << _map.size() << std::endl;
     for (auto & v : _map) {
@@ -75,7 +81,9 @@ void  xblockdump_t::dump_input_resources(base::xvblock_t* block) {
 }
 
 void  xblockdump_t::dump_output_resources(base::xvblock_t* block) {
-    auto resources = block->get_output()->get_resources();
+    std::error_code ec;
+    auto output_object = block->load_output(ec);   
+    auto resources = output_object->get_resources();
     const std::map<std::string, std::string>& _map = resources->get_map();
     std::cout << "output_resources_count:" << _map.size() << std::endl;
     for (auto & v : _map) {
@@ -86,10 +94,10 @@ void  xblockdump_t::dump_output_resources(base::xvblock_t* block) {
 void  xblockdump_t::dump_object(base::xvblock_t* block) {
     std::string block_object_bin;
     block->serialize_to_string(block_object_bin);
-    std::cout << "block_size:" << block_object_bin.size() + block->get_input()->get_resources_data().size() + block->get_output()->get_resources_data().size()
+    std::cout << "block_size:" << block_object_bin.size() + block->get_input_data().size() + block->get_output_data().size()
     << " object_size:" << block_object_bin.size()
-    << " input_size:" << block->get_input()->get_resources_data().size()
-    << " output_size:" << block->get_output()->get_resources_data().size() << std::endl;
+    << " input_size:" << block->get_input_data().size()
+    << " output_size:" << block->get_output_data().size() << std::endl;
 } 
 
 void  xblockdump_t::dump_unitblock(base::xvblock_t* block) {

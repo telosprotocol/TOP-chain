@@ -569,7 +569,7 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
     }
 
     std::error_code ec;
-    data::xtableheader_extra_t header_extra;
+    base::xtableheader_extra_t header_extra;
     data::xblockextract_t::get_tableheader_extra_from_block(proposal_block, header_extra, ec);
     if (ec) {
         return blockmaker::xblockmaker_error_proposal_bad_header;
