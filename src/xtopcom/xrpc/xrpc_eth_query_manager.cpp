@@ -1000,6 +1000,11 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
             xdbg("filter_block_log_bloom ok, %llu", i);
         }
 
+        if (false == m_block_store->load_block_input(table_addr, block.get())) {
+            xerror("xrpc_eth_query_manager::get_log fail load input %s", block->dump().c_str());
+            continue;            
+        }
+
         auto input_actions = data::xblockextract_t::unpack_eth_txactions(block.get());
         xdbg("input_actions size:%d", input_actions.size());
         for (uint64_t txindex = 0; txindex < (uint64_t)input_actions.size(); txindex++) {

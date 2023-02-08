@@ -33,7 +33,7 @@ public:
                                 observer_ptr<top::base::xiothread_t>            thread);
     void on_message(const xvnode_address_t & edge_sender, xmessage_t const & message, std::uint64_t const timer_height);
     void shard_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const uint64_t msghash);
-    void process_msg(const xrpc_msg_request_t & edge_msg, xjson_proc_t & json_proc);
+    void process_msg(const xrpc_msg_request_t & edge_msg);
     void start();
     void stop();
 

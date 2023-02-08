@@ -162,15 +162,15 @@ int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
     this->serialize_to_string(block_object_bin);
     stream << block_object_bin;
     if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-        stream << get_input()->get_resources_data();
-        stream << get_output()->get_resources_data();
+        stream << get_input_data();
+        stream << get_output_data();
         if (!get_output_offdata_hash().empty()) {
             stream << get_output_offdata();
         }
     }
 
     xdbg("xblock_t::full_block_serialize_to,succ.block=%s,size=%zu,%zu,%zu,%zu,%d",
-        dump().c_str(), block_object_bin.size(), get_input()->get_resources_data().size(), get_output()->get_resources_data().size(), get_output_offdata().size(), stream.size());
+        dump().c_str(), block_object_bin.size(), get_input_data().size(), get_output_data().size(), get_output_offdata().size(), stream.size());
     return CALC_LEN();
 }
 
@@ -189,13 +189,13 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
         std::string _output_content;
         stream >> _input_content;
         stream >> _output_content;
-        if (false == new_block->set_input_resources(_input_content)) {
-            xerror("xblock_t::full_block_read_from set_input_resources fail.block=%s,ir=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_input_content));
+        if (false == new_block->set_input_data(_input_content)) {
+            xerror("xblock_t::full_block_read_from set_input_data fail.block=%s,ir=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_input_content));
             new_block->release_ref();
             return nullptr;
         }
-        if (false == new_block->set_output_resources(_output_content)) {
-            xerror("xblock_t::full_block_read_from set_output_resources failblock=%s,or=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_output_content));
+        if (false == new_block->set_output_data(_output_content)) {
+            xerror("xblock_t::full_block_read_from set_output_data failblock=%s,or=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_output_content));
             new_block->release_ref();
             return nullptr;
         }
@@ -218,117 +218,8 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
     return new_block;
 }
 
-std::string xblock_t::dump_header(base::xvheader_t* header) {
-    std::stringstream ss;
-    ss << "{";
-    ss << header->get_account();
-    ss << ",height=" << header->get_height();
-    ss << ",level:" << header->get_block_level();
-    ss << ",class=" << header->get_block_class();
-    ss << ",type=" << header->get_block_type();
-    ss << ",features:" << header->get_block_features();
-    ss << ",version:" << header->get_block_version();
-    ss << ",weight:" << header->get_weight();
-    if (!header->get_comments().empty()) {
-        ss << ",comments:"  << header->get_comments();
-    }
-    if (!header->get_extra_data().empty()) {
-        ss << ",extra:"     << base::xhash64_t::digest(header->get_extra_data());
-    }
-    ss << ",last_h:" << base::xhash64_t::digest(header->get_last_block_hash());
-    ss << ",input_h=" << base::xhash64_t::digest(header->get_input_hash());
-    ss << ",output_h=" << base::xhash64_t::digest(header->get_output_hash());
-    ss << "}";
-    return ss.str();
-}
-
-std::string xblock_t::dump_header() const {
-    std::stringstream ss;
-    ss << "{";
-    ss << get_header()->get_account();
-    ss << ",height=" << get_header()->get_height();
-    ss << ",level:" << get_header()->get_block_level();
-    ss << ",class=" << get_header()->get_block_class();
-    ss << ",type=" << get_header()->get_block_type();
-    ss << ",features:" << get_header()->get_block_features();
-    ss << ",version:" << get_header()->get_block_version();
-    ss << ",weight:" << get_header()->get_weight();
-    if (!get_header()->get_comments().empty()) {
-        ss << ",comments:"  << get_header()->get_comments();
-    }
-    ss << ",extra:"     << base::xhash64_t::digest(get_header()->get_extra_data());
-    ss << ",last_h:" << base::xhash64_t::digest(get_header()->get_last_block_hash());
-    ss << ",input_h=" << base::xhash64_t::digest(get_header()->get_input_hash());
-    ss << ",output_h=" << base::xhash64_t::digest(get_header()->get_output_hash());
-    if (get_block_class() != base::enum_xvblock_class_nil && get_input() != nullptr && get_output() != nullptr) {
-        std::string     _input_bin;
-        std::string     _output_bin;
-        get_input()->serialize_to_string(_input_bin);
-        get_output()->serialize_to_string(_output_bin);
-        ss << ",i_=" << base::xhash64_t::digest(_input_bin);
-        ss << ",ic_=" << get_input()->get_entitys().size();
-        ss << ",o_=" << base::xhash64_t::digest(_output_bin);
-        ss << ",oc_=" << get_output()->get_entitys().size();
-    }
-    ss << "}";
-    return ss.str();
-}
-
-std::string xblock_t::dump_cert(base::xvqcert_t * qcert) const {
-    std::stringstream ss;
-    ss << "{";
-    ss << ",nonce="     << qcert->get_nonce();
-    ss << ",expire="    << qcert->get_expired();
-    ss << ",drand="     << qcert->get_drand_height();
-    ss << ",parent_h="  << qcert->get_parent_block_height();
-    ss << " validator=" << qcert->get_validator().low_addr;
-    ss << " auditor="   << qcert->get_auditor().low_addr;
-    ss << " sign_h="    << base::xhash64_t::digest(qcert->get_hash_to_sign());
-    ss << " header_h="   << base::xhash64_t::digest(qcert->get_header_hash());
-    ss << " input_r="   << base::xhash64_t::digest(qcert->get_input_root_hash());
-    ss << " output_r="  << base::xhash64_t::digest(qcert->get_output_root_hash());
-    ss << " justify_r="  << base::xhash64_t::digest(qcert->get_justify_cert_hash());
-    ss << " verify_th=" << qcert->get_validator_threshold();
-    ss << " audit_th="  << qcert->get_auditor_threshold();
-    ss << " verify_sig="<< qcert->get_verify_signature().size();
-    ss << " audit_sig=" << qcert->get_audit_signature().size();
-    ss << " cons_type=" << qcert->get_consensus_type();
-    ss << " cons_th=" << qcert->get_consensus_threshold();
-    ss << " cons_flag=" << qcert->get_consensus_flags();
-    ss << " key_type=" << qcert->get_crypto_key_type();
-    ss << " sign_type=" << qcert->get_crypto_sign_type();
-    ss << " hash_type=" << qcert->get_crypto_hash_type();
-    ss << " extend=" << base::xhash64_t::digest(qcert->get_extend_data());
-    ss << "," << base::xhash64_t::digest(qcert->get_extend_cert());
-
-    ss << "}";
-
-    return ss.str();
-}
-
-std::string xblock_t::dump_cert() const {
-    std::stringstream ss;
-    ss << "cert:" << dump_cert(get_cert());
-    return ss.str();
-}
-
-std::string xblock_t::dump_body() const {
-    std::stringstream ss;
-    if (get_input() != nullptr) {
-        ss << get_input()->dump();
-    }
-    if (get_output() != nullptr) {
-        ss << get_output()->dump();
-    }
-    return ss.str();
-}
-
-std::string xblock_t::get_block_hash_hex_str() const {
-    return to_hex_str(get_block_hash());
-}
-
 xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) const {
-    std::string value = get_input()->query_resource(txhash);
+    std::string value = query_input_resource(txhash);
     if (!value.empty()) {
         xtransaction_ptr_t raw_tx;
         xtransaction_t::set_tx_by_serialized_data(raw_tx, value);
@@ -338,7 +229,7 @@ xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) 
 }
 
 uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
-    std::string value = get_input()->query_resource(txhash);
+    std::string value = query_input_resource(txhash);
     return value.size();
 }
 
@@ -355,27 +246,6 @@ std::vector<base::xvtxkey_t> xblock_t::get_txkeys() const {
     xunitheader_extra_t he;
     he.serialize_from_string(extra_str);
     return he.get_txkeys();
-}
-
-uint64_t xblock_t::get_second_level_gmtime() const {
-    // only table-block has second_level_gmtime
-    if (get_block_level() != base::enum_xvblock_level_table) {
-        xassert(false);
-        return 0;
-    }
-    uint64_t gmtime = 0;
-    auto & extra_str = get_header()->get_extra_data();
-    // second level gmtime is introduced after v3.0.0 
-    if (!extra_str.empty()) {
-        xtableheader_extra_t he;
-        he.deserialize_from_string(extra_str);
-        gmtime = he.get_second_level_gmtime();
-    }
-
-    if (0 == gmtime) {
-        return get_timestamp(); // XTODO return clock level gmtime for old version
-    }
-    return gmtime;
 }
 
 NS_END2

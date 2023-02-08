@@ -8,7 +8,6 @@
 #include "xsync/xsync_message.h"
 #include "xsync/xgossip_message.h"
 // #include "xblockstore/test/xblockstore_face_mock.h"
-// #include "xblockstore/test/test_blockstore_datamock.hpp"
 #include "xdata/xblocktool.h"
 #include "xstore/xstore.h"
 // TODO(jimmy) #include "xbase/xvledger.h"

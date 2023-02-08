@@ -1566,7 +1566,7 @@ void xrpc_query_manager::set_shared_info(xJson::Value & root, xblock_t * bp) {
     } else {
         root["table_height"] = static_cast<unsigned long long>(bp->get_height());
     }
-    root["hash"] = bp->get_block_hash_hex_str();
+    root["hash"] = to_hex_str(bp->get_block_hash());
     root["prev_hash"] = to_hex_str(bp->get_last_block_hash());
     root["timestamp"] = static_cast<unsigned long long>(bp->get_timestamp());
 }
@@ -1928,7 +1928,7 @@ void xrpc_query_manager::getChainInfo(xJson::Value & js_req, xJson::Value & js_r
     auto vb = m_block_store->load_block_object(_timer_vaddress, 0, 0, true, metrics::blockstore_access_from_rpc_get_chain_info);
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
-        jv["first_timerblock_hash"] = bp->get_block_hash_hex_str();
+        jv["first_timerblock_hash"] = to_hex_str(bp->get_block_hash());
         jv["first_timerblock_stamp"] = static_cast<xJson::UInt64>(bp->get_timestamp());
     }
     jv["initial_total_gas_deposit"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_gas_deposit));

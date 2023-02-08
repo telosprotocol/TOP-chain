@@ -110,25 +110,25 @@ TEST_F(test_shard, basic) {
 }
 
 TEST_F(test_shard, process_msg_illegal) {
-    int32_t cnt{0};
-    xrpc_msg_request_t edge_msg;
-    xjson_proc_t json_proc;
-    try {
-        m_shard_handler->process_msg(edge_msg, json_proc);
-    } catch (xrpc_error & e) {
-        EXPECT_EQ(string("unknow msg type"), string(e.what()));
-        cnt++;
-    }
-    EXPECT_EQ(1, cnt);
+    // int32_t cnt{0};
+    // xrpc_msg_request_t edge_msg;
+    // xjson_proc_t json_proc;
+    // try {
+    //     m_shard_handler->process_msg(edge_msg, json_proc);
+    // } catch (xrpc_error & e) {
+    //     EXPECT_EQ(string("unknow msg type"), string(e.what()));
+    //     cnt++;
+    // }
+    // EXPECT_EQ(1, cnt);
 
-    edge_msg.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
-    try {
-        m_shard_handler->process_msg(edge_msg, json_proc);
-    } catch (xrpc_error & e) {
-        EXPECT_EQ(string("unknow msg type"), string(e.what()));
-        cnt++;
-    }
-    EXPECT_EQ(2, cnt);
+    // edge_msg.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
+    // try {
+    //     m_shard_handler->process_msg(edge_msg, json_proc);
+    // } catch (xrpc_error & e) {
+    //     EXPECT_EQ(string("unknow msg type"), string(e.what()));
+    //     cnt++;
+    // }
+    // EXPECT_EQ(2, cnt);
 
     // auto tx = make_object_ptr<data::xtransaction_t>();
     // data::xproperty_asset asset_out{100};

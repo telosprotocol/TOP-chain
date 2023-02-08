@@ -19,33 +19,6 @@ xtable_bstate_t::~xtable_bstate_t() {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, -1);
 }
 
-bool xtable_bstate_t::set_block_offsnapshot(base::xvblock_t* block, const std::string & snapshot) {
-    if (block->get_block_level() != base::enum_xvblock_level_table || block->get_block_class() != base::enum_xvblock_class_full) {
-        xerror("xtable_bstate_t::set_block_offsnapshot fail-not fulltable block");
-        return false;
-    }
-    if (snapshot.empty()) {
-        xerror("xtable_bstate_t::set_block_offsnapshot fail-snapshot empty");
-        return false;
-    }
-
-    if (block->is_full_state_block()) {
-        xwarn("xtable_bstate_t::set_block_offsnapshot already has full state. block=%s", block->dump().c_str());
-        return true;
-    }
-
-    std::string binlog_hash = base::xcontext_t::instance().hash(snapshot, block->get_cert()->get_crypto_hash_type());
-    if (binlog_hash != block->get_fullstate_hash()) {
-        xerror("xtable_bstate_t::set_block_offsnapshot fail-snapshot hash unmatch.block=%s", block->dump().c_str());
-        return false;
-    }
-    if (false == block->set_offblock_snapshot(snapshot)) {
-        xerror("xtable_bstate_t::set_block_offsnapshot set offblock snapshot state. block=%s", block->dump().c_str());
-        return false;
-    }
-    return true;
-}
-
 bool xtable_bstate_t::set_account_index(const std::string & account, const base::xaccount_index_t & account_index, base::xvcanvas_t* canvas) {
     std::string value;
     account_index.old_serialize_to(value);

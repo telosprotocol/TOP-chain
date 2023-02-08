@@ -60,18 +60,6 @@ class xfull_tableblock_t : public xblock_t {
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
     virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
-
-    virtual int64_t get_pledge_balance_change_tgas() const override {
-        auto out_entity = get_output()->get_primary_entity();
-        int64_t tgas_balance_change = 0;
-        if (out_entity != nullptr) {
-            tgas_balance_change = base::xstring_utl::toint64(out_entity->query_value(base::xvoutentity_t::key_name_tgas_pledge_change()));
-            xdbg("total_tgas_balance_change=%lld,account=%s", tgas_balance_change, dump().c_str());
-        }
-
-        return tgas_balance_change;
-    }
-
  public:
     xstatistics_data_t get_table_statistics() const;
     std::string get_table_statistics_string() const;

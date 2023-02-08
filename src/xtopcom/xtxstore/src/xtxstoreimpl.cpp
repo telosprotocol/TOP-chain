@@ -241,24 +241,6 @@ bool xtxstoreimpl::strategy_permission(common::xbool_strategy_t const & strategy
     return false;
 }
 
-std::vector<base::xvblock_ptr_t> xtxstoreimpl::load_block_objects(const std::string & account, const uint64_t height) {
-    base::xvaccount_t _vaddress(account);
-    auto blks_v = top::base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, height, metrics::blockstore_access_from_sync_load_block_objects);
-    std::vector<base::xvblock_t*> blks_ptr = blks_v.get_vector();
-    std::vector<base::xvblock_ptr_t> blocks;
-    for (uint32_t j = 0; j < blks_ptr.size(); j++) {
-        if (false == top::base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaddress, blks_ptr[j], metrics::blockstore_access_from_sync_load_block_objects_output)
-            || false == top::base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, blks_ptr[j], metrics::blockstore_access_from_sync_load_block_objects_input) ) {
-            xerror("xtxstoreimpl::load_block_objects fail-load block input or output. block=%s", blks_ptr[j]->dump().c_str());
-            return {};
-        }
-        base::xvblock_ptr_t xvblock_ptr;
-        blks_ptr[j]->add_ref();
-        xvblock_ptr.attach(blks_ptr[j]);
-        blocks.push_back(xvblock_ptr);
-    }
-    return blocks;
-}
 std::vector<base::xvblock_ptr_t> xtxstoreimpl::load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {
     auto blocks = top::base::xvchain_t::instance().get_xblockstore()->load_block_object(tx_hash, type, metrics::blockstore_access_from_sync_load_tx);
     for (auto & block : blocks) {

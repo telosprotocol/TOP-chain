@@ -96,9 +96,9 @@ TEST_F(test_state_prune, prune_exec_storage) {
         xdb->read(state_key, value_state);
         assert(value_state.empty() == (h <= 20 && block->get_block_class() != base::enum_xvblock_class_full));
         EXPECT_EQ(value_state.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     pruner.prune_imp(80);
@@ -111,9 +111,10 @@ TEST_F(test_state_prune, prune_exec_storage) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // not prune offdata any more
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 }
 
@@ -162,9 +163,10 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // not prune offdata any more
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     for (auto & mock_unit : mock_units) {
@@ -183,9 +185,10 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // not prune offdata any more
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     for (auto & mock_unit : mock_units) {

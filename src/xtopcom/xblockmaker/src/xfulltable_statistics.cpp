@@ -2,7 +2,7 @@
 #include "xcertauth/xcertauth_face.h"
 #include "xcertauth/src/xsigndata.h"
 #include "xvm/manager/xcontract_manager.h"
-
+#include "xvledger/xvblock_extra.h"
 #include "xvledger/xvblock.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbase/xobject_ptr.h"
@@ -170,7 +170,7 @@ data::xstatistics_cons_data_t tableblock_statistics_consortium(std::vector<xobje
 
         if (!blks[i]->get_header()->get_extra_data().empty()) {
             const std::string& extra_data = blks[i]->get_header()->get_extra_data();
-            data::xtableheader_extra_t blockheader_extradata;
+            base::xtableheader_extra_t blockheader_extradata;
             int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
             if (ret <= 0) {
                 xerror("tableblock_statistics::get_table_header fail-extra data invalid");
