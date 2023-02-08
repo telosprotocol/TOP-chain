@@ -565,23 +565,23 @@ XDECLARE_CONFIGURATION(evm_json_rpc_port, uint16_t, 19086);
 
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_consortium);
 #if defined(XBUILD_CI)
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "192.168.50.155:9921,192.168.50.156:9921,192.168.50.157:9921,192.168.50.158:9921,192.168.50.159:9921,192.168.50.160:9921,192.168.50.121:9921,192.168.50.119:9921");
 XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #elif defined(XBUILD_DEV)
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "127.0.0.1:9000");
 XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #else
-XDECLARE_CONFIGURATION(platform_public_endpoints,
+XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
                        "206.189.227.204:9000,206.189.238.224:9000,206.189.205.198:9000,204.48.27.142:9000,206.81.0.133:9000");
 //fix hash before online
 XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79ccdbcddb3226a1c042a1020be6d3fc29f2");
 #endif 
-XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnetwork.org/");
+XDECLARE_CONFIGURATION(p2p_url_endpoints, char const *, "http://mainnetwork.org/");
 
 #else 
 #if defined(XBUILD_CI)

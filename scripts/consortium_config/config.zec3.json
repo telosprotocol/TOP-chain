@@ -40,9 +40,6 @@
     "enable_free_tgas": false,
     "evm_token_type":"TOP",
     "chain_name": "consortium",
-    "platform": {
-        "business_port": 9903,
-        "public_endpoints": "127.0.0.1:9000,127.0.0.1:9002,127.0.0.1:9003,127.0.0.1:9004",
-        "show_cmd": false
-    }
+    "node_p2p_port": 9903,
+    "p2p_endpoints": "127.0.0.1:9000,127.0.0.1:9002,127.0.0.1:9003,127.0.0.1:9004"
 }
