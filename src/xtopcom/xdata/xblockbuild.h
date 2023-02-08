@@ -23,12 +23,14 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
         enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
         enum_extra_data_type_tgas_second_level_gmtime               = 1,
         enum_extra_data_type_eth_header                             = 2,
+        enum_extra_data_type_burn_gas                               = 3,
     };
  public:
      static std::string build_extra_string(base::xvheader_t * _tableheader,
                                            uint64_t tgas_height,
                                            uint64_t gmtime,
-                                           const std::string & eth_header);
+                                           const std::string & eth_header,
+                                           uint64_t burn_gas = 0);
 
  protected:
     int32_t do_write(base::xstream_t & stream) const override;
@@ -44,6 +46,8 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     void     set_second_level_gmtime(uint64_t gmtime);
     std::string get_ethheader() const;
     void     set_ethheader(const std::string & value);
+    uint64_t get_total_burn_gas() const;
+    void     set_total_burn_gas(uint64_t burn_gas);
 
  private:
     std::map<uint16_t, std::string>  m_paras;

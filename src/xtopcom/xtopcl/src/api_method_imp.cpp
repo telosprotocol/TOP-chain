@@ -1331,4 +1331,114 @@ static void set_user_info(task_info_callback<T> * info,
     // info->params[top::xChainRPC::xrpc_signature::method_key_] = uinfo.sign_method;
     // info->params[top::xChainRPC::xrpc_signature::version_key_] = uinfo.sign_version;
 }
+#if defined(XBUILD_CONSORTIUM)
+
+bool api_method_imp::nodeInfoReg(const user_info & uinfo, const std::string & account_name, uint64_t expiry_time, const std::string & account_cert,
+                                std::ostringstream & out_str, std::function<void(NodeRegResult *)> func) {
+    auto info = new task_info_callback<NodeRegResult>();
+    set_user_info(info, uinfo, CMD_SET_INFO_REG, func);
+
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
+    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string target_action_name = "nodeInfoReg";
+    std::string param_t = stream_params(stream_t, account_name, expiry_time, account_cert);
+
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_node_manage_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
+
+    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
+        delete info;
+        return false;
+    }
+
+    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+
+    auto rpc_response = task_dispatcher::get_instance()->get_result();
+    out_str << rpc_response;
+    return true;
+}
+
+bool api_method_imp::nodeInfoUnreg(const user_info & uinfo, const std::string & account_name, std::ostringstream & out_str, 
+                                    std::function<void(NodeRegResult *)> func) {
+    auto info = new task_info_callback<NodeRegResult>();
+    set_user_info(info, uinfo, CMD_SET_INFO_UNREG, func);
+
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
+    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string target_action_name = "nodeInfoUnreg";
+    std::string param_t = stream_params(stream_t, account_name);
+
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_node_manage_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
+
+    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
+        delete info;
+        return false;
+    }
+
+    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+
+    auto rpc_response = task_dispatcher::get_instance()->get_result();
+    out_str << rpc_response;
+    return true;
+}
+
+bool api_method_imp::nodeInfoRootCaReplace(const user_info & uinfo,const std::string & root_account,  const std::string & cert_str, std::ostringstream & out_str, 
+                                    std::function<void(NodeRegResult *)> func) {
+    auto info = new task_info_callback<NodeRegResult>();
+    set_user_info(info, uinfo, CMD_ADD_ROOT_CA, func);
+
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
+    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string target_action_name = "nodeInfoRootCaReplace";
+    std::string param_t = stream_params(stream_t,root_account, cert_str);
+
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_node_manage_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
+
+    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
+        delete info;
+        return false;
+    }
+
+    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+
+    auto rpc_response = task_dispatcher::get_instance()->get_result();
+    out_str << rpc_response;
+    return true;
+}
+ 
+bool api_method_imp::nodeInfoAuthConfig(const user_info & uinfo,std::string const& check_type, std::string const& check_flag, std::ostringstream & out_str, 
+                                    std::function<void(NodeRegResult *)> func) {
+    auto info = new task_info_callback<NodeRegResult>();
+    set_user_info(info, uinfo, CMD_SET_NODE_CHECK_TYPE, func);
+
+    xaction_asset_param asset_param(this, "", 0);
+    std::string param_s = asset_param.create();
+
+    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
+    std::string target_action_name = "nodeInfoAuthConfig";
+    std::string param_t = stream_params(stream_t, check_type, check_flag);
+
+    auto tx_info = top::data::xtx_action_info(uinfo.account, "", param_s, top::sys_contract_rec_node_manage_addr, target_action_name, param_t);
+    info->trans_action->construct_tx(xtransaction_type_run_contract, 100, m_deposit, uinfo.nonce, "", tx_info);
+
+    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
+        delete info;
+        return false;
+    }
+
+    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+
+    auto rpc_response = task_dispatcher::get_instance()->get_result();
+    out_str << rpc_response;
+    return true;
+}
+#endif 
 }  // namespace xChainSDK

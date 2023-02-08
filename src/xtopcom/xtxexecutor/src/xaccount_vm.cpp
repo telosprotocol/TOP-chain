@@ -106,4 +106,12 @@ int32_t xaccount_vm_t::execute(const xvm_input_t & input, xvm_output_t & output)
 }
 
 
+uint64_t xaccount_vm_t::get_total_gas_burn() const
+{
+    if (m_account_context) {
+        return m_account_context->get_total_gas_burn();
+    }
+    return 0;
+}
+
 NS_END2

@@ -397,7 +397,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee, uint64_t, normal, ASSET_TOP
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard, uint64_t, normal, 2160000000000, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset, uint64_t, normal, ASSET_TOP(100), 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(free_gas, uint64_t, normal, 25000, 1, std::numeric_limits<uint64_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio, uint64_t, normal, 20, 1, std::numeric_limits<uint64_t>::max());
+
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio, uint64_t, normal, 5004220, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio, uint64_t, normal, 80, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price, uint64_t, normal, 40000000000, 1, std::numeric_limits<uint64_t>::max());
@@ -535,10 +535,15 @@ XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
 XDECLARE_CONFIGURATION(evm_port, uint16_t, 8080);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
-#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
-XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
-#else
-XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+
+#if defined(XBUILD_CONSORTIUM)
+    XDECLARE_CONFIGURATION(chain_id, uint32_t, 9999);
+#else 
+    #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+        XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
+    #else
+        XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+    #endif
 #endif
 XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
 XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
@@ -556,6 +561,29 @@ XDECLARE_CONFIGURATION(evm_json_rpc_port, uint16_t, 19086);
 
 /* end of offchain parameters */
 
+#if defined(XBUILD_CONSORTIUM)
+
+XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_consortium);
+#if defined(XBUILD_CI)
+XDECLARE_CONFIGURATION(platform_public_endpoints,
+                       char const *,
+                       "192.168.50.155:9921,192.168.50.156:9921,192.168.50.157:9921,192.168.50.158:9921,192.168.50.159:9921,192.168.50.160:9921,192.168.50.121:9921,192.168.50.119:9921");
+XDECLARE_CONFIGURATION(root_hash, char const *, "");
+#elif defined(XBUILD_DEV)
+XDECLARE_CONFIGURATION(platform_public_endpoints,
+                       char const *,
+                       "127.0.0.1:9000");
+XDECLARE_CONFIGURATION(root_hash, char const *, "");
+#else
+XDECLARE_CONFIGURATION(platform_public_endpoints,
+                       char const *,
+                       "206.189.227.204:9000,206.189.238.224:9000,206.189.205.198:9000,204.48.27.142:9000,206.81.0.133:9000");
+//fix hash before online
+XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79ccdbcddb3226a1c042a1020be6d3fc29f2");
+#endif 
+XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnetwork.org/");
+
+#else 
 #if defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
@@ -592,6 +620,7 @@ XDECLARE_CONFIGURATION(platform_public_endpoints,
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnet.seed.topnetwork.org/");
 XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79ccdbcddb3226a1c042a1020be6d3fc29f2");
 #endif
+#endif 
 
 XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
@@ -608,6 +637,25 @@ XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
 XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
 XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 256);
 #endif
+
+
+
+#if defined(XBUILD_CONSORTIUM)
+    XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
+    XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");
+    XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio, uint64_t, normal, 1, 1, std::numeric_limits<uint64_t>::max());
+
+    //consortium configuration
+    XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, bool, normal, false, false, true);
+    XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");
+    XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, normal, false, false, true);
+    XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
+
+#else 
+    XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);  
+    XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH");
+    XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio, uint64_t, normal, 20, 1, std::numeric_limits<uint64_t>::max());
+#endif 
 
 XDECLARE_CONFIGURATION(table_fork_info_interval, xinterval_t, 10);
 

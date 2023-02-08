@@ -880,6 +880,9 @@ uint64_t xtop_contract_execution_context::calc_total_tgas() const {
 }
 
 uint64_t xtop_contract_execution_context::calc_free_tgas() const {
+    if (XGET_CONFIG(enable_free_tgas) == false)
+        return 0;
+	
     auto const balance = contract_state()->balance(state_accessor::properties::xproperty_identifier_t{
         data::XPROPERTY_BALANCE_AVAILABLE, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system});
     auto const lock_balance = contract_state()->balance(state_accessor::properties::xproperty_identifier_t{

@@ -21,6 +21,7 @@ class xaccount_vm_t {
 
  public:
     int32_t execute(const xvm_input_t & input, xvm_output_t & output);
+    uint64_t get_total_gas_burn() const;
  
  private:
     contract_runtime::xtransaction_execution_result_t exec_evm_tx(store::xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx);

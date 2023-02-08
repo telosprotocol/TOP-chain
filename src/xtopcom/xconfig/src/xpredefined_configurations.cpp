@@ -182,6 +182,17 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_tx_list);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_gasprice_list);
 
+// consortium parameters
+#if defined(XBUILD_CONSORTIUM)
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+#endif 
+
+XDEFINE_CONFIGURATION(enable_free_tgas);
+XDEFINE_CONFIGURATION(evm_token_type);
+
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
 XDEFINE_CONFIGURATION(validator_group_count);

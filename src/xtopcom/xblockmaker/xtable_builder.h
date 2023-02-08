@@ -10,6 +10,7 @@
 #include "xvledger/xaccountindex.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xblock_statistics_data.h"
+#include "xdata/xblock_statistics_cons_data.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -55,6 +56,7 @@ class xfulltable_builder_t : public xblock_builder_face_t {
 
 protected:
     data::xstatistics_data_t make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
+    data::xstatistics_cons_data_t make_block_statistics_cons(const std::vector<xblock_ptr_t> & blocks);
 };
 class xemptytable_builder_t : public xblock_builder_face_t {
  public:

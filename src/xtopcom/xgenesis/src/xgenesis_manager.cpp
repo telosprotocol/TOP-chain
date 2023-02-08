@@ -156,7 +156,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
             (account.to_string().find(sys_contract_zec_elect_relay_addr) != std::string::npos) ||
             (account.to_string().find(sys_contract_relay_make_block_addr) != std::string::npos) ||
             (account.to_string().find(sys_contract_sharding_fork_info_addr) != std::string::npos) ||
-            (account.to_string().find(sys_contract_eth_fork_info_addr) != std::string::npos)) {
+            (account.to_string().find(sys_contract_eth_fork_info_addr) != std::string::npos) || 
+            (account.to_string().find(sys_contract_rec_node_manage_addr) != std::string::npos)) {
             // just delete it here and store new root block after
             xwarn("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
                   account.to_string().c_str(),

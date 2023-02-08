@@ -632,6 +632,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     nodep2paddr->add_option("--admin_http_port", admin_http_port, "admin http server port(default: 8000).");
     nodep2paddr->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
 
+#if !defined(XBUILD_CONSORTIUM)
     /*
      * staking
      */
@@ -691,6 +692,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // claim reward
     auto claimReward_app = staking_app->add_subcommand("claimReward", "Claim reward.");
     claimReward_app->callback(std::bind(&ApiMethod::claim_reward, &topcl.api, std::ref(out_str)));
+#endif
 
     /*
      * transfer
@@ -835,9 +837,11 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     block_prune_app->callback(std::bind(block_prune, std::ref(prune_enable), std::ref(out_str),
         std::ref(admin_http_addr), std::ref(admin_http_port)));
     block_prune_app->add_option("on|off", prune_enable, "auto prune data on or off.")->required();
+   
+#if !defined(XBUILD_CONSORTIUM) 
     /*
-     * resource
-     */
+    * resource
+    */ 
     auto resource_app = app.add_subcommand("resource", "Manage the resource of account.");
 
     // stake for gas
@@ -851,7 +855,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string withdrawFund_amount("0");
     withdrawFund_app->add_option("top_num", withdrawFund_amount, "Amounts of deposit for gas will be withdrawed, unit is TOP.")->required();
     withdrawFund_app->callback(std::bind(&ApiMethod::withdraw_fund, &topcl.api, std::ref(withdrawFund_amount), std::ref(out_str)));
-
+#endif
     /*
      * govern
      */

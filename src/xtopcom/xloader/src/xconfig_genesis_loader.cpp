@@ -141,9 +141,70 @@ bool xconfig_genesis_loader_t::extract_genesis_para_seedNodes(const xJson::Value
     return false;
 }
 
-bool xconfig_genesis_loader_t::extract_genesis_para_genesis_timestamp(const xJson::Value & json_root, data::xrootblock_para_t & para) {
+bool xconfig_genesis_loader_t::extract_genesis_para_ca_relation(const xJson::Value& json_root, data::xrootblock_para_t& para)
+{
+#if defined(XBUILD_CONSORTIUM)
+    xdbg("xconfig_genesis_loader_t::extract_genesis_para_ca_relation");
     const auto members = json_root.getMemberNames();
-    for (const auto & member : members) {
+
+    if (json_root["root_ca"].isObject()) {
+        xJson::Value arrayObj = json_root["root_ca"];
+        const auto sub_members = arrayObj.getMemberNames();
+        if (sub_members.size() != 1) {
+            xerror("xconfig_genesis_loader_t::extract_genesis_para_ca_relation root_ca size is %d.", sub_members.size());
+            return false;
+        }
+        for (const auto& sub_member : sub_members) {
+            std::string root_ca = arrayObj[sub_member].asString();
+            auto it = find(para.m_tcc_accounts.begin(), para.m_tcc_accounts.end(), sub_member);
+            if (it != para.m_tcc_accounts.end()) {
+                para.m_extend_data_map[EXTEND_ROOT_ACCOUNT_KEY] = sub_member;
+                para.m_extend_data_map[EXTEND_ROOT_ACCOUNT_CA_KEY] = root_ca;
+                xdbg("xconfig_genesis_loader_t::extract_genesis_para_ca_relation root account=%s ca=%s", sub_member.c_str(), root_ca.c_str());
+            } else {
+                xerror("xconfig_genesis_loader_t::extract_genesis_para_ca_relation root account=%s is not exist!", sub_member.c_str());
+                return false;
+            }
+        }
+    } else {
+        xerror("xconfig_genesis_loader_t::extract_genesis_para_ca_relation root account is not exist!");
+        return false;
+    }
+
+    if (json_root["seedNodes_ca"].isObject()) {
+        xJson::Value arrayObj = json_root["seedNodes_ca"];
+        uint64_t index = 0;
+        std::string nodes_ca_map_str{};
+        base::xstream_t _stream(base::xcontext_t::instance());
+        const auto sub_members = arrayObj.getMemberNames();
+        _stream << static_cast<uint32_t>(sub_members.size());
+        for (const auto& sub_member : sub_members) {
+            auto node_info = para.m_genesis_nodes[index];
+            if (sub_member != node_info.m_account.to_string()) {
+                xerror("xconfig_genesis_loader_t::extract_genesis_para_ca_relation sub_member =%s is not exist!", sub_member.c_str());
+                return false;
+            }
+            std::string account_ca = arrayObj[sub_member].asString();
+            _stream << sub_member;
+            _stream << account_ca;
+            xdbg("xconfig_genesis_loader_t::extract_genesis_para_ca_relation nodes account=%s ca=%s", sub_member.c_str(), account_ca.c_str());
+            index++;
+        }
+        nodes_ca_map_str = std::string((char*)_stream.data(), _stream.size());
+        para.m_extend_data_map[EXTEND_ROOT_SEED_NODES_CA_MAP_KEY] = nodes_ca_map_str;
+    } else {
+        xerror("xconfig_genesis_loader_t::extract_genesis_para_ca_relation nodes account is not exist!");
+        return false;
+    }
+
+#endif
+    return true;
+}
+
+bool xconfig_genesis_loader_t::extract_genesis_para_genesis_timestamp(const xJson::Value& json_root, data::xrootblock_para_t& para)
+{
+    const auto members = json_root.getMemberNames();
+    for (const auto& member : members) {
         if (member == "timestamp") {
             para.m_genesis_time_stamp = json_root[member].asUInt64();
             return true;
@@ -187,6 +248,10 @@ bool xconfig_genesis_loader_t::extract_genesis_para(data::xrootblock_para_t & pa
             return false;
         }
         if (false == extract_genesis_para_genesis_timestamp(genesis_root, para)) {
+            return false;
+        }
+
+        if (false == extract_genesis_para_ca_relation(genesis_root, para)) {
             return false;
         }
 
