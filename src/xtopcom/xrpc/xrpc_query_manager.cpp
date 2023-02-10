@@ -40,6 +40,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xdata/xblocktool.h"
 #include "xstatestore/xstatestore_face.h"
+#include "xbasic/xutility.h"
 
 #include <cstdint>
 #include <iostream>
@@ -289,7 +290,7 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
 
     xJson::Value j;
 
-    std::string xissue_detail_str;    
+    std::string xissue_detail_str;
     if (statestore::xstatestore_hub_t::instance()->get_string_property(zec_reward_contract_address, height, data::system_contract::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
         xwarn("[grpc::getIssuanceDetail] contract_address: %s, height: %llu, property_name: %s",
               sys_contract_zec_reward_addr,
@@ -515,10 +516,29 @@ uint64_t xrpc_query_manager::get_timer_clock() const {
     }
 }
 
-void xrpc_query_manager::parse_run_contract(xJson::Value & j, const xaction_t & action) {
-    if (is_sys_contract_address(common::xaccount_address_t{action.get_account_addr()})) {
-        j["paras"] = to_hex_str(action.get_action_param());
-        // xdbg("get_block shard contract: %s", source_action.get_account_addr().c_str());
+void xrpc_query_manager::parse_run_contract(xJson::Value & j, const xaction_t & action, data::xtransaction_t const * tx) const {
+    std::error_code ec;
+    auto const & action_address = common::xaccount_address_t::build_from(action.get_account_addr(), ec);
+    if (ec) {
+        xwarn("invalid action address %s", action.get_account_addr().c_str());
+        return;
+    }
+
+    if (is_t2_address(action_address)) {
+        if (action_address.base_address() == sharding_vote_contract_base_address && (action.get_action_name() == "voteNode" || action.get_action_name() == "unvoteNode")) {
+            xstream_t stream{base::xcontext_t::instance(),
+                             reinterpret_cast<uint8_t *>(const_cast<char *>(action.get_action_param().data())),
+                             static_cast<uint32_t>(action.get_action_param().size())};
+            std::map<std::string, uint64_t> vote_data;
+            stream >> vote_data;
+            for (auto const & vote_datum : vote_data) {
+                j[top::get<std::string const>(vote_datum)] = static_cast<xJson::UInt64>(top::get<uint64_t>(vote_datum));
+            }
+        } else {
+            j["paras"] = to_hex_str(action.get_action_param());
+            // xdbg("get_block shard contract: %s", source_action.get_account_addr().c_str());
+        }
+
         return;
     }
     xJson::Value jvas;
@@ -756,7 +776,7 @@ void xrpc_query_manager::parse_redeem_token_vote(xJson::Value & j, const xaction
     }
 }
 
-xJson::Value xrpc_query_manager::parse_action(const xaction_t & action) {
+xJson::Value xrpc_query_manager::parse_action(const xaction_t & action, data::xtransaction_t const * tx) {
     xJson::Value j;
 
     switch (action.get_action_type()) {
@@ -769,7 +789,7 @@ xJson::Value xrpc_query_manager::parse_action(const xaction_t & action) {
         break;
 
     case xaction_type_run_contract:
-        parse_run_contract(j, action);
+        parse_run_contract(j, action, tx);
         break;
 
     case xaction_type_asset_in:
@@ -880,13 +900,13 @@ int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
                 action.set_action_type(tx->get_source_action_type());
                 action.set_action_name(tx->get_source_action_name());
                 action.set_action_param(tx->get_source_action_para());
-                auto jsa = parse_action(action);
+                auto jsa = parse_action(action, tx.get());
 
                 action.set_account_addr(tx->get_origin_target_addr());
                 action.set_action_type(tx->get_target_action_type());
                 action.set_action_name(tx->get_target_action_name());
                 action.set_action_param(tx->get_target_action_para());
-                auto jta = parse_action(action);
+                auto jta = parse_action(action, tx.get());
 
                 if (version == RPC_VERSION_V2) {
                     result_json["original_tx_info"]["sender_action_param"] = jsa;
@@ -1177,7 +1197,7 @@ void xrpc_query_manager::getChainId(xJson::Value & js_req, xJson::Value & js_rsp
     js_rsp["chain_id"] = j["chain_id"];
 }
 
-void xrpc_query_manager::getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {  
+void xrpc_query_manager::getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     xJson::Value jv_tables_height;
     base::xreceiptid_all_table_states all_states;
     std::vector<std::string> addrs = data::xblocktool_t::make_all_table_addresses();
@@ -1194,8 +1214,8 @@ void xrpc_query_manager::getCrossReceiptIds(xJson::Value & js_req, xJson::Value 
             xerror("xrpc_query_manager::getCrossReceiptIds fail-get tablestate.%s", addr.c_str());
         }
     }
-    
-    xJson::Value jv_unfinish_info; 
+
+    xJson::Value jv_unfinish_info;
     auto unfinish_infos = all_states.get_unfinish_info();
     for (auto & info : unfinish_infos) {
         xJson::Value v;
@@ -1411,7 +1431,7 @@ void xrpc_query_manager::getBlockByHeight(xJson::Value & js_req, xJson::Value & 
 void xrpc_query_manager::getBlocksByHeight(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     std::string type = js_req["type"].asString();
     std::string owner = js_req["account_addr"].asString();
-    std::string strHeight; 
+    std::string strHeight;
     uint64_t height = 0;
     if (js_req["height"].isString()) {
         strHeight = js_req["height"].asString();

@@ -121,7 +121,7 @@ void xtop_contract_deploy::deploy_sys_contracts() {
 
     deploy(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, xnode_type_t::consensus_validator, "", enum_broadcast_policy_t::normal);
 
-    deploy(sharding_fork_info_contract_address,
+    deploy(common::xaccount_address_t::build_from(sharding_fork_info_contract_base_address),
            xnode_type_t::consensus_validator,
            "",
            enum_broadcast_policy_t::normal,

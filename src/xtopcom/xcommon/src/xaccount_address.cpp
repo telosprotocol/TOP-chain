@@ -11,19 +11,19 @@
 
 NS_BEG2(top, common)
 
-bool is_t0(xaccount_address_t const & account_address) {
+bool is_t0_address(xaccount_address_t const & account_address) {
     return account_address.type() == base::enum_vaccount_addr_type_secp256k1_user_account;
 }
 
-bool is_t2(xaccount_address_t const & account_address) {
+bool is_t2_address(xaccount_address_t const & account_address) {
     return account_address.type() == base::enum_vaccount_addr_type_native_contract;
 }
 
-bool is_t8(xaccount_address_t const & account_address) {
+bool is_t8_address(xaccount_address_t const & account_address) {
     return account_address.type() == base::enum_vaccount_addr_type_secp256k1_eth_user_account;
 }
 
-bool is_t6(xaccount_address_t const & account_address) {
+bool is_t6_address(xaccount_address_t const & account_address) {
     return account_address.type() == base::enum_vaccount_addr_type_secp256k1_evm_user_account;
 }
 
