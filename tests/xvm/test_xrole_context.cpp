@@ -7,7 +7,7 @@
 #include "xstore/test/test_datamock.hpp"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvm/xcontract/xcontract_exec.h"
 #include "xmbus/xevent_store.h"
 #include "xdata/xblock.h"

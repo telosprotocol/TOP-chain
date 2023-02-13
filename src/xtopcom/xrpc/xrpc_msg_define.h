@@ -6,7 +6,7 @@
 #include <sstream>
 #include <msgpack.hpp>
 #include "xrpc_define.h"
-#include "xrpc/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xcodec/xmsgpack/xvnode_address_codec.hpp"
 

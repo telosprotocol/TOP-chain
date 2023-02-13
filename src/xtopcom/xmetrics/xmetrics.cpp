@@ -672,7 +672,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         //eth
         RETURN_METRICS_NAME(ethtx_get_from);
 
-#ifdef CACHE_SIZE_STATISTIC
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
         RETURN_METRICS_NAME(statistic_tx_v2_num);
         RETURN_METRICS_NAME(statistic_tx_v3_num);
         RETURN_METRICS_NAME(statistic_receipt_num);

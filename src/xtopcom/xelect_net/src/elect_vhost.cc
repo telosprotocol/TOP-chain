@@ -9,7 +9,7 @@
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xtransport/udp_transport/transport_util.h"
 #include "xvnetwork/xcodec/xmsgpack/xvnetwork_message_codec.hpp"
 #include "xvnetwork/xvnetwork_message.h"
@@ -91,8 +91,8 @@ bool EcVHost::SyncMessageWhenStart(const vnetwork::xvnode_address_t & send_addre
                                    const common::xmessage_id_t & message_type) const {
     if (send_address.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && send_address.zone_id() == common::xfrozen_zone_id &&
         send_address.cluster_id() == common::xdefault_cluster_id && send_address.group_id() == common::xdefault_group_id) {
-        if (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
-            message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state) {
+        if (message_type == xmessage_id_sync_frozen_gossip || message_type == xmessage_id_sync_get_blocks || message_type == xmessage_id_sync_blocks ||
+            message_type == xmessage_id_sync_frozen_broadcast_chain_state || message_type == xmessage_id_sync_frozen_response_chain_state) {
             TOP_DEBUG("found static xip for sync");
             return true;
         }

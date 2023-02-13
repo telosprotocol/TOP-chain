@@ -3,12 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xstatistic/xclass_type_converter.h"
-#include "xrpc/xmessage_ids.h"
-#include "xstate_sync/xmessage_ids.h"
-#include "xsyncbase/xmessage_ids.h"
-#include "xtxpool_v2/xmessage_ids.h"
-#include "xunit_service/xmessage_ids.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 
 NS_BEG2(top, xstatistic)
 
@@ -50,79 +45,79 @@ enum_statistic_class_type message_id_to_class_type(uint32_t msgid) {
     }
 
     switch (msgid) {
-        case (uint32_t)common::xmessage_id_t::invalid:
+    case (uint32_t)common::xmessage_id_t::invalid:
             return enum_statistic_undetermined;
-        case (uint32_t)xrpc::rpc_msg_request :
+        case (uint32_t)rpc_msg_request :
             return enum_statistic_msg_rpc_request;
-        case (uint32_t)xrpc::rpc_msg_response :
+        case (uint32_t)rpc_msg_response :
             return enum_statistic_msg_rpc_response;
-        case (uint32_t)xrpc::rpc_msg_query_request :
+        case (uint32_t)rpc_msg_query_request :
             return enum_statistic_msg_rpc_query_request;
-        case (uint32_t)xrpc::rpc_msg_eth_request :
+        case (uint32_t)rpc_msg_eth_request :
             return enum_statistic_msg_rpc_eth_request;
-        case (uint32_t)xrpc::rpc_msg_eth_response :
+        case (uint32_t)rpc_msg_eth_response :
             return enum_statistic_msg_rpc_eth_response;
-        case (uint32_t)xrpc::rpc_msg_eth_query_request :
+        case (uint32_t)rpc_msg_eth_query_request :
             return enum_statistic_msg_rpc_eth_query_request;
 
-        case (uint32_t)state_sync::xmessage_id_sync_trie_request :
+        case (uint32_t)xmessage_id_sync_trie_request :
             return enum_statistic_msg_state_trie_request;
-        case (uint32_t)state_sync::xmessage_id_sync_trie_response :
+        case (uint32_t)xmessage_id_sync_trie_response :
             return enum_statistic_msg_state_trie_response;
-        case (uint32_t)state_sync::xmessage_id_sync_table_request :
+        case (uint32_t)xmessage_id_sync_table_request :
             return enum_statistic_msg_state_table_request;
-        case (uint32_t)state_sync::xmessage_id_sync_table_response :
+        case (uint32_t)xmessage_id_sync_table_response :
             return enum_statistic_msg_state_table_response;
-        case (uint32_t)state_sync::xmessage_id_sync_unit_request :
+        case (uint32_t)xmessage_id_sync_unit_request :
             return enum_statistic_msg_state_unit_request;
-        case (uint32_t)state_sync::xmessage_id_sync_unit_response :
+        case (uint32_t)xmessage_id_sync_unit_response :
             return enum_statistic_msg_state_unit_response;
 
-        case (uint32_t)xtxpool_v2::xtxpool_msg_send_receipt :
+        case (uint32_t)xtxpool_msg_send_receipt :
             return enum_statistic_msg_txpool_send_receipt;
-        case (uint32_t)xtxpool_v2::xtxpool_msg_recv_receipt :
+        case (uint32_t)xtxpool_msg_recv_receipt :
             return enum_statistic_msg_txpool_recv_receipt;
-        case (uint32_t)xtxpool_v2::xtxpool_msg_pull_recv_receipt :
+        case (uint32_t)xtxpool_msg_pull_recv_receipt :
             return enum_statistic_msg_txpool_pull_recv_receipt;
-        case (uint32_t)xtxpool_v2::xtxpool_msg_push_receipt :
+        case (uint32_t)xtxpool_msg_push_receipt :
             return enum_statistic_msg_txpool_push_receipt;
-        case (uint32_t)xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2 :
+        case (uint32_t)xtxpool_msg_pull_confirm_receipt_v2 :
             return enum_statistic_msg_txpool_pull_confirm_receipt;
-        case (uint32_t)xtxpool_v2::xtxpool_msg_receipt_id_state :
+        case (uint32_t)xtxpool_msg_receipt_id_state :
             return enum_statistic_msg_txpool_receipt_id_state;
 
-        case (uint32_t)contract::xmessage_block_broadcast_id :
+        case (uint32_t)xmessage_block_broadcast_id :
             return enum_statistic_msg_block_broadcast;
 
-        case (uint32_t)sync::xmessage_id_sync_gossip :
+        case (uint32_t)xmessage_id_sync_gossip :
             return enum_statistic_msg_sync_gossip;
-        case (uint32_t)sync::xmessage_id_sync_frozen_gossip :
+        case (uint32_t)xmessage_id_sync_frozen_gossip :
             return enum_statistic_msg_sync_frozen_gossip;
-        case (uint32_t)sync::xmessage_id_sync_broadcast_chain_state :
+        case (uint32_t)xmessage_id_sync_broadcast_chain_state :
             return enum_statistic_msg_sync_broadcast_chain_state;
-        case (uint32_t)sync::xmessage_id_sync_frozen_broadcast_chain_state :
+        case (uint32_t)xmessage_id_sync_frozen_broadcast_chain_state :
             return enum_statistic_msg_sync_frozen_broadcast_chain_state;
-        case (uint32_t)sync::xmessage_id_sync_response_chain_state :
+        case (uint32_t)xmessage_id_sync_response_chain_state :
             return enum_statistic_msg_sync_response_chain_state;
-        case (uint32_t)sync::xmessage_id_sync_frozen_response_chain_state :
+        case (uint32_t)xmessage_id_sync_frozen_response_chain_state :
             return enum_statistic_msg_sync_frozen_response_chain_state;
-        case (uint32_t)sync::xmessage_id_sync_cross_cluster_chain_state :
+        case (uint32_t)xmessage_id_sync_cross_cluster_chain_state :
             return enum_statistic_msg_sync_cross_cluster_chain_state;
-        case (uint32_t)sync::xmessage_id_sync_chain_snapshot_request :
+        case (uint32_t)xmessage_id_sync_chain_snapshot_request :
             return enum_statistic_msg_sync_chain_snapshot_request;
-        case (uint32_t)sync::xmessage_id_sync_chain_snapshot_response :
+        case (uint32_t)xmessage_id_sync_chain_snapshot_response :
             return enum_statistic_msg_sync_chain_snapshot_response;
-        case (uint32_t)sync::xmessage_id_sync_ondemand_chain_snapshot_request :
+        case (uint32_t)xmessage_id_sync_ondemand_chain_snapshot_request :
             return enum_statistic_msg_sync_ondemand_chain_snapshot_request;
-        case (uint32_t)sync::xmessage_id_sync_ondemand_chain_snapshot_response :
+        case (uint32_t)xmessage_id_sync_ondemand_chain_snapshot_response :
             return enum_statistic_msg_sync_ondemand_chain_snapshot_response;
-        case (uint32_t)sync::xmessage_id_sync_query_archive_height :
+        case (uint32_t)xmessage_id_sync_query_archive_height :
             return enum_statistic_msg_sync_query_archive_height;
-        case (uint32_t)sync::xmessage_id_sync_newblock_push :
+        case (uint32_t)xmessage_id_sync_newblock_push :
             return enum_statistic_msg_sync_newblock_push;
-        case (uint32_t)sync::xmessage_id_sync_block_request :
+        case (uint32_t)xmessage_id_sync_block_request :
             return enum_statistic_msg_sync_block_request;
-        case (uint32_t)sync::xmessage_id_sync_block_response :
+        case (uint32_t)xmessage_id_sync_block_response :
             return enum_statistic_msg_sync_block_response;
         default: {
             xerror("msgid:%u", msgid);

@@ -31,7 +31,7 @@
 #include "xstatestore/xstatestore_face.h"
 #include "xvledger/xvblock.h"
 #include "xvm/manager/xcontract_address_map.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract.h"

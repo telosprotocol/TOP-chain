@@ -9,7 +9,7 @@
 #include "xbase/xthread.h"
 #include "xbase/xns_macro.h"
 #include "xcommon/xmessage_category.h"
-#include "xunit_service/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 NS_BEG2(top, xunit_service)

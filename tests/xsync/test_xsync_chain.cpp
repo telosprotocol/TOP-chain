@@ -10,7 +10,7 @@
 #include "xsync/xsync_message.h"
 #include "common.h"
 #include "xmbus/xevent_executor.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 

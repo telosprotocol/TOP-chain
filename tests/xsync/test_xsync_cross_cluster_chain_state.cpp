@@ -5,7 +5,7 @@
 #include "xsync/xsync_cross_cluster_chain_state.h"
 #include "common.h"
 #include "xsync/xsync_util.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;

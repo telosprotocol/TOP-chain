@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xcommon/xnode_id.h"
-#include "xstate_sync/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 

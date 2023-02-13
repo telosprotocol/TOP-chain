@@ -11,7 +11,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtable_bstate.h"
 #include "xmbus/xmessage_bus.h"
-#include "xtxpool_v2/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvledger/xvcertauth.h"
 #include "xvledger/xvpropertyprove.h"
 

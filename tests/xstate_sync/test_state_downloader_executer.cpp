@@ -58,7 +58,7 @@ public:
                     continue;
                 }
             }
-            if (m.second.id() == state_sync::xmessage_id_sync_table_request) {
+            if (m.second.id() == xmessage_id_sync_table_request) {
                 base::xstream_t stream(base::xcontext_t::instance(), const_cast<uint8_t *>(m.second.payload().data()), (uint32_t)m.second.payload().size());
                 std::string table;
                 uint64_t height{0};
@@ -81,7 +81,7 @@ public:
                     }
                 }
                 m_executer->push_state_pack(res);
-            } else if (m.second.id() == state_sync::xmessage_id_sync_trie_request) {
+            } else if (m.second.id() == xmessage_id_sync_trie_request) {
                 base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(m.second.payload().data()), (uint32_t)m.second.payload().size());
                 std::string table;
                 uint32_t id{0};

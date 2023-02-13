@@ -8,7 +8,7 @@
 #include "xsync/xsync_log.h"
 #include "xmetrics/xmetrics.h"
 #include "xdata/xdatautil.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xsync/xsync_util.h"
 
 NS_BEG2(top, sync)
