@@ -97,11 +97,9 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(ip);
     XADD_OFFCHAIN_PARAMETER(root_hash);
 
-    XADD_OFFCHAIN_PARAMETER(platform_business_port);
-    XADD_OFFCHAIN_PARAMETER(platform_public_endpoints);
-    XADD_OFFCHAIN_PARAMETER(platform_url_endpoints);
-    XADD_OFFCHAIN_PARAMETER(platform_show_cmd);
-    XADD_OFFCHAIN_PARAMETER(platform_db_path);
+    XADD_OFFCHAIN_PARAMETER(node_p2p_port);
+    XADD_OFFCHAIN_PARAMETER(p2p_endpoints);
+    XADD_OFFCHAIN_PARAMETER(p2p_url_endpoints);
 
     XADD_OFFCHAIN_PARAMETER(min_account_deposit);
     XADD_OFFCHAIN_PARAMETER(account_send_queue_tx_max_num);

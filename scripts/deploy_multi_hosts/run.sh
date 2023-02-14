@@ -166,11 +166,9 @@ cat > config.tmp << EOF
         "seedNodes": {${recNodes}},
         "timestamp": 1599555555
     },
-  "platform":{
-    "business_port": ${busPort},
-    "url_endpoints": "http://unnecessary.org",
-    "public_endpoints": "${pubEndPoints}"
-  },
+  "node_p2p_port": ${busPort},
+  "p2p_endpoints": "${pubEndPoints}",
+  "p2p_url_endpoints" : "http://unnecessary.org",
   "root_hash": ""
 }
 EOF

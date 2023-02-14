@@ -9,12 +9,13 @@
 
 #include "CLI11.hpp"
 #include "db_tool/db_tool.h"
-#include "rocksdb/convenience.h"
-#include "rocksdb/db.h"
-#include "rocksdb/options.h"
-#include "rocksdb/slice.h"
-#include "rocksdb/table.h"
-#include "rocksdb/utilities/backupable_db.h"
+#include "db_tool/db_prune.h"
+// #include "rocksdb/convenience.h"
+// #include "rocksdb/db.h"
+// #include "rocksdb/options.h"
+// #include "rocksdb/slice.h"
+// #include "rocksdb/table.h"
+// #include "rocksdb/utilities/backupable_db.h"
 #include "xchaininit/xchain_command_http_client.h"
 #include "xchaininit/version.h"
 #include "xconfig/xconfig_register.h"
@@ -40,7 +41,6 @@
 #include <utility>
 #include <vector>
 #include <sys/statvfs.h>
-#include "db_tool/db_prune.h"
 using json = nlohmann::json;
 
 namespace top {
@@ -935,8 +935,8 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         }
 
         if (0 == db_backup(backupFromDir, backupToDir)) {
-            auto listvec = db_backup_list_info(dbdir);
-            out_str << "DBversion: " << listvec.back().backup_id << std::endl;
+            auto backup_info = db_backup_list_info(dbdir);
+            out_str << "DBversion: " << backup_info.latest_backup_id() << std::endl;
         }
     });
 
@@ -945,16 +945,17 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     listversion->add_option("backupdir", listbackupToDir, "Target database backup directory.")->mandatory();
     listversion->callback([&]() {
         auto dbdir = listbackupToDir + DB_PATH;
-        auto listvec = db_backup_list_info(dbdir);
-        if (listvec.empty()) {
+        auto backup_info = db_backup_list_info(dbdir);
+        if (backup_info.empty()) {
             out_str << "No data." << std::endl;
         } else {
+            auto backup_ids = backup_info.backup_ids_and_timestamps();
             char backup_date[100];
-            for (auto iter : listvec) {
-                time_t rawtime(iter.timestamp);
+            for (auto id_ts_pair : backup_ids) {
+                time_t rawtime(id_ts_pair.second);
                 struct tm * p = gmtime(&rawtime);
                 strftime(backup_date, sizeof(backup_date), "%Y-%m-%d %H:%M:%S", p);
-                out_str << "DBversion:" << iter.backup_id << ",timestamp:" << backup_date << "." << std::endl;
+                out_str << "DBversion:" << id_ts_pair.first << ",timestamp:" << backup_date << "." << std::endl;
             }
         }
     });
@@ -977,12 +978,12 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
         if (backupid == 0) {
             auto dbdir = restoreFromDir + DB_PATH;
-            auto listvec = db_backup_list_info(dbdir);
-            if (listvec.size() == 0) {
+            auto backup_info = db_backup_list_info(dbdir);
+            if (backup_info.empty()) {
                 out_str << "Restore failed\nError: cannot find the dbversion." << std::endl;
                 return;
             }
-            backupid = listvec.back().backup_id;
+            backupid = backup_info.latest_backup_id();
         }
 
         db_restore(restoreFromDir, restoreToDir, backupid);

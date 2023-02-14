@@ -12,11 +12,13 @@
 #include <fstream>
 
 #include "db_tool.h"
-// #include "rocksdb/slice.h"
-// #include "rocksdb/options.h"
-// #include "rocksdb/table.h"
-// #include "rocksdb/convenience.h"
-// #include "rocksdb/utilities/backupable_db.h"
+#include "rocksdb/db.h"
+#include "rocksdb/slice.h"
+#include "rocksdb/options.h"
+#include "rocksdb/table.h"
+#include "rocksdb/convenience.h"
+#include "rocksdb/utilities/backupable_db.h"
+#include "rocksdb/utilities/backup_engine.h"
 #include "xbase/xbase.h"
 #include <cstring>
 
@@ -223,18 +225,47 @@ int restore(const uint32_t backup_id,const std::string& backup_dir, const std::s
 	return 0;
 }
 
-std::vector<rocksdb::BackupInfo> db_backup_list_info(const std::string& backup_dir) {
-    rocksdb::BackupEngineReadOnly* backup_engine;
-    rocksdb::Status s = rocksdb::BackupEngineReadOnly::Open(
-        rocksdb::Env::Default(), rocksdb::BackupableDBOptions(backup_dir), &backup_engine);
-    // assert(s.ok());
-    if (!s.ok()){
-        return std::vector<rocksdb::BackupInfo>{};
+backup_list_info db_backup_list_info(const std::string & backup_dir) {
+    auto r = backup_list_info{backup_dir};
+    return r;
+}
+
+class backup_list_info_impl {
+public:
+    std::vector<rocksdb::BackupInfo> m_data;
+
+public:
+    backup_list_info_impl(std::vector<rocksdb::BackupInfo> info) : m_data{info} {
     }
+};
+
+backup_list_info::backup_list_info(std::string const & backup_dir) {
+    rocksdb::BackupEngineReadOnly * backup_engine;
+    rocksdb::Status s = rocksdb::BackupEngineReadOnly::Open(rocksdb::Env::Default(), rocksdb::BackupableDBOptions(backup_dir), &backup_engine);
+    // assert(s.ok());
     std::vector<rocksdb::BackupInfo> backup_info;
-    backup_engine->GetBackupInfo(&backup_info);
+    if (s.ok()) {
+        backup_engine->GetBackupInfo(&backup_info);
+    }
+    m_info = std::make_shared<backup_list_info_impl>(backup_info);
     delete backup_engine;
+}
 
+uint32_t backup_list_info::latest_backup_id() {
+    if (empty()) {
+        return 0;
+    }
+    return m_info->m_data.back().backup_id;
+}
 
-	return backup_info;
+bool backup_list_info::empty() const noexcept {
+    return m_info->m_data.empty();
+}
+
+std::vector<std::pair<uint32_t, int64_t>> backup_list_info::backup_ids_and_timestamps() {
+    std::vector<std::pair<uint32_t, int64_t>> result;
+    for (auto iter : m_info->m_data) {
+        result.push_back(std::make_pair(iter.backup_id, iter.timestamp));
+    }
+    return result;
 }

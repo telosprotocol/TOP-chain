@@ -40,27 +40,32 @@ public:
 
 void xelect_client_imp::bootstrap_node_join() {
     auto & config_register = top::config::xconfig_register_t::get_instance();
-    xplatform_params & platform_params = xplatform_params::get_instance();
-
     xuser_params & user_params = xuser_params::get_instance();
 
     auto const http_port_ui = XGET_CONFIG(http_port);
-
     std::string http_port = std::to_string(http_port_ui);
 
-    std::set<std::string> seed_edge_host_set;
-    platform_params.get_seed_edge_host(seed_edge_host_set);
-    if (seed_edge_host_set.empty()) {
-        xerror("can't get seed edge host");
-        throw std::runtime_error("can't get seed edge host");
+    std::string p2p_endpoints = XGET_CONFIG(p2p_endpoints);
+    xinfo("get p2p_endpoints: %s", p2p_endpoints.c_str());
+    std::vector<std::string> endpoints_vec;
+    std::set<std::string> ip_set;
+    top::base::xstring_utl::split_string(p2p_endpoints, ',', endpoints_vec);
+    for (auto ip_port : endpoints_vec) {
+        std::vector<std::string> ip_port_vec;
+        top::base::xstring_utl::split_string(ip_port, ':', ip_port_vec);
+        if (ip_port_vec.size() != 2) {
+            continue;
+        }
+        ip_set.insert(ip_port_vec[0]);
     }
+
     bool send_success{false};
     size_t try_count{60};
     size_t loop_count{0};
     size_t success_count{0};
     xinfo("enter bootstrap_node_join");
     for (auto i = 0u; i < try_count; ++i) {
-        for (auto & item : seed_edge_host_set) {
+        for (auto & item : ip_set) {
             std::string seed_edge_host = item + ":" + http_port;
             BootstrapClient client{seed_edge_host};
             xdbg("bootstrap to %s", seed_edge_host.c_str());

@@ -5,7 +5,6 @@ NUM=$1
 echo "run number: "${NUM}
 
 topio=cbuild/bin/Linux/topio
-solib=cbuild/lib/Linux/libxtopchain.so.*
 
 cpwd=$(pwd)
 clear=${cpwd}/.github/scripts/test_clear.sh
@@ -15,18 +14,13 @@ if [ ! -f ${topio} ];then
     echo ${topio}" no exist!"
     exit -1
 fi
-if [ ! -f ${solib} ];then
-    echo ${solib}" no exist!"
-    exit -1
-fi
 if [ ! -d ${workdir} ];then
     echo ${workdir}" no exist!"
     exit -1
 fi
 
-rm -f ${workdir}/xtopchain ${workdir}/topio ${workdir}/libxtopchain.so
+rm -f ${workdir}/xtopchain ${workdir}/topio 
 cp ${topio} ${workdir}/
-cp ${solib} ${workdir}/libxtopchain.so
 
 sh ${clear} -o clean
 
