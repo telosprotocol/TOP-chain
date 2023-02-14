@@ -43,7 +43,6 @@ private:
 private:
     std::string m_vnode_id;
     std::string m_address;
-    xchain_info_t m_chain_info;
 
     uint64_t m_behind_height{0};
     enum_chain_sync_policy m_sync_policy;

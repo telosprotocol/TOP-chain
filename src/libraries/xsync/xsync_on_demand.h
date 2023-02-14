@@ -32,26 +32,7 @@ public:
         xrole_xips_manager_t *role_xips_mgr,
         xsync_sender_t *sync_sender);
     void on_behind_event(const mbus::xevent_ptr_t &e);
-    void on_response_event(const std::string account);
-    void handle_blocks_request(const xsync_message_get_on_demand_blocks_t &block, 
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_blocks_request_with_proof(const xsync_message_get_on_demand_blocks_with_proof_t &block,
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_blocks_request_with_hash(const xsync_message_get_on_demand_blocks_with_hash_t &msg,
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks,
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_blocks_response_with_proof(const std::vector<data::xblock_ptr_t> &blocks, const std::string& unit_proof_str,
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_blocks_response_with_hash(const std::vector<data::xblock_ptr_t> &blocks,
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta, 
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
-    void handle_chain_snapshot(xsync_message_chain_snapshot_t &chain_snapshot, 
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void on_behind_by_hash_event(const mbus::xevent_ptr_t &e);
-    void handle_blocks_by_hash_request(const xsync_message_get_on_demand_by_hash_blocks_t &block, 
-        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void handle_blocks_by_hash_response(const std::vector<data::xblock_ptr_t> &blocks, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);    
     xsync_download_tracer_mgr* download_tracer_mgr();

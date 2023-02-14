@@ -7,6 +7,7 @@
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_prune.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xnative_contract_address.h"
 
 NS_BEG2(top, sync)
 
@@ -147,8 +148,10 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
         if (!common::has<common::xnode_type_t::frozen>(self_addr.type())) {
             base::xvaccount_t account_obj{address};
             auto zone_id = account_obj.get_zone_index();
-            if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-                continue;
+            if (address != sys_drand_addr) {
+                if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                    continue;
+                }
             }
         }
 

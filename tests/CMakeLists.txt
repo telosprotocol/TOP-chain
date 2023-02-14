@@ -50,6 +50,8 @@ add_subdirectory(xsafebox_test)
 add_subdirectory(xstate_reset)
 add_subdirectory(xstate_accessor)
 add_subdirectory(xunit_service_test)
+add_subdirectory(mbus_event_test)
+
 if (XBUILD_CONSORTIUM)
     add_subdirectory(xca_auth_test)
 endif()

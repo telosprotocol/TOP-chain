@@ -34,8 +34,9 @@ public:
     virtual void on_response(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
     virtual void on_archive_blocks(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
     virtual void on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) = 0;
-    virtual void on_chain_snapshot_response(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
+
     virtual void on_block_committed_event(uint64_t height) = 0;
+    virtual uint64_t get_chain_last_end_height(enum_chain_sync_policy sync_policy)  = 0;
 };
 
 using xchain_downloader_face_ptr_t = std::shared_ptr<xchain_downloader_face_t>;
@@ -98,6 +99,9 @@ class xchain_object_t {
         void set_start_height(const uint64_t start_height);
         uint64_t get_behind_height_real(const int64_t now, xsync_store_face_t* xsync_store, 
                                              const uint32_t sync_type, const std::string& address);
+        uint64_t get_end_height() {
+            return m_end_height;
+        }
     private:
         uint64_t m_picked_height{0};
         uint64_t m_current_height{1};
@@ -113,7 +117,7 @@ class xchain_downloader_t : public xchain_downloader_face_t {
 public:
     xchain_downloader_t(std::string vnode_id,
         xsync_store_face_t *sync_store, xrole_xips_manager_t *role_xips_mgr,
-        xrole_chains_mgr_t *role_chains_mgr, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
+        xrole_chains_mgr_t *role_chains_mgr, 
         const observer_ptr<base::xvcertauth_t> &certauth,
         xsync_sender_t *sync_sender, xsync_ratelimit_face_t *ratelimit,
         const std::string &address);
@@ -129,18 +133,16 @@ public:
     void on_response(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
     void on_archive_blocks(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
     void on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) override;
-    void on_chain_snapshot_response(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
     void on_block_committed_event(uint64_t height) override;
-    xsync_command_execute_result execute_next_download(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr);
     xsync_command_execute_result execute_next_download(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr);
     xsync_command_execute_result execute_next_download(uint64_t height);
     xsync_command_execute_result execute_download(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason);
+
+    uint64_t get_chain_last_end_height(enum_chain_sync_policy sync_policy) override;
+
 protected:
     enum_result_code handle_block(data::xblock_ptr_t & block, uint64_t quota_height);
-    enum_result_code pre_handle_block(std::vector<data::xblock_ptr_t> &blocks, uint64_t quota_height, std::vector<base::xvblock_t*> &processed_blocks);
-
     xsync_command_execute_result handle_next(uint64_t current_height);
-    bool handle_fulltable(uint64_t fulltable_height_of_tablechain, const vnetwork::xvnode_address_t self_addr, const vnetwork::xvnode_address_t target_addr);
     void clear();
 
     dependency_info_t get_depend_elect_info(const data::xblock_ptr_t &block);
@@ -149,7 +151,6 @@ protected:
     bool check_behind(uint64_t height, const char *elect_address);
 
     bool send_request(int64_t now);
-    bool send_request(int64_t now, const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta);
     xentire_block_request_ptr_t create_request(uint64_t start_height, uint32_t count);
 
 private:
@@ -163,7 +164,6 @@ private:
 protected:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store;
-    observer_ptr<mbus::xmessage_bus_face_t> m_mbus;
     observer_ptr<base::xvcertauth_t> m_certauth;
     xsync_sender_t *m_sync_sender;
     xsync_ratelimit_face_t *m_ratelimit;

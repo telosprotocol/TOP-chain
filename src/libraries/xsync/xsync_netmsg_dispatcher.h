@@ -21,7 +21,7 @@ public:
 
     xsync_netmsg_dispatcher_t(std::string vnode_id, const std::vector<observer_ptr<base::xiothread_t>> &thread_pool, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
         const observer_ptr<vnetwork::xvhost_face_t> &vhost,
-        xsync_handler_t *sync_handler, int min_compress_threshold = DEFAULT_MIN_COMPRESS_THRESHOLD);
+        xsync_handler_t *sync_handler);
     void watch(vnetwork::xvnetwork_driver_face_t* driver);
     void unwatch(vnetwork::xvnetwork_driver_face_t* driver);
     void on_receive(vnetwork::xvnode_address_t const & addr, vnetwork::xmessage_t const & msg, std::uint64_t const, vnetwork::xvnode_address_t const & vnetwork_self);
@@ -42,7 +42,6 @@ protected:
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost{};
     xsync_handler_t *m_sync_handler{};
-    int m_min_compress_threshold{};
 };
 
 NS_END2

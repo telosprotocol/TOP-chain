@@ -16,17 +16,16 @@ NS_BEG2(top, sync)
 
 using namespace mbus;
 
-#define block_fecher_event_queue_size_max (10000)
 
 xblock_fetcher_event_monitor_t::xblock_fetcher_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const &mbus, 
         observer_ptr<base::xiothread_t> const & iothread,
         xblock_fetcher_t* block_fetcher):
-xbase_sync_event_monitor_t(mbus, block_fecher_event_queue_size_max, iothread),
+xbase_sync_event_monitor_t(mbus, xsync_event_queue_size_max, iothread),
 m_block_fetcher(block_fetcher) {
 
     mbus::xevent_queue_cb_t cb = std::bind(&xblock_fetcher_event_monitor_t::push_event, this, std::placeholders::_1);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_account, cb);
-    m_reg_holder.add_listener((int) mbus::xevent_major_type_timer, cb);
+    //m_reg_holder.add_listener((int) mbus::xevent_major_type_timer, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_sync_executor, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_blockfetcher, cb);
 }
@@ -88,25 +87,23 @@ bool xblock_fetcher_timer_t::on_timer_fire(const int32_t thread_id,const int64_t
 }
 
 ///////////
-xblock_fetcher_t::xblock_fetcher_t(std::string vnode_id, observer_ptr<base::xiothread_t> const &iothread, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
+xblock_fetcher_t::xblock_fetcher_t(std::string vnode_id, observer_ptr<base::xiothread_t> const &iothread, 
         const observer_ptr<base::xvcertauth_t> &certauth,
         xrole_chains_mgr_t *role_chains_mgr,
         xsync_store_face_t *sync_store,
-        xsync_broadcast_t *sync_broadcast,
         xsync_sender_t *sync_sender):
 m_vnode_id(vnode_id),
-m_mbus(mbus),
 m_certauth(certauth),
 m_role_chains_mgr(role_chains_mgr),
 m_sync_store(sync_store),
-m_sync_broadcast(sync_broadcast),
 m_sync_sender(sync_sender) {
 
     m_self_mbus = top::make_unique<mbus::xmessage_bus_t>();
     m_monitor = top::make_unique<xblock_fetcher_event_monitor_t>(make_observer(m_self_mbus.get()), iothread, this);
 
-    m_timer = new xblock_fetcher_timer_t(make_observer(m_self_mbus.get()), top::base::xcontext_t::instance(), iothread->get_thread_id());
-    m_timer->start(0, 50);
+    //chain_block_fetch do nothing now, so close it.
+    //m_timer = new xblock_fetcher_timer_t(make_observer(m_self_mbus.get()), top::base::xcontext_t::instance(), iothread->get_thread_id());
+    //m_timer->start(0, 50);
 }
 
 void xblock_fetcher_t::push_event(const mbus::xevent_ptr_t &e) {
@@ -280,7 +277,7 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::find_chain(const std::string &addre
 
 xchain_block_fetcher_ptr_t xblock_fetcher_t::create_chain(const std::string &address) {
 
-    xchain_block_fetcher_ptr_t chain = std::make_shared<xchain_block_fetcher_t>(m_vnode_id, address, m_certauth, m_sync_store, m_sync_broadcast, m_sync_sender);
+    xchain_block_fetcher_ptr_t chain = std::make_shared<xchain_block_fetcher_t>(m_vnode_id, address, m_certauth, m_sync_store,  m_sync_sender);
     m_chains[address] = chain;
     return chain;
 }

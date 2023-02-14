@@ -24,13 +24,11 @@ xchain_block_fetcher_t::xchain_block_fetcher_t(std::string vnode_id,
         const std::string &address,
         const observer_ptr<base::xvcertauth_t> &certauth,
         xsync_store_face_t *sync_store,
-        xsync_broadcast_t *sync_broadcast,
         xsync_sender_t *sync_sender):
 m_vnode_id(vnode_id),
 m_address(address),
 m_certauth(certauth),
 m_sync_store(sync_store),
-m_sync_broadcast(sync_broadcast),
 m_sync_sender(sync_sender) {
 }
 
@@ -82,8 +80,7 @@ void xchain_block_fetcher_t::on_timer() {
 }
 
 void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t & block, const vnetwork::xvnode_address_t & network_self, const vnetwork::xvnode_address_t & from_address) {
-    // to be deleted
-    // check block existed already
+
     auto exist_block = m_sync_store->existed(block->get_account(), block->get_height(), block->get_viewid());
     if (exist_block) {
         XMETRICS_GAUGE(metrics::xsync_recv_duplicate_block, 1);
@@ -107,7 +104,9 @@ void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t & block, const vnetw
         xchain_state_info_t info;
         info.address = m_address;
         info.end_height = latest_end_block_height;
-        m_sync_sender->send_archive_height(info, network_self, from_address);
+        std::vector<xchain_state_info_t> info_list;
+        info_list.push_back(std::move(info));
+        m_sync_sender->send_archive_height_list(info_list, network_self, from_address);
     }
 }
 
@@ -198,16 +197,6 @@ void xchain_block_fetcher_t::on_response_blocks(xblock_ptr_t &block, const vnetw
 }
 
 void xchain_block_fetcher_t::add_blocks() {
-#if 0
-    while (!m_blocks.empty()) {
-        auto it = m_blocks.begin();
-        std::string hash = it.first;
-        xblock_ptr_t blk = it.second;
-        import_block(blk);
-        m_blocks.erase(hash);
-        // remove
-    }
-#endif
     for (auto &it: m_blocks) {
         import_block(it.second);
         forget_hash(it.second->get_block_hash());
@@ -221,17 +210,10 @@ void xchain_block_fetcher_t::import_block(xblock_ptr_t &block) {
     xsync_info("chain_fetcher handle_block %s,height=%lu,viewid=%lu,hash=%s,",
             m_address.c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str());
 
-    // if (is_beacon_table(m_address) && !check_auth(m_certauth, block)) {
-    //     xsync_warn("chain_fetcher handle_block auth failed %s", block->dump().c_str());
-    //     return;
-    // }
 
     base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
     m_sync_store->store_block(vblock);
 
-    // disable broadcast newblockhash to archive neighbors
-    // if (m_sync_broadcast != nullptr)
-    //     m_sync_broadcast->broadcast_newblockhash_to_archive_neighbors(block);
 }
 
 // need vector?

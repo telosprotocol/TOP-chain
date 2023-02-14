@@ -5,6 +5,7 @@
 #include "xsync/xsync_gossip.h"
 #include "xsync/xsync_log.h"
 #include "xmetrics/xmetrics.h"
+#include "xdata/xnative_contract_address.h"
 
 NS_BEG2(top, sync)
 
@@ -23,10 +24,9 @@ const uint32_t common_behind_gossip_factor = 3;
 
 const uint32_t max_peer_behind_count = 10000;
 
-xsync_gossip_t::xsync_gossip_t(std::string vnode_id, const observer_ptr<mbus::xmessage_bus_face_t> &mbus, xsync_store_face_t* sync_store,
+xsync_gossip_t::xsync_gossip_t(std::string vnode_id,  xsync_store_face_t* sync_store,
         xrole_chains_mgr_t *role_chains_mgr, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender):
 m_vnode_id(vnode_id),
-m_mbus(mbus),
 m_sync_store(sync_store),
 m_role_chains_mgr(role_chains_mgr),
 m_role_xips_mgr(role_xips_mgr),
@@ -129,8 +129,10 @@ void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, cons
 
         base::xvaccount_t _vaddr(it.second.address);
         auto zone_id = _vaddr.get_zone_index();
-        if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-            continue;
+        if (it.second.address != sys_drand_addr) {
+            if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                continue;
+            }
         }
 
         xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();

@@ -46,13 +46,12 @@ static bool xsync_netmsg_dispatcher_thread_event(top::base::xcall_t& call, const
 
 xsync_netmsg_dispatcher_t::xsync_netmsg_dispatcher_t(std::string vnode_id, const std::vector<observer_ptr<base::xiothread_t>> &thread_pool,
             const observer_ptr<mbus::xmessage_bus_face_t> &mbus, const observer_ptr<vnetwork::xvhost_face_t> &vhost,
-            xsync_handler_t *sync_handler, int min_compress_threshold):
+            xsync_handler_t *sync_handler):
 m_vnode_id(vnode_id),
 m_thread_pool(thread_pool),
 m_bus(mbus),
 m_vhost(vhost),
-m_sync_handler(sync_handler),
-m_min_compress_threshold(min_compress_threshold) {
+m_sync_handler(sync_handler){
     m_thread_count = thread_pool.size();
 }
 
@@ -101,7 +100,8 @@ void xsync_netmsg_dispatcher_t::dispatch(
     top::base::xparam_t param(para.get());
     top::base::xcall_t tmp_func((top::base::xcallback_ptr)xsync_netmsg_dispatcher_thread_event, param);
 
-    uint32_t idx = xtime_utl::get_fast_randomu()%m_thread_count;
+    static uint32_t thread_index = 0;
+    uint32_t idx = (thread_index++)%m_thread_count;
 
     // TODO use semaphore & task queue
     auto ret = m_thread_pool[idx]->send_call(tmp_func);
