@@ -119,6 +119,8 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                   message.hash());
             return;
         }
+        // edge send tx to validators directly.
+        return;
     } else {
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;

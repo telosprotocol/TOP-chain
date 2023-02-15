@@ -99,10 +99,15 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
             }
 
             auto vd = m_edge_vhost_ptr->get_vnetwork_driver();
-            auto group_addr =
-                m_edge_vhost_ptr->get_router()->sharding_address_from_account(common::xaccount_address_t{msg_ptr->m_account}, vd->network_id(), xnode_type_t::consensus_auditor);
-            vnetwork::xvnode_address_t dst{ group_addr };
             if (msg_ptr->m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
+                auto group_addr =
+                    m_edge_vhost_ptr->get_router()->sharding_address_from_account(common::xaccount_address_t{msg_ptr->m_account}, vd->network_id(), xnode_type_t::consensus_auditor);
+                vnetwork::xvnode_address_t dst{ group_addr };
+                // for test: directly broadcast to validators.
+                auto validator_group_addr =
+                    m_edge_vhost_ptr->get_router()->sharding_address_from_account(common::xaccount_address_t{msg_ptr->m_account}, vd->network_id(), xnode_type_t::consensus_validator);
+                vnetwork::xvnode_address_t validator_dst{ validator_group_addr };
+
                 xdbg("[global_trace][edge][forward advance]%s,%s,src %s, dst %s,%" PRIx64,
                    tx_hash.c_str(),
                    msg_ptr->m_account.c_str(),
@@ -122,6 +127,17 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                           msg.hash());
                     // todo ?
                     // assert(false);
+                }
+                ec.clear();
+                vd->broadcast(validator_dst.xip2(), msg, ec);
+                XMETRICS_GAUGE(metrics::rpc_edge_tx_request, 1);
+                if (ec) {
+                    xwarn("[global_trace][edge][forward validator] failed. %s,%s,src %s, dst %s,%" PRIx64,
+                          tx_hash.c_str(),
+                          msg_ptr->m_account.c_str(),
+                          vd->address().to_string().c_str(),
+                          validator_dst.to_string().c_str(),
+                          msg.hash());
                 }
             } else {
                 auto count = 0;

@@ -806,7 +806,7 @@ xgroup_address_t build_fullnode_group_address(xnetwork_id_t const & network_id) 
 
 xgroup_address_t
 build_evm_group_address(xnetwork_id_t const & network_id, common::xnode_type_t const & type) {
-    if (common::has<common::xnode_type_t::evm_validator>(type)) {
+    if (common::has<common::xnode_type_t::evm_validator>(type) || common::has<common::xnode_type_t::consensus_validator>(type)) {
         return xgroup_address_t{network_id, xevm_zone_id, xdefault_cluster_id, xvalidator_group_id_begin};
     }
     return xgroup_address_t{
