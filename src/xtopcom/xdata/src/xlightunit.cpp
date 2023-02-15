@@ -89,14 +89,14 @@ void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
             ji["txs"].append(jtx);
         }
     } else {
-        auto tx_vec = get_txkeys();
-        for (auto & tx : tx_vec) {
-            xJson::Value jv;
-            jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
-            xJson::Value jtx;
-            jtx["0x" + tx.get_tx_hex_hash()] = jv;
-            ji["txs"].append(jtx);
-        }
+        // auto tx_vec = get_txkeys();
+        // for (auto & tx : tx_vec) {
+        //     xJson::Value jv;
+        //     jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
+        //     xJson::Value jtx;
+        //     jtx["0x" + tx.get_tx_hex_hash()] = jv;
+        //     ji["txs"].append(jtx);
+        // }
     }
     root["lightunit"]["lightunit_input"] = ji;
 }
@@ -111,15 +111,15 @@ void xlightunit_block_t::parse_to_json_v2(xJson::Value & root) {
             root["lightunit"]["txs"].append(jv);
         }
     } else {
-        auto tx_vec = get_txkeys();
-        xJson::Value txs;
-        for (auto & tx : tx_vec) {
-            xJson::Value jv;
-            jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
-            jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
-            txs["txs"].append(jv);
-        }
-        root["lightunit"] = txs;
+        // auto tx_vec = get_txkeys();
+        // xJson::Value txs;
+        // for (auto & tx : tx_vec) {
+        //     xJson::Value jv;
+        //     jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
+        //     jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
+        //     txs["txs"].append(jv);
+        // }
+        // root["lightunit"] = txs;
     }
 }
 

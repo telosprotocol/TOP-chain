@@ -78,7 +78,7 @@ namespace top
 
             m_consensus_type = base::enum_xconsensus_type_genesis;
             m_consensus_threshold = base::enum_xconsensus_threshold_anyone;
-            m_consensus_flag = enum_xconsensus_flag(0);
+            m_consensus_flag = base::enum_xconsensus_flag_validator_cert;
             m_sign_scheme = base::enum_xvchain_threshold_sign_scheme_none;
             m_hash_type = enum_xhash_type_sha2_256;
         }
@@ -93,7 +93,7 @@ namespace top
             m_parent_height = 0;
             m_consensus_type = base::enum_xconsensus_type_xhbft;
             m_consensus_threshold = base::enum_xconsensus_threshold_2_of_3;
-            m_consensus_flag = enum_xconsensus_flag(0);
+            m_consensus_flag = base::enum_xconsensus_flag_validator_cert;
             m_sign_scheme = base::enum_xvchain_threshold_sign_scheme_schnorr;
             m_hash_type = enum_xhash_type_sha2_256;
         }
@@ -116,27 +116,28 @@ namespace top
             m_drand_height = _drand_height;
             m_parent_height = _parent_height;
             m_justify_cert_hash = _justify_hash;
-            m_consensus_flag = base::enum_xconsensus_flag_extend_cert;
+            if (!is_xip2_empty(_auditor)) {  // optional
+                m_consensus_flag = base::enum_xconsensus_flag_extend_and_audit_cert;
+            } else {
+                m_consensus_flag = base::enum_xconsensus_flag_extend_cert;
+            }            
         }
-
-        void xbbuild_para_t::set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, xvqcert_t * cert) {
-            set_default_qcert();
+        void xbbuild_para_t::set_simple_cert_para(uint64_t _clock, uint64_t _viewid, uint64_t _parent_height) {
             m_clock = _clock;
-            m_viewtoken = _viewtoken;
+            m_expired = 0;
+            m_nonce = 0;
+            m_viewtoken = 0;
             m_viewid = _viewid;
-            m_validator = cert->get_validator();
-            m_auditor = cert->get_auditor();
-            m_drand_height = cert->get_drand_height();
-            m_justify_cert_hash = cert->get_justify_cert_hash();
-            m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
-        }
-        void xbbuild_para_t::set_relay_cert_para() {
-            set_default_qcert();
-            m_clock = 0;
-            m_viewtoken = 1;
-            m_viewid = 0;
-            m_validator = xvip2_t({(uint64_t)-1, (uint64_t)-1});
-            m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+            set_empty_xip2(m_validator);
+            set_empty_xip2(m_auditor);
+            m_drand_height = 0;
+            m_justify_cert_hash = std::string();
+            m_parent_height = _parent_height;
+            m_consensus_type = base::enum_xconsensus_type_none;
+            m_consensus_threshold = base::enum_xconsensus_threshold_anyone;
+            m_consensus_flag = base::enum_xconsensus_flag_simple_cert;
+            m_sign_scheme = base::enum_xvchain_threshold_sign_scheme_none;
+            m_hash_type = enum_xhash_type_sha2_256;
         }
 
         void xbbuild_para_t::set_table_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
@@ -150,7 +151,14 @@ namespace top
             m_drand_height = _drand_height;
             m_justify_cert_hash = _justify_hash;
             if (need_relay_prove) {
+                xassert(is_xip2_empty(m_auditor));// relay table not has auditor network
                 m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+            } else {
+                if (!is_xip2_empty(_auditor)) {  // optional
+                    m_consensus_flag = base::enum_xconsensus_flag_audit_cert;
+                } else {
+                    m_consensus_flag = base::enum_xconsensus_flag_validator_cert;
+                }
             }
         }
 
@@ -225,11 +233,16 @@ namespace top
             _qcert->set_viewid(_para.m_viewid);
             _qcert->set_viewtoken(_para.m_viewtoken);
             _qcert->set_validator(_para.m_validator);
+            _qcert->set_expired(_para.m_expired);
+            _qcert->set_nonce(_para.m_nonce);
             if (!is_xip2_empty(_para.m_auditor)) {  // optional
                 _qcert->set_auditor(_para.m_auditor);
-                _qcert->set_consensus_flag(base::enum_xconsensus_flag_audit_cert);
+                // _qcert->set_consensus_flag(base::enum_xconsensus_flag_audit_cert);
             }
             _qcert->set_justify_cert_hash(_para.m_justify_cert_hash);
+            if (get_header()->get_block_level() != base::enum_xvblock_level_unit) {
+                xassert(_para.m_parent_height == 0);
+            }
             _qcert->set_parent_height(_para.m_parent_height);
             set_qcert(_qcert.get());
         }
@@ -284,6 +297,13 @@ namespace top
                 return;
             }
             get_header()->set_comments(comments);
+        }
+        void xvblockbuild_t::set_block_character(enum_xvblock_character it) {
+            if (get_header() == nullptr) {
+                xassert(false);
+                return;
+            }
+            get_header()->set_block_character(it);
         }
 
         xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block, uint64_t _clock) {
@@ -430,24 +450,14 @@ namespace top
 
         //----------------------------------------xvblockmaker_t-------------------------------------//
         xvblockmaker_t::xvblockmaker_t() {
-            //create it first
-            m_input_resource  = new xstrmap_t();
-            m_output_resource = new xstrmap_t();
-            m_primary_output_entity = new base::xvoutentity_t();
         }
         xvblockmaker_t::xvblockmaker_t(base::xvheader_t* header) {
             set_header(header);
-            m_input_resource  = new xstrmap_t();
-            m_output_resource = new xstrmap_t();
-            m_primary_output_entity = new base::xvoutentity_t();
         }
         xvblockmaker_t::xvblockmaker_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output) {
             set_header(header);
             set_input(input);
             set_output(output);
-            m_input_resource  = new xstrmap_t();
-            m_output_resource = new xstrmap_t();
-            m_primary_output_entity = new base::xvoutentity_t();
         }
         xvblockmaker_t::~xvblockmaker_t() {
             if (m_input_resource != nullptr) {
@@ -492,17 +502,30 @@ namespace top
             m_primary_input_entity = new xvinentity_t(extend_bin, actions);
             return true;
         }
+
         bool    xvblockmaker_t::set_output_entity(const std::string & key, const std::string & value) {
             if (!value.empty()) {
+                if (nullptr == m_primary_output_entity) {
+                    m_primary_output_entity = new base::xvoutentity_t();                
+                }
                 m_primary_output_entity->set_value(key, value);
             }            
             return true;
+        }
+        xvoutentity_t* xvblockmaker_t::create_empty_output_entity() {
+            if (nullptr == m_primary_output_entity) {
+                m_primary_output_entity = new base::xvoutentity_t();
+            }
+            return m_primary_output_entity;
         }
 
         bool    xvblockmaker_t::set_input_resource(const std::string & key, const std::string & value) {
             if (key.empty() || value.empty()) {
                 xassert(false);
                 return false;
+            }
+            if (nullptr == m_input_resource) {
+                m_input_resource  = new xstrmap_t();
             }
             m_input_resource->set(key, value);
             return true;
@@ -513,6 +536,9 @@ namespace top
                 xassert(false);
                 return false;
             }
+            if (nullptr == m_output_resource) {
+                m_output_resource = new xstrmap_t();  
+            }          
             m_output_resource->set(key, value);
             return true;
         }
@@ -656,7 +682,7 @@ namespace top
             // basic block only has one entity
             std::vector<xventity_t*> _entities;
             _entities.emplace_back(get_input_entity());
-            xauto_ptr<xvinput_t>input_obj(new xvinput_t(_entities,*get_input_resource()));
+            xauto_ptr<xvinput_t>input_obj(new xvinput_t(_entities,get_input_resource()));
             return input_obj;
         }
 
@@ -690,6 +716,9 @@ namespace top
         }
 
         xauto_ptr<xvoutput_t> xvblockmaker_t::make_output() {
+            if (get_output_entity() == nullptr) {
+                create_empty_output_entity(); // XTODO must has one output entity for compatibility
+            }
             xassert(get_output_entity() != nullptr);
             //basic block has only one entity
             std::vector<xventity_t*> _entities;
@@ -700,9 +729,9 @@ namespace top
                     xassert(false);
                     return nullptr;
                 }
-                set_output_resource(get_full_state_hash(), get_full_state());
+                set_output_resource(get_full_state_hash(), get_full_state());// TODO(jimmy)
             }
-            xauto_ptr<xvoutput_t>output_obj(new xvoutput_t(_entities,*get_output_resource()));
+            xauto_ptr<xvoutput_t>output_obj(new xvoutput_t(_entities,get_output_resource()));
             return output_obj;
         }
 
@@ -732,9 +761,9 @@ namespace top
         bool xvblockmaker_t::check_block_rules(base::xvblock_t* target_block) {
             enum_xvblock_class _class = target_block->get_block_class();
             if (_class == enum_xvblock_class_nil) {
-                if (!target_block->get_fullstate_hash().empty()
+                if (//!target_block->get_fullstate_hash().empty()
                     // || !target_block->get_binlog_hash().empty()
-                    || !target_block->get_input_root_hash().empty()
+                    !target_block->get_input_root_hash().empty()
                     || !target_block->get_output_root_hash().empty()) {
                     xassert(false);
                     return false;

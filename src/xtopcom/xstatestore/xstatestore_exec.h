@@ -44,6 +44,7 @@ public:
 
     void    build_unitstate_by_accountindex(common::xaccount_address_t const& unit_addr, base::xaccount_index_t const& account_index, data::xunitstate_ptr_t &unitstate, std::error_code & ec) const;
     void    build_unitstate_by_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t* unit, data::xunitstate_ptr_t &unitstate, std::error_code & ec) const;  
+    void    build_unitstate_by_hash(common::xaccount_address_t const& unit_addr, uint64_t unit_height, std::string const& unit_hash, data::xunitstate_ptr_t &unitstate, std::error_code & ec) const;
 
     uint64_t get_latest_executed_block_height() const;
     uint64_t get_need_sync_state_block_height() const;

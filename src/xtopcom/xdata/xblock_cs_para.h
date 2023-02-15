@@ -39,6 +39,7 @@ class xblock_consensus_para_t {
     void    set_parent_height(uint64_t height) const {m_parent_height = height;}
     void    set_timeofday_s(uint64_t now) {m_timeofday_s = now;}
     void    set_clock(uint64_t clock) {m_clock = clock;}
+    void    set_viewid(uint64_t viewid) {m_viewid = viewid;}
     void    set_ethheader(const std::string & ethheader) const {m_ethheader = ethheader;}
     void    set_coinbase(common::xaccount_address_t const& address) {m_coinbase = address;}
     void    set_block_gaslimit(uint64_t _gas_limit) {m_block_gas_limit = _gas_limit;}

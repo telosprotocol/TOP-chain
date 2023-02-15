@@ -33,10 +33,9 @@ namespace top
             void    set_basic_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator);
             void    set_unit_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
                                         uint64_t _parent_height, const std::string & _justify_hash);
+            void    set_simple_cert_para(uint64_t _clock, uint64_t _viewid, uint64_t _parent_height);                                        
             void    set_table_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
                                         const std::string & _justify_hash, bool need_relay_prove = false);
-            void    set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, xvqcert_t * cert);
-            void    set_relay_cert_para();
             // some optional parameters
             void    set_extra_data(const std::string & _extra_data) {m_extra_data = _extra_data;}
             uint64_t get_clock() const {return m_clock;}
@@ -61,6 +60,8 @@ namespace top
 
             // qcert paras
             uint64_t            m_clock{0};
+            uint64_t            m_expired{(uint32_t)-1}; // XTODO for compatibility
+            uint64_t            m_nonce{uint64_t(-1)};// XTODO for compatibility
             uint32_t            m_viewtoken{0};
             uint64_t            m_viewid{0};
             xvip2_t             m_validator;
@@ -110,6 +111,7 @@ namespace top
             void    init_header(const xbbuild_para_t & _para);
             void    set_header_extra(const std::string & _extra);
             void    set_header_comments(const std::string & comments);
+            void    set_block_character(enum_xvblock_character it);
 
         public:
             xvheader_t*     get_header() const {return m_header_ptr;}
@@ -190,6 +192,7 @@ namespace top
             inline xstrmap_t*           get_output_resource() const {return m_output_resource;}
             inline xvinentity_t*        get_input_entity()    const {return m_primary_input_entity;}
             inline xvoutentity_t*       get_output_entity()   const {return m_primary_output_entity;}
+            xvoutentity_t*              create_empty_output_entity();
             inline const std::string &  get_full_state()      const {return m_full_state;}
             inline const std::string &  get_full_state_hash() const {return m_full_state_hash;}
             inline const std::string &  get_output_offdata()  const {return m_output_offdata;}

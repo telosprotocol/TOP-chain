@@ -102,6 +102,8 @@ xJson::Value xrpc_query_manager::parse_account(const std::string & account, stri
     data::xaccountstate_ptr_t accountstate_ptr = statestore::xstatestore_hub_t::instance()->get_accountstate(LatestConnectBlock, common::xaccount_address_t(account));
     if (accountstate_ptr != nullptr && (!accountstate_ptr->get_unitstate()->is_empty_state())) {
         data::xunitstate_ptr_t account_ptr = accountstate_ptr->get_unitstate();
+
+        xinfo("xarc_query_manager::getAccount account:%s,height=%ld,nonce:%ld", account.c_str(),account_ptr->height(),accountstate_ptr->get_tx_nonce());
         // string freeze_fee{};
         result_json["account_addr"] = account;
         result_json["created_time"] = static_cast<xJson::UInt64>(account_ptr->get_account_create_time());
@@ -1612,6 +1614,12 @@ void xrpc_query_manager::set_header_info(xJson::Value & header, xblock_t * bp) {
             header["validator"] = addr;
         }
     }
+
+    // TODO(jimmy) just for RPC API compatibility. unit block has no leader info any more
+    if (auditor.high_addr == 0 && auditor.low_addr == 0 && validator.high_addr == 0 && validator.low_addr == 0) {
+        header["auditor"] = "";
+    }
+
     if (bp->is_tableblock()) {
         header["multisign_auditor"] = to_hex_str(bp->get_cert()->get_audit_signature());
         header["multisign_validator"] = to_hex_str(bp->get_cert()->get_verify_signature());

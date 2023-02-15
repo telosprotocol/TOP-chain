@@ -582,7 +582,7 @@ namespace top
                 xerror("xauthcontext_t_impl::verify_muti_sign,fail-duplicated validtor and auditor for cert:%s",test_for_cert->dump().c_str());
                 return base::enum_vcert_auth_result::enum_bad_address;
             }
-            if(test_for_cert->get_consensus_flags() & base::enum_xconsensus_flag_audit_cert) //ask audit
+            if(test_for_cert->get_consensus_flags() == base::enum_xconsensus_flag_audit_cert) //ask audit
             {
                 //auditor and validator must at same cluster
                 if( get_cluster_id_from_xip2(test_for_cert->get_validator()) != get_cluster_id_from_xip2(test_for_cert->get_auditor()) )
@@ -598,7 +598,7 @@ namespace top
             if(verify_result != base::enum_vcert_auth_result::enum_successful )
                 return verify_result;
 
-            if(test_for_cert->get_consensus_flags() & base::enum_xconsensus_flag_audit_cert) //ask audit
+            if(test_for_cert->get_consensus_flags() == base::enum_xconsensus_flag_audit_cert) //ask audit
             {
                 base::enum_vcert_auth_result audit_result = verify_auditor_mutisig(*verify_scheme_obj,ask_verify_hash,test_for_cert,exclude_nodes,exclude_keys);
                 if(audit_result != base::enum_vcert_auth_result::enum_successful)
@@ -620,7 +620,7 @@ namespace top
             }
 
             base::enum_vcert_auth_result result = base::enum_vcert_auth_result::enum_verify_fail;
-            if(target_cert->get_consensus_flags() & base::enum_xconsensus_flag_extend_cert) //by extend cert to verify
+            if(target_cert->is_consensus_flag_has_extend_cert()) //by extend cert to verify
             {
                 base::xauto_ptr<base::xvqcert_t> extend_cert(base::xvblock_t::create_qcert_object(target_cert->get_extend_cert()));
                 if(extend_cert == nullptr)

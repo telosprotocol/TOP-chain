@@ -443,7 +443,18 @@ namespace top
             }
             xassert(0);
         }
-    
+
+        void    xvqcert_t::set_expired(const  uint64_t expired)
+        {
+            if(is_allow_modify())
+            {
+                m_expired  = expired;
+                add_modified_count();
+                return;
+            }
+            xassert(0);
+        }
+
         void   xvqcert_t::set_nonce(const uint64_t nonce)
         {
             if(is_allow_modify())
@@ -523,7 +534,8 @@ namespace top
         {
             if(is_allow_modify())
             {
-                m_consensus |= flag;
+                ////lowest 3bit  clear and reset
+                m_consensus = ((m_consensus & 0xF8) | flag);
                 add_modified_count();
                 return;
             }
@@ -683,14 +695,16 @@ namespace top
                || ( m_header_hash.empty())
                )
             {
-                xdbg_info("xvqcert_t::is_valid,some property not set correctly,dump=%s",dump().c_str());
-                return false;
+                if (get_consensus_flags() != enum_xconsensus_flag_simple_cert) {
+                    xwarn("xvqcert_t::is_valid,some property not set correctly,dump=%s",dump().c_str());
+                    return false;
+                }
             }
             else if(m_viewid != 0) //any non-genesis cert
             {
                 if(0 == m_clock)
                 {
-                    xdbg_info("xvqcert_t::is_valid,clock can not be 0 for non-genesis cert,dump=%s",dump().c_str());
+                    xwarn("xvqcert_t::is_valid,clock can not be 0 for non-genesis cert,dump=%s",dump().c_str());
                     return false;
                 }
             }
@@ -698,12 +712,12 @@ namespace top
             {
                 if(0 != m_clock)
                 {
-                    xdbg_info("xvqcert_t::is_valid,clock must be 0 for genesis cert,dump=%s",dump().c_str());
+                    xwarn("xvqcert_t::is_valid,clock must be 0 for genesis cert,dump=%s",dump().c_str());
                     return false;
                 }
                 if(0 != m_drand_height)
                 {
-                    xdbg_info("xvqcert_t::is_valid,m_drand_height must be 0 for genesis cert,dump=%s",dump().c_str());
+                    xwarn("xvqcert_t::is_valid,m_drand_height must be 0 for genesis cert,dump=%s",dump().c_str());
                     return false;
                 }
             }
@@ -718,7 +732,7 @@ namespace top
                 return false;
             }
             
-            if( (get_consensus_flags() & enum_xconsensus_flag_audit_cert) != 0)
+            if( get_consensus_flags() == enum_xconsensus_flag_audit_cert || get_consensus_flags() == enum_xconsensus_flag_extend_and_audit_cert)
             {
                 if( ( 0 == m_auditor.low_addr) || (0 == m_auditor.high_addr) ) //if ask audit but dont have set threshold for audit
                 {
@@ -728,7 +742,7 @@ namespace top
             }
             else if( ( 0 != m_auditor.low_addr) || (0 != m_auditor.high_addr) )//if NOT ask audit but DO have set threshold for audit
             {
-                xerror("xvqcert_t::is_valid,audit and threshold must be empty for non-audit block");
+                xerror("xvqcert_t::is_valid,audit and threshold must be empty for non-audit block.flag=%d,auditor=%ld,%ld",get_consensus_flags(),m_auditor.low_addr,m_auditor.high_addr);
                 return false;
             }
             // if( (get_consensus_flags() & enum_xconsensus_flag_commit_cert) != 0)//not support this flag yet,so not allow use now
@@ -742,56 +756,54 @@ namespace top
         bool    xvqcert_t::is_deliver()  const
         {
             if(is_valid() == false) {
-                xdbg("xvqcert_t::is_deliver, is_valid fail.");
+                xwarn("xvqcert_t::is_deliver, is_valid fail.");
                 return false;
             }
  
             if( (0 == m_viewid) && (0 == m_clock) ) //genesis block
                 return true;
             
-            if(get_consensus_flags() & enum_xconsensus_flag_extend_cert)
-            {
-                if(m_extend_cert.empty())
-                {
-                    xdbg("xvqcert_t::is_deliver,has flag_extend_cert but miss the extend_cert");
+            int consensus_flag = get_consensus_flags();
+            if (consensus_flag == enum_xconsensus_flag_extend_cert || consensus_flag == enum_xconsensus_flag_extend_and_audit_cert) {
+                if(m_extend_cert.empty()
+                    || m_extend_data.empty()
+                    || false == m_verify_signature.empty()
+                    || false == m_audit_signature.empty()) {
+                    xerror("xvqcert_t::is_deliver,invalid cert for extend_cert.flag=%d,%zu,%zu,%zu,%zu",consensus_flag,m_extend_cert.size(),m_extend_data.size(),m_verify_signature.size(),m_audit_signature.size());
                     return false;
                 }
-                if( (false == m_verify_signature.empty()) || (false == m_audit_signature.empty()) )
-                {
-                    xerror("xvqcert_t::is_deliver,extend cert not allow carry own'verify/auditor signature");
+            } else if (consensus_flag == enum_xconsensus_flag_extend_vote) {
+                if(false == m_extend_cert.empty()
+                    || m_extend_data.empty()
+                    || m_verify_signature.empty()
+                    || false == m_audit_signature.empty()) {
+                    xerror("xvqcert_t::is_deliver,invalid cert for not extend_vote.flag=%d,%zu,%zu,%zu,%zu",consensus_flag,m_extend_cert.size(),m_extend_data.size(),m_verify_signature.size(),m_audit_signature.size());
                     return false;
-                }
+                } 
+            } else {
+                if(false == m_extend_cert.empty()
+                    || false == m_extend_data.empty()) {
+                    xerror("xvqcert_t::is_deliver,invalid cert for other.flag=%d,%zu,%zu,%zu,%zu",consensus_flag,m_extend_cert.size(),m_extend_data.size(),m_verify_signature.size(),m_audit_signature.size());
+                    return false;
+                }    
             }
-            else
-            {
-                if( (get_consensus_flags() & enum_xconsensus_flag_extend_vote) != 0)
-                {
-                    if(m_extend_data.empty())
-                    {
-                        xerror("xvqcert_t::is_deliver,has flag_relay_prove but miss extend data");
-                        return false;
-                    }
-                }
-                if(m_verify_signature.empty()) {
-                    xdbg("xvqcert_t::is_deliver, m_verify_signature empty.");
+
+            if (consensus_flag == enum_xconsensus_flag_audit_cert) {
+                if (m_audit_signature.empty()) {
+                    xerror("xvqcert_t::is_deliver,invalid cert for audit cert.flag=%d,%zu,%zu,%zu,%zu",consensus_flag,m_extend_cert.size(),m_extend_data.size(),m_verify_signature.size(),m_audit_signature.size());
                     return false;
                 }
-                
-                if( (get_consensus_flags() & enum_xconsensus_flag_audit_cert) != 0)//if ask audit but dont have audit proof
-                {
-                    if(m_audit_signature.empty())
-                    {
-                        xerror("xvqcert_t::is_deliver,has flag_audit_cert but miss audit_signature");
-                        return false;
-                    }
-                }
-                else
-                {
-                    if(m_audit_signature.empty() == false)
-                    {
-                        xerror("xvqcert_t::is_deliver,dont ask audit_signature,but has content of audit_signature ");
-                        return false;
-                    }
+            } else {
+                if (false == m_audit_signature.empty()) {
+                    xerror("xvqcert_t::is_deliver,invalid cert for not audit cert.flag=%d,%zu,%zu,%zu,%zu",consensus_flag,m_extend_cert.size(),m_extend_data.size(),m_verify_signature.size(),m_audit_signature.size());
+                    return false;
+                }    
+            }
+
+            if (consensus_flag == enum_xconsensus_flag_simple_cert) {
+                if (false == m_verify_signature.empty() || false == m_audit_signature.empty()) {
+                    xerror("xvqcert_t::is_deliver,invalid cert for simple_cert.flag=%d,%zu,%zu,%zu,%zu",consensus_flag,m_extend_cert.size(),m_extend_data.size(),m_verify_signature.size(),m_audit_signature.size());
+                    return false;
                 }
             }
             return true;
@@ -1057,13 +1069,13 @@ namespace top
         //     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, 1);
         // }
     
-        xvinput_t::xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj,enum_xobject_type type)
+        xvinput_t::xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t* resource_obj,enum_xobject_type type)
             :xvexemodule_t(entitys,resource_obj,type)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, 1);
         }
     
-        xvinput_t::xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xobject_type type)
+        xvinput_t::xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t* resource_obj, enum_xobject_type type)
             :xvexemodule_t(entitys,resource_obj,type)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvinput, 1);
@@ -1130,7 +1142,7 @@ namespace top
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvoutput, 1);
         }
     
-        xvoutput_t::xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xobject_type type)//xvqcert_t used for genreate hash for resource
+        xvoutput_t::xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t* resource_obj, enum_xobject_type type)//xvqcert_t used for genreate hash for resource
             :xvexemodule_t(entitys,resource_obj,type)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvoutput, 1);
@@ -1277,8 +1289,7 @@ namespace top
             }
             
             //now header are completely ready
-            bool is_character_cert_header_only = _vheader.get_block_characters() & enum_xvblock_character_certify_header_only;
-            std::string vheader_bin;
+            bool is_character_cert_header_only = _vheader.get_block_characters() & enum_xvblock_character_certify_header_only;            
             std::string vinput_bin;
             std::string voutput_bin;
             if(_vheader.get_block_class() != enum_xvblock_class_nil)
@@ -1375,29 +1386,29 @@ namespace top
                 else
                 {
                     _vheader.set_output_hash(_vcert.hash(voutput_bin));
-                }
-                
-                //now header are completely ready
-                _vheader.serialize_to_string(vheader_bin);
-                
-                //link cert and header
-                if(_vcert.set_header_hash(vheader_bin) == false )
-                { //bind to certification
-                    xassert(0);
-                    return false;
-                }
+                }                
             }
-            else //qcert.header_hash = hash(header+input+output)
-            {
+
+            // simple unit not need set header hash
+            if (!_vheader.is_character_simple_unit()) {
+                std::string vheader_bin;
                 //now header are completely ready
-                _vheader.serialize_to_string(vheader_bin);
-                
-                //link cert and header,input,output
-                const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
-                if(_vcert.set_header_hash(vheader_input_output) == false )
-                { //bind to certification
-                    xassert(0);
-                    return false;
+                _vheader.serialize_to_string(vheader_bin);                
+                if(is_character_cert_header_only) {
+                    //link cert and header
+                    if(_vcert.set_header_hash(vheader_bin) == false )
+                    {
+                        xassert(0);
+                        return false;
+                    }
+                } else {                   
+                    //link cert and header,input,output
+                    const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
+                    if(_vcert.set_header_hash(vheader_input_output) == false )
+                    {
+                        xassert(0);
+                        return false;
+                    }
                 }
             }
             
@@ -1552,21 +1563,23 @@ namespace top
         std::string xvblock_t::dump() const //just for debug purpose
         {
             
-#ifdef DEBUG 
-            char local_param_buf[512];
-        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",ver:0x%x,block_hash=%s -> last_block=%s}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
+// #ifdef DEBUG 
+//             char local_param_buf[512];
+//         xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",parent=%ld,%ld,flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",ver:0x%x,block_hash=%s -> last_block=%s}",
+//         get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_cert()->get_parent_block_height(),get_cert()->get_parent_block_viewid(), get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
             
-#else
+// #else
             if(check_block_flag(enum_xvblock_flag_authenticated) && (false == m_dump_info.empty()) )
             {
-                return (m_dump_info + "real-flags=" + xstring_utl::tostring((int32_t)get_block_flags()));
+                return (m_dump_info + "flags=0x" + xstring_utl::uint642hex((uint64_t)get_block_flags()));
             }
             
-            char local_param_buf[256];
-        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",ver:0x%x}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_block_version());
+            char local_param_buf[400];
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",validator=0x%" PRIx64 ":%" PRIx64 ",auditor=0x%" PRIx64 ":%" PRIx64 ",ver:0x%x,parent:%ld,%ld,hash:%s->%s}",
+            get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,
+            get_block_version(),get_cert()->get_parent_block_height(),get_cert()->get_parent_block_viewid(),xstring_utl::to_hex(get_block_hash()).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
 
-#endif
-            
+// #endif
             return std::string(local_param_buf);
         }
         
@@ -1730,6 +1743,56 @@ namespace top
                 return get_timestamp(); // XTODO return clock level gmtime for old version
             }
             return gmtime;
+        }
+
+        bool xvblock_t::is_fullunit() const {
+            xassert(get_block_level() == base::enum_xvblock_level_unit);
+            if (get_block_level() == base::enum_xvblock_level_unit) {
+                if (get_block_class() == base::enum_xvblock_class_full) {
+                    return true;
+                }
+                if (get_block_class() == base::enum_xvblock_class_nil && get_block_type() == base::enum_xvblock_type_fullunit) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool xvblock_t::is_lightunit() const {
+            xassert(get_block_level() == base::enum_xvblock_level_unit);
+            if (get_block_level() == base::enum_xvblock_level_unit) {
+                if (get_block_class() == base::enum_xvblock_class_light) {
+                    return true;
+                }
+                if (get_block_class() == base::enum_xvblock_class_nil && get_block_type() == base::enum_xvblock_type_lightunit) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool xvblock_t::is_emptyunit() const {
+            xassert(get_block_level() == base::enum_xvblock_level_unit);
+            if (get_block_level() == base::enum_xvblock_level_unit) {
+                if (get_block_class() == base::enum_xvblock_class_nil) {
+                    if (get_block_type() != base::enum_xvblock_type_lightunit && get_block_type() != base::enum_xvblock_type_fullunit) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        bool xvblock_t::is_state_changed_unit() const {
+            xassert(get_block_level() == base::enum_xvblock_level_unit);
+            if (get_block_class() == base::enum_xvblock_class_light) {
+                return true;
+            } else if (get_block_class() == base::enum_xvblock_class_full 
+                && base::xvblock_fork_t::is_block_match_version(get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
+                return true;
+            } else {
+                if (get_block_type() == base::enum_xvblock_type_lightunit || get_block_type() == base::enum_xvblock_type_fullunit) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         std::string const& xvblock_t::get_input_data_hash() const {            
@@ -1927,7 +1990,7 @@ namespace top
             }
             // create input output object on demand for new version
             if (m_vinput_data.empty()) {
-                if (false == should_has_input_data()) {
+                if (should_has_input_data()) {
                     ec = error::xerrc_t::block_input_output_data_not_exist;
                     xassert(false);
                 }
@@ -2123,10 +2186,28 @@ namespace top
             return query_output_resource(xvoutput_t::RESOURCE_ACCOUNT_INDEXS);
         }
         const std::string xvblock_t::get_binlog() const {
+            // TODO(jimmy) move to xvunit_t
+            if (get_block_level() == base::enum_xvblock_level_unit
+                && get_block_class() == base::enum_xvblock_class_nil
+                && get_block_type() == base::enum_xvblock_type_lightunit) {
+                xunit_header_extra_t _unit_extra;
+                _unit_extra.deserialize_from_string(get_header()->get_extra_data());
+                xassert(!_unit_extra.get_binlog().empty());
+                return _unit_extra.get_binlog();
+            }
             auto binlog_hash = get_binlog_hash();
             return query_output_resource(binlog_hash);
         }
         const std::string xvblock_t::get_full_state() const {
+            // TODO(jimmy) move to xvunit_t
+            if (get_block_level() == base::enum_xvblock_level_unit
+                && get_block_class() == base::enum_xvblock_class_nil
+                && get_block_type() == base::enum_xvblock_type_fullunit) {
+                xunit_header_extra_t _unit_extra;
+                _unit_extra.deserialize_from_string(get_header()->get_extra_data());
+                xassert(!_unit_extra.get_binlog().empty());
+                return _unit_extra.get_binlog();
+            }
             std::string state_hash = get_fullstate_hash();
             if (!state_hash.empty())
             {
@@ -2172,6 +2253,14 @@ namespace top
         
         const std::string xvblock_t::get_fullstate_hash() const
         {
+            // TODO(jimmy) move to xvunit_t
+            if (get_block_level() == base::enum_xvblock_level_unit
+                && get_block_class() == base::enum_xvblock_class_nil
+                && (get_block_type() == base::enum_xvblock_type_lightunit || get_block_type() == base::enum_xvblock_type_fullunit)) {
+                xunit_header_extra_t _unit_extra;
+                _unit_extra.deserialize_from_string(get_header()->get_extra_data());
+                return _unit_extra.get_state_hash();    
+            }
             // XTODO new version, output root = bstate snapshot hash
             if (get_header()->is_character_cert_header_only()) {
                 #ifdef DEBUG
@@ -2300,6 +2389,17 @@ namespace top
             }
             return false;
         }
+        const std::string xvblock_t::build_block_hash() const {
+            if (!get_header()->is_character_simple_unit()) {
+                return get_cert()->build_block_hash();
+            } else {
+                std::string  header_bin_data;
+                get_header()->serialize_to_string(header_bin_data);                        
+                std::string  cert_bin_data;
+                get_cert()->serialize_to_string(cert_bin_data);  
+                return get_cert()->hash(header_bin_data + cert_bin_data);
+            }
+        }
         bool  xvblock_t::set_block_flag(enum_xvblock_flag flag)  //refer enum_xvblock_flag
         {
             if(check_block_flag(flag)) //duplicated setting
@@ -2310,7 +2410,7 @@ namespace top
                 if(get_cert()->is_deliver())
                 {
                     get_cert()->set_unit_flag(enum_xvblock_flag_authenticated);//add flag for cert
-                    m_cert_hash = get_cert()->build_block_hash();
+                    m_cert_hash = build_block_hash();                    
                     get_cert()->reset_modified_count();//reset it because everyting has count on
                     
                     xatomic_t::xorx(m_obj_flags,(uint16_t)enum_xvblock_flag_authenticated);//now safe to set at block
@@ -2446,7 +2546,7 @@ namespace top
                 }
  
                 if(deep_test){
-                    const std::string cert_hash = get_cert()->build_block_hash();
+                    const std::string cert_hash = build_block_hash();
                     if(cert_hash != m_cert_hash) {
                         xerror("xvblock_t::is_valid,hash of cert not match,cert_hash=%s vs m_cert_hash(%s)",cert_hash.c_str(), m_cert_hash.c_str());
                         return false;
@@ -2614,21 +2714,12 @@ namespace top
                 xassert(qcert_ptr != NULL); //should has value
                 if(qcert_ptr != NULL)
                 {
-                    #if DEBUG
-                        const std::string vcert_hash = qcert_ptr->hash(vqcert_bin);
-                        if( (m_cert_hash.empty() == false) && (vcert_hash != m_cert_hash) ) //test match
-                        {
-                            xerror("xvblock_t::do_read, vqcert not match with stored hash, vcert_hash:%s but ask %s",vcert_hash.c_str(),m_cert_hash.c_str());
-                        }   
-                        else
-                    #endif
-                        {
-                            m_vqcert_ptr = qcert_ptr;
-                        }
+                    m_vqcert_ptr = qcert_ptr;
                 }
             }
-            if(NULL == m_vqcert_ptr) {
-                 return enum_xerror_code_bad_block;
+            if (NULL == m_vqcert_ptr) {
+                xassert(false);
+                return enum_xerror_code_bad_block;
             }
             
             //------------------------------read xvheader_t------------------------------//
@@ -2645,9 +2736,18 @@ namespace top
                 }
             }
             if(NULL == m_vheader_ptr) {
+                xassert(false);
                 return enum_xerror_code_bad_block;
             }
-            
+
+            #if DEBUG
+                const std::string vcert_hash = build_block_hash();
+                if( (m_cert_hash.empty() == false) && (vcert_hash != m_cert_hash) ) //test match
+                {
+                    xerror("xvblock_t::do_read, vqcert not match with stored hash, vcert_hash:%s but ask %s",vcert_hash.c_str(),m_cert_hash.c_str());
+                }   
+            #endif
+
             //------------------------------read input&output------------------------------//
             std::string vinput_bin;
             std::string voutput_bin;

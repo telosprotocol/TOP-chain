@@ -198,7 +198,9 @@ namespace top
         const std::string xvbindex_t::dump() const
         {
             char local_buf[256];
-            xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:account_id(%" PRIu64 "),account_addr=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",next_viewid(%" PRIu64 "),  parent_height(%" PRIu64 "),block-flags=0x%x,store-flags=0x%x,refcount=%d,this=%p}",get_xvid(),get_account().c_str(), m_block_height,m_block_viewid,get_next_viewid(),m_parent_block_height,get_block_flags(),get_store_flags(), get_refcount(),this);
+            // xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:account_id(%" PRIu64 "),account_addr=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",next_viewid(%" PRIu64 "),  parent_height(%" PRIu64 "),block-flags=0x%x,store-flags=0x%x,refcount=%d,this=%p}",get_xvid(),get_account().c_str(), m_block_height,m_block_viewid,get_next_viewid(),m_parent_block_height,get_block_flags(),get_store_flags(), get_refcount(),this);
+            xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:%s,height=%" PRIu64 ",viewid=%" PRIu64 ",hash=%s,next_viewid(%" PRIu64 "),flags=0x%x,0x%x,refcount=%d,this=%p}",
+                get_account().c_str(),m_block_height,m_block_viewid,base::xstring_utl::to_hex(m_block_hash).c_str(),get_next_viewid(),get_block_flags(),get_store_flags(), get_refcount(),this);
 
             return std::string(local_buf);
         }
