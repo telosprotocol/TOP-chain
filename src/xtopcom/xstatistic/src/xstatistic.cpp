@@ -15,7 +15,7 @@ NS_BEG2(top, xstatistic)
 #if defined(XBUILD_CI) || defined(XBUILD_DEV)
 #define STATISTIC_DELAY_TIME (100)
 #else
-#define STATISTIC_DELAY_TIME (900)  // delay 900 Sm to calculate object size.
+#define STATISTIC_DELAY_TIME (1500)  // delay 1500 ms to calculate object size.
 #endif
 
 
