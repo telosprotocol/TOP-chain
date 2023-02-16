@@ -147,6 +147,8 @@ namespace top
                     return enum_vbucket_has_tables_count + MAIN_CHAIN_REC_TABLE_USED_NUM + m_subaddr - 1;
                 } else if (m_zone_index == enum_chain_zone_evm_index) {
                     return 0;
+                } else if (m_zone_index == enum_chain_zone_relay_index) {
+                    return 0;
                 }
                 xassert(false);
                 return 255;
