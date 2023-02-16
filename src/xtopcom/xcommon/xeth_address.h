@@ -64,6 +64,8 @@ public:
 
     bool operator==(xeth_address_t const & rhs) const noexcept;
     bool operator!=(xeth_address_t const & rhs) const noexcept;
+
+    int32_t get_ex_alloc_size() const;
 };
 
 NS_END2

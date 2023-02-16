@@ -12,7 +12,7 @@
 #include "xvnetwork/xvhost_face.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_message.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_session_manager.h"
 

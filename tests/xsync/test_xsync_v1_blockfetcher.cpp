@@ -7,7 +7,7 @@
 #include "xsync/xchain_info.h"
 #include "../mock/xmock_auth.hpp"
 #include "common.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;

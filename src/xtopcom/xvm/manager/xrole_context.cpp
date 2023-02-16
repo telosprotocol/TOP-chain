@@ -20,7 +20,7 @@
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvm/xvm_service.h"
 #include "xstatestore/xstatestore_face.h"
 

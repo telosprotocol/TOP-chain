@@ -281,20 +281,20 @@ bool xtxpool_service::table_boundary_equal_to(std::shared_ptr<xtxpool_service_fa
 
 void xtxpool_service::drop_msg(vnetwork::xmessage_t const & message, std::string reason) {
     xtxpool_warn("xtxpool_service::drop_msg msg id:%x,hash:%x,resaon:%s", message.id(), message.hash(), reason.c_str());
-    if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt) {
+    if (message.id() == xtxpool_msg_send_receipt) {
         XMETRICS_GAUGE(metrics::txpool_drop_send_receipt_msg, 1);
         XMETRICS_GAUGE(metrics::txpool_receipt_tx, 0);
-    } else if (message.id() == xtxpool_v2::xtxpool_msg_recv_receipt) {
+    } else if (message.id() == xtxpool_msg_recv_receipt) {
         XMETRICS_GAUGE(metrics::txpool_drop_receive_receipt_msg, 1);
         XMETRICS_GAUGE(metrics::txpool_receipt_tx, 0);
-    } else if (message.id() == xtxpool_v2::xtxpool_msg_push_receipt) {
+    } else if (message.id() == xtxpool_msg_push_receipt) {
         XMETRICS_GAUGE(metrics::txpool_drop_push_receipt_msg, 1);
         XMETRICS_GAUGE(metrics::txpool_receipt_tx, 0);
-    } else if (message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) {
+    } else if (message.id() == xtxpool_msg_pull_recv_receipt) {
         XMETRICS_GAUGE(metrics::txpool_drop_pull_recv_receipt_msg, 1);
-    } else if (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2) {
+    } else if (message.id() == xtxpool_msg_pull_confirm_receipt_v2) {
         XMETRICS_GAUGE(metrics::txpool_drop_pull_confirm_receipt_msg_v2, 1);
-    } else if (message.id() == xtxpool_v2::xtxpool_msg_receipt_id_state) {
+    } else if (message.id() == xtxpool_msg_receipt_id_state) {
         XMETRICS_GAUGE(metrics::txpool_drop_receipt_id_state_msg, 1);
     }
 }
@@ -309,7 +309,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
     xtxpool_info("xtxpool_service::on_message_receipt msg id:%x,hash:%x", message.id(), message.hash());
 
-    if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt || message.id() == xtxpool_v2::xtxpool_msg_recv_receipt || (message.id() == xtxpool_v2::xtxpool_msg_push_receipt)) {
+    if (message.id() == xtxpool_msg_send_receipt || message.id() == xtxpool_msg_recv_receipt || (message.id() == xtxpool_msg_push_receipt)) {
         if (m_para->get_fast_dispatcher() == nullptr) {
             drop_msg(message, "fast_dispatcher_not_exist");
             return;
@@ -321,7 +321,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
         }
 
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
-        if (message.id() == xtxpool_v2::xtxpool_msg_push_receipt) {
+        if (message.id() == xtxpool_msg_push_receipt) {
             auto self = shared_from_this();
             auto handler = [this, self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
@@ -341,8 +341,8 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             base::xcall_t asyn_call(handler, para.get());
             m_para->get_fast_dispatcher()->dispatch(asyn_call);
         }
-    } else if ((message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2) ||
-               (message.id() == xtxpool_v2::xtxpool_msg_receipt_id_state)) {
+    } else if ((message.id() == xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_msg_pull_confirm_receipt_v2) ||
+               (message.id() == xtxpool_msg_receipt_id_state)) {
         // todo: not process xtxpool_msg_pull_confirm_receipt after a specified clock!!!
 
         if (m_para->get_slow_dispatcher() == nullptr) {
@@ -358,7 +358,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
         auto self = shared_from_this();
         auto handler = [this, self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
-            if (para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt || para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2) {
+            if (para->m_message.id() == xtxpool_msg_pull_recv_receipt || para->m_message.id() == xtxpool_msg_pull_confirm_receipt_v2) {
                 this->on_message_pull_receipt_received(para->m_sender, para->m_message);
             } else {
                 this->on_message_receipt_id_state_received(para->m_sender, para->m_message);
@@ -497,7 +497,7 @@ void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_receipt_t & pulle
     base::xautostream_t<1024> stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pulled_receipt.serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_recv_receipt);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_pull_recv_receipt);
     send_receipt_sync_msg(msg, pulled_receipt.m_tx_from_account);
 }
 
@@ -505,7 +505,7 @@ void xtxpool_service::send_pull_receipts_of_confirm(xreceipt_pull_receipt_t & pu
     base::xautostream_t<1024> stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pulled_receipt.serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_pull_confirm_receipt_v2);
     send_receipt_sync_msg(msg, pulled_receipt.m_tx_to_account);
 }
 
@@ -513,7 +513,7 @@ void xtxpool_service::send_push_receipts(xreceipt_push_t & pushed_receipt) {
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pushed_receipt.serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_push_receipt);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_push_receipt);
 
     std::error_code ec;
     m_vnet_driver->broadcast(pushed_receipt.m_req_node.xip2().group_xip2(), msg, ec);
@@ -594,7 +594,7 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
         xinfo("xtxpool_service::on_message_pull_receipt_received xtxpool_msg_pull_recv_receipt droped at_node:%s,msg id:%x", m_vnetwork_str.c_str(), message.id());
         return;
     }
-    bool is_pull_recv = (message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt);
+    bool is_pull_recv = (message.id() == xtxpool_msg_pull_recv_receipt);
     xreceipt_pull_receipt_t pulled_receipt;
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     pulled_receipt.serialize_from(stream);
@@ -709,7 +709,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     property_prove->serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_receipt_id_state);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_receipt_id_state);
     xinfo("xtxpool_service::send_table_receipt_id_state table:%d,height:%llu", table_id, height);
 
     std::error_code ec = vnetwork::xvnetwork_errc2_t::success;
@@ -762,7 +762,7 @@ bool xtxpool_service::is_unreged() const {
 //     base::xstream_t stream(base::xcontext_t::instance());
 //     vnetwork::xmessage_t msg;
 //     neighbor_sync_req.serialize_to(stream);
-//     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_neighbor_sync_req);
+//     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_neighbor_sync_req);
 //     m_vnet_driver->send_to(neighbor_node_addr, msg);
 // }
 

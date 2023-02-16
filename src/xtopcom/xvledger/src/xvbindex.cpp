@@ -7,18 +7,19 @@
 #include "../xvbindex.h"
 #include "../xvaccount.h"
  #include "xmetrics/xmetrics.h"
+ #include "xstatistic/xbasic_size.hpp"
 namespace top
 {
     namespace base
     {
-        xvbindex_t::xvbindex_t()
+        xvbindex_t::xvbindex_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_bindex)
         {
             init();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbindex_t, 1);
         }
 
         xvbindex_t::xvbindex_t(xvblock_t & obj)
-            :xvaccount_t(obj.get_account())
+            :xvaccount_t(obj.get_account()), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_bindex)
         {
             init();
 
@@ -44,7 +45,7 @@ namespace top
         }
 
         xvbindex_t::xvbindex_t(xvbindex_t && obj)
-            :xvaccount_t(obj)
+            :xvaccount_t(obj), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_bindex)
         {
             init();
 
@@ -81,7 +82,7 @@ namespace top
         }
 
         xvbindex_t::xvbindex_t(const xvbindex_t & obj)
-            :xvaccount_t(obj)
+            :xvaccount_t(obj), xstatistic::xstatistic_obj_face_t(obj)
         {
             init();
             *this = obj;
@@ -145,6 +146,7 @@ namespace top
 
         xvbindex_t::~xvbindex_t()
         {
+            statistic_del();
             xdbg("xvbindex_t::destroy,dump(%s)",dump().c_str());
 
             if(m_prev_index != NULL)
@@ -610,6 +612,24 @@ namespace top
             base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
             const int result = serialize_from(_stream);
             return result;
+        }
+
+        int32_t xvbindex_t::get_object_size_real() const {
+            int32_t total_size = sizeof(*this) + get_size(m_block_hash) + get_size(m_last_block_hash) + get_size(m_last_fullblock_hash) + get_size(m_extend_cert) +
+                                 get_size(m_extend_data) + get_size(m_reserved) + get_size(get_xvid_str()) + get_size(get_address()) + get_size(get_storage_key());
+            xdbg("-----cache size----- xvbindex_t total_size:%d this:%d,%d:%d:%d:%d:%d:%d:%d:%d:%d",
+                 total_size,
+                 sizeof(*this),
+                 get_size(m_block_hash),
+                 get_size(m_last_block_hash),
+                 get_size(m_last_fullblock_hash),
+                 get_size(m_extend_cert),
+                 get_size(m_extend_data),
+                 get_size(m_reserved),
+                 get_size(get_xvid_str()),
+                 get_size(get_address()),
+                 get_size(get_storage_key()));
+            return total_size;
         }
 
         xvbnode_t::xvbnode_t(xvbnode_t * parent_node,xvblock_t & raw_block)

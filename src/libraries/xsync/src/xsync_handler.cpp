@@ -21,7 +21,7 @@
 #include "xmbus/xevent_executor.h"
 #include "xmbus/xevent_blockfetcher.h"
 #include "xbasic/xutility.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xdata/xblock.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtable_bstate.h"

@@ -7,6 +7,7 @@
 #include "xdata/xtransaction_v2.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
+#include "xstatistic/xbasic_size.hpp"
 #include "xdata/xaction_parse.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xgenesis_data.h"
@@ -22,12 +23,13 @@ namespace top { namespace data {
 
 using namespace top::base;
 
-xtransaction_v2_t::xtransaction_v2_t() {
+xtransaction_v2_t::xtransaction_v2_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_tx_v2) {
     MEMCHECK_ADD_TRACE(this, "tx_create");
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, 1);
 }
 
 xtransaction_v2_t::~xtransaction_v2_t() {
+    statistic_del();
     MEMCHECK_REMOVE_TRACE(this);
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtransaction_t, -1);
 }
@@ -549,6 +551,35 @@ int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_typ
     }
 
     return 0;
+}
+
+int32_t xtransaction_v2_t::get_object_size_real() const {
+    int32_t total_size = sizeof(*this);
+    // add string member variable alloc size.
+    xdbg("------cache size------xtransaction_v2_t this:%d,m_source_addr:%d,m_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",
+         sizeof(*this),
+         get_size(m_source_addr),
+         get_size(m_target_addr),
+         get_size(m_token_name),
+         get_size(m_memo),
+         get_size(m_authorization),
+         get_size(m_edge_nodeid));
+    xdbg(
+        "------cache size------ xtransaction_v2_t "
+        "m_source_action_name:%d,m_source_action_para:%d,m_target_action_name:%d,m_target_action_para:%d,m_transaction_hash_str:%d,m_adjust_target_addr:%d",
+        get_size(m_source_action_name),
+        get_size(m_source_action_para),
+        get_size(m_target_action_name),
+        get_size(m_target_action_para),
+        get_size(m_transaction_hash_str),
+        get_size(m_adjust_target_addr));
+    // m_source_action_para and m_target_action_para might use same memory, here might be calculate twice!!!!
+    
+    total_size += get_size(m_source_addr) + get_size(m_target_addr) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
+                  get_size(m_edge_nodeid) + get_size(m_source_action_name) + get_size(m_source_action_para) + get_size(m_target_action_name) + get_size(m_target_action_para) +
+                  get_size(m_transaction_hash_str) + get_size(m_adjust_target_addr);
+    xdbg("------cache size------ xtransaction_v2_t total_size:%d", total_size);
+    return total_size;
 }
 
 }  // namespace data

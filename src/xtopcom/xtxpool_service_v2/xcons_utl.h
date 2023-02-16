@@ -34,6 +34,5 @@ public:
     static bool                    xip_equals(const xvip2_t & left, const xvip2_t & right);
     static bool                    is_broadcast_address(const xvip2_t & addr);
 };
-XDEFINE_MSG_ID(xmessage_category_txpool, xReceipt_msg, 0x00000000);
 
 NS_END2

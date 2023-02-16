@@ -5,18 +5,12 @@
 #pragma once
 
 #include "xcommon/xnode_id.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
 namespace top {
 namespace state_sync {
-
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_trie_request, 0x01);
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_trie_response, 0x02);
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_table_request, 0x03);
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_table_response, 0x04);
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_unit_request, 0x05);
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_unit_response, 0x06);
 
 struct sync_result {
     common::xaccount_address_t account;

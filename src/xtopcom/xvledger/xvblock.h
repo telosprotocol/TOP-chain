@@ -11,6 +11,7 @@
 #include "xvtransact.h"
 #include "xvblock_fork.h"
 #include "xvledger/xvblock_extra.h"
+#include "xstatistic/xstatistic.h"
 
 namespace top
 {
@@ -137,7 +138,7 @@ namespace top
             //PATCH： version when make backwards compatible bug fixes.
         //virual header of virtual-block
         //note:once xvheader_t is created or serialized_from,not allow change it'data anymore
-        class xvheader_t : public xobject_t
+        class xvheader_t : public xobject_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
             friend class xvblockstore_t;
@@ -233,6 +234,8 @@ namespace top
             int32_t             serialize_to(xstream_t & stream); //serialize header and object,return how many bytes is writed
             //just wrap function for serialize_to(),but assign data to string and return
             int32_t             serialize_to_string(std::string & bin_data);
+
+            virtual int32_t    get_class_type() const override {return xstatistic::enum_statistic_block_header;}
         private:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             int32_t             do_write(xstream_t & stream); //not allow subclass change behavior
@@ -243,6 +246,8 @@ namespace top
             //just open for xvblock_t object to access
             inline void                 set_input_hash(const std::string& input_hash)   {m_input_hash = input_hash;}
             inline void                 set_output_hash(const std::string& output_hash) {m_output_hash = output_hash;}
+            
+            virtual int32_t     get_object_size_real() const override;
         private:
             //information about this block
             uint16_t            m_types;        //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
@@ -316,7 +321,7 @@ namespace top
         //3bit = max 8 definition for enum_xhash_type
 
         //xCertificate like CA Cetification that support hierarchy sign and verify
-        class xvqcert_t : public xdataunit_t
+        class xvqcert_t : public xdataunit_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
             friend class xvblockstore_t;
@@ -439,6 +444,10 @@ namespace top
             void                set_extend_data(const std::string& extention);
             void                set_extend_cert(const std::string & _cert_bin);
 
+            virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vqcert;}
+        private:
+            virtual int32_t     get_object_size_real() const override;
+
         private: //m_modified_count not serialized into binary,put here make alignment of this class better
             uint32_t            m_modified_count;   //count how many times modified since last save,it is 0 if nothing changed
         private:
@@ -477,7 +486,8 @@ namespace top
         };
 
         //once xvinput_t constructed,it not allow modify then
-        class xvinput_t : public xvexemodule_t
+        class 
+        xvinput_t : public xvexemodule_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
         public:
@@ -515,6 +525,10 @@ namespace top
             size_t                      get_action_count() const;
             virtual std::string         dump() const override;
 
+            virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vinput;}
+        private:
+            virtual int32_t             get_object_size_real() const override;
+
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
             // std::string  m_proposal;    //raw proposal
@@ -522,7 +536,7 @@ namespace top
         };
 
         //once xvoutput_t constructed,it not allow modify then
-        class xvoutput_t : public xvexemodule_t
+        class xvoutput_t : public xvexemodule_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
         public:
@@ -553,6 +567,11 @@ namespace top
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
             base::xvoutentity_t*        get_primary_entity() const;
             virtual std::string         dump() const override;
+
+            virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_voutput;}
+        private:
+            virtual int32_t             get_object_size_real() const override;
+
 
         protected:
             const std::string           get_binlog_hash();
@@ -621,7 +640,7 @@ namespace top
             enum_xvblock_class      m_block_class;
         };
 
-        class xvblock_t : public xdataobj_t
+        class xvblock_t : public xdataobj_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblockbuild_t;
             friend class xvblockstore_t;
@@ -813,6 +832,9 @@ namespace top
             virtual const std::string   get_proposal() const {return m_proposal;}
             virtual bool                set_proposal(const std::string & proposal){m_proposal = proposal;return true;}
             void                        set_not_serialize_input_output(bool value);
+            virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vblock;}
+        private:
+            virtual int32_t             get_object_size_real() const override;
         private:
             std::string                 m_cert_hash;        //hash(vqcert_bin)
 

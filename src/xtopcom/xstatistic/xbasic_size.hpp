@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <string>
 #include "xbase/xns_macro.h"
-#include "xcommon/xmessage_id.h"
 
-NS_BEG2(top, contract)
+NS_BEG1(top)
 
-XDEFINE_MSG_ID(xmessage_block_broadcast, xmessage_block_broadcast_id, 0x01);
+size_t get_size(const std::string & str);
 
-NS_END2
+NS_END1

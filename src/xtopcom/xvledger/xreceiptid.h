@@ -10,11 +10,12 @@
 #include "xbase/xobject_ptr.h"
 #include "xbase/xns_macro.h"
 #include "xvledger/xvaccount.h"
+#include "xstatistic/xstatistic.h"
 
 NS_BEG2(top, base)
 
 // receipt id relations between the two table pair
-class xreceiptid_pair_t {
+class xreceiptid_pair_t : public xstatistic::xstatistic_obj_face_t {
  public:
     xreceiptid_pair_t();
     xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id);
@@ -44,6 +45,10 @@ class xreceiptid_pair_t {
     void            set_send_rsp_id_max(uint64_t value);
     void            set_confirm_rsp_id_max(uint64_t value);
 
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_receiptid_pair;}
+private:
+    virtual int32_t get_object_size_real() const override {return sizeof(*this);}
+
  private:
     uint64_t    m_send_id_max{0};
     uint32_t    m_unconfirm_num{0};
@@ -71,6 +76,8 @@ class xreceiptid_pairs_t {
     bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) const;
     const std::map<xtable_shortid_t, xreceiptid_pair_t> & get_all_pairs() const {return m_all_pairs;}
     size_t          get_size() const{return m_all_pairs.size();}
+
+    int32_t         get_object_size_real() const;
 
  private:
     std::map<xtable_shortid_t, xreceiptid_pair_t>   m_all_pairs;
@@ -100,6 +107,8 @@ class xreceiptid_state_t {
     bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) const;
     void        add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
     const xreceiptid_pairs_ptr_t & get_all_receiptid_pairs() const {return m_binlog;}
+
+    int32_t     get_object_size_real() const;
 
  private:
     xreceiptid_pairs_ptr_t  m_binlog{nullptr};

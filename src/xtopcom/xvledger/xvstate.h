@@ -139,7 +139,7 @@ namespace top
 
         class xvblock_t;
         //xvbstate_t is the block-based state-object,which manage all properties on the specific block(specified block height and viewid)
-        class xvbstate_t : public xvexestate_t
+        class xvbstate_t : public xvexestate_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
             friend class xvblockstore_t;
@@ -203,11 +203,15 @@ namespace top
             std::vector<uint8_t> get_property_value_in_bytes(std::string const & property_name) const;
             void set_property_value_from_bytes(std::string const & name, std::vector<uint8_t> const & bin_data, xvcanvas_t * canvas);
 
+            virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vbstate;}
+
         protected:
             //subclass extend behavior and load more information instead of a raw one
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             virtual int32_t         do_write(xstream_t & stream) override;//allow subclass extend behavior
             virtual int32_t         do_read(xstream_t & stream)  override;//allow subclass extend behavior
+        private:
+            virtual int32_t         get_object_size_real() const override;
 
         private:
             //belong to current block

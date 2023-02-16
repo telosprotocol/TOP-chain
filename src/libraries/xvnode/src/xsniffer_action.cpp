@@ -5,7 +5,7 @@
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer_action.h"
 
 #include "xdata/xtx_factory.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xstatestore/xstatestore_face.h"
 
@@ -66,7 +66,7 @@ void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & v
     assert(block_ptr != nullptr);
     base::xstream_t stream(base::xcontext_t::instance());
     block_ptr->full_block_serialize_to(stream);
-    auto message = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, contract::xmessage_block_broadcast_id);
+    auto message = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_block_broadcast_id);
 
     std::error_code ec;
     if (common::has<common::xnode_type_t::all_types>(types)) {

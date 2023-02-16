@@ -87,3 +87,4 @@ if (XBUILD_CONSORTIUM)
     add_subdirectory(xca_auth)
 endif()
 
+add_subdirectory(xstatistic)

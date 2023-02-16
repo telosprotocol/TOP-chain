@@ -9,13 +9,15 @@
 #include "xmbus/xevent.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xblock.h"
+#include "xstatistic/xbasic_size.hpp"
+#include "xstatistic/xstatistic.h"
 
 NS_BEG2(top, mbus)
 
 // <editor-fold defaultstate="collapsed" desc="event type store">
 // published by store, common to ask missed things
 
-class xevent_store_t : public xbus_event_t {
+class xevent_store_t : public xbus_event_t, public xstatistic::xstatistic_obj_face_t {
 public:
 
     enum _minor_type_ {
@@ -33,10 +35,19 @@ public:
     (int) sub_type,
     dir,
     _sync),
+    xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_event_store),
     owner(_owner) {
     }
 
+    ~xevent_store_t() {statistic_del();}
+
     std::string owner;
+
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_event_store;}
+private:
+    virtual int32_t get_object_size_real() const override {
+        return sizeof(*this) + get_size(get_result_data()) + get_size(owner);
+    }
 };
 
 using xevent_store_ptr_t = xobject_ptr_t<xevent_store_t>;

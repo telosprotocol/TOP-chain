@@ -6,7 +6,7 @@
 
 #include "xmbus/xevent_common.h"
 #include "xmbus/xmessage_bus.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xmetrics/xmetrics.h"
 #include "xsync/xmessage_pack.h"

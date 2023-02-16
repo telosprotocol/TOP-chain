@@ -169,7 +169,7 @@ namespace top
 
                 case base::enum_xevent_core_type_create_block:
                 {
-                    xdbg("xcsobject_t::on_event_up enum_xevent_core_type_create_block(nathan)");
+                    xdbg("xcsobject_t::on_event_up enum_xevent_core_type_create_block");
                     ((base::xvevent_t &)event).set_route_path(base::enum_xevent_route_path_up); //add route path indication
                     return on_create_block_event(event,(xcsobject_t*)from_child,cur_thread_id,timenow_ms);
                 }
@@ -204,7 +204,7 @@ namespace top
 
                 case base::enum_xevent_core_type_create_block:
                 {
-                    xdbg("xcsobject_t::on_event_down enum_xevent_core_type_create_block(nathan)");
+                    xdbg("xcsobject_t::on_event_down enum_xevent_core_type_create_block");
                     ((base::xvevent_t &)event).set_route_path(base::enum_xevent_route_path_down);//add route path indication
                     return on_create_block_event(event,(xcsobject_t*)from_parent,cur_thread_id,timenow_ms);
                 }

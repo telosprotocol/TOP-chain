@@ -156,7 +156,7 @@ void test_state_sync_fixture::sync_helper() {
         auto m = mock_net->m_msg.front();
         mock_net->m_msg.pop();
 
-        if (m.second.id() == state_sync::xmessage_id_sync_table_request) {
+        if (m.second.id() == xmessage_id_sync_table_request) {
             base::xstream_t stream(base::xcontext_t::instance(), const_cast<uint8_t *>(m.second.payload().data()), (uint32_t)m.second.payload().size());
             std::string table;
             uint64_t height{0};
@@ -172,7 +172,7 @@ void test_state_sync_fixture::sync_helper() {
                 req.nodes_response.emplace_back(state_bytes);
             }
             m_syncer->deliver_req(req);
-        } else if (m.second.id() == state_sync::xmessage_id_sync_trie_request) {
+        } else if (m.second.id() == xmessage_id_sync_trie_request) {
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(m.second.payload().data()), (uint32_t)m.second.payload().size());
             std::string table;
             uint32_t id{0};
@@ -508,14 +508,14 @@ TEST_F(test_state_sync_fixture, test_send_message) {
     stream << units_bytes;
     stream << rand();
     auto str = xbytes_t{stream.data(), stream.data() + stream.size()};
-    auto node = m_syncer->send_message(m_peers, str, state_sync::xmessage_id_sync_table_request);
+    auto node = m_syncer->send_message(m_peers, str, xmessage_id_sync_table_request);
 
     auto it = std::find(m_peers.peers.begin(), m_peers.peers.end(), node);
     EXPECT_TRUE(it != m_peers.peers.end());
 
     auto mock_net = std::dynamic_pointer_cast<xmock_vnetwork_driver_t>(m_peers.network);
     EXPECT_EQ(mock_net->m_msg.front().first, (*it));
-    EXPECT_EQ(mock_net->m_msg.front().second, vnetwork::xmessage_t(str, state_sync::xmessage_id_sync_table_request));
+    EXPECT_EQ(mock_net->m_msg.front().second, vnetwork::xmessage_t(str, xmessage_id_sync_table_request));
 }
 
 TEST_F(test_state_sync_fixture, test_send_message_error) {
@@ -535,7 +535,7 @@ TEST_F(test_state_sync_fixture, test_send_message_error) {
 
     auto mock_net = std::dynamic_pointer_cast<xmock_vnetwork_driver_t>(m_peers.network);
     mock_net->m_send_error = true;
-    auto node = m_syncer->send_message(m_peers, str, state_sync::xmessage_id_sync_table_request);
+    auto node = m_syncer->send_message(m_peers, str, xmessage_id_sync_table_request);
 
     auto it = std::find(m_peers.peers.begin(), m_peers.peers.end(), node);
     EXPECT_TRUE(it != m_peers.peers.end());

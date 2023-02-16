@@ -41,6 +41,7 @@ class xeth_accesslist_t {
  public:
     void    streamRLP(evm_common::RLPStream& _s) const;
     void    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+    size_t  capacity() const {return m_accesstuple.capacity();}
 
  private:
     std::vector<xeth_accesstuple_t>  m_accesstuple;
@@ -80,6 +81,7 @@ class xeth_transaction_t {
     evm_common::u256 const&    get_signV() const { return m_signV; }
     evm_common::h256 const&    get_signR() const { return m_signR; }
     evm_common::h256 const&    get_signS() const { return m_signS; }
+    const xeth_accesslist_t&   get_accesslist() const { return m_accesslist; }
 
  public:
     void    set_tx_version(enum_ethtx_version version) {m_version = version;}

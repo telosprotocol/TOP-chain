@@ -9,7 +9,7 @@
 #include "xbase/xns_macro.h"
 #include "xbase/xobject_ptr.h"
 #include "xsync/xsync_message.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xvnetwork_message.h"
 

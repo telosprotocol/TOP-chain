@@ -9,7 +9,7 @@
 #include "xmbus/xevent_role.h"
 
 #include "xmbus/xevent.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xbase/xbase.h"
 #include "xdata/xgenesis_data.h"
 #include "xsync/xsync_log.h"

@@ -187,6 +187,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXUSE_JEMALLOC=ON"
         echo "BUILD WITH XUSE_JEMALLOC"
     ;;
+    enable_jeprof)
+        CMAKE_EXTRA_OPTIONS+=" -DENABLE_JEPROF=ON"
+        echo "BUILD WITH ENABLE_JEPROF"
+    ;;
     eth2_sepolia)
         CMAKE_EXTRA_OPTIONS+=" -DETH2_SEPOLIA=ON"
         echo "BUILD WITH ETH2_SEPOLIA"
@@ -194,6 +198,14 @@ do
     build_consortium)
         CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CONSORTIUM=ON"
         echo "Build Consortium testnet"
+    ;;
+    cache_size_statistic)
+        CMAKE_EXTRA_OPTIONS+=" -DCACHE_SIZE_STATISTIC=ON"
+        echo "BUILD WITH CACHE_SIZE_STATISTIC"
+    ;;
+    cache_size_statistic_more_detail)
+        CMAKE_EXTRA_OPTIONS+=" -DCACHE_SIZE_STATISTIC_MORE_DETAIL=ON"
+        echo "BUILD WITH CACHE_SIZE_STATISTIC_MORE_DETAIL"
     ;;
     *)
         echo "unknown build option: "$option

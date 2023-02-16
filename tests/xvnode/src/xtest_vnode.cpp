@@ -7,7 +7,7 @@
 #include "tests/xvnetwork/xvnetwork_fixture.h"
 #include "xbasic/xmemory.hpp"
 #include "xelection/xcache/xdata_accessor.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xvhost.h"
 #include "xvnode/xbasic_vnode.h"
 
@@ -138,12 +138,12 @@ TEST_F(xvnode_fixture_t, broadcast_normal_in_group) {
     EXPECT_TRUE(!ec);
 
     validator_vnode_->broadcast(common::xnode_address_t{group_address_no_logic_epoch, group_element->logic_epoch()}.xip2(),
-                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id},
+                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id},
                       ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(1, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 
-    validator_vnode_->broadcast(common::xnode_address_t{group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id}, ec);
+    validator_vnode_->broadcast(common::xnode_address_t{group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id}, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(2, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 
@@ -161,12 +161,12 @@ TEST_F(xvnode_fixture_t, broadcast_normal_cross_group_associated) {
     EXPECT_TRUE(!ec);
 
     validator_vnode_->broadcast(common::xnode_address_t{associated_group_address_no_logic_epoch, group_element->logic_epoch()}.xip2(),
-                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id},
+                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id},
                       ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(1, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 
-    validator_vnode_->broadcast(common::xnode_address_t{associated_group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id}, ec);
+    validator_vnode_->broadcast(common::xnode_address_t{associated_group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id}, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(2, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 
@@ -184,12 +184,12 @@ TEST_F(xvnode_fixture_t, broadcast_normal_cross_group_nonassociated) {
     EXPECT_TRUE(!ec);
 
     validator_vnode_->broadcast(common::xnode_address_t{nonassociated_group_address_no_logic_epoch, group_element->logic_epoch()}.xip2(),
-                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id},
+                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id},
                       ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(1, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 
-    validator_vnode_->broadcast(common::xnode_address_t{nonassociated_group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id}, ec);
+    validator_vnode_->broadcast(common::xnode_address_t{nonassociated_group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id}, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(2, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 
@@ -203,7 +203,7 @@ TEST_F(xvnode_fixture_t, broadcast_normal_network) {
     std::error_code ec;
 
     validator_vnode_->broadcast(common::xnode_address_t{network_group}.xip2(),
-                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id},
+                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id},
                       ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(1, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
@@ -226,7 +226,7 @@ TEST_F(xvnode_fixture_t, broadcast_abnormal_dst_is_not_broadcast_addr) {
     auto const dst_child = dst_children.begin()->second;
     auto const dst_address = dst_child->address();
 
-    validator_vnode_->broadcast(dst_address.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id}, ec);
+    validator_vnode_->broadcast(dst_address.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id}, ec);
     ASSERT_TRUE(!!ec);
     ASSERT_EQ(0, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 
@@ -244,7 +244,7 @@ TEST_F(xvnode_fixture_t, broadcast_abnormal_dst_is_not_broadcast_addr) {
 //    EXPECT_TRUE(!ec);
 //
 //    validator_vnode_->broadcast(common::xnode_address_t{associated_group_address_no_logic_epoch, common::xlogic_epoch_t{10, 5}}.xip2(),
-//                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id},
+//                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id},
 //                      ec);
 //    ASSERT_TRUE(!ec);
 //    ASSERT_EQ(1, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
@@ -263,12 +263,12 @@ TEST_F(xvnode_fixture_t, broadcast_abnormal_dst_is_not_broadcast_addr) {
 //    EXPECT_TRUE(!ec);
 //
 //    validator_vnode_->broadcast(common::xnode_address_t{group_address_no_logic_epoch, group_element->logic_epoch()}.xip2(),
-//                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id},
+//                      top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id},
 //                      ec);
 //    ASSERT_TRUE(!ec);
 //    ASSERT_EQ(1, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 //
-//    validator_vnode_->broadcast(common::xnode_address_t{group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id}, ec);
+//    validator_vnode_->broadcast(common::xnode_address_t{group_address_no_logic_epoch}.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id}, ec);
 //    ASSERT_TRUE(!ec);
 //    ASSERT_EQ(2, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter_spread_rumor);
 //
@@ -291,7 +291,7 @@ TEST_F(xvnode_fixture_t, send_to_normal_cross_group_associated) {
     auto const dst_child = dst_children.begin()->second;
     auto const dst_address = dst_child->address();
 
-    validator_vnode_->send_to(dst_address.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id}, ec);
+    validator_vnode_->send_to(dst_address.xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id}, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(1, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter);
 
@@ -302,7 +302,7 @@ TEST_F(xvnode_fixture_t, send_to_abnormal_self) {
     ASSERT_EQ(vnetwork::account_pubkey_validator1.account.to_string(), validator_vnode_->address().account_address().to_string());
 
     std::error_code ec;
-    validator_vnode_->send_to(validator_vnode_->address().xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id}, ec);
+    validator_vnode_->send_to(validator_vnode_->address().xip2(), top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id}, ec);
     ASSERT_TRUE(!!ec);
     ASSERT_EQ(0, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter);
 
@@ -320,7 +320,7 @@ TEST_F(xvnode_fixture_t, send_to_abnormal_broadcast_dst) {
     EXPECT_TRUE(!ec);
 
     validator_vnode_->send_to(common::xnode_address_t{associated_group_address_no_logic_epoch, group_element->logic_epoch()}.xip2(),
-                    top::vnetwork::xmessage_t{xbyte_buffer_t{}, top::contract::xmessage_block_broadcast_id},
+                    top::vnetwork::xmessage_t{xbyte_buffer_t{}, xmessage_block_broadcast_id},
                     ec);
     ASSERT_TRUE(!!ec);
     ASSERT_EQ(0, std::dynamic_pointer_cast<tests::network::xdummy_network_driver_t>(network_driver_)->m_counter);
