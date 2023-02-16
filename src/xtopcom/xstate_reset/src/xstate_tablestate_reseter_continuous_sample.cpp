@@ -5,7 +5,7 @@
 #include "xstate_reset/xstate_tablestate_reseter_continuous_sample.h"
 
 #include "xcommon/xtoken_metadata.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xstatectx/xstatectx.h"
 
 NS_BEG2(top, state_reset)

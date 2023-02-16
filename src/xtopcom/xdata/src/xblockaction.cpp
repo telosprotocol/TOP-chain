@@ -75,6 +75,25 @@ bool xlightunit_action_t::get_evm_transaction_receipt(data::xeth_store_receipt_t
     return false;
 }
 
+bool xlightunit_action_t::get_tvm_transaction_receipt(data::xtop_store_receipt_t & tvm_tx_receipt) const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_TVM_TRANSACTION_RECEIPT);
+    if (true == value.empty()) {
+        return false;
+    }
+    std::error_code ec;
+    tvm_tx_receipt.decodeBytes(to_bytes<std::string>(value), ec);
+    if (ec) {
+        xerror("[xlightunit_action_t::get_tvm_transaction_receipt] get-logs, decode fail");
+        return false;
+    }
+    if (true == tvm_tx_receipt.get_logs().empty()){
+        xwarn("[xlightunit_action_t::get_tvm_transaction_receipt] get-logs,the logs information is empty");
+        return false;
+    }
+    tvm_tx_receipt.create_bloom();
+    return true;
+}
+
 uint64_t xlightunit_action_t::get_receipt_id() const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID);
     if (!value.empty()) {

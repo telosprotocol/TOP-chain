@@ -1,8 +1,8 @@
 #pragma once
 
 #include "xbasic/xoptional.hpp"
-#include "xevm_common/common.h"
-#include "xevm_common/fixed_hash.h"
+#include "xcommon/common.h"
+#include "xcommon/fixed_hash.h"
 
 #include <vector>
 

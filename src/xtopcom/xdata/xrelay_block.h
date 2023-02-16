@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "xevm_common/fixed_hash.h"
+#include "xcommon/fixed_hash.h"
 #include "xethreceipt.h"
 #include "xethtransaction.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 
 namespace top {
 namespace data {

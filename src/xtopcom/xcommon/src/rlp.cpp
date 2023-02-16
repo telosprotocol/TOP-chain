@@ -2,9 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xevm_common/rlp.h"
-#include "xevm_common/binary_coding.h"
-#include "xevm_common/data.h"
+#include "xcommon/rlp.h"
+#include "xcommon/data.h"
 
 #include <algorithm>
 #include <tuple>

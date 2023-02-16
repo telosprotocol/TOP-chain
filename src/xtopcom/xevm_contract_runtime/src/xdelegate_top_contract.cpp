@@ -6,9 +6,9 @@
 
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xevm_common/xabi_decoder.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xevm_contract_runtime/sys_contract/xdelegate_erc20_contract.h"
 #include "xevm_contract_runtime/xerror/xerror.h"
 

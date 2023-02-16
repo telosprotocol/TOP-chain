@@ -6,7 +6,7 @@
 
 #include "xcommon/xaccount_address.h"
 #include "xstate_mpt/xstate_mpt_store_fwd.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 
 #include <map>
 #include <system_error>

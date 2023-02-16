@@ -6,7 +6,7 @@
 
 #include "xbase/xns_macro.h"
 #include "xcommon/xtoken_metadata.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xstatectx/xstatectx_face.h"
 
 #include <memory>

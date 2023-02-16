@@ -7,7 +7,7 @@
 #include <string>
 #include "xdata/xblock.h"
 #include "xcommon/xaccount_address.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xdata/xtable_bstate.h"
 
 NS_BEG2(top, data)

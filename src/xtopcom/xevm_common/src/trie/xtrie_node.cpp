@@ -5,7 +5,7 @@
 #include "xevm_common/trie/xtrie_node.h"
 
 #include "xbasic/xhex.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
 #endif

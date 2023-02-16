@@ -6,7 +6,7 @@
 
 #include "xcommon/xtable_address.h"
 #include "xevm_common/trie/xtrie_sync.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xvledger/xvdbstore.h"
 
 namespace top {

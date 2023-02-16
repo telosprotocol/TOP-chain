@@ -8,8 +8,8 @@
 #include "xbasic/xhex.h"
 #include "xbasic/xstring.h"
 #include "xcommon/xeth_address.h"
-#include "xevm_common/common.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common.h"
+#include "xcommon/common_data.h"
 #include "xevm_common/xerror/xerror.h"
 
 #include <cassert>

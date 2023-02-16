@@ -5,7 +5,7 @@
 #include "test_evm_eth2_client_contract_update_data.inc"
 #include "xbasic/xhex.h"
 #include "xdata/xdatautil.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/xabi_decoder.h"
 
 #if defined(XCXX20)

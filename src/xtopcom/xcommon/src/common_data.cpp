@@ -2,9 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 
-#include "xevm_common/xerror/xerror.h"
+#include "xcommon/xerror/xerror.h"
 
 #include <random>
 
@@ -116,7 +116,7 @@ evm_common::u256 from_bytes<evm_common::u256>(xbytes_t const & input, std::error
     assert(input.size() >= 32);
 
     if (input.size() < 32) {
-        ec = evm_common::error::xerrc_t::not_enough_data;
+        ec = common::error::xerrc_t::not_enough_data;
         return 0;
     }
 
@@ -144,7 +144,7 @@ evm_common::u256 from_string<evm_common::u256>(std::string const & input, std::e
     assert(input.size() >= 32);
 
     if (input.size() < 32) {
-        ec = evm_common::error::xerrc_t::not_enough_data;
+        ec = common::error::xerrc_t::not_enough_data;
         return 0;
     }
 
@@ -172,7 +172,7 @@ evm_common::u160 from_bytes<evm_common::u160>(xbytes_t const & input, std::error
     assert(input.size() >= 20);
 
     if (input.size() < 20) {
-        ec = evm_common::error::xerrc_t::not_enough_data;
+        ec = common::error::xerrc_t::not_enough_data;
         return 0;
     }
 
@@ -200,7 +200,7 @@ evm_common::u160 from_string<evm_common::u160>(std::string const & input, std::e
     assert(input.size() >= 20);
 
     if (input.size() < 20) {
-        ec = evm_common::error::xerrc_t::not_enough_data;
+        ec = common::error::xerrc_t::not_enough_data;
         return 0;
     }
 

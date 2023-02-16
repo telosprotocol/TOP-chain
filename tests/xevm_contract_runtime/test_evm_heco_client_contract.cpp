@@ -1,6 +1,6 @@
 #include "tests/xevm_contract_runtime/test_evm_eth_bridge_contract_fixture.h"
 #include "xbasic/xhex.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 

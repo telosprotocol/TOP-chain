@@ -12,7 +12,7 @@
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xunit_bstate.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xstore/xaccount_context.h"

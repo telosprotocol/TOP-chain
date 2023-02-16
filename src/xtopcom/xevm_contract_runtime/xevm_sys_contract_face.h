@@ -7,7 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xeth_address.h"
 #include "xdata/xnative_contract_address.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xevm_transaction_result.h"
 #if defined(XCXX20)

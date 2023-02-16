@@ -10,7 +10,7 @@
 #include "xdata/xtx_factory.h"
 #include "xbasic/xhex.h"
 #include "xvledger/xvblock.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xdata/xblock.h"
 #include "xdata/xblockdump.h"
 

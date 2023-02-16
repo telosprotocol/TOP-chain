@@ -6,6 +6,7 @@
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
+#include "xcommon/xtop_log.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
@@ -671,10 +672,13 @@ int xrpc_query_manager::parse_tx(const std::string & tx_hash_str, xtransaction_t
         bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->get_target_addr() == black_hole_addr;
         if (is_self_tx) {
             cons[jk.m_confirm] = sendjson;  // XTODO set to confirm block info
+            xrpc_loader_t::parse_logs(sendindex,cons[jk.m_confirm]);
         } else {
             cons[jk.m_send] = sendjson;
             data::enum_xunit_tx_exec_status recvtx_status;
-            cons[jk.m_recv] = xrpc_loader_t::load_and_parse_recv_tx(tx_hash_str, sendindex, recvtx_status);
+            xtxindex_detail_ptr_t recvindex;
+            cons[jk.m_recv] = xrpc_loader_t::load_and_parse_recv_tx(tx_hash_str, sendindex, recvindex,recvtx_status);
+            xrpc_loader_t::parse_logs(recvindex,cons[jk.m_recv]);
             if (cons[jk.m_recv]["height"].asUInt64() > 0) {  // only recv exist will load confirm
                 cons[jk.m_confirm] = xrpc_loader_t::load_and_parse_confirm_tx(tx_hash_str, sendindex, recvtx_status);
             }

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xdata/xnative_contract_address.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/xcrosschain/xeth2.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"

@@ -2,7 +2,7 @@
 
 #include "xbasic/xhex.h"
 #include "xcommon/xnode_id.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xstate_sync/xerror.h"
 #include "xstate_sync/xstate_sync_face.h"
 #include "xvledger/xvdbkey.h"

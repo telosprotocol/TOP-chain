@@ -9,7 +9,7 @@
 #include "xcommon/xeth_address.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xcrosschain/xeth_config.h"
 #include "xevm_common/xcrosschain/xeth_eip1559.h"

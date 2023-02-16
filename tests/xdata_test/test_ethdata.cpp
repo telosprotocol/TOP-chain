@@ -5,7 +5,7 @@
 #include "xdata/xethheader.h"
 #include "xdata/xethreceipt.h"
 #include "xdata/xlightunit_info.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 
 using namespace top;
 using namespace top::base;
