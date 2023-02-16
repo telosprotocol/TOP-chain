@@ -308,7 +308,8 @@ void xdb::xdb_impl::setup_default_cf_options(xColumnFamily & cf_config,const siz
         table_options.block_size = block_size;
     if(block_cache != nullptr)
         table_options.block_cache = block_cache;
-    
+
+#define DB_CACHE  1 // TODO(jimmy) always enable for memory usage control    
 #ifdef DB_CACHE
     table_options.cache_index_and_filter_blocks = true;
     table_options.cache_index_and_filter_blocks_with_high_priority = true;
