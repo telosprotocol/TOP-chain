@@ -11,8 +11,13 @@
 #include "xpbase/base/top_utils.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
-#include "xtransport/proto/transport.pb.h"
-#include "xkad/proto/kadmlia.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 #include "xkad/routing_table/local_node_info.h"
 #include "xkad/routing_table/root_routing_table.h"
 

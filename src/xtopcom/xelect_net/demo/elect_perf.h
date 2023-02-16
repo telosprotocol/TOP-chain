@@ -1,6 +1,6 @@
 #pragma once
 
-#include "json/json.h"
+#include <json/json.h>
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/routing_utils.h"
@@ -25,7 +25,7 @@ public:
     ~ElectPerf();
     void PrintRoutingTable(top::kadmlia::RoutingTablePtr & routing_table);
 
-    xJson::Value rpc_broadcast_all(uint32_t test_num,
+    Json::Value rpc_broadcast_all(uint32_t test_num,
                                    uint32_t test_len,
                                    uint32_t gossip_type,
                                    uint32_t backup,
@@ -38,7 +38,7 @@ public:
                                    uint32_t right_overlap);
 
     // for test rrs_gossip
-    xJson::Value rpc_broadcast_all_new(uint32_t test_num,
+    Json::Value rpc_broadcast_all_new(uint32_t test_num,
                                        uint32_t test_len,
                                        uint32_t gossip_type,
                                        uint32_t backup,
@@ -50,7 +50,7 @@ public:
                                        uint32_t left_overlap,
                                        uint32_t right_overlap);
 
-    xJson::Value rpc_broadcast_to_cluster(const std::string & src_node_id,
+    Json::Value rpc_broadcast_to_cluster(const std::string & src_node_id,
                                           const std::string & des_node_id,
                                           uint32_t test_num,
                                           uint32_t test_len,

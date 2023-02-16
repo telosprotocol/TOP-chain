@@ -18,6 +18,9 @@ function command_line_option_include_item {
 osname=`uname` # Linux/Darwin
 echo "osname: $osname"
 
+distrib=`cat /etc/*-release | uniq -u | grep ^ID= | grep -oP "ID=\"*\K\w+"`
+echo "distribution: $distrib"
+
 options="$@"
 
 command_line_option_include_item "$options" "pack"
@@ -52,8 +55,11 @@ if [ $? -eq 1 ]; then
     cd ${CBUILD_DIR}
     printf "$options" > ./build_options.inc
     
-    if [ $osname == "Linux" ]; then
+    if [ $distrib == "centos" ]; then
         cmake3 .. ${CMAKE_EXTRA_OPTIONS}
+        CPU_CORE=$( lscpu -pCPU | grep -v "#" | wc -l )
+    elif [ $distrib == "ubuntu" ]; then
+        cmake .. ${CMAKE_EXTRA_OPTIONS}
         CPU_CORE=$( lscpu -pCPU | grep -v "#" | wc -l )
     elif [ $osname == "Darwin" ]; then
         cmake .. ${CMAKE_EXTRA_OPTIONS}

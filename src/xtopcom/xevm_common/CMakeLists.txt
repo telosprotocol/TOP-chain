@@ -1,3 +1,5 @@
+#find_package(Boost REQUIRED)
+
 add_compile_options(-Wpedantic)
 
 aux_source_directory(./src src_dir)

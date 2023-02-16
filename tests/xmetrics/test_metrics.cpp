@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#include <gtest/gtest.h>
 #include <sstream>
 #define private public
 #define METRICS_UNIT_TEST
@@ -10,7 +10,6 @@
 #endif
 #include "xmetrics/xmetrics.h"
 
-#include <gtest/gtest.h>
 #include <cinttypes>
 
 #define TEST_CASE_SIZE 7

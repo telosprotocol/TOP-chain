@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#if !defined XCXX14_OR_ABOVE
+#if !defined(XCXX14)
 
 #    include "xconfig/xpredefined_configurations.h"
 

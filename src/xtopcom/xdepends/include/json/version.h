@@ -3,6 +3,10 @@
 #ifndef JSON_VERSION_H_INCLUDED
 # define JSON_VERSION_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 # define JSONCPP_VERSION_STRING "1.7.2"
 # define JSONCPP_VERSION_MAJOR 1
 # define JSONCPP_VERSION_MINOR 7

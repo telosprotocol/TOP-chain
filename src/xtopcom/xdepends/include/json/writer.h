@@ -6,6 +6,10 @@
 #ifndef JSON_WRITER_H_INCLUDED
 #define JSON_WRITER_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "value.h"
 #endif // if !defined(JSON_IS_AMALGAMATION)
@@ -20,7 +24,7 @@
 #pragma warning(disable : 4251)
 #endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
-namespace xJson {
+namespace Json {
 
 class Value;
 
@@ -109,7 +113,7 @@ public:
     JSON Value.
     \sa setDefaults()
     */
-  xJson::Value settings_;
+  Json::Value settings_;
 
   StreamWriterBuilder();
   ~StreamWriterBuilder() JSONCPP_OVERRIDE;
@@ -122,7 +126,7 @@ public:
   /** \return true if 'settings' are legal and consistent;
    *   otherwise, indicate bad settings via 'invalid'.
    */
-  bool validate(xJson::Value* invalid) const;
+  bool validate(Json::Value* invalid) const;
   /** A simple way to update a specific setting.
    */
   Value& operator[](JSONCPP_STRING key);
@@ -132,7 +136,7 @@ public:
    * \remark Defaults:
    * \snippet src/lib_json/json_writer.cpp StreamWriterBuilderDefaults
    */
-  static void setDefaults(xJson::Value* settings);
+  static void setDefaults(Json::Value* settings);
 };
 
 /** \brief Abstract class for writers.

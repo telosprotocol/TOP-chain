@@ -75,31 +75,31 @@ XINLINE_CONSTEXPR std::uint16_t xdefault_group_size_value{0x03FF};
 XINLINE_CONSTEXPR std::uint64_t xdefault_associated_blk_height_value{0x3FFFFFFFFFFFFF};
 
 struct xtop_broadcast_id final {
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     static XINLINE_CONSTEXPR xnetwork_id_t network{xbroadcast_network_id_value};
 #else
     static xnetwork_id_t const network;
 #endif
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     static XINLINE_CONSTEXPR xzone_id_t zone{xbroadcast_zone_id_value};
 #else
     static xzone_id_t const zone;
 #endif
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     static XINLINE_CONSTEXPR xcluster_id_t cluster{xbroadcast_cluster_id_value};
 #else
     static xcluster_id_t const cluster;
 #endif
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     static XINLINE_CONSTEXPR xgroup_id_t group{xbroadcast_group_id_value};
 #else
     static xgroup_id_t const group;
 #endif
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     static XINLINE_CONSTEXPR xslot_id_t slot{xbroadcast_slot_id_value};
 #else
     static xslot_id_t const slot;
@@ -334,7 +334,7 @@ xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cl
 
 xnetwork_id_t network_id() noexcept;
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xnetwork_version_t
 #else
 xnetwork_version_t const
@@ -345,14 +345,14 @@ xnetwork_version_t const
 /// pre-defined network ids
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xnetwork_id_t
 #else
 xnetwork_id_t const
 #endif
     xbeacon_network_id{static_cast<xzone_id_t::value_type>(base::enum_main_chain_id)};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xnetwork_id_t
 #else
 xnetwork_id_t const
@@ -364,7 +364,7 @@ xnetwork_id_t const
  */
 XINLINE_CONSTEXPR xnetwork_id_t::value_type xtestnet_id_value{base::enum_test_chain_id};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xnetwork_id_t
 #else
 xnetwork_id_t const
@@ -376,7 +376,7 @@ xnetwork_id_t const
 ///////////////////////////////////////////////////////////////////////////////
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xcommittee_zone_id_value{base::enum_chain_zone_beacon_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -384,7 +384,7 @@ xzone_id_t const
     xcommittee_zone_id{xcommittee_zone_id_value};
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xzec_zone_id_value{base::enum_chain_zone_zec_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -392,7 +392,7 @@ xzone_id_t const
     xzec_zone_id{xzec_zone_id_value};
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xconsensus_zone_id_value{base::enum_chain_zone_consensus_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -400,7 +400,7 @@ xzone_id_t const
     xconsensus_zone_id{xconsensus_zone_id_value};
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xfrozen_zone_id_value{base::enum_chain_zone_frozen_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -408,7 +408,7 @@ xzone_id_t const
     xfrozen_zone_id{xfrozen_zone_id_value};
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xevm_zone_id_value{base::enum_chain_zone_evm_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -416,7 +416,7 @@ xzone_id_t const
     xevm_zone_id{xevm_zone_id_value};
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xrelay_zone_id_value{base::enum_chain_zone_relay_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -424,7 +424,7 @@ xzone_id_t const
     xrelay_zone_id{xrelay_zone_id_value};
 
 XINLINE_CONSTEXPR xzone_id_t::value_type xfullnode_zone_id_value{base::enum_chain_zone_fullnode_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -435,7 +435,7 @@ xzone_id_t const
  * @brief default archive zone id
  */
 XINLINE_CONSTEXPR xzone_id_t::value_type xstorage_zone_id_value{base::enum_chain_zone_storage_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -446,7 +446,7 @@ xzone_id_t const
  * @brief default edge zone id
  */
 XINLINE_CONSTEXPR xzone_id_t::value_type xedge_zone_id_value{base::enum_chain_zone_edge_index};
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -458,7 +458,7 @@ xzone_id_t const
  */
 XINLINE_CONSTEXPR xzone_id_t::value_type xdefault_zone_id_value{xconsensus_zone_id_value};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
@@ -478,42 +478,42 @@ XINLINE_CONSTEXPR xcluster_id_t::value_type xexchange_cluster_id_value{2};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xnormal_cluster_id_value_begin{1};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xnormal_cluster_id_value_end{127};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xcluster_id_t
 #else
 xcluster_id_t const
 #endif
     xcommittee_cluster_id{xcommittee_cluster_id_value};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xcluster_id_t
 #else
 xcluster_id_t const
 #endif
     xdefault_cluster_id{xdefault_cluster_id_value};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xcluster_id_t
 #else
 xcluster_id_t const
 #endif
     xexchange_cluster_id{xexchange_cluster_id_value};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xcluster_id_t
 #else
 xcluster_id_t const
 #endif
     xnormal_cluster_id_begin{xnormal_cluster_id_value_begin};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xcluster_id_t
 #else
 xcluster_id_t const
 #endif
     xnormal_cluster_id_end{xnormal_cluster_id_value_end};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xcluster_id_t
 #else
 xcluster_id_t const
@@ -530,14 +530,14 @@ xcluster_id_t const
 XINLINE_CONSTEXPR xgroup_id_t::value_type xcommittee_group_id_value{0};
 XINLINE_CONSTEXPR xgroup_id_t::value_type xunassociatable_group_id_value{0};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
     xcommittee_group_id{xcommittee_group_id_value};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
@@ -551,14 +551,14 @@ xgroup_id_t const
 XINLINE_CONSTEXPR xgroup_id_t::value_type xauditor_group_id_value_begin{1};
 XINLINE_CONSTEXPR xgroup_id_t::value_type xauditor_group_id_value_end{64};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
     xauditor_group_id_begin{xauditor_group_id_value_begin};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
@@ -569,14 +569,14 @@ xgroup_id_t const
 XINLINE_CONSTEXPR xgroup_id_t::value_type xvalidator_group_id_value_begin{64};
 XINLINE_CONSTEXPR xgroup_id_t::value_type xvalidator_group_id_value_end{127};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
     xvalidator_group_id_begin{xvalidator_group_id_value_begin};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
@@ -589,42 +589,42 @@ XINLINE_CONSTEXPR xgroup_id_t::value_type xlegacy_exchange_group_id_value{ 2 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xexchange_group_id_value{ 1 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_end{ 3 };
 
-#if defined(XCXX14_OR_ABOVE)
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
 xarchive_group_id_begin{ xarchive_group_id_value_begin };
 
-#if defined(XCXX14_OR_ABOVE)
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
 xarchive_group_id{ xarchive_group_id_value_begin };
 
-#if defined(XCXX14_OR_ABOVE)
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
 xlegacy_exchange_group_id{ xlegacy_exchange_group_id_value };
 
-#if defined(XCXX14_OR_ABOVE)
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
 xexchange_group_id{ xexchange_group_id_value };
 
-#if defined(XCXX14_OR_ABOVE)
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
 xarchive_group_id_end{ xarchive_group_id_value_end };
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
@@ -635,21 +635,21 @@ XINLINE_CONSTEXPR xgroup_id_t::value_type xdefault_group_id_value{1};
 XINLINE_CONSTEXPR xgroup_id_t::value_type xnormal_group_id_value_begin{1};
 XINLINE_CONSTEXPR xgroup_id_t::value_type xnormal_group_id_value_end{127};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
     xdefault_group_id{xdefault_group_id_value};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const
 #endif
     xnormal_group_id_begin{xnormal_group_id_value_begin};
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
 XINLINE_CONSTEXPR xgroup_id_t
 #else
 xgroup_id_t const

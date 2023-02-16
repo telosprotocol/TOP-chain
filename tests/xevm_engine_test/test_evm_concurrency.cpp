@@ -1,3 +1,8 @@
+#include <sstream>
+#include <gtest/gtest.h>
+
+#define private public
+
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_statectx.h"
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_storage.h"
 #include "xbasic/xhex.h"
@@ -11,7 +16,7 @@
 #include "xevm_runner/evm_import_instance.h"
 #include "xtxexecutor/xvm_face.h"
 
-#include <gtest/gtest.h>
+
 
 NS_BEG4(top, contract_runtime, evm, tests)
 

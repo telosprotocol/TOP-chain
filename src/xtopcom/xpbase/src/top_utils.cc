@@ -26,7 +26,6 @@
 #include <windows.h>
 #endif
 
-#include "common/xxhash.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/check_cast.h"
 

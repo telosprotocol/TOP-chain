@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <vector>
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
+
 #include <memory>
 #include <array>
-#include <deque>
-
-#include "xtransport/proto/transport.pb.h"
 
 namespace top {
 

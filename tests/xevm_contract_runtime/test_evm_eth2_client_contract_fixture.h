@@ -30,7 +30,7 @@ public:
         bstate->new_string_var(data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_RESET_FLAG, canvas.get());
         m_contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
-        m_statectx = make_unique<xmock_statectx_t>(m_contract_state);
+        m_statectx = top::make_unique<xmock_statectx_t>(m_contract_state);
         m_statectx_observer = make_observer<statectx::xstatectx_face_t>(m_statectx.get());
         m_context.address = common::xtop_eth_address::build_from("ff00000000000000000000000000000000000010");
         m_context.caller = common::xtop_eth_address::build_from("f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38");

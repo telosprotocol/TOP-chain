@@ -38,7 +38,7 @@ std::error_category const & state_sync_category();
 
 namespace std {
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::state_sync::error::xerrc_t> final {

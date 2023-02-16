@@ -1,23 +1,28 @@
-#include <stdio.h>
-#include <iostream>
-#include <string>
+#include <gtest/gtest.h>
+
+
 #include "xevm_common/rlp.h"
 #include "xevm_common/address.h"
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
-#include "json/json.h"
-#include "json/json.hpp"
+#include <nlohmann/json.hpp>
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
 #include "trezor-crypto/sha3.h"
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
 
-#include <gtest/gtest.h>
+#include <cstdio>
+#include <iostream>
+#include <string>
+
+#if defined(XCXX20)
+#    include <secp256k1.h>
+#    include <secp256k1_recovery.h>
+#else
+#    include <secp256k1/secp256k1.h>
+#    include <secp256k1/secp256k1_recovery.h>
+#endif
 
 using namespace top::evm_common;
-
-
 
 TEST(test_boost, uint) {
     u512 n = 1;

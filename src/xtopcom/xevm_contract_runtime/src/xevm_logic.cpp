@@ -10,8 +10,13 @@
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xevm_common/common_data.h"
 #include "xevm_contract_runtime/xevm_memory_tools.h"
-#include "xevm_runner/proto/proto_basic.pb.h"
-#include "xevm_runner/proto/proto_parameters.pb.h"
+#if defined(XCXX20)
+#include "xevm_runner/proto/ubuntu/proto_basic.pb.h"
+#include "xevm_runner/proto/ubuntu/proto_parameters.pb.h"
+#else
+#include "xevm_runner/proto/centos/proto_basic.pb.h"
+#include "xevm_runner/proto/centos/proto_parameters.pb.h"
+#endif
 
 #include <climits>
 

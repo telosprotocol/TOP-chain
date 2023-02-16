@@ -10,10 +10,10 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 
-NS_BEG2(top, contract)
-
 using namespace top::common;
 using namespace top::data;
+
+NS_BEG2(top, contract)
 
 xtop_contract_deploy & xtop_contract_deploy::instance() {
     static xtop_contract_deploy inst;
@@ -29,7 +29,7 @@ void xtop_contract_deploy::deploy_sys_contracts() {
            xnode_type_t::committee,
            "all",
            enum_broadcast_policy_t::normal,
-           std::string{sys_contract_beacon_timer_addr} + u8",on_timer,C," + config::xrec_standby_pool_update_interval_onchain_goverance_parameter_t::name);
+           std::string{sys_contract_beacon_timer_addr} + ",on_timer,C," + config::xrec_standby_pool_update_interval_onchain_goverance_parameter_t::name);
 
     deploy(common::xaccount_address_t{sys_contract_zec_workload_addr},
            xnode_type_t::zec,

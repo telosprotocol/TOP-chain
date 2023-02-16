@@ -54,7 +54,7 @@ private:
         config_hub.insert({"dump_full_unit", (bool)true});
         config_hub.insert({"dump_json_format", (bool)true});
     }
-    mutable std::mutex m_config_mutex{};
+    mutable std::mutex m_config_mutex;
     std::map<std::string, config_value> config_hub;
 };
 #define XMETRICS_CONFIG_GET(config_name, value) top::metrics::e_metrics_config::get_instance().get(config_name, value);

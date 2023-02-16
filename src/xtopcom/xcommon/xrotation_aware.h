@@ -59,7 +59,7 @@ public:
     xtop_basic_rotation_aware & operator=(xtop_basic_rotation_aware &&) = default;
     ~xtop_basic_rotation_aware() override = default;
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
     xtop_basic_rotation_aware() noexcept {
     }
 #else

@@ -212,7 +212,7 @@ struct xtop_type_of<xproperty_type_t::token> {
 }
 }
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 NS_BEG1(std)
 
 template <>

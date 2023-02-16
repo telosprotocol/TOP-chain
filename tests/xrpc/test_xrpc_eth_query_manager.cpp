@@ -41,11 +41,11 @@ class test_xrpc_eth_query_manager : public testing::Test {
     std::string m_account{"T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30"};
     std::string m_null_account{"T00000LdD549VCMVVzS2m2RCgkT9errUXdSjJZbb"};
 };
-xJson::Value parse_res(const std::string& res);
+Json::Value parse_res(const std::string& res);
 
 TEST_F(test_xrpc_eth_query_manager, illegal_request) {
-    xJson::Value js_req;
-    xJson::Value js_rsp;
+    Json::Value js_req;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     std::string strRequet = "illegal";
@@ -88,8 +88,8 @@ TEST_F(test_xrpc_eth_query_manager, get_block_height) {
     EXPECT_EQ(height, 0);
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getBalance) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["id"] = "12345678";
@@ -105,8 +105,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBalance) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getBalance2) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -119,8 +119,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBalance2) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -133,8 +133,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBalance2) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -149,8 +149,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBalance2) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getTransactionCount) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -163,8 +163,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getTransactionCount) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -177,8 +177,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getTransactionCount) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -193,8 +193,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getTransactionCount) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getTransactionByHash) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -207,8 +207,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getTransactionByHash) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -222,8 +222,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getTransactionByHash) {
     }
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getTransactionReceipt) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["id"] = "12345678";
@@ -236,8 +236,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getTransactionReceipt) {
     EXPECT_EQ(js_rsp.isNull(), false);
 }
 TEST_F(test_xrpc_eth_query_manager, eth_blockNumber) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["id"] = "12345678";
@@ -250,8 +250,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_blockNumber) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getBlockByHash) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -264,8 +264,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBlockByHash) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -280,8 +280,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBlockByHash) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getBlockByNumber) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -294,8 +294,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBlockByNumber) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -310,8 +310,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getBlockByNumber) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getCode) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -324,8 +324,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getCode) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -338,8 +338,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getCode) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -354,14 +354,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_getCode) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_call) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_call";
-        xJson::Value param;
+        Json::Value param;
         param["from"] = "0x83d85d169f750ad626dc10565043a802b5499a3f";
         param["to"] = "0x1C46bA26351ADC1ADB9165Fc78e240EDc02ee96A";
         param["data"] = "0x70a08231000000000000000000000000de0e9abfafffe4618e5a8fb7dd97b19434987533";
@@ -373,14 +373,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_call) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_call";
-        xJson::Value param;
+        Json::Value param;
         param["from"] = "0x83d85d169f750ad626dc10565043a802b5499a3f";
         param["to"] = "0x1C46bA26351ADC1ADB9165Fc78e240EDc02ee96A";
         param["data"] = "0x70a08231000000000000000000000000de0e9abfafffe4618e5a8fb7dd97b19434987533";
@@ -392,14 +392,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_call) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_call";
-        xJson::Value param;
+        Json::Value param;
         param["from"] = "0x83d85d169f750ad626dc10565043a802b5499a3f";
         param["to"] = "0x1C46bA26351ADC1ADB9165Fc78e240EDc02ee96A";
         param["data"] = "0x70a08231000000000000000000000000de0e9abfafffe4618e5a8fb7dd97b19434987533";
@@ -413,14 +413,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_call) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_estimateGas) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_estimateGas";
-        xJson::Value param;
+        Json::Value param;
         param["from"] = "0x83d85d169f750ad626dc10565043a802b5499a3f";
         param["to"] = "0x1C46bA26351ADC1ADB9165Fc78e240EDc02ee96A";
         param["data"] = "0x70a08231000000000000000000000000de0e9abfafffe4618e5a8fb7dd97b19434987533";
@@ -432,14 +432,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_estimateGas) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_estimateGas";
-        xJson::Value param;
+        Json::Value param;
         param["from"] = "0x83d85d169f750ad626dc10565043a802b5499a3f";
         param["to"] = "0x1C46bA26351ADC1ADB9165Fc78e240EDc02ee96A";
         param["data"] = "0x70a08231000000000000000000000000de0e9abfafffe4618e5a8fb7dd97b19434987533";
@@ -451,14 +451,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_estimateGas) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_estimateGas";
-        xJson::Value param;
+        Json::Value param;
         param["from"] = "0x83d85d169f750ad626dc10565043a802b5499a3f";
         param["to"] = "0x1C46bA26351ADC1ADB9165Fc78e240EDc02ee96A";
         param["data"] = "0x70a08231000000000000000000000000de0e9abfafffe4618e5a8fb7dd97b19434987533";
@@ -472,8 +472,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_estimateGas) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getStorageAt) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -487,8 +487,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getStorageAt) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -502,8 +502,8 @@ TEST_F(test_xrpc_eth_query_manager, eth_getStorageAt) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
@@ -519,14 +519,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_getStorageAt) {
 }
 TEST_F(test_xrpc_eth_query_manager, eth_getLogs) {
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_getLogs";
-        xJson::Value param;
+        Json::Value param;
         param["fromBlock"] = "0x0";
         jr["params"].append(param);
         std::string request = jr.toStyledString();
@@ -534,14 +534,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_getLogs) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_getLogs";
-        xJson::Value param;
+        Json::Value param;
         param["fromBlock"] = "0x0";
         param["toBlock"] = "latest";
         param["topics"].append("0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735");
@@ -551,14 +551,14 @@ TEST_F(test_xrpc_eth_query_manager, eth_getLogs) {
         EXPECT_EQ(js_rsp.isNull(), false);
     }
     {
-        xJson::Value jr;
-        xJson::Value js_rsp;
+        Json::Value jr;
+        Json::Value js_rsp;
         std::string strResult = "ok";
         uint32_t nErrorCode = 0;
         jr["id"] = "12345678";
         jr["jsonrpc"] = "2.0";
         jr["method"] = "eth_getLogs";
-        xJson::Value param;
+        Json::Value param;
         param["fromBlock"] = "0x0";
         param["address"].append("0x2f6d20e1344ec580d1af7be80351bcf1065455f4");
         param["topics"].append("0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735");

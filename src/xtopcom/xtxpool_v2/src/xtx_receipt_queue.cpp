@@ -9,13 +9,14 @@
 #include "xdata/xtransaction.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xverifier/xtx_verifier.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xverifier_utl.h"
+
+using namespace top::data;
 
 namespace top {
 namespace xtxpool_v2 {
 
-using namespace top::data;
 
 void xreceipt_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();

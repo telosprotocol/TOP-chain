@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include "tests/xcontract_vm/xaccount_vm_fixture.h"
 #include "tests/xcontract_vm/xdemo_contract/xdummy_contract.h"
 #include "xbase/xmem.h"
@@ -11,8 +13,6 @@
 #include "xvledger/xvcanvas.h"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvtxindex.h"
-
-#include <gtest/gtest.h>
 
 #include <string>
 

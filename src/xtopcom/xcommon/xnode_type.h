@@ -163,7 +163,7 @@ std::string to_presentation_string(xnode_type_t const type);
 std::string to_presentation_string_compatible(xnode_type_t const type);
 
 constexpr xnode_type_t operator&(xnode_type_t const lhs, xnode_type_t const rhs) noexcept {
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     auto const lhs_value = static_cast<std::underlying_type<xnode_type_t>::type>(lhs);
     auto const rhs_value = static_cast<std::underlying_type<xnode_type_t>::type>(rhs);
     return static_cast<xnode_type_t>(lhs_value & rhs_value);
@@ -173,7 +173,7 @@ constexpr xnode_type_t operator&(xnode_type_t const lhs, xnode_type_t const rhs)
 }
 
 constexpr xnode_type_t operator|(xnode_type_t const lhs, xnode_type_t const rhs) noexcept {
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     auto const lhs_value = static_cast<std::underlying_type<xnode_type_t>::type>(lhs);
     auto const rhs_value = static_cast<std::underlying_type<xnode_type_t>::type>(rhs);
     return static_cast<xnode_type_t>(lhs_value | rhs_value);
@@ -183,7 +183,7 @@ constexpr xnode_type_t operator|(xnode_type_t const lhs, xnode_type_t const rhs)
 }
 
 constexpr xnode_type_t operator~(xnode_type_t const value) noexcept {
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     auto const raw_value = static_cast<std::underlying_type<xnode_type_t>::type>(value);
     return static_cast<xnode_type_t>(~raw_value);
 #else

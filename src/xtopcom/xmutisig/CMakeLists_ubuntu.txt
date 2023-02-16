@@ -1,0 +1,7 @@
+find_library(secp256k1_LIBRARY secp256k1 REQUIRED)
+find_package(OpenSSL REQUIRED)
+
+aux_source_directory(./src xmutisig_src)
+add_library(xmutisig ${xmutisig_src})
+
+target_link_libraries(xmutisig PRIVATE OpenSSL::SSL OpenSSL::Crypto xxbase ${secp256k1_LIBRARY})

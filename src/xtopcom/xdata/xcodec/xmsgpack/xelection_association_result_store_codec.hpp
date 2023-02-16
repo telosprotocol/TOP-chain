@@ -35,7 +35,7 @@ struct convert<top::data::election::xelection_association_result_store_t> final
             }
             case xelection_association_result_store_results_index: {
                 result.results(o.via.array.ptr[xelection_association_result_store_results_index].as<std::map<top::common::xcluster_id_t, top::data::election::xelection_association_result_t>>());
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
         return o;

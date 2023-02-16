@@ -146,8 +146,8 @@
 //             ++count;
 //             string result = response->content.string();
 //             cout << result << endl;
-//             xJson::Reader reader;
-//             xJson::Value result_json;
+//             Json::Reader reader;
+//             Json::Value result_json;
 //             if (reader.parse(result, result_json)) {
 //                 account_token = result_json["data"]["token"].asString();
 //             }
@@ -291,8 +291,8 @@ TEST(xrpc_server_api_test, token)
         {
             ++count;
             string result = response->content.string();
-            xJson::Reader reader;
-            xJson::Value result_json;
+            Json::Reader reader;
+            Json::Value result_json;
             if (reader.parse(result, result_json)) {
                 account_token = result_json["data"]["token"].asString();
             }

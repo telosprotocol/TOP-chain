@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 #include "xbase/xns_macro.h"
-#include "json/json.h"
+#include <json/json.h>
 #include "simplewebserver/utility.hpp"
 
 NS_BEG2(top, xrpc)
@@ -29,8 +29,8 @@ public:
 public:
     request_map_t               m_request_map{};
     bool                        m_finish{false};
-    xJson::FastWriter           m_writer;
-    xJson::Value                m_response_json;
+    Json::FastWriter           m_writer;
+    Json::Value                m_response_json;
     static std::vector<std::string>  m_mandatory_fileds;
     static std::vector<std::string>  m_option_fileds;
 };

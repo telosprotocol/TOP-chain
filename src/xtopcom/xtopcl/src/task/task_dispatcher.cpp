@@ -10,10 +10,10 @@
 #include <assert.h>
 
 extern xChainSDK::user_info g_userinfo;
-
-namespace xChainSDK {
 using namespace top::xrpc;
 using namespace top::data;
+
+namespace xChainSDK {
 using std::cout;
 using std::endl;
 task_dispatcher * task_dispatcher::s_instance = nullptr;
@@ -265,8 +265,8 @@ std::string task_dispatcher::get_result() {
 }
 
 void task_dispatcher::push_result_queue(std::string const & result, RequestTaskPtr & task) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
     try {
         reader.parse(result, root);
     } catch (...) {

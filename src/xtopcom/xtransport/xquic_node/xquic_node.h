@@ -2,7 +2,11 @@
 #include "xbase/xpacket.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xrunnable.h"
-#include "xtransport/proto/transport.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 #include "xtransport/transport_fwd.h"
 
 #include <functional>

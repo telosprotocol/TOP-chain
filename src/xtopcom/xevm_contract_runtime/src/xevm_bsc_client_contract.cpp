@@ -15,9 +15,9 @@
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 
-NS_BEG4(top, contract_runtime, evm, sys_contract)
-
 using namespace top::evm_common;
+
+NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 constexpr uint64_t confirm_num = 15;
 constexpr uint64_t validator_num = 21;

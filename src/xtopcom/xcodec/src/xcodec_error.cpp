@@ -25,7 +25,7 @@ xtop_codec_error::xtop_codec_error(std::string const & msg,
                                    std::error_code const & ec,
                                    std::size_t const line,
                                    std::string file)
-    : std::runtime_error{ std::move(file) + u8":" + std::to_string(line) + ":" + ec.message() + (msg.empty() ? msg : (". extra info: " + msg)) }
+    : std::runtime_error{ std::move(file) + ":" + std::to_string(line) + ":" + ec.message() + (msg.empty() ? msg : (". extra info: " + msg)) }
     , m_ec{ std::move(ec) }
 {
 }

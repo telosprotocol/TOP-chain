@@ -376,7 +376,7 @@ inline std::set<std::string> xtop_evm_crosschain_syscontract_face<T>::load_white
     }
     std::set<std::string> ret;
     auto const & list = j["whitelist"];
-    for (auto const item : list) {
+    for (auto const & item : list) {
         ret.insert(item.get<std::string>());
     }
     return ret;

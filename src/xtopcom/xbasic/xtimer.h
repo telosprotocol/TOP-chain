@@ -6,6 +6,7 @@
 
 #include "xbase/xtimer.h"
 #include "xbasic/xasio_io_context_wrapper.h"
+
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
@@ -28,7 +29,7 @@ public:
     using timeout_callback_t = std::function<void(std::error_code const &)>;
 
 private:
-    mutable std::mutex m_timer_mutex{};
+    mutable std::mutex m_timer_mutex;
     asio::steady_timer m_timer;
 
 public:
@@ -88,7 +89,7 @@ public:
     using timeout_callback_t = xbase_timer_wrapper_t::timeout_callback_t;
 
 private:
-    mutable std::mutex m_timer_mutex{};
+    mutable std::mutex m_timer_mutex;
     xobject_ptr_t<xbase_timer_wrapper_t> m_timer;
 
 public:

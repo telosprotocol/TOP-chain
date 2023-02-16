@@ -46,7 +46,7 @@ TEST_F(test_grpc_mgr, handler_mgr) {
     ret = handle_mgr->handle("haha");
     EXPECT_EQ(true, ret);
     res = handle_mgr->get_response();
-    xJson::Value jv;
+    Json::Value jv;
     jv["result"] = "json parse error";
     EXPECT_EQ(jv.toStyledString(), res);
 }

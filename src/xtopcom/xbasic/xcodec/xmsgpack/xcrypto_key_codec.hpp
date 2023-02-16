@@ -8,6 +8,8 @@
 
 #include <msgpack.hpp>
 
+#include <string>
+
 // MSGPACK_ADD_ENUM(top::xcrypto_key_type_t)
 
 NS_BEG1(msgpack)
@@ -45,17 +47,17 @@ struct pack<top::xcrypto_key_t<top::pub>> {
     }
 };
 
-template <>
-struct object<top::xcrypto_key_t<top::pub>> {
-    void
-    operator()(msgpack::object & o, top::xcrypto_key_t<top::pub> const & message) const {
-        if (message.empty()) {
-            o.type = msgpack::type::NIL;
-        } else {
-            msgpack::adaptor::object<std::string>{}(o, message.to_string());
-        }
-    }
-};
+//template <>
+//struct object<top::xcrypto_key_t<top::pub>> {
+//    void
+//    operator()(msgpack::object & o, top::xcrypto_key_t<top::pub> const & message) const {
+//        if (message.empty()) {
+//            o.type = msgpack::type::NIL;
+//        } else {
+//            msgpack::adaptor::object<std::string>{}(o, message.to_string());
+//        }
+//    }
+//};
 
 template <>
 struct object_with_zone<top::xcrypto_key_t<top::pub>>

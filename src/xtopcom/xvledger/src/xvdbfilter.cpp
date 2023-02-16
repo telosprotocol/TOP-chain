@@ -15,7 +15,7 @@ namespace top
     {
         //*************************************xdbevent_t****************************************//
         xdbevent_t::xdbevent_t(xvdbstore_t* src_db_ptr,xvdbstore_t* dst_db_ptr,enum_xdbevent_code code)
-            :xvevent_t(enum_xevent_category_db | code | enum_xdbkey_type_keyvalue)
+            :xvevent_t(static_cast<uint16_t>(enum_xevent_category_db) | static_cast<uint16_t>(code) | static_cast<uint16_t>(enum_xdbkey_type_keyvalue))
         {
             m_db_key_type   = enum_xdbkey_type_keyvalue;
             m_src_store_ptr = src_db_ptr;
@@ -23,7 +23,7 @@ namespace top
         }
     
         xdbevent_t::xdbevent_t(const std::string & db_key,const std::string & db_value,enum_xdbkey_type db_key_type,xvdbstore_t* src_db_ptr,xvdbstore_t* dst_db_ptr,enum_xdbevent_code code)
-            :xvevent_t(enum_xevent_category_db | code | db_key_type)
+          : xvevent_t(static_cast<uint16_t>(enum_xevent_category_db) | static_cast<uint16_t>(code) | static_cast<uint16_t>(db_key_type))
         {
             m_db_key        = db_key;
             m_db_value      = db_value;

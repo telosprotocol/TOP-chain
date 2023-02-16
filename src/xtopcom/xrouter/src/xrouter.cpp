@@ -2,13 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xrouter/xrouter.h"
+
 #include "xbasic/xutility.h"
 #include "xcommon/xsharding_info.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xbook_id_mapping.h"
 #include "xdata/xgenesis_data.h"
-#include "xrouter/xrouter.h"
-#include "xvm/manager/xcontract_address_map.h"
 
 #include <cinttypes>
 NS_BEG2(top, router)

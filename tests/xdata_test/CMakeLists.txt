@@ -1,6 +1,3 @@
-#add_compile_options(-static -Wall -Werror)
-add_compile_options(-static)
-
 if (DISABLE_REAL_STAKE)
     add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
 endif()

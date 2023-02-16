@@ -23,9 +23,9 @@
 #include "xrpc/xuint_format.h"
 
 #include "xtxstore/xtxstore_face.h"
-#include "xverifier/xtx_verifier.h"
-#include "xverifier/xblacklist_verifier.h"
-#include "xverifier/xwhitelist_verifier.h"
+#include "xtxstore/xtransaction_prepare.h"
+#include "xdata/xverifier/xblacklist_verifier.h"
+#include "xdata/xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
 

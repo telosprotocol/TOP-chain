@@ -10,12 +10,12 @@
 #include "xtxpool_v2/xreceipt_state_cache.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 namespace top {
 namespace xtxpool_v2 {
 
-using namespace top::data;
+// using namespace top::data;
 
 #define table_send_tx_queue_size_max (1024)
 #define table_recv_tx_queue_size_max (1024)
@@ -436,20 +436,20 @@ public:
         xdbg("conf_tx_dec table %s confirm queue size:%u", get_address().c_str(), m_counter.get_conf_tx_count());
     }
 
-    void tx_inc(enum_transaction_subtype subtype, int32_t count) {
-        if (subtype == enum_transaction_subtype_confirm) {
+    void tx_inc(base::enum_transaction_subtype subtype, int32_t count) {
+        if (subtype == base::enum_transaction_subtype_confirm) {
             conf_tx_inc(count);
-        } else if (subtype == enum_transaction_subtype_recv) {
+        } else if (subtype == base::enum_transaction_subtype_recv) {
             recv_tx_inc(count);
         } else {
             send_tx_inc(count);
         }
     }
 
-    void tx_dec(enum_transaction_subtype subtype, int32_t count) {
-        if (subtype == enum_transaction_subtype_confirm) {
+    void tx_dec(base::enum_transaction_subtype subtype, int32_t count) {
+        if (subtype == base::enum_transaction_subtype_confirm) {
             conf_tx_dec(count);
-        } else if (subtype == enum_transaction_subtype_recv) {
+        } else if (subtype == base::enum_transaction_subtype_recv) {
             recv_tx_dec(count);
         } else {
             send_tx_dec(count);

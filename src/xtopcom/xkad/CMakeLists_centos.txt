@@ -1,0 +1,9 @@
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/proto/${XOS_ID})
+
+aux_source_directory(./src xkad_src)
+aux_source_directory(./proto/${XOS_ID} xkad_src)
+add_library(xkad ${xkad_src})
+
+#add_dependencies(xkad xpbase xtransport xdb)
+target_link_libraries(xkad xpbase xtransport xdb protobuf)
+

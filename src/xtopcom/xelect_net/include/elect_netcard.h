@@ -4,16 +4,18 @@
 
 #pragma once
 
-#include "xbase/xbase.h"
 #include "xbase/xpacket.h"
 #include "xbasic/xsimple_message.hpp"
 #include "xcommon/xmessage_id.h"
-#include "xkad/proto/kadmlia.pb.h"
+// #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xnetwork/xnetwork_message_ready_callback.h"
 #include "xpbase/base/top_timer.h"
-#include "xpbase/base/top_utils.h"
-#include "xtransport/proto/transport.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 
 #include <chrono>
 #include <map>

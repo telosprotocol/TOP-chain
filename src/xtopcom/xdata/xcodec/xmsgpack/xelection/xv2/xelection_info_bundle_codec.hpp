@@ -40,7 +40,7 @@ struct convert<top::data::election::v2::xelection_info_bundle_t> final {
 
             case xelection_info_bundle_node_id_index: {
                 info_bundle.account_address(o.via.array.ptr[xelection_info_bundle_node_id_index].as<top::common::xnode_id_t>());
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
 

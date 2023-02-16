@@ -15,9 +15,9 @@
 #include <vector>
 
 extern xChainSDK::user_info g_userinfo;
+using namespace top::xrpc;
 
 namespace xChainSDK {
-using namespace top::xrpc;
 using std::cout;
 using std::endl;
 using std::string;
@@ -72,7 +72,7 @@ protocol::protocol() : _param_names(nullptr) {
 protocol::~protocol() {
 }
 
-int protocol::encode_body_params(const ParamMap & params, xJson::Value & root) {
+int protocol::encode_body_params(const ParamMap & params, Json::Value & root) {
     if (nullptr == _param_names)
         return 0;
 
@@ -92,14 +92,14 @@ int protocol::encode_body_params(const ParamMap & params, xJson::Value & root) {
 }
 
 int protocol::encode_body(const ParamMap & params, std::string & body) {
-    xJson::Value root;
+    Json::Value root;
 
     if (trans_action_ != nullptr) {
         encode_transaction_params(root, trans_action_.get());
     } else {
         encode_body_params(params, root);
     }
-    xJson::FastWriter fast_writer;
+    Json::FastWriter fast_writer;
     body += fast_writer.write(root);
     return body.length();
 }
@@ -124,8 +124,8 @@ int protocol::encode(ParamMap & params, std::string & body) {
 }
 
 void protocol::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<ResultBase>();
 
@@ -152,8 +152,8 @@ void protocol::decode(const std::string & params, task_info * info) {
 }
 
 uint32_t protocol::decode_task_id(const std::string & result) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     uint32_t task_id = 0;
     try {
@@ -260,11 +260,11 @@ void protocol::regist_create_function(const std::string & method, CreateFunc fun
     _create_funcs.insert(CreateFuncMap::value_type(method, func));
 }
 
-int protocol::encode_transaction_params(xJson::Value & root, top::data::xtransaction_t * tx_ptr) {
+int protocol::encode_transaction_params(Json::Value & root, top::data::xtransaction_t * tx_ptr) {
     if (tx_ptr == nullptr)
         return -1;
 
-    xJson::Value & result_json = root["params"];
+    Json::Value & result_json = root["params"];
     if (tx_ptr->get_tx_version() == top::data::xtransaction_version_2) {
         tx_ptr->parse_to_json(result_json);
     } else {
@@ -288,7 +288,7 @@ CheckTxHashCmd::~CheckTxHashCmd() {
     std::cout << "Destroy CheckTxHashCmd" << std::endl;
 }
 
-int CheckTxHashCmd::encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) {
+int CheckTxHashCmd::encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) {
     if (nullptr == _param_names)
         return 0;
 
@@ -317,7 +317,7 @@ AccountTxCmd::~AccountTxCmd() {
     // std::cout << "Destroy CheckTxHashCmd" << std::endl;
 }
 
-int AccountTxCmd::encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) {
+int AccountTxCmd::encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) {
     if (nullptr == _param_names)
         return 0;
 
@@ -351,8 +351,8 @@ VoteDetailsCmd::~VoteDetailsCmd() {
 }
 
 void VoteDetailsCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<VoteDetailsResult>();
 
@@ -365,7 +365,7 @@ void VoteDetailsCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root[DATA];
+            Json::Value date = root[DATA];
             if (!date.isNull()) {
                 if (date[details].isArray()) {
                     auto & a = date[details];
@@ -396,8 +396,8 @@ CandidateCmd::~CandidateCmd() {
 }
 
 void CandidateCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<CandidateDetailsResult>();
 
@@ -410,7 +410,7 @@ void CandidateCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root[DATA];
+            Json::Value date = root[DATA];
             if (!date.isNull()) {
                 if (date[details].isArray()) {
                     auto & a = date[details];
@@ -441,8 +441,8 @@ DividendCmd::~DividendCmd() {
 }
 
 void DividendCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<DividendDetailsResult>();
 
@@ -455,7 +455,7 @@ void DividendCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root[DATA];
+            Json::Value date = root[DATA];
             if (!date.isNull()) {
                 if (date[details].isArray()) {
                     auto & a = date[details];
@@ -486,8 +486,8 @@ RequestTokenCmd::~RequestTokenCmd() {
 }
 
 void RequestTokenCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<RequestTokenResult>();
 
@@ -500,7 +500,7 @@ void RequestTokenCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root[DATA];
+            Json::Value date = root[DATA];
             if (!date.isNull()) {
                 if (date[identity_token].isString())
                     result->_token = date[identity_token].asString();
@@ -533,8 +533,8 @@ CreateAccountCmd::~CreateAccountCmd() {
 }
 
 void CreateAccountCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<CreateAccountResult>();
 
@@ -547,7 +547,7 @@ void CreateAccountCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root["data"];
+            Json::Value date = root["data"];
             if (!date.isNull()) {
             }
         }
@@ -572,8 +572,8 @@ AccountInfoCmd::~AccountInfoCmd() {
 }
 
 void AccountInfoCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<AccountInfoResult>();
     try {
@@ -585,7 +585,7 @@ void AccountInfoCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value data = root["data"];
+            Json::Value data = root["data"];
             if (!data.isNull()) {
                 if (data["account_addr"].isString())
                     result->_account = data["account_addr"].asString();
@@ -622,8 +622,8 @@ AccountTransactionCmd::~AccountTransactionCmd() {
     // std::cout << "Destroy AccountTransactionCmd" << std::endl;
 }
 void AccountTransactionCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<AccountTransactionResult>();
     try {
@@ -635,7 +635,7 @@ void AccountTransactionCmd::decode(const std::string & params, task_info * info)
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root["data"];
+            Json::Value date = root["data"];
             if (!date.isNull()) {
                 result->_authorization = date["authorization"].asString();
                 result->_expire_duration = date["expire_duration"].asUInt();
@@ -695,7 +695,7 @@ TransferCmd::~TransferCmd() {
     //        std::cout << "Destroy TransferCmd" << std::endl;
 }
 
-int TransferCmd::encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) {
+int TransferCmd::encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) {
     if (nullptr == _param_names)
         return 0;
 
@@ -719,8 +719,8 @@ int TransferCmd::encode_body_params(const std::map<std::string, std::string> & p
 }
 
 void TransferCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<TransferResult>();
 
@@ -733,7 +733,7 @@ void TransferCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root["data"];
+            Json::Value date = root["data"];
             if (!date.isNull()) {
             }
         }
@@ -764,7 +764,7 @@ KeyStoreCmd::~KeyStoreCmd() {
     // std::cout << "Destroy KeyStoreCmd" << std::endl;
 }
 
-int KeyStoreCmd::encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) {
+int KeyStoreCmd::encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) {
     if (nullptr == _param_names)
         return 0;
 
@@ -798,7 +798,7 @@ GetPropertyCmd::~GetPropertyCmd() {
     // std::cout << "Destroy GetPropertyCmd" << std::endl;
 }
 
-int GetPropertyCmd::encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) {
+int GetPropertyCmd::encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) {
     if (nullptr == _param_names)
         return 0;
 
@@ -835,8 +835,8 @@ int GetPropertyCmd::encode_body_params(const std::map<std::string, std::string> 
     return 0;
 }
 void GetPropertyCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<GetPropertyResult>();
 
@@ -865,11 +865,11 @@ void GetPropertyCmd::decode(const std::string & params, task_info * info) {
             if (root[ERROR_MSG].isString())
                 result->errmsg = root[ERROR_MSG].asString();
 
-            xJson::Value date = root["data"];
+            Json::Value date = root["data"];
             if (!date.isNull()) {
                 if (date["property_value"].isArray()) {
                     auto size = date["property_value"].size();
-                    for (xJson::ArrayIndex i = 0; i < size; ++i) {
+                    for (Json::ArrayIndex i = 0; i < size; ++i) {
                         std::cout << "property_value:[" << i << "]" << date["property_value"][i].asString() << std::endl;  ///!!!
                         result->_values.push_back(date["property_value"][i].asString());
                     }
@@ -932,7 +932,7 @@ GetBlockCmd::GetBlockCmd() {
     _param_names = &_cur_param_names;
 }
 
-int GetBlockCmd::encode_body_params(const std::map<std::string, std::string> & params, xJson::Value & root) {
+int GetBlockCmd::encode_body_params(const std::map<std::string, std::string> & params, Json::Value & root) {
     if (nullptr == _param_names)
         return 0;
 
@@ -990,7 +990,7 @@ ChainInfoCmd::ChainInfoCmd() {
     _param_names = &_cur_param_names;
 }
 
-// int ChainInfoCmd::encode_body_params(const std::map<std::string, std::string>& params, xJson::Value& root)
+// int ChainInfoCmd::encode_body_params(const std::map<std::string, std::string>& params, Json::Value& root)
 // {
 // 	if (nullptr == _param_names)
 // 		return 0;
@@ -1014,8 +1014,8 @@ ChainInfoCmd::~ChainInfoCmd() {
 }
 
 void ChainInfoCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<ChainInfoResult>();
 
@@ -1040,8 +1040,8 @@ GeneralInfoCmd::~GeneralInfoCmd() {
 }
 
 void GeneralInfoCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<GeneralInfoResult>();
 
@@ -1063,8 +1063,8 @@ NodeInfoCmd::~NodeInfoCmd() {
 }
 
 void NodeInfoCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<NodeInfoResult>();
 
@@ -1086,8 +1086,8 @@ ElectInfoCmd::~ElectInfoCmd() {
 }
 
 void ElectInfoCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<NodeInfoResult>();
 
@@ -1119,8 +1119,8 @@ NodeRewardCmd::~NodeRewardCmd() {
 }
 
 void NodeRewardCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<NodeRewardResult>();
 
@@ -1153,8 +1153,8 @@ VoterRewardCmd::~VoterRewardCmd() {
 }
 
 void VoterRewardCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<VoterRewardResult>();
 
@@ -1176,8 +1176,8 @@ GetProposalCmd::~GetProposalCmd() {
 }
 
 void GetProposalCmd::decode(const std::string & params, task_info * info) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
 
     auto result = std::make_shared<GetProposalResult>();
 

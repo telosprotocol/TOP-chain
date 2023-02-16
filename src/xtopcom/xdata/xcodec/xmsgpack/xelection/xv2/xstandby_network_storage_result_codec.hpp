@@ -39,7 +39,7 @@ struct convert<top::data::election::v2::xstandby_network_storage_result_t> final
 
             case xstandby_network_storage_result_result_index: {
                 result.results(o.via.array.ptr[xstandby_network_storage_result_result_index].as<std::map<top::common::xnode_id_t, top::data::election::v2::xstandby_node_info_t>>());
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
 

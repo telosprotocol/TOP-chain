@@ -1360,7 +1360,17 @@ namespace top
         }
         
         const std::string xvblockstore_impl::get_unit_proof(const base::xvaccount_t & account, uint64_t height){
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            if (is_close()) {
+                xwarn_err("xvblockstore has closed at store_path=%s", m_store_path.c_str());
+                return {};
+            }
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
+            if (target_table == nullptr) {
+                xwarn_err("xvblockstore invalid account=%s", account.get_address().c_str());
+                return {};
+            }
+            auto_xblockacct_ptr account_obj(target_table->get_lock(), this);
+            get_block_account(target_table, account.get_address(), account_obj);
             return account_obj->get_unit_proof(height);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_block_by_hash(const std::string& hash)

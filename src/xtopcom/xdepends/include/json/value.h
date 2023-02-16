@@ -6,6 +6,10 @@
 #ifndef CPPTL_JSON_H_INCLUDED
 #define CPPTL_JSON_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "forwards.h"
 #endif // if !defined(JSON_IS_AMALGAMATION)
@@ -49,7 +53,7 @@
 
 /** \brief JSON (JavaScript Object Notation).
  */
-namespace xJson {
+namespace Json {
 
 /** Base class for all exceptions we throw.
  *
@@ -195,15 +199,15 @@ public:
   typedef std::vector<JSONCPP_STRING> Members;
   typedef ValueIterator iterator;
   typedef ValueConstIterator const_iterator;
-  typedef xJson::UInt UInt;
-  typedef xJson::Int Int;
+  typedef Json::UInt UInt;
+  typedef Json::Int Int;
 #if defined(JSON_HAS_INT64)
-  typedef xJson::UInt64 UInt64;
-  typedef xJson::Int64 Int64;
+  typedef Json::UInt64 UInt64;
+  typedef Json::Int64 Int64;
 #endif // defined(JSON_HAS_INT64)
-  typedef xJson::LargestInt LargestInt;
-  typedef xJson::LargestUInt LargestUInt;
-  typedef xJson::ArrayIndex ArrayIndex;
+  typedef Json::LargestInt LargestInt;
+  typedef Json::LargestUInt LargestUInt;
+  typedef Json::ArrayIndex ArrayIndex;
 
   static const Value& null;  ///< We regret this reference to a global instance; prefer the simpler Value().
   static const Value& nullRef;  ///< just a kludge for binary-compatibility; same as null
@@ -871,7 +875,7 @@ public:
 namespace std {
 /// Specialize std::swap() for Json::Value.
 template<>
-inline void swap(xJson::Value& a, xJson::Value& b) { a.swap(b); }
+inline void swap(Json::Value& a, Json::Value& b) { a.swap(b); }
 }
 
 

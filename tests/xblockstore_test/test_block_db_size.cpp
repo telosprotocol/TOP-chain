@@ -17,7 +17,7 @@
 #include "xmetrics/xmetrics.h"
 
 // #include "test_blockmock.hpp"
-#include "xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xtx_verifier.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"

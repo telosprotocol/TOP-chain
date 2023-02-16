@@ -7,9 +7,9 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xmetrics/xmetrics.h"
-#include "json/value.h"
-#include "json/reader.h"
-#include "json/writer.h"
+#include <json/value.h>
+#include <json/reader.h>
+#include <json/writer.h>
 #include <fstream>
 #include <sstream>
 #ifdef DEBUG
@@ -1643,12 +1643,12 @@ namespace top
             std::ifstream keyfile(extra_config, std::ios::in);
             xinfo("xvchain_t:get_db_path  extra_config %s", extra_config.c_str());
             if (keyfile) {
-                xJson::Value key_info_js;
+                Json::Value key_info_js;
                 std::stringstream buffer;
                 buffer << keyfile.rdbuf();
                 keyfile.close();
                 std::string key_info = buffer.str();
-                xJson::Reader reader;
+                Json::Reader reader;
                 reader.parse(key_info, key_info_js);
 
                 //get db kind

@@ -906,7 +906,7 @@ xslot_id_t const & broadcast<xslot_id_t>() noexcept {
     return broadcast_id;
 }
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 xnetwork_id_t const xtop_broadcast_id::network{xbroadcast_network_id_value};
 xzone_id_t const xtop_broadcast_id::zone{xbroadcast_zone_id_value};

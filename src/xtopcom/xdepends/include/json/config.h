@@ -8,6 +8,10 @@
 #include <stddef.h>
 #include <string> //typdef String
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 /// If defined, indicates that json library is embedded in CppTL library.
 //# define JSON_IN_CPPTL 1
 
@@ -139,7 +143,7 @@
 
 #endif // if !defined(JSON_IS_AMALGAMATION)
 
-namespace xJson {
+namespace Json {
 typedef int Int;
 typedef unsigned int UInt;
 #if defined(JSON_NO_INT64)

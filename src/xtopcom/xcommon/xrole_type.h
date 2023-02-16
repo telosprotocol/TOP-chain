@@ -57,7 +57,7 @@ operator >>(top::base::xstream_t & stream, xminer_type_t & role_type);
 constexpr
 xminer_type_t
 operator &(xminer_type_t const lhs, xminer_type_t const rhs) noexcept {
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     auto const lhs_value = static_cast<std::underlying_type<xminer_type_t>::type>(lhs);
     auto const rhs_value = static_cast<std::underlying_type<xminer_type_t>::type>(rhs);
     return static_cast<xminer_type_t>(lhs_value & rhs_value);
@@ -69,7 +69,7 @@ operator &(xminer_type_t const lhs, xminer_type_t const rhs) noexcept {
 constexpr
 xminer_type_t
 operator |(xminer_type_t const lhs, xminer_type_t const rhs) noexcept {
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     auto const lhs_value = static_cast<std::underlying_type<xminer_type_t>::type>(lhs);
     auto const rhs_value = static_cast<std::underlying_type<xminer_type_t>::type>(rhs);
     return static_cast<xminer_type_t>(lhs_value | rhs_value);

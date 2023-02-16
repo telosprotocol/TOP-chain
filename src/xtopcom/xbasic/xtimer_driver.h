@@ -23,7 +23,7 @@ class xtop_timer_driver final
 private:
     using runnable_base_type = xbasic_runnable_t<xtop_timer_driver>;
 
-    std::mutex m_timers_mutex{};
+    std::mutex m_timers_mutex;
     std::vector<std::shared_ptr<top::xtimer_t>> m_timers{};
 
     std::chrono::milliseconds m_reap_interval;
@@ -54,7 +54,7 @@ class xtop_base_timer_driver final
 private:
     using runnable_base_type = xbasic_runnable_t<xtop_base_timer_driver>;
 
-    std::mutex m_timers_mutex{};
+    std::mutex m_timers_mutex;
     std::vector<std::unique_ptr<top::xbase_timer_t>> m_timers{};
 
     std::chrono::milliseconds m_reap_interval;

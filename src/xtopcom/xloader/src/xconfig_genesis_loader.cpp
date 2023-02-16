@@ -5,8 +5,8 @@
 #include <string>
 #include <fstream>
 
-#include "json/json.h"
-#include "json/value.h"
+#include <json/json.h>
+#include <json/value.h>
 #include "xdata/xdata_common.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xloader/src/xgenesis_info.h"
@@ -57,8 +57,8 @@ std::string xconfig_genesis_loader_t::get_file_content(const std::string& filepa
 }
 
 std::string xconfig_genesis_loader_t::extract_genesis_content(const std::string& filecontent) {
-    xJson::Reader reader;
-    xJson::Value json_root;
+    Json::Reader reader;
+    Json::Value json_root;
 
     xdbg("xconfig_genesis_loader_t::extract_genesis_content begin to parse");
 
@@ -78,18 +78,18 @@ std::string xconfig_genesis_loader_t::extract_genesis_content(const std::string&
     return {};
 }
 
-bool xconfig_genesis_loader_t::extract_genesis_para_accounts(const xJson::Value & json_root, data::xrootblock_para_t & para) {
+bool xconfig_genesis_loader_t::extract_genesis_para_accounts(const Json::Value & json_root, data::xrootblock_para_t & para) {
     const auto members = json_root.getMemberNames();
     for (const auto& member : members) {
         if (member == "accounts") {
-            xJson::Value arrayObj = json_root[member];
+            Json::Value arrayObj = json_root[member];
             const auto account_members = arrayObj.getMemberNames();
             for (auto const& account_member: account_members) {
                 if ( "tcc" == account_member ) {
-                    xJson::Value tccAccounts = arrayObj[account_member];
+                    Json::Value tccAccounts = arrayObj[account_member];
                     const auto tcc_members = tccAccounts.getMemberNames();
                     for (auto const& tcc_member: tcc_members) {
-                        xJson::Value tccAccount = tccAccounts[tcc_member];
+                        Json::Value tccAccount = tccAccounts[tcc_member];
                         std::string balance_str = tccAccount["balance"].asString();
                         uint64_t balance = base::xstring_utl::touint64(balance_str);
                         para.m_account_balances[tcc_member] = balance;
@@ -97,10 +97,10 @@ bool xconfig_genesis_loader_t::extract_genesis_para_accounts(const xJson::Value 
                         xdbg("xconfig_genesis_loader_t::extract_genesis_para tcc account=%s balance=%ld", tcc_member.c_str(), balance);
                     }
                 } else if ("genesis_funds_account" == account_member) {
-                    xJson::Value fundsAccounts = arrayObj[account_member];
+                    Json::Value fundsAccounts = arrayObj[account_member];
                     const auto funds_members = fundsAccounts.getMemberNames();
                     for (auto const& fund_member: funds_members) {
-                        xJson::Value fundAccount = fundsAccounts[fund_member];
+                        Json::Value fundAccount = fundsAccounts[fund_member];
                         std::string balance_str = fundAccount["balance"].asString();
                         uint64_t balance = base::xstring_utl::touint64(balance_str);
                         para.m_account_balances[fund_member] = balance;
@@ -117,12 +117,12 @@ bool xconfig_genesis_loader_t::extract_genesis_para_accounts(const xJson::Value 
     return false;
 }
 
-bool xconfig_genesis_loader_t::extract_genesis_para_seedNodes(const xJson::Value & json_root, data::xrootblock_para_t & para) {
+bool xconfig_genesis_loader_t::extract_genesis_para_seedNodes(const Json::Value & json_root, data::xrootblock_para_t & para) {
     const auto members = json_root.getMemberNames();
     for (const auto& member : members) {
         if (member == "seedNodes") {
             std::vector<data::node_info_t> genesis_nodes;
-            xJson::Value arrayObj = json_root[member];
+            Json::Value arrayObj = json_root[member];
             const auto sub_members = arrayObj.getMemberNames();
             for (const auto& sub_member : sub_members) {
                 std::string publickey = arrayObj[sub_member].asString();
@@ -141,14 +141,14 @@ bool xconfig_genesis_loader_t::extract_genesis_para_seedNodes(const xJson::Value
     return false;
 }
 
-bool xconfig_genesis_loader_t::extract_genesis_para_ca_relation(const xJson::Value& json_root, data::xrootblock_para_t& para)
+bool xconfig_genesis_loader_t::extract_genesis_para_ca_relation(const Json::Value& json_root, data::xrootblock_para_t& para)
 {
 #if defined(XBUILD_CONSORTIUM)
     xdbg("xconfig_genesis_loader_t::extract_genesis_para_ca_relation");
     const auto members = json_root.getMemberNames();
 
     if (json_root["root_ca"].isObject()) {
-        xJson::Value arrayObj = json_root["root_ca"];
+        Json::Value arrayObj = json_root["root_ca"];
         const auto sub_members = arrayObj.getMemberNames();
         if (sub_members.size() != 1) {
             xerror("xconfig_genesis_loader_t::extract_genesis_para_ca_relation root_ca size is %d.", sub_members.size());
@@ -172,7 +172,7 @@ bool xconfig_genesis_loader_t::extract_genesis_para_ca_relation(const xJson::Val
     }
 
     if (json_root["seedNodes_ca"].isObject()) {
-        xJson::Value arrayObj = json_root["seedNodes_ca"];
+        Json::Value arrayObj = json_root["seedNodes_ca"];
         uint64_t index = 0;
         std::string nodes_ca_map_str{};
         base::xstream_t _stream(base::xcontext_t::instance());
@@ -201,7 +201,7 @@ bool xconfig_genesis_loader_t::extract_genesis_para_ca_relation(const xJson::Val
     return true;
 }
 
-bool xconfig_genesis_loader_t::extract_genesis_para_genesis_timestamp(const xJson::Value& json_root, data::xrootblock_para_t& para)
+bool xconfig_genesis_loader_t::extract_genesis_para_genesis_timestamp(const Json::Value& json_root, data::xrootblock_para_t& para)
 {
     const auto members = json_root.getMemberNames();
     for (const auto& member : members) {
@@ -216,8 +216,8 @@ bool xconfig_genesis_loader_t::extract_genesis_para_genesis_timestamp(const xJso
 
 bool xconfig_genesis_loader_t::extract_genesis_para(data::xrootblock_para_t & para) {
     try {
-        xJson::Reader reader;
-        xJson::Value json_root;
+        Json::Reader reader;
+        Json::Value json_root;
 
         xdbg("xconfig_genesis_loader_t::extract_genesis_para begin to parse.");
 
@@ -227,7 +227,7 @@ bool xconfig_genesis_loader_t::extract_genesis_para(data::xrootblock_para_t & pa
             return false;
         }
 
-        xJson::Value genesis_root;
+        Json::Value genesis_root;
         bool is_find_genesis = false;
         const auto members = json_root.getMemberNames();
         for (const auto& member : members) {
@@ -256,7 +256,7 @@ bool xconfig_genesis_loader_t::extract_genesis_para(data::xrootblock_para_t & pa
         }
 
         return true;
-    }catch(xJson::LogicError const &) {
+    }catch(Json::LogicError const &) {
         xerror("xconfig_genesis_loader_t::extract_genesis_para json logic error");
         return false;
     }catch(const std::exception& e) {

@@ -73,7 +73,7 @@ std::error_category const & gasfee_category() {
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 size_t hash<top::gasfee::error::xerrc_t>::operator()(top::gasfee::error::xerrc_t errc) const noexcept {
     return static_cast<size_t>(static_cast<std::underlying_type<top::gasfee::error::xerrc_t>::type>(errc));

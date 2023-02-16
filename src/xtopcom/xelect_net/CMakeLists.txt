@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 aux_source_directory(./src xelect_net_src)
 aux_source_directory(./proto xelect_net_proto)
 add_library(xelect_net STATIC ${xelect_net_src} ${xelect_net_proto})

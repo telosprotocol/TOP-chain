@@ -6,7 +6,6 @@
 
 #include <vector>
 #include "xmbus/xevent.h"
-#include "xvnetwork/xaddress.h"
 #include "xbase/xobject_ptr.h"
 #include "xstatistic/xbasic_size.hpp"
 #include "xstatistic/xstatistic.h"
@@ -14,7 +13,7 @@
 
 NS_BEG2(top, mbus)
 
-using namespace top;
+// using namespace top;
 
 class xevent_consensus_t : public xbus_event_t, public xstatistic::xstatistic_obj_face_t {
 public:

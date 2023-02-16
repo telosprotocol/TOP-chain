@@ -4,11 +4,6 @@
 
 #pragma once
 
-#ifndef private
-#include <sstream>
-#define private protected
-#endif
-
 #include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 #include "xelection/xvnode_house.h"

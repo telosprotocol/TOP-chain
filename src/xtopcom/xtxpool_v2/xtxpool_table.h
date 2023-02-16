@@ -104,7 +104,7 @@ public:
     xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para);
     data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash);
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
-    void on_block_confirmed(xblock_t * table_block);
+    void on_block_confirmed(data::xblock_t * table_block);
     bool on_block_confirmed(base::enum_xvblock_class blk_class, uint64_t height);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs);
     void refresh_table();
@@ -122,7 +122,7 @@ public:
         return m_xtable_info.get_short_table_id();
     }
     void unconfirm_cache_status(uint32_t & sender_cache_size, uint32_t & receiver_cache_size, uint32_t & height_record_size, uint32_t & unconfirm_raw_txs_size) const;
-    xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
+    data::xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
 
     void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
 
@@ -141,8 +141,8 @@ private:
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce);
     int32_t push_receipt_real(const std::shared_ptr<xtx_entry> & tx);
-    void deal_commit_table_block(xblock_t * table_block, bool update_txmgr);
-    xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
+    void deal_commit_table_block(data::xblock_t * table_block, bool update_txmgr);
+    xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, base::enum_transaction_subtype subtype);
     void move_uncommit_txs(base::xvblock_t * block);
     xcons_transaction_ptr_t query_tx(const std::string & account, const std::string & hash_str);
     int32_t check_send_tx_nonce(const std::shared_ptr<xtx_entry> & tx, uint64_t & latest_nonce);

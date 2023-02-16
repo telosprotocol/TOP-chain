@@ -51,7 +51,7 @@ ElectPerf::ElectPerf() {
 ElectPerf::~ElectPerf() {
 }
 
-xJson::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
+Json::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
                                           uint32_t test_len,
                                           uint32_t gossip_type,
                                           uint32_t backup,
@@ -62,7 +62,7 @@ xJson::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
                                           uint32_t layer_switch_hop_num,
                                           uint32_t left_overlap,
                                           uint32_t right_overlap) {
-    xJson::Value ret;
+    Json::Value ret;
     ret["msghash"] = {};
 
     // auto routing_table = wrouter::GetRoutingTable(kRoot, true);
@@ -136,7 +136,7 @@ xJson::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
     return ret;
 }
 
-xJson::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
+Json::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
                                               uint32_t test_len,
                                               uint32_t gossip_type,
                                               uint32_t backup,
@@ -147,7 +147,7 @@ xJson::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
                                               uint32_t layer_switch_hop_num,
                                               uint32_t left_overlap,
                                               uint32_t right_overlap) {
-    xJson::Value ret;
+    Json::Value ret;
     ret["msghash"] = {};
 
     // auto routing_table = wrouter::GetRoutingTable(kRoot, true);
@@ -223,7 +223,7 @@ xJson::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
     return ret;
 }
 
-xJson::Value ElectPerf::rpc_broadcast_to_cluster(const std::string & src_node_id,
+Json::Value ElectPerf::rpc_broadcast_to_cluster(const std::string & src_node_id,
                                                  const std::string & des_node_id,
                                                  uint32_t test_num,
                                                  uint32_t test_len,
@@ -236,7 +236,7 @@ xJson::Value ElectPerf::rpc_broadcast_to_cluster(const std::string & src_node_id
                                                  uint32_t layer_switch_hop_num,
                                                  uint32_t left_overlap,
                                                  uint32_t right_overlap) {
-    xJson::Value ret;
+    Json::Value ret;
     ret["msghash"] = {};
 
     uint32_t looop = test_num * backup;

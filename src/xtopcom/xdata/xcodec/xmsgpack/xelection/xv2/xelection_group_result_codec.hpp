@@ -83,7 +83,7 @@ struct convert<top::data::election::v2::xelection_group_result_t> final {
 
             case xelection_group_result_results_index: {
                 result.results(array[xelection_group_result_results_index].as<std::map<top::common::xslot_id_t, top::data::election::v2::xelection_info_bundle_t>>());
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
 

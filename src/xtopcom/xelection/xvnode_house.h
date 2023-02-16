@@ -82,7 +82,7 @@ public:
     virtual bool                       add_group(const base::xvnodegroup_t* group_ptr)   override {return false;}
     virtual bool                       remove_group(const xvip2_t & target_group)  override {return false;}
 
-private:
+protected:
     /**
      * @brief Get the group object internally
      *
@@ -137,7 +137,6 @@ private:
     void add_group(const std::string &elect_address, uint64_t elect_height,
             data::election::xelection_result_store_t const & election_result_store, const common::xnetwork_id_t &nid);
 
-private:
     common::xnode_id_t m_node_id;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;

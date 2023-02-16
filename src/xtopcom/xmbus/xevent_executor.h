@@ -6,9 +6,9 @@
 
 #include "xmbus/xevent.h"
 #include "xdata/xblock.h"
+#include "xcommon/xaddress.h"
 #include "xstatistic/xbasic_size.hpp"
 #include "xstatistic/xstatistic.h"
-#include "xvnetwork/xaddress.h"
 
 NS_BEG2(top, mbus)
 
@@ -47,8 +47,8 @@ public:
 
     xevent_sync_response_blocks_t(
             const std::vector<data::xblock_ptr_t> &_blocks,
-            const vnetwork::xvnode_address_t& _self_address,
-            const vnetwork::xvnode_address_t& _from_address,
+            const common::xnode_address_t& _self_address,
+            const common::xnode_address_t& _from_address,
             direction_type dir = to_listener,
             bool _sync = true) :
     xevent_sync_executor_t(xevent_sync_executor_t::blocks, dir, _sync),
@@ -58,8 +58,8 @@ public:
     }
 
     std::vector<data::xblock_ptr_t> blocks;
-    vnetwork::xvnode_address_t self_address;
-    vnetwork::xvnode_address_t from_address;
+    common::xnode_address_t self_address;
+    common::xnode_address_t from_address;
 };
 
 using xevent_sync_response_blocks_ptr_t = xobject_ptr_t<xevent_sync_response_blocks_t>;
@@ -69,8 +69,8 @@ public:
 
     xevent_sync_archive_blocks_t(
             const std::vector<data::xblock_ptr_t> &_blocks,
-            const vnetwork::xvnode_address_t& _self_address,
-            const vnetwork::xvnode_address_t& _from_address,
+            const common::xnode_address_t& _self_address,
+            const common::xnode_address_t& _from_address,
             direction_type dir = to_listener,
             bool _sync = true) :
     xevent_sync_executor_t(xevent_sync_executor_t::archive_blocks, dir, _sync),
@@ -80,7 +80,7 @@ public:
     }
 
     std::vector<data::xblock_ptr_t> blocks;
-    vnetwork::xvnode_address_t self_address;
-    vnetwork::xvnode_address_t from_address;
+    common::xnode_address_t self_address;
+    common::xnode_address_t from_address;
 };
 NS_END2

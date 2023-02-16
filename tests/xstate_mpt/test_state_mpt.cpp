@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include "nlohmann/fifo_map.hpp"
 #include "nlohmann/json.hpp"
 #include "test_state_mpt_cache_data.inc"
@@ -26,8 +28,6 @@ using json = unordered_json;
 #include "xevm_common/trie/xtrie_sync.h"
 #include "xstate_mpt/xstate_mpt.h"
 #include "xstate_mpt/xstate_sync.h"
-
-#include <gtest/gtest.h>
 
 namespace top {
 
@@ -551,7 +551,7 @@ std::map<evm_common::xh256_t, xbytes_t> create_node_bytes_data(size_t count) {
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
         // xhash256_t key{to_bytes(hashvalue)};
-        data[evm_common::xh256_t{hashvalue}] = {str.begin(), str.end()};
+        data[evm_common::xh256_t{xspan_t<xbyte_t>{hashvalue.data(), static_cast<size_t>(hashvalue.size())}}] = {str.begin(), str.end()};
     }
     return data;
 }

@@ -63,7 +63,7 @@ common::xtoken_id_t from_byte<common::xtoken_id_t>(xbyte_t input);
 
 NS_END1
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 #include <functional>
 

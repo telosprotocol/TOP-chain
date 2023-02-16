@@ -481,7 +481,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
                 json jvn;
                 int no = 0;
                 jv["task_id"] = m.first;
-                jv["onchain_timer_round"] = (xJson::UInt64)task.onchain_timer_round;
+                jv["onchain_timer_round"] = (Json::UInt64)task.onchain_timer_round;
                 jv["contract"] = task.contract;
                 jv["action"] = task.action;
                 if (task.action == XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {

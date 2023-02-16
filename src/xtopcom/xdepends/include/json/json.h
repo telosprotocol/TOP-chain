@@ -6,6 +6,10 @@
 #ifndef JSON_JSON_H_INCLUDED
 #define JSON_JSON_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #include "autolink.h"
 #include "value.h"
 #include "reader.h"

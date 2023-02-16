@@ -1,6 +1,7 @@
-#include <gtest/gtest.h>
 #include <string>
 #include <chrono>
+
+#include <gtest/gtest.h>
 
 #include "tests/xelection/xmocked_vnode_service.h"
 
@@ -240,9 +241,6 @@ TEST_F(test_table_slash_contract, collect_slash_statistic_info_BENCH) {
 
     data::system_contract::xunqualified_node_info_v1_t summarize_info;
     uint32_t summarize_tableblock_count = 0;
-
-
-
     int count = 1000;
 
     int total_time = 0;

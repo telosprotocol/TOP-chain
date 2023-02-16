@@ -104,7 +104,7 @@ void MultiRouting::HandleRootMessage(transport::protobuf::RoutingMessage & messa
 
     switch (root_message.message_type()) {
     case kCompleteNodeRequest:
-        XATTRIBUTE_FALLTHROUGH
+        XATTRIBUTE_FALLTHROUGH;
     case kCompleteNodeResponse:
         return root_routing_table_->HandleMessage(message, packet);
     case kCacheElectNodesRequest:

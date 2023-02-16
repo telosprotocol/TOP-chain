@@ -1,16 +1,11 @@
 #include "xdata/xblock_statistics_cons_data.h"
-#include "xcertauth/xcertauth_face.h"
-
-#include "xvledger/xvblock.h"
-
-#include "xbase/xobject_ptr.h"
 
 namespace top {
 namespace data {
 
 /// xaccount_statistics_cons_data_t
 std::string xtop_account_statistics_cons_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_account_statistics_cons_data::do_read(base::xstream_t & stream) {
@@ -43,7 +38,7 @@ int32_t operator<<(base::xbuffer_t & stream, xaccount_statistics_cons_data_t con
 
 /// xgroup_statistics_cons_data_t
 std::string xtop_group_statistics_cons_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_group_statistics_cons_data::do_read(base::xstream_t & stream) {
@@ -76,7 +71,7 @@ int32_t operator<<(base::xbuffer_t & buffer, xgroup_statistics_cons_data_t const
 
 /// xelection_statistics_cons_data_t
 std::string xtop_election_statistics_cons_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_election_statistics_cons_data::do_read(base::xstream_t & stream) {
@@ -109,7 +104,7 @@ int32_t operator<<(base::xbuffer_t & buffer, xelection_statistics_cons_data_t co
 
 /// xstatistics_cons_data_t
 std::string xtop_statistics_cons_data::to_json_string() const {
-    return to_json_object<xJson::Value>().asString();
+    return to_json_object<Json::Value>().asString();
 }
 
 int32_t xtop_statistics_cons_data::do_read(base::xstream_t & stream) {

@@ -12,9 +12,9 @@
 #include "xvledger/xvledger.h"
 #include "xdata/xblockextract.h"
 
-NS_BEG2(top, data)
-
 using namespace top::evm_common;
+
+NS_BEG2(top, data)
 
 bool xrelay_block_store::load_block_hash_from_db(uint64_t load_height, top::data::xrelay_block& db_relay_block)
 {

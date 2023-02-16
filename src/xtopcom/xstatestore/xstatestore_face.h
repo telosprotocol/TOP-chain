@@ -106,4 +106,6 @@ private:
     static xstatestore_face_t * _static_statestore;
 };
 
+int32_t verify_standby_transaction(data::xtransaction_t const * trx);
+
 NS_END2

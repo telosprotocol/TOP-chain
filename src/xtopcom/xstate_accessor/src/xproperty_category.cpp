@@ -5,7 +5,7 @@
 #include "xstate_accessor/xproperties/xproperty_category.h"
 
 #include <cassert>
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 #    include <type_traits>
 #endif
 
@@ -27,7 +27,7 @@ char category_character(xproperty_category_t const c) noexcept {
 
 NS_END3
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 NS_BEG1(std)
 
 size_t hash<top::state_accessor::properties::xproperty_category_t>::operator()(top::state_accessor::properties::xproperty_category_t const property_category) const noexcept {

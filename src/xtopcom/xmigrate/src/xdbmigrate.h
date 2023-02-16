@@ -36,7 +36,7 @@ namespace top
             virtual bool                delete_value(const std::string & key) override;
             virtual std::string   get_value(const std::string & key) const override;
             virtual bool                delete_values(const std::vector<std::string> & to_deleted_keys) override;
-            virtual bool delete_values(std::vector<gsl::span<char const>> const & to_deleted_keys) override;
+            virtual bool delete_values(std::vector<xspan_t<char const>> const & to_deleted_keys) override;
             
         public:
             //prefix must start from first char of key

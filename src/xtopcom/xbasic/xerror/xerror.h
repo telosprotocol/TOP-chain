@@ -71,7 +71,7 @@ NS_END2
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::error::xbasic_errc_t> final {

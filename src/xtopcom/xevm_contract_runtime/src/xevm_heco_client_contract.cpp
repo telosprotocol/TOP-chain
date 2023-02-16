@@ -17,9 +17,9 @@
 #include "xevm_common/xcrosschain/xheco_config.h"
 #include "xevm_common/xcrosschain/xheco_eip1559.h"
 
-NS_BEG4(top, contract_runtime, evm, sys_contract)
-
 using namespace top::evm_common;
+
+NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 constexpr uint64_t confirm_num = 15;
 constexpr uint64_t validator_num = 21;
@@ -41,7 +41,7 @@ bool xtop_evm_heco_client_contract::init(const xbytes_t & rlp_bytes, state_ptr s
         return false;
     }
     // step 2: decode
-    auto left_bytes = std::move(rlp_bytes);
+    auto left_bytes = rlp_bytes;
     std::vector<xeth_header_t> headers;
     while (!left_bytes.empty()) {
         auto item = RLP::decode_once(left_bytes);

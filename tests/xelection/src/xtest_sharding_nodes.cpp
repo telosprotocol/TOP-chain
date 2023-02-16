@@ -83,10 +83,10 @@ TEST(xtest_committee_sharding_nodes, _) {
     for (auto i = 0u; i < node_count; ++i) {
         auto const it = std::next(sharding_nodes.begin(), i);
 
-        ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
-        ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
-        ASSERT_EQ(committee_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
+        ASSERT_TRUE(xslot_id_t{ i } == top::get<xslot_id_t const>(*it));
+        ASSERT_TRUE(xslot_id_t{ i } == top::get<top::data::xnode_info_t>(*it).address.slot_id());
+        ASSERT_TRUE(build_account_address(i) == top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_TRUE(committee_sharding_address == top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
 
@@ -148,10 +148,10 @@ TEST(xtest_zec_sharding_nodes, _) {
     for (auto i = 0u; i < node_count; ++i) {
         auto const it = std::next(sharding_nodes.begin(), i);
 
-        ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
-        ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
-        ASSERT_EQ(zec_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
+        ASSERT_TRUE(xslot_id_t{ i } == top::get<xslot_id_t const>(*it));
+        ASSERT_TRUE(xslot_id_t{ i } == top::get<top::data::xnode_info_t>(*it).address.slot_id());
+        ASSERT_TRUE(build_account_address(i) == top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_TRUE(zec_sharding_address == top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
 
@@ -213,10 +213,10 @@ TEST(xtest_edge_sharding_nodes, _) {
     for (auto i = 0u; i < node_count; ++i) {
         auto const it = std::next(sharding_nodes.begin(), i);
 
-        ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
-        ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
-        ASSERT_EQ(edge_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
+        ASSERT_TRUE(xslot_id_t{i} == top::get<xslot_id_t const>(*it));
+        ASSERT_TRUE(xslot_id_t{i} == top::get<top::data::xnode_info_t>(*it).address.slot_id());
+        ASSERT_TRUE(build_account_address(i) == top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_TRUE(edge_sharding_address == top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
 
@@ -278,10 +278,10 @@ TEST(xtest_archive_sharding_nodes, _) {
     for (auto i = 0u; i < node_count; ++i) {
         auto const it = std::next(sharding_nodes.begin(), i);
 
-        ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
-        ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-        ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
-        ASSERT_EQ(archive_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
+        ASSERT_TRUE(xslot_id_t{i} == top::get<xslot_id_t const>(*it));
+        ASSERT_TRUE(xslot_id_t{i} == top::get<top::data::xnode_info_t>(*it).address.slot_id());
+        ASSERT_TRUE(build_account_address(i) == top::get<top::data::xnode_info_t>(*it).address.node_id());
+        ASSERT_TRUE(archive_sharding_address == top::get<top::data::xnode_info_t>(*it).address.sharding_address());
     }
 }
 
@@ -388,19 +388,19 @@ TEST(xtest_consensus_sharding_nodes, _) {
             for (auto i = 0u; i < node_count; ++i) {
                 auto const it = std::next(auditor_sharding_nodes.begin(), i);
 
-                ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
-                ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-                ASSERT_EQ(build_account_address(i), top::get<top::data::xnode_info_t>(*it).address.node_id());
-                ASSERT_EQ(auditor_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
+                ASSERT_TRUE(xslot_id_t{i} == top::get<xslot_id_t const>(*it));
+                ASSERT_TRUE(xslot_id_t{i} == top::get<top::data::xnode_info_t>(*it).address.slot_id());
+                ASSERT_TRUE(build_account_address(i) == top::get<top::data::xnode_info_t>(*it).address.node_id());
+                ASSERT_TRUE(auditor_sharding_address == top::get<top::data::xnode_info_t>(*it).address.sharding_address());
             }
         } else {
             for (auto i = 0u; i < node_count; ++i) {
                 auto const it = std::next(validator_sharding_nodes.begin(), i);
 
-                ASSERT_EQ(xslot_id_t{ i }, top::get<xslot_id_t const>(*it));
-                ASSERT_EQ(xslot_id_t{ i }, top::get<top::data::xnode_info_t>(*it).address.slot_id());
-                ASSERT_EQ(build_account_address(i + node_count), top::get<top::data::xnode_info_t>(*it).address.node_id());
-                ASSERT_EQ(validator_sharding_address, top::get<top::data::xnode_info_t>(*it).address.sharding_address());
+                ASSERT_TRUE(xslot_id_t{i} == top::get<xslot_id_t const>(*it));
+                ASSERT_TRUE(xslot_id_t{i} == top::get<top::data::xnode_info_t>(*it).address.slot_id());
+                ASSERT_TRUE(build_account_address(i + node_count) == top::get<top::data::xnode_info_t>(*it).address.node_id());
+                ASSERT_TRUE(validator_sharding_address == top::get<top::data::xnode_info_t>(*it).address.sharding_address());
             }
         }
     }

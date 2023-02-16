@@ -16,9 +16,9 @@
 #include "xmbus/xmessage_bus.h"
 #include "xmetrics/xmetrics.h"
 
-NS_BEG2(top, mbus)
-
 using namespace top::base;
+
+NS_BEG2(top, mbus)
 
 struct xevent_object_t : public xobject_t
 {

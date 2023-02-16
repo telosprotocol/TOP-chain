@@ -7,28 +7,25 @@
 
 #include "xchaininit/xchain_command.h"
 
-#include "CLI11.hpp"
-#include "db_tool/db_tool.h"
+#if defined(XCXX20)
+#    include "CLI/CLI.hpp"
+#else
+#    include "CLI11.hpp"
+#endif
 #include "db_tool/db_prune.h"
-// #include "rocksdb/convenience.h"
-// #include "rocksdb/db.h"
-// #include "rocksdb/options.h"
-// #include "rocksdb/slice.h"
-// #include "rocksdb/table.h"
-// #include "rocksdb/utilities/backupable_db.h"
-#include "xchaininit/xchain_command_http_client.h"
+#include "db_tool/db_tool.h"
 #include "xchaininit/version.h"
+#include "xchaininit/xchain_command_http_client.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xpbase/base/check_cast.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xtopcl/include/topcl.h"
 #include "xtopcl/include/global_definition.h"
+#include "xtopcl/include/topcl.h"
 #include "xtopcl/include/xcrypto.h"
-#include "xconfig/xpredefined_configurations.h"
 
-#include <dirent.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -40,7 +37,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <dirent.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
+
 using json = nlohmann::json;
 
 namespace top {
@@ -546,14 +547,20 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // just put here for help info(particular implementation in topio main(xmain.cpp))
     // startnode
     auto startnode = node->add_subcommand("startNode", "Launch the node.");
-    startnode->add_flag("-S,--single_process", "start topio as single_process(default master+worker mode).");
+    {
+        std::string const description{"start topio as single_process(default master + worker mode)."};
+        startnode->add_flag(std::string{"-S,--single_process"}, description);
+    }
     startnode->add_option("--admin_http_addr", "admin http server addr(default: 127.0.0.1).");
     startnode->add_option("--admin_http_port", "admin http server port(default: 8000).");
     startnode->add_option("--bootnodes", "Comma separated endpoints(ip:port) for P2P  discovery bootstrap.");
     startnode->add_option("--net_port", "p2p network listening port (default: 9000).");
     startnode->add_option("--db_compress", "set db compress option:(default:default_compress, high_compress, bottom_compress, no_compress).");
     // startnode->add_option("-c,--config", "start with config file.");
-    startnode->add_flag("--nodaemon", "start as no daemon.");
+    {
+        std::string const description{"start as no daemon."};
+        startnode->add_flag("--nodaemon", description);
+    }
     startnode->callback([&]() {});
     // stopnode
     auto stopnode = node->add_subcommand("stopNode", "stop topio.");

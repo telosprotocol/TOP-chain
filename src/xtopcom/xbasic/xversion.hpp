@@ -40,7 +40,7 @@ private:
     value_type m_value{};
     bool m_initialized{ false };
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     value_type
@@ -73,7 +73,7 @@ public:
         std::swap(m_initialized, other.m_initialized);
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -90,7 +90,7 @@ public:
         return m_value == other.m_value;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -98,7 +98,7 @@ public:
         return !(*this == other);
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -114,7 +114,7 @@ public:
         return m_value < other.m_value;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -122,7 +122,7 @@ public:
         return other < *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -138,7 +138,7 @@ public:
         return m_value <= other.m_value;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -146,7 +146,7 @@ public:
         return other <= *this;
     }
 
-#if defined(XCXX14_OR_ABOVE)
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_epoch next(int32_t step = 1) {
@@ -160,7 +160,7 @@ public:
         return this_copy;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_epoch &
@@ -179,7 +179,7 @@ public:
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_epoch
@@ -199,7 +199,7 @@ public:
         return xtop_epoch{ old_value };
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_epoch &
@@ -218,7 +218,7 @@ public:
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_epoch
@@ -238,7 +238,7 @@ public:
         return xtop_epoch{ old_value };
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_epoch &
@@ -251,14 +251,14 @@ public:
         auto increament_space = std::numeric_limits<value_type>::max() - step;
         if (step > increament_space) {
             assert(false);
-            throw std::overflow_error{ "version overflow " + std::to_string(m_value) + u8" increase " + std::to_string(step) };
+            throw std::overflow_error{ "version overflow " + std::to_string(m_value) + " increase " + std::to_string(step) };
         }
 
         m_value += step;
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_epoch &
@@ -278,7 +278,7 @@ public:
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     value_type
@@ -286,7 +286,7 @@ public:
         return get_value();
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     value_type
@@ -298,7 +298,7 @@ public:
         return get_value();
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -306,7 +306,7 @@ public:
         return !m_initialized;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool
@@ -314,7 +314,7 @@ public:
         return m_initialized;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     hash_result_type

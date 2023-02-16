@@ -5,13 +5,6 @@
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xvstate.h"
 
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <thread>
 
 NS_BEG2(top, db_export)
 

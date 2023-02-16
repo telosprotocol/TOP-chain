@@ -191,7 +191,7 @@ std::string xtop_sync_object::status() const {
             const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
             for (const auto &it: chains) {
                 const std::string &address = it.first;
-                xaccount_address_t _account(address);
+                common::xaccount_address_t _account(address);
 
                 std::string table_prefix;
                 uint32_t table_id = 0;

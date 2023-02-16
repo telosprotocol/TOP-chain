@@ -4,13 +4,21 @@
 
 #pragma once
 
-#include "xkad/proto/kadmlia.pb.h"
+#if defined(XCXX20)
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_timer.h"
-#include "xtransport/proto/transport.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 #include "xtransport/transport.h"
 
 #include <condition_variable>

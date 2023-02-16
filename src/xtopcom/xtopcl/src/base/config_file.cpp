@@ -32,8 +32,8 @@ namespace xChainSDK {
         }
         cfg.close();
 
-        xJson::Reader reader;
-        xJson::Value root;
+        Json::Reader reader;
+        Json::Value root;
         try {
             if (!reader.parse(json_str, root_)) {
                 return false;

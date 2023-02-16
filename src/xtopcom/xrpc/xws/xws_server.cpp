@@ -9,8 +9,8 @@
 #include "xrpc/xratelimit/xratelimit_data.h"
 #include "xrpc/xratelimit/xratelimit_data_queue.h"
 
-NS_BEG2(top, xrpc)
 using namespace top::xChainRPC;
+NS_BEG2(top, xrpc)
 
 WsServer xws_server::m_server;
 unique_ptr<xrpc_service<xedge_ws_method>> xws_server::m_rpc_service = nullptr;

@@ -4,8 +4,8 @@
 
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 
-#include "secp256k1/secp256k1.h"
-#include "secp256k1/secp256k1_recovery.h"
+// #include "secp256k1.h"
+// #include "secp256k1_recovery.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"

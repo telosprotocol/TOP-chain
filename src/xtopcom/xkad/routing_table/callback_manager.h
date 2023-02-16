@@ -13,8 +13,13 @@
 
 #include "xpbase/base/top_timer.h"
 #include "xkad/routing_table/routing_utils.h"
-#include "xtransport/proto/transport.pb.h"
-#include "xkad/proto/kadmlia.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 
 namespace top {
 

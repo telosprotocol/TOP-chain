@@ -5,7 +5,11 @@
 #include "xevm_contract_runtime/xevm_context.h"
 
 #include "xevm_common/common_data.h"
-#include "xevm_runner/proto/proto_parameters.pb.h"
+#if defined(XCXX20)
+#include "xevm_runner/proto/ubuntu/proto_parameters.pb.h"
+#else
+#include "xevm_runner/proto/centos/proto_parameters.pb.h"
+#endif
 
 NS_BEG2(top, evm_runtime)
 

@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 aux_source_directory(./src xgenerate_account_src)
 
 add_executable(xgenerate_account ${xgenerate_account_src})

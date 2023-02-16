@@ -16,7 +16,11 @@ NS_BEG2(top, data)
 
 class xemptyblock_t : public xblock_t {
  protected:
+#if defined(XCXX20)
+     static inline constexpr int object_type_value = static_cast<int>(enum_xdata_type::enum_xdata_type_max) - static_cast<int>(xdata_type_empty_block);
+#else
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_empty_block };
+#endif
 
 public:
     xemptyblock_t();

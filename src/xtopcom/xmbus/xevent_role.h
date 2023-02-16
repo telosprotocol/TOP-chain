@@ -3,7 +3,7 @@
 #include "xmbus/xevent.h"
 #include "xstatistic/xbasic_size.hpp"
 #include "xstatistic/xstatistic.h"
-#include "xvnetwork/xaddress.h"
+#include "xvnetwork/xvnetwork_driver_face.h"
 
 NS_BEG2(top, mbus)
 

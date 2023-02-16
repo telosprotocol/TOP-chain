@@ -1,8 +1,16 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#include <cinttypes>
+#include <fstream>
 #include <sstream>
+#include <string>
+
+#include <gtest/gtest.h>
+
 #define private public
+
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
@@ -23,12 +31,6 @@
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
 #include "xstatestore/xstatestore_face.h"
-
-#include <gtest/gtest.h>
-
-#include <cinttypes>
-#include <fstream>
-#include <string>
 
 using namespace top;
 using namespace top::xvm;
@@ -80,17 +82,17 @@ public:
 
     void exec(top::xvm::xvm_context * vm_ctx) { return; }
 
-    xstatistics_data_t data;
+    data::xstatistics_data_t data;
     top::xobject_ptr_t<top::store::xstore_face_t> m_store;
     top::xobject_ptr_t<top::base::xvblockstore_t> m_blockstore;
 
-    void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_t txs_count, const uint32_t blk_count, std::vector<base::xvoter> const & voter_info, xstatistics_data_t & data){
+    void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_t txs_count, const uint32_t blk_count, std::vector<base::xvoter> const & voter_info, data::xstatistics_data_t & data){
         // height
         uint64_t block_height = get_network_height_from_xip2(leader_xip);
         auto it_height = data.detail.find(block_height);
         if (it_height == data.detail.end()) {
-            xelection_related_statistics_data_t election_related_data;
-            std::pair<std::map<uint64_t, xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
+            data::xelection_related_statistics_data_t election_related_data;
+            std::pair<std::map<uint64_t, data::xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
             it_height = ret.first;
         }
         // gid
@@ -102,7 +104,7 @@ public:
         common::xgroup_address_t group_addr(network_id, zone_id, cluster_id, group_id);
         auto it_group = it_height->second.group_statistics_data.find(group_addr);
         if (it_group == it_height->second.group_statistics_data.end()) {
-            xgroup_related_statistics_data_t group_related_data;
+            data::xgroup_related_statistics_data_t group_related_data;
             auto ret = it_height->second.group_statistics_data.insert(std::make_pair(group_addr, group_related_data));
             it_group = ret.first;
         }
@@ -167,15 +169,15 @@ public:
             tableblock_statistics_handle(leader_xip_test[i], tx_count_test[i], blk_count_test[i], voter_info_test[i], data);
         }
     }
-    base::xauto_ptr<xblock_t> get_block_by_height(const std::string & owner, uint64_t height) const {
+    base::xauto_ptr<data::xblock_t> get_block_by_height(const std::string & owner, uint64_t height) const {
         // TODO(jimmy)
         base::xvaccount_t _vaddr(owner);
         base::xauto_ptr<base::xvblock_t> _block = m_blockstore->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
         if (_block != nullptr) {
             _block->add_ref();
-            return base::xauto_ptr<xblock_t>(dynamic_cast<data::xblock_t*>(_block.get()));
+            return base::xauto_ptr<data::xblock_t>(dynamic_cast<data::xblock_t*>(_block.get()));
         }
-        return base::xauto_ptr<xblock_t>(nullptr);
+        return base::xauto_ptr<data::xblock_t>(nullptr);
     }
 
     std::vector<xobject_ptr_t<data::xblock_t>> test_get_fullblock(common::xaccount_address_t const & table_owner, common::xlogic_time_t const timestamp) {
@@ -250,7 +252,7 @@ public:
         return res;
     }
 
-    void test_accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload) {
+    void test_accumulate_workload(data::xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & group_workload) {
         // auto node_service = contract::xcontract_manager_t::instance().get_node_service();
         auto workload_per_tableblock = 2;
         auto workload_per_tx = 1;
@@ -258,7 +260,7 @@ public:
             auto elect_statistic = static_item.second;
             for (auto const & group_item: elect_statistic.group_statistics_data) {
                 common::xgroup_address_t const & group_addr = group_item.first;
-                xgroup_related_statistics_data_t const & group_account_data = group_item.second;
+                data::xgroup_related_statistics_data_t const & group_account_data = group_item.second;
                 xvip2_t const &group_xvip2 = top::common::xip2_t{
                     group_addr.network_id(),
                     group_addr.zone_id(),
@@ -298,7 +300,7 @@ public:
         for (auto i = 0; i < enum_vledger_const::enum_vbucket_has_tables_count; i++) {
         // for (auto i = 0; i < 10; i++) {
             // calc table address
-            auto table_owner = common::xaccount_address_t{xdatautil::serialize_owner_str(common::con_table_base_address.to_string(), i)};
+            auto table_owner = common::xaccount_address_t{data::xdatautil::serialize_owner_str(common::con_table_base_address.to_string(), i)};
             {
                 std::string value_str;
                 statestore::xstatestore_hub_t::instance()->map_get(zec_workload_contract_address, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
@@ -311,7 +313,7 @@ public:
             uint32_t total_table_block_count = 0;
             // accumulate workload
             for (std::size_t block_index = 0; block_index < full_blocks.size(); block_index++) {
-                xfull_tableblock_t *full_tableblock = dynamic_cast<xfull_tableblock_t *>(full_blocks[block_index].get());
+                data::xfull_tableblock_t *full_tableblock = dynamic_cast<data::xfull_tableblock_t *>(full_blocks[block_index].get());
                 assert(full_tableblock != nullptr);
                 auto const & stat_data = full_tableblock->get_table_statistics();
                 test_accumulate_workload(stat_data, group_workload);
@@ -1120,7 +1122,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
 
 TEST_F(xtest_workload_contract_t, upload_workload_internal) {
     auto vbstate = make_object_ptr<xvbstate_t>(sys_contract_zec_workload_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
-    auto unitstate = std::make_shared<xunit_bstate_t>(vbstate.get());
+    auto unitstate = std::make_shared<data::xunit_bstate_t>(vbstate.get());
     auto account_context = std::make_shared<xaccount_context_t>(unitstate);
     auto contract_helper = std::make_shared<xcontract_helper>(account_context.get(), common::xnode_id_t{sys_contract_zec_workload_addr}, m_table);
     m_workload_contract.set_contract_helper(contract_helper);

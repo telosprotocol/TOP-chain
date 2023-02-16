@@ -7,8 +7,8 @@
 #include "xmetrics/xmetrics.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xverifier/xtx_verifier.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -89,7 +89,7 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
 data::xcons_transaction_ptr_t xtxmgr_table_t::pop_tx(const std::string & tx_hash, base::enum_transaction_subtype subtype, bool clear_follower) {
     // maybe m_tx_queue m_pending_accounts both contains the tx
     std::shared_ptr<xtx_entry> tx_ent = nullptr;
-    if (subtype == enum_transaction_subtype_self || subtype == enum_transaction_subtype_send) {
+    if (subtype == base::enum_transaction_subtype_self || subtype == base::enum_transaction_subtype_send) {
         tx_ent = m_send_tx_queue.pop_tx(tx_hash, clear_follower);
     } else {
         tx_ent = m_new_receipt_queue.pop_tx(tx_hash, subtype);
@@ -101,7 +101,7 @@ data::xcons_transaction_ptr_t xtxmgr_table_t::pop_tx(const std::string & tx_hash
 }
 
 void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid) {
-    if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
+    if (txinfo.get_subtype() == base::enum_transaction_subtype_self || txinfo.get_subtype() == base::enum_transaction_subtype_send) {
         m_send_tx_queue.updata_latest_nonce_by_hash(txinfo.get_hash_str());
     } else {
         m_new_receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, table_sid, receiptid);

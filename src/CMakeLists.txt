@@ -10,11 +10,8 @@ add_compile_options(
     -Wall
     -Werror
     -Wfatal-errors
-
     # -Wpedantic  # recommended
     # -Wextra
-    # -Wconversion
-    # -Wempty-body
     -Werror=return-type
     -Werror=write-strings
     -Werror=unused-label

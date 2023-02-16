@@ -3,23 +3,30 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <sstream>
-
+#include <gtest/gtest.h>
 
 #include "xdata/xrelay_block_store.h"
-#include <gtest/gtest.h>
-#include <cinttypes>
 #include "xpbase/base/top_utils.h"
 #include <trezor-crypto/sha3.h>
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xutility/xhash.h"
 #include "xdata/xrelay_block.h"
-#include "../../src/xtopcom/xdepends/include/trezor-crypto/ed25519-donna/ed25519.h"
-#include <fstream>  
+#include "trezor-crypto/ed25519-donna/ed25519.h"
+
+#include <cinttypes>
+#include <fstream>
+
+#if defined(XCXX20)
+#    include <secp256k1.h>
+#    include <secp256k1_recovery.h>
+#else
+#    include <secp256k1/secp256k1.h>
+#    include <secp256k1/secp256k1_recovery.h>
+#endif
+
 #if 0
 
 using namespace top;

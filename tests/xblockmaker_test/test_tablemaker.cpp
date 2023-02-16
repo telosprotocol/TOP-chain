@@ -938,7 +938,7 @@ TEST_F(test_tablemaker, version_1) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
 
         {
-            xJson::Value jv1;
+            Json::Value jv1;
             proposal_block->parse_to_json(jv1, RPC_VERSION_V1);
             auto j_txs = jv1["tableblock"]["units"][from_addr]["lightunit_input"];
             auto tx_hashes = j_txs.getMemberNames();
@@ -955,7 +955,7 @@ TEST_F(test_tablemaker, version_1) {
         } 
         
         {
-            xJson::Value jv2;
+            Json::Value jv2;
             proposal_block->parse_to_json(jv2, RPC_VERSION_V2);
             auto j_txs = jv2["tableblock"]["txs"];
             for(auto tx : j_txs) {
@@ -980,7 +980,7 @@ TEST_F(test_tablemaker, version_1) {
             EXPECT_EQ(txs.size(), 0);  // unit has none txs
 
             {
-                xJson::Value jv1;
+                Json::Value jv1;
                 unit->parse_to_json(jv1, RPC_VERSION_V1);
                 auto j_txs = jv1["lightunit"]["lightunit_input"]["txs"];
                 for(auto tx : j_txs) {
@@ -996,7 +996,7 @@ TEST_F(test_tablemaker, version_1) {
             }
 
             {
-                xJson::Value jv2;
+                Json::Value jv2;
                 unit->parse_to_json(jv2, RPC_VERSION_V2);
                 auto txs = jv2["lightunit"]["lightunit_input"];
                 for (auto & tx : txs) {
@@ -1047,7 +1047,7 @@ TEST_F(test_tablemaker, table_inner_tx) {
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
 
         {
-            xJson::Value jv1;
+            Json::Value jv1;
             proposal_block->parse_to_json(jv1, RPC_VERSION_V1);
             auto j_txs = jv1["tableblock"]["units"][from_addr]["lightunit_input"];
             auto tx_hashes = j_txs.getMemberNames();
@@ -1058,7 +1058,7 @@ TEST_F(test_tablemaker, table_inner_tx) {
         }
         
         {
-            xJson::Value jv2;
+            Json::Value jv2;
             proposal_block->parse_to_json(jv2, RPC_VERSION_V2);
             auto j_txs = jv2["tableblock"]["txs"];
             EXPECT_EQ(j_txs.size(), 2);
@@ -1087,7 +1087,7 @@ TEST_F(test_tablemaker, table_inner_tx) {
             // EXPECT_EQ(txs.size(), 0);
             
             // {
-            //     xJson::Value jv1;
+            //     Json::Value jv1;
             //     unit->parse_to_json(jv1, RPC_VERSION_V1);
             //     auto j_txs = jv1["lightunit"]["lightunit_input"]["txs"];
             //     for(auto tx : j_txs) {
@@ -1100,7 +1100,7 @@ TEST_F(test_tablemaker, table_inner_tx) {
             // }
 
             {
-                xJson::Value jv2;
+                Json::Value jv2;
                 unit->parse_to_json(jv2, RPC_VERSION_V2);
                 auto txs = jv2["lightunit"]["lightunit_input"];
                 for (auto & tx : txs) {
@@ -1227,7 +1227,7 @@ TEST_F(test_tablemaker, fullunit) {
         EXPECT_TRUE(unit->is_fullunit());
         auto fullunit = dynamic_cast<xblock_t*>(unit.get());
         if (fullunit != nullptr) {
-            xJson::Value jv;
+            Json::Value jv;
             fullunit->parse_to_json(jv, RPC_VERSION_V2);
             auto txs = jv["fullunit"]["txs"];
             for (auto tx : txs) {

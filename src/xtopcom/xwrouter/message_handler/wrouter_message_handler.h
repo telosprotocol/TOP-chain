@@ -12,7 +12,11 @@
 #include "xbase/xthread.h"
 #include "xbase/xtimer.h"
 #include "xbase/xutl.h"
-#include "xkad/proto/kadmlia.pb.h"
+#if defined(XCXX20)
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 #include "xwrouter/register_message_handler.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 

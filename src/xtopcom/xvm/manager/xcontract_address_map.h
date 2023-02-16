@@ -13,8 +13,8 @@
 
 NS_BEG2(top, contract)
 
-using namespace top::common;
-using namespace top::data;
+// using namespace top::common;
+// using namespace top::data;
 
 class xcontract_address_map_t {
 public:
@@ -26,7 +26,7 @@ public:
      * @return common::xaccount_address_t
      */
     static common::xaccount_address_t calc_cluster_address(common::xaccount_address_t const &address, const uint32_t table_id) {
-        if (is_sys_contract_address(address)) {
+        if (data::is_sys_contract_address(address)) {
             return data::make_address_by_prefix_and_subaddr(address.to_string(), (uint16_t)table_id);
         }
         return address;

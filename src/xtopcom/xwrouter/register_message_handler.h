@@ -5,7 +5,11 @@
 #pragma once
 
 #include "xbase/xpacket.h"
-#include "xkad/proto/kadmlia.pb.h"
+#if defined(XCXX20)
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 #include "xtransport/transport_fwd.h"
 
 #include <functional>

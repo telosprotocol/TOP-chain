@@ -8,19 +8,16 @@
 
 #include "xbase/xpacket.h"
 #include "xbase/xthread.h"
-#include "xtransport/proto/transport.pb.h"
-#include "xtransport/utils/transport_utils.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 #include "xtransport/transport.h"
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
 
-#include <condition_variable>
 #include <memory>
 #include <mutex>
-#include <queue>
-#include <thread>
 #include <vector>
 
 namespace top {

@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 aux_source_directory(./ xcontract_common_test_src)
 
 add_executable(xcontract_common_test ${xcontract_common_test_src})

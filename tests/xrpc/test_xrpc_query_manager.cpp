@@ -64,9 +64,9 @@ class test_xrpc_query_manager : public testing::Test {
     std::string m_null_account{"T00000LdD549VCMVVzS2m2RCgkT9errUXdSjJZbb"};
 };
 
-xJson::Value parse_res(const std::string& res){
-    xJson::Reader reader;
-    xJson::Value jv;
+Json::Value parse_res(const std::string& res){
+    Json::Reader reader;
+    Json::Value jv;
     if (!reader.parse(res, jv)) {
         EXPECT_EQ(1, 0);
     }
@@ -74,8 +74,8 @@ xJson::Value parse_res(const std::string& res){
 }
 
 TEST_F(test_xrpc_query_manager, illegal_request) {
-    xJson::Value js_req;
-    xJson::Value js_rsp;
+    Json::Value js_req;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     std::string strRequet = "illegal";
@@ -87,8 +87,8 @@ TEST_F(test_xrpc_query_manager, illegal_request) {
 }
 
 TEST_F(test_xrpc_query_manager, get_latest_block) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getBlock";
@@ -118,8 +118,8 @@ TEST_F(test_xrpc_query_manager, get_latest_block) {
 }
 
 TEST_F(test_xrpc_query_manager, get_table_block) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getBlock";
@@ -135,8 +135,8 @@ TEST_F(test_xrpc_query_manager, get_table_block) {
 }
 
 TEST_F(test_xrpc_query_manager, get_block_by_height) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getBlock";
@@ -150,8 +150,8 @@ TEST_F(test_xrpc_query_manager, get_block_by_height) {
 }
 
 TEST_F(test_xrpc_query_manager, getProperty) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getProperty";
@@ -180,8 +180,8 @@ TEST_F(test_xrpc_query_manager, getProperty) {
 
 #if 0
 TEST_F(test_xrpc_query_manager, getGeneralInfos) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getGeneralInfos";
@@ -191,8 +191,8 @@ TEST_F(test_xrpc_query_manager, getGeneralInfos) {
     EXPECT_EQ(true, ret);
 
     js_rsp["result"] = strResult;
-    xJson::Reader reader;
-    xJson::Value jres;
+    Json::Reader reader;
+    Json::Value jres;
     if (!reader.parse(js_rsp.toStyledString(), jres)) {
         EXPECT_EQ(1, 0);
     }
@@ -203,8 +203,8 @@ TEST_F(test_xrpc_query_manager, getGeneralInfos) {
 #endif
 
 TEST_F(test_xrpc_query_manager, get_transaction) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getTransaction";
@@ -219,8 +219,8 @@ TEST_F(test_xrpc_query_manager, get_transaction) {
 }
 
 TEST_F(test_xrpc_query_manager, getAccount) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["account_addr"] = m_account;
@@ -231,8 +231,8 @@ TEST_F(test_xrpc_query_manager, getAccount) {
 }
 
 TEST_F(test_xrpc_query_manager, getEdges) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getEdges";
@@ -242,8 +242,8 @@ TEST_F(test_xrpc_query_manager, getEdges) {
 }
 
 TEST_F(test_xrpc_query_manager, getArcs) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getArcs";
@@ -253,8 +253,8 @@ TEST_F(test_xrpc_query_manager, getArcs) {
 }
 
 TEST_F(test_xrpc_query_manager, getConsensus) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getConsensus";
@@ -264,8 +264,8 @@ TEST_F(test_xrpc_query_manager, getConsensus) {
 }
 
 TEST_F(test_xrpc_query_manager, getStandbys) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getStandbys";
@@ -275,8 +275,8 @@ TEST_F(test_xrpc_query_manager, getStandbys) {
 }
 
 TEST_F(test_xrpc_query_manager, queryNodeInfo) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "queryNodeInfo";
@@ -286,8 +286,8 @@ TEST_F(test_xrpc_query_manager, queryNodeInfo) {
 }
 
 TEST_F(test_xrpc_query_manager, getTimerInfo) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getTimerInfo";
@@ -297,8 +297,8 @@ TEST_F(test_xrpc_query_manager, getTimerInfo) {
 }
 
 TEST_F(test_xrpc_query_manager, getGeneralInfos) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getGeneralInfos";
@@ -308,8 +308,8 @@ TEST_F(test_xrpc_query_manager, getGeneralInfos) {
 }
 
 TEST_F(test_xrpc_query_manager, getChainId) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "getChainId";
@@ -327,13 +327,13 @@ TEST_F(test_xrpc_query_manager, getChainId) {
 //     auto sync = std::make_shared<sync::xsync_t>(sync_status.get());
 //     auto block_handle = std::make_shared<chain_info::get_block_handle>(nullptr, sync.get());
 
-//     xJson::Value jr;
+//     Json::Value jr;
 //     jr["action"] = "get_sync_overview";
 //     std::string request = jr.toStyledString();
 //     auto ret = block_handle->handle(request);
 //     EXPECT_EQ(true, ret);
 //     auto res = block_handle->get_response();
-//     xJson::Value jres = parse_res(res);
+//     Json::Value jres = parse_res(res);
 //     EXPECT_EQ(0, jres["value"]["syncing"].asUInt64());
 
 //     jr["action"] = "get_sync_detail_all_table";
@@ -354,8 +354,8 @@ TEST_F(test_xrpc_query_manager, getChainId) {
 // }
 
 TEST_F(test_xrpc_query_manager, get_error) {
-    xJson::Value jr;
-    xJson::Value js_rsp;
+    Json::Value jr;
+    Json::Value js_rsp;
     std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     jr["action"] = "get_error";

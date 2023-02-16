@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <tuple>
 
-using namespace std;
+// using namespace std;
 
 
 namespace top {
@@ -243,7 +243,7 @@ xbytes_t RLP::encodeList(const xbytes_t & encoded) noexcept {
 //    return encoded;
 //}
 
-xbytes_t RLP::encode(gsl::span<xbyte_t const> const bytes) {
+xbytes_t RLP::encode(xspan_t<xbyte_t const> const bytes) {
     if (bytes.size() == 1 && bytes[0] <= 0x7f) {
         // Fits in single byte, no header
         return xbytes_t{bytes[0]};
@@ -621,7 +621,7 @@ static void streamOut(std::ostream& _out, RLP const& _d, unsigned _depth = 0)
     else if (_d.isNull())
         _out << "null";
     else if (_d.isInt())
-        _out << std::showbase << std::hex << std::nouppercase << _d.toInt<bigint>(RLP::LaissezFaire) << dec;
+        _out << std::showbase << std::hex << std::nouppercase << _d.toInt<bigint>(RLP::LaissezFaire) << std::dec;
     else if (_d.isData())
         _out << escaped(_d.toString(), false);
     else if (_d.isList())

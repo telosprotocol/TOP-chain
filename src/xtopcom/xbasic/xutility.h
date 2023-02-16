@@ -58,7 +58,7 @@ mul(T a, T b) {
     return x;
 }
 
-#if !defined XCXX14_OR_ABOVE
+#if !defined(XCXX14)
 
 template<typename T, typename U>
 constexpr
@@ -244,7 +244,7 @@ get(std::pair<T, U> && pair) noexcept {
 
 #endif
 
-#if !defined(XCXX23_OR_ABOVE)
+#if !defined(XCXX23)
 
 [[noreturn]] inline void unreachable() {
 #    if defined(__GNUC__)  // GCC, Clang, ICC

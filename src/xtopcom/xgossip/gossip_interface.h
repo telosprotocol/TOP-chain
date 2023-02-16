@@ -8,7 +8,11 @@
 #include "xkad/routing_table/elect_routing_table.h"
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/root_routing_table.h"
-#include "xtransport/proto/transport.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 #include "xtransport/transport.h"
 #include "xtransport/udp_transport/transport_util.h"
 

@@ -12,6 +12,8 @@
 #include "xcrypto/xckey.h"
 #include "xloader/xconfig_genesis_loader.h"
 
+#include <fstream>
+
 #include <omp.h>
 
 using namespace top;

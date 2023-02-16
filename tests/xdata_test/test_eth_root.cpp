@@ -130,7 +130,7 @@ public:
     }
 };
 
-xJson::Value read_json_file(const std::string& filepath) {
+Json::Value read_json_file(const std::string& filepath) {
     std::ifstream in(filepath);
     if (!in.is_open()) {
         assert(false);
@@ -141,8 +141,8 @@ xJson::Value read_json_file(const std::string& filepath) {
     in.close();
     std::string json_str = tmp.str();
 
-    xJson::Value content;
-    xJson::Reader reader;
+    Json::Value content;
+    Json::Reader reader;
     bool ret = reader.parse(json_str, content);
     if (!ret) {
         assert(false);
@@ -151,7 +151,7 @@ xJson::Value read_json_file(const std::string& filepath) {
     return content;
 }
 
-xbytes_t  legecy_json_tx_to_bytes(xJson::Value const& txjson) {
+xbytes_t  legecy_json_tx_to_bytes(Json::Value const& txjson) {
     std::error_code ec;
     legacy_tx tx;
     tx.m_nonce = test_ethtx_tool::jsToU256(txjson["nonce"].asString());
@@ -172,7 +172,7 @@ xbytes_t  legecy_json_tx_to_bytes(xJson::Value const& txjson) {
     return tx.encodeBytes();
 }
 
-xbytes_t  eip1599_json_tx_to_bytes(xJson::Value const& txjson) {
+xbytes_t  eip1599_json_tx_to_bytes(Json::Value const& txjson) {
     std::error_code ec;
     xeth_transaction_t tx;
     uint64_t txversion = (uint64_t)test_ethtx_tool::jsToU256(txjson["type"].asString());
@@ -209,7 +209,7 @@ xbytes_t  eip1599_json_tx_to_bytes(xJson::Value const& txjson) {
     return tx.encodeBytes();
 }
 
-xbytes_t  json_tx_to_bytes(xJson::Value const& txjson) {
+xbytes_t  json_tx_to_bytes(Json::Value const& txjson) {
     uint8_t type = (uint8_t)test_ethtx_tool::jsToU256(txjson["type"].asString());
     xbytes_t _bs;
     if (type == EIP_LEGACY) {
@@ -224,14 +224,14 @@ xbytes_t  json_tx_to_bytes(xJson::Value const& txjson) {
 #if 0 // TODO(jimmy) can't pass
 TEST_F(test_eth_root, eth_block_transactions_root) {
     std::error_code ec;
-    xJson::Value _get_block_js = read_json_file("/home/code/telosprotocal/jimmy_TOP-chain/tests/xdata_test/test_eth_block.json");
-    xJson::Value result_js = _get_block_js["result"];
-    xJson::Value txs_js = result_js["transactions"];
+    Json::Value _get_block_js = read_json_file("/home/code/telosprotocal/jimmy_TOP-chain/tests/xdata_test/test_eth_block.json");
+    Json::Value result_js = _get_block_js["result"];
+    Json::Value txs_js = result_js["transactions"];
     int txs_count = txs_js.size();
     std::cout << "txs_count=" << txs_count << std::endl;
     std::vector<xbytes_t> leafs;
     for (int i = 0; i < txs_count; i++) {
-        xJson::Value tx_js = txs_js[i];
+        Json::Value tx_js = txs_js[i];
         xbytes_t bs = json_tx_to_bytes(tx_js);
         leafs.push_back(bs);
         // std::cout << "tx_bs=" << top::to_hex_prefixed(bs) << std::endl;

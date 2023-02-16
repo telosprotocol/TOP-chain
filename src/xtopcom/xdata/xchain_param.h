@@ -15,7 +15,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xdata/xdata_common.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "json/value.h"
+#include <json/value.h>
 #include "xverifier/xverifier_utl.h"
 
 namespace top { namespace data {

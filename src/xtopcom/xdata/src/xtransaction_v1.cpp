@@ -366,7 +366,7 @@ bool xtransaction_v1_t::sign_check() const {
 
 bool xtransaction_v1_t::pub_key_sign_check(xpublic_key_t const & pub_key) const {
     auto pub_data = base::xstring_utl::base64_decode(pub_key.to_string());
-    xdbg("[global_trace][xtx_verifier][verify_tx_signature][pub_key_sign_check] pub_key: %s , decode.size():%d", pub_key.to_string().c_str(), pub_data.size());
+    xdbg("[global_trace][pub_key_sign_check] pub_key: %s , decode.size():%d", pub_key.to_string().c_str(), pub_data.size());
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.data());
     uint8_t out_publickey_data[utl::UNCOMPRESSED_PUBLICKEY_SIZE];
     memcpy(out_publickey_data, pub_data.data(), (size_t)std::min(utl::UNCOMPRESSED_PUBLICKEY_SIZE, (int)pub_data.size()));
@@ -382,16 +382,16 @@ std::string xtransaction_v1_t::dump() const {
     return std::string(local_param_buf);
 }
 
-void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::string & version) const {
+void xtransaction_v1_t::parse_to_json(Json::Value& result_json, const std::string & version) const {
     result_json["tx_structure_version"] = get_tx_version();
     result_json["tx_deposit"] = get_deposit();
     result_json["tx_type"] = get_tx_type();
     result_json["tx_len"] = get_tx_len();
     result_json["tx_hash"] = data::uint_to_str(digest().data(), digest().size());
     result_json["tx_expire_duration"] = get_expire_duration();
-    result_json["send_timestamp"] = static_cast<xJson::UInt64>(get_fire_timestamp());
+    result_json["send_timestamp"] = static_cast<Json::UInt64>(get_fire_timestamp());
     result_json["premium_price"] = get_premium_price();
-    result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(get_last_nonce());
+    result_json["last_tx_nonce"] = static_cast<Json::UInt64>(get_last_nonce());
     result_json["note"] = get_memo();
     result_json["ext"] = data::uint_to_str(get_ext().data(), get_ext().size());
     result_json["authorization"] = get_authorization();
@@ -407,7 +407,7 @@ void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::stri
             stream >> token_name;
             stream >> amount;
         }
-        result_json["amount"] = static_cast<xJson::UInt64>(amount);
+        result_json["amount"] = static_cast<Json::UInt64>(amount);
         result_json["token_name"] = token_name;
         
         result_json["sender_account"] = m_source_action.get_account_addr();
@@ -423,7 +423,7 @@ void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::stri
         result_json["last_tx_hash"] = data::uint64_to_str(get_last_hash());
         result_json["challenge_proof"] = get_challenge_proof();
 
-        xJson::Value& s_action_json = result_json["sender_action"];
+        Json::Value& s_action_json = result_json["sender_action"];
         s_action_json["action_hash"] = m_source_action.get_action_hash();
         s_action_json["action_type"] = m_source_action.get_action_type();
         s_action_json["action_size"] = m_source_action.get_action_size();
@@ -433,7 +433,7 @@ void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::stri
         s_action_json["action_ext"] = data::uint_to_str(m_source_action.get_action_ext().data(), m_source_action.get_action_ext().size());
         s_action_json["action_authorization"] = m_source_action.get_action_authorization();
 
-        xJson::Value& t_action_json = result_json["receiver_action"];
+        Json::Value& t_action_json = result_json["receiver_action"];
         t_action_json["action_hash"] = m_target_action.get_action_hash();
         t_action_json["action_type"] = m_target_action.get_action_type();
         t_action_json["action_size"] = m_target_action.get_action_size();
@@ -445,7 +445,7 @@ void xtransaction_v1_t::parse_to_json(xJson::Value& result_json, const std::stri
     }
 }
 
-void xtransaction_v1_t::construct_from_json(xJson::Value& request) {
+void xtransaction_v1_t::construct_from_json(Json::Value& request) {
     set_tx_version(request["tx_structure_version"].asUInt());
     set_deposit(request["tx_deposit"].asUInt());
     set_to_ledger_id(static_cast<uint8_t>(request["to_ledger_id"].asUInt()));

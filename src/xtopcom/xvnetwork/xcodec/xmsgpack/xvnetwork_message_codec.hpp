@@ -59,7 +59,7 @@ struct convert<top::vnetwork::xvnetwork_message_t> final
 
             case xvnetwork_message_sender_index: {
                 sender = o.via.array.ptr[xvnetwork_message_sender_index].as<top::common::xnode_address_t>();
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
 
