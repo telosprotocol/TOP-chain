@@ -678,6 +678,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     //cpu
     cpu_hash_256_calc,
+    cpu_hash_256_keccak_calc,
     cpu_hash_64_calc,
     cpu_ca_merge_sign_xbft,
     cpu_ca_merge_sign_tc,

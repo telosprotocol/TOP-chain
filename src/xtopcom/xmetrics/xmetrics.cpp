@@ -621,6 +621,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         //cpu
         RETURN_METRICS_NAME(cpu_hash_256_calc);
+        RETURN_METRICS_NAME(cpu_hash_256_keccak_calc);        
         RETURN_METRICS_NAME(cpu_hash_64_calc);
         RETURN_METRICS_NAME(cpu_ca_merge_sign_xbft);
         RETURN_METRICS_NAME(cpu_ca_merge_sign_tc);
