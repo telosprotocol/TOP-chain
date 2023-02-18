@@ -49,9 +49,6 @@ endif()
 
 option(XENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(BUILD_METRICS "build metrics" OFF)
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(BUILD_METRICS ON)
-endif()
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
@@ -150,6 +147,7 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
         -fstack-protector-strong
         -fno-short-enums
         -Wno-deprecated-declarations
+        -Wno-unused-function
         -fpie
         -fPIE
     )
@@ -347,11 +345,6 @@ if (XBUILD_CONSORTIUM)
     add_definitions(-DXBUILD_CONSORTIUM)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
-#  find_package(PkgConfig REQUIRED)
-
-endif()
-
 message(STATUS "CMAKE_BUILD_TYPE:" ${CMAKE_BUILD_TYPE})
 message(STATUS "CMAKE_SYSTEM_NAME:" ${CMAKE_SYSTEM_NAME})
 message(STATUS "CMAKE_CXX_COMPILER_ID:" ${CMAKE_CXX_COMPILER_ID})
@@ -386,40 +379,33 @@ if (${XSYS_VER} EQUAL 0)
     include_directories(SYSTEM src/xtopcom/xdepends/include/trezor-crypto)
     include_directories(SYSTEM src/xtopcom/xdepends/include)
     include_directories(SYSTEM src/xtopcom/xdepends/GSL/include)
+
+    link_directories(src/xtopcom/xdepends/libs/${XSYSTEM_NAME_LOWERCASE})
+
+    add_subdirectory(src/xtopcom/xdepends)
 else()
-    include_directories(SYSTEM src/xtopcom/xdepends/)
-    include_directories(SYSTEM src/xtopcom/xdepends/trezor)
-    include_directories(SYSTEM src/xtopcom/xdepends/trezor/trezor-crypto)
-    include_directories(SYSTEM src/xtopcom/xdepends/include)
-    include_directories(SYSTEM src/xtopcom/xdepends/GSL/include)
-    include_directories(SYSTEM src/xtopcom/xdepends/jsoncpp/include)
-    include_directories(SYSTEM src/xtopcom/xdepends/ethash/include)
-    include_directories(SYSTEM src/xtopcom/xdepends/ethash/lib)
-    include_directories(SYSTEM src/xtopcom/xdepends/json/single_include)
-    include_directories(SYSTEM src/xtopcom/xdepends/fifo_map/src)
-    include_directories(SYSTEM src/xtopcom/xdepends/crossguid/include)
-    include_directories(SYSTEM src/xtopcom/xdepends/lz4/lib)
+    include_directories(SYSTEM third_party/include)
+    include_directories(SYSTEM third_party/asio/asio/include)
+    include_directories(SYSTEM third_party/trezor)
+    include_directories(SYSTEM third_party/trezor/trezor-crypto)
+    include_directories(SYSTEM third_party/jsoncpp/include)
+    include_directories(SYSTEM third_party/ethash/include)
+    include_directories(SYSTEM third_party/ethash/lib)
+    include_directories(SYSTEM third_party/nlohmann/json/single_include)
+    include_directories(SYSTEM third_party/nlohmann/fifo_map/src)
+    include_directories(SYSTEM third_party/crossguid/include)
+    include_directories(SYSTEM third_party/lz4/lib)
+
+    link_directories(third_party/prebuild/libs/${XSYSTEM_NAME_LOWERCASE})
+
+    add_subdirectory(third_party)
 endif()
 
 link_directories(${LIBRARY_OUTPUT_DIRECTORY})
-link_directories(libs/Linux/${XBUILD_TYPE})
 link_directories(src/xtopcom/xbase/libs/${CMAKE_SYSTEM_NAME}/${XBUILD_TYPE}/${XOS_ID})
-link_directories(src/xtopcom/xdepends/libs/${XSYSTEM_NAME_LOWERCASE})
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_compile_options(
-        # -Wl,-z,relro
-        # -Wl,-z,noexecstack
-        # -Wl,--no-undefined
-        # -Wl,-z,now
-        -Wno-unused-function
-        -Wno-unused-value
-        -Wno-unused-variable
-    )
-
-    set(XDB_TYPE "ROCKSDB")
-    add_subdirectory(src)
-endif()
+set(XDB_TYPE "ROCKSDB")
+add_subdirectory(src)
 
 if (XBUILD_TEST)
     enable_testing()

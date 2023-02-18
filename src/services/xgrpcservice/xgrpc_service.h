@@ -1,12 +1,19 @@
 #pragma once
 
+#include "xbase/xcxx_config.h"
+
+#include <json/json.h>
+#if defined(XCXX20)
+#include "src/ubuntu/xrpc.grpc.pb.h"
+#else
+#include "src/centos/xrpc.grpc.pb.h"
+#endif
+
+#include <atomic>
 #include <string>
 #include <thread>
 #include <deque>
 #include <condition_variable>
-#include <json/json.h>
-#include "src/xrpc.grpc.pb.h"
-#include <atomic>
 
 using grpc::Status;
 using grpc::ServerContext;

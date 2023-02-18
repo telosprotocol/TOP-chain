@@ -6,13 +6,11 @@
 #define XXH_INLINE_ALL  //define it first,then include xxhash.h
 #include "xutility/xxHash/xxhash.h" //from xxhash lib
 
-extern "C"
-{
-    #include "trezor-crypto/ripemd160.h"
-    #include "trezor-crypto/blake256.h"
-    #include "trezor-crypto/sha2.h"
-    #include "trezor-crypto/sha3.h"
-}
+#include "trezor-crypto/ripemd160.h"
+#include "trezor-crypto/blake256.h"
+#include "trezor-crypto/sha2.h"
+#include "trezor-crypto/sha3.h"
+
 #include "xmetrics/xmetrics.h"
 
 #define ENABLE_HASH_METRICS

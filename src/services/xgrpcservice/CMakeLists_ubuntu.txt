@@ -22,7 +22,8 @@ find_library(absl_time_LIBRARY absl_time REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 aux_source_directory(./src src_dir)
-add_library(xgrpcservice STATIC ${src_dir})
+aux_source_directory(./src/${XOS_ID} proto_src)
+add_library(xgrpcservice STATIC ${proto_src} ${src_dir})
 
 add_dependencies(xgrpcservice xxbase)
 

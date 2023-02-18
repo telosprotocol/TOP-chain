@@ -6,6 +6,7 @@
 //
 #pragma once
 
+#include "xbase/xcxx_config.h"
 #include "xbase/xpacket.h"
 #include "xbase/xthread.h"
 #if defined(XCXX20)

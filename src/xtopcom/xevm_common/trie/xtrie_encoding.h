@@ -5,8 +5,7 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-
-#include <gsl/span>
+#include "xbasic/xspan.h"
 
 NS_BEG3(top, evm_common, trie)
 
@@ -21,13 +20,13 @@ NS_BEG3(top, evm_common, trie)
 // std::size_t prefixLen(xbytes_t const & a, xbytes_t const & b);
 // bool hasTerm(xbytes_t const & s);
 
-xbytes_t hex_to_compact(gsl::span<xbyte_t const> hex);
-std::size_t hex_to_compact_inplace(gsl::span<xbyte_t> hex);
-xbytes_t compact_to_hex(gsl::span<xbyte_t const> compact);
-xbytes_t key_bytes_to_hex(gsl::span<xbyte_t const> bytes);
-xbytes_t hex_to_key_bytes(gsl::span<xbyte_t const> hex);
-void decode_nibbles(gsl::span<xbyte_t const> nibbles, gsl::span<xbyte_t> out);
-std::size_t prefix_len(gsl::span<xbyte_t const> a, gsl::span<xbyte_t const> b);
-bool has_terminator(gsl::span<xbyte_t const> bytes);
+xbytes_t hex_to_compact(xspan_t<xbyte_t const> hex);
+std::size_t hex_to_compact_inplace(xspan_t<xbyte_t> hex);
+xbytes_t compact_to_hex(xspan_t<xbyte_t const> compact);
+xbytes_t key_bytes_to_hex(xspan_t<xbyte_t const> bytes);
+xbytes_t hex_to_key_bytes(xspan_t<xbyte_t const> hex);
+void decode_nibbles(xspan_t<xbyte_t const> nibbles, xspan_t<xbyte_t> out);
+std::size_t prefix_len(xspan_t<xbyte_t const> a, xspan_t<xbyte_t const> b);
+bool has_terminator(xspan_t<xbyte_t const> bytes);
 
 NS_END3

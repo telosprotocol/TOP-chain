@@ -1,3 +1,5 @@
+#include "xbase/xcxx_config.h"
+
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
