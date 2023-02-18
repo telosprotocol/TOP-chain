@@ -19,11 +19,11 @@ xtop_kv_db::xtop_kv_db(base::xvdbstore_t * db, common::xtable_address_t const ta
     m_node_key_prefix = base::xvdbkey_t::create_prunable_mpt_node_key_prefix(m_table.vaccount());
 }
 
-std::string xtop_kv_db::convert_key(gsl::span<xbyte_t const> const key) const {
+std::string xtop_kv_db::convert_key(xspan_t<xbyte_t const> const key) const {
     return base::xvdbkey_t::create_prunable_mpt_node_key(m_node_key_prefix, std::string{key.begin(), key.end()});
 }
 
-void xtop_kv_db::Put(gsl::span<xbyte_t const> const key, xbytes_t const & value, std::error_code & ec) {
+void xtop_kv_db::Put(xspan_t<xbyte_t const> const key, xbytes_t const & value, std::error_code & ec) {
     XMETRICS_COUNTER_INCREMENT("trie_put_nodes", 1);
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_db->set_value(convert_key(key), {value.begin(), value.end()}) == false) {
@@ -87,7 +87,7 @@ void xtop_kv_db::Delete(xbytes_t const & key, std::error_code & ec) {
     xdbg("xtop_kv_db::Delete key: %s", top::to_hex(key).c_str());
 }
 
-void xtop_kv_db::DeleteBatch(std::vector<gsl::span<xbyte_t const>> const & batch, std::error_code & ec) {
+void xtop_kv_db::DeleteBatch(std::vector<xspan_t<xbyte_t const>> const & batch, std::error_code & ec) {
     assert(!ec);
     std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<std::string> convert_batch;
@@ -126,7 +126,7 @@ void xtop_kv_db::DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::err
     return;
 }
 
-bool xtop_kv_db::has(gsl::span<xbyte_t const> const key, std::error_code & ec) const {
+bool xtop_kv_db::has(xspan_t<xbyte_t const> const key, std::error_code & ec) const {
     std::lock_guard<std::mutex> lock(m_mutex);
     return !m_db->get_value(convert_key(key)).empty();
 }
@@ -136,7 +136,7 @@ bool xtop_kv_db::HasDirect(xbytes_t const & key, std::error_code & ec) const {
     return !m_db->get_value({key.begin(), key.end()}).empty();
 }
 
-xbytes_t xtop_kv_db::get(gsl::span<xbyte_t const> const key, std::error_code & ec) const {
+xbytes_t xtop_kv_db::get(xspan_t<xbyte_t const> const key, std::error_code & ec) const {
     XMETRICS_COUNTER_INCREMENT("trie_get_nodes", 1);
     std::lock_guard<std::mutex> lock(m_mutex);
     auto const & value = m_db->get_value(convert_key(key));

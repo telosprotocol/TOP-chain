@@ -252,7 +252,7 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
     XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
     assert(!ec);
 
-    std::vector<gsl::span<xbyte_t const>> pruned_keys;
+    std::vector<xspan_t<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes_.size());
     // std::transform(std::begin(pruned_hashes_), std::end(pruned_hashes_), std::back_inserter(pruned_keys), [](xh256_t const & hash) { return hash; });
     for (auto const & pruned_hash : pruned_hashes_) {
@@ -278,7 +278,7 @@ void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hash
     XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
     assert(!ec);
 
-    std::vector<gsl::span<xbyte_t const>> pruned_keys;
+    std::vector<xspan_t<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes.size());
     for (auto const & hash : pruned_hashes) {
         cleans_erase(hash);

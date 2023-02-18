@@ -9,7 +9,7 @@
 #include "xevm_common/xerror/xerror.h"
 #include "xmetrics/xmetrics.h"
 
-#include <assert.h>
+#include <cassert>
 
 NS_BEG3(top, evm_common, trie)
 
@@ -23,7 +23,7 @@ SyncPath newSyncPath(xbytes_t const & path) {
     if (path.size() < 64) {
         res.push_back(hex_to_compact(path));
     } else {
-        gsl::span<xbyte_t const> const path_span{path};
+        xspan_t<xbyte_t const> const path_span{path};
         res.push_back(hex_to_key_bytes(path_span.first(64)));
         res.push_back(hex_to_compact(path_span.subspan(64)));
     }
@@ -270,7 +270,7 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
         auto node = std::dynamic_pointer_cast<xtrie_short_node_t>(object);
         assert(node != nullptr);
 
-        gsl::span<xbyte_t const> key{node->key};
+        xspan_t<xbyte_t const> key{node->key};
         if (has_terminator(key)) {
             key = key.first(key.size() - 1);
         }
@@ -315,7 +315,7 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
                 if (child_p.first.size() == 2 * 32) {
                     paths.push_back(hex_to_key_bytes(child_p.first));
                 } else if (child_p.first.size() == 4 * 32) {
-                    gsl::span<xbyte_t const> child_p_first_span{child_p.first};
+                    xspan_t<xbyte_t const> child_p_first_span{child_p.first};
                     paths.push_back(hex_to_key_bytes(child_p_first_span.first(64)));
                     paths.push_back(hex_to_key_bytes(child_p_first_span.subspan(64)));
                 }
