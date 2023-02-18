@@ -40,9 +40,15 @@
 [submodule "third_party/crossguid"]
 	path = third_party/crossguid
 	url = git@github.com:graeme-hill/crossguid.git
-[submodule "third_party/trezor-crypto"]
-	path = third_party/trezor-crypto
-	url = git@github.com:trezor/trezor-crypto.git
 [submodule "third_party/asio"]
 	path = third_party/asio
 	url = git@github.com:chriskohlhoff/asio.git
+[submodule "third_party/xquic"]
+	path = third_party/xquic
+	url = git@github.com:alibaba/xquic.git
+[submodule "third_party/trezor/trezor-crypto"]
+	path = third_party/trezor/trezor-crypto
+	url = git@github.com:trezor/trezor-crypto.git
+[submodule "third_party/boringssl"]
+	path = third_party/boringssl
+	url = git@github.com:google/boringssl.git
