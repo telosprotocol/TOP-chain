@@ -4,4 +4,4 @@ add_library(xloader STATIC ${src_dir})
 
 #add_dependencies(xloader xconfig xdata xbasic xpbase)
 
-target_link_libraries(xloader PRIVATE xconfig xmbus xdata xbasic xpbase xblockstore jsoncpp)
+target_link_libraries(xloader PRIVATE xconfig xmbus xdata xbasic xpbase xstatestore rocksdb z bz2 zstd snappy lz4 jsoncpp)

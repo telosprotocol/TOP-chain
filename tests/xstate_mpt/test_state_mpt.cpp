@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "test_state_mpt_cache_data.inc"
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
@@ -11,6 +9,13 @@
 #include "xutility/xhash.h"
 #include "xvledger/xvdbstore.h"
 #include "xvledger/xvledger.h"
+
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
+#include <nlohmann/fifo_map.hpp>
+#endif
+#include <nlohmann/json.hpp>
 
 #include <fstream>
 

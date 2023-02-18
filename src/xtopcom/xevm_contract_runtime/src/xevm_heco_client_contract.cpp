@@ -4,8 +4,6 @@
 
 #include "xevm_contract_runtime/sys_contract/xevm_heco_client_contract.h"
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "xbasic/endianness.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
@@ -16,6 +14,13 @@
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xcrosschain/xheco_config.h"
 #include "xevm_common/xcrosschain/xheco_eip1559.h"
+
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
+#include <nlohmann/fifo_map.hpp>
+#endif
+#include <nlohmann/json.hpp>
 
 using namespace top::evm_common;
 

@@ -1,8 +1,6 @@
 #include "xrpc_eth_query_manager.h"
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
-#include <trezor-crypto/sha3.h>
 #if defined(XCXX20)
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>

@@ -6,6 +6,7 @@
 
 #include "heartbeat_manager.h"
 #include "xbase/xbase.h"
+#include "xbase/xcxx_config.h"
 #if defined(XCXX20)
 #include "xkad/proto/ubuntu/kadmlia.pb.h"
 #else

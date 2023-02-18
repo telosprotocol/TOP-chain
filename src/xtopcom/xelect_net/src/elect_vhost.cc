@@ -4,7 +4,11 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xelect_net/include/elect_uitils.h"
-#include "xelect_net/proto/elect_net.pb.h"
+#if defined(XCXX20)
+#    include "xelect_net/proto/ubuntu/elect_net.pb.h"
+#else
+#    include "xelect_net/proto/centos/elect_net.pb.h"
+#endif
 #include "xgossip/include/gossip_utils.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_log.h"

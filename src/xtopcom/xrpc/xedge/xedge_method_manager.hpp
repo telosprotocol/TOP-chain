@@ -301,8 +301,8 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             if (now < json_proc.m_tx_ptr->get_fire_timestamp()) {
                 XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
             }
-            uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
-            XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, delay_time_s);
+            // uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
+            XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now));
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr(), rpc_msg_request);
         } else {
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_query_request);

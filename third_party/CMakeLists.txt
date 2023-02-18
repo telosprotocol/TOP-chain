@@ -59,7 +59,7 @@ set(SSL_INC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/boringssl/include ${CMAKE_CURRENT_S
 # if compile boringssl, find static lib here:
 # set(SSL_LIB_PATH ${LIBRARY_OUTPUT_PATH}/libssl.a;${LIBRARY_OUTPUT_PATH}/libcrypto.a)
 # for now we put it here:
-set(SSL_LIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/prebuild/libs/libbrssl.a;${CMAKE_CURRENT_SOURCE_DIR}/prebuild/libs/libbrcrypto.a)
+set(SSL_LIB_PATH ${CMAKE_SOURCE_DIR}/third_party/prebuild/libs/${XSYSTEM_NAME_LOWERCASE}/libbrssl.a;${CMAKE_SOURCE_DIR}/third_party/prebuild/libs/${XSYSTEM_NAME_LOWERCASE}/libbrcrypto.a)
 set(XQC_ENABLE_TESTING OFF)
 add_compile_options(-Wno-stringop-truncation -Wno-array-parameter)
 add_subdirectory(xquic)

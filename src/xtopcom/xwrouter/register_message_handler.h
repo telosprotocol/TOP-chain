@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbase/xcxx_config.h"
 #include "xbase/xpacket.h"
 #if defined(XCXX20)
 #include "xkad/proto/ubuntu/kadmlia.pb.h"

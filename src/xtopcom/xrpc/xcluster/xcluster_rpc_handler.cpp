@@ -104,11 +104,11 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
         is_evm_tx = base::xvaccount_t::get_addrtype_from_account(account) == base::enum_vaccount_addr_type_secp256k1_evm_user_account;
 
         uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
-        uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
+        // uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
         if (now < tx_ptr->get_fire_timestamp()) {
             XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
         }
-        XMETRICS_GAUGE(metrics::txdelay_from_client_to_auditor, delay_time_s);
+        XMETRICS_GAUGE(metrics::txdelay_from_client_to_auditor, tx_ptr->get_delay_from_fire_timestamp(now));
 
         if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
             xwarn("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",

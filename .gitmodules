@@ -52,3 +52,6 @@
 [submodule "third_party/boringssl"]
 	path = third_party/boringssl
 	url = git@github.com:google/boringssl.git
+[submodule "src/xtopcom/xdepends/lz4"]
+	path = src/xtopcom/xdepends/lz4
+	url = git@github.com:lz4/lz4.git

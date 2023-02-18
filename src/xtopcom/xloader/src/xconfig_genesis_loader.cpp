@@ -9,7 +9,7 @@
 #include <json/value.h>
 #include "xdata/xdata_common.h"
 #include "xloader/xconfig_genesis_loader.h"
-#include "xloader/src/xgenesis_info.h"
+#include "xloader/xgenesis_info.h"
 
 NS_BEG2(top, loader)
 

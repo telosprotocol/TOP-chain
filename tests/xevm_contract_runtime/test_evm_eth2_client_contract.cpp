@@ -1,5 +1,3 @@
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "test_evm_eth2_client_contract_fixture.h"
 #include "test_evm_eth2_client_contract_kiln_header_data.inc"
 #include "test_evm_eth2_client_contract_sepolia_header_data.inc"
@@ -9,6 +7,13 @@
 #include "xdata/xdatautil.h"
 #include "xevm_common/rlp.h"
 #include "xevm_common/xabi_decoder.h"
+
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
+#include <nlohmann/fifo_map.hpp>
+#endif
+#include <nlohmann/json.hpp>
 
 #include <fstream>
 

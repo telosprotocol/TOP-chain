@@ -1,3 +1,4 @@
+#include "xbase/xcxx_config.h"
 #if defined(XCXX20)
 #include "xtransport/proto/ubuntu/transport.pb.h"
 #else

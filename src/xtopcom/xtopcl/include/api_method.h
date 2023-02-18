@@ -1,4 +1,7 @@
 #pragma once
+
+#include "xbase/xcxx_config.h"
+
 #if defined(XCXX20)
 #include "CLI/CLI.hpp"
 #else

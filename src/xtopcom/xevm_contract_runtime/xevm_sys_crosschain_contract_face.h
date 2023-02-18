@@ -4,10 +4,15 @@
 
 #pragma once
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "xdata/xcrosschain_whitelist.h"
 #include "xevm_contract_runtime/xevm_sys_contract_face.h"
+
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
+#include <nlohmann/fifo_map.hpp>
+#endif
+#include <nlohmann/json.hpp>
 
 #ifdef ETH_BRIDGE_TEST
 #include <fstream>

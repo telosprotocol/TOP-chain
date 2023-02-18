@@ -14,7 +14,7 @@
 #include "xdata/xtable_bstate.h"
 #include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"
-#include "xloader/src/xgenesis_info.h"
+#include "xloader/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xrpc/xrpc_query_manager.h"
 #include "xstore/xstore_error.h"
