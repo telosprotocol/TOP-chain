@@ -17,9 +17,9 @@ namespace xtxpool_v2 {
 
 using namespace top::data;
 
-#define table_send_tx_queue_size_max (1024)
-#define table_recv_tx_queue_size_max (1024)
-#define table_conf_tx_queue_size_max (1024)
+#define table_send_tx_queue_size_max (2048)
+#define table_recv_tx_queue_size_max (2048)
+#define table_conf_tx_queue_size_max (2048)
 
 #define role_send_tx_queue_size_max_for_each_table (800)
 #define role_recv_tx_queue_size_max_for_each_table (800)
