@@ -1939,7 +1939,7 @@ void xrpc_query_manager::getSyncNeighbors(Json::Value & js_req, Json::Value & js
 
 void xrpc_query_manager::get_property(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     const string & account = js_req["account_addr"].asString();
-    const string & type = js_req["type"].asString();
+    // const string & type = js_req["type"].asString();
     const std::string & prop_name = js_req["data"].asString();
 
     // add top address check

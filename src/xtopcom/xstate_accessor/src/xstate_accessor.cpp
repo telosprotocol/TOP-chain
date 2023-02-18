@@ -1085,7 +1085,7 @@ size_t xtop_state_accessor::binlog_size(std::error_code & ec) const {
     assert(!ec);
     assert(canvas_ != nullptr);
 
-    size_t r;
+    // size_t r;
     return canvas_.get()->get_op_records_size();
 }
 

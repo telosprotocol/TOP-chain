@@ -307,7 +307,7 @@ void xtop_sniffer::normal_timer_func(common::xaccount_address_t const& contract_
 
 void xtop_sniffer::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
     base::xaccount_index_t accountindex;
-    int32_t ret_pushtx = xsuccess;
+    // int32_t ret_pushtx = xsuccess;
     bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, address, accountindex);
     if (ret) {
         auto tx = data::xtx_factory::create_v2_run_contract_tx(address,
@@ -342,7 +342,7 @@ void xtop_sniffer::call(common::xaccount_address_t const & source_address,
                             std::string const & action_params,
                             uint64_t timestamp) const {
     base::xaccount_index_t accountindex;
-    int32_t ret_pushtx = xsuccess;
+    // int32_t ret_pushtx = xsuccess;
     bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, source_address, accountindex);
     if (ret) {
         auto tx = data::xtx_factory::create_v2_run_contract_tx(source_address,

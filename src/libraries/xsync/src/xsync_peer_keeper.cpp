@@ -191,7 +191,7 @@ void xsync_peer_keeper_t::prune_table(const common::xnode_address_t &self_addr, 
 
     for (const auto &it: chains) {
         const std::string &address = it.first;
-        const xchain_info_t &chain_info = it.second;
+        // const xchain_info_t &chain_info = it.second;
         if (common::has<common::xminer_type_t::advance>(miner_type)) {
             uint64_t height = m_sync_store->get_latest_block_with_state(address);
             xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height);

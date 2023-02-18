@@ -2642,7 +2642,7 @@ static void get_node_manage_info_map(common::xaccount_address_t const & contract
         return;
     }
     for (auto m : info_map) {
-        auto const &account =  m.first;
+        // auto const &account =  m.first;
         auto const &detail = m.second;
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         data::system_contract::xnode_manage_account_info_t reg_account_info;

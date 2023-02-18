@@ -22,3 +22,27 @@
 [submodule "src/xtopcom/xdepends/gperftools"]
 	path = src/xtopcom/xdepends/gperftools
 	url = git@github.com:gperftools/gperftools.git
+[submodule "third_party/jsoncpp"]
+	path = third_party/jsoncpp
+	url = git@github.com:open-source-parsers/jsoncpp.git
+[submodule "third_party/ethash"]
+	path = third_party/ethash
+	url = git@github.com:chfast/ethash.git
+[submodule "third_party/nlohmann/json"]
+	path = third_party/nlohmann/json
+	url = git@github.com:nlohmann/json.git
+[submodule "third_party/nlohmann/fifo_map"]
+	path = third_party/nlohmann/fifo_map
+	url = git@github.com:nlohmann/fifo_map.git
+[submodule "third_party/lz4"]
+	path = third_party/lz4
+	url = git@github.com:lz4/lz4.git
+[submodule "third_party/crossguid"]
+	path = third_party/crossguid
+	url = git@github.com:graeme-hill/crossguid.git
+[submodule "third_party/trezor-crypto"]
+	path = third_party/trezor-crypto
+	url = git@github.com:trezor/trezor-crypto.git
+[submodule "third_party/asio"]
+	path = third_party/asio
+	url = git@github.com:chriskohlhoff/asio.git

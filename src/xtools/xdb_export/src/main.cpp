@@ -79,7 +79,7 @@ void usage() {
 }
 
 int main(int argc, char ** argv) {
-    auto hash_plugin = new xtop_hash_t();
+    /*auto hash_plugin = */new xtop_hash_t();
     top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
     top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
     top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));

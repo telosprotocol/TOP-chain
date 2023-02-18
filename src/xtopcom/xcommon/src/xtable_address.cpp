@@ -110,7 +110,7 @@ xtable_base_address_t xtop_table_address::base_address() const noexcept {
 
 uint64_t xtop_table_address::hash() const {
     if (has_value()) {
-        auto const & account_string = to_string();
+        // auto const & account_string = to_string();
         utl::xxh64_t hasher;
         hasher.update(base_address_.type_and_zone_id_.data(), base_address_.type_and_zone_id_.size());
         auto const table_id_value = assigned_table_id_.value();

@@ -39,7 +39,7 @@ public:
 };
 
 void xelect_client_imp::bootstrap_node_join() {
-    auto & config_register = top::config::xconfig_register_t::get_instance();
+    // auto & config_register = top::config::xconfig_register_t::get_instance();
     xuser_params & user_params = xuser_params::get_instance();
 
     auto const http_port_ui = XGET_CONFIG(http_port);
@@ -59,9 +59,9 @@ void xelect_client_imp::bootstrap_node_join() {
         ip_set.insert(ip_port_vec[0]);
     }
 
-    bool send_success{false};
+    // bool send_success{false};
     size_t try_count{60};
-    size_t loop_count{0};
+    // size_t loop_count{0};
     size_t success_count{0};
     xinfo("enter bootstrap_node_join");
     for (auto i = 0u; i < try_count; ++i) {

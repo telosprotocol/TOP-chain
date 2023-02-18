@@ -820,8 +820,8 @@ void xdb_export_tools_t::query_archive_db(std::map<common::xtable_address_t, uin
     // step 1: check table
     std::cout << "checking table accounts..." << std::endl;
     auto t1 = base::xtime_utl::time_now_ms();
-    uint64_t total_tables = 0;
-    uint64_t total_units = 0;
+    // uint64_t total_tables = 0;
+    // uint64_t total_units = 0;
     std::shared_ptr<xdb_archive_check_info_t> _archive_info = std::make_shared<xdb_archive_check_info_t>();
     {
         asio::thread_pool pool(8);

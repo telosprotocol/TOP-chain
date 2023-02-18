@@ -168,7 +168,7 @@ void xzec_vote_contract::on_receive_shard_votes_v2(uint64_t report_time, std::ma
     //     MAP_CREATE(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY);
     //     MAP_SET(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY, source_address, base::xstring_utl::tostring(0));
     // }
-    bool replace = true;
+    // bool replace = true;
     std::string value_str;
     MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY, source_address, value_str);
     uint64_t last_report_time = 0;

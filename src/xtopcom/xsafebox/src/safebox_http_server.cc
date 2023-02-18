@@ -34,7 +34,7 @@ NS_BEG2(top, safebox)
 void SafeBox::expire_account() {
     std::unique_lock<std::mutex> locak(pw_map_mutex_);
     for (auto iter = pw_map_.begin(); iter != pw_map_.end();) {
-        auto const & account = iter->first;
+        // auto const & account = iter->first;
         auto const & box = iter->second;
         auto now = std::chrono::steady_clock::now();
         if (box.expired_time != std::chrono::milliseconds::zero() && now - box.t > box.expired_time) {

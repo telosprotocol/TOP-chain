@@ -228,7 +228,7 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
             continue;
         }
         // $0
-        auto balance = unitstate->token_get(data::XPROPERTY_BALANCE_AVAILABLE);
+        // auto balance = unitstate->token_get(data::XPROPERTY_BALANCE_AVAILABLE);
         if (!is_account_address(account_address)) {
             if (!accounts_json["contract_account_parse"].count(account) && unitstate->token_get(data::XPROPERTY_BALANCE_AVAILABLE) == 0) {
                 // std::cout << account << " check fail2" << std::endl;
@@ -479,7 +479,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
                 task.serialize_from(stream);
                 json jv;
                 json jvn;
-                int no = 0;
+                // int no = 0;
                 jv["task_id"] = m.first;
                 jv["onchain_timer_round"] = (Json::UInt64)task.onchain_timer_round;
                 jv["contract"] = task.contract;

@@ -24,13 +24,13 @@ static void reset_raw_xip2_address_domain(xvip2_t & xip2) noexcept {
 #endif
 }
 
-static void reset_raw_xip2_type(xvip2_t & xip2) noexcept {
-    reset_xip_type_to_xip2(xip2);
-#if !defined NDEBUG
-    auto const type = static_cast<xip_type_t>(get_xip_type_from_xip2(xip2));
-    assert(type == xip_type_t::enum_xip_type_dynamic);
-#endif
-}
+//static void reset_raw_xip2_type(xvip2_t & xip2) noexcept {
+//    reset_xip_type_to_xip2(xip2);
+//#if !defined NDEBUG
+//    auto const type = static_cast<xip_type_t>(get_xip_type_from_xip2(xip2));
+//    assert(type == xip_type_t::enum_xip_type_dynamic);
+//#endif
+//}
 
 static void reset_raw_xip2_network_type(xvip2_t & xip2) noexcept {
     reset_network_type_to_xip2(xip2);
@@ -113,39 +113,39 @@ static void set_raw_xip2_address_domain(xvip2_t & xip2, xaddress_domain_t const 
 #endif
 }
 
-static void set_raw_xip_address_domain(xvip_t & xip, xaddress_domain_t const domain) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_address_domain(xip2, domain);
-    xip = xip2.low_addr;
+//static void set_raw_xip_address_domain(xvip_t & xip, xaddress_domain_t const domain) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_address_domain(xip2, domain);
+//    xip = xip2.low_addr;
+//
+//#if !defined NDEBUG
+//    xip2.low_addr = xip;
+//    auto const v = static_cast<xaddress_domain_t>(get_address_domain_from_xip2(xip2));
+//    assert(domain == v);
+//#endif
+//}
 
-#if !defined NDEBUG
-    xip2.low_addr = xip;
-    auto const v = static_cast<xaddress_domain_t>(get_address_domain_from_xip2(xip2));
-    assert(domain == v);
-#endif
-}
+//static void set_raw_xip2_type(xvip2_t & xip2, xip_type_t const type) noexcept {
+//    reset_raw_xip2_type(xip2);
+//    set_xip_type_to_xip2(xip2, type);
+//}
 
-static void set_raw_xip2_type(xvip2_t & xip2, xip_type_t const type) noexcept {
-    reset_raw_xip2_type(xip2);
-    set_xip_type_to_xip2(xip2, type);
-}
-
-static void set_raw_xip_type(xvip_t & xip, xip_type_t const type) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_type(xip2, type);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_type(xvip_t & xip, xip_type_t const type) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_type(xip2, type);
+//    xip = xip2.low_addr;
+//}
 
 static void set_raw_xip2_network_type(xvip2_t & xip2, xnetwork_type_t const type) noexcept {
     reset_raw_xip2_network_type(xip2);
     set_network_type_to_xip2(xip2, type);
 }
 
-static void set_raw_xip_network_type(xvip_t & xip, xnetwork_type_t const type) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_network_type(xip2, type);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_network_type(xvip_t & xip, xnetwork_type_t const type) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_network_type(xip2, type);
+//    xip = xip2.low_addr;
+//}
 
 //static void set_raw_xip2_network_version(xvip2_t & xip2, std::uint8_t const version) noexcept {
 //    reset_raw_xip2_network_version(xip2);
@@ -167,11 +167,11 @@ static void set_raw_xip2_network_id(xvip2_t & xip2, xnetwork_id_t::value_type co
 #endif
 }
 
-static void set_raw_xip_network_id(xvip_t & xip, xnetwork_id_t::value_type const network_id) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_network_id(xip2, network_id);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_network_id(xvip_t & xip, xnetwork_id_t::value_type const network_id) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_network_id(xip2, network_id);
+//    xip = xip2.low_addr;
+//}
 
 static void set_raw_xip2_zone_id(xvip2_t & xip2, xzone_id_t::value_type const zid) noexcept {
     reset_raw_xip2_zone_id(xip2);
@@ -182,11 +182,11 @@ static void set_raw_xip2_zone_id(xvip2_t & xip2, xzone_id_t::value_type const zi
 #endif
 }
 
-static void set_raw_xip_zone_id(xvip_t & xip, xzone_id_t::value_type const zone_id) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_zone_id(xip2, zone_id);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_zone_id(xvip_t & xip, xzone_id_t::value_type const zone_id) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_zone_id(xip2, zone_id);
+//    xip = xip2.low_addr;
+//}
 
 static void set_raw_xip2_cluster_id(xvip2_t & xip2, xcluster_id_t::value_type const cid) noexcept {
     reset_raw_xip2_cluster_id(xip2);
@@ -197,11 +197,11 @@ static void set_raw_xip2_cluster_id(xvip2_t & xip2, xcluster_id_t::value_type co
 #endif
 }
 
-static void set_raw_xip_cluster_id(xvip_t & xip, xcluster_id_t::value_type const cluster_id) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_cluster_id(xip2, cluster_id);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_cluster_id(xvip_t & xip, xcluster_id_t::value_type const cluster_id) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_cluster_id(xip2, cluster_id);
+//    xip = xip2.low_addr;
+//}
 
 static void set_raw_xip2_group_id(xvip2_t & xip2, xgroup_id_t::value_type const gid) noexcept {
     reset_raw_xip2_group_id(xip2);
@@ -212,11 +212,11 @@ static void set_raw_xip2_group_id(xvip2_t & xip2, xgroup_id_t::value_type const 
 #endif
 }
 
-static void set_raw_xip_group_id(xvip_t & xip, xgroup_id_t::value_type const group_id) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_group_id(xip2, group_id);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_group_id(xvip_t & xip, xgroup_id_t::value_type const group_id) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_group_id(xip2, group_id);
+//    xip = xip2.low_addr;
+//}
 
 static void set_raw_xip2_slot_id(xvip2_t & xip2, xslot_id_t::value_type const sid) noexcept {
     reset_raw_xip2_slot_id(xip2);
@@ -227,29 +227,29 @@ static void set_raw_xip2_slot_id(xvip2_t & xip2, xslot_id_t::value_type const si
 #endif
 }
 
-static void set_raw_xip_slot_id(xvip_t & xip, xslot_id_t::value_type const slot_id) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_slot_id(xip2, slot_id);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_slot_id(xvip_t & xip, xslot_id_t::value_type const slot_id) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_slot_id(xip2, slot_id);
+//    xip = xip2.low_addr;
+//}
 
-static void set_raw_xip2_group_size(xvip2_t & xip2, uint16_t const size) noexcept {
-    reset_raw_xip2_group_size(xip2);
-    set_group_nodes_count_to_xip2(xip2, size);
-#if !defined NDEBUG
-    auto const sz = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(xip2));
-    assert(size == sz);
-#endif
-}
+//static void set_raw_xip2_group_size(xvip2_t & xip2, uint16_t const size) noexcept {
+//    reset_raw_xip2_group_size(xip2);
+//    set_group_nodes_count_to_xip2(xip2, size);
+//#if !defined NDEBUG
+//    auto const sz = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(xip2));
+//    assert(size == sz);
+//#endif
+//}
 
-static void set_raw_xip2_blk_height(xvip2_t & xip2, uint64_t const h) noexcept {
-    reset_raw_xip2_blk_height(xip2);
-    set_network_height_to_xip2(xip2, h);
-#if !defined NDEBUG
-    auto const height = static_cast<std::uint64_t>(get_network_height_from_xip2(xip2));
-    assert(h == height);
-#endif
-}
+//static void set_raw_xip2_blk_height(xvip2_t & xip2, uint64_t const h) noexcept {
+//    reset_raw_xip2_blk_height(xip2);
+//    set_network_height_to_xip2(xip2, h);
+//#if !defined NDEBUG
+//    auto const height = static_cast<std::uint64_t>(get_network_height_from_xip2(xip2));
+//    assert(h == height);
+//#endif
+//}
 
 xtop_ip::xtop_ip(xtop_ip const & xip, xaddress_domain_t const domain) noexcept : xtop_ip{xip} {
     xvip2_t xip2{m_xip, 0};

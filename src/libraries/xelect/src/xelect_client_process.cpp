@@ -194,9 +194,12 @@ void xelect_client_process::process_election_contract(common::xaccount_address_t
 
 void xelect_client_process::update_election_status(common::xlogic_time_t current_time) {
     constexpr config::xinterval_t update_divider = 4;
+#if !defined(XBUILD_CI) && !defined(XBUILD_DEV) && !defined(XBUILD_GALILEO)
     constexpr config::xinterval_t committee_group_update_interval = 180;
     constexpr config::xinterval_t consensus_group_update_interval = 60;
     constexpr config::xinterval_t nonconsensus_group_update_interval = 60;
+#endif
+
     {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
         auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / update_divider;

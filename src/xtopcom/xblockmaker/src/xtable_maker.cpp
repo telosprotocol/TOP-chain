@@ -482,8 +482,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     }
 
     // reset justify cert hash para
-    const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
-    const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
+    // const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
+    // const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
 
     data::xblock_ptr_t tableblock = xtablebuilder_t::make_light_block(cs_para.get_latest_cert_block(),
                                                                         cs_para,
@@ -523,7 +523,7 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
-    const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
+    // const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
@@ -551,7 +551,7 @@ xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_p
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
-    const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
+    // const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 

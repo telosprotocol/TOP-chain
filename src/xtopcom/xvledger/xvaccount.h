@@ -5,11 +5,29 @@
 #pragma once
 
 #include <string>
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunused-value"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wunused-value"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xbase/xhash.h"
 #include "xbase/xns_macro.h"
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
 #include "xbase/xdata.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 
 namespace top
 {

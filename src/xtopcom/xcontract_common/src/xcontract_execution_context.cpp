@@ -852,7 +852,7 @@ void xtop_contract_execution_context::calc_used_tgas(uint64_t deposit, uint64_t 
 
 uint64_t xtop_contract_execution_context::calc_available_tgas() const {
     uint64_t available_tgas{0};
-    auto token_price = calc_token_price();
+    /*auto token_price = */calc_token_price();
     auto used_tgas = calc_decayed_tgas();
     auto total_tgas = calc_total_tgas();
     if (total_tgas > used_tgas) {
@@ -929,9 +929,9 @@ uint64_t xtop_contract_execution_context::calc_cost_tgas(bool is_contract) const
 
 uint64_t xtop_contract_execution_context::calc_cost_disk(bool is_contract) const {
 #ifdef ENABLE_SCALE
-    uint16_t amplify = 100;
+    // uint16_t amplify = 100;
 #else
-    uint16_t amplify = 1;
+    // uint16_t amplify = 1;
 #endif
 #if 1
     return 0;

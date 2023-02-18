@@ -158,7 +158,7 @@ common::xeth_address_t xtop_abi_decoder::extract<common::xeth_address_t>(std::er
         return {};
     }
 
-    std::array<uint8_t, 20> addr_data;
+    // std::array<uint8_t, 20> addr_data;
     auto value_u256 = extract<evm_common::u256>(ec);
     if (ec) {
         return {};

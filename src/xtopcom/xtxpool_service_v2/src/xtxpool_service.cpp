@@ -542,7 +542,7 @@ void xtxpool_service::send_receipt_sync_msg(const vnetwork::xmessage_t & msg, co
 
 void xtxpool_service::on_message_push_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
     xinfo("xtxpool_service::on_message_push_receipt_received at_node:%s,msg id:%x,hash:%x", m_vnetwork_str.c_str(), message.id(), message.hash());
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    // uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
     xreceipt_push_t pushed_receipt;
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());

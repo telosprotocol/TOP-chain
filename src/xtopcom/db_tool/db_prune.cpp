@@ -35,7 +35,7 @@ DbPrune & DbPrune::instance() {
     return prune;
 }
 int DbPrune::db_init(const std::string datadir) {
-    auto hash_plugin = new xtop_hash_t();
+    /*auto hash_plugin = */new xtop_hash_t();
     data::xrootblock_para_t para;
     data::xrootblock_t::init(para);
 

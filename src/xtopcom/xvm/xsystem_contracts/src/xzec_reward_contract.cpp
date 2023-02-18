@@ -28,8 +28,8 @@
 #define VALID_AUDITOR(node) (node.deposit() > 0 && node.can_be_auditor())
 #define VALID_VALIDATOR(node) (node.deposit() > 0)
 
-enum { total_idx = 0, valid_idx, deposit_zero_num, num_type_idx_num } xreward_num_type_e;
-enum { edger_idx = 0, archiver_idx, auditor_idx, validator_idx, evm_auditor_idx, evm_validator_idx, role_type_idx_num } xreward_role_type_e;
+enum { total_idx = 0, valid_idx, deposit_zero_num, num_type_idx_num } /*xreward_num_type_e*/;
+enum { edger_idx = 0, archiver_idx, auditor_idx, validator_idx, evm_auditor_idx, evm_validator_idx, role_type_idx_num } /*xreward_role_type_e*/;
 
 NS_BEG2(top, xstake)
 
@@ -890,7 +890,7 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
 
     // calc nums
     for (auto const & entity : map_nodes) {
-        auto const & account = entity.first;
+        // auto const & account = entity.first;
         auto const & node = entity.second;
 
         // now statistical method
@@ -963,7 +963,7 @@ uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, s
         auto & node = entity.second;
         uint64_t node_total_votes = 0;
         for (auto const & vote_detail : votes_detail) {
-            auto const & contract = vote_detail.first;
+            // auto const & contract = vote_detail.first;
             auto const & vote = vote_detail.second;
             auto iter = vote.find(account);
             if (iter != vote.end()) {
@@ -1008,9 +1008,9 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     for (auto & entity : map_nodes) {
         auto const & account = entity.first;
-        auto & node = entity.second;
+        // auto & node = entity.second;
         for (auto const & vote_detail : votes_detail) {
-            auto const & contract = vote_detail.first;
+            // auto const & contract = vote_detail.first;
             auto const & vote = vote_detail.second;
             auto iter = vote.find(account);
             if (iter != vote.end()) {

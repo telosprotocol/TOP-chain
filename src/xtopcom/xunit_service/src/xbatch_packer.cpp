@@ -549,7 +549,7 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
     // proposal should pass to xbft, so xbft could realize local is beind in view/block and do sync
-    bool is_leader = false;
+    // bool is_leader = false;
     bool valid = true;
     if (type == xconsensus::enum_consensus_msg_type_proposal || type == xconsensus::enum_consensus_msg_type_proposal_v2) {
         valid = verify_proposal_packet(from_addr, to_addr, packet);

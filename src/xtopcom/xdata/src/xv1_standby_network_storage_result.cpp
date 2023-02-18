@@ -22,7 +22,7 @@ void xtop_standby_network_storage_result::set_activate_state(bool _activated) no
 xstandby_network_result_t xtop_standby_network_storage_result::network_result(common::xnode_type_t const node_type) const {
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
-        auto const & node_id = top::get<common::xnode_id_t const>(p);
+        // auto const & node_id = top::get<common::xnode_id_t const>(p);
         auto const & standby_node_info = top::get<election::v1::xstandby_node_info_t>(p);
         for (auto & stake : standby_node_info.stake_container) {
             if (node_type == top::get<common::xnode_type_t const>(stake))
@@ -48,7 +48,7 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result() 
 xstandby_network_result_t xtop_standby_network_storage_result::all_network_result() const {
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
-        auto const & node_id = top::get<common::xnode_id_t const>(p);
+        // auto const & node_id = top::get<common::xnode_id_t const>(p);
         auto const & standby_node_info = top::get<election::v1::xstandby_node_info_t>(p);
         for (auto & stake : standby_node_info.stake_container) {
             auto const & node_type = top::get<common::xnode_type_t const>(stake);

@@ -421,7 +421,7 @@ namespace top
                 }
                 
                 uint32_t thread_index = m_scaned_keys_num++ % THREAD_NUM;
-                size_t queue_size = thread_dbevent_set(thread_index, db_event);
+                /*size_t queue_size = */thread_dbevent_set(thread_index, db_event);
 
                 if (m_scaned_keys_num - m_processed_count > 1000000) {
                     sleep(5);

@@ -60,12 +60,12 @@ public:
     }
 
     uint32_t get_disk_usage(bool is_contract) {
-        uint64_t tx_size = m_trans->get_transaction()->get_tx_len();
-        #ifdef ENABLE_SCALE
-            uint16_t amplify = 100;
-        #else
-            uint16_t amplify = 1;
-        #endif
+        //uint64_t tx_size = m_trans->get_transaction()->get_tx_len();
+        //#ifdef ENABLE_SCALE
+        //    uint16_t amplify = 100;
+        //#else
+        //    uint16_t amplify = 1;
+        //#endif
 #if 1
         return 0;
 #else

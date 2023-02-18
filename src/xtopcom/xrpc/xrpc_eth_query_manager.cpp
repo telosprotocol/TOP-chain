@@ -1054,7 +1054,7 @@ int xrpc_eth_query_manager::get_log(Json::Value & js_rsp, const uint64_t begin, 
             std::string tx_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(txindex);
             xlog_location_t loglocation(block_hash, block_num, tx_hash, tx_index);
 
-            uint32_t index = 0;
+            // uint32_t index = 0;
             for (uint64_t logindex = 0; logindex < (uint64_t)evm_tx_receipt.get_logs().size(); logindex++) {
                 auto & log = evm_tx_receipt.get_logs()[logindex];
                 if (false == check_log_is_match(log, vTopics, sAddress)) {

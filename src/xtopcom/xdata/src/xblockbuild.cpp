@@ -67,7 +67,7 @@ std::string xtableheader_extra_build_t::build_extra_string(base::xvheader_t * _t
 
 int32_t xextra_map_base_t::serialize_to_string(std::string & str) const {
     base::xstream_t _stream(base::xcontext_t::instance());
-    auto size = do_write(_stream);
+    do_write(_stream);
     str.clear();
     str.assign((const char*)_stream.data(), _stream.size());
     return str.size();

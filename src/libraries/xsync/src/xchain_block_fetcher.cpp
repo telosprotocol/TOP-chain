@@ -49,7 +49,7 @@ void xchain_block_fetcher_t::on_timer() {
     std::list<xsync_block_announce_ptr_t> requests;
 
     for (auto &it: m_announced) {
-        const std::string &hash = it.first;
+        // const std::string &hash = it.first;
         std::vector<xsync_block_announce_ptr_t> &lists = it.second;
         if (lists.size() == 0)
             continue;

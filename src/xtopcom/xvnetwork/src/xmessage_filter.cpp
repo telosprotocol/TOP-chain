@@ -618,7 +618,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
         return false;
     }
 
-    auto recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
+    auto const recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
     if (ec) {
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
@@ -1449,7 +1449,7 @@ bool xtop_message_filter_recver_is_rec::filter_sender_from_rec(xvnetwork_message
     }
 
     auto const & recver = vnetwork_message.receiver();
-    auto const & sender = vnetwork_message.sender();
+    // auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
         normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
@@ -1523,7 +1523,7 @@ bool xtop_message_filter_recver_is_zec::filter_sender_from_zec(xvnetwork_message
     }
 
     auto const & recver = vnetwork_message.receiver();
-    auto const & sender = vnetwork_message.sender();
+    // auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
         normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {

@@ -48,7 +48,7 @@ bool ThreadHandler::on_databox_open(base::xpacket_t & packet, int32_t cur_thread
 }
 
 bool ThreadHandler::fired_packet(base::xpacket_t & packet, int32_t cur_thread_id, uint64_t time_now_ms, on_receive_callback_t & callback_ptr) {
-    auto thread_begin_time = GetCurrentTimeMicSec();  // us
+    // auto thread_begin_time = GetCurrentTimeMicSec();  // us
     transport::protobuf::RoutingMessage pro_message;
     if (!pro_message.ParseFromArray((const char *)packet.get_body().data() + enum_xbase_header_len, packet.get_body().size() - enum_xbase_header_len)) {
         TOP_ERROR("Message ParseFromString from string failed!");
