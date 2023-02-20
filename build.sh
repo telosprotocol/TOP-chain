@@ -21,6 +21,12 @@ echo "osname: $osname"
 distrib=`cat /etc/*-release | uniq -u | grep ^ID= | grep -oP "ID=\"*\K\w+"`
 echo "distribution: $distrib"
 
+CMAKE_EXE=`which cmake || which cmake3`
+if [ ! -f $CMAKE_EXE ]; then
+    echo "cmake not installed"
+    exit
+fi
+
 options="$@"
 
 command_line_option_include_item "$options" "pack"
@@ -40,9 +46,9 @@ if [ $? -eq 1 ]; then
     echo "no install found, compile mode"
     CMAKE_EXTRA_OPTIONS="-DCMAKE_BUILD_TYPE=Debug"
     CBUILD_DIR="cbuild"
-    
+
     source ./build_options.sh
-    
+
     command_line_option_include_item "$options" "leak_trace"
     if [ $? -eq 0 ]; then
         CBUILD_DIR="${CBUILD_DIR}_leak"
@@ -50,24 +56,21 @@ if [ $? -eq 1 ]; then
 
     echo "CMAKE_EXTRA_OPTIONS: ${CMAKE_EXTRA_OPTIONS}"
     echo "CBUILD_DIR: ${CBUILD_DIR}"
-    
+
     mkdir -p ${CBUILD_DIR}
     cd ${CBUILD_DIR}
     printf "$options" > ./build_options.inc
-    
-    if [ $distrib == "centos" ]; then
-        cmake3 .. ${CMAKE_EXTRA_OPTIONS}
-        CPU_CORE=$( lscpu -pCPU | grep -v "#" | wc -l )
-    elif [ $distrib == "ubuntu" ]; then
-        cmake .. ${CMAKE_EXTRA_OPTIONS}
+
+    if [ $osname == "Linux" ]; then
+        $CMAKE_EXE ${CMAKE_EXTRA_OPTIONS} ..
         CPU_CORE=$( lscpu -pCPU | grep -v "#" | wc -l )
     elif [ $osname == "Darwin" ]; then
-        cmake .. ${CMAKE_EXTRA_OPTIONS}
+        $CMAKE_EXE .. ${CMAKE_EXTRA_OPTIONS}
         CPU_CORE=$( sysctl hw|grep ncpu|awk -F ':' '{print $2}' )
     fi
-    
+
     # # MEM_MEG=$( free -m | sed -n 2p | tr -s ' ' | cut -d\  -f2 )
-    
+
     # # MEM_GIG=$(( ((MEM_MEG / 1000) / 2) ))
     # # JOBS=$(( MEM_GIG > CPU_CORE ? CPU_CORE : MEM_GIG ))
     # # make -j${JOBS}
