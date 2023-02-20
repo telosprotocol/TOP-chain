@@ -170,35 +170,35 @@ void xdownloader_t::push_event(const mbus::xevent_ptr_t &e) {
     m_mbus_list[idx]->push_event(e);
 }
 
-std::string xdownloader_t::get_address_by_event(const mbus::xevent_ptr_t &e) {
+std::string xdownloader_t::get_address_by_event(const mbus::xevent_ptr_t &e) const {
     switch(e->major_type) {
     case mbus::xevent_major_type_sync_executor:
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
-            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
+            auto const bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
             return bme->blocks[0]->get_account();
         } else if (e->minor_type == mbus::xevent_sync_executor_t::archive_blocks) {
-            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_archive_blocks_t>(e);
+            auto const bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_archive_blocks_t>(e);
             return bme->blocks[0]->get_account();
         } 
         break;
     case mbus::xevent_major_type_behind:
         if (e->minor_type == mbus::xevent_behind_t::type_download) {
-            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_behind_download_t>(e);
+            auto const bme = dynamic_xobject_ptr_cast<mbus::xevent_behind_download_t>(e);
             return bme->address;
         }
         break;
     case mbus::xevent_major_type_account:
         if (e->minor_type == mbus::xevent_account_t::add_role) {
-            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_add_role_t>(e);
+            auto const bme = dynamic_xobject_ptr_cast<mbus::xevent_account_add_role_t>(e);
             return bme->address;
         } else if (e->minor_type == mbus::xevent_account_t::remove_role) {
-            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_remove_role_t>(e);
+            auto const bme = dynamic_xobject_ptr_cast<mbus::xevent_account_remove_role_t>(e);
             return bme->address;
         }
         break;
     case mbus::xevent_major_type_store:
         if (e->minor_type == mbus::xevent_store_t::type_block_committed) {
-            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+            auto const bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
             return bme->owner;
         }
     default:
