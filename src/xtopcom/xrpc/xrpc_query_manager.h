@@ -110,6 +110,9 @@ public:
         REGISTER_QUERY_METHOD(getLatestTables);
         REGISTER_QUERY_METHOD(getChainId);
         REGISTER_QUERY_METHOD(getCrossReceiptIds);
+#if defined(XBUILD_CONSORTIUM)
+        REGISTER_QUERY_METHOD(getConsortiumReward);
+#endif 
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -133,7 +136,7 @@ public:
     void update_tx_state(xJson::Value & result, const xJson::Value & cons, const std::string & rpc_version);
     xJson::Value parse_tx(top::data::xtransaction_t * tx_ptr, const std::string & version);
     int parse_tx(const std::string & tx_hash, xtransaction_t * txpool_tx, xtxindex_detail_ptr_t const& sendindex, const std::string & version, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
-    xJson::Value parse_action(const top::data::xaction_t & action);
+    xJson::Value parse_action(const top::data::xaction_t & action, data::xtransaction_t const * tx);
     void getRecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getZecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getEdges(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -149,6 +152,9 @@ public:
     xJson::Value parse_sharding_reward(const std::string & target, const std::string & prop_name, string & version);
     void getChainId(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+#if defined(XBUILD_CONSORTIUM)
+    void getConsortiumReward(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+#endif 
 
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -182,7 +188,7 @@ private:
     // set json for different tx types
     void parse_asset_out(xJson::Value & j, const data::xaction_t & action);
     void parse_create_contract_account(xJson::Value & j, const data::xaction_t & action);
-    void parse_run_contract(xJson::Value & j, const data::xaction_t & action);
+    void parse_run_contract(xJson::Value & j, const data::xaction_t & action, data::xtransaction_t const * tx) const;
     void parse_asset_in(xJson::Value & j, const data::xaction_t & action);
     void parse_pledge_token(xJson::Value & j, const data::xaction_t & action);
     void parse_redeem_token(xJson::Value & j, const data::xaction_t & action);

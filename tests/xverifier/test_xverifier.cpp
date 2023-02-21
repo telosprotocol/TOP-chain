@@ -214,7 +214,7 @@ TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
 
-    std::string bad_src_addr = base::xvaccount_t::make_account_address(sys_contract_beacon_table_block_addr, 1);
+    std::string bad_src_addr = base::xvaccount_t::make_account_address(common::rec_table_base_address.to_string(), 1);
     trx_ptr->set_different_source_target_address(bad_src_addr, dst_addr);
     trx_ptr->set_digest();
     trx_ptr->set_len();

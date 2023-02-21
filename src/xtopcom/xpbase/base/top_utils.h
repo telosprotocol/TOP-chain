@@ -72,6 +72,7 @@ std::string Base64Decode(const std::string& str);
 std::string HexSubstr(const std::string& str);
 std::string Base64Substr(const std::string& str);
 std::string DecodePrivateString(const std::string & pri_key);
+int SplitString(const std::string & input,const char split_char,std::set<std::string> & values);
 
 enum RoutingMessageType {
     kInvalidMessageType = 0,

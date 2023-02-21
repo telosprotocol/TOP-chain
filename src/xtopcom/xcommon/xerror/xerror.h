@@ -19,6 +19,8 @@ enum class xenum_errc {
     invalid_table_id,
     invalid_ledger_id,
     invalid_account_type,
+    invalid_zone_index,
+    invalid_table_type,
     token_not_used,
     token_symbol_not_matched,
     token_not_predefined,
@@ -31,11 +33,14 @@ enum class xenum_errc {
     invalid_eth_header,
     invalid_bloom,
     table_id_mismatch,
+    table_base_address_is_empty,
+    invalid_table_base_address,
+    invalid_table_address,
 };
 using xerrc_t = xenum_errc;
 
-std::error_code make_error_code(xerrc_t const errc) noexcept;
-std::error_condition make_error_condition(xerrc_t const errc) noexcept;
+std::error_code make_error_code(xerrc_t errc) noexcept;
+std::error_condition make_error_condition(xerrc_t errc) noexcept;
 
 std::error_category const & common_category() noexcept;
 

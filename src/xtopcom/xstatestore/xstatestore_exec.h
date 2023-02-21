@@ -28,7 +28,7 @@ public:
     static std::mutex   m_global_execute_lock;
 
 public:
-    xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener);
+    xstatestore_executor_t(common::xtable_address_t const& table_addr, xexecute_listener_face_t * execute_listener);
     void    init();
 
 public:
@@ -68,13 +68,16 @@ protected:
     xtablestate_ext_ptr_t  execute_block_recursive(base::xvblock_t* current_block, uint32_t & limit, std::error_code & ec) const;
     xtablestate_ext_ptr_t execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, bool bstate_must, std::error_code & ec) const;
 
+    data::xunitstate_ptr_t execute_unitstate_from_prev_state(common::xaccount_address_t const& unit_addr, base::xaccount_index_t const& current_accountindex, 
+                                                            base::xauto_ptr<base::xvheader_t> const& current_header, std::string const& binlog, std::error_code & ec) const;
+
 protected:
     mutable std::mutex          m_execute_lock;  // protect the whole execution
     mutable uint64_t            m_executed_cert_height{0};
     mutable uint64_t            m_executed_height{0};
     mutable uint64_t            m_need_all_state_sync_height{0};
     mutable uint32_t            m_force_push_execute_count{0};
-    common::xaccount_address_t  m_table_addr;
+    common::xtable_address_t  m_table_addr;
     base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
     xstatestore_base_t          m_statestore_base;
     mutable xstatestore_accessor_t m_state_accessor;

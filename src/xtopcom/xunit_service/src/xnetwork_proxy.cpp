@@ -350,7 +350,7 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         receipt->serialize_to(stream);
         vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()},
-                                                        receipt->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
+                                                        receipt->is_recv_tx() ? xtxpool_msg_send_receipt : xtxpool_msg_recv_receipt);
 
         common::xnode_type_t auditor_type = (target_tableindex.get_zone_index() == base::enum_chain_zone_consensus_index) ? common::xnode_type_t::consensus_auditor : common::xnode_type_t::evm_auditor;
         auto auditor_cluster_addr =

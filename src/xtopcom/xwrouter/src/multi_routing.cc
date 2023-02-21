@@ -49,8 +49,8 @@ int MultiRouting::CreateRootRouting(std::shared_ptr<transport::Transport> transp
         }
     }
 
-    std::set<std::pair<std::string, uint16_t>> public_endpoints_config;
-    GetPublicEndpointsConfig(config, public_endpoints_config);
+    std::set<std::pair<std::string, uint16_t>> p2p_endpoints_config;
+    GetPublicEndpointsConfig(config, p2p_endpoints_config);
     TOP_INFO("enter CreateRoutingTable:%lu", service_type.value());
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key_ptr);
     if (!local_node_ptr) {
@@ -72,12 +72,12 @@ int MultiRouting::CreateRootRouting(std::shared_ptr<transport::Transport> transp
         root_routing_table_ = routing_table_ptr;
     }
 
-    if (public_endpoints_config.empty()) {
+    if (p2p_endpoints_config.empty()) {
         TOP_FATAL("node join must has bootstrap endpoints!");
         return kKadFailed;
     }
 
-    if (routing_table_ptr->MultiJoin(public_endpoints_config) != kKadSuccess) {
+    if (routing_table_ptr->MultiJoin(p2p_endpoints_config) != kKadSuccess) {
         TOP_FATAL("MultiJoin failed");
         return kKadFailed;
     }

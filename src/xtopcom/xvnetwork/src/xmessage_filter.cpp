@@ -10,7 +10,7 @@
 #include "xelection/xdata_accessor_error.h"
 #include "xmetrics/xmetrics.h"
 #include "xtxpool_v2/xtxpool_face.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage_filter_manager.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnetwork/xvnetwork_error2.h"
@@ -172,7 +172,7 @@ xfilter_result_t xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwo
         constexpr std::uint64_t future_threshold{ 2 };
         constexpr std::uint64_t past_threshold{ 6 };
 
-        if ((local_time != 0) && (local_time + future_threshold < msg_time) && message.id() != top::contract::xmessage_block_broadcast_id) {
+        if ((local_time != 0) && (local_time + future_threshold < msg_time) && message.id() != xmessage_block_broadcast_id) {
             ec = xvnetwork_errc2_t::future_message;
 
             // receive a message from future, ignore
@@ -183,7 +183,7 @@ xfilter_result_t xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwo
             return xfilter_result_t::stop_filtering;
         }
 
-        if ((msg_time != 0) && (msg_time + past_threshold < local_time) && message.id() != top::contract::xmessage_block_broadcast_id) {
+        if ((msg_time != 0) && (msg_time + past_threshold < local_time) && message.id() != xmessage_block_broadcast_id) {
             ec = xvnetwork_errc2_t::expired_message;
 
             // receive a message from past, ignore
@@ -255,21 +255,21 @@ xfilter_result_t xtop_message_filter_message_id::filter(xvnetwork_message_t & vn
 #    pragma warning(push, 0)
 #endif
     switch (message_id) {
-    case top::contract::xmessage_block_broadcast_id:
+    case xmessage_block_broadcast_id:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_send_receipt:
+    case xtxpool_msg_send_receipt:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_recv_receipt:
+    case xtxpool_msg_recv_receipt:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_pull_recv_receipt:
+    case xtxpool_msg_pull_recv_receipt:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_pull_confirm_receipt:
+    case xtxpool_msg_pull_confirm_receipt:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_push_receipt:
+    case xtxpool_msg_push_receipt:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2:
+    case xtxpool_msg_pull_confirm_receipt_v2:
         XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_receipt_id_state:
+    case xtxpool_msg_receipt_id_state:
     {
         assert(!broadcast(vnetwork_message.receiver().network_id()));
         assert(!broadcast(vnetwork_message.receiver().zone_id()));

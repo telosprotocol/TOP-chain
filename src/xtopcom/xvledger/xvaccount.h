@@ -82,7 +82,7 @@ namespace top
         {
             enum_main_chain_id          = 0,      //main chain for TOP asset
             enum_rootbeacon_chain_id    = 128,    //root beacon of TOP platform
-            
+            enum_consortium_id          = 129,     //for consortium
             enum_test_chain_id          = 255,    //for test purpose
             
             //service_chain_id defined as below ,that must >= 256
@@ -146,6 +146,8 @@ namespace top
                 } else if (m_zone_index == enum_chain_zone_zec_index) {
                     return enum_vbucket_has_tables_count + MAIN_CHAIN_REC_TABLE_USED_NUM + m_subaddr - 1;
                 } else if (m_zone_index == enum_chain_zone_evm_index) {
+                    return 0;
+                } else if (m_zone_index == enum_chain_zone_relay_index) {
                     return 0;
                 }
                 xassert(false);

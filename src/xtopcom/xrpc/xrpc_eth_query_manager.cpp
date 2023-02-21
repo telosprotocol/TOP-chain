@@ -92,25 +92,25 @@ enum_query_result xrpc_eth_query_manager::query_account_by_number(const std::str
     return enum_success;
 }
 xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_block_by_height(const std::string& table_height) {
-    xdbg("xrpc_eth_query_manager::query_block_by_height: %s, %s",  sys_contract_eth_table_block_addr, table_height.c_str());
-    base::xvaccount_t _table_addr(std::string(sys_contract_eth_table_block_addr) + "@0");
+    xdbg("xrpc_eth_query_manager::query_block_by_height: %s, %s",  common::eth_table_base_address.to_string().c_str(), table_height.c_str());
+    auto const table_addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).vaccount();
 
-    xobject_ptr_t<base::xvblock_t> _block;
+    xobject_ptr_t<base::xvblock_t> block;
     if (table_height == "latest")
-        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
+        block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_addr);
     else if (table_height == "earliest")
-        _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(_table_addr);
+        block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table_addr);
     else if (table_height == "pending")
-        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
+        block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_addr);
     else {
-        uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);
-        _block = m_block_store->load_block_object(_table_addr, height, base::enum_xvblock_flag_authenticated, false);
+        uint64_t const height = std::strtoul(table_height.c_str(), nullptr, 16);
+        block = m_block_store->load_block_object(table_addr, height, base::enum_xvblock_flag_authenticated, false);
     }
-    return _block;
+    return block;
 }
 uint64_t xrpc_eth_query_manager::get_block_height(const std::string& table_height) {
     uint64_t height = 0;
-    std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+    std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
     base::xvaccount_t _vaddress(addr);
     uint64_t max_height = m_block_store->get_latest_cert_block_height(_vaddress);
 
@@ -153,7 +153,15 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
     } else if (ret == enum_success) {
-        evm_common::u256 balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
+        auto default_token_type = XGET_CONFIG(evm_token_type);
+        evm_common::u256 balance = 0;
+        xdbg("xrpc_eth_query_manager::eth_getBalance token type is %s.", default_token_type.c_str());
+        if (default_token_type == "TOP") {
+            uint64_t top_balance = account_ptr->balance();
+            balance = top_balance;
+        } else {
+            balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
+        }
         js_rsp["result"] = xrpc_eth_parser_t::u256_to_hex_prefixed(balance);
         xdbg("xrpc_eth_query_manager::eth_getBalance address=%s,balance=%s,%s", account.c_str(), balance.str().c_str(), xrpc_eth_parser_t::u256_to_hex_prefixed(balance).c_str());
     }
@@ -266,7 +274,7 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
 void xrpc_eth_query_manager::eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
         return;
-    std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+    std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
     base::xvaccount_t _vaddress(addr);
     uint64_t height = m_block_store->get_latest_cert_block_height(_vaddress);
 
@@ -487,7 +495,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     xinfo("xrpc_eth_query_manager::eth_call, %s, %s, %s", jdata.c_str(), value.c_str(), gas_u256.str().c_str());
 
-    std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+    std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
     base::xvaccount_t _vaddress(addr);
     //auto block = m_block_store->get_latest_committed_block(_vaddress);   
     xobject_ptr_t<base::xvblock_t> block = query_block_by_height(js_req[1].asString());
@@ -618,7 +626,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     xinfo("xrpc_eth_query_manager::eth_estimateGas, %s, %s, %s", jdata.c_str(), value.c_str(), gas_u256.str().c_str());
 
-    std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+    std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
     base::xvaccount_t _vaddress(addr);
     xobject_ptr_t<base::xvblock_t> block = query_block_by_height(block_number);
     if (block == nullptr) {
@@ -863,13 +871,13 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
         return;
     } else {
         if (from_block.empty()) {
-            std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+            std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
             base::xvaccount_t _vaddress(addr);
             begin = m_block_store->get_latest_cert_block_height(_vaddress);
         } else
             begin = get_block_height(from_block);
         if (to_block.empty()) {
-            std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+            std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
             base::xvaccount_t _vaddress(addr);
             end = m_block_store->get_latest_cert_block_height(_vaddress);
         } else
@@ -977,9 +985,9 @@ bool xrpc_eth_query_manager::check_block_log_bloom(xobject_ptr_t<base::xvblock_t
     return true;
 }
 int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) {
-    base::xvaccount_t _table_addr(std::string(sys_contract_eth_table_block_addr) + "@0");
+    auto table_addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).vaccount();
     for (uint64_t i = begin; i <= end; i++) {  // traverse blocks
-        xobject_ptr_t<base::xvblock_t> block = m_block_store->load_block_object(_table_addr, i, base::enum_xvblock_flag_authenticated, false);
+        xobject_ptr_t<base::xvblock_t> block = m_block_store->load_block_object(table_addr, i, base::enum_xvblock_flag_authenticated, false);
         if (block == nullptr) {
             xwarn("xrpc_eth_query_manager::get_log, load_block_object fail:%llu", i);
             continue;
@@ -990,6 +998,11 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
             continue;
         } else {
             xdbg("filter_block_log_bloom ok, %llu", i);
+        }
+
+        if (false == m_block_store->load_block_input(table_addr, block.get())) {
+            xerror("xrpc_eth_query_manager::get_log fail load input %s", block->dump().c_str());
+            continue;            
         }
 
         auto input_actions = data::xblockextract_t::unpack_eth_txactions(block.get());

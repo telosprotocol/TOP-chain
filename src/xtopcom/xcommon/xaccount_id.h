@@ -17,10 +17,42 @@
 
 NS_BEG2(top, common)
 
+/*
+ /////////////////////////////////XID defintion/////////////////////////////////////
+ //XID : ID of the logic & virtual account/user# at overlay network
+ XID  definition as total 64bit =
+ {
+    -[32bit]    //index(could be as hash32(account_address)
+    -[26bit]    //prefix  e.g. xledger defined as below
+        -[16bit:ledger_id]
+            -[12bit:net#/chain#]
+            -[4 bit:zone#/bucket-index]
+        -[10bit:subaddr_of_ledger]
+            -[7 bit:book-index]
+            -[3 bit:table-index]
+    -[enum_xid_level :3bit]
+    -[enum_xid_type  :3bit]
+ }
+ */
+
+struct xtop_virtual_id {
+    uint32_t index;
+    uint32_t chain_id : 12;
+    uint32_t zone_index : 4;
+    uint32_t book_index : 7;
+    uint32_t table_index : 3;
+    uint32_t level : 3;
+    uint32_t type : 3;
+};
+using xvirtual_id_t = xtop_virtual_id;
+
 class xtop_account_id {
     friend xaccount_address_t;
 
-    xvid_t m_value{std::numeric_limits<xvid_t>::max()};
+    union {
+        xvid_t m_value{std::numeric_limits<xvid_t>::max()};
+        xvirtual_id_t m_vid;
+    };
 
 public:
     xtop_account_id() = default;

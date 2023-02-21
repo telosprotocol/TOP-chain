@@ -74,7 +74,7 @@ TEST_F(test_state_prune, prune_exec_storage) {
     }
 
     std::shared_ptr<xstatestore_resources_t> para;
-    xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
+    xstatestore_prune_t pruner(common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), para);
 
     base::xvchain_t::instance().set_node_type(true, false);
 
@@ -96,9 +96,9 @@ TEST_F(test_state_prune, prune_exec_storage) {
         xdb->read(state_key, value_state);
         assert(value_state.empty() == (h <= 20 && block->get_block_class() != base::enum_xvblock_class_full));
         EXPECT_EQ(value_state.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     pruner.prune_imp(80);
@@ -111,9 +111,10 @@ TEST_F(test_state_prune, prune_exec_storage) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // not prune offdata any more
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 }
 
@@ -139,7 +140,7 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
     }
 
     std::shared_ptr<xstatestore_resources_t> para;
-    xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
+    xstatestore_prune_t pruner(common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), para);
 
     base::xvchain_t::instance().set_node_type(true, true);
 
@@ -162,9 +163,10 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // not prune offdata any more
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 20 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     for (auto & mock_unit : mock_units) {
@@ -183,9 +185,10 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // not prune offdata any more
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 40 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     for (auto & mock_unit : mock_units) {
@@ -223,7 +226,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
     }
 
     xexecute_listener_test listener_test;
-    statestore::xstatestore_executor_t state_executor{common::xaccount_address_t{mocktable.get_account()}, &listener_test};
+    statestore::xstatestore_executor_t state_executor{common::xtable_address_t::build_from(mocktable.get_account()), &listener_test};
 
     for (uint64_t height = 0; height <= max_block_height - 2; height++) {
         auto block = blockstore->load_block_object(mocktable, height, base::enum_xvblock_flag_committed, false);
@@ -241,14 +244,14 @@ TEST_F(test_state_prune, prune_exec_cons) {
         EXPECT_TRUE(!ec);
 
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
+            common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         xdbg("prune_exec_cons test table:%s,height:%llu,hash:%s", mocktable.get_vaccount().get_account().c_str(), h, root.hex().c_str());
         EXPECT_TRUE(!ec);
         EXPECT_TRUE(mpt != nullptr);
     }
 
     std::shared_ptr<xstatestore_resources_t> para;
-    xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
+    xstatestore_prune_t pruner(common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), para);
     base::xvchain_t::instance().set_node_type(false, true);
 
     for (auto & block : tableblocks) {
@@ -281,7 +284,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
         EXPECT_EQ(!ec, true);
 
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
+            common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         EXPECT_EQ(mpt != nullptr, (h > 20));
         EXPECT_EQ(ec.value() == 0, (h > 20));
     }
@@ -312,7 +315,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
         EXPECT_EQ(!ec, true);
 
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
+            common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         EXPECT_EQ(mpt != nullptr, (h > 40));
     }
 
@@ -331,7 +334,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
         EXPECT_EQ(!ec, true);
 
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
+            common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         xassert(mpt != nullptr);
 
         mpt->prune(root, ec);
@@ -342,7 +345,7 @@ TEST_F(test_state_prune, prune_height) {
     mock::xvchain_creator creator(true);
     std::shared_ptr<xstatestore_resources_t> para;
     mock::xdatamock_table mocktable(1, 4);
-    xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
+    xstatestore_prune_t pruner(common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), para);
 
     uint64_t keep_table_states_max_num = XGET_CONFIG(keep_table_states_max_num);
     uint64_t prune_table_state_diff = XGET_CONFIG(prune_table_state_diff);
@@ -485,7 +488,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 
     evm_common::xh256_t null_root;
     std::error_code ec;
-    auto base_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{table_addr}, null_root, xdbstore, ec);
+    auto base_mpt = state_mpt::xtop_state_mpt::create(common::xtable_address_t::build_from(table_addr), null_root, xdbstore, ec);
     if (ec) {
         assert(false);
     }
@@ -534,7 +537,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 
     auto last_keep_mpt_root = mpt_root_vec[mpt_prune_num];
 
-    auto last_keep_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{table_addr}, last_keep_mpt_root, xdbstore, ec);
+    auto last_keep_mpt = state_mpt::xtop_state_mpt::create(common::xtable_address_t::build_from(table_addr), last_keep_mpt_root, xdbstore, ec);
     if (ec) {
         assert(false);
     }

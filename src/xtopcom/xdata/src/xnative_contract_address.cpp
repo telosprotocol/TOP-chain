@@ -16,6 +16,7 @@ common::xaccount_address_t const rec_elect_rec_contract_address{sys_contract_rec
 common::xaccount_address_t const rec_elect_zec_contract_address{sys_contract_rec_elect_zec_addr};
 common::xaccount_address_t const rec_tcc_contract_address{sys_contract_rec_tcc_addr};
 common::xaccount_address_t const rec_standby_pool_contract_address{sys_contract_rec_standby_pool_addr};
+common::xaccount_address_t const rec_node_manage_address{sys_contract_rec_node_manage_addr};
 
 common::xaccount_address_t const zec_workload_contract_address{sys_contract_zec_workload_addr};
 common::xaccount_address_t const zec_vote_contract_address{sys_contract_zec_vote_addr};
@@ -33,17 +34,16 @@ common::xaccount_address_t const sharding_statistic_info_contract_address{sys_co
 common::xaccount_address_t const sharding_fork_info_contract_address{sys_contract_sharding_fork_info_addr};
 common::xaccount_base_address_t const table_vote_contract_base_address{common::xaccount_base_address_t::build_from(sys_contract_sharding_vote_addr)};
 
+common::xaccount_base_address_t const sharding_vote_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_vote_addr);
+common::xaccount_base_address_t const sharding_reward_claiming_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_reward_claiming_addr);
+common::xaccount_base_address_t const sharding_statistic_info_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_statistic_info_addr);
+common::xaccount_base_address_t const sharding_fork_info_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_fork_info_addr);
+
 common::xaccount_address_t const eth_fork_info_contract_address{sys_contract_eth_fork_info_addr};
 common::xaccount_address_t const eth_statistic_info_contract_address{sys_contract_eth_table_statistic_info_addr};
 common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address{sys_contract_eth_table_cross_chain_txs_collection_addr};
 
 common::xaccount_address_t const eth_zero_address{"T600040000000000000000000000000000000000000000"};
-
-common::xaccount_address_t const rec_table_address{sys_contract_beacon_table_block_addr};
-common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_addr};
-common::xaccount_address_t const sharding_table_address{sys_contract_sharding_table_block_addr};
-common::xaccount_address_t const eth_table_address{sys_contract_eth_table_block_addr};
-common::xaccount_base_address_t const relay_table_base_address{common::xaccount_base_address_t::build_from(sys_contract_relay_table_block_base_addr)};
 common::xaccount_address_t const relay_table_address{sys_contract_relay_table_block_addr};
 
 // common::xaccount_address_t const evm_erc20_contract_address{"T60004ff00000000000000000000000000000000000001"};

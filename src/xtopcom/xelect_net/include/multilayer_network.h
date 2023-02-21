@@ -25,7 +25,7 @@ public:
     MultilayerNetwork & operator=(MultilayerNetwork &&) = delete;
     ~MultilayerNetwork() override = default;
 
-    int HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config);
+    void TryCombineP2PEndpoints();
 
     bool Init(const base::Config & config);
     bool Run(const base::Config & config);
@@ -58,7 +58,7 @@ protected:
 private:
     int CreateRootManager(std::shared_ptr<transport::Transport> transport,
                           const top::base::Config & config,
-                          const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config);
+                          const std::set<std::pair<std::string, uint16_t>> & p2p_endpoints_config);
 
 private:
     mutable std::mutex vhost_map_mutex_;

@@ -20,6 +20,9 @@ NS_BEG2(top, data)
 
 class xblockextract_t {
  public:
+    static void loop_all_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func);
+    static void loop_eth_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func);
+    static void loop_top_txactions(base::xvblock_t* _block, std::function<void(const base::xvaction_t & _action)> _func); 
     static void                                     extract_sub_txs(base::xvblock_t* _block, std::vector<base::xvtxindex_ptr> & sub_txs);
     static uint32_t                                 get_txactions_count(base::xvblock_t* _block);
     static std::vector<xlightunit_action_t>         unpack_txactions(base::xvblock_t* _block);
@@ -37,9 +40,7 @@ class xblockextract_t {
     static evm_common::xh256_t get_state_root(base::xvblock_t * block, std::error_code & ec);
     static evm_common::xh256_t get_state_root_from_block(base::xvblock_t * block);
     static void     unpack_subblocks(base::xvblock_t* _block, std::vector<xobject_ptr_t<base::xvblock_t>> & sublocks, std::error_code & ec);
-    static void     get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec);
- 
-
+    static void     get_tableheader_extra_from_block(base::xvblock_t* _block, base::xtableheader_extra_t &header_extra, std::error_code & ec);
  private:
     static std::shared_ptr<xrelay_block>            unpack_commit_relay_block_from_relay_table(base::xvblock_t* _block, std::error_code & ec);    
 };

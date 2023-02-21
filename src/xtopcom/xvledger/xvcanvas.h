@@ -6,6 +6,7 @@
  
 #include <mutex>
 #include "xbase/xvmethod.h"
+#include "xstatistic/xstatistic.h"
 
 namespace top
 {
@@ -13,7 +14,7 @@ namespace top
     {
         //xvcanvas_t is the execution context that recording and compile to bin-log
         //xvcanvas_t has own mutex so it is multiple-thread safe
-        class xvcanvas_t : public xrefcount_t
+        class xvcanvas_t : public xrefcount_t, public xstatistic::xstatistic_obj_face_t
         {
         public:
             enum enum_compile_optimization
@@ -52,6 +53,10 @@ namespace top
             const int  encode(std::string & output_bin,const int compile_options = xvcanvas_t::enum_compile_optimization_all);
  
             size_t     get_op_records_size() const {return m_records.size();}
+
+            virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vcanvas;}
+        private:
+            virtual int32_t get_object_size_real() const override;
             
         public://debug purpose only
             void              log();

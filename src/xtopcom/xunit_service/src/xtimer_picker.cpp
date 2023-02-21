@@ -8,7 +8,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xunit_service/xcons_utl.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xBFT/src/xtimercertview.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
@@ -229,7 +229,7 @@ bool  xtimer_picker_t::on_time_cert_event(const base::xvevent_t & event,xcsobjec
             xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
             xunit_info("[xtimer_picker_t::on_time_cert_event] broadcast to all nodes,round=%d,height=%ld,xip=%s",
                 e.get_broadcast_round(),tc_block->get_height(),xcons_utl::xip_to_hex(local_xip).c_str());
-            network_proxy->send_out(contract::xmessage_block_broadcast_id, local_xip, to_addr, tc_block);
+            network_proxy->send_out(xmessage_block_broadcast_id, local_xip, to_addr, tc_block);
             XMETRICS_GAUGE_SET_VALUE(metrics::clock_leader_broadcast_height, tc_block->get_height());
         }
     }
@@ -321,7 +321,7 @@ bool xtimer_picker_t::on_proposal_finish(const base::xvevent_t & event, xcsobjec
             auto    network_proxy = m_params->get_resources()->get_network();
             xassert(network_proxy != nullptr);
             if (network_proxy != nullptr) {
-                network_proxy->send_out(contract::xmessage_block_broadcast_id, get_xip2_addr(), to_addr, high_qc);
+                network_proxy->send_out(xmessage_block_broadcast_id, get_xip2_addr(), to_addr, high_qc);
             }
         }
     } else {

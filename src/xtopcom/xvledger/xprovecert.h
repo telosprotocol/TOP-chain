@@ -24,6 +24,8 @@ namespace top
         public:
             xprove_cert_t();
             xprove_cert_t(base::xvqcert_t* prove_cert, enum_xprove_cert_type prove_type, const std::string & _path);
+
+            int32_t get_object_size() const;
         protected:
             virtual ~xprove_cert_t();
         private:

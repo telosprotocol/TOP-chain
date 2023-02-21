@@ -98,10 +98,21 @@ public:
      */
     static int32_t verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr);
 
+    /**
+     * @brief check account if genesis account
+     * 
+     * @param account 
+     * @return true 
+     * @return false 
+     */
+    static bool  verify_check_genesis_account(const std::string& account);
+    
  private:
     static int32_t verify_burn_tx(data::xtransaction_t const * trx);
     static int32_t verify_local_tx(data::xtransaction_t const * trx);
     static int32_t verify_shard_contract_addr(data::xtransaction_t const * trx_ptr);
+    static int32_t    verify_node_whitelist(const std::string& source_addr, const std::string& target_addr);
+    static int32_t    verify_transaction_whitelist(const std::string& src_addr, const std::string& dst_addr);
 };
 
 

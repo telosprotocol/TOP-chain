@@ -29,7 +29,7 @@ const uint16_t VALIDATOR_ACCOUNT_ADDR_NUM = 512;
 
 class test_table_slash_contract: public xtable_statistic_info_collection_contract, public testing::Test {
 public:
-    test_table_slash_contract() : xtable_statistic_info_collection_contract{common::xnetwork_id_t{0}}, node_serv{sharding_statistic_info_contract_address, "null"} {};
+    test_table_slash_contract() : xtable_statistic_info_collection_contract{common::xnetwork_id_t{0}}, node_serv{common::xaccount_address_t::build_from(sharding_statistic_info_contract_base_address), "null"} {};
 
     void SetUp(){
         create_account_addrs(AUDITOR_ACCOUNT_ADDR_NUM, VALIDATOR_ACCOUNT_ADDR_NUM);

@@ -8,7 +8,6 @@
 #include "xsync/xsync_message.h"
 #include "xsync/xgossip_message.h"
 // #include "xblockstore/test/xblockstore_face_mock.h"
-// #include "xblockstore/test/test_blockstore_datamock.hpp"
 #include "xdata/xblocktool.h"
 #include "xstore/xstore.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
@@ -189,7 +188,7 @@ TEST(xsync_message, general_newblockhash) {
 TEST(xsync_message, gossip) {
     base::xstream_t stream(base::xcontext_t::instance());
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
+    std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), 0);
 
     {
         std::vector<xgossip_chain_info_ptr_t> info_list;

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xvblock.h"
+#include "xstatistic/xstatistic.h"
 
 #ifndef STORE_UNIT_BLOCK
 #define STORE_UNIT_BLOCK
@@ -30,7 +31,7 @@ namespace top
             enum_index_store_flags_mask           = 0xFF, //Mask to keep them
             //note:all bit has been used up, not allow add more
         };
-        class xvbindex_t : public xvaccount_t
+        class xvbindex_t : public xvaccount_t, public xstatistic::xstatistic_obj_face_t
         {
             friend class xvblock_t;
         public:
@@ -117,9 +118,11 @@ namespace top
 
             int32_t            serialize_to(std::string & bin_data);   //write whole object to binary
             int32_t            serialize_from(const std::string & bin_data);  //read from binary and regeneate content of
+            virtual int32_t    get_class_type() const override {return xstatistic::enum_statistic_bindex;}
         private:
             void               init(); //init object
             bool               reset_next_block(xvbindex_t * _new_next_ptr);//return false if hash or height not match
+            virtual int32_t    get_object_size_real() const override;
 
         private://not serialized to db
             xvbindex_t*     m_prev_index;
@@ -234,8 +237,8 @@ namespace top
             inline xvblock_t*          get_block()   const {return m_block;}//it always be valid before xvbnode_t release
             inline xvheader_t*         get_header()  const {return m_block->get_header();}  //raw ptr of xvheader_t
             inline xvqcert_t*          get_cert()    const {return m_block->get_cert();}    //raw ptr of xvqcert_t
-            inline xvinput_t *         get_input()   const {return m_block->get_input();}   //raw ptr of xvinput_t,might be nullptr
-            inline xvoutput_t*         get_output()  const {return m_block->get_output();}  //raw ptr of xvoutput_t,might be nullptr
+            // inline xvinput_t *         get_input()   const {return m_block->get_input();}   //raw ptr of xvinput_t,might be nullptr
+            // inline xvoutput_t*         get_output()  const {return m_block->get_output();}  //raw ptr of xvoutput_t,might be nullptr
 
             inline bool                is_valid(bool deeptest)  {return m_block->is_valid(deeptest);}
             inline bool                is_deliver(bool deeptest){return m_block->is_deliver(deeptest);}

@@ -182,6 +182,17 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_tx_list);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_gasprice_list);
 
+// consortium parameters
+#if defined(XBUILD_CONSORTIUM)
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+#endif 
+
+XDEFINE_CONFIGURATION(enable_free_tgas);
+XDEFINE_CONFIGURATION(evm_token_type);
+
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
 XDEFINE_CONFIGURATION(validator_group_count);
@@ -239,11 +250,9 @@ XDEFINE_CONFIGURATION(evm_json_rpc_port);
 /* end of development parameters */
 
 /* end of offchain parameters */
-XDEFINE_CONFIGURATION(platform_business_port);
-XDEFINE_CONFIGURATION(platform_public_endpoints);
-XDEFINE_CONFIGURATION(platform_show_cmd);
-XDEFINE_CONFIGURATION(platform_db_path);
-XDEFINE_CONFIGURATION(platform_url_endpoints);
+XDEFINE_CONFIGURATION(node_p2p_port);
+XDEFINE_CONFIGURATION(p2p_endpoints);
+XDEFINE_CONFIGURATION(p2p_url_endpoints);
 
 XDEFINE_CONFIGURATION(sync_table_state_height_gap);
 XDEFINE_CONFIGURATION(keep_table_states_max_num);

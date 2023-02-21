@@ -92,7 +92,7 @@ public:
     void   prune_db();
     void   query_all_table_performance(std::vector<std::string> const & accounts_vec);
 
-    std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> get_unit_accounts(common::xaccount_address_t const & table_address,
+    std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> get_unit_accounts(common::xtable_address_t const & table_address,
                                                                                              std::uint64_t table_height,
                                                                                              std::vector<common::xaccount_address_t> const & designated,
                                                                                              std::error_code & ec) const;
@@ -138,106 +138,110 @@ public:
                         std::error_code & ec) const;
 
 private:
-    struct tx_ext_t {
-        base::xtable_shortid_t  sendtableid;
-        std::string hash{};
-        uint64_t height{0};
-        uint64_t timestamp{0};
-        std::string src{};
-        std::string target{};
-        // uint64_t unit_height{0};
-        uint8_t phase{0};
-        uint64_t fire_timestamp{0}; // origin tx fire timestamp
-        uint16_t self_table{0};
-        uint16_t peer_table{0};
-        bool not_need_confirm{false};        
+    enum enum_tx_consensus_phase_type : uint8_t {
+        enum_tx_consensus_phase_type_unkwown,
+        enum_tx_consensus_phase_type_one,
+        enum_tx_consensus_phase_type_two,
+        enum_tx_consensus_phase_type_three,
+        enum_tx_consensus_phase_type_max,
     };
 
-    struct block_info_t {
-        uint32_t height{0};
-        uint32_t timestamp{0};
-        void copy(const tx_ext_t & tx_ext) {
-            height = (uint32_t)tx_ext.height;
-            timestamp = (uint32_t)tx_ext.timestamp;
-        }
+    struct tx_ext_t {
+        std::string get_hex_hash() const {return base::xstring_utl::to_hex(hash);}
+        std::string hash{};
+        enum_tx_consensus_phase_type cons_phase_type{enum_tx_consensus_phase_type_unkwown};
+        uint8_t phase{0};
+        base::xtable_shortid_t  sendtableid;
+        uint64_t block_timestamp{0};
+        uint64_t fire_timestamp{0}; // origin tx fire timestamp
     };
 
     struct tx_ext_sum_t {
-        uint16_t self_table{0};
-        uint16_t peer_table{0};
-        uint32_t fire_timestamp{0}; // origin tx fire timestamp
-        block_info_t send_block_info{};
-        block_info_t recv_block_info{};
-        block_info_t confirm_block_info{};
+        std::string get_hex_hash() const {return base::xstring_utl::to_hex(hash);}
         std::string hash{};
-        bool not_need_confirm{false};
-        bool is_self{false};
+        enum_tx_consensus_phase_type cons_phase_type{enum_tx_consensus_phase_type_max};
+        uint8_t actions_count{0};
+        base::xtable_shortid_t  sendtableid;
+        uint32_t fire_timestamp{0}; // origin tx fire timestamp
+        uint64_t send_block_timestamp{0};
+        uint64_t recv_block_timestamp{0};
+        uint64_t confirm_block_timestamp{0};
 
         tx_ext_sum_t() {
         }
 
-        tx_ext_sum_t(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype) {
+        tx_ext_sum_t(const tx_ext_t & tx_ext) {
             hash = tx_ext.hash;
-            copy_tx_ext(tx_ext, subtype);
-        }
-
-        void copy_tx_ext(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype) {
-            if (tx_ext.not_need_confirm) {
-                not_need_confirm = true;
+            cons_phase_type = tx_ext.cons_phase_type;
+            if (cons_phase_type != enum_tx_consensus_phase_type_one && cons_phase_type != enum_tx_consensus_phase_type_two && cons_phase_type != enum_tx_consensus_phase_type_three) {
+                std::cout << "tx_ext_sum_t error cons_phase_type " << (uint32_t)cons_phase_type << std::endl;
+                std::__throw_bad_exception();
             }
 
-            if (subtype == data::enum_transaction_subtype_send) {
-                self_table = tx_ext.self_table;
-                peer_table = tx_ext.peer_table;
-                fire_timestamp = (uint32_t)tx_ext.fire_timestamp;   
-                send_block_info.copy(tx_ext);
-            } else if (subtype == data::enum_transaction_subtype_recv) {
-                recv_block_info.copy(tx_ext);
-            } else if (subtype == data::enum_transaction_subtype_confirm) {
-                confirm_block_info.copy(tx_ext);
-            } else if (subtype == data::enum_transaction_subtype_self) {
-                not_need_confirm = true;
-                is_self = true;
-                self_table = tx_ext.self_table;
-                peer_table = tx_ext.peer_table;
-                fire_timestamp = (uint32_t)tx_ext.fire_timestamp;                   
-                send_block_info.copy(tx_ext);
+            sendtableid = tx_ext.sendtableid;
+            fire_timestamp = tx_ext.fire_timestamp;
+            actions_count = 1;
+            if (tx_ext.phase == base::enum_transaction_subtype_self || tx_ext.phase == base::enum_transaction_subtype_send) {
+                send_block_timestamp = tx_ext.block_timestamp;
+            } else if (tx_ext.phase == base::enum_transaction_subtype_recv) {
+                recv_block_timestamp = tx_ext.block_timestamp;
+            } else {
+                confirm_block_timestamp = tx_ext.block_timestamp;
+            }
+        }
+
+        void copy_tx_ext(const tx_ext_t & tx_ext) {
+            actions_count++;
+            if (hash != tx_ext.hash || cons_phase_type != tx_ext.cons_phase_type || sendtableid != tx_ext.sendtableid || tx_ext.block_timestamp == 0) {
+                std::cout << "copy_tx_ext error cons_phase_type " << (uint32_t)cons_phase_type << std::endl;
+                std::__throw_bad_exception();
+            }
+            if (tx_ext.phase == base::enum_transaction_subtype_self || tx_ext.phase == base::enum_transaction_subtype_send) {
+                send_block_timestamp = tx_ext.block_timestamp;
+                fire_timestamp = tx_ext.fire_timestamp;
+            } else if (tx_ext.phase == base::enum_transaction_subtype_recv) {
+                recv_block_timestamp = tx_ext.block_timestamp;
+            } else {
+                confirm_block_timestamp = tx_ext.block_timestamp;
             }
         }
 
         bool is_confirmed() {
-            if (send_block_info.height == 0 || recv_block_info.height == 0) {
-                return false;
-            }
-
-            if (not_need_confirm) {
+            if (cons_phase_type == enum_tx_consensus_phase_type_one) {
                 return true;
+            } else if (cons_phase_type == enum_tx_consensus_phase_type_two) {
+                if (send_block_timestamp != 0 && recv_block_timestamp != 0) {
+                    return true;
+                }
+            } else if (cons_phase_type == enum_tx_consensus_phase_type_three) {
+                if (send_block_timestamp != 0 && recv_block_timestamp != 0 && confirm_block_timestamp != 0) {
+                    return true;
+                }                
+            } else {
+                std::cout << "is_confirmed error cons_phase_type " << (uint32_t)cons_phase_type << std::endl;
+                std::__throw_bad_exception();
             }
 
-            return (confirm_block_info.height != 0);
+            return false;
         }
 
         uint32_t    get_delay_from_send_to_confirm() const {
-            if (is_self) {
+            if (cons_phase_type == enum_tx_consensus_phase_type_one) {
                 return 0;
+            } else if (cons_phase_type == enum_tx_consensus_phase_type_two) {
+                return recv_block_timestamp > send_block_timestamp ? (recv_block_timestamp - send_block_timestamp) : 0;
             } else {
-                uint32_t confirm_time = not_need_confirm ? recv_block_info.timestamp : confirm_block_info.timestamp;
-                // the second level timestamp of confirm block may less than send block
-                return confirm_time > send_block_info.timestamp ? (confirm_time - send_block_info.timestamp) : 0;
-            }            
+                return confirm_block_timestamp > send_block_timestamp ? (confirm_block_timestamp - send_block_timestamp) : 0;              
+            }
         }
         uint32_t   get_delay_from_fire_to_confirm() const {
-            uint32_t confirm_time;
-            if (is_self) {
-                confirm_time = send_block_info.timestamp;
+            if (cons_phase_type == enum_tx_consensus_phase_type_one) {
+                return send_block_timestamp > fire_timestamp ? send_block_timestamp - fire_timestamp : 0;
+            } else if (cons_phase_type == enum_tx_consensus_phase_type_two) {
+                return recv_block_timestamp > fire_timestamp ? recv_block_timestamp - fire_timestamp : 0;
             } else {
-                confirm_time = not_need_confirm ? recv_block_info.timestamp : confirm_block_info.timestamp;
+                return confirm_block_timestamp > fire_timestamp ? confirm_block_timestamp - fire_timestamp : 0;       
             }
-            // the timestamp of send block may less than the timestamp of tx fire_timestamp
-            uint32_t adjust_tx_fire_timestamp = fire_timestamp < send_block_info.timestamp ? fire_timestamp : send_block_info.timestamp;
-            // the second level timestamp of confirm block may less than send block
-            uint32_t delay_from_fire_to_confirm = confirm_time > adjust_tx_fire_timestamp ? (confirm_time - adjust_tx_fire_timestamp) : 0;
-            return delay_from_fire_to_confirm;
         }
 
     };
@@ -264,20 +268,16 @@ private:
         uint64_t tx_v1_total_size{0};
         uint32_t tx_v2_num{0};
         uint64_t tx_v2_total_size{0};
-
-        // uint64_t total_confirm_time_from_send{0};
-        // uint64_t total_confirm_time_from_fire{0};
-        // uint64_t max_confirm_time_from_send{0};
-        // uint64_t max_confirm_time_from_fire{0};
     };
 
     struct xdbtool_all_table_info_t {
         std::map<std::string, tx_ext_sum_t> unconfirmed_tx_map;
-        // int confirmedtx_num{0};
-        // uint64_t total_confirm_time_from_send{0};
-        // uint64_t total_confirm_time_from_fire{0};
         uint64_t max_confirm_time_from_send{0};
         uint64_t max_confirm_time_from_fire{0};
+        uint64_t confirmed_tx_count{0};
+        uint64_t total_confirm_time_from_send{0};
+        uint64_t total_confirm_time_from_fire{0};
+        uint64_t total_tx_count{0};
         std::mutex m_lock;
         bool all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum);
         void set_table_txdelay_time(const tx_ext_sum_t & tx_ext_sum);
@@ -394,7 +394,6 @@ private:
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data);
     void query_archive_db_internal(common::xtable_address_t const & table_address, uint64_t check_height, std::ofstream & file, std::shared_ptr<xdb_archive_check_info_t> archive_info);
 
-    json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);
     json set_unconfirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);
     // void set_table_txdelay_time(xdbtool_table_info_t & table_info, const tx_ext_t & send_txinfo, const tx_ext_t & confirm_txinfo);
@@ -409,10 +408,6 @@ private:
     void generate_account_info_file(std::string const & account, const uint64_t height);
     void generate_json_file(std::string const & filename, json const & j);
     void generate_common_file(std::string const & filename, std::string const & data);
-    bool all_table_check_tx_file(const tx_ext_t & tx_ext,
-                                 base::enum_transaction_subtype type,
-                                 const std::map<std::string, tx_check_info_t> & tx_check_list,
-                                 std::map<std::string, tx_check_result_info_t> & tx_result_list);
     void query_table_performance(std::string const & account);
 
     std::unique_ptr<xbase_timer_driver_t> m_timer_driver;

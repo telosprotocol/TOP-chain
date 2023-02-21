@@ -38,7 +38,7 @@ private:
 
 class xstatestore_prune_t : public std::enable_shared_from_this<xstatestore_prune_t> {
 public:
-    xstatestore_prune_t(common::xaccount_address_t const & table_addr, std::shared_ptr<xstatestore_resources_t> para);
+    xstatestore_prune_t(common::xtable_address_t const & table_addr, std::shared_ptr<xstatestore_resources_t> para);
 
 public:
     void on_table_block_executed(uint64_t exec_height);
@@ -47,7 +47,7 @@ public:
 private:
     void prune_imp(uint64_t exec_height);
     void unitstate_prune_batch(const xaccounts_prune_info_t & accounts_prune_info);
-    common::xaccount_address_t const & get_account() const {return m_table_addr;}
+    common::xtable_address_t const & get_account() const {return m_table_addr;}
     bool need_prune(uint64_t exec_height);
     bool get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height);
     void set_pruned_height(uint64_t pruned_height);
@@ -61,7 +61,7 @@ private:
 
 private:
     mutable std::mutex m_prune_lock;
-    common::xaccount_address_t m_table_addr;
+    common::xtable_address_t m_table_addr;
     base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
     uint64_t m_pruned_height{0};
     xstatestore_base_t m_statestore_base;

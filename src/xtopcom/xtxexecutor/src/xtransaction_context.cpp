@@ -235,7 +235,7 @@ int32_t xtransaction_run_contract::source_fee_exec() {
 
 int32_t xtransaction_run_contract::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }
@@ -288,11 +288,17 @@ int32_t xtransaction_run_contract::target_action_exec() {
 
 int32_t xtransaction_transfer::source_fee_exec() {
     int32_t ret{0};
+    xdbg("xtransaction_transfer::source_fee_exec tx hash: %s, lock_tgas: %u, use_send_tx_tgas: %u, used_deposit: %u",
+              m_trans->get_digest_hex_str().c_str(), m_trans->get_last_action_send_tx_lock_tgas(), 0, m_trans->get_last_action_used_deposit());
     // no check transfer amount for genesis state
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() })) {
         uint64_t balance = m_account_ctx->get_blockchain()->balance();
+        xdbg("xtransaction_transfer::source_fee_exec_1 tx hash: %s, lock_tgas: %u, use_send_tx_tgas: %u, used_deposit: %u balance:%u",
+              m_trans->get_digest_hex_str().c_str(), m_trans->get_last_action_send_tx_lock_tgas(), 0, 
+              m_trans->get_last_action_used_deposit(), balance);
         if (get_asset().is_top_token()) {
             auto transfer_amount = get_amount();
+            xdbg("xtransaction_transfer::source_fee_exec_1 tx top_token");
             if (transfer_amount) {
                 if (balance < transfer_amount) {
                     xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu", balance, transfer_amount);
@@ -304,6 +310,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
                 }
             }
         } else {
+            xdbg("xtransaction_transfer::source_fee_exec_1 tx no_top_token");
             auto transfer_amount_256 = get_amount_256();
             if (transfer_amount_256 != 0) {
                 std::error_code ec;
@@ -340,7 +347,7 @@ int32_t xtransaction_pledge_token_vote::source_fee_exec(){
 
 int32_t xtransaction_pledge_token_vote::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }
@@ -372,7 +379,7 @@ int32_t xtransaction_redeem_token_vote::source_fee_exec(){
 
 int32_t xtransaction_redeem_token_vote::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }
@@ -396,7 +403,7 @@ int32_t xtransaction_vote::source_fee_exec(){
 
 int32_t xtransaction_vote::source_action_exec() {
     auto const account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xinfo("only T0 or T8 is allowed to vote");
         return -1;
     }
@@ -423,7 +430,7 @@ int32_t xtransaction_abolish_vote::source_fee_exec() {
 
 int32_t xtransaction_abolish_vote::source_action_exec() {
     auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
-    if (common::is_t6(account)) {
+    if (common::is_t6_address(account)) {
         xwarn("T6 account is not allowed to call contract");
         return -1;
     }

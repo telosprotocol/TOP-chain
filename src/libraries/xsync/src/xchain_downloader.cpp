@@ -174,8 +174,8 @@ bool xchain_downloader_t::is_elect_chain() {
     uint32_t table_id = 0;
     data::xdatautil::extract_parts(m_address, account_prefix, table_id);
 
-    if (account_prefix == sys_contract_beacon_table_block_addr || account_prefix == sys_contract_zec_table_block_addr ||
-        account_prefix == sys_contract_relay_table_block_base_addr) {
+    if (account_prefix == common::rec_table_base_address.to_string() || account_prefix == common::zec_table_base_address.to_string() ||
+        account_prefix == common::relay_table_base_address.to_string()) {
         is_elect_chain = true;
     }
     return is_elect_chain;
@@ -539,20 +539,20 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
             xsync_dbg("xchain_downloader_t::execute_download check fail : %s", m_address.c_str());
             return abort;
         }
-        if (account_prefix == sys_contract_beacon_table_block_addr) {
+        if (account_prefix == common::rec_table_base_address.to_string()) {
             // ignore
-        } else if (account_prefix == sys_contract_zec_table_block_addr) {
+        } else if (account_prefix == common::zec_table_base_address.to_string()) {
             if (!check_behind(end_height, sys_contract_rec_elect_zec_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
             }
-        } else if (account_prefix == sys_contract_sharding_table_block_addr) {
+        } else if (account_prefix == common::con_table_base_address.to_string()) {
             if (!check_behind(end_height, sys_contract_zec_elect_consensus_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
             }
-        } else if (account_prefix == sys_contract_eth_table_block_addr) {
-        } else if (account_prefix == sys_contract_relay_table_block_base_addr) {
+        } else if (account_prefix == common::eth_table_base_address.to_string()) {
+        } else if (account_prefix == common::relay_table_base_address.to_string()) {
         } else {
             xsync_dbg("xchain_downloader_t::execute_download check fail: %s", m_address.c_str());
             return abort;
@@ -714,21 +714,6 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
 
     m_ratelimit->feedback(total_cost, now);
     XMETRICS_COUNTER_INCREMENT("sync_downloader_response_cost", total_cost);
-
-    // base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_policy_fast);
-    // data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-    // if (current_block->is_fullblock() && !current_block->is_full_state_block() && current_block->get_height() == height) {
-    //     if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot)) {
-    //         xsync_error("chain_downloader on_snapshot_response invalid snapshot. block=%s", current_vblock->dump().c_str());
-    //         return abort;
-    //     }
-    //     xsync_dbg("chain_downloader on_snapshot_response valid snapshot. block=%s", current_vblock->dump().c_str());
-    //     statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
-    //     m_sync_store->store_block(current_block.get());
-    // }
-
-    // xsync_info("chain_downloader on_snapshot_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
-    //     m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
 
     return handle_next(m_sync_range_mgr.get_current_sync_start_height());
 }

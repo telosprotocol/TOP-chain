@@ -259,19 +259,7 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
     }
     return blocks;
 }
-/*
-std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {
-    auto blocks = m_blockstore->load_block_object(tx_hash, type, metrics::blockstore_access_from_sync_load_tx);
-    for (auto & block : blocks) {
-        if (false == m_blockstore->load_block_output(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_output)
-            || false == m_blockstore->load_block_input(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_input)
-            || false == m_blockstore->load_block_output_offdata(base::xvaccount_t(block->get_account()), block.get())) {
-            xerror("xsync_store_t::load_block_objects for txhash fail-load block input or output or offdata. block=%s", block->dump().c_str());
-            return {};
-        }
-    }
-    return blocks;
-}*/
+
 base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height) {
     return m_blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
 }

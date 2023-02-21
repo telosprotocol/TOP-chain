@@ -4,7 +4,6 @@
 #include <memory>
 #include "xdata/xdata_common.h"
 #include "xsync/xsync_range_mgr.h"
-#include "xblockstore/test/test_blockstore_datamock.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;

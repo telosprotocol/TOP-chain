@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xstatistic/xbasic_size.hpp"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvcontract.h"
@@ -14,21 +15,22 @@ namespace top
     namespace base
     {
         xtx_receipt_t::xtx_receipt_t()
-        : m_tx_action({},{},{},"invalid") {  // TODO(jimmy)
+        : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receipt), m_tx_action({},{},{},"invalid") {  // TODO(jimmy)
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
         xtx_receipt_t::xtx_receipt_t(const base::xvaction_t & txaction, base::xvqcert_t* prove_cert, const std::string & path, enum_xprove_cert_type type)
-        : m_tx_action(txaction) {
+        : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receipt), m_tx_action(txaction) {
             m_tx_action_prove = make_object_ptr<xprove_cert_t>(prove_cert, type, path);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
         xtx_receipt_t::xtx_receipt_t(const base::xvaction_t & txaction)
-        : m_tx_action(txaction) {
+        : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receipt), m_tx_action(txaction) {
             m_tx_action_prove = nullptr;
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, 1);
         }
 
         xtx_receipt_t::~xtx_receipt_t() {
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_tx_receipt_t, -1);
         }
 
@@ -124,7 +126,16 @@ namespace top
             return xvcontract_t::get_contract_address(m_tx_action.get_contract_uri());
         }
 
+        int32_t xtx_receipt_t::get_object_size_real() const {
+            int32_t total_size = sizeof(*this);
+            total_size += m_tx_action.get_ex_alloc_size();
+            if (m_tx_action_prove != nullptr) {
+                total_size += m_tx_action_prove->get_object_size();
+            }
 
+            xdbg("------cache size------ xtx_receipt_t total_size:%d", total_size);
+            return total_size;
+        }
 
         xtx_receipt_ptr_t xtxreceipt_build_t::create_table_input_primary_action_receipt(xvblock_t* commit_block, xvblock_t* cert_block) {
             if (commit_block == nullptr || cert_block == nullptr) {
@@ -139,9 +150,11 @@ namespace top
                 return nullptr;
             }
             // get all leafs firstly for performance
-            std::vector<std::string> all_leafs = xvblockmaker_t::get_input_merkle_leafs(commit_block->get_input());
+            std::error_code ec;
+            auto input_object = commit_block->load_input(ec);          
+            std::vector<std::string> all_leafs = xvblockmaker_t::get_input_merkle_leafs(input_object);
 
-            auto primary_entity = commit_block->get_input()->get_primary_entity();
+            auto primary_entity = input_object->get_primary_entity();
             if (primary_entity == nullptr) {
                 xassert(false);
                 return nullptr;

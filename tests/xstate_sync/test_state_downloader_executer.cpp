@@ -33,7 +33,7 @@ public:
         m_peers = peers_func(table_account_address.table_id(), 15);
         auto peers_func_impl = [&](const common::xtable_id_t &) -> state_sync::sync_peers { return m_peers; };
         auto track_func = [this](state_sync::state_req const & sr) { m_executer->push_track_req(sr); };
-        m_syncer = state_sync::xstate_sync_t::new_state_sync(table_account_address, table_height, block_hash, state_hash, root_hash, peers_func_impl, track_func, m_db, true);
+        m_syncer = state_sync::xstate_sync_t::new_state_sync(common::xaccount_address_t::build_from(table_account_address.to_string()), table_height, block_hash, state_hash, root_hash, peers_func_impl, track_func, m_db, true);
     }
     void TearDown() override {
     }
@@ -58,7 +58,7 @@ public:
                     continue;
                 }
             }
-            if (m.second.id() == state_sync::xmessage_id_sync_table_request) {
+            if (m.second.id() == xmessage_id_sync_table_request) {
                 base::xstream_t stream(base::xcontext_t::instance(), const_cast<uint8_t *>(m.second.payload().data()), (uint32_t)m.second.payload().size());
                 std::string table;
                 uint64_t height{0};
@@ -81,7 +81,7 @@ public:
                     }
                 }
                 m_executer->push_state_pack(res);
-            } else if (m.second.id() == state_sync::xmessage_id_sync_trie_request) {
+            } else if (m.second.id() == xmessage_id_sync_trie_request) {
                 base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(m.second.payload().data()), (uint32_t)m.second.payload().size());
                 std::string table;
                 uint32_t id{0};
@@ -154,6 +154,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_success) {
     EXPECT_EQ(res.root_hash, root_hash);
     EXPECT_FALSE(res.ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
@@ -186,6 +187,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_in_bad_connec
     EXPECT_EQ(res.root_hash, root_hash);
     EXPECT_FALSE(res.ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
@@ -218,6 +220,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_wrong_da
     EXPECT_EQ(res.root_hash, root_hash);
     EXPECT_FALSE(res.ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
@@ -250,6 +253,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_empty_da
     EXPECT_EQ(res.root_hash, root_hash);
     EXPECT_FALSE(res.ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
@@ -285,6 +289,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_task_flooding
     EXPECT_EQ(res.root_hash, root_hash);
     EXPECT_FALSE(res.ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {
@@ -376,6 +381,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_req_limit) {
     EXPECT_EQ(res.root_hash, root_hash);
     EXPECT_FALSE(res.ec);
     EXPECT_TRUE(m_syncer->m_sync_table_finish);
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
     EXPECT_EQ(m_db->get_value(state_key), to_string(state_bytes));
     std::error_code ec;
     for (auto & k : node_map) {

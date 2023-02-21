@@ -10,15 +10,17 @@
 
 NS_BEG2(top, base)
 
-xreceiptid_pair_t::xreceiptid_pair_t() {
+xreceiptid_pair_t::xreceiptid_pair_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receiptid_pair) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, 1);
 }
 
 xreceiptid_pair_t::~xreceiptid_pair_t() {
+    statistic_del();
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xreceiptid_pair_t, -1);
 }
 
-xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id) {
+xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid, uint64_t send_rsp_id, uint64_t confirm_rsp_id)
+    : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_receiptid_pair)  {
     set_sendid_max(sendid);
     set_confirmid_max(confirmid);
     set_recvid_max(recvid);
@@ -215,6 +217,12 @@ std::string xreceiptid_pairs_t::dump() const {
     return ss.str();
 }
 
+int32_t xreceiptid_pairs_t::get_object_size_real() const {
+    // each node of std::map<xtable_shortid_t, xreceiptid_pair_t> alloc 80B
+    int32_t total_size = sizeof(*this) + m_all_pairs.size()*80;
+    xdbg("-----cache size----- xreceiptid_pairs_t total_size:%d this:%d,m_all_pairs:%d * 80", total_size, sizeof(*this), m_all_pairs.size());
+    return total_size;
+}
 
 xreceiptid_state_t::xreceiptid_state_t() {
     m_binlog = std::make_shared<xreceiptid_pairs_t>();
@@ -274,6 +282,21 @@ void xreceiptid_state_t::add_pair_modified(xtable_shortid_t sid, const xreceipti
 
 void xreceiptid_state_t::clear_pair_modified() {
     m_modified_binlog->clear_binlog();
+}
+
+int32_t xreceiptid_state_t::get_object_size_real() const {
+    int32_t binlog_size = 0;
+    int32_t modified_binlog_size = 0;
+    if (m_binlog != nullptr) {
+        binlog_size = m_binlog->get_object_size_real();
+    }
+    if (m_modified_binlog != nullptr) {
+        modified_binlog_size = m_modified_binlog->get_object_size_real();
+    }
+
+    int32_t total_size = sizeof(*this) + binlog_size + modified_binlog_size;
+    xdbg("------cache size------ xreceiptid_state_t total_size:%d this:%d,binlog_size:%d,modified_binlog_size:%d", total_size, sizeof(*this), binlog_size, modified_binlog_size);
+    return total_size;
 }
 
 void xids_check_t::set_id(xtable_shortid_t sid, uint64_t value) {

@@ -13,9 +13,9 @@
 namespace top {
 namespace state_mpt {
 
-std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xaccount_address_t & table, evm_common::xh256_t const & root, base::xvdbstore_t * db, bool sync_unit) {
+std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xtable_address_t & table, evm_common::xh256_t const & root, base::xvdbstore_t * db, bool sync_unit) {
     auto syncer = evm_common::trie::Sync::NewSync(std::make_shared<evm_common::trie::xkv_db_t>(db, table));
-    auto callback = [&table, &root, sync_unit, weak_syncer = std::weak_ptr<evm_common::trie::Sync>(syncer)](
+    auto callback = [table, root, sync_unit, weak_syncer = std::weak_ptr<evm_common::trie::Sync>(syncer)](
                         std::vector<xbytes_t> const & path, xbytes_t const & hexpath, xbytes_t const & value, evm_common::xh256_t const & parent, std::error_code & ec) {
         if (value.empty()) {
             ec = error::xerrc_t::state_mpt_leaf_empty;

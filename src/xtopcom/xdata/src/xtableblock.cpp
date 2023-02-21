@@ -51,7 +51,9 @@ void xtable_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_
 }
 
 void xtable_block_t::parse_to_json_v1(xJson::Value & root) {
-    const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
+    std::error_code ec;
+    auto input_object = load_input(ec);
+    const std::vector<base::xventity_t*> & _table_inentitys = input_object->get_entitys();
     uint32_t entitys_count = _table_inentitys.size();
     for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
         base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
@@ -131,7 +133,9 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
 
 std::vector<xvheader_ptr_t> xtable_block_t::get_sub_block_headers() const {
     std::vector<xvheader_ptr_t> unit_headers;
-    const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
+    std::error_code ec;
+    auto input_object = load_input(ec);
+    const std::vector<base::xventity_t*> & _table_inentitys = input_object->get_entitys();
     uint32_t entitys_count = _table_inentitys.size();
     for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
         base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
@@ -172,16 +176,6 @@ std::vector<base::xvsubblock_index_t> xtable_block_t::get_subblocks_index() cons
         }
     }
     return subblocks_index;
-}
-
-int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
-    auto out_entity = get_output()->get_primary_entity();
-    xassert(out_entity != nullptr);
-    int64_t tgas_balance_change = 0;
-    if (out_entity != nullptr) {
-        tgas_balance_change = base::xstring_utl::toint64(out_entity->query_value(base::xvoutentity_t::key_name_tgas_pledge_change()));
-    }
-    return tgas_balance_change;
 }
 
 bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) {

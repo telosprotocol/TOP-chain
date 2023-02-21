@@ -16,13 +16,13 @@
 #include <utility>
 #include <vector>
 
-namespace top{
+namespace top {
 
-std::string xconfig::get_file_content(const std::string& filepath) {
+std::string xtopio_config_t::get_file_content(const std::string & filepath) {
     std::ifstream in(filepath);
     if (!in.is_open()) {
         std::cerr << "can't open file: " << filepath << std::endl;
-        
+
         assert(false);
         return "";
     }
@@ -32,8 +32,7 @@ std::string xconfig::get_file_content(const std::string& filepath) {
     return tmp.str();
 }
 
-int32_t xconfig::load_config_file(const std::string & config_file, const std::string & config_extra)
-{
+int32_t xtopio_config_t::load_config_file(const std::string & config_file, const std::string & config_extra) {
     std::string content = get_file_content(config_file);
     xJson::Reader reader;
     bool ret = reader.parse(content, m_root);
@@ -56,21 +55,20 @@ int32_t xconfig::load_config_file(const std::string & config_file, const std::st
     return 0;
 }
 
-void xconfig::merge_config(xJson::Value& root, const xJson::Value& root_extra) {
+void xtopio_config_t::merge_config(xJson::Value & root, const xJson::Value & root_extra) {
     if (!root_extra.isObject()) {
         return;
     }
 
-    for (auto& name : root_extra.getMemberNames()) {
+    for (auto & name : root_extra.getMemberNames()) {
         root[name] = root_extra[name];
         TOP_FATAL("merge extra[%s]", name.c_str());
     }
 }
 
-bool xconfig::save(const std::string & config_file,
-        std::unordered_map<std::string, std::string>& map) {
+bool xtopio_config_t::save(const std::string & config_file, std::unordered_map<std::string, std::string> & map) {
     xJson::Value root;
-    for(auto& enty : map) {
+    for (auto & enty : map) {
         root[enty.first.c_str()] = enty.second.c_str();
     }
 
@@ -78,7 +76,7 @@ bool xconfig::save(const std::string & config_file,
     std::string str = writer.write(root);
     std::ofstream ofs;
     ofs.open(config_file.c_str());
-    if(ofs.is_open()) {
+    if (ofs.is_open()) {
         ofs << str;
         ofs.close();
         return true;
@@ -86,14 +84,14 @@ bool xconfig::save(const std::string & config_file,
     return false;
 }
 
-void xconfig::fetch_all(std::unordered_map<std::string, std::string>& map) {
+void xtopio_config_t::fetch_all(std::unordered_map<std::string, std::string> & map) {
     extract(m_root, map);
 }
 
-void xconfig::extract(xJson::Value& arr, std::unordered_map<std::string, std::string>& map) {
+void xtopio_config_t::extract(xJson::Value & arr, std::unordered_map<std::string, std::string> & map) {
     auto mem = arr.getMemberNames();
-    for(auto it = mem.begin(); it != mem.end(); ++it) {
-        if(arr[*it].isArray()) {
+    for (auto it = mem.begin(); it != mem.end(); ++it) {
+        if (arr[*it].isArray()) {
             // extract(arr[*it], map);
             continue;
         } else {
@@ -102,10 +100,8 @@ void xconfig::extract(xJson::Value& arr, std::unordered_map<std::string, std::st
     }
 }
 
-std::string xconfig::get_string(const std::string & item)
-{
-    if(m_root[item].empty())
-    {
+std::string xtopio_config_t::get_string(const std::string & item) {
+    if (m_root[item].empty()) {
         std::cout << "config item " << item << " is empty" << std::endl;
     }
     assert(false == m_root[item].empty());
@@ -113,7 +109,7 @@ std::string xconfig::get_string(const std::string & item)
     return m_root[item].asString();
 }
 
-bool xconfig::get_string(const std::string & item, std::string& value) {
+bool xtopio_config_t::get_string(const std::string & item, std::string & value) {
     if (!m_root[item].empty() && m_root[item].isString()) {
         value = m_root[item].asString();
         return true;
@@ -121,7 +117,7 @@ bool xconfig::get_string(const std::string & item, std::string& value) {
     return false;
 }
 
-bool xconfig::get_json(const std::string& item, xJson::Value& value) {
+bool xtopio_config_t::get_json(const std::string & item, xJson::Value & value) {
     if (m_root.isMember(item)) {
         value = m_root[item];
         return true;
@@ -130,98 +126,68 @@ bool xconfig::get_json(const std::string& item, xJson::Value& value) {
     return false;
 }
 
-void xconfig::set_option_param(std::string& destination, const std::string& item)
-{
+void xtopio_config_t::set_option_param(std::string & destination, const std::string & item) {
     if (!m_root[item].empty() && m_root[item].isString()) {
         destination = m_root[item].asString();
     }
 }
 
-void xconfig::set_option_param(uint32_t& destination, const std::string& item)
-{
+void xtopio_config_t::set_option_param(uint32_t & destination, const std::string & item) {
     if (!m_root[item].empty() && m_root[item].isUInt()) {
         destination = m_root[item].asUInt();
     }
 }
 
-void xconfig::set_option_param(uint16_t& destination, const std::string& item)
-{
+void xtopio_config_t::set_option_param(uint16_t & destination, const std::string & item) {
     if (!m_root[item].empty() && m_root[item].isUInt()) {
         destination = m_root[item].asUInt();
     }
 }
 
-void xconfig::set_option_param(int32_t& destination, const std::string& item)
-{
+void xtopio_config_t::set_option_param(int32_t & destination, const std::string & item) {
     if (!m_root[item].empty() && m_root[item].isInt()) {
         destination = m_root[item].asInt();
     }
 }
 
-void xconfig::set_option_param(
-        bool& destination, 
-        const std::string& item,
-        const std::string& sub_item)
-{
+void xtopio_config_t::set_option_param(bool & destination, const std::string & item, const std::string & sub_item) {
     if (!m_root[item].empty() && !m_root[item][sub_item].empty() && m_root[item][sub_item].isBool()) {
         destination = m_root[item][sub_item].asBool();
     }
 }
 
-void xconfig::set_option_param(
-        std::string& destination, 
-        const std::string& item,
-        const std::string& sub_item)
-{
+void xtopio_config_t::set_option_param(std::string & destination, const std::string & item, const std::string & sub_item) {
     if (!m_root[item].empty() && !m_root[item][sub_item].empty() && m_root[item][sub_item].isString()) {
         destination = m_root[item][sub_item].asString();
     }
 }
 
-void xconfig::set_option_param(
-    uint32_t& destination, 
-    const std::string& item,
-    const std::string& sub_item)
-{
+void xtopio_config_t::set_option_param(uint32_t & destination, const std::string & item, const std::string & sub_item) {
     if (!m_root[item].empty() && !m_root[item][sub_item].empty() && m_root[item][sub_item].isUInt()) {
         destination = m_root[item][sub_item].asUInt();
     }
 }
 
-void xconfig::set_option_param(
-    uint64_t& destination, 
-    const std::string& item,
-    const std::string& sub_item)
-{
+void xtopio_config_t::set_option_param(uint64_t & destination, const std::string & item, const std::string & sub_item) {
     if (!m_root[item].empty() && !m_root[item][sub_item].empty() && m_root[item][sub_item].isUInt64()) {
         destination = m_root[item][sub_item].asUInt64();
     }
 }
 
-void xconfig::set_option_param(
-    uint16_t& destination, 
-    const std::string& item,
-    const std::string& sub_item)
-{
+void xtopio_config_t::set_option_param(uint16_t & destination, const std::string & item, const std::string & sub_item) {
     if (!m_root[item].empty() && !m_root[item][sub_item].empty() && m_root[item][sub_item].isUInt()) {
         destination = m_root[item][sub_item].asUInt();
     }
 }
 
-void xconfig::set_option_param(
-    int32_t& destination, 
-    const std::string& item,
-    const std::string& sub_item)
-{
+void xtopio_config_t::set_option_param(int32_t & destination, const std::string & item, const std::string & sub_item) {
     if (!m_root[item].empty() && !m_root[item][sub_item].empty() && m_root[item][sub_item].isInt()) {
         destination = m_root[item][sub_item].asInt();
     }
 }
 
-int xconfig::get_int(const std::string & item)
-{
-    if(m_root[item].empty())
-    {
+int xtopio_config_t::get_int(const std::string & item) {
+    if (m_root[item].empty()) {
         std::cout << "config item " << item << " is empty" << std::endl;
     }
     assert(false == m_root[item].empty());
@@ -229,9 +195,8 @@ int xconfig::get_int(const std::string & item)
     return m_root[item].asInt();
 }
 
-int xconfig::get_int_empty(const std::string & item)
-{
-    if(m_root[item].empty()) {
+int xtopio_config_t::get_int_empty(const std::string & item) {
+    if (m_root[item].empty()) {
         std::cout << "config item " << item << " empty, use default" << std::endl;
         return 0;
     }
@@ -239,10 +204,8 @@ int xconfig::get_int_empty(const std::string & item)
     return m_root[item].asInt();
 }
 
-bool xconfig::get_bool(const std::string & item)
-{
-    if(m_root[item].empty())
-    {
+bool xtopio_config_t::get_bool(const std::string & item) {
+    if (m_root[item].empty()) {
         std::cout << "config item " << item << " is empty" << std::endl;
     }
     assert(false == m_root[item].empty());
@@ -250,4 +213,4 @@ bool xconfig::get_bool(const std::string & item)
     return m_root[item].asBool();
 }
 
-}
+}  // namespace top

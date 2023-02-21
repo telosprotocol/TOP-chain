@@ -108,8 +108,6 @@ class xlightunit_block_t : public xblock_t {
     void *query_interface(const int32_t _enum_xobject_type_) override;
     virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
 
- public:  // lightunit special apis
-    virtual     std::string     dump_body() const;
  public:  // override base block api
     const std::vector<xlightunit_action_ptr_t> get_txs() const;
 };

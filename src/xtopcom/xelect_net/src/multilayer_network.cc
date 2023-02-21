@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xelect_net/include/multilayer_network.h"
 
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdb/xdb_factory.h"
 #include "xelect_net/include/http_seed_fetcher.h"
 #include "xelect_net/include/https_seed_fetcher.h"
@@ -42,20 +44,8 @@ MultilayerNetwork::MultilayerNetwork(common::xnode_id_t const & node_id, const s
 }
 
 void MultilayerNetwork::start() {
-    auto & platform_params = data::xplatform_params::get_instance();
-
     top::base::Config config;
-    if (HandleParamsAndConfig(platform_params, config) != 0) {
-        xerror("load platform config failed");
-        throw std::runtime_error{"HandleParamsAndConfig: load platform config failed"};
-    }
-
-    std::string public_endpoints;
-    if (!config.Get("node", "public_endpoints", public_endpoints)) {
-        xerror("get node public_endpoints from config failed!");
-        throw std::runtime_error{"config.Get: get node public_endpoints from config failed!"};
-    }
-    platform_params.set_seed_edge_host(public_endpoints);
+    TryCombineP2PEndpoints();
 
     if (!Init(config)) {
         xerror("start elect main init failed!");
@@ -101,12 +91,6 @@ void MultilayerNetwork::stop() {
 }
 
 bool MultilayerNetwork::Init(const base::Config & config) {
-    std::string db_path;
-    if (!config.Get("db", "path", db_path)) {
-        xerror("get db path from conf failed[%s]", db_path.c_str());
-        return false;
-    }
-
     if (!top::kadmlia::CreateGlobalXid(config)) {
         return false;
     }
@@ -118,13 +102,8 @@ bool MultilayerNetwork::Init(const base::Config & config) {
     }
     multi_message_handler_->Init();
 
-    std::string local_ip;
-    if (!config.Get("node", "local_ip", local_ip)) {
-        xerror("get node local_ip from config failed!");
-        return false;
-    }
-    uint16_t local_port = 0;
-    config.Get("node", "local_port", local_port);
+    std::string local_ip = XGET_CONFIG(ip);
+    uint16_t local_port = XGET_CONFIG(node_p2p_port);
     if (!core_transport_->Init(local_ip, local_port, multi_message_handler_.get())) {
         xerror("MultilayerNetwork::Init udptransport init failed");
         return false;
@@ -196,107 +175,50 @@ std::shared_ptr<elect::xnetwork_driver_face_t> MultilayerNetwork::GetEcVhost(con
     return std::static_pointer_cast<elect::xnetwork_driver_face_t>(ifind->second);
 }
 
-int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config) {
-    if (!edge_config.Set("db", "path", platform_param.db_path)) {
-        xerror("set config failed [db][path][%s]", platform_param.db_path.c_str());
-        return 1;
+void MultilayerNetwork::TryCombineP2PEndpoints() {
+    std::string settled_p2p_endpoints = XGET_CONFIG(p2p_endpoints);
+    xinfo("config get settled_p2p_endpoints %s", settled_p2p_endpoints.c_str());
+
+    std::string combined_p2p_endpoints = settled_p2p_endpoints;
+    std::string url_endpoints = XGET_CONFIG(p2p_url_endpoints);
+    xinfo("[seeds] url_endpoints url:%s", url_endpoints.c_str());
+    if (url_endpoints.find("http") == std::string::npos) {
+        // url not support nothing todo.
+        return;
     }
 
-    if (!edge_config.Set("log", "path", platform_param.log_path)) {
-        xerror("set config failed [log][log_path][%s]", platform_param.log_path.c_str());
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "country", platform_param.country)) {
-        xerror("set config failed [node][country][%s]", platform_param.country.c_str());
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "zone_id", platform_param.zone_id)) {
-        xerror("set config failed [node][zone_id][%d]", platform_param.zone_id);
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "local_ip", platform_param.local_ip)) {
-        xerror("set config failed [node][local_ip][%s]", platform_param.local_ip.c_str());
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "local_port", platform_param.local_port)) {
-        xerror("set config failed [node][local_port][%d]", platform_param.local_port);
-        return 1;
-    }
-
-    std::string show_cmd_str = (platform_param.show_cmd ? "true" : "false");
-    if (!edge_config.Set("node", "show_cmd", show_cmd_str)) {
-        xerror("set config failed [node][show_cmd][%s]", show_cmd_str.c_str());
-        return 1;
-    }
-
-    std::string public_endpoints(platform_param.public_endpoints);
-    xinfo("config get public_endpoints %s", public_endpoints.c_str());
-
-    std::string final_public_endpoints;
-    final_public_endpoints = public_endpoints;
-
-    edge_config.Set("node", "public_endpoints", final_public_endpoints);
-    xinfo("config set final public_endpoints %s", final_public_endpoints.c_str());
-
-    bool endpoints_status = false;
-    if (final_public_endpoints.empty()) {
-        endpoints_status = true;
-        xwarn("config get no public_endpoints %s", final_public_endpoints.c_str());
-    }
-
-    if (platform_param.url_endpoints.find("http") == std::string::npos) {
-        return endpoints_status;
-    }
-    xinfo("[seeds] url_endpoints url:%s", platform_param.url_endpoints.c_str());
-
+    // fetch using http
     std::vector<std::string> url_seeds;
-    if (platform_param.url_endpoints.find("https://") != std::string::npos) {
-        HttpsSeedFetcher seed_fetcher{platform_param.url_endpoints};
+    if (url_endpoints.find("https://") != std::string::npos) {
+        HttpsSeedFetcher seed_fetcher{url_endpoints};
         if (!seed_fetcher.GetSeeds(url_seeds)) {
-            xwarn("[seeds] get public endpoints failed from url:%s", platform_param.url_endpoints.c_str());
-            return endpoints_status;
+            xwarn("[seeds] get public endpoints failed from url:%s", url_endpoints.c_str());
+            return;
         }
     } else {  // http scheme
-        HttpSeedFetcher seed_fetcher{platform_param.url_endpoints};
+        HttpSeedFetcher seed_fetcher{url_endpoints};
         if (!seed_fetcher.GetSeeds(url_seeds)) {
-            xwarn("[seeds] get public endpoints failed from url:%s", platform_param.url_endpoints.c_str());
-            return endpoints_status;
+            xwarn("[seeds] get public endpoints failed from url:%s", url_endpoints.c_str());
+            return;
         }
     }
 
-    std::string bootstrap_nodes;
+    // combine url's endpoints together.
     for (const auto & item : url_seeds) {
-        bootstrap_nodes += item;
-        bootstrap_nodes += ",";
+        combined_p2p_endpoints += item;
+        combined_p2p_endpoints += ",";
     }
+    if (!combined_p2p_endpoints.empty() && combined_p2p_endpoints.back() == ',') {
+        combined_p2p_endpoints.pop_back();
+    }
+    xinfo("config get combined_p2p_endpoints %s", combined_p2p_endpoints.c_str());
 
-    if (bootstrap_nodes.back() == ',') {
-        bootstrap_nodes.pop_back();
-    }
-    xinfo("[seeds] fetch url:%s bootstrap_nodes:%s", platform_param.url_endpoints.c_str(), bootstrap_nodes.c_str());
-    if (bootstrap_nodes.empty()) {
-        return endpoints_status;
-    }
-
-    if (!final_public_endpoints.empty()) {
-        final_public_endpoints += ",";
-        final_public_endpoints += bootstrap_nodes;
-    } else {
-        final_public_endpoints = bootstrap_nodes;
-    }
-
-    edge_config.Set("node", "public_endpoints", final_public_endpoints);
-    xinfo("[seeds] config set final public_endpoints %s", final_public_endpoints.c_str());
-    return 0;
+    XSET_CONFIG(p2p_endpoints, combined_p2p_endpoints);
 }
 
 int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> transport,
                                          const top::base::Config & config,
-                                         const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config) {
+                                         const std::set<std::pair<std::string, uint16_t>> & p2p_endpoints_config) {
     xinfo("enter CreateRootManager");
     top::base::Config new_config = config;
     if (!new_config.Set("edge", "service_list", "")) {
@@ -325,10 +247,10 @@ int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> t
 }
 
 int MultilayerNetwork::ResetRootRouting(std::shared_ptr<transport::Transport> transport, const base::Config & config) {
-    std::set<std::pair<std::string, uint16_t>> public_endpoints_config;
-    kadmlia::GetPublicEndpointsConfig(config, public_endpoints_config);
+    std::set<std::pair<std::string, uint16_t>> p2p_endpoints_config;
+    kadmlia::GetPublicEndpointsConfig(config, p2p_endpoints_config);
 
-    return CreateRootManager(transport, config, public_endpoints_config);
+    return CreateRootManager(transport, config, p2p_endpoints_config);
 }
 
 std::vector<std::string> MultilayerNetwork::GetServiceNeighbours(const common::xip2_t & xip2) {

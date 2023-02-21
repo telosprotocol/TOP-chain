@@ -554,7 +554,7 @@ namespace top
                         
                         std::string msg_stream;
                         if (!_proposal->get_block()->get_vote_extend_data().empty()) {
-                            xdbg("nathan test vote msg inner proposal:%s,vote data size:%d,:%s", _proposal->dump().c_str(), _proposal->get_block()->get_vote_extend_data().size(), _proposal->get_block()->get_vote_extend_data().c_str());
+                            xdbg("vote msg inner proposal:%s,vote data size:%d,:%s", _proposal->dump().c_str(), _proposal->get_block()->get_vote_extend_data().size(), _proposal->get_block()->get_vote_extend_data().c_str());
                         }
                         xvote_msg_t _vote_msg(*_proposal->get_proposal_cert(), _proposal->get_block()->get_vote_extend_data());
                         _vote_msg.serialize_to_string(msg_stream);
@@ -614,7 +614,7 @@ namespace top
             }
             
             if (!_vote_msg.get_vote_extend_data().empty()) {
-                xdbg("nathan test handle_vote_msg,proposal:%s,inner vote data size:%d,:%s", _local_proposal_block->dump().c_str(), _vote_msg.get_vote_extend_data().size(), _vote_msg.get_vote_extend_data().c_str());
+                xdbg("handle_vote_msg,proposal:%s,inner vote data size:%d,:%s", _local_proposal_block->dump().c_str(), _vote_msg.get_vote_extend_data().size(), _vote_msg.get_vote_extend_data().c_str());
             }
             //step#3: verify view_id & viewtoken to protect from DDOS attack
             if( false == _local_proposal_block->is_valid_packet(packet) )

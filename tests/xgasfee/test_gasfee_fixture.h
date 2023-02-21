@@ -292,7 +292,7 @@ public:
     data::xaccountstate_ptr_t recver{nullptr};
     xobject_ptr_t<base::xvbstate_t> sender_bstate{nullptr};
     xobject_ptr_t<base::xvbstate_t> recver_bstate{nullptr};
-    std::string table_address{eth_table_address.to_string()};
+    std::string table_address{common::eth_table_base_address.to_string()};
 };
 
 }  // namespace tests

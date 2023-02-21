@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xcommon/xaccount_address.h"
+#include "xcommon/xtable_base_address.h"
 
 
 NS_BEG1(top)
@@ -24,6 +25,8 @@ XINLINE_CONSTEXPR char const * sys_contract_rec_elect_rec_addr{ "T2000138JQPo5Tc
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_zec_addr{ "T2000138Kc9WynduqxJvX3VCU7XjHCR9YyKuBL1fx@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_tcc_addr{ "T2000138Ao4jjYtrXoNwfzb6gdpD2XNBpqUv46p8B@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_standby_pool_addr{ "T2000138CQwyzFxbWZ59mNjkq3eZ3eH41t7b5midm@0" };
+
+XINLINE_CONSTEXPR char const * sys_contract_rec_node_manage_addr{"T2000100000000000000000000000000000000022@0"};
 
 XINLINE_CONSTEXPR char const * sys_contract_zec_workload_addr{ "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_vote_addr{ "T200024uPV1k6XjTm9No5yB2mxBPK9o2XqJKyhDUn@0" };
@@ -47,15 +50,9 @@ XINLINE_CONSTEXPR char const * sys_contract_eth_table_cross_chain_txs_collection
 XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T200050000000000000000000000000000000001@0"};
 
 // Table addresses
-XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
-XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
-XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
-XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr{"Ta0004"};
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr_with_suffix{"Ta0004@0"};
 
-XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_base_addr{"Ta0005"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_addr{"Ta0005@0"};
-XINLINE_CONSTEXPR char const * sys_contract_relay_block_base_addr{"Tb0005"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_block_addr{"Tb0005@0"};
 
 extern common::xaccount_address_t const black_hole_system_address;
@@ -89,17 +86,16 @@ extern common::xaccount_address_t const sharding_statistic_info_contract_address
 extern common::xaccount_address_t const sharding_fork_info_contract_address;
 extern common::xaccount_base_address_t const table_vote_contract_base_address;
 
+extern common::xaccount_base_address_t const sharding_vote_contract_base_address;
+extern common::xaccount_base_address_t const sharding_reward_claiming_contract_base_address;
+extern common::xaccount_base_address_t const sharding_statistic_info_contract_base_address;
+extern common::xaccount_base_address_t const sharding_fork_info_contract_base_address;
+
 extern common::xaccount_address_t const eth_fork_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address;
 
 extern common::xaccount_address_t const eth_zero_address;
-
-extern common::xaccount_address_t const rec_table_address;
-extern common::xaccount_address_t const zec_table_address;
-extern common::xaccount_address_t const sharding_table_address;
-extern common::xaccount_address_t const eth_table_address;
-extern common::xaccount_base_address_t const relay_table_base_address;
 extern common::xaccount_address_t const relay_table_address;
 
 // extern common::xaccount_address_t const evm_erc20_contract_address;
@@ -114,5 +110,8 @@ extern common::xaccount_address_t const evm_usdc_contract_address;
 
 extern common::xaccount_address_t const relay_make_block_contract_address;
 
+#if defined(XBUILD_CONSORTIUM)
+extern common::xaccount_address_t const rec_node_manage_address;
+#endif 
 
 NS_END1

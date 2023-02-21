@@ -7,7 +7,7 @@
 #include "tests/xvnetwork/xdummy_data_accessor.h"
 #include "tests/xvnetwork/xtest_vhost_fixture.h"
 #include "xbasic/xsimple_message.hpp"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvhost.h"
 #include "xvnetwork/xvnetwork_error.h"
@@ -24,7 +24,7 @@ TEST(test_, vhost_not_run) {
                                                                                                         make_observer(&tests::vnetwork::xdummy_network_data_accessor));
 
     std::error_code           ec = xvnetwork_errc2_t::success;
-    top::vnetwork::xmessage_t msg(xbyte_buffer_t{}, sync::xmessage_id_sync_blocks);
+    top::vnetwork::xmessage_t msg(xbyte_buffer_t{}, xmessage_id_sync_blocks);
 
     common::xaccount_election_address_t account_address{common::xnode_id_t{std::string{"test1"}}, common::xslot_id_t{}};
 

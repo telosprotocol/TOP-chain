@@ -171,6 +171,13 @@ if ((BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC) AND XUSE_JEMALLOC)
     message(FATAL_ERROR "Not allowed to enable tcmalloc and jemalloc at the same time")
 endif()
 
+if (ENABLE_JEPROF)
+    if (NOT XUSE_JEMALLOC)
+        message(FATAL_ERROR "should define use_jemalloc before enable_jeprof")
+    endif()
+    add_definitions(-DENABLE_JEPROF)
+endif()
+
 if (ADDRESS_SANITIZER)
     add_compile_options(-fsanitize=address)
 endif()
@@ -298,12 +305,24 @@ if (ETH2_SEPOLIA)
     add_definitions(-DETH2_SEPOLIA)
 endif()
 
+if (CACHE_SIZE_STATISTIC)
+    add_definitions(-DCACHE_SIZE_STATISTIC)
+endif()
+
+if (CACHE_SIZE_STATISTIC_MORE_DETAIL)
+    add_definitions(-DCACHE_SIZE_STATISTIC_MORE_DETAIL)
+endif()
+
 if (PERIOD_MOCK)
     add_definitions(-DPERIOD_MOCK)
 endif()
 
 if (CROSS_TX_DBG)
     add_definitions(-DCROSS_TX_DBG)
+endif()
+
+if (XBUILD_CONSORTIUM)
+    add_definitions(-DXBUILD_CONSORTIUM)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
@@ -452,11 +471,11 @@ if (CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
 endif()
 #message (STATUS "TOPIO Installation directory: CMAKE_INSTALL_PREFIX = " ${CMAKE_INSTALL_PREFIX})
 
-set(INSTALL_BIN_PATH /usr/bin/)
-set(INSTALL_LIB_PATH /lib/)
+# set(INSTALL_BIN_PATH /usr/bin/)
+# set(INSTALL_LIB_PATH /lib/)
 
-INSTALL(TARGETS topio xtopchain
-RUNTIME DESTINATION ${INSTALL_BIN_PATH}
-LIBRARY DESTINATION ${INSTALL_LIB_PATH}
-ARCHIVE DESTINATION ${INSTALL_LIB_PATH}
-)
+# INSTALL(TARGETS topio xtopchain
+# RUNTIME DESTINATION ${INSTALL_BIN_PATH}
+# LIBRARY DESTINATION ${INSTALL_LIB_PATH}
+# ARCHIVE DESTINATION ${INSTALL_LIB_PATH}
+# )

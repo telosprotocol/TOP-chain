@@ -7,12 +7,13 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xaccount_address.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
+#include "xstatistic/xstatistic.h"
 #include "xvledger/xaccountindex.h"
 
 namespace top {
 namespace state_mpt {
 
-struct xtop_state_object {
+struct xtop_state_object : public xstatistic::xstatistic_obj_face_t {
 private:
     xtop_state_object();
     xtop_state_object(xtop_state_object const &);
@@ -28,10 +29,15 @@ public:
     void set_account_index(const base::xaccount_index_t & new_index);
     void set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit);
 
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_mpt_state_object;}
+
     common::xaccount_address_t account;
     base::xaccount_index_t index;
     xbytes_t unit_bytes;
     bool dirty_unit{false};
+
+private:
+    virtual int32_t get_object_size_real() const override;
 };
 using xstate_object_t = xtop_state_object;
 

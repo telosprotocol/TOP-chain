@@ -31,7 +31,7 @@ public:
     }
 
     std::string get_table_address() const override {
-        return eth_table_address.to_string();
+        return common::eth_table_base_address.to_string();
     }
 
     bool is_state_dirty() const override {

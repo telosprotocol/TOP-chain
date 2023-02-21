@@ -21,14 +21,14 @@
 NS_BEG2(top, statectx)
 
 xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablestate_ext_ptr_t & prev_table_state, base::xvblock_t* commit_block, const statestore::xtablestate_ext_ptr_t & commit_table_state, const xstatectx_para_t & para)
-: m_table_address(prev_block->get_account()), m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
+: m_table_address(common::xtable_address_t::build_from(prev_block->get_account())), m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
     // create proposal table state for context
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = xstatectx_base_t::create_proposal_bstate(prev_block, prev_table_state->get_table_state()->get_bstate().get(), para.m_clock);
     data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);  // change to modified state
     m_table_ctx = std::make_shared<xtablestate_ctx_t>(proposal_table_state, prev_table_state->get_state_mpt());
 
     std::error_code ec;
-    std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t(prev_block->get_account()),
+    std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(m_table_address,
                                                                                                 prev_table_state->get_state_mpt()->get_original_root_hash(),
                                                                                                 base::xvchain_t::instance().get_xdbstore(),
                                                                                                 ec);
@@ -38,7 +38,7 @@ xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablest
 }
 
 bool xstatectx_t::is_same_table(common::xaccount_address_t const& address) const {
-    if (address.ledger_id().zone_id() == m_table_address.ledger_id().zone_id() && address.table_id() == m_table_address.table_id()) {
+    if (address.ledger_id().zone_id() == common::zone_id(m_table_address) && address.table_id() == m_table_address.table_id()) {
         return true;
     }
     return false;

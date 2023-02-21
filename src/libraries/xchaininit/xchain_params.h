@@ -16,9 +16,6 @@ public:
 private:
 	int  get_uuid(std::string& uuid);
     void load_user_config();
-    void load_dev_config();
-    void load_onchain_config();
-    void load_platform_config();
 
 };
 }

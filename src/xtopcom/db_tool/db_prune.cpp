@@ -265,9 +265,9 @@ std::vector<std::string> DbPrune::get_db_unit_accounts() {
 std::vector<std::string> DbPrune::get_table_accounts() {
     std::vector<std::string> v;
     const std::vector<std::pair<std::string, int>> table = {
-        std::make_pair(std::string{sys_contract_sharding_table_block_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
-        std::make_pair(std::string{sys_contract_zec_table_block_addr}, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
-        std::make_pair(std::string{sys_contract_beacon_table_block_addr}, MAIN_CHAIN_REC_TABLE_USED_NUM),
+        std::make_pair(common::con_table_base_address.to_string(), enum_vledger_const::enum_vbucket_has_tables_count),
+        std::make_pair(common::zec_table_base_address.to_string(), MAIN_CHAIN_ZEC_TABLE_USED_NUM),
+        std::make_pair(common::rec_table_base_address.to_string(), MAIN_CHAIN_REC_TABLE_USED_NUM),
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {

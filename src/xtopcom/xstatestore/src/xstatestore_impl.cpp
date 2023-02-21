@@ -47,7 +47,7 @@ xstatestore_impl_t::xstatestore_impl_t() {
 void xstatestore_impl_t::init_all_tablestate() {
     std::vector<std::string> table_addrs = data::xblocktool_t::make_all_table_addresses();
     for (auto & v : table_addrs) {
-        xstatestore_table_ptr_t tablestore = std::make_shared<xstatestore_table_t>(common::xaccount_address_t(v), m_para);
+        xstatestore_table_ptr_t tablestore = std::make_shared<xstatestore_table_t>(common::xtable_address_t::build_from(v), m_para);
         m_table_statestore[v] = tablestore;
     }
 }
@@ -123,12 +123,12 @@ void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
     m_timer->send_call(asyn_call);
 }
 
-uint64_t xstatestore_impl_t::get_latest_executed_block_height(common::xaccount_address_t const & table_address) const {
+uint64_t xstatestore_impl_t::get_latest_executed_block_height(common::xtable_address_t const & table_address) const {
     xdbg("xstatestore_impl_t::get_latest_executed_block_height table:%s,this=%p", table_address.to_string().c_str(), this);
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
     return tablestore->get_latest_executed_block_height();
 }
-uint64_t xstatestore_impl_t::get_need_sync_state_block_height(common::xaccount_address_t const & table_address) const {
+uint64_t xstatestore_impl_t::get_need_sync_state_block_height(common::xtable_address_t const & table_address) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
     return tablestore->get_need_sync_state_block_height();    
 }
@@ -396,7 +396,7 @@ std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstat
         }
         return tablestate_ext->get_table_state()->all_accounts();
     } else {
-        common::xaccount_address_t table_addr(table_block->get_account());
+        common::xtable_address_t table_addr = common::xtable_address_t::build_from(table_block->get_account());
         std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> accounts_index;
         auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), table_addr);
         auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
@@ -634,6 +634,13 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
         xinfo("xstatestore_impl_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu",
               table_address.to_string().c_str(),
               non_nil_commit_block->get_height() + 2);
+        return false;
+    }
+
+    if (false == get_blockstore()->load_block_input(table_address.vaccount(), non_nil_commit_block.get())) {
+        xerror("xstatestore_impl_t::get_receiptid_state_and_prove fail load block input.table:%s, height:%llu",
+              table_address.to_string().c_str(),
+              non_nil_commit_block->get_height());
         return false;
     }
 

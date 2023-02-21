@@ -10,7 +10,7 @@
 #include "xsync/xsync_message.h"
 #include "common.h"
 #include "xmbus/xevent_executor.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 
@@ -37,7 +37,7 @@ public:
 
 TEST(xsync_account, no_response) {
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
+    std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), 0);
 
 
     mock::xvchain_creator creator;

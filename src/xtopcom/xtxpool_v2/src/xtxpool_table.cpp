@@ -42,28 +42,8 @@ bool xtxpool_table_t::is_reach_limit(const std::shared_ptr<xtx_entry> & tx) cons
     return false;
 }
 
-int32_t xtxpool_table_t::push_send_tx_real(const std::shared_ptr<xtx_entry> & tx) {
-    uint64_t latest_nonce;
-    // bool is_cached_nonce = false;
-
-    auto & account_addr = tx->get_tx()->get_source_addr();
-
-    // {
-    //     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    //     is_cached_nonce = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce);
-    // }
-
-    // if (!is_cached_nonce) {
-    bool result = get_account_latest_nonce(account_addr, latest_nonce);
-    if (!result) {
-        // todo : push to non_ready_accounts
-        // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
-        // m_non_ready_accounts.push_tx(tx);
-        xtxpool_warn("xtxpool_table_t::push_send_tx account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
-        return xtxpool_error_account_state_fall_behind;
-    }
-    // }
-
+int32_t xtxpool_table_t::push_send_tx_real(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce) {
+    auto account_addr = tx->get_tx()->get_source_addr();
     if (data::is_sys_contract_address(common::xaccount_address_t{account_addr})) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);
     } else {
@@ -85,16 +65,35 @@ int32_t xtxpool_table_t::push_send_tx_real(const std::shared_ptr<xtx_entry> & tx
     return ret;
 }
 
+int32_t xtxpool_table_t::check_send_tx_nonce(const std::shared_ptr<xtx_entry> & tx, uint64_t & latest_nonce) {
+    bool result = get_account_latest_nonce(tx->get_tx()->get_source_addr(), latest_nonce);
+    if (!result) {
+        xtxpool_warn("xtxpool_table_t::check_send_tx_nonce fail-get account nonce.tx:%s", tx->get_tx()->dump().c_str());
+        return xtxpool_error_account_state_fall_behind;
+    }
+    if (tx->get_tx()->get_tx_nonce() <= latest_nonce) {
+        xtxpool_warn("xtxpool_table_t::check_send_tx_nonce fail-tx nonce expired.tx:%s,latest_nonce=%ld", tx->get_tx()->dump().c_str(),latest_nonce);
+        return xtxpool_error_tx_nonce_expired;
+    }
+    return xsuccess;
+}
+
 int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     if (is_reach_limit(tx)) {
         return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
-    }
-
-    int32_t ret = verify_send_tx(tx->get_tx(), true);
+    }    
+    int32_t ret;
+    uint64_t latest_nonce = 0;
+    ret = check_send_tx_nonce(tx, latest_nonce);
     if (ret != xsuccess) {
         return ret;
     }
-    ret = push_send_tx_real(tx);
+
+    ret = verify_send_tx(tx->get_tx(), true);
+    if (ret != xsuccess) {
+        return ret;
+    }
+    ret = push_send_tx_real(tx, latest_nonce);
     if (ret == xsuccess) {
         XMETRICS_COUNTER_INCREMENT(m_push_send_tx_metrics_name, 1);
     }
@@ -374,11 +373,8 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
             }
         }
         int32_t ret = verify_cons_tx(tx);
-        if (ret != xsuccess) {
-            xtxpool_warn("xtxpool_table_t::verify_txs verify fail,tx:%s,err:%u", tx->dump(true).c_str(), ret);
-            if (ret == xverifier::xverifier_error::xverifier_error_tx_duration_expired) {
-                return xsuccess;
-            }
+        if (ret != xsuccess && ret != xverifier::xverifier_error::xverifier_error_tx_duration_expired) {
+            xtxpool_warn("xtxpool_table_t::verify_txs verify fail,tx:%s,err:%u", tx->dump().c_str(), ret);
             return ret;
         }
 
@@ -386,15 +382,21 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
         if (tx->is_send_tx() || tx->is_self_tx()) {
             if (!is_reach_limit(tx_ent)) {
+                uint64_t latest_nonce = 0;
+                ret = check_send_tx_nonce(tx_ent, latest_nonce);
+                if (ret != xsuccess) {
+                    xtxpool_warn("xtxpool_table_t::verify_txs fail-check tx nonce,tx:%s,err:%u", tx->dump().c_str(), ret);
+                    return ret;
+                }
                 xtxpool_info("xtxpool_table_t::verify_txs push tx from proposal tx:%s", tx->dump().c_str());
                 XMETRICS_GAUGE(metrics::txpool_push_tx_from_proposal, 1);
-                push_send_tx_real(tx_ent);
+                push_send_tx_real(tx_ent, latest_nonce);
             }
         } else {
             uint64_t latest_receipt_id = m_table_state_cache.get_tx_corresponding_latest_receipt_id(tx_ent);
             uint64_t tx_receipt_id = tx->get_last_action_receipt_id();
             if (tx_receipt_id < latest_receipt_id) {
-                xtxpool_warn("xtxpool_table_t::push_receipt duplicate receipt:%s,id:%llu:%llu", tx->dump().c_str(), tx_receipt_id, latest_receipt_id);
+                xtxpool_warn("xtxpool_table_t::verify_txs duplicate receipt:%s,id:%llu:%llu", tx->dump().c_str(), tx_receipt_id, latest_receipt_id);
                 return xtxpool_error_tx_duplicate;
             } else {
                 xtxpool_info("xtxpool_table_t::verify_txs push tx from proposal tx:%s", tx->dump().c_str());
@@ -815,7 +817,10 @@ void xtxpool_table_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::x
     for (auto & send_tx : recovered_send_txs) {
         xtxpool_v2::xtx_para_t para;
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(send_tx, para);
-        push_send_tx_real(tx_ent);
+        uint64_t latest_nonce = 0;
+        if (check_send_tx_nonce(tx_ent, latest_nonce) == xsuccess) {
+            push_send_tx_real(tx_ent, latest_nonce);
+        }
     }
     for (auto & receipt : recovered_receipts) {
         xtxpool_v2::xtx_para_t para;

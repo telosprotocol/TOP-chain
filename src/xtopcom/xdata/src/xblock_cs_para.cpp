@@ -92,4 +92,9 @@ xvip2_t xblock_consensus_para_t::get_leader_xip() const {
     return m_validator;
 }
 
+void xblock_consensus_para_t::set_total_burn_gas(const uint64_t burn_gas) const
+{
+    m_total_burn_tgas_token = burn_gas;
+}
+
 NS_END2

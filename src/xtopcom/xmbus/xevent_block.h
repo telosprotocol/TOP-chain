@@ -9,10 +9,12 @@
 #include "xmbus/xevent.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xblock.h"
+#include "xstatistic/xbasic_size.hpp"
+#include "xstatistic/xstatistic.h"
 
 NS_BEG2(top, mbus)
 
-class xevent_block_t : public xbus_event_t {
+class xevent_block_t : public xbus_event_t, public xstatistic::xstatistic_obj_face_t {
 public:
 
     enum _minor_type_ {
@@ -28,12 +30,20 @@ public:
     (int) none,
     dir,
     _sync),
+    xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_event_block),
     block(_block),
     new_block(_new_block) {
     }
 
+    ~xevent_block_t() {statistic_del();}
+
     data::xblock_ptr_t block;
     bool new_block{false};
+    virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_event_block;}
+private:
+    virtual int32_t get_object_size_real() const override {
+        return sizeof(*this) + get_size(get_result_data());
+    }
 };
 
 using xevent_block_ptr_t = xobject_ptr_t<xevent_block_t>;

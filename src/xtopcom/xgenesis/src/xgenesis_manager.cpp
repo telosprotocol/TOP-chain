@@ -57,7 +57,7 @@ void xtop_genesis_manager::load_accounts() {
     for (auto const & pair : system_contract_map) {
         auto const & address = top::get<common::xaccount_address_t const>(pair);
 
-        if (is_t2(address) && address_belongs_to_zone(address, common::xconsensus_zone_id)) {
+        if (is_t2_address(address) && address_belongs_to_zone(address, common::xconsensus_zone_id)) {
             for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
                 m_contract_accounts.insert(append_table_id(address, common::xtable_id_t{i}));
             }
@@ -156,7 +156,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
             (account.to_string().find(sys_contract_zec_elect_relay_addr) != std::string::npos) ||
             (account.to_string().find(sys_contract_relay_make_block_addr) != std::string::npos) ||
             (account.to_string().find(sys_contract_sharding_fork_info_addr) != std::string::npos) ||
-            (account.to_string().find(sys_contract_eth_fork_info_addr) != std::string::npos)) {
+            (account.to_string().find(sys_contract_eth_fork_info_addr) != std::string::npos) || 
+            (account.to_string().find(sys_contract_rec_node_manage_addr) != std::string::npos)) {
             // just delete it here and store new root block after
             xwarn("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
                   account.to_string().c_str(),
@@ -394,7 +395,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_block(base
     auto constexpr src = xenum_create_src_t::blockstore;
     common::xaccount_address_t const account_address{account.get_account()};
 
-    if (is_t2(account_address)) {
+    if (is_t2_address(account_address)) {
         // check system contract account(reset)
         return create_genesis_of_contract_account(account_address, src, ec);
     }

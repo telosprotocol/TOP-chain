@@ -382,13 +382,13 @@ TEST_F(test_relay_block_store, store_tx_block_serialize)
     xbytes_t rlp_genesis_block_header_data = genesis_block.encodeBytes(false);
     std::string data((char*)rlp_genesis_block_header_data.data(), rlp_genesis_block_header_data.size());
 
-    data::xtableheader_extra_t header_extra_src;
+    base::xtableheader_extra_t header_extra_src;
   //  header_extra_src.set_relay_wrap_info("");
     header_extra_src.set_relay_block_data(data);
     std::string extra_data;
     header_extra_src.serialize_to_string(extra_data);
 
-    data::xtableheader_extra_t last_header_extra_new;
+    base::xtableheader_extra_t last_header_extra_new;
     auto ret = last_header_extra_new.deserialize_from_string(extra_data);
     if (ret ) {
        std::cout << "ok " << std::endl;

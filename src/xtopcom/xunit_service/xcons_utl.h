@@ -9,6 +9,7 @@
 #include "xbase/xthread.h"
 #include "xbase/xns_macro.h"
 #include "xcommon/xmessage_category.h"
+#include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 NS_BEG2(top, xunit_service)
@@ -40,7 +41,5 @@ public:
     static int32_t get_groupid_by_account(const xvip2_t & local_xip, const std::string &account);
     static int32_t get_groupid_by_table(const xvip2_t & local_xip, uint16_t table_id);
 };
-XDEFINE_MSG_ID(xmessage_category_consensus, xBFT_msg, 0x00000000);
-XDEFINE_MSG_ID(xmessage_category_timer, xTimer_msg, 0x00000000);
-XDEFINE_MSG_ID(xmessage_category_relay, xrelay_BFT_msg, 0x00000000);
+
 NS_END2

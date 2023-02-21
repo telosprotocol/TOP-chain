@@ -5,6 +5,7 @@
 
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvexeunit.h"
 #include "xmetrics/xmetrics.h"
 
@@ -196,6 +197,17 @@ namespace top
                 xerror("xvexeunit_t::executenot_impl for id-method(%d) of uri(%s)",method_key,op.get_method_uri().c_str());
             }
             return xvalue_t();
+        }
+
+        int32_t xvexeunit_t::get_ex_alloc_size() const {
+            // each node alloc 72 for std::map<int, xvstdfunc_t> and 
+            int32_t ex_size = get_size(m_unit_name) + get_size(m_execute_uri) + ((m_id_methods.size() + m_name_methods.size()) * 72);
+            for (auto & pair : m_name_methods) {
+                auto key_size = get_size(pair.first);
+                ex_size += key_size;
+                xdbg("-----cache size----- xvexeunit_t m_name_methods key:%d", key_size);
+            }
+            return ex_size;
         }
     
         xvexegroup_t::xvexegroup_t(enum_xdata_type type)
@@ -431,6 +443,24 @@ namespace top
                 }
             }
             return (begin_size - stream.size());
+        }
+
+        int32_t xvexegroup_t::get_ex_alloc_size() const {
+            int32_t ex_size = 0;
+            for (auto & pair : m_child_units) {
+                auto key_size = get_size(pair.first);
+                auto value_size = sizeof(pair.second);
+                if (pair.second != nullptr) {
+                    auto vexeunit_size = sizeof(*pair.second);
+                    auto vexeunit_ex_size = pair.second->get_ex_alloc_size();
+                    xdbg("-----cache size----- xvexemodule_t vexeunit_size:%d,vexeunit_ex_size:%d", vexeunit_size, vexeunit_ex_size);
+                }
+                // each map node alloc 48B
+                ex_size += (key_size + value_size + 48);
+                xdbg("-----cache size----- xvexemodule_t key:%d,value:%d,node:48", key_size, value_size);
+            }
+
+            return ex_size;
         }
     };
 };

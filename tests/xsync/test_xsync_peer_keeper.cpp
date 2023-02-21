@@ -7,7 +7,7 @@
 #include "xsync/xsync_peer_keeper.h"
 #include "common.h"
 #include "xsync/xsync_util.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 
 using namespace top;
 using namespace top::sync;

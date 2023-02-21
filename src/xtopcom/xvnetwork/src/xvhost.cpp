@@ -18,7 +18,7 @@
 #include "xelection/xdata_accessor_error.h"
 #include "xmetrics/xmetrics.h"
 #include "xtxpool_v2/xtxpool_face.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xutility/xhash.h"
 #include "xvnetwork/xcodec/xmsgpack/xmessage_codec.hpp"
 #include "xvnetwork/xcodec/xmsgpack/xvnetwork_message_codec.hpp"
@@ -218,8 +218,8 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_ad
         // auto message_type = vmsg.message_id();
         // if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
         //     src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
-        //     (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
-        //         message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state)) {
+        //     (message_type == xmessage_id_sync_frozen_gossip || message_type == xmessage_id_sync_get_blocks || message_type == xmessage_id_sync_blocks ||
+        //         message_type == xmessage_id_sync_frozen_broadcast_chain_state || message_type == xmessage_id_sync_frozen_response_chain_state)) {
         //     m_network_driver->send_to_through_root(convert_to_p2p_xip2(src), dst.node_id(), bytes, ec);
         //     msg_metrics(vmsg, metrics::message_send_category_begin);
         // } else {

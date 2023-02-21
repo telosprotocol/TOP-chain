@@ -353,17 +353,32 @@ static std::string const g_bounty_genesis_config =
 }
 )T";
 
+
 const std::string & get_genesis_info() {
-#if defined(XBUILD_CI)
-    return g_ci_genesis_config;
-#elif defined(XBUILD_GALILEO)
-    return g_testnet_genesis_config;
-#elif defined(XBUILD_DEV)
-    return g_dev_genesis_config;
-#elif defined(XBUILD_BOUNTY)
-    return g_bounty_genesis_config;
+
+#if defined(XBUILD_CONSORTIUM)
+    #include "xgenesis_info_consortium.h"
+    #if defined(XBUILD_CI)
+        return g_ci_consortium_genesis_config;
+    #elif defined(XBUILD_DEV)
+        return g_dev_consortium_genesis_config;
+    #else
+        //add other config later
+        static_assert(false, "not config for consortium!");
+        return ;
+    #endif
 #else
-    return g_mainnet_genesis_config;
+    #if defined(XBUILD_CI)
+        return g_ci_genesis_config;
+    #elif defined(XBUILD_GALILEO)
+        return g_testnet_genesis_config;
+    #elif defined(XBUILD_DEV)
+        return g_dev_genesis_config;
+    #elif defined(XBUILD_BOUNTY)
+        return g_bounty_genesis_config;
+    #else
+        return g_mainnet_genesis_config;
+    #endif
 #endif
 }
 

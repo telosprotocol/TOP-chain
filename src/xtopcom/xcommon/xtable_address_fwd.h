@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "xcommon/xaccount_address_fwd.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, common)
-
-using xtable_address_t = common::xaccount_address_t;
-
+NS_BEG1(details)
+class xtop_table_address;
+NS_END1
+using xtable_address_t = details::xtop_table_address;
 NS_END2

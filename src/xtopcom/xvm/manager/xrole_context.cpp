@@ -20,7 +20,7 @@
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
-#include "xvm/manager/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "xvm/xvm_service.h"
 #include "xstatestore/xstatestore_face.h"
 
@@ -48,37 +48,53 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         return;
     }
 
+    auto const & contract_base_address = m_contract_info->address.base_address();
     // process block event
     if (m_contract_info->has_block_monitors()) {
         auto block_owner = block->get_block_owner();
         // table fulltable block process
         bool is_sharding_statistic =
-            (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos);
-        bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(sys_contract_eth_table_block_addr) != std::string::npos);
+            (contract_base_address == sharding_statistic_info_contract_base_address) && (block_owner.find(common::con_table_base_address.to_string()) != std::string::npos);
+        bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(common::eth_table_base_address.to_string()) != std::string::npos);
 
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
-            base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, true);
+            base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, false);
+            // XTODO get_pledge_balance_change_tgas need load block output
+            if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t{block_owner}, full_block.get())) {
+                xerror("xrole_context_t::on_block_to_db fail-load block output.%s",full_block->dump().c_str());
+                return;
+            }
 
             auto const * full_tableblock = dynamic_cast<xfull_tableblock_t*>(full_block.get());
             auto node_service = contract::xcontract_manager_t::instance().get_node_service();
-            auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
-            auto const statistic_accounts = fulltableblock_statistic_accounts(fulltable_statisitc_data, node_service);
-
-            base::xstream_t stream(base::xcontext_t::instance());
-            stream << fulltable_statisitc_data;
-            stream << statistic_accounts;
-            stream << block_height;
-            stream << block->get_pledge_balance_change_tgas();
-            std::string action_params = std::string((char *)stream.data(), stream.size());
-
             xblock_monitor_info_t * info = m_contract_info->find(m_contract_info->address);
             uint32_t table_id = 0;
             auto result = xdatautil::extract_table_id_from_address(block_owner, table_id);
             assert(result);
             XMETRICS_GAUGE(metrics::xmetrics_tag_t::contract_table_fullblock_event, 1);
-            on_fulltableblock_event(m_contract_info->address, "on_collect_statistic_info", action_params, block->get_timestamp(), (uint16_t)table_id);
+
+            #ifndef XBUILD_CONSORTIUM
+                auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
+                auto const statistic_accounts = fulltableblock_statistic_accounts(fulltable_statisitc_data, node_service);
+                base::xstream_t stream(base::xcontext_t::instance());
+                stream << fulltable_statisitc_data;
+                stream << statistic_accounts;
+                stream << block_height;
+                stream << full_tableblock->get_pledge_balance_change_tgas();
+                std::string action_params = std::string((char *)stream.data(), stream.size());
+                on_fulltableblock_event(m_contract_info->address, "on_collect_statistic_info", action_params, block->get_timestamp(), (uint16_t)table_id);
+            #else 
+                auto const fulltable_statisitc_data = full_tableblock->get_table_statistics_cons_data();
+                auto const statistic_accounts = fulltableblock_statistic_cons_accounts(fulltable_statisitc_data, node_service);
+                base::xstream_t stream(base::xcontext_t::instance());
+                stream << fulltable_statisitc_data;
+                stream << statistic_accounts;
+                stream << block_height;
+                std::string action_params = std::string((char *)stream.data(), stream.size());
+                on_fulltableblock_event(m_contract_info->address, "on_collect_statistic_info_cons", action_params, block->get_timestamp(), (uint16_t)table_id);
+            #endif
         }
     }
 
@@ -173,8 +189,9 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     onchain_timer_round = block->get_height();
                     block_timestamp = block->get_timestamp();
 
-
-                    if ((m_contract_info->address == sharding_statistic_info_contract_address || m_contract_info->address == sharding_vote_contract_address) && valid_call(onchain_timer_round)) {
+                    auto const & contract_base_address = m_contract_info->address.base_address();
+                    if ((contract_base_address == sharding_statistic_info_contract_base_address || contract_base_address == sharding_vote_contract_base_address
+                        || m_contract_info->address == eth_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
 
                         int table_num = m_driver->table_ids().size();
                         if (table_num == 0) {
@@ -183,9 +200,9 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                         }
 
                         int clock_interval = 1;
-                        if (m_contract_info->address == sharding_statistic_info_contract_address) {
+                        if (contract_base_address == sharding_statistic_info_contract_base_address) {
                             clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
-                        } else if (m_contract_info->address == sharding_vote_contract_address) {
+                        } else if (contract_base_address == sharding_vote_contract_base_address) {
                             clock_interval = 1;
                         }
 
@@ -537,6 +554,49 @@ void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_ty
             //xdbg("[xrole_context_t] broadcast to archive. block owner %s", block_ptr->get_block_owner().c_str());
         }
     }
+}
+
+
+data::xfulltableblock_statistic_accounts xrole_context_t::fulltableblock_statistic_cons_accounts(data::xstatistics_cons_data_t const& block_statistic_data, base::xvnodesrv_t * node_service) {
+    using namespace top::data;
+
+    xfulltableblock_statistic_accounts res;
+
+    // process one full tableblock statistic data
+    for (auto const & statistic_item: block_statistic_data.detail) {
+        auto elect_statistic = statistic_item.second;
+        xfulltableblock_group_data_t res_group_data;
+        for (auto const & group_item: elect_statistic.group_statistics_data) {
+            xgroup_statistics_cons_data_t const& group_account_data = group_item.second;
+            common::xgroup_address_t const& group_addr = group_item.first;
+            xvip2_t const& group_xvip2 = top::common::xip2_t{
+                group_addr.network_id(),
+                group_addr.zone_id(),
+                group_addr.cluster_id(),
+                group_addr.group_id(),
+                (uint16_t)group_account_data.account_statistics_data.size(),
+                statistic_item.first
+            };
+
+            xfulltableblock_account_data_t res_account_data;
+            for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
+                auto const& account_group = node_service->get_group(group_xvip2);
+                // if empty, then just return current data
+                if (!account_group) {
+                    xerror("[fulltableblock_statistic_cons_accounts xrole_context_t::fulltableblock_statistic_accounts] data miss, statistic accounts not the same");
+                    return res;
+                }
+                auto account_addr = account_group->get_node(slotid)->get_account();
+                res_account_data.account_data.emplace_back(std::move(account_addr));
+            }
+
+            res_group_data.group_data[group_addr] = res_account_data;
+        }
+
+        res.accounts_detail[statistic_item.first] = res_group_data;
+    }
+
+    return res;
 }
 
 NS_END2

@@ -6,6 +6,7 @@
 #include <cinttypes>
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
+#include "xstatistic/xbasic_size.hpp"
 #include "../xvblock.h"
 #include "../xvstate.h"
 #include "../xvstatestore.h"
@@ -995,7 +996,7 @@ namespace top
         }
             
         xvbstate_t::xvbstate_t(enum_xdata_type type)
-            :xvexestate_t(type)
+            :xvexestate_t(type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
@@ -1012,7 +1013,7 @@ namespace top
         }
         
         xvbstate_t::xvbstate_t(const xvblock_t& for_block,xvexeunit_t * parent_unit,enum_xdata_type type)
-            :xvexestate_t(for_block.get_account(),type)
+            :xvexestate_t(for_block.get_account(),type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
@@ -1036,7 +1037,7 @@ namespace top
         }
         
         xvbstate_t::xvbstate_t(const xvblock_t& for_block,xvbstate_t & clone_from,xvexeunit_t * parent_unit,enum_xdata_type type)
-            :xvexestate_t(for_block.get_account(),type)
+            :xvexestate_t(for_block.get_account(),type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
@@ -1062,7 +1063,7 @@ namespace top
         }
         
         xvbstate_t::xvbstate_t(const xvheader_t& proposal_header,xvbstate_t & clone_from,uint64_t viewid,xvexeunit_t * parent_unit,enum_xdata_type type)
-        :xvexestate_t(proposal_header.get_account(),type)
+        :xvexestate_t(proposal_header.get_account(),type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
@@ -1088,7 +1089,7 @@ namespace top
         }
         
         xvbstate_t::xvbstate_t(const xvheader_t& proposal_header,xvexeunit_t * parent_unit,enum_xdata_type type)
-        :xvexestate_t(proposal_header.get_account(),type)
+        :xvexestate_t(proposal_header.get_account(),type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
@@ -1114,7 +1115,7 @@ namespace top
         
         //debug & ut-test only
         xvbstate_t::xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit)
-            :xvexestate_t(account,(enum_xdata_type)enum_xobject_type_vbstate)
+            :xvexestate_t(account,(enum_xdata_type)enum_xobject_type_vbstate), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
@@ -1138,7 +1139,7 @@ namespace top
         }
         
         xvbstate_t::xvbstate_t(const xvbstate_t & obj)
-            :xvexestate_t(obj)
+            :xvexestate_t(obj), xstatistic::xstatistic_obj_face_t(obj)
         {
             m_block_types    = obj.m_block_types;
             m_block_versions = obj.m_block_versions;
@@ -1161,6 +1162,7 @@ namespace top
         
         xvbstate_t::~xvbstate_t()
         {
+            statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, -1);
         }
         
@@ -1311,6 +1313,22 @@ namespace top
             xerror("decompile_from_binlog failed for bin-log,length(%u)",(uint32_t)from_bin_log.size());
             return false;
         }
- 
+
+        int32_t xvbstate_t::get_object_size_real() const {
+            int32_t total_size = sizeof(*this);
+            auto ex_size = get_ex_alloc_size();
+            total_size +=
+                get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + get_size(get_xvid_str()) + get_size(get_address()) + get_size(get_storage_key()) + ex_size;
+            xdbg("------cache size------ xvbstate_t total_size:%d this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,xvid_str:%d,address:%d,storage_key:%d,ex_size:%d",
+                 total_size,
+                 sizeof(*this),
+                 get_size(m_last_block_hash),
+                 get_size(m_last_full_block_hash),
+                 get_size(get_xvid_str()),
+                 get_size(get_address()),
+                 get_size(get_storage_key()),
+                 ex_size);
+            return total_size;
+        }
     };
 };

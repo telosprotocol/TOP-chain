@@ -41,7 +41,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
                                                                  base::xvdbstore_t * db,
                                                                  bool sync_unit) {
     auto sync = std::make_shared<xtop_state_sync>();
-    sync->m_sched = state_mpt::new_state_sync(table, root_hash, db, sync_unit);
+    sync->m_sched = state_mpt::new_state_sync(table.table_address(), root_hash, db, sync_unit);
     sync->m_table = table;
     sync->m_height = height;
     sync->m_table_block_hash = block_hash;
@@ -51,7 +51,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_peers_func = peers;
     sync->m_track_func = track_req;
     sync->m_db = db;
-    sync->m_kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
+    sync->m_kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table.table_address());
     sync->m_items_per_task = total_fetch_num;
     sync->m_units_per_task = unit_fetch_num;
     sync->m_max_req_nums = max_req_num;

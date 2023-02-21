@@ -10,6 +10,8 @@
 #endif
 
 #include "xbase/xhash.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xpbase/base/endpoint_util.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
@@ -25,14 +27,9 @@ namespace top {
 
 namespace kadmlia {
 
-void GetPublicEndpointsConfig(const top::base::Config & config, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
-    std::string public_endpoints;
-    if (!config.Get("node", "public_endpoints", public_endpoints)) {
-        TOP_INFO("get node.public_endpoints failed");
-        return;
-    }
-
-    top::base::ParseEndpoints(public_endpoints, boot_endpoints);
+void GetPublicEndpointsConfig(const top::base::Config &, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
+    std::string p2p_endpoints = XGET_CONFIG(p2p_endpoints);
+    top::base::ParseEndpoints(p2p_endpoints, boot_endpoints);
 }
 
 bool CreateGlobalXid(const base::Config & config) try {
@@ -45,16 +42,8 @@ bool CreateGlobalXid(const base::Config & config) try {
 }
 
 LocalNodeInfoPtr CreateLocalInfoFromConfig(const base::Config & config, base::KadmliaKeyPtr kad_key) try {
-    std::string local_ip;
-    if (!config.Get("node", "local_ip", local_ip)) {
-        TOP_ERROR("get node local_ip from config failed!");
-        return nullptr;
-    }
-    uint16_t local_port = 0;
-    if (!config.Get("node", "local_port", local_port)) {
-        TOP_ERROR("get node local_port from config failed!");
-        return nullptr;
-    }
+    std::string local_ip = XGET_CONFIG(ip);
+    uint16_t local_port = XGET_CONFIG(node_p2p_port);
 
     kadmlia::LocalNodeInfoPtr local_node_ptr = nullptr;
     local_node_ptr.reset(new top::kadmlia::LocalNodeInfo());

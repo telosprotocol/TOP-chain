@@ -7,7 +7,7 @@
 #include "xsync/xchain_info.h"
 #include "../mock/xmock_auth.hpp"
 #include "common.h"
-#include "xsyncbase/xmessage_ids.h"
+#include "xcommon/xmessage_id.h"
 #include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
@@ -17,7 +17,7 @@ using namespace top::data;
 
 TEST(xsync_v1_block_fetcher, not_exist1) {
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
+    std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), 0);
 
     top::mock::xmock_auth_t auth{1};
 
@@ -104,7 +104,7 @@ TEST(xsync_v1_block_fetcher, not_exist1) {
 
 TEST(xsync_v1_block_fetcher, not_exist2) {
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
+    std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), 0);
 
     top::mock::xmock_auth_t auth{1};
 
@@ -193,7 +193,7 @@ TEST(xsync_v1_block_fetcher, not_exist2) {
 
 TEST(xsync_v1_block_fetcher, exist) {
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
+    std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), 0);
 
     top::mock::xmock_auth_t auth{1};
 
@@ -260,7 +260,7 @@ TEST(xsync_v1_block_fetcher, exist) {
 
 TEST(xsync_v1_block_fetcher, timeout) {
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
+    std::string address = xdatautil::serialize_owner_str(common::rec_table_base_address.to_string(), 0);
 
     top::mock::xmock_auth_t auth{1};
 

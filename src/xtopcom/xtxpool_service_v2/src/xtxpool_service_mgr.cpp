@@ -15,7 +15,6 @@
 #include "xtxpool_service_v2/xreceipt_strategy.h"
 #include "xtxpool_service_v2/xtxpool_proxy.h"
 #include "xtxpool_service_v2/xtxpool_service.h"
-#include "xtxpool_v2/xreceipt_resend.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xchain_fork/xutility.h"
 

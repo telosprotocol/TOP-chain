@@ -60,6 +60,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_mpt_state_object);
         RETURN_METRICS_NAME(dataobject_mpt_trie_node_cnt);
 
+        //data 
+        RETURN_METRICS_NAME(data_relay_release_input);
+        RETURN_METRICS_NAME(data_relay_release_output);
+        RETURN_METRICS_NAME(data_relay_release_resource);
+
         // dbkeys
         RETURN_METRICS_NAME(db_key_tx);
         RETURN_METRICS_NAME(db_key_block_index);
@@ -79,19 +84,13 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_read_tick);
         RETURN_METRICS_NAME(db_write_tick);
         RETURN_METRICS_NAME(db_delete_tick);
-        RETURN_METRICS_NAME(db_block_cache_size);
-        RETURN_METRICS_NAME(db_memtable_cache_size);
-        RETURN_METRICS_NAME(db_memory_total_size);
+        RETURN_METRICS_NAME(db_rocksdb_block_cache);
+        RETURN_METRICS_NAME(db_rocksdb_table_readers);
+        RETURN_METRICS_NAME(db_rocksdb_all_mem_tables);
+        RETURN_METRICS_NAME(db_rocksdb_cache_pinned);
+        RETURN_METRICS_NAME(db_rocksdb_total);
 
         // consensus
-        RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
-        RETURN_METRICS_NAME(cons_drand_backup_finish_succ);
-        RETURN_METRICS_NAME(cons_drand_leader_finish_fail);
-        RETURN_METRICS_NAME(cons_drand_backup_finish_fail);
-        RETURN_METRICS_NAME(cons_tableblock_leader_finish_succ);
-        RETURN_METRICS_NAME(cons_tableblock_backup_finish_succ);
-        RETURN_METRICS_NAME(cons_tableblock_leader_finish_fail);
-        RETURN_METRICS_NAME(cons_tableblock_backup_finish_fail);
         RETURN_METRICS_NAME(cons_drand_leader_succ);
         RETURN_METRICS_NAME(cons_drand_backup_succ);
         RETURN_METRICS_NAME(cons_tableblock_leader_succ);
@@ -670,7 +669,168 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(prune_block_contract);
         RETURN_METRICS_NAME(prune_state_unitstate);
 
+        //eth
         RETURN_METRICS_NAME(ethtx_get_from);
+
+#if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
+        RETURN_METRICS_NAME(statistic_tx_v2_num);
+        RETURN_METRICS_NAME(statistic_tx_v3_num);
+        RETURN_METRICS_NAME(statistic_receipt_num);
+        RETURN_METRICS_NAME(statistic_vqcert_num);
+        RETURN_METRICS_NAME(statistic_vblock_num);
+        RETURN_METRICS_NAME(statistic_table_bstate_num);
+        RETURN_METRICS_NAME(statistic_unit_bstate_num);
+        RETURN_METRICS_NAME(statistic_block_header_num);
+        RETURN_METRICS_NAME(statistic_vinput_num);
+        RETURN_METRICS_NAME(statistic_voutput_num);
+        RETURN_METRICS_NAME(statistic_vbstate_num);
+        RETURN_METRICS_NAME(statistic_vcanvas_num);
+        RETURN_METRICS_NAME(statistic_mpt_state_object_num);
+        RETURN_METRICS_NAME(statistic_bindex_num);
+        RETURN_METRICS_NAME(statistic_account_index_num);
+        RETURN_METRICS_NAME(statistic_receiptid_pair_num);
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+        RETURN_METRICS_NAME(statistic_event_num);
+        RETURN_METRICS_NAME(statistic_msg_cons_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_num);
+        RETURN_METRICS_NAME(statistic_msg_block_broadcast_num);
+        RETURN_METRICS_NAME(statistic_msg_state_num);
+#else
+        RETURN_METRICS_NAME(statistic_event_account_num);
+        RETURN_METRICS_NAME(statistic_event_behind_num);
+        RETURN_METRICS_NAME(statistic_event_block_num);
+        RETURN_METRICS_NAME(statistic_event_blockfetcher_num);
+        RETURN_METRICS_NAME(statistic_event_consensus_num);
+        RETURN_METRICS_NAME(statistic_event_sync_executor_num);
+        RETURN_METRICS_NAME(statistic_event_network_num);
+        RETURN_METRICS_NAME(statistic_event_role_num);
+        RETURN_METRICS_NAME(statistic_event_state_sync_num);
+        RETURN_METRICS_NAME(statistic_event_store_num);
+        RETURN_METRICS_NAME(statistic_event_sync_num);
+        RETURN_METRICS_NAME(statistic_event_timer_num);
+        RETURN_METRICS_NAME(statistic_event_chain_timer_num);
+        RETURN_METRICS_NAME(statistic_event_vnode_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_request_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_response_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_query_request_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_eth_request_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_eth_response_num);
+        RETURN_METRICS_NAME(statistic_msg_rpc_eth_query_request_num);
+        RETURN_METRICS_NAME(statistic_msg_state_trie_request_num);
+        RETURN_METRICS_NAME(statistic_msg_state_trie_response_num);
+        RETURN_METRICS_NAME(statistic_msg_state_table_request_num);
+        RETURN_METRICS_NAME(statistic_msg_state_table_response_num);
+        RETURN_METRICS_NAME(statistic_msg_state_unit_request_num);
+        RETURN_METRICS_NAME(statistic_msg_state_unit_response_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_send_receipt_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_recv_receipt_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_pull_recv_receipt_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_push_receipt_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_pull_confirm_receipt_num);
+        RETURN_METRICS_NAME(statistic_msg_txpool_receipt_id_state_num);
+        RETURN_METRICS_NAME(statistic_msg_bft_num);
+        RETURN_METRICS_NAME(statistic_msg_timer_num);
+        RETURN_METRICS_NAME(statistic_msg_relay_bft_num);
+        RETURN_METRICS_NAME(statistic_msg_block_broadcast_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_gossip_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_frozen_gossip_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_broadcast_chain_state_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_frozen_broadcast_chain_state_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_response_chain_state_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_frozen_response_chain_state_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_cross_cluster_chain_state_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_chain_snapshot_request_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_chain_snapshot_response_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_ondemand_chain_snapshot_request_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_ondemand_chain_snapshot_response_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_query_archive_height_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_newblock_push_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_block_request_num);
+        RETURN_METRICS_NAME(statistic_msg_sync_block_response_num);
+#endif
+        RETURN_METRICS_NAME(statistic_tx_v2_size);
+        RETURN_METRICS_NAME(statistic_tx_v3_size);
+        RETURN_METRICS_NAME(statistic_receipt_size);
+        RETURN_METRICS_NAME(statistic_vqcert_size);
+        RETURN_METRICS_NAME(statistic_vblock_size);
+        RETURN_METRICS_NAME(statistic_table_bstate_size);
+        RETURN_METRICS_NAME(statistic_unit_bstate_size);
+        RETURN_METRICS_NAME(statistic_block_header_size);
+        RETURN_METRICS_NAME(statistic_vinput_size);
+        RETURN_METRICS_NAME(statistic_voutput_size);
+        RETURN_METRICS_NAME(statistic_vbstate_size);
+        RETURN_METRICS_NAME(statistic_vcanvas_size);
+        RETURN_METRICS_NAME(statistic_mpt_state_object_size);
+        RETURN_METRICS_NAME(statistic_bindex_size);
+        RETURN_METRICS_NAME(statistic_account_index_size);
+        RETURN_METRICS_NAME(statistic_receiptid_pair_size);
+#ifndef CACHE_SIZE_STATISTIC_MORE_DETAIL
+        RETURN_METRICS_NAME(statistic_event_size);
+        RETURN_METRICS_NAME(statistic_msg_cons_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_size);
+        RETURN_METRICS_NAME(statistic_msg_block_broadcast_size);
+        RETURN_METRICS_NAME(statistic_msg_state_size);
+#else
+        RETURN_METRICS_NAME(statistic_event_account_size);
+        RETURN_METRICS_NAME(statistic_event_behind_size);
+        RETURN_METRICS_NAME(statistic_event_block_size);
+        RETURN_METRICS_NAME(statistic_event_blockfetcher_size);
+        RETURN_METRICS_NAME(statistic_event_consensus_size);
+        RETURN_METRICS_NAME(statistic_event_sync_executor_size);
+        RETURN_METRICS_NAME(statistic_event_network_size);
+        RETURN_METRICS_NAME(statistic_event_role_size);
+        RETURN_METRICS_NAME(statistic_event_state_sync_size);
+        RETURN_METRICS_NAME(statistic_event_store_size);
+        RETURN_METRICS_NAME(statistic_event_sync_size);
+        RETURN_METRICS_NAME(statistic_event_timer_size);
+        RETURN_METRICS_NAME(statistic_event_chain_timer_size);
+        RETURN_METRICS_NAME(statistic_event_vnode_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_request_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_response_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_query_request_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_eth_request_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_eth_response_size);
+        RETURN_METRICS_NAME(statistic_msg_rpc_eth_query_request_size);
+        RETURN_METRICS_NAME(statistic_msg_state_trie_request_size);
+        RETURN_METRICS_NAME(statistic_msg_state_trie_response_size);
+        RETURN_METRICS_NAME(statistic_msg_state_table_request_size);
+        RETURN_METRICS_NAME(statistic_msg_state_table_response_size);
+        RETURN_METRICS_NAME(statistic_msg_state_unit_request_size);
+        RETURN_METRICS_NAME(statistic_msg_state_unit_response_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_send_receipt_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_recv_receipt_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_pull_recv_receipt_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_push_receipt_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_pull_confirm_receipt_size);
+        RETURN_METRICS_NAME(statistic_msg_txpool_receipt_id_state_size);
+        RETURN_METRICS_NAME(statistic_msg_bft_size);
+        RETURN_METRICS_NAME(statistic_msg_timer_size);
+        RETURN_METRICS_NAME(statistic_msg_relay_bft_size);
+        RETURN_METRICS_NAME(statistic_msg_block_broadcast_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_gossip_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_frozen_gossip_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_broadcast_chain_state_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_frozen_broadcast_chain_state_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_response_chain_state_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_frozen_response_chain_state_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_cross_cluster_chain_state_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_chain_snapshot_request_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_chain_snapshot_response_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_ondemand_chain_snapshot_request_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_ondemand_chain_snapshot_response_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_query_archive_height_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_newblock_push_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_block_request_size);
+        RETURN_METRICS_NAME(statistic_msg_sync_block_response_size);
+#endif
+        RETURN_METRICS_NAME(statistic_mpt_node_cache_num);
+        RETURN_METRICS_NAME(statistic_mpt_node_cache_size);
+        RETURN_METRICS_NAME(statistic_total_size);
+#endif
 
         default: assert(false); return nullptr;
     }
