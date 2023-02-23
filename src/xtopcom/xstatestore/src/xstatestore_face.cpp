@@ -35,7 +35,11 @@ int32_t verify_standby_transaction(data::xtransaction_t const * trx) {
     xdbg("verify_standby_transaction: tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
     auto const check_success = !pub_key.empty() && trx->pub_key_sign_check(pub_key);
-    xdbg("verify_standby_transaction: %s .tx:%s, pub_key(base64):%s", check_success ? "success" : "fail", trx->dump().c_str(), pub_key.to_string().c_str());
+    if (!check_success) {
+        xwarn("verify_standby_transaction: fail .tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
+    } else {
+        xdbg("verify_standby_transaction: success .tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
+    }
 
     return check_success ? xverifier::xverifier_error::xverifier_error_tx_signature_invalid : xverifier::xverifier_error::xverifier_success;
 }
