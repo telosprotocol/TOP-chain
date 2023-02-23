@@ -5,11 +5,35 @@
 #include "xbase/xdata.h"
 #include "xbase/xhash.h"
 #include "xvledger/xvblock_offdata.h"
+#include "xvledger/xvblock.h"
 
 namespace top
 {
     namespace base
     {
+        //---------------------------------subblock_build_info_t---------------------------------//
+        subblock_build_info_t::subblock_build_info_t(base::xvblock_t* unit) {
+            unit->get_header()->add_ref();
+            m_header.attach(unit->get_header());
+
+            std::string binlog;
+            if (false == unit->get_header()->is_character_simple_unit()) {
+                if (unit->get_block_class() == base::enum_xvblock_class_full) {
+                    m_binlog = unit->get_full_state();
+                } else {
+                    m_binlog = unit->get_binlog();
+                }
+                m_fullstate_hash = unit->get_fullstate_hash();
+            } else {
+                // binlog and state hash in header
+            }      
+        }
+        subblock_build_info_t::subblock_build_info_t(xvheader_ptr_t const& header, std::string const& binlog, std::string const& state_hash)
+        : m_header(header), m_binlog(binlog), m_fullstate_hash(state_hash) {
+
+        }
+
+
         //---------------------------------xunitblock_t---------------------------------//
 
 
@@ -71,20 +95,7 @@ namespace top
         xvblock_out_offdata_t::xvblock_out_offdata_t(const std::vector<xobject_ptr_t<xvblock_t>> & subblocks) {
             std::vector<subblock_build_info_t> subblocks_info;
             for (auto & subblock : subblocks) {
-                std::string header_bin;
-                subblock->get_header()->serialize_to_string(header_bin);
-                std::string binlog;
-                if (subblock->get_block_class() == base::enum_xvblock_class_full) {
-                    binlog = subblock->get_full_state();
-                } else {
-                    binlog = subblock->get_binlog();
-                }
-                
-                subblock_build_info_t _info;
-                _info.m_header_bin = header_bin;
-                _info.m_binlog = binlog;
-                _info.m_fullstate_hash = subblock->get_fullstate_hash();
-                subblocks_info.push_back(_info);
+                subblocks_info.push_back(subblock_build_info_t{subblock.get()});
             }
             set_subblocks_info(subblocks_info);
         }
@@ -93,9 +104,11 @@ namespace top
             uint32_t count = infos.size();
             _stream.write_compact_var(count);
             for (auto & v : infos) {
-                _stream.write_compact_var(v.m_header_bin);
-                _stream.write_compact_var(v.m_fullstate_hash);
-                _stream.write_compact_var(v.m_binlog);
+                std::string header_bin;
+                v.get_header()->serialize_to_string(header_bin);
+                _stream.write_compact_var(header_bin);
+                _stream.write_compact_var(v.get_state_hash());
+                _stream.write_compact_var(v.get_binlog());
             }
             std::string _stream_str;
             _stream_str.assign((const char*)_stream.data(), _stream.size());
@@ -108,12 +121,17 @@ namespace top
             uint32_t count;
             _stream.read_compact_var(count);
             std::vector<subblock_build_info_t> infos;
-            for (uint32_t i = 0; i < count; i++) {
-                subblock_build_info_t info;
-                _stream.read_compact_var(info.m_header_bin);
-                _stream.read_compact_var(info.m_fullstate_hash);
-                _stream.read_compact_var(info.m_binlog);
-                infos.push_back(info);
+            for (uint32_t i = 0; i < count; i++) {                
+                std::string header_bin;
+                std::string state_hash;
+                std::string binlog;
+                _stream.read_compact_var(header_bin);
+                _stream.read_compact_var(state_hash);
+                _stream.read_compact_var(binlog);
+
+                base::xauto_ptr<base::xvheader_t> vheader_ptr = base::xvblock_t::create_header_object(header_bin);
+                xassert(vheader_ptr != nullptr); //should has value
+                infos.push_back(subblock_build_info_t{vheader_ptr, binlog, state_hash});
             }
             return infos;
         }

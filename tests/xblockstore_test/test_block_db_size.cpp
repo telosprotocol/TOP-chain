@@ -44,40 +44,39 @@ protected:
     }
 };
 TEST_F(test_block_db_size, table_unit_size) {
-// before optimize
+// after unit optimize
 // table = Ta0000@1 height=0 size = 213 object:213 input:0 output:0 offdata: 0
-// table = Ta0000@1 height=1 size = 5236 object:1167 input:1578 output:154 offdata: 2337
-// table = Ta0000@1 height=2 size = 5389 object:1195 input:1578 output:139 offdata: 2477
-// table = Ta0000@1 height=3 size = 5564 object:1238 input:1578 output:139 offdata: 2609
-// table = Ta0000@1 height=4 size = 5555 object:1229 input:1578 output:139 offdata: 2609
-// table = Ta0000@1 height=5 size = 5556 object:1230 input:1578 output:139 offdata: 2609
-// unit = T00000LXutXVNk3Kakvr8di6mcRWXEWrayCPEsSk height=0 size = 1087 header:90 qcert:145 input:135 output:86 input_res:358 output_res:180 binlog:102
-// unit = T00000LXutXVNk3Kakvr8di6mcRWXEWrayCPEsSk height=1 size = 591 header:122 qcert:154 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXutXVNk3Kakvr8di6mcRWXEWrayCPEsSk height=2 size = 627 header:122 qcert:156 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXutXVNk3Kakvr8di6mcRWXEWrayCPEsSk height=3 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXutXVNk3Kakvr8di6mcRWXEWrayCPEsSk height=4 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXutXVNk3Kakvr8di6mcRWXEWrayCPEsSk height=5 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXHWbydhyTPP4NTcHV6DAFjmXgASm4M4Cg height=0 size = 1049 header:90 qcert:145 input:135 output:86 input_res:358 output_res:180 binlog:102
-// unit = T00000LXHWbydhyTPP4NTcHV6DAFjmXgASm4M4Cg height=1 size = 591 header:122 qcert:154 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXHWbydhyTPP4NTcHV6DAFjmXgASm4M4Cg height=2 size = 627 header:122 qcert:156 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXHWbydhyTPP4NTcHV6DAFjmXgASm4M4Cg height=3 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXHWbydhyTPP4NTcHV6DAFjmXgASm4M4Cg height=4 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LXHWbydhyTPP4NTcHV6DAFjmXgASm4M4Cg height=5 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000Li6nDAcBokiREp3V1t6AQRB4P8k8mBwReC height=0 size = 1049 header:90 qcert:145 input:135 output:86 input_res:358 output_res:180 binlog:102
-// unit = T00000Li6nDAcBokiREp3V1t6AQRB4P8k8mBwReC height=1 size = 591 header:122 qcert:154 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000Li6nDAcBokiREp3V1t6AQRB4P8k8mBwReC height=2 size = 627 header:122 qcert:156 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000Li6nDAcBokiREp3V1t6AQRB4P8k8mBwReC height=3 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000Li6nDAcBokiREp3V1t6AQRB4P8k8mBwReC height=4 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000Li6nDAcBokiREp3V1t6AQRB4P8k8mBwReC height=5 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LKbV3kW2VPBFVBAqAZw3S7GmNebb8AqQTK height=0 size = 1048 header:90 qcert:145 input:135 output:86 input_res:358 output_res:180 binlog:102
-// unit = T00000LKbV3kW2VPBFVBAqAZw3S7GmNebb8AqQTK height=1 size = 591 header:122 qcert:154 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LKbV3kW2VPBFVBAqAZw3S7GmNebb8AqQTK height=2 size = 627 header:122 qcert:156 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LKbV3kW2VPBFVBAqAZw3S7GmNebb8AqQTK height=3 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LKbV3kW2VPBFVBAqAZw3S7GmNebb8AqQTK height=4 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// unit = T00000LKbV3kW2VPBFVBAqAZw3S7GmNebb8AqQTK height=5 size = 659 header:122 qcert:188 input:30 output:82 input_res:0 output_res:145 binlog:67
-// db key size = 72544
-// db value size = 319737
-// hash_calc_count = 328
+// table = Ta0000@1 height=1 size = 3439 object:553 input:1423 output:656 offdata: 807
+// table = Ta0000@1 height=2 size = 3459 object:588 input:1423 output:641 offdata: 807
+// table = Ta0000@1 height=3 size = 3498 object:621 input:1429 output:641 offdata: 807
+// table = Ta0000@1 height=4 size = 3500 object:621 input:1431 output:641 offdata: 807
+// table = Ta0000@1 height=5 size = 3500 object:621 input:1431 output:641 offdata: 807
+// unit = T00000LWPwYdDaQDnCAKY3hBJV3Ztx2zYmAekxaB height=0 size = 1049 header:90 qcert:145 input:358 output:180 input_res:358 output_res:180 binlog:102
+// unit = T00000LWPwYdDaQDnCAKY3hBJV3Ztx2zYmAekxaB height=1 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LWPwYdDaQDnCAKY3hBJV3Ztx2zYmAekxaB height=2 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LWPwYdDaQDnCAKY3hBJV3Ztx2zYmAekxaB height=3 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LWPwYdDaQDnCAKY3hBJV3Ztx2zYmAekxaB height=4 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LWPwYdDaQDnCAKY3hBJV3Ztx2zYmAekxaB height=5 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNAmUR4HcaSChs3PdY1SCkqJrtvMtKCBVX height=0 size = 1049 header:90 qcert:145 input:358 output:180 input_res:358 output_res:180 binlog:102
+// unit = T00000LNAmUR4HcaSChs3PdY1SCkqJrtvMtKCBVX height=1 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNAmUR4HcaSChs3PdY1SCkqJrtvMtKCBVX height=2 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNAmUR4HcaSChs3PdY1SCkqJrtvMtKCBVX height=3 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNAmUR4HcaSChs3PdY1SCkqJrtvMtKCBVX height=4 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNAmUR4HcaSChs3PdY1SCkqJrtvMtKCBVX height=5 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LRyHY2akBduz4r8GMrr4jrNeSthBtmbCP9 height=0 size = 1049 header:90 qcert:145 input:358 output:180 input_res:358 output_res:180 binlog:102
+// unit = T00000LRyHY2akBduz4r8GMrr4jrNeSthBtmbCP9 height=1 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LRyHY2akBduz4r8GMrr4jrNeSthBtmbCP9 height=2 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LRyHY2akBduz4r8GMrr4jrNeSthBtmbCP9 height=3 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LRyHY2akBduz4r8GMrr4jrNeSthBtmbCP9 height=4 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LRyHY2akBduz4r8GMrr4jrNeSthBtmbCP9 height=5 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNpUvtRERaAX4PJ57oiy87AocC2yvNgMwA height=0 size = 1049 header:90 qcert:145 input:358 output:180 input_res:358 output_res:180 binlog:102
+// unit = T00000LNpUvtRERaAX4PJ57oiy87AocC2yvNgMwA height=1 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNpUvtRERaAX4PJ57oiy87AocC2yvNgMwA height=2 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNpUvtRERaAX4PJ57oiy87AocC2yvNgMwA height=3 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNpUvtRERaAX4PJ57oiy87AocC2yvNgMwA height=4 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// unit = T00000LNpUvtRERaAX4PJ57oiy87AocC2yvNgMwA height=5 size = 282 header:196 qcert:37 input:0 output:0 input_res:0 output_res:0 binlog:67
+// dbmeta key_size:102042 value_size = 406348 key_count = 1506 write_count = 1550 read_count = 836
+//  hash_calc_count = 224
 
     mock::xvchain_creator creator(true);
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -129,16 +128,18 @@ TEST_F(test_block_db_size, table_unit_size) {
 
     db::xdb_meta_t dbmeta = creator.get_xdb()->get_meta();
     std::cout << "dbmeta key_size:" << dbmeta.m_db_key_size
-    << "value_size = " << dbmeta.m_db_value_size
-    << "key_count = " << dbmeta.m_key_count  
-    << "write_count = " << dbmeta.m_write_count
-    << "read_count = " << dbmeta.m_read_count
+    << " value_size = " << dbmeta.m_db_value_size
+    << " key_count = " << dbmeta.m_key_count  
+    << " write_count = " << dbmeta.m_write_count
+    << " read_count = " << dbmeta.m_read_count
     << std::endl;
-    std::cout << "hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl;
+    std::cout << " hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl;
     xhashtest_t::print_hash_calc = false;
 }
 
-TEST_F(test_block_db_size, table_unit_IO_opt) {
+TEST_F(test_block_db_size, table_unit_IO_opt_BENCH) {
+// dbmeta key_size:849067 value_size = 5462528 key_count = 14408 write_count = 25782 read_count = 4788 erase_count = 0
+// hash_calc_count = 46780    
     mock::xvchain_creator creator(true);
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 

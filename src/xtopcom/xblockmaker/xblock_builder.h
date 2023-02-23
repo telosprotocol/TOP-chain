@@ -16,17 +16,6 @@
 
 NS_BEG2(top, blockmaker)
 
-class xunitbuilder_para_t {
- public:
-    xunitbuilder_para_t() = default;
-    xunitbuilder_para_t(const base::xvtxkey_vec_t & txkeys)
-    : m_txkeys(txkeys) {
-    }
-    const base::xvtxkey_vec_t & get_txkeys() const {return m_txkeys;}
- private:
-    base::xvtxkey_vec_t    m_txkeys;
-};
-
 class xunitbuildber_txkeys_mgr_t {
  public:
     void    add_pack_tx(const data::xcons_transaction_ptr_t & tx);
@@ -40,7 +29,8 @@ class xunitbuildber_txkeys_mgr_t {
 class xunitbuilder_t {
  public:
     static bool    can_make_full_unit_v2(uint64_t proposal_height);
-    static data::xblock_ptr_t  make_block_v2(const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para);
+    static base::xvblock_ptr_t  create_unit(std::string const& account, uint64_t height, std::string const& last_block_hash, const data::xunit_block_para_t & bodypara, const data::xblock_consensus_para_t & cs_para);
+    static base::xvblock_ptr_t  make_block_v2(const data::xunitstate_ptr_t & unitstate, const data::xblock_consensus_para_t & cs_para);
 };
 
 
@@ -50,8 +40,7 @@ class xtablebuilder_t {
     static bool     update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
                                                   const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
 
-    static void     make_table_block_para(const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index,
-                                          const data::xtablestate_ptr_t & tablestate,
+    static void     make_table_block_para(const data::xtablestate_ptr_t & tablestate,
                                           txexecutor::xexecute_output_t const& execute_output, 
                                           data::xtable_block_para_t & lighttable_para);
 

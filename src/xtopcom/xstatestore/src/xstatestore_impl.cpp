@@ -510,21 +510,18 @@ int32_t xstatestore_impl_t::get_string_property(common::xaccount_address_t const
 base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
     // TODO(jimmy) check if the binlog hash exists
     base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
-    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
+    if (vblock->is_state_changed_unit()) {
         return vblock;
     }
-    if (vblock->get_block_class() == base::enum_xvblock_class_full &&
-        base::xvblock_fork_t::is_block_match_version(vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-        return vblock;
-    }
+
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
         base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
-        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
+        if (prev_vblock == nullptr) {
+            xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
         }
-        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full &&
-            base::xvblock_fork_t::is_block_match_version(prev_vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
+        if (prev_vblock->is_state_changed_unit()) {
             return prev_vblock;
         }
         current_height = prev_vblock->get_height();
@@ -537,11 +534,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
     XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
     base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(account, max_height, base::enum_xvblock_flag_committed, false);
     xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
-    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
-        return vblock;
-    }
-    if (vblock->get_block_class() == base::enum_xvblock_class_full &&
-        base::xvblock_fork_t::is_block_match_version(vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
+    if (vblock->is_state_changed_unit()) {
         return vblock;
     }
 
@@ -549,11 +542,12 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
     while (current_height > 0) {
         XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
         base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
-        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
+        if (prev_vblock == nullptr) {
+            xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
         }
-        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full &&
-            base::xvblock_fork_t::is_block_match_version(prev_vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
+
+        if (prev_vblock->is_state_changed_unit()) {
             return prev_vblock;
         }
 

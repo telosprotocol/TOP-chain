@@ -222,8 +222,8 @@ namespace top
             xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xobject_type type);
             xvexemodule_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type);
             
-            xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource, enum_xobject_type type);
-            xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource, enum_xobject_type type);
+            xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t* resource, enum_xobject_type type);
+            xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t* resource, enum_xobject_type type);
             virtual ~xvexemodule_t();
         private:
             xvexemodule_t();

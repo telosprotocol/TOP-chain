@@ -20,11 +20,12 @@ namespace top
             enum_xvblock_fork_version_4_1_0             = 0x040100,  // 4.1.0: v1.6 support relay-chain
             enum_xvblock_fork_version_5_0_0             = 0x050000,  // 5.0.0: v1.7 unit off table
             enum_xvblock_fork_version_6_0_0             = 0x060000,  // 6.0.0: v1.10 block object seperate with input output
+            enum_xvblock_fork_version_7_0_0             = 0x070000,  // 7.0.0: v1.11 unit block user header only mode
         };
 
         // XTODO need change old and new version when block structure changed
-        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_5_0_0;
-        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_6_0_0;
+        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_5_0_0;  // XTODO v1.9.2 v1.10 not released
+        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_7_0_0;
 
         typedef std::function<bool(uint64_t clock) noexcept> xvblock_fork_check_fun_t;
 

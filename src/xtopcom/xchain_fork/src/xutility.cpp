@@ -20,7 +20,7 @@ bool xtop_utility::is_forked(top::optional<fork_points::xfork_point_t> const & f
 }
 
 bool xtop_utility::is_block_forked(uint64_t const target) noexcept {
-    return xtop_utility::is_forked(fork_points::v1_10_0_block_fork_point, target);
+    return xtop_utility::is_forked(fork_points::v1_11_0_unit_optimize_fork_point, target);
 }
 
 NS_END2

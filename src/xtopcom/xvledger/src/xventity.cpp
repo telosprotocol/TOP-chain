@@ -427,14 +427,14 @@ namespace top
             }
         }
     
-        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj, enum_xobject_type type)
+        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t* resource_obj, enum_xobject_type type)
             :xobject_t(type)
         {
             m_resources_obj = NULL;
-            if(resource_obj.empty() == false)
+            if(nullptr != resource_obj && resource_obj->empty() == false)
             {
-                resource_obj.add_ref();
-                m_resources_obj = &resource_obj;
+                resource_obj->add_ref();
+                m_resources_obj = resource_obj;
             }
             m_entitys = std::move(entitys);
             for(size_t i = 0; i < m_entitys.size(); ++i)//reset index of entity
@@ -445,14 +445,14 @@ namespace top
             }
         }
         
-        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xobject_type type)
+        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t* resource_obj, enum_xobject_type type)
             :xobject_t(type)
         {
             m_resources_obj = NULL;
-            if(resource_obj.empty() == false)
+            if(nullptr != resource_obj && resource_obj->empty() == false)
             {
-                resource_obj.add_ref();
-                m_resources_obj = &resource_obj;
+                resource_obj->add_ref();
+                m_resources_obj = resource_obj;
             }
             
             for(size_t i = 0; i < entitys.size(); ++i)

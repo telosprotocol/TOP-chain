@@ -55,7 +55,22 @@ bool xunitbuilder_t::can_make_full_unit_v2(uint64_t proposal_height) {
     return false;
 }
 
-data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para){
+base::xvblock_ptr_t  xunitbuilder_t::create_unit(std::string const& account, uint64_t height, std::string const& last_block_hash, const data::xunit_block_para_t & bodypara, const data::xblock_consensus_para_t & cs_para) {
+    bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(height);
+    xassert(!last_block_hash.empty());
+    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
+        account, height, last_block_hash, is_full_unit, bodypara, cs_para);    
+    base::xvblock_ptr_t proposal_block = vblockmaker->build_new_block();
+    if (proposal_block->get_cert()->is_consensus_flag_has_extend_cert()) {
+        proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
+        proposal_block->set_extend_cert("1");
+        proposal_block->set_extend_data("1");
+    }
+    proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+    return proposal_block;
+}
+
+base::xvblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t & unitstate, const data::xblock_consensus_para_t & cs_para){
     std::string binlog = unitstate->take_binlog();
     std::string snapshot = unitstate->take_snapshot();
     if (binlog.empty() || snapshot.empty()) {
@@ -65,20 +80,7 @@ data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t &
     data::xunit_block_para_t bodypara;
     bodypara.set_binlog(binlog);
     bodypara.set_fullstate_bin(snapshot);
-    bodypara.set_txkeys(unitbuilder_para.get_txkeys());
-
-    bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
-    xassert(!unitstate->get_bstate()->get_last_block_hash().empty());
-    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
-        unitstate->account_address().to_string(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
-    base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
-    data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
-    xassert(proposal_block->get_cert()->get_justify_cert_hash().empty());
-    proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
-    proposal_block->set_extend_cert("1");
-    proposal_block->set_extend_data("1");
-    proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);
-
+    base::xvblock_ptr_t proposal_block = create_unit(unitstate->account_address().to_string(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), bodypara, cs_para);
     xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
         proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size());
     return proposal_block;
@@ -121,8 +123,7 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
     return true;
 }
 
-void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index,
-                                                const data::xtablestate_ptr_t & tablestate,
+void     xtablebuilder_t::make_table_block_para(const data::xtablestate_ptr_t & tablestate,
                                                 txexecutor::xexecute_output_t const& execute_output, 
                                                 data::xtable_block_para_t & lighttable_para) {
     int64_t tgas_balance_change = 0;
@@ -149,7 +150,6 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblo
 
     lighttable_para.set_property_binlog(binlog);
     lighttable_para.set_fullstate_bin(snapshot);
-    lighttable_para.set_batch_unit_and_index(batch_unit_and_index);
     lighttable_para.set_tgas_balance_change(tgas_balance_change);
     lighttable_para.set_property_hashs(property_hashs);
     lighttable_para.set_txs(txs_info);

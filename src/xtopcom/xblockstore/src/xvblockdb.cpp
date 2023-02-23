@@ -385,13 +385,13 @@ namespace top
             {
                 const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
-                xdbg("xvblockdb_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
+                xinfo("xvblockdb_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
             }
             else
             {
                 const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height(),index_obj->get_viewid());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
-                xdbg("xvblockdb_t::write_index_to_db for other entry.index=%s",index_obj->dump().c_str());
+                xinfo("xvblockdb_t::write_index_to_db for other entry.index=%s",index_obj->dump().c_str());
             }
             
             update_block_write_metrics(index_obj->get_block_level(), index_obj->get_block_class(), enum_blockstore_metrics_type_block_index, index_bin.size());
@@ -592,7 +592,7 @@ namespace top
                         const std::string input_res_key = create_block_input_resource_key(index_ptr);
                         if(get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
-                            xdbg("xvblockdb_t::write_block_input_to_db,store input resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_res_bin.size());
+                            xinfo("xvblockdb_t::write_block_input_to_db,store input resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_res_bin.size());
                             return base::enum_index_store_flag_input_resource;
                         }
                         else
@@ -666,7 +666,7 @@ namespace top
                         const std::string output_offdata_key = create_block_output_offdata_key(index_ptr);
                         if(get_xdbstore()->set_value(output_offdata_key, output_offdata_bin))
                         {
-                            xdbg("xvblockdb_t::write_block_output_to_db,store output offdata to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_offdata_bin.size());
+                            xinfo("xvblockdb_t::write_block_output_to_db,store output offdata to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_offdata_bin.size());
                             update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_output_offdata, output_offdata_bin.size());
                         }
                         else
@@ -685,7 +685,7 @@ namespace top
                         {
                             update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_output_res, output_res_bin.size());
 
-                            xdbg("xvblockdb_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
+                            xinfo("xvblockdb_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
                             return base::enum_index_store_flag_output_resource;
                         }
                         else

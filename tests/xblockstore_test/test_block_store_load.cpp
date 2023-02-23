@@ -171,8 +171,11 @@ TEST_F(test_block_store_load, load_unexsit_block_3) {
     {
         auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, false);
         ASSERT_NE(_block, nullptr);
-        ASSERT_EQ(_block->is_output_ready(true), false);
-        ASSERT_EQ(_block->is_input_ready(true), false);
+        xassert(_block->get_block_version() == base::enum_xvblock_fork_version_7_0_0);
+        xassert(_block->get_block_level() == base::enum_xvblock_level_unit);
+        xassert(_block->get_block_class() == base::enum_xvblock_class_nil);
+        ASSERT_EQ(_block->is_output_ready(true), true);
+        ASSERT_EQ(_block->is_input_ready(true), true);
     }
     {
         auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, true);
@@ -180,6 +183,98 @@ TEST_F(test_block_store_load, load_unexsit_block_3) {
         ASSERT_EQ(_block->is_output_ready(true), true);
         ASSERT_EQ(_block->is_input_ready(true), true);
     }    
+}
+
+TEST_F(test_block_store_load, simple_unit_check) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable;
+    mocktable.genrate_table_chain(20, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();    
+
+    const std::vector<xblock_ptr_t> & unitblocks = mockunits[0].get_history_units();
+    xassert(unitblocks.size() > 2);
+    // genesis unit check
+    {
+        auto & genesis_unit = unitblocks[0];
+        ASSERT_EQ(genesis_unit->get_block_class(), base::enum_xvblock_class_light);
+        ASSERT_EQ(genesis_unit->get_block_version(), enum_xvblock_fork_version_init);
+        std::error_code ec;
+        ASSERT_NE(genesis_unit->load_input(ec), nullptr);
+        ASSERT_NE(genesis_unit->load_output(ec), nullptr);
+        ASSERT_EQ(genesis_unit->is_output_ready(true), true);
+        ASSERT_EQ(genesis_unit->is_input_ready(true), true);      
+        ASSERT_NE(genesis_unit->get_input_data().size(), 0);
+        ASSERT_NE(genesis_unit->get_output_data().size(), 0);          
+
+        std::string block_bin;
+        genesis_unit->serialize_to_string(block_bin);
+        xassert(block_bin.size() < 600);  //genesis block bin 499
+    }
+    {
+        for (uint32_t i=1;i<unitblocks.size();i++) {
+            auto & _unit = unitblocks[i];
+            ASSERT_EQ(_unit->get_block_class(), base::enum_xvblock_class_nil);
+            ASSERT_EQ(_unit->get_block_version(), base::xvblock_fork_t::get_block_fork_new_version());
+            std::error_code ec;
+            ASSERT_EQ(_unit->load_input(ec), nullptr);
+            ASSERT_EQ(_unit->load_output(ec), nullptr);
+            ASSERT_EQ(_unit->is_output_ready(true), true);
+            ASSERT_EQ(_unit->is_input_ready(true), true);    
+            ASSERT_EQ(_unit->get_input_data().size(), 0);
+            ASSERT_EQ(_unit->get_output_data().size(), 0);   
+            ASSERT_NE(_unit->get_cert()->get_parent_block_height(), 0);            
+            ASSERT_NE(_unit->get_cert()->get_viewid(), 0);
+            ASSERT_NE(_unit->get_cert()->get_clock(), 0);
+            ASSERT_EQ(_unit->get_cert()->get_parent_block_viewid(), 0);
+            ASSERT_EQ(_unit->get_cert()->get_viewtoken(), 0);
+            ASSERT_EQ(_unit->get_cert()->get_drand_height(), 0);
+            ASSERT_TRUE(is_xip2_empty(_unit->get_cert()->get_auditor()));
+            ASSERT_TRUE(is_xip2_empty(_unit->get_cert()->get_validator()));
+            ASSERT_EQ(_unit->get_cert()->get_auditor_threshold(), 0);
+            ASSERT_EQ(_unit->get_cert()->get_validator_threshold(), 0);
+            ASSERT_EQ(_unit->get_cert()->get_audit_signature(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_verify_signature(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_extend_cert(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_extend_data(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_expired(), _unit->get_cert()->get_clock());
+            ASSERT_NE(_unit->get_cert()->get_gmtime(), 0);
+            ASSERT_EQ(_unit->get_cert()->get_nonce(), 0);
+            ASSERT_EQ(_unit->get_cert()->get_header_hash(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_input_root_hash(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_output_root_hash(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_justify_cert_hash(), std::string());
+            ASSERT_NE(_unit->build_block_hash(), std::string());
+            ASSERT_EQ(_unit->get_cert()->get_consensus_type(), base::enum_xconsensus_type_none);
+            ASSERT_EQ(_unit->get_cert()->get_consensus_threshold(), base::enum_xconsensus_threshold_anyone);
+            ASSERT_EQ(_unit->get_cert()->get_consensus_flags(), base::enum_xconsensus_flag_simple_cert);
+            ASSERT_FALSE(_unit->get_cert()->is_consensus_flag_has_extend_cert());
+            ASSERT_EQ(_unit->get_cert()->get_crypto_key_type(), base::enum_xvchain_key_curve_secp256k1);
+            ASSERT_EQ(_unit->get_cert()->get_crypto_sign_type(), base::enum_xvchain_threshold_sign_scheme_none);
+            ASSERT_EQ(_unit->get_cert()->get_crypto_hash_type(), enum_xhash_type_sha2_256);
+
+            ASSERT_NE(_unit->get_header()->get_account(), std::string());
+            ASSERT_EQ(_unit->get_header()->get_height(), i);
+            ASSERT_EQ(_unit->get_header()->get_block_characters(), base::enum_xvblock_character_simple_unit | base::enum_xvblock_character_certify_header_only);
+            ASSERT_EQ(_unit->get_header()->get_block_class(), base::enum_xvblock_class_nil);
+            ASSERT_EQ(_unit->get_header()->get_block_level(), base::enum_xvblock_level_unit);
+            xassert(_unit->get_header()->get_block_type() == base::enum_xvblock_type_lightunit || _unit->get_header()->get_block_type() == base::enum_xvblock_type_fullunit);
+            ASSERT_NE(_unit->get_header()->get_chainid(), 0);
+            ASSERT_TRUE(_unit->get_header()->get_input_hash().empty());
+            ASSERT_TRUE(_unit->get_header()->get_output_hash().empty());
+            ASSERT_TRUE(_unit->get_header()->get_comments().empty());
+            ASSERT_FALSE(_unit->get_header()->get_extra_data().empty());
+            ASSERT_TRUE(_unit->get_header()->get_last_full_block_hash().empty());
+            ASSERT_EQ(_unit->get_header()->get_weight(), 1);
+            ASSERT_EQ(_unit->get_header()->get_last_full_block_height(), 0);
+
+            std::string block_bin;
+            _unit->serialize_to_string(block_bin); 
+            xassert(block_bin.size() < 300); // block bin 279
+        }
+    }
 }
 
 TEST_F(test_block_store_load, load_units_BENCH) {
