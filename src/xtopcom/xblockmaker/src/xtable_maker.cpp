@@ -641,42 +641,16 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
     return proposal_block;
 }
 
-int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
+xblock_ptr_t xtable_maker_t::make_proposal_backup(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, bool empty_block) {
     // XMETRICS_TIMER(metrics::cons_tablemaker_verify_proposal_tick);
     XMETRICS_TIME_RECORD("cons_tablemaker_verify_proposal_cost");
     std::lock_guard<std::mutex> l(m_lock);
-
-    // check table maker state
-    const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();  // should update to this new table cert block
-    xassert(table_para.get_tablestate() != nullptr);
-
-    const auto & highest_block = latest_cert_block;
-    if (proposal_block->get_last_block_hash() != highest_block->get_block_hash()
-        || proposal_block->get_height() != highest_block->get_height() + 1) {
-        xwarn("xtable_maker_t::verify_proposal fail-proposal unmatch last hash.proposal=%s, last_height=%" PRIu64 "",
-            proposal_block->dump().c_str(), highest_block->get_height());
-        return xblockmaker_error_proposal_table_not_match_prev_block;
-    }
-
-    const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
-    if (lock_block == nullptr) {
-        xerror("xtable_maker_t::verify_proposal fail-get lock block.proposal=%s, last_height=%" PRIu64 "",
-            proposal_block->dump().c_str(), highest_block->get_height());
-        return xblockmaker_error_proposal_table_not_match_prev_block;
-    }
-    if (proposal_block->get_cert()->get_justify_cert_hash() != lock_block->get_input_root_hash()) {
-        xerror("xtable_maker_t::verify_proposal fail-proposal unmatch justify hash.proposal=%s, last_height=%" PRIu64 ",justify=%s,%s",
-            proposal_block->dump().c_str(), highest_block->get_height(),
-            base::xstring_utl::to_hex(proposal_block->get_cert()->get_justify_cert_hash()).c_str(),
-            base::xstring_utl::to_hex(lock_block->get_input_root_hash()).c_str());
-        return xblockmaker_error_proposal_table_not_match_prev_block;
-    }
 
     xblock_ptr_t local_block = nullptr;
     xtablemaker_result_t table_result;
     if (can_make_next_full_block(cs_para)) {
         local_block = make_full_table(table_para, cs_para, false, table_result.m_make_block_error_code);
-    } else if (proposal_block->get_block_class() == base::enum_xvblock_class_nil) {
+    } else if (empty_block) {
         if (can_make_next_empty_block(cs_para)) {
             local_block = make_empty_table(table_para, cs_para, false, table_result.m_make_block_error_code);
         }
@@ -684,26 +658,15 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
         local_block = backup_make_light_table(table_para, cs_para, table_result);
     }
     if (local_block == nullptr) {
-        xwarn("xtable_maker_t::verify_proposal fail-make table. proposal=%s,error_code=%s",
-            proposal_block->dump().c_str(), chainbase::xmodule_error_to_str(table_result.m_make_block_error_code).c_str());
-        return xblockmaker_error_proposal_backup_make_block_fail;
+        xwarn("xtable_maker_t::make_proposal_backup fail-make table. cs_para=%s,error_code=%s",
+            cs_para.dump().c_str(), chainbase::xmodule_error_to_str(table_result.m_make_block_error_code).c_str());
+        return nullptr;
     }
-
-    local_block->get_cert()->set_nonce(proposal_block->get_cert()->get_nonce());  // TODO(jimmy)
-    // check local and proposal is match
-    if (false == verify_proposal_with_local(proposal_block, local_block.get())) {
-        xwarn("xtable_maker_t::verify_proposal fail-verify_proposal_with_local. proposal=%s",
-            proposal_block->dump().c_str());
-        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_with_local, 1);
-        return xblockmaker_error_proposal_not_match_local;
-    }
-
-    xinfo("xtable_maker_t::verify_proposal succ.proposal=%s",
-        proposal_block->dump().c_str());
-    return xsuccess;
+    return local_block;
 }
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
+    local_block->get_cert()->set_nonce(proposal_block->get_cert()->get_nonce());  // TODO(jimmy)
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
         xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
             proposal_block->dump().c_str(),

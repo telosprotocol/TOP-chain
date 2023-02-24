@@ -139,6 +139,9 @@ namespace top
             virtual void    add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, const std::string & result);
             virtual bool    proc_vote_complate(base::xvblock_t * proposal_block);
             virtual bool    verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data);
+
+            // for preproposal
+            virtual bool    proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata);
             
             //send clock event to child objects
             virtual bool    fire_clock(base::xvblock_t & latest_clock_block,int32_t cur_thread_id,uint64_t timenow_ms);

@@ -139,6 +139,14 @@ namespace top
 
             return false;//not handled
         }
+
+        bool    xcsobject_t::proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata) {
+            xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();
+            if(parent_obj != NULL)
+                return parent_obj->proc_preproposal(leader_xip, height, viewid, clock, viewtoken, msgdata);
+
+            return false;//not handled
+        }
         
         bool    xcsobject_t::verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) {
             xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();

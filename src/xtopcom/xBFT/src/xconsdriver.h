@@ -124,6 +124,9 @@ namespace top
             base::xvblock_t*    find_first_cert_block(const uint64_t block_height) const;
             base::xvblock_t*    find_cert_block(const uint64_t view_id) const;
             base::xvblock_t*    find_cert_block(const uint64_t block_height,const std::string & block_hash);
+
+            //for preproposal.
+            bool                permit_preproposal(uint64_t height, uint64_t viewid);
  
             base::xauto_ptr<base::xvbindex_t> load_block_index(const uint64_t block_height,const std::string & block_hash);
             
@@ -317,7 +320,9 @@ namespace top
             virtual int   handle_commit_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             
             virtual int   handle_votereport_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
-            
+
+            virtual int   handle_preproposal_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
+
             bool  on_proposal_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             bool  on_vote_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             bool  on_commit_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
@@ -325,6 +330,7 @@ namespace top
             bool  on_sync_respond_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             bool  on_votereport_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             
+            bool  on_preproposal_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
         private:
             int  sync_for_proposal(xproposal_t* _proposal);
             int  vote_for_proposal(xproposal_t* _proposal);

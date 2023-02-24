@@ -807,6 +807,8 @@ void xtxpool_table_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::x
     std::vector<xcons_transaction_ptr_t> recovered_send_txs;
     std::vector<xcons_transaction_ptr_t> recovered_receipts;
 
+    xinfo("xtxpool_table_t::update_uncommit_txs table:%s in", m_xtable_info.get_account().c_str());
+
     auto ret =
         m_uncommit_txs.pop_recovered_block_txs(_cert_block->get_height(), _cert_block->get_block_hash(), _lock_block->get_block_hash(), recovered_send_txs, recovered_receipts);
     if (ret == no_need_update) {

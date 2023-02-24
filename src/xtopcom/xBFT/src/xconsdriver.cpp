@@ -436,6 +436,19 @@ namespace top
             return enum_xconsensus_code_successful;
         }
 
+        int   xBFTdriver_t::handle_preproposal_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent) {
+            base::xcspdu_t & packet = event_obj->_packet;
+            bool ret = permit_preproposal(packet.get_block_height(), packet.get_session_id());
+            if (ret)
+            {
+                xdbg("xBFTdriver_t::handle_preproposal_msg packet:%s get_session_key:%u", packet.dump().c_str(), packet.get_session_key());
+                proc_preproposal(from_addr, packet.get_block_height(), packet.get_session_id(), packet.get_block_clock(), packet.get_session_key(), packet.get_msg_body());
+                return enum_xconsensus_code_successful;
+            }
+
+            return enum_xconsensus_error_fail;
+        }
+
         int  xBFTdriver_t::sync_for_proposal(xproposal_t* new_proposal)
         {
             if(NULL == new_proposal)
@@ -1586,6 +1599,21 @@ namespace top
             return true;
         }
 
+        bool  xBFTdriver_t::on_preproposal_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent) {
+            base::xcspdu_t & packet = event_obj->_packet;
+            xdbg_info("xcsdriver_t::on_preproposal_msg_recv start --> packet=%s at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+
+            const int result = handle_preproposal_msg(from_addr,to_addr,event_obj,cur_thread_id,timenow_ms,_parent);
+            if(result != enum_xconsensus_code_successful)
+            {
+                xwarn("handle_preproposal_msg err-code(%d) --> respond={height=%llu,viewid=%llu,viewtoken=%u} vs local=%s from 0x%llx to 0x%llx",result,packet.get_block_height(),packet.get_block_viewid(),packet.get_block_viewtoken(),dump().c_str(),from_addr.low_addr,to_addr.low_addr);
+                return false;
+            }
+
+            //xdbg("xcsdriver_t::on_preproposal_msg_recv finish --> packet=%s at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+            return true;
+        }
+
         bool  xBFTdriver_t::send_report(const int result,const xvip2_t & from_addr,const xvip2_t & to_addr)
         {
             std::string msg_stream;
@@ -1656,6 +1684,9 @@ namespace top
 
                 case enum_consensus_msg_type_vote_report:
                     return on_votereport_msg_recv(from_addr,to_addr,_evt_obj,cur_thread_id,timenow_ms,(xcsobject_t*)from_parent);
+                
+                case enum_consensus_msg_type_preproposal:
+                    return on_preproposal_msg_recv(from_addr,to_addr,_evt_obj,cur_thread_id,timenow_ms,(xcsobject_t*)from_parent);
             }
             return false;
         }
