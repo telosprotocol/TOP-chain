@@ -94,7 +94,7 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
 
     // TODO(jimmy) keep for help txpool clear cache
     update_txpool_table_state(latest_blocks.get_latest_committed_block(), tablestate_commit);
-    get_txpool()->update_uncommit_txs(latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block());
+    // get_txpool()->update_uncommit_txs(latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block());
     return cs_para;
 }
 
