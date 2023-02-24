@@ -167,11 +167,11 @@ void xrec_registration_contract::setup() {
 #ifdef MAINNET_ACTIVATED
     data::system_contract::xactivation_record record;
     record.activated = 1;
-    record.activation_time = 1;
+    record.activation_time = 10199160;          // 2023-02-01 00:00:00
 
     base::xstream_t stream(base::xcontext_t::instance());
     record.serialize_to(stream);
-    auto value_str = std::string((char *)stream.data(), stream.size());
+    auto value_str = std::string(reinterpret_cast<char *>(stream.data()), stream.size());
     STRING_SET(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, value_str);
 #endif
 
