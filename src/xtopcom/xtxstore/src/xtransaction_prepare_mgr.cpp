@@ -62,6 +62,12 @@ void xtransaction_prepare_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 }
 
 int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) {
+    base::xvaccount_t _vaccount(bp->get_account());
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, bp.get(), metrics::blockstore_access_from_txpool_refresh_table)) {
+        xerror("xtransaction_prepare_mgr::update_prepare_cache fail-load block input, block=%s", bp->dump().c_str());
+        return -1;
+    }
+
     xJson::Value jv;
     auto input_actions = data::xblockextract_t::unpack_txactions((base::xvblock_t*)bp.get());
     for(auto & action : input_actions) {

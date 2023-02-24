@@ -92,13 +92,13 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
     static std::atomic_int cnt{0};
     j["result"] = cnt++;
 
-#ifdef DEBUG
-    // adding push tx log info
-    auto txactions = data::xblockextract_t::unpack_txactions(bp);
-    for (auto & txaction : txactions) {
-        xdbg("grpc stream tx hash: tx_key=%s", txaction.get_tx_dump_key().c_str());
-    }
-#endif
+// #ifdef DEBUG
+//     // adding push tx log info
+//     auto txactions = data::xblockextract_t::unpack_txactions(bp);
+//     for (auto & txaction : txactions) {
+//         xdbg("grpc stream tx hash: tx_key=%s", txaction.get_tx_dump_key().c_str());
+//     }
+// #endif
 
     {
         std::unique_lock<std::mutex> lck(tableblock_mtx);

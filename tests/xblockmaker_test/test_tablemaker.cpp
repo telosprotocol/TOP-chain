@@ -1034,7 +1034,7 @@ TEST_F(test_tablemaker, table_inner_tx) {
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
-        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(10000000);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
 
         xtablemaker_result_t table_result;
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
@@ -1066,12 +1066,15 @@ TEST_F(test_tablemaker, table_inner_tx) {
             EXPECT_EQ(j_txs[1]["tx_consensus_phase"].asString(), "recv");
 
             auto units = jv2["tableblock"]["units"];
-            // EXPECT_EQ(units.size(), 2);// TODO(jimmy) rpc compatibility
+            xassert(units.size() >= 2); // some genesis accounts in mpt index
             for (auto & unit : units) {
-                auto unit_height = unit["unit_height"].asUInt64();
-                EXPECT_EQ(unit_height, 1);
                 auto account = unit["account"].asString();
-                ASSERT_TRUE(account == from_addr || account == to_addr);
+                auto unit_height = unit["unit_height"].asUInt64();
+                if (account == from_addr || account == to_addr) {
+                    xassert(unit_height == 1);
+                } else {
+                    xassert(unit_height == 0);
+                }
             }
         }
 
@@ -1111,9 +1114,103 @@ TEST_F(test_tablemaker, table_inner_tx) {
         proposal_block->extract_sub_blocks(sub_blocks);
         // EXPECT_EQ(headers.size(), 2);
         for (auto & subblock : sub_blocks) {
-            EXPECT_EQ(subblock->get_header()->get_extra_data().empty(), true);  // not include tx hashs
+            EXPECT_EQ(subblock->get_header()->get_extra_data().empty(), false);  // include binlog
             EXPECT_EQ(subblock->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
         }
+    }
+}
+
+TEST_F(test_tablemaker, genesis_accounts_in_mpt) {
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 4);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[1];
+
+    mocktable.store_genesis_units(resources->get_blockstore());
+
+    const uint32_t tx_cnt = 1;
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
+    EXPECT_EQ(send_txs.size(), tx_cnt);
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(send_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+
+        std::vector<xobject_ptr_t<xvblock_t>> sub_blocks;
+        proposal_block->extract_sub_blocks(sub_blocks);
+        // EXPECT_EQ(headers.size(), 2);
+        for (auto & subblock : sub_blocks) {
+            xassert(subblock->get_account() == from_addr || subblock->get_account() == to_addr);           
+            EXPECT_EQ(subblock->get_header()->get_extra_data().empty(), false);  // include binlog
+            EXPECT_EQ(subblock->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+        }
+
+        uint32_t match_unit_count = 0;
+        for (auto & v : unit_addrs) {
+            common::xaccount_address_t _address(v);
+            base::xaccount_index_t _accountindex;
+            xassert(true == statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(_address, proposal_block.get(), _accountindex));
+            if (v == from_addr || v == to_addr) {
+                xassert(_accountindex.get_latest_unit_height() == 1);
+                for (auto & subblock : sub_blocks) {
+                    if (subblock->get_account() == v) {                        
+                        xassert(_accountindex.get_latest_unit_hash() == subblock->get_block_hash());
+                        match_unit_count++;
+                    }
+                }
+                ASSERT_TRUE(_accountindex.is_valid_mpt_index());
+            } else {
+                ASSERT_TRUE(_accountindex.get_latest_unit_height() == 0);    
+                ASSERT_TRUE(_accountindex.get_latest_unit_hash().empty());
+                ASSERT_FALSE(_accountindex.is_valid_mpt_index());
+            }
+        }
+        xassert(match_unit_count == 2);
+
+        auto & genesis_accounts = genesis::xgenesis_manager_t::get_all_genesis_accounts();
+        for (auto & _address : genesis_accounts) {
+            if (!base::xvaccount_t::is_unit_address_type(_address.type())) {
+                continue;
+            }
+            // check if account same table
+            if (_address.table_address().to_string() != table_addr) {
+                continue;
+            }
+
+            base::xaccount_index_t _accountindex;
+            ASSERT_TRUE(statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(_address, proposal_block.get(), _accountindex));
+            ASSERT_TRUE(_accountindex.get_latest_unit_height() == 0);    
+            ASSERT_TRUE(_accountindex.get_latest_unit_viewid() == 0);
+            ASSERT_TRUE(_accountindex.get_latest_tx_nonce() == 0);
+            ASSERT_FALSE(_accountindex.get_latest_unit_hash().empty());
+            ASSERT_TRUE(_accountindex.is_valid_mpt_index());
+        }
+
+        {
+            std::string other_addr = mock::xdatamock_address::make_unit_address(base::enum_chain_zone_consensus_index, 1);
+            common::xaccount_address_t _address(other_addr);
+            base::xaccount_index_t _accountindex;
+            xassert(true == statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(_address, proposal_block.get(), _accountindex));
+            xassert(_accountindex.get_latest_unit_height() == 0);
+            xassert(_accountindex.get_latest_unit_hash().empty());    
+            xassert(!_accountindex.is_valid_mpt_index());      
+        }
+        // 
     }
 }
 
@@ -1127,8 +1224,8 @@ TEST_F(test_tablemaker, fullunit) {
     std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
     fullunit_table->extract_sub_blocks(sub_blocks);
     for(auto & unit : sub_blocks) {
-        EXPECT_EQ(unit->get_block_class(), enum_xvblock_class_full);
-        auto fullunit = dynamic_cast<xfullunit_block_t*>(unit.get());
+        EXPECT_TRUE(unit->is_fullunit());
+        auto fullunit = dynamic_cast<xblock_t*>(unit.get());
         if (fullunit != nullptr) {
             xJson::Value jv;
             fullunit->parse_to_json(jv, RPC_VERSION_V2);

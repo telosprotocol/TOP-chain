@@ -58,8 +58,9 @@ TEST_F(test_create_block, create_time_clock) {
     mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_block_height + 1);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
 
-    auto _block = tableblocks[1];
+    auto _block = mockunits[0].get_history_units()[1];
     auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
     // base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
     // xassert(bstate != nullptr);
@@ -85,7 +86,9 @@ TEST_F(test_create_block, create_time_gmt) {
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_block_height + 1);
 
-    auto _block = tableblocks[1];
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+
+    auto _block = mockunits[0].get_history_units()[1];
     auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
     // base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
     // xassert(bstate != nullptr);

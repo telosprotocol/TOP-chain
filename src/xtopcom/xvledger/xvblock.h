@@ -91,15 +91,17 @@ namespace top
         enum enum_xvblock_type
         {
             enum_xvblock_type_general   = 0, //untyped
-            enum_xvblock_type_genesis   = 1, //first block of every chain,with block height of 0,viewid of 0 and clock of 0
-            enum_xvblock_type_boot      = 2, //bootstrap block
+            enum_xvblock_type_genesis   = 1, //first block of every chain,with block height of 0,viewid of 0 and clock of 0            
+            // enum_xvblock_type_boot      = 2, //bootstrap block
+            enum_xvblock_type_fullunit  = 2, // fullunit with class_nil
             enum_xvblock_type_clock     = 3, //clock related block
-            enum_xvblock_type_node      = 4, //node related  block,e.g. node join/leave
-            enum_xvblock_type_user      = 5, //user related  block,e.g. create account/destroy account
+            enum_xvblock_type_lightunit = 4, // lightunit with class_nil
+            // enum_xvblock_type_node      = 4, //node related  block,e.g. node join/leave
+            // enum_xvblock_type_user      = 5, //user related  block,e.g. create account/destroy account
             enum_xvblock_type_txs       = 6, //transaction(financial/token) related
-            enum_xvblock_type_cmds      = 7, //smart-contract related
-            enum_xvblock_type_view      = 8, //view block or timeout block
-            enum_xvblock_type_election  = 9, //election block from REC/ZEC etc
+            // enum_xvblock_type_cmds      = 7, //smart-contract related
+            // enum_xvblock_type_view      = 8, //view block or timeout block
+            // enum_xvblock_type_election  = 9, //election block from REC/ZEC etc
             enum_xvblock_type_batch     = 10,//that is a batch group(like table or book)
         };
 
@@ -123,8 +125,8 @@ namespace top
                 //xvheader.input_hash/output_hash must be valid
             //but it disabled as default,which mean xvqcert.m_header_hash = hash(xvheader+xvinput+xvoutput)
             enum_xvblock_character_certify_header_only = 0x01,
-            //indicate whether this block is pruneable while recylcing db space
-            enum_xvblock_character_pruneable           = 0x02,
+            //xvblock only include xvheader,just for unit block
+            enum_xvblock_character_simple_unit         = 0x02,
         };
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;//1573189200 == 2019-11-08 05:00:00  UTC
@@ -182,6 +184,7 @@ namespace top
             inline enum_xvblock_type           get_block_type()   const {return (enum_xvblock_type) ((m_types >> 2) & 0x7F);}
             inline int                         get_block_characters()const {return (m_types & 0x03);}
             inline bool                        is_character_cert_header_only() const {return get_block_characters() & enum_xvblock_character_certify_header_only;}
+            inline bool                        is_character_simple_unit() const {return get_block_characters() & enum_xvblock_character_simple_unit;}            
             inline const uint16_t              get_block_raw_types() const {return m_types;}
 
             //common information for this block
@@ -274,6 +277,7 @@ namespace top
         //3bits = max 8 definition
         enum enum_xconsensus_type
         {
+            enum_xconsensus_type_none           = 0,
             enum_xconsensus_type_genesis        = 1,//follow rules of genesis
             enum_xconsensus_type_xhbft          = 2,//xBFT-chain mode
             enum_xconsensus_type_xpow           = 3,//xPoW
@@ -287,14 +291,16 @@ namespace top
             enum_xconsensus_threshold_3_of_4    = 2, // 3/4 voted for BFT
             enum_xconsensus_threshold_reserved  = 3, //undefined yet
         };
-        //3bit = max 3 flags
+        //3bit = max 3 flags  max 8 definition
         enum enum_xconsensus_flag
         {
             //any cert with unspecified flag means just a "prepared-cert" that ask the next 3/2 more certs to proof it
-            enum_xconsensus_flag_audit_cert          = 0x01, //audit required
-            // enum_xconsensus_flag_commit_cert         = 0x02, //commit certification for a commit block,just use by basic-mode
-            enum_xconsensus_flag_extend_vote         = 0x02, //save extend vote data
+            enum_xconsensus_flag_validator_cert      = 0x00, //validator signature required
+            enum_xconsensus_flag_audit_cert          = 0x01, //validator and audit signature required
+            enum_xconsensus_flag_extend_vote         = 0x02, //validator signature and extend signature together for relay-table
+            enum_xconsensus_flag_simple_cert         = 0x03, //no signature for simple unit mode
             enum_xconsensus_flag_extend_cert         = 0x04, //relyon m_extend_cert to proof
+            enum_xconsensus_flag_extend_and_audit_cert = 0x05, // for old version unit,may extend cert and audit cert
         };
 
         /////////////////////////1 byte for algorithm types /////////////////////////
@@ -386,7 +392,7 @@ namespace top
             inline  enum_xconsensus_type       get_consensus_type()      const {return (enum_xconsensus_type)(m_consensus >> 5);}
             inline  enum_xconsensus_threshold  get_consensus_threshold() const {return (enum_xconsensus_threshold)((m_consensus >> 3) & 0x03);}
             inline  int                        get_consensus_flags()     const {return (m_consensus & 0x07);} //lowest 3bit
-
+            bool                               is_consensus_flag_has_extend_cert() const {return get_consensus_flags() == enum_xconsensus_flag_extend_cert || get_consensus_flags() == enum_xconsensus_flag_extend_and_audit_cert;}
             //[enum_xvchain_key_curve][enum_xvchain_sign_scheme][enum_xhash_type] = [2][3][3] = 8bits
             inline  enum_xvchain_key_curve     get_crypto_key_type()     const {return (enum_xvchain_key_curve)(m_cryptos >> 6);}
             inline  enum_xvchain_sign_scheme   get_crypto_sign_type()    const {return (enum_xvchain_sign_scheme)((m_cryptos >> 3) & 0x07);}
@@ -401,6 +407,7 @@ namespace top
 
             void                 set_drand(const uint64_t global_drand_height);
             void                 set_clock(const  uint64_t  global_clock_round);
+            void                 set_expired(const  uint64_t  expired);
             void                 set_nonce(const  uint64_t nonce);
             void                 set_viewid(const uint64_t viewid);
             void                 set_viewtoken(const uint32_t viewtoken);
@@ -499,8 +506,8 @@ namespace top
         public:
             // xvinput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type = enum_xobject_type_vinput);
 
-            xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj,enum_xobject_type type = enum_xobject_type_vinput);
-            xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj,enum_xobject_type type = enum_xobject_type_vinput);
+            xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t* resource_obj,enum_xobject_type type = enum_xobject_type_vinput);
+            xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t* resource_obj,enum_xobject_type type = enum_xobject_type_vinput);
         protected:
             xvinput_t(enum_xobject_type type = enum_xobject_type_vinput);
             virtual ~xvinput_t();
@@ -550,7 +557,7 @@ namespace top
         public:
             xvoutput_t(std::vector<xventity_t*> && entitys,enum_xobject_type type = enum_xobject_type_voutput);
             xvoutput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data, enum_xobject_type type = enum_xobject_type_voutput);
-            xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource,enum_xobject_type type = enum_xobject_type_voutput);//xvqcert_t used for genreate hash for resource
+            xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t* resource,enum_xobject_type type = enum_xobject_type_voutput);//xvqcert_t used for genreate hash for resource
         protected:
             xvoutput_t(enum_xobject_type type = enum_xobject_type_voutput);
             virtual ~xvoutput_t();
@@ -690,9 +697,9 @@ namespace top
 
         public://header&cert get apis
             //note:m_height,m_networkid,m_account are copy from m_vheader_ptr,so PLEASE update_header() when xvheader_t changed them(rare case)
-            inline  uint64_t            get_viewid()      const {return m_vqcert_ptr->get_viewid();}
-            inline  uint32_t            get_viewtoken()   const {return m_vqcert_ptr->get_viewtoken();}
-            inline  uint64_t            get_clock()       const {return m_vqcert_ptr->get_clock();}
+            inline  uint64_t            get_viewid()      const {return m_vqcert_ptr != nullptr ? m_vqcert_ptr->get_viewid() : 0;}
+            inline  uint32_t            get_viewtoken()   const {return m_vqcert_ptr != nullptr ? m_vqcert_ptr->get_viewtoken() : 0;}
+            inline  uint64_t            get_clock()       const {return m_vqcert_ptr != nullptr ? m_vqcert_ptr->get_clock() : 0;}
             inline  uint64_t            get_height()      const {return m_vheader_ptr->get_height();}
             inline  uint32_t            get_chainid()     const {return m_vheader_ptr->get_chainid();}
             inline  const std::string&  get_account()     const {return m_vheader_ptr->get_account();}
@@ -701,6 +708,11 @@ namespace top
             inline  enum_xvblock_level  get_block_level() const {return m_vheader_ptr->get_block_level();}
             inline  uint64_t            get_timestamp()   const {return m_vqcert_ptr->get_gmtime();}  // default timestamp is clock level gmtime, which is used for tx execute
             uint64_t                    get_second_level_gmtime() const;  // table-block has second level gmtime used for performance statistics
+            
+            bool                        is_fullunit()     const; // TODO(jimmy) move to xunit
+            bool                        is_lightunit()    const; // TODO(jimmy) move to xunit
+            bool                        is_emptyunit()    const; // TODO(jimmy) move to xunit for old unit version
+            bool                        is_state_changed_unit() const; // TODO(jimmy) move to xunit
 
             //note:block'hash actually = cert'hash
             inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}
@@ -732,6 +744,7 @@ namespace top
             const   std::string         get_header_path() const; //header include vcert part as well under get_block_path()
             const   std::string         get_input_path()  const; //path pointed to vbody at DB/disk  under get_block_path()
             const   std::string         get_output_path() const; //path pointed to vbody at DB/disk  under get_block_path()
+            const   std::string         build_block_hash() const;
 
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
             virtual bool                extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
@@ -775,8 +788,8 @@ namespace top
         public: //associated information about parent block(e.g. tableblock)
             inline const std::string    get_parent_account()      const {return m_parent_account;}
             inline const uint32_t       get_parent_entity_id()    const {return m_parent_entity_id;}
-            inline const uint64_t       get_parent_block_height() const {return m_vqcert_ptr->get_parent_block_height();}
-            inline const uint64_t       get_parent_block_viewid() const {return m_vqcert_ptr->get_parent_block_viewid();}
+            inline const uint64_t       get_parent_block_height() const {return m_vqcert_ptr != nullptr ? m_vqcert_ptr->get_parent_block_height() : 0;}
+            inline const uint64_t       get_parent_block_viewid() const {return m_vqcert_ptr != nullptr ? m_vqcert_ptr->get_parent_block_viewid() : 0;}
            
             bool  set_parent_block(const std::string parent_addr, uint32_t parent_entity_id);
 

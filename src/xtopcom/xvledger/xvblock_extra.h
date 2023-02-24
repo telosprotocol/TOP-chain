@@ -47,6 +47,31 @@ namespace top
             std::map<uint16_t, std::string>  m_paras;
         };
 
+        // unit block header extra
+        class xunit_header_extra_t {
+        protected:
+            enum extra_data_type : uint16_t {
+                enum_extra_data_type_binlog         = 0,
+                enum_extra_data_type_state_hash     = 1,
+            };
+
+        protected:
+            int32_t do_write(base::xstream_t & stream) const;
+            int32_t do_read(base::xstream_t & stream);
+        public:
+            int32_t deserialize_from_string(const std::string & extra_data);
+            int32_t serialize_to_string(std::string & extra_data);
+            std::string     get_value(uint16_t type) const;
+            void            set_value(uint16_t type, std::string const& value);
+            
+            void        set_binlog(std::string const & value) {set_value(enum_extra_data_type_binlog, value);}
+            std::string get_binlog() const {return get_value(enum_extra_data_type_binlog);}
+            void        set_state_hash(std::string const & value) {set_value(enum_extra_data_type_state_hash, value);}
+            std::string get_state_hash() const {return get_value(enum_extra_data_type_state_hash);}
+        private:
+            std::map<uint16_t, std::string>  m_paras;
+        };
+
     }//end of namespace of base
 
 }//end of namespace top
