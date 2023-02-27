@@ -84,8 +84,10 @@ void xpreproposal_packer::clear_for_new_view() {
 void xpreproposal_packer::send_preproposal(const data::xblock_consensus_para_t & cs_para,
                                            const std::vector<data::xcons_transaction_ptr_t> & txs,
                                            const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_proves) {
-    xvip2_t broadcast_addr = {(xvip_t)-1, (uint64_t)-1};
-    xvip2_t self_addr = get_xip2_addr();
+    xvip2_t local_xip = get_xip2_addr();
+    auto to_xip = local_xip;
+    set_node_id_to_xip2(to_xip, common::xbroadcast_slot_id_value);
+
     xinfo("xpreproposal_packer::send_preproposal cs_para=%s", cs_para.dump().c_str());
 
     xpreproposal_msg_t msg(cs_para, txs, receiptid_state_proves);
@@ -99,9 +101,9 @@ void xpreproposal_packer::send_preproposal(const data::xblock_consensus_para_t &
     packet.set_block_clock(cs_para.get_clock());
     packet.set_block_viewid(cs_para.get_viewid());
     packet.set_block_viewtoken(cs_para.get_viewtoken());
-    packet.reset_message(xconsensus::enum_consensus_msg_type_preproposal, get_default_msg_ttl(), msg_content, 0, self_addr.low_addr, broadcast_addr.low_addr);
+    packet.reset_message(xconsensus::enum_consensus_msg_type_preproposal, get_default_msg_ttl(), msg_content, 0, local_xip.low_addr, to_xip.low_addr);
 
-    send_out(self_addr, broadcast_addr, packet, 0, 0);
+    send_out(local_xip, to_xip, packet, 0, 0);
 }
 
 xunit_service::xpreproposal_send_cb xpreproposal_packer::get_preproposal_send_cb() {
