@@ -536,7 +536,7 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool
     if (raw_tx->get_target_addr() == rec_standby_pool_contract_address.to_string()) {
 #if !defined(XENABLE_MOCK_ZEC_STAKE)
         common::xaccount_address_t const src_address{raw_tx->get_source_addr()};
-        if (!is_t0_address(src_address) && !is_t8_address(src_address) && src_address != rec_standby_pool_contract_address && raw_tx->get_target_action_name() != "on_timer") {
+        if (!is_t0_address(src_address) && !is_t8_address(src_address) && (src_address == rec_standby_pool_contract_address && raw_tx->get_target_action_name() != "on_timer")) {
             xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
             return xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
         }
