@@ -70,6 +70,7 @@ public:
         REGISTER_ETH_QUERY_METHOD(eth_estimateGas);
         REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
         REGISTER_ETH_QUERY_METHOD(eth_getLogs);
+        REGISTER_ETH_QUERY_METHOD(eth_feeHistory);
         
         REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByNumber);
         REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByHash);
@@ -94,6 +95,7 @@ public:
     void eth_estimateGas(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_feeHistory(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 
     void topRelay_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void topRelay_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);

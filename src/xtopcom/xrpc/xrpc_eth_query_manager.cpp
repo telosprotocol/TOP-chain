@@ -51,6 +51,7 @@
 #include "xdata/xrelay_block_store.h"
 #include "xgasfee/xgasfee.h"
 #include "xstatestore/xstatestore_face.h"
+#include "xgasfee/xgas_estimate.h"
 
 using namespace top::data;
 
@@ -1365,6 +1366,62 @@ void xrpc_eth_query_manager::top_getBalance(xJson::Value & js_req, xJson::Value 
         js_rsp["result"] = xrpc_eth_parser_t::u256_to_hex_prefixed(balance);
         xdbg("xrpc_eth_query_manager::top_getBalance address=%s,balance=%s,%s", account.c_str(), balance.str().c_str(), xrpc_eth_parser_t::u256_to_hex_prefixed(balance).c_str());
     }
+}
+
+
+void xrpc_eth_query_manager::eth_feeHistory(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 3))
+        return;
+    
+    xJson::Value js_result;
+    std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
+    base::xvaccount_t _vaddress(addr);
+    uint64_t height = m_block_store->get_latest_cert_block_height(_vaddress);
+    xinfo("xarc_query_manager::eth_feeHistory: %llu", height);
+    std::stringstream outstr;
+    outstr << "0x" << std::hex << height;
+    js_result["oldestBlock"] = std::string(outstr.str());
+        
+    xJson::Value reward_array_json;
+    reward_array_json.resize(0);
+    for (int i = 0; i < 4; i++) {
+        xJson::Value block_reward_json;
+        block_reward_json.resize(0);
+        block_reward_json.append("0x77359400");
+        block_reward_json.append("0x77359400");
+        reward_array_json.append(block_reward_json);
+    }
+
+    js_result["reward"] = reward_array_json;
+
+    xJson::Value baseFee_array_json;
+    baseFee_array_json.resize(0);
+     auto base_price = top::gasfee::xgas_estimate::base_price();
+    std::string baseprice_str = top::to_hex((top::evm_common::h256)base_price);
+    uint32_t i = 0;
+    for (; i < baseprice_str.size() - 1; i++) {
+        if (baseprice_str[i] != '0') {
+            break;
+        }
+    }
+    xJson::Value baseFeePerGas;
+    baseFeePerGas = "0x" + baseprice_str.substr(i);
+    for (int i = 0; i < 5; i++) {
+        baseFee_array_json.append(baseFeePerGas);
+    }
+
+    js_result["baseFeePerGas"] = baseFee_array_json;
+        
+    xJson::Value gasUsedRatio_array_json;
+    gasUsedRatio_array_json.resize(0);
+    for (int i = 0; i < 4; i++) {
+        gasUsedRatio_array_json.append("0.5000");
+    }
+    js_result["gasUsedRatio"] = gasUsedRatio_array_json;
+    js_rsp["result"] = js_result;
+    xJson::FastWriter  json_writer;
+    std::string result =  json_writer.write(js_rsp); 
+    xdbg("xrpc_eth_query_manager::eth_feeHistory result: %s ", result.c_str());
 }
 
 

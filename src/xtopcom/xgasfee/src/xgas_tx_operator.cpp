@@ -9,6 +9,8 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xgasfee/xerror/xerror.h"
+#include "xconfig/xutility.h"
+#include "xchain_fork/xutility.h"
 
 #include <stdint.h>
 
@@ -62,13 +64,17 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_fee_per_gas() const {
     return m_tx->get_transaction()->get_max_fee_per_gas();
 }
 
-evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
+evm_common::u256 xtop_gas_tx_operator::tx_eth_priority_fee_per_gas() const {
+    return m_tx->get_transaction()->get_max_priority_fee_per_gas();
+}
+
+evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee(uint64_t forked_time) const {
     // 1Gwei = (ratio / 10^3)Utop
     // 1Utop = (10^3 / ratio)Gwei
     evm_common::u256 limit = tx_eth_gas_limit();
     evm_common::u256 price = tx_eth_fee_per_gas();
     evm_common::u256 wei_gasfee = limit * price;
-    evm_common::u256 utop_gasfee = wei_to_utop(wei_gasfee);
+    evm_common::u256 utop_gasfee = wei_to_utop(wei_gasfee, forked_time);
     xdbg("[xtop_gas_tx_operator::tx_eth_limited_gasfee] eth_gas_price: %s, eth_gas_limit: %s, wei_gasfee: %s, utop_gasfee: %s",
          price.str().c_str(),
          limit.str().c_str(),
@@ -77,14 +83,21 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
     return utop_gasfee;
 }
 
-evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei) {
-    evm_common::u256 gwei = wei / evm_common::u256(1000000000ULL);
-    evm_common::u256 mtop = gwei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
-    evm_common::u256 utop = mtop / 1000U;
+evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei, uint64_t forked_time) {
+    evm_common::u256 utop{0};
+
+    if (chain_fork::xutility_t::is_forked(fork_points::v1_10_priority_fee_update_point, forked_time)) {
+        utop = wei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio) / evm_common::u256(1000000000000ULL);
+    } else {
+        evm_common::u256 gwei = wei / evm_common::u256(1000000000ULL);
+        evm_common::u256 mtop = gwei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
+        utop = mtop / 1000U;
+    }
+
     xdbg("[xtop_gas_tx_operator::wei_to_utop] exchange ratio: %lu, wei: %s, utop: %s",
-         XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio),
-         wei.str().c_str(),
-         utop.str().c_str());
+        XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio),
+        wei.str().c_str(),
+        utop.str().c_str());
     return utop;
 }
 

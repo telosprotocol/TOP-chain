@@ -134,7 +134,7 @@ public:
     virtual xbytes_t const& get_data() const override { return m_ethtx.get_data(); }
     virtual const top::evm_common::u256 get_gaslimit() const override {return m_ethtx.get_gas(); }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const override { return m_ethtx.get_max_fee_per_gas(); }
-
+    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return m_ethtx.get_max_priority_fee_per_gas(); } 
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const override {return m_ethtx;}
 
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_tx_v3;}

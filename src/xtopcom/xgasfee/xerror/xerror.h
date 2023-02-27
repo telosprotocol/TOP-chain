@@ -21,7 +21,7 @@ enum class xenum_errc {
     account_balance_not_enough,
     tx_deposit_not_enough,
     tx_out_of_gas,
-
+    tx_priority_fee_error,
     invalid_param,
 };
 using xerrc_t = xenum_errc;

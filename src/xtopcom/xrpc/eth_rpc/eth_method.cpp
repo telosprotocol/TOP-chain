@@ -49,4 +49,21 @@ void EthMethod::eth_gasPrice(const Json::Value & js_req, Json::Value & js_rsp) {
     Json::Value value = "0x1";*/
     js_rsp["result"] = "0x" + baseprice_str.substr(i);
 }
+
+void EthMethod::eth_maxPriorityFeePerGas(const Json::Value & js_req, Json::Value & js_rsp) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
+        return;
+
+    std::string baseprice_str = top::to_hex((top::evm_common::h256)0);
+    uint32_t i = 0;
+    for (; i < baseprice_str.size() - 1; i++) {
+        if (baseprice_str[i] != '0') {
+            break;
+        }
+    }
+
+    js_rsp["result"] = "0x" + baseprice_str.substr(i);
+}
+
+
 }

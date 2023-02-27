@@ -905,7 +905,7 @@ uint64_t xtop_contract_execution_context::calc_decayed_tgas() const {
     uint64_t decayed_tgas{0};
     auto last_hour = contract_state()->last_tx_hour();
     auto height = contract_state()->time();
-    auto decay_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle);
+    auto decay_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_reset_interval);  //usedgas_decay_cycle Deprecated
     if (height <= last_hour) {
         decayed_tgas = contract_state()->used_tgas();
     } else if (height - last_hour < decay_time) {

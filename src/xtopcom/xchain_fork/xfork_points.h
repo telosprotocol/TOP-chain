@@ -41,4 +41,5 @@ extern top::optional<xfork_point_t> v10901_enable_voting;
 extern top::optional<xfork_point_t> v10902_table_tickets_reset;
 extern top::optional<xfork_point_t> v10902_enable_voting;
 extern top::optional<xfork_point_t> v1_10_0_block_fork_point;
+extern top::optional<xfork_point_t> v1_10_priority_fee_update_point;
 NS_END2

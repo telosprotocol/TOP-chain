@@ -30,7 +30,9 @@ public:
         m_eth_method_map.emplace(std::make_pair("net_version", std::bind(&EthMethod::net_version, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("eth_gasPrice", std::bind(&EthMethod::eth_gasPrice, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("web3_sha3", std::bind(&EthMethod::web3_sha3, this, std::placeholders::_1, std::placeholders::_2)));
-
+         //EIP-1599 new rpc 
+        m_eth_method_map.emplace(std::make_pair("eth_maxPriorityFeePerGas", std::bind(&EthMethod::eth_maxPriorityFeePerGas, this, std::placeholders::_1, std::placeholders::_2)));
+ 
         m_supported_method.insert("eth_call");
         m_supported_method.insert("eth_estimateGas");
         m_supported_method.insert("eth_getCode");
@@ -44,6 +46,7 @@ public:
         m_supported_method.insert("eth_getTransactionCount");
         m_supported_method.insert("eth_getTransactionByHash");
         m_supported_method.insert("eth_getTransactionReceipt");
+        m_supported_method.insert("eth_feeHistory");
 
         m_supported_method.insert("topRelay_getPolyBlockHashListByHash");
         m_supported_method.insert("topRelay_getLeafBlockHashListByHash");
@@ -96,6 +99,7 @@ public:
 
     void eth_gasPrice(const Json::Value & request, Json::Value & response);
     void web3_sha3(const Json::Value & request, Json::Value & response);
+    void eth_maxPriorityFeePerGas(const Json::Value & request, Json::Value & response);
 };
 
 }  // namespace rpc

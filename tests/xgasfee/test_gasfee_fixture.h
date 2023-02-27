@@ -113,14 +113,14 @@ public:
 
     xobject_ptr_t<data::xtransaction_t> make_tx_v3() {
         std::string data;
-        data::xtransaction_ptr_t tx = data::xtx_factory::create_ethcall_v3_tx(default_T6_sender, default_T6_recver, data, default_eth_value, default_evm_gas_limit, default_eth_per_gas);
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_ethcall_v3_tx(default_T6_sender, default_T6_recver, data, default_eth_value, default_evm_gas_limit, default_eth_per_gas, default_fee_price);
         return tx;
     }
 
     xobject_ptr_t<data::xtransaction_t> make_tx_v3_deploy() {
         std::string data = "1111111"; // code not empty
         std::string to;  // to addr is empty
-        data::xtransaction_ptr_t tx = data::xtx_factory::create_ethcall_v3_tx(default_T6_sender, to, data, default_eth_value, default_evm_gas_limit, default_eth_per_gas);
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_ethcall_v3_tx(default_T6_sender, to, data, default_eth_value, default_evm_gas_limit, default_eth_per_gas, default_fee_price);
         return tx;
     }
 
@@ -200,6 +200,7 @@ public:
     evm_common::u256 default_eth_per_gas{5000000000};
     evm_common::u256 default_evm_gas_limit{4};
     evm_common::u256 default_eth_value{1000};
+    evm_common::u256 default_fee_price{0};
 
     // data to build
     xobject_ptr_t<base::xvbstate_t> default_bstate;

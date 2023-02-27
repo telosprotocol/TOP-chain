@@ -92,13 +92,15 @@ data::xeth_transaction_t  xeth_transaction_t::build_from(xbytes_t const& rawtx_b
     return _tx;
 }
 
-xeth_transaction_t::xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, evm_common::u256 const& _value, evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice) {
+xeth_transaction_t::xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, 
+                                       evm_common::u256 const& _value, evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice,evm_common::u256 const& _maxPriorityFee) {
     m_from = _from;
     m_to = _to;
     m_data = _data;
     m_value = _value;
     m_gas = _gas;
     m_max_fee_per_gas = _maxGasPrice;
+    m_max_priority_fee_per_gas = _maxPriorityFee;
 }
 
 xbytes_t xeth_transaction_t::encodeBytes(bool includesig) const {

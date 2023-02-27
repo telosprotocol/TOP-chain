@@ -29,7 +29,8 @@ public:
     data::enum_xtransaction_version tx_version() const;
     evm_common::u256 tx_eth_gas_limit() const;
     evm_common::u256 tx_eth_fee_per_gas() const;
-    evm_common::u256 tx_eth_limited_gasfee() const;
+    evm_common::u256 tx_eth_limited_gasfee(uint64_t forked_time) const;
+    evm_common::u256 tx_eth_priority_fee_per_gas() const;   
     uint64_t deposit() const;
     uint64_t tx_last_action_used_deposit() const;
 
@@ -39,7 +40,7 @@ public:
 
     static evm_common::u256 balance_to_tgas(const evm_common::u256 balance);
     static evm_common::u256 tgas_to_balance(const evm_common::u256 tgas);
-    static evm_common::u256 wei_to_utop(const evm_common::u256 wei);
+    static evm_common::u256 wei_to_utop(const evm_common::u256 wei, uint64_t forked_time);
     static evm_common::u256 utop_to_wei(const evm_common::u256 utop);
 
     bool is_one_stage_tx() const;

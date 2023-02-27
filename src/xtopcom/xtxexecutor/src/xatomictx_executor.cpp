@@ -58,24 +58,12 @@ bool xatomictx_executor_t::update_nonce_and_hash(const data::xaccountstate_ptr_t
 }
 
 bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx, uint64_t &total_burn_out) {
-    if (detail.m_state_unlock_balance > 0) {
-        auto lock_balance = unitstate->lock_balance();
-        xassert(lock_balance >= detail.m_state_unlock_balance);
-        unitstate->token_withdraw(data::XPROPERTY_BALANCE_LOCK, base::vtoken_t(detail.m_state_unlock_balance));
-        unitstate->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(detail.m_state_unlock_balance));
-    }
+
     if (detail.m_state_burn_balance > 0) {
         auto balance = unitstate->balance();
         auto token = std::min(balance, detail.m_state_burn_balance);
         unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(token));
         unitstate->token_deposit(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(token));
-        total_burn_out += token;
-    }
-    if (detail.m_state_lock_balance > 0) {
-        auto balance = unitstate->balance();
-        xassert(balance >= detail.m_state_lock_balance);
-        unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(detail.m_state_lock_balance));
-        unitstate->token_deposit(data::XPROPERTY_BALANCE_LOCK, base::vtoken_t(detail.m_state_lock_balance));
     }
     if (detail.m_state_used_tgas > 0) {
         unitstate->string_set(data::XPROPERTY_USED_TGAS_KEY, std::to_string(detail.m_state_used_tgas));
