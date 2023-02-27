@@ -55,7 +55,7 @@ bool xrpc_query_func::is_prop_name_already_set_property(const std::string & prop
         data::XPROPERTY_CONTRACT_GROUP_ASSOC_KEY,
     };
 
-    auto iter = property_names.find(prop_name);
+    auto const iter = property_names.find(prop_name);
     if (iter != property_names.end()) {
         return true;
     }
@@ -104,7 +104,7 @@ bool xrpc_query_func::is_prop_name_not_set_property(const std::string & prop_nam
                                                    PROPOSAL_MAP_ID,
                                                    VOTE_MAP_ID};
 
-    auto iter = property_names.find(prop_name);
+    auto const iter = property_names.find(prop_name);
     if (iter != property_names.end()) {
         return true;
     }
@@ -244,7 +244,7 @@ void xrpc_query_func::query_account_property_base(Json::Value & jph, const std::
 void xrpc_query_func::query_account_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode) {
     xdbg("xrpc_query_manager::query_account_property account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
     // load newest account state
-    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(owner));
+    data::xunitstate_ptr_t const unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(owner));
     query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode == xfull_node_compatible_mode_t::compatible);
 }
 

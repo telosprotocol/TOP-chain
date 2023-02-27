@@ -157,7 +157,7 @@ public:
                            bool compatible_mode,
                            Json::Value & json) const;
     void get_contract_data(common::xaccount_address_t const & contract_address,
-                           const data::xunitstate_ptr_t unitstate,
+                           data::xunitstate_ptr_t const & unitstate,
                            std::string const & property_name,
                            xjson_format_t const json_format,
                            bool compatible_mode,
