@@ -379,9 +379,16 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     }
 
     if (current_block->get_height() != 0 && current_block->get_height() <= get_cert_executed_height_inner()) {
+        auto tablestate_ext = m_state_accessor.read_table_bstate(m_table_addr, current_block);
+        if (nullptr != tablestate_ext) {
+            xwarn("xstatestore_executor_t::write_table_all_states repeat write states.block=%s", current_block->dump().c_str());
+            return tablestate_ext;
+        }
         // fork blocks may execute some times with same height
-        xwarn("xstatestore_executor_t::write_table_all_states repeat write states.block=%s", current_block->dump().c_str());
+        xwarn("xstatestore_executor_t::write_table_all_states fork blocks write states.block=%s", current_block->dump().c_str());
     }
+
+    xinfo("xstatestore_executor_t::write_table_all_states begin,block:%s",current_block->dump().c_str());
 
 #ifdef DEBUG
     auto table_full_state_hash = current_block->get_fullstate_hash();
