@@ -40,6 +40,7 @@ private:
     std::unordered_map<std::string, std::map<std::string, data::xunitstate_ptr_t>> m_unitstate_cache; // account's unitstate cache
     // mutable base::xlru_cache<std::string, data::xunitstate_ptr_t> m_unitstate_cache;  //unitstate cache
     std::map<uint64_t, std::map<std::string, xtablestate_ext_ptr_t>>  m_table_states;
+    mutable std::mutex m_mutex;
 };
 
 

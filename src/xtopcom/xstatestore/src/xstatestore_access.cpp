@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include <mutex>
 #include "xbasic/xmemory.hpp"
 #include "xstatestore/xstatestore_access.h"
 #include "xstatestore/xerror.h"
@@ -19,6 +20,7 @@ xtablestate_ext_ptr_t const& xstatestore_cache_t::get_latest_connectted_tablesta
 
 data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& account, std::string const& block_hash) const {
     data::xunitstate_ptr_t state = nullptr;
+    std::lock_guard<std::mutex> lock(m_mutex);
     auto iter = m_unitstate_cache.find(account);
     if (iter != m_unitstate_cache.end()) {
         auto iter2 = iter->second.find(block_hash);
@@ -37,6 +39,7 @@ data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& acc
 
 void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) {
     // TODO(jimmy) always update cache
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_unitstate_cache[state->get_bstate()->get_account()][block_hash] = state;
     // m_unitstate_cache.put(block_hash, state);
     xdbg("xstatestore_cache_t::set_unitstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
