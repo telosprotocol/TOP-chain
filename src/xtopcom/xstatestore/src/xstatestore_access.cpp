@@ -9,7 +9,7 @@
 
 NS_BEG2(top, statestore)
 
-xstatestore_cache_t::xstatestore_cache_t() : m_unitstate_cache(enum_max_unit_state_lru_cache_max) {
+xstatestore_cache_t::xstatestore_cache_t() : m_unitstate_cache() {
 
 }
 
