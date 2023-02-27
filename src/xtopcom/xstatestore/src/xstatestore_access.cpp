@@ -3,14 +3,13 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include <mutex>
 #include "xbasic/xmemory.hpp"
 #include "xstatestore/xstatestore_access.h"
 #include "xstatestore/xerror.h"
 
 NS_BEG2(top, statestore)
 
-xstatestore_cache_t::xstatestore_cache_t() : m_unitstate_cache() {
+xstatestore_cache_t::xstatestore_cache_t() : m_unitstate_cache(enum_max_unit_state_lru_cache_max) {
 
 }
 
@@ -18,30 +17,15 @@ xtablestate_ext_ptr_t const& xstatestore_cache_t::get_latest_connectted_tablesta
     return m_latest_connectted_tablestate;
 }
 
-data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& account, std::string const& block_hash) const {
+data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& block_hash) const {
     data::xunitstate_ptr_t state = nullptr;
-    std::lock_guard<std::mutex> lock(m_mutex);
-    auto iter = m_unitstate_cache.find(account);
-    if (iter != m_unitstate_cache.end()) {
-        auto iter2 = iter->second.find(block_hash);
-        if (iter2 != iter->second.end()) {            
-            XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, 1);
-            return iter2->second;
-        }
-    }
-    XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, 0);
-    xdbg("xstatestore_cache_t::get_unitstate fail account=%s,hash=%s", account.c_str(), base::xstring_utl::to_hex(block_hash).c_str());
-    return nullptr;
-    // m_unitstate_cache.get(block_hash, state);
-    // XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, state != nullptr ? 1 : 0);
-    // return state;
+    m_unitstate_cache.get(block_hash, state);
+    XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, state != nullptr ? 1 : 0);
+    return state;
 }
 
 void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) {
-    // TODO(jimmy) always update cache
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_unitstate_cache[state->get_bstate()->get_account()][block_hash] = state;
-    // m_unitstate_cache.put(block_hash, state);
+    m_unitstate_cache.put(block_hash, state);
     xdbg("xstatestore_cache_t::set_unitstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
 }
 
@@ -235,7 +219,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_for_account_inde
 }
 
 data::xunitstate_ptr_t xstatestore_accessor_t::read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {
-    data::xunitstate_ptr_t unitstate = m_state_cache.get_unitstate(address.to_string(), block_hash);
+    data::xunitstate_ptr_t unitstate = m_state_cache.get_unitstate(block_hash);
     if (nullptr != unitstate) {
         return unitstate;
     }
