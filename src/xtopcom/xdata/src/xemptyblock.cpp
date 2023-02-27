@@ -37,20 +37,20 @@ void * xemptyblock_t::query_interface(const int32_t _enum_xobject_type_) {
 }
 
 // XTODO block parse to json
-void xemptyblock_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
+void xemptyblock_t::parse_to_json(Json::Value & root, const std::string & rpc_version) {
     if (get_block_level() == base::enum_xvblock_level_unit) {
         // XTODO for compatibility. unit has no tx info any more
         if (is_fullunit()) {
-            xJson::Value j_fu;
+            Json::Value j_fu;
             j_fu["latest_full_unit_number"] = static_cast<unsigned int>(get_height());
             j_fu["latest_full_unit_hash"] = to_hex_str(get_block_hash());
             root["fullunit"] = j_fu;
         } else if (is_lightunit()) {
             if (rpc_version == RPC_VERSION_V1) {
-                xJson::Value ji;
+                Json::Value ji;
                 root["lightunit"]["lightunit_input"] = ji;
             } else {
-                xJson::Value txs;
+                Json::Value txs;
                 root["lightunit"] = txs;
             }
         }
