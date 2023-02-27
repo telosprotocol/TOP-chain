@@ -674,24 +674,25 @@ namespace top
  
                     xdbgassert(_local_proposal->get_block()->is_body_and_offdata_ready(true));
                     
+                    //collect data from propoal first
+                    std::string msg_stream;
+                    std::string   _commit_block_cert; //ship by packet' header instead of xcommit_msg_t for optimization
+                    xcommit_msg_t _commit_msg(enum_xconsensus_code_successful);
+                    _commit_msg.set_proof_certificate(std::string(), _local_proposal->get_height());//just carry empty cert
+                    _commit_msg.serialize_to_string(msg_stream);
+
+                    _local_proposal->get_cert()->serialize_to_string(_commit_block_cert);//here generated full data of cert
+
+                    //at last send out commit message
+                    //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
+                    xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
+                    fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert,std::string());//ship block cert by packet
+
                     bool found_matched_proposal = false;
                     //step#8: call on_consensus_finish() to let upper layer know it
                     if(add_cert_block(_local_proposal->get_block(),found_matched_proposal))//set certified block(QC block)
                     {
-                        //collect data from propoal first
-                        std::string msg_stream;
-                        std::string   _commit_block_cert; //ship by packet' header instead of xcommit_msg_t for optimization
-                        xcommit_msg_t _commit_msg(enum_xconsensus_code_successful);
-                        _commit_msg.set_proof_certificate(std::string(), _local_proposal->get_height());//just carry empty cert
-                        _commit_msg.serialize_to_string(msg_stream);
 
-                        _local_proposal->get_cert()->serialize_to_string(_commit_block_cert);//here generated full data of cert
-
-                        //at last send out commit message
-                        //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
-                        xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
-                        fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert,std::string());//ship block cert by packet
-                        
                         // xassert(found_matched_proposal);
                         if(false == found_matched_proposal)//exception case
                             fire_replicate_finish_event(_local_proposal->get_block());//call on_replicate_finish(block) to driver context layer
