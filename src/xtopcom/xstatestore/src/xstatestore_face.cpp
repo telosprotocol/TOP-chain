@@ -41,7 +41,7 @@ int32_t verify_standby_transaction(data::xtransaction_t const * trx) {
         xdbg("verify_standby_transaction: success .tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
     }
 
-    return check_success ? xverifier::xverifier_error::xverifier_error_tx_signature_invalid : xverifier::xverifier_error::xverifier_success;
+    return check_success ? xverifier::xverifier_error::xverifier_success : xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
 }
 
 NS_END2
