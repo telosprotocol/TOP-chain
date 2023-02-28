@@ -22,3 +22,6 @@
 [submodule "src/xtopcom/xdepends/gperftools"]
 	path = src/xtopcom/xdepends/gperftools
 	url = git@github.com:gperftools/gperftools.git
+[submodule "src/xtopcom/xtvm_engine_rs"]
+	path = src/xtopcom/xtvm_engine_rs
+	url = git@github.com:telosprotocol/tvm_engine_rs.git
