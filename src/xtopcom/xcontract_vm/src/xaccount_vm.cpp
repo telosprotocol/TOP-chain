@@ -173,7 +173,7 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
                 }
                 followup_tx.execute_type = contract_common::xfollowup_transaction_execute_type_t::success;
                 // TODO: not support double follow up now
-                if (followup_result.output.followup_transaction_data.size() > 0) {
+                if (!followup_result.output.followup_transaction_data.empty()) {
                     assert(false);
                 }
             } else if (followup_tx.execute_type == contract_common::xfollowup_transaction_execute_type_t::success) {

@@ -35,7 +35,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     uint32_t count = bme->count;
     bool is_consensus = bme->is_consensus;
     const std::string &reason = bme->reason;
-    bool unit_proof = bme->unit_proof;
+    // bool unit_proof = bme->unit_proof;
     auto & last_unit_hash = bme->last_unit_hash;
 
     if (count == 0)
