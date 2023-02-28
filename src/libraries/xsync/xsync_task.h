@@ -34,25 +34,6 @@ class xsync_on_blocks_response_command_t : public xsync_command_t<xchain_downloa
         vnetwork::xvnode_address_t m_target_addr;
 };
 
-class xsync_on_snapshot_response_command_t : public xsync_command_t<xchain_downloader_t *> {
-    public:
-        xsync_on_snapshot_response_command_t(
-            const std::string & chain_snapshot, uint64_t height,
-            const vnetwork::xvnode_address_t& self_addr,
-            const vnetwork::xvnode_address_t& target_addr):
-            m_height(height), m_snapshot(chain_snapshot),  m_self_addr(self_addr),
-            m_target_addr(target_addr){
-        };
-
-        xsync_command_execute_result execute(xchain_downloader_t *downloader) override;
-
-    private:
-        uint64_t m_height;
-        std::string m_snapshot;
-        vnetwork::xvnode_address_t m_self_addr;
-        vnetwork::xvnode_address_t m_target_addr;
-};
-
 class xsync_download_command_t : public xsync_command_t<xchain_downloader_t *> {
     public:
         xsync_download_command_t(

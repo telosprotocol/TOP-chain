@@ -3,6 +3,7 @@
 #include "xsync/xsync_message.h"
 #include "common_func.h"
 #include "xsync/xsync_util.h"
+#include "xsync/xsync_session_manager.h"
 
 using namespace top;
 using namespace top::sync;
@@ -139,3 +140,61 @@ TEST(test_xsync_message, test_xsync_msg_block_push_t) {
     }
 
 }
+
+TEST(test_xsync_message, test_xsync_msg_manager_request_check)
+{
+    bool ret = true;
+    std::string address { "T600044dce5c8961e283786cb31ad7fc072347227d7ea2" };
+    sync::xsync_session_manager_t session_manager(10, 1000);
+
+    for (int request_type = (int)enum_sync_block_request_push; request_type <= (int)enum_sync_block_request_max; request_type++) {
+       for (int request_param = (int)enum_sync_block_by_none; request_param <= (int)enum_sync_block_by_max; request_param++) {
+             uint32_t request_option = SYNC_MSG_OPTION_SET(request_type, request_param, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+             auto body = make_object_ptr<xsync_msg_block_request_t>(address, request_option, 1, 10, "");
+             ret = session_manager.sync_block_request_valid_check(body);
+             if (request_type == enum_sync_block_request_max || request_param == enum_sync_block_by_max ||
+                ((request_param == enum_sync_block_by_hash || request_param == enum_sync_block_by_txhash) && body->get_requeset_param_str().empty())) {
+                 ASSERT_FALSE(ret);
+             } else if(request_type != enum_sync_block_request_push && (request_param == enum_sync_block_by_none || request_param == enum_sync_block_by_max)){
+                 ASSERT_FALSE(ret);
+             }
+             else {
+                 ASSERT_TRUE(ret);
+             }
+       }
+    }
+}
+
+TEST(test_xsync_message, test_xsync_msg_manager_count_limit)
+{
+    bool ret = true;
+    std::string address { "T600044dce5c8961e283786cb31ad7fc072347227d7ea2" };
+    sync::xsync_session_manager_t session_manager(10, 1000);
+
+    for (int i = 0; i < 10; i++) {
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_demand, enum_sync_block_by_height, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+        auto body = make_object_ptr<xsync_msg_block_request_t>(address, request_option, 1, 10, "");
+        ret = session_manager.sync_block_request_insert(body);
+        ASSERT_TRUE(ret);
+    }
+
+    uint32_t request_option_11 = SYNC_MSG_OPTION_SET(enum_sync_block_request_demand, enum_sync_block_by_height, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+    auto body_11 = make_object_ptr<xsync_msg_block_request_t>(address, request_option_11, 1, 10, "");
+    ret = session_manager.sync_block_request_insert(body_11);
+    ASSERT_FALSE(ret);
+}
+
+TEST(test_xsync_message, test_xsync_msg_manager_same_hash)
+{
+    bool ret = true;
+    std::string address { "T600044dce5c8961e283786cb31ad7fc072347227d7ea2" };
+    sync::xsync_session_manager_t session_manager(10, 1000);
+
+    uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_demand, enum_sync_block_by_height, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+    auto body = make_object_ptr<xsync_msg_block_request_t>(address, request_option, 1, 10, "");
+    ret = session_manager.sync_block_request_insert(body);
+    ASSERT_TRUE(ret);
+    ret = session_manager.sync_block_request_insert(body);
+    ASSERT_FALSE(ret);
+}
+

@@ -23,7 +23,7 @@ using namespace top::mock;
 
 #define MAX_BLOCK_TEST (1500)
 
-class test_xsync_chain_down : public testing::Test {
+class test_xsync_span : public testing::Test {
 public:
     void SetUp() override
     {
@@ -51,7 +51,7 @@ public:
     std::set<uint64_t> m_height_set; // to save span height
 };
 
-void test_xsync_chain_down::save_block(uint64_t store_start_height, uint64_t store_count)
+void test_xsync_span::save_block(uint64_t store_start_height, uint64_t store_count)
 {
     std::string address = m_mocktable.get_account();
     xvaccount_t account(address);
@@ -70,7 +70,7 @@ void test_xsync_chain_down::save_block(uint64_t store_start_height, uint64_t sto
     //std::cout << "save_block  height " << height << std::endl;
 }
 
-void test_xsync_chain_down::save_empty_block()
+void test_xsync_span::save_empty_block()
 {
      std::string address = m_mocktable.get_account();
      xvaccount_t account(address);
@@ -101,7 +101,7 @@ void test_xsync_chain_down::save_empty_block()
      }
 }
 
-void test_xsync_chain_down::test_interval_no_blocks_in_span(uint64_t cp_start_height, uint64_t cp_end_height)
+void test_xsync_span::test_interval_no_blocks_in_span(uint64_t cp_start_height, uint64_t cp_end_height)
 {
     std::string address = m_mocktable.get_account();
     xvaccount_t account(address);
@@ -121,7 +121,7 @@ void test_xsync_chain_down::test_interval_no_blocks_in_span(uint64_t cp_start_he
     ASSERT_EQ(pair_result.second, cp_end_height);
 }
 
-void test_xsync_chain_down::test_interval_blocks_in_span(uint64_t cp_start_height, uint64_t cp_end_height, uint64_t check_start_height, uint64_t check_end_height)
+void test_xsync_span::test_interval_blocks_in_span(uint64_t cp_start_height, uint64_t cp_end_height, uint64_t check_start_height, uint64_t check_end_height)
 {
     std::string address = m_mocktable.get_account();
     xvaccount_t account(address);
@@ -142,21 +142,21 @@ void test_xsync_chain_down::test_interval_blocks_in_span(uint64_t cp_start_heigh
 }
 
 // blockstore only genesis, input[1,cp_end_height] and output [1,cp_end_height]
-TEST_F(test_xsync_chain_down, test_xsync_empty_test)
+TEST_F(test_xsync_span, test_xsync_empty_test_BENCH)
 {
     test_interval_no_blocks_in_span(1, 50);
     test_interval_blocks_in_span(0, 50, 1, 50);
 }
 
 // blockstore save [0],[20-50],
-TEST_F(test_xsync_chain_down, test_xsync_0_20_test)
+TEST_F(test_xsync_span, test_xsync_0_20_test_BENCH)
 {
     save_block(20, 31);
     test_interval_blocks_in_span(1, 50, 1, 19);
 }
 
 // blockstore save [0,19],[20-50],
-TEST_F(test_xsync_chain_down, test_xsync_19_19_test)
+TEST_F(test_xsync_span, test_xsync_19_19_test_BENCH)
 {
     save_block(1, 18);
     save_block(20, 31);
@@ -164,7 +164,7 @@ TEST_F(test_xsync_chain_down, test_xsync_19_19_test)
 }
 
 // // blockstore save [0,50],
-TEST_F(test_xsync_chain_down, test_xsync_0_50_test)
+TEST_F(test_xsync_span, test_xsync_0_50_test_BENCH)
 {
     save_block(1, 50);
     test_interval_blocks_in_span(1, 50, 0, 0);
@@ -172,7 +172,7 @@ TEST_F(test_xsync_chain_down, test_xsync_0_50_test)
 }
 
 // blockstore save [0,77]]
-TEST_F(test_xsync_chain_down, test_xsync_0_77_test)
+TEST_F(test_xsync_span, test_xsync_0_77_test_BENCH)
 {
     save_block(1, 77);
     test_interval_blocks_in_span(1, 70, 0, 0);
@@ -180,7 +180,7 @@ TEST_F(test_xsync_chain_down, test_xsync_0_77_test)
 }
 
 // blockstore save [0,80]
-TEST_F(test_xsync_chain_down, test_xsync_0_80_test)
+TEST_F(test_xsync_span, test_xsync_0_80_test_BENCH)
 {
     save_block(1, 80);
     test_interval_blocks_in_span(1, 70, 0, 0);
@@ -188,7 +188,7 @@ TEST_F(test_xsync_chain_down, test_xsync_0_80_test)
 }
 
 // blockstore save [0,80][90,100]
-TEST_F(test_xsync_chain_down, test_xsync_0_80_90_100_test)
+TEST_F(test_xsync_span, test_xsync_0_80_90_100_test_BENCH)
 {
     save_block(1, 80);
     save_block(90, 100);
@@ -197,33 +197,33 @@ TEST_F(test_xsync_chain_down, test_xsync_0_80_90_100_test)
 }
 
 // blockstore save [0,80]
-TEST_F(test_xsync_chain_down, test_xsync_0_80_82_150_test)
+TEST_F(test_xsync_span, test_xsync_0_80_82_150_test_BENCH)
 {
     save_block(1, 80);
     test_interval_blocks_in_span(82, 150, 82, 150);
 }
 
 // blockstore save [0,80]
-TEST_F(test_xsync_chain_down, test_xsync_100_150_test)
+TEST_F(test_xsync_span, test_xsync_100_150_test_BENCH)
 {
     save_block(1, 100);
     test_interval_blocks_in_span(60, 120, 101, 120);
 }
 
-TEST_F(test_xsync_chain_down, test_xsync_999_test)
+TEST_F(test_xsync_span, test_xsync_999_test_BENCH)
 {
     save_block(1, 999);
     test_interval_blocks_in_span(1000, 1100, 1000, 1100);
 }
 
 // blockstore save [0,80]
-TEST_F(test_xsync_chain_down, test_xsync_1024_test)
+TEST_F(test_xsync_span, test_xsync_1024_test_BENCH)
 {
     save_block(1, 1100);
     test_interval_blocks_in_span(1000, 1200, 1101, 1200);
 }
 
-TEST_F(test_xsync_chain_down, test_xsync_span_genesis_time_reflash)
+TEST_F(test_xsync_span, test_xsync_span_genesis_time_reflash_BENCH)
 {
    
     save_block(1, 6);
@@ -261,7 +261,7 @@ TEST_F(test_xsync_chain_down, test_xsync_span_genesis_time_reflash)
     ASSERT_EQ(8, genesis_height);
 }
 
-TEST_F(test_xsync_chain_down, test_xsync_cp_reflash_lost)
+TEST_F(test_xsync_span, test_xsync_cp_reflash_lost_BENCH)
 {
     save_block(1, 8);
     save_block(11, 10);
@@ -287,14 +287,15 @@ TEST_F(test_xsync_chain_down, test_xsync_cp_reflash_lost)
     ASSERT_EQ(8, cp_lost_height);
  
     // first record
-    cp_object.get_behind_height_real(1, &sync_store, 2, address);
     int64_t now = 200000;
+    cp_object.get_behind_height_real(now, &sync_store, 2, address);
+    now = 400000;
     // timeout,reset request height
     uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
     ASSERT_EQ(8, cp_connect_height);
 }
 
-TEST_F(test_xsync_chain_down, test_xsync_or_cp_reflash_disconnect)
+TEST_F(test_xsync_span, test_xsync_or_cp_reflash_disconnect_BENCH)
 {
     save_empty_block();
 
@@ -320,8 +321,9 @@ TEST_F(test_xsync_chain_down, test_xsync_or_cp_reflash_disconnect)
     ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_disconnect_height);
 
     // first record
-    cp_object.get_behind_height_real(1, &sync_store, 2, address);
     int64_t now = 200000;
+    cp_object.get_behind_height_real(now, &sync_store, 2, address);
+    now = 400000;
     // timeout,reset request height
     uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
     ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_connect_height);

@@ -7,10 +7,6 @@ xsync_command_execute_result xsync_on_blocks_response_command_t::execute(xchain_
     return downloader->execute_next_download(m_blocks, m_self_addr, m_target_addr);
 }
 
-xsync_command_execute_result xsync_on_snapshot_response_command_t::execute(xchain_downloader_t* downloader) {
-    return downloader->execute_next_download(m_snapshot, m_height, m_self_addr, m_target_addr);
-}
-
 xsync_command_execute_result xsync_download_command_t::execute(xchain_downloader_t* downloader) {
     return downloader->execute_download(m_expect_height_interval.first, m_expect_height_interval.second, 
             m_sync_policy, m_self_addr, m_target_addr, "time");

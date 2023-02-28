@@ -151,10 +151,15 @@ bool xsync_session_manager_t::sync_block_msg_valid_check(const xobject_ptr_t<xsy
     }
 
     if (msg->get_request_type() != enum_sync_block_request_push) {
-        if ((msg->get_requeset_param_type() < enum_sync_block_by_height) || (msg->get_requeset_param_type() >= enum_sync_block_by_max)) {
+        if (msg->get_requeset_param_type() < enum_sync_block_by_height) {
             xwarn("xsync_session_manager_t::sync_block_msg_valid_check  msg param(%d) is error ", msg->get_requeset_param_type());
             return false;
         }
+    }
+
+    if ((msg->get_requeset_param_type() >= enum_sync_block_by_max)) {
+        xwarn("xsync_session_manager_t::sync_block_msg_valid_check  msg request_param(%d) is error ", msg->get_requeset_param_type());
+        return false;
     }
 
     if (msg->get_data_type() == 0) {
