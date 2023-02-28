@@ -6,6 +6,10 @@
 #ifndef CPPTL_JSON_READER_H_INCLUDED
 #define CPPTL_JSON_READER_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "jfeatures.h"
 #include "value.h"
@@ -16,6 +20,8 @@
 #include <string>
 #include <istream>
 
+
+
 // Disable warning C4251: <data member>: <type> needs to have dll-interface to
 // be used by...
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
@@ -23,7 +29,7 @@
 #pragma warning(disable : 4251)
 #endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 
-namespace xJson {
+namespace Json {
 
 /** \brief Unserialize a <a HREF="http://www.json.org">JSON</a> document into a
  *Value.
@@ -330,7 +336,7 @@ public:
     JSON Value.
     \sa setDefaults()
     */
-  xJson::Value settings_;
+  Json::Value settings_;
 
   CharReaderBuilder();
   ~CharReaderBuilder() JSONCPP_OVERRIDE;
@@ -340,7 +346,7 @@ public:
   /** \return true if 'settings' are legal and consistent;
    *   otherwise, indicate bad settings via 'invalid'.
    */
-  bool validate(xJson::Value* invalid) const;
+  bool validate(Json::Value* invalid) const;
 
   /** A simple way to update a specific setting.
    */
@@ -351,13 +357,13 @@ public:
    * \remark Defaults:
    * \snippet src/lib_json/json_reader.cpp CharReaderBuilderDefaults
    */
-  static void setDefaults(xJson::Value* settings);
+  static void setDefaults(Json::Value* settings);
   /** Same as old Features::strictMode().
    * \pre 'settings' != NULL (but Json::null is fine)
    * \remark Defaults:
    * \snippet src/lib_json/json_reader.cpp CharReaderBuilderStrictMode
    */
-  static void strictMode(xJson::Value* settings);
+  static void strictMode(Json::Value* settings);
 };
 
 /** Consume entire stream and use its begin/end.

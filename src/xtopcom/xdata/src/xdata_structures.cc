@@ -18,7 +18,7 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
     uint64_t total_votes = 0;
 
     for (auto const & entity : nodes) {
-        auto const & account = entity.first;
+        // auto const & account = entity.first;
         auto const & reg_node_str = entity.second;
         if (reg_node_str.empty()) {
             continue;

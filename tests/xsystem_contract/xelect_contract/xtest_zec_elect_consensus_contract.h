@@ -2,12 +2,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#pragma once
+
+#include <gtest/gtest.h>
+
+#define private public
+
 #include "tests/xsystem_contract/xelection_algorithm/xtest_election_data_manager_fixture.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xcontract_helper.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract.h"
 
-#include <gtest/gtest.h>
 
 XINLINE_CONSTEXPR char const * TEST_NODE_ID_AUDITOR_PREFIX = "test__auditor__node_id_";
 

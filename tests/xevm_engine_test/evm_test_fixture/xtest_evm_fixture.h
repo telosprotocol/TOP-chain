@@ -9,8 +9,13 @@
 #include "xevm_contract_runtime/xevm_storage.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
-#include "xevm_runner/proto/proto_basic.pb.h"
-#include "xevm_runner/proto/proto_parameters.pb.h"
+#if defined(XCXX20)
+#include "xevm_runner/proto/ubuntu/proto_basic.pb.h"
+#include "xevm_runner/proto/ubuntu/proto_parameters.pb.h"
+#else
+#include "xevm_runner/proto/centos/proto_basic.pb.h"
+#include "xevm_runner/proto/centos/proto_parameters.pb.h"
+#endif
 #include "xtxexecutor/xvm_face.h"
 
 #include <nlohmann/json.hpp>

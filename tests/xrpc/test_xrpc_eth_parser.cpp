@@ -51,7 +51,7 @@ TEST_F(test_xrpc_eth_parser, u256_to_hex_prefixed) {
 }
 TEST_F(test_xrpc_eth_parser, log_to_json) {
     xrpc::xlog_location_t loglocation("", "", "", "");
-    xJson::Value js_log;
+    Json::Value js_log;
     evm_common::xevm_log_t log;
     xrpc::xrpc_eth_parser_t::log_to_json(loglocation, log, js_log);
     EXPECT_EQ(js_log.empty(), false);
@@ -64,7 +64,7 @@ TEST_F(test_xrpc_eth_parser, receipt_to_json) {
     std::error_code ec;
     xrpc::xtx_location_t txlocation("","","","");
     data::xeth_transaction_t ethtx;
-    xJson::Value js_v;
+    Json::Value js_v;
     data::xeth_store_receipt_t evm_tx_receipt;
 //    top::utl::xkeyaddress_t pubkey1("");
     xrpc::xrpc_eth_parser_t::receipt_to_json(txlocation, ethtx, evm_tx_receipt, js_v, ec);
@@ -75,7 +75,7 @@ TEST_F(test_xrpc_eth_parser, receipt_to_json2) {
     std::error_code ec;
     xrpc::xtx_location_t txlocation("","","","");
     data::xeth_transaction_t ethtx;
-    xJson::Value js_v;
+    Json::Value js_v;
 
     std::string raw_tx_hash;
     xrpc::xtxindex_detail_ptr_t sendindex = xrpc::xrpc_loader_t::load_ethtx_indx_detail(raw_tx_hash);
@@ -88,7 +88,7 @@ TEST_F(test_xrpc_eth_parser, transaction_to_json) {
     std::error_code ec;
     xrpc::xtx_location_t txlocation("","","","");
     data::xeth_transaction_t ethtx;
-    xJson::Value js_v;
+    Json::Value js_v;
 
     xrpc::xrpc_eth_parser_t::transaction_to_json(txlocation, ethtx, js_v, ec);    
     EXPECT_EQ(js_v.empty(), false);
@@ -98,7 +98,7 @@ TEST_F(test_xrpc_eth_parser, transaction_to_json2) {
     std::error_code ec;
     xrpc::xtx_location_t txlocation("","","","");
     data::xeth_transaction_t ethtx;
-    xJson::Value js_v;
+    Json::Value js_v;
     std::string tx_hash_str;
     xrpc::xtxindex_detail_ptr_t sendindex = xrpc::xrpc_loader_t::load_ethtx_indx_detail(tx_hash_str);
     if (sendindex == nullptr)

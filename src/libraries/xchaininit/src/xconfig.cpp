@@ -1,13 +1,9 @@
 #include "xchaininit/xconfig.h"
 
-#include "json/value.h"
 #include "xpbase/base/top_log.h"
 
-#include <assert.h>
-#include <json/reader.h>
-#include <json/writer.h>
-#include <stdint.h>
-
+#include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -34,7 +30,7 @@ std::string xtopio_config_t::get_file_content(const std::string & filepath) {
 
 int32_t xtopio_config_t::load_config_file(const std::string & config_file, const std::string & config_extra) {
     std::string content = get_file_content(config_file);
-    xJson::Reader reader;
+    Json::Reader reader;
     bool ret = reader.parse(content, m_root);
     if (!ret) {
         std::cout << "parse config file " << config_file << " failed" << std::endl;
@@ -42,8 +38,8 @@ int32_t xtopio_config_t::load_config_file(const std::string & config_file, const
     }
 
     if (!config_extra.empty()) {
-        xJson::Reader reader_extra;
-        xJson::Value root_extra;
+        Json::Reader reader_extra;
+        Json::Value root_extra;
         std::string content_extra = get_file_content(config_extra);
         bool ret = reader_extra.parse(content_extra, root_extra);
         if (!ret) {
@@ -55,7 +51,7 @@ int32_t xtopio_config_t::load_config_file(const std::string & config_file, const
     return 0;
 }
 
-void xtopio_config_t::merge_config(xJson::Value & root, const xJson::Value & root_extra) {
+void xtopio_config_t::merge_config(Json::Value & root, const Json::Value & root_extra) {
     if (!root_extra.isObject()) {
         return;
     }
@@ -67,12 +63,12 @@ void xtopio_config_t::merge_config(xJson::Value & root, const xJson::Value & roo
 }
 
 bool xtopio_config_t::save(const std::string & config_file, std::unordered_map<std::string, std::string> & map) {
-    xJson::Value root;
+    Json::Value root;
     for (auto & enty : map) {
         root[enty.first.c_str()] = enty.second.c_str();
     }
 
-    xJson::FastWriter writer;
+    Json::FastWriter writer;
     std::string str = writer.write(root);
     std::ofstream ofs;
     ofs.open(config_file.c_str());
@@ -88,7 +84,7 @@ void xtopio_config_t::fetch_all(std::unordered_map<std::string, std::string> & m
     extract(m_root, map);
 }
 
-void xtopio_config_t::extract(xJson::Value & arr, std::unordered_map<std::string, std::string> & map) {
+void xtopio_config_t::extract(Json::Value & arr, std::unordered_map<std::string, std::string> & map) {
     auto mem = arr.getMemberNames();
     for (auto it = mem.begin(); it != mem.end(); ++it) {
         if (arr[*it].isArray()) {
@@ -117,7 +113,7 @@ bool xtopio_config_t::get_string(const std::string & item, std::string & value) 
     return false;
 }
 
-bool xtopio_config_t::get_json(const std::string & item, xJson::Value & value) {
+bool xtopio_config_t::get_json(const std::string & item, Json::Value & value) {
     if (m_root.isMember(item)) {
         value = m_root[item];
         return true;

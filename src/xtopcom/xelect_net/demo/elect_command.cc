@@ -56,7 +56,7 @@ void ElectCommands::set_netcard(elect::EcNetcardPtr ec_netcard) {
     ec_netcard_ = ec_netcard;
 }
 // #if 0
-using query_method_handler = std::function<void(xJson::Value &, xJson::Value &, std::string &, uint32_t &)>;
+using query_method_handler = std::function<void(Json::Value &, Json::Value &, std::string &, uint32_t &)>;
 
 #define REGISTER_NET_CMD_METHOD(func_name)                                                                                                                                         \
     m_query_method_map.emplace(std::pair<std::string, query_method_handler>{                                                                                                       \
@@ -67,7 +67,7 @@ public:
     net_cmd_handle(top::ElectCommands * elect_cmd) : m_elect_cmd{elect_cmd} {
         REGISTER_NET_CMD_METHOD(p2ptest);
     }
-    void p2ptest(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+    void p2ptest(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
         std::cout << "p2p test" << std::endl;
         std::string test_cmd = js_req["test_cmd"].asString();
         uint64_t index = js_req["index"].asUInt64();
@@ -75,7 +75,7 @@ public:
 
         js_rsp["value"] = m_elect_cmd->ProcessRpcCommand(test_cmd, index);
     }
-    bool handle(std::string & request, xJson::Value& js_req, xJson::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) override{
+    bool handle(std::string & request, Json::Value& js_req, Json::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) override{
         std::string action = js_req["action"].asString();
         auto iter = m_query_method_map.find(action);
         if (iter != m_query_method_map.end()) {
@@ -129,7 +129,7 @@ void ElectCommands::PrintUsage() {
     // std::cout << "\tsets set service type for gets.\n";
 }
 
-xJson::Value ElectCommands::ProcessRpcCommand(const std::string & cmdline, uint64_t cmd_index) {
+Json::Value ElectCommands::ProcessRpcCommand(const std::string & cmdline, uint64_t cmd_index) {
     if (cmdline.empty()) {
         return {};
     }
@@ -180,22 +180,22 @@ void ElectCommands::AddBaseCommands() {
         return "false net type";
     };
     AddRpcCommand("prt", [this, &get_net_type](Arguments const & args) {
-        xJson::Value ret;
+        Json::Value ret;
 
         auto root_routing_table = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
         if (!root_routing_table) {
             ret["root_rt"] = "null";
         } else {
-            xJson::Value root_rt;
+            Json::Value root_rt;
             root_rt["local_nodeid"] = root_routing_table->get_local_node_info()->kad_key();
             root_rt["service_type"] = root_routing_table->get_local_node_info()->service_type().info();
-            root_rt["neighbours"] = static_cast<xJson::UInt64>(root_routing_table->nodes_size());
+            root_rt["neighbours"] = static_cast<Json::UInt64>(root_routing_table->nodes_size());
             ret["root_rt"] = root_rt;
         }
         std::vector<base::ServiceType> vec_type;
         wrouter::MultiRouting::Instance()->GetAllRegisterType(vec_type);
         for (const auto & type : vec_type) {
-            xJson::Value one_ret;
+            Json::Value one_ret;
 
             auto routing_table = wrouter::MultiRouting::Instance()->GetElectRoutingTable(type);
             if (!routing_table) {
@@ -204,7 +204,7 @@ void ElectCommands::AddBaseCommands() {
             }
             one_ret["local_nodeid"] = routing_table->get_local_node_info()->kad_key();
             one_ret["service_type"] = routing_table->get_local_node_info()->service_type().info();
-            one_ret["neighbours"] = static_cast<xJson::UInt64>(routing_table->nodes_size());
+            one_ret["neighbours"] = static_cast<Json::UInt64>(routing_table->nodes_size());
 
             std::string net_type = get_net_type(routing_table->get_local_node_info()->kadmlia_key()->xnetwork_id(),
                                                 static_cast<uint32_t>(routing_table->get_local_node_info()->kadmlia_key()->zone_id()),
@@ -323,7 +323,7 @@ void ElectCommands::AddBaseCommands() {
     AddRpcCommand("broadcast_to_cluster", [this](Arguments const & args) {
         if (args.size() < 2) {
             std::cout << "invalid params, usage: crtnode [src_node_id] [des_node_id]" << std::endl;
-            return xJson::Value{};
+            return Json::Value{};
         }
 
         // std::string src_node_id = HexDecode(nodeid)

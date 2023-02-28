@@ -390,7 +390,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_remove_t>(e);
         std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
         common::xminer_type_t miner_type = bme->m_miner_type;
-        bool genesis = bme->m_genesis;
+        // bool genesis = bme->m_genesis;
 
         vnetwork::xvnode_address_t addr = vnetwork_driver->address();
         std::vector<uint16_t> table_ids = vnetwork_driver->table_ids();
@@ -454,7 +454,7 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_add_t>(e);
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
     common::xminer_type_t miner_type = bme->m_miner_type;
-    bool genesis = bme->m_genesis;
+    // bool genesis = bme->m_genesis;
 
     for (const auto & it : chains) {
         if (common::has<common::xminer_type_t::advance>(miner_type) || common::has<common::xminer_type_t::validator>(miner_type)) {

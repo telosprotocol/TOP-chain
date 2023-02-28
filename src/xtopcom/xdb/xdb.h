@@ -9,9 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include "xbasic/xspan.h"
 #include "xdb/xdb_face.h"
-
-#include <gsl/span>
 
 namespace top { namespace db {
 
@@ -34,12 +33,12 @@ class xdb : public xdb_face_t {
     bool write(const std::map<std::string, std::string>& batches) override;
     bool erase(const std::string& key) override;
     bool erase(const std::vector<std::string>& keys) override;
-    bool erase(std::vector<gsl::span<char const>> const & keys) override;
+    bool erase(std::vector<xspan_t<char const>> const & keys) override;
     static void destroy(const std::string& m_db_name);
     
     //batch mode for multiple keys with multiple ops
     bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) override;
-    bool batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys) override;
+    bool batch_change(const std::map<std::string, std::string> & objs, std::vector<xspan_t<char const>> const & delete_keys) override;
     
     //prefix must start from first char of key
     bool read_range(const std::string& prefix, std::vector<std::string>& values) override;

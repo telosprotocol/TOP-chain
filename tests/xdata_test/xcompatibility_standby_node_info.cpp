@@ -29,28 +29,28 @@ TEST(compatibility, standby_node_info_v0_v1) {
         auto const from_bytes = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::encode(from);
         auto const to = codec::xmsgpack_codec_t<data::election::v0::xstandby_node_info_t>::decode(from_bytes);
 
-        ASSERT_EQ(from.consensus_public_key, to.consensus_public_key);
-        ASSERT_EQ(from.genesis, to.genesis);
+        ASSERT_TRUE(from.consensus_public_key == to.consensus_public_key);
+        ASSERT_TRUE(from.genesis == to.genesis);
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-        ASSERT_EQ(from.miner_type, to.miner_type);
+        ASSERT_TRUE(from.miner_type == to.miner_type);
 #endif
-        ASSERT_EQ(from.program_version, to.program_version);
-        ASSERT_EQ(from.stake_container, to.stake_container);
-        ASSERT_EQ(to, from.v0());
+        ASSERT_TRUE(from.program_version == to.program_version);
+        ASSERT_TRUE(from.stake_container == to.stake_container);
+        ASSERT_TRUE(to == from.v0());
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v0::xstandby_node_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::decode(to_bytes);
 
-        ASSERT_EQ(from.consensus_public_key, from_again.consensus_public_key);
-        ASSERT_EQ(from.genesis, from_again.genesis);
+        ASSERT_TRUE(from.consensus_public_key == from_again.consensus_public_key);
+        ASSERT_TRUE(from.genesis == from_again.genesis);
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-        ASSERT_EQ(from.miner_type, from_again.miner_type);
+        ASSERT_TRUE(from.miner_type == from_again.miner_type);
 #endif
-        ASSERT_EQ(from.program_version, from_again.program_version);
-        ASSERT_EQ(from.stake_container, from_again.stake_container);
+        ASSERT_TRUE(from.program_version == from_again.program_version);
+        ASSERT_TRUE(from.stake_container == from_again.stake_container);
 
         auto const from_from = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::decode(from_bytes);
-        ASSERT_EQ(from, from_from);
+        ASSERT_TRUE(from == from_from);
     }
 
     {
@@ -69,18 +69,18 @@ TEST(compatibility, standby_node_info_v0_v1) {
         auto const from_bytes = codec::xmsgpack_codec_t<data::election::v0::xstandby_node_info_t>::encode(from);
         auto const to = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::decode(from_bytes);
 
-        ASSERT_EQ(from.consensus_public_key, to.consensus_public_key);
-        ASSERT_EQ(from.genesis, to.genesis);
+        ASSERT_TRUE(from.consensus_public_key == to.consensus_public_key);
+        ASSERT_TRUE(from.genesis == to.genesis);
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-        ASSERT_EQ(from.miner_type, to.miner_type);
+        ASSERT_TRUE(from.miner_type == to.miner_type);
 #endif
-        ASSERT_EQ(from.program_version, to.program_version);
-        ASSERT_EQ(from.stake_container, to.stake_container);
+        ASSERT_TRUE(from.program_version == to.program_version);
+        ASSERT_TRUE(from.stake_container == to.stake_container);
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v0::xstandby_node_info_t>::decode(to_bytes);
 
-        ASSERT_EQ(from, from_again);
+        ASSERT_TRUE(from == from_again);
     }
 }
 
@@ -103,25 +103,25 @@ TEST(compatibility, standby_node_info_v1_v2) {
         auto const from_bytes = codec::xmsgpack_codec_t<data::election::v2::xstandby_node_info_t>::encode(from);
         auto const to = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::decode(from_bytes);
 
-        ASSERT_EQ(from.consensus_public_key, to.consensus_public_key);
-        ASSERT_EQ(from.genesis, to.genesis);
-        ASSERT_EQ(from.miner_type, to.miner_type);
-        ASSERT_EQ(from.program_version, to.program_version);
-        ASSERT_EQ(from.stake_container, to.stake_container);
-        ASSERT_EQ(to, from.v1());
+        ASSERT_TRUE(from.consensus_public_key == to.consensus_public_key);
+        ASSERT_TRUE(from.genesis == to.genesis);
+        ASSERT_TRUE(from.miner_type == to.miner_type);
+        ASSERT_TRUE(from.program_version == to.program_version);
+        ASSERT_TRUE(from.stake_container == to.stake_container);
+        ASSERT_TRUE(to == from.v1());
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v2::xstandby_node_info_t>::decode(to_bytes);
 
-        ASSERT_EQ(from.consensus_public_key, from_again.consensus_public_key);
-        ASSERT_EQ(from.genesis, from_again.genesis);
-        ASSERT_EQ(from.miner_type, from_again.miner_type);
-        ASSERT_EQ(from.program_version, from_again.program_version);
-        ASSERT_EQ(from.stake_container, from_again.stake_container);
+        ASSERT_TRUE(from.consensus_public_key == from_again.consensus_public_key);
+        ASSERT_TRUE(from.genesis == from_again.genesis);
+        ASSERT_TRUE(from.miner_type == from_again.miner_type);
+        ASSERT_TRUE(from.program_version == from_again.program_version);
+        ASSERT_TRUE(from.stake_container == from_again.stake_container);
         ASSERT_TRUE(from_again.raw_credit_scores.empty());
 
         auto const from_from = codec::xmsgpack_codec_t<data::election::v2::xstandby_node_info_t>::decode(from_bytes);
-        ASSERT_EQ(from, from_from);
+        ASSERT_TRUE(from == from_from);
     }
 
     {
@@ -138,17 +138,17 @@ TEST(compatibility, standby_node_info_v1_v2) {
         auto const from_bytes = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::encode(from);
         auto const to = codec::xmsgpack_codec_t<data::election::v2::xstandby_node_info_t>::decode(from_bytes);
 
-        ASSERT_EQ(from.consensus_public_key, to.consensus_public_key);
-        ASSERT_EQ(from.genesis, to.genesis);
-        ASSERT_EQ(from.miner_type, to.miner_type);
-        ASSERT_EQ(from.program_version, to.program_version);
-        ASSERT_EQ(from.stake_container, to.stake_container);
+        ASSERT_TRUE(from.consensus_public_key == to.consensus_public_key);
+        ASSERT_TRUE(from.genesis == to.genesis);
+        ASSERT_TRUE(from.miner_type == to.miner_type);
+        ASSERT_TRUE(from.program_version == to.program_version);
+        ASSERT_TRUE(from.stake_container == to.stake_container);
         ASSERT_TRUE(to.raw_credit_scores.empty());
 
         auto const to_bytes = codec::xmsgpack_codec_t<data::election::v2::xstandby_node_info_t>::encode(to);
         auto const from_again = codec::xmsgpack_codec_t<data::election::v1::xstandby_node_info_t>::decode(to_bytes);
 
-        ASSERT_EQ(from, from_again);
+        ASSERT_TRUE(from == from_again);
     }
 }
 

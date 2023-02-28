@@ -78,7 +78,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 
     // genesis blocks should init imediately after db created
-    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
+    m_genesis_manager = top::make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
 
     if ((m_store == nullptr) || !m_store->open()) {
         xwarn("xtop_application::start db open failed!");
@@ -536,9 +536,10 @@ void xtop_application::top_console_init() {
 
 NS_END2
 
-#if !defined XCXX14_OR_ABOVE
+#if !defined(XCXX14)
 
 NS_BEG1(std)
+
 std::size_t hash<top::application::xthread_pool_type_t>::operator()(top::application::xthread_pool_type_t const type) const noexcept {
     return static_cast<std::size_t>(type);
 };
@@ -548,4 +549,5 @@ std::size_t hash<top::application::xio_context_type_t>::operator()(top::applicat
 };
 
 NS_END1
+
 #endif

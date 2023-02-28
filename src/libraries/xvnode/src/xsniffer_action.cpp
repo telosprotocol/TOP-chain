@@ -42,7 +42,7 @@ void xtop_sniffer_action::call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_fa
                                std::string const & action_params,
                                uint64_t timestamp) {
     base::xaccount_index_t accountindex;
-    int32_t ret_pushtx = xsuccess;
+    // int32_t ret_pushtx = xsuccess;
     bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, source_address, accountindex);
     if (ret) {
         auto tx = data::xtx_factory::create_v2_run_contract_tx(source_address,

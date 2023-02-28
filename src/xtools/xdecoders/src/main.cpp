@@ -6,7 +6,11 @@
 #include "../xtoken_to_ticket_swap_contract_data_decoder.h"
 #include "../xticket_to_token_swap_contract_data_decoder.h"
 
-#include <CLI11.hpp>
+#if defined(XCXX20)
+#include <CLI/CLI.hpp>
+#else
+#include "CLI11.hpp"
+#endif
 
 NS_BEG3(top, tools, decoders)
 

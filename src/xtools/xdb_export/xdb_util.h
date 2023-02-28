@@ -1,17 +1,16 @@
 #pragma once
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
+
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xvstate.h"
 
-#include <sys/stat.h>
-#include <sys/types.h>
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
+#include <nlohmann/fifo_map.hpp>
+#endif
+#include <nlohmann/json.hpp>
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <thread>
 
 NS_BEG2(top, db_export)
 

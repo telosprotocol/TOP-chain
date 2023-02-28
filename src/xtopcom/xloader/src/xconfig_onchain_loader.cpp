@@ -3,7 +3,6 @@
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
 #include "xbasic/xmap_utl.hpp"
-#include "xblockstore/xblockstore_face.h"
 #include "xvledger/xvledger.h"
 #include "xconfig/xconfig_update_parameter_action.h"
 #include "xconfig/xconfig_register.h"

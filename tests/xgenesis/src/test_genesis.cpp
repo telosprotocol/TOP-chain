@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include <sstream>
 #define private public
 
@@ -415,7 +417,7 @@ public:
         static mock::xvchain_creator creator(false);
         m_store = creator.get_xstore();
         m_blockstore = creator.get_blockstore();
-        m_genesis_manager = make_unique<xgenesis_manager_t>(top::make_observer(m_blockstore));
+        m_genesis_manager = top::make_unique<xgenesis_manager_t>(top::make_observer(m_blockstore));
         contract::xcontract_deploy_t::instance().deploy_sys_contracts();
         contract::xcontract_manager_t::instance().instantiate_sys_contracts();
         contract::xcontract_manager_t::instance().register_address();

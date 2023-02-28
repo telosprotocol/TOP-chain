@@ -57,7 +57,7 @@ public:
         CONTRACT_FUNCTION_PARAM(xtable_statistic_info_collection_contract, report_summarized_statistic_info);
     END_CONTRACT_WITH_PARAM
 
-private:
+protected:
     /**
      * @brief collection slash statistic info
      *

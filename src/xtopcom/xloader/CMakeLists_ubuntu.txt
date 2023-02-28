@@ -1,0 +1,29 @@
+find_library(RocksDB_LIBRARIES rocksdb REQUIRED)
+find_library(lz4_LIBRARIES lz4 HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+find_library(zstd_LIBRARIES zstd REQUIRED)
+find_library(Snappy_LIBRARIES snappy REQUIRED)
+find_package(BZip2 REQUIRED)
+find_package(ZLIB REQUIRED)
+find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+
+aux_source_directory(./src src_dir)
+
+add_library(xloader STATIC ${src_dir})
+
+#add_dependencies(xloader xconfig xdata xbasic xpbase)
+
+target_link_libraries(
+    xloader
+    PRIVATE
+    xconfig
+    xmbus
+    xdata
+    xbasic
+    xpbase
+    ${RocksDB_LIBRARIES}
+    ZLIB::ZLIB
+    BZip2::BZip2
+    ${zstd_LIBRARIES}
+    ${Snappy_LIBRARIES}
+    ${lz4_LIBRARIES}
+    jsoncpp)

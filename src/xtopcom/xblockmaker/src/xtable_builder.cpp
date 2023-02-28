@@ -47,7 +47,7 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
     XMETRICS_TIMER(metrics::cons_tablebuilder_fulltable_tick);
-    const std::string & account = prev_block->get_account();
+    // const std::string & account = prev_block->get_account();
     std::shared_ptr<xfulltable_builder_para_t> fulltable_build_para = std::dynamic_pointer_cast<xfulltable_builder_para_t>(build_para);
     xassert(fulltable_build_para != nullptr);
 

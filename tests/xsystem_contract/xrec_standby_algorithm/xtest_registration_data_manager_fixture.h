@@ -29,27 +29,6 @@ public:
     void change_account_mortgage(common::xnode_id_t const & node_id, uint64_t new_account_mortgage);
 
     void change_public_key(common::xnode_id_t const & node_id, top::xpublic_key_t const & new_public_key);
-
-    //... might need more of it.
-
-    // reg_node_info:
-
-    // std::string m_account{""};
-    // uint64_t m_account_mortgage{0};
-    // common::xminer_type_t m_registered_miner_type{common::xminer_type_t::invalid};
-    // uint64_t m_vote_amount{0};
-    // uint64_t m_auditor_credit_numerator{0};
-    // uint64_t m_auditor_credit_denominator{1000000};
-    // uint64_t m_validator_credit_numerator{0};
-    // uint64_t m_validator_credit_denominator{1000000};
-
-    // uint m_support_ratio_numerator{0};  // dividends to voters
-    // uint m_support_ratio_denominator{100};
-    // common::xlogic_time_t m_last_update_time{0};
-    // bool m_genesis_node{false};
-    // std::set<uint32_t> m_network_ids;
-    // std::string nickname;
-    // xpublic_key_t consensus_public_key;
 };
 
 NS_END3

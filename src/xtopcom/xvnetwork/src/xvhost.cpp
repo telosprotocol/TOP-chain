@@ -56,9 +56,11 @@ NS_BEG2(top, vnetwork)
 //}
 
 static void msg_metrics(xvnetwork_message_t const & message, metrics::E_SIMPLE_METRICS_TAG tag_start) {
+#if defined(ENABLE_METRICS)
     auto const message_category = common::get_message_category(message.message_id());
     auto delta = (uint16_t)message_category - (uint16_t)xmessage_category_consensus;
     XMETRICS_GAUGE((metrics::E_SIMPLE_METRICS_TAG)(tag_start + delta), 1);
+#endif
 }
 
 xtop_vhost::xtop_vhost(observer_ptr<elect::xnetwork_driver_face_t> const & network_driver,

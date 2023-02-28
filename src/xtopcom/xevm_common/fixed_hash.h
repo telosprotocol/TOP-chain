@@ -6,7 +6,7 @@
 
 #include "xevm_common/common_data.h"
 
-#include <gsl/span>
+#include "xbasic/xspan.h"
 
 #include <boost/functional/hash.hpp>
 
@@ -77,7 +77,7 @@ public:
     }
 
     /// Explicitly construct, copying from a byte array.
-    explicit FixedHash(gsl::span<xbyte_t const> const _b, ConstructFromHashType _t = FailIfDifferent) {
+    explicit FixedHash(xspan_t<xbyte_t const> const _b, ConstructFromHashType _t = FailIfDifferent) {
         if (_b.size() == N)
             memcpy(m_data.data(), _b.data(), std::min<unsigned>(_b.size(), N));
         else {

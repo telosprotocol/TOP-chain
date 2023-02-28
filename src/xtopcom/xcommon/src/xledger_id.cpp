@@ -41,9 +41,9 @@ uint16_t xtop_ledger_id::value(std::error_code & ec) const noexcept {
 
 uint16_t xtop_ledger_id::value() const {
     std::error_code ec;
-    auto r = value(ec);
+    auto const r = value(ec);
     top::error::throw_error(ec);
-    return m_value;
+    return r;
 }
 
 NS_END2

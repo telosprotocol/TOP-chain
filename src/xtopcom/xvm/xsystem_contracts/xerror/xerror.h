@@ -44,7 +44,7 @@ NS_END4
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::xvm::system_contracts::error::xsystem_contract_errc_t> final {

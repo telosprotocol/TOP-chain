@@ -57,7 +57,7 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
             for (const auto &it: chains) {
 
                 const std::string &address = it.first;
-                const xchain_info_t &chain_info = it.second;
+                // const xchain_info_t &chain_info = it.second;
 
                 xchain_state_info_t info;
                 info.address = address;

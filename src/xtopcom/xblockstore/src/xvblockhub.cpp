@@ -1643,7 +1643,6 @@ namespace top
             if((this_block_flags & base::enum_xvblock_flag_committed) == 0)
                 return false;
 
-            const uint64_t old_highest_connect_block_height = m_meta->_highest_connect_block_height;
             if((0 == this_block_height) && (0 == m_meta->_highest_connect_block_height))
             {
                 m_meta->_highest_connect_block_height = this_block_height;
@@ -1713,8 +1712,11 @@ namespace top
                         break;
                     }
                 }
+#if defined(DEBUG)
+                const uint64_t old_highest_connect_block_height = m_meta->_highest_connect_block_height;
                 const int  block_connect_step  = (int)(m_meta->_highest_connect_block_height - old_highest_connect_block_height);
                 xdbg("xblockacct_t::full_connect_to,navigate step(%d) to _highest_connect_block_height=%" PRIu64 "  ",block_connect_step,m_meta->_highest_connect_block_height);
+#endif
             }
             
             return true;

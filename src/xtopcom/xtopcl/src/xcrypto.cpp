@@ -29,12 +29,13 @@
 #include <sstream>
 #include <vector>
 
-namespace xChainSDK {
-namespace xcrypto {
-
 using namespace top::utl;
 using namespace top::xrpc;
 using namespace top::data;
+
+namespace xChainSDK {
+namespace xcrypto {
+
 using std::endl;
 using std::string;
 
@@ -42,7 +43,7 @@ static bool g_is_key = false;  // false for owner key, true for worker key
 static string g_owner_account;
 const std::string CRYPTO_KDF = "scypt";  // scypt or pbkdf2
 
-std::string get_account_address_from_json_keystore(xJson::Value const & keystore_json) {
+std::string get_account_address_from_json_keystore(Json::Value const & keystore_json) {
     if (keystore_json.isMember("account_address") && !keystore_json["account_address"].asString().empty()) {
         return keystore_json["account_address"].asString();
     }
@@ -53,7 +54,7 @@ std::string get_account_address_from_json_keystore(xJson::Value const & keystore
     return "";
 }
 
-int get_top_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::byte * key) {
+int get_top_ed_key(const string & pw, const Json::Value & key_info, CryptoPP::byte * key) {
     // parse hkdf params
     auto salt_hex = key_info["crypto"]["kdfparams"]["salt"].asString();
     auto salt_vec = hex_to_uint(salt_hex);
@@ -67,7 +68,7 @@ int get_top_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::b
     return 0;
 }
 
-int get_eth_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::byte * key) {
+int get_eth_ed_key(const string & pw, const Json::Value & key_info, CryptoPP::byte * key) {
     // parse hkdf params
     auto salt_hex = key_info["crypto"]["kdfparams"]["salt"].asString();
     std::string salt_vec = top::HexDecode(salt_hex);
@@ -103,7 +104,7 @@ int get_eth_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::b
     return 0;
 }
 
-bool parse_keystore(std::string const & keystore_path, xJson::Value & keystore_info) {
+bool parse_keystore(std::string const & keystore_path, Json::Value & keystore_info) {
     std::ifstream keyfile(keystore_path, std::ios::in);
     if (!keyfile) {
         std::cout << keystore_path << " Not Exist" << std::endl;
@@ -113,7 +114,7 @@ bool parse_keystore(std::string const & keystore_path, xJson::Value & keystore_i
     buffer << keyfile.rdbuf();
     string keystore_info_str = buffer.str();
 
-    xJson::Reader reader;
+    Json::Reader reader;
     if (!reader.parse(keystore_info_str, keystore_info)) {
         std::cout << "keyfile " << keystore_path << " parse error" << std::endl;
         return false;
@@ -122,7 +123,7 @@ bool parse_keystore(std::string const & keystore_path, xJson::Value & keystore_i
     return true;
 }
 
-bool decrypt_get_kdf_key(std::string const & password, xJson::Value const & keystore_info, std::string & kdf_key) {
+bool decrypt_get_kdf_key(std::string const & password, Json::Value const & keystore_info, std::string & kdf_key) {
     std::string account = get_account_address_from_json_keystore(keystore_info);
 
     CryptoPP::byte key[derived_key_len];
@@ -142,7 +143,7 @@ bool decrypt_get_kdf_key(std::string const & password, xJson::Value const & keys
     return true;
 }
 
-bool decrypt_keystore_by_password(std::string const & password, xJson::Value const & keystore_info, std::string & pri_key) {
+bool decrypt_keystore_by_password(std::string const & password, Json::Value const & keystore_info, std::string & pri_key) {
     std::string kdf_key;
     if (decrypt_get_kdf_key(password, keystore_info, kdf_key) == false) {
         return false;
@@ -150,7 +151,7 @@ bool decrypt_keystore_by_password(std::string const & password, xJson::Value con
     return decrypt_keystore_by_kdf_key(kdf_key, keystore_info, pri_key);
 }
 
-bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const & keystore_info, std::string & pri_key) {
+bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, Json::Value const & keystore_info, std::string & pri_key) {
     std::string account = get_account_address_from_json_keystore(keystore_info);
 
     if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account) {
@@ -212,7 +213,7 @@ bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const
 }
 
 bool decrypt_keystore_file_by_kdf_key(std::string const & kdf_key, std::string const & keystore_path, std::string & pri_key) {
-    xJson::Value keystore_info;
+    Json::Value keystore_info;
     if (parse_keystore(keystore_path, keystore_info) == false) {
         return false;
     }
@@ -319,7 +320,7 @@ void eth_aes256_cbc_encrypt(const std::string & pw, const string & raw_text, std
 }
 
 void writeKeystoreFile(std::ofstream & key_file, byte * iv, const string & ciphertext, byte * info, byte * salt, byte * mac) {
-    xJson::Value key_info;
+    Json::Value key_info;
     if (!g_is_key) {
         key_info["account_address"] = g_userinfo.account;
         key_info["key_type"] = "owner";
@@ -362,7 +363,7 @@ void writeEthKeystoreFile(std::ofstream & key_file, byte * iv, const string & ci
     rnd.GenerateBlock(id, 16);
     std::string str_id = top::HexEncode(std::string((char *)id, 16));
 
-    xJson::Value key_info;
+    Json::Value key_info;
     key_info["version"] = 3;
     key_info["id"] = str_id.insert(20, "-").insert(16, "-").insert(12, "-").insert(8, "-");
 
@@ -474,7 +475,7 @@ void fill_eth_aes_info(const std::string & pw, const string & raw_text, AES_INFO
 }
 
 // update
-void update_keystore_file(const std::string & pw, const string & raw_text, std::ofstream & key_file, xJson::Value & key_info) {
+void update_keystore_file(const std::string & pw, const string & raw_text, std::ofstream & key_file, Json::Value & key_info) {
     AES_INFO aes_info;
     std::string account = get_account_address_from_json_keystore(key_info);
 
@@ -529,8 +530,8 @@ std::string get_keystore_filepath(string & dir, const string & account) {
     return path;
 }
 
-xJson::Value attach_parse_keystore(const string & path, std::ostringstream & out_str) {
-    xJson::Value key_info_js;
+Json::Value attach_parse_keystore(const string & path, std::ostringstream & out_str) {
+    Json::Value key_info_js;
     std::ifstream keyfile(path, std::ios::in);
     if (!keyfile) {
         out_str << path << " Not Exist" << std::endl;
@@ -541,7 +542,7 @@ xJson::Value attach_parse_keystore(const string & path, std::ostringstream & out
     buffer << keyfile.rdbuf();
     string key_info = buffer.str();
 
-    xJson::Reader reader;
+    Json::Reader reader;
     if (!reader.parse(key_info, key_info_js)) {
         out_str << "keyfile " << path << " parse error" << std::endl;
     }
@@ -549,8 +550,8 @@ xJson::Value attach_parse_keystore(const string & path, std::ostringstream & out
     return key_info_js;
 }
 
-xJson::Value parse_keystore(const string & path) {
-    xJson::Value key_info_js;
+Json::Value parse_keystore(const string & path) {
+    Json::Value key_info_js;
     std::ifstream keyfile(path, std::ios::in);
     if (!keyfile) {
         std::cout << path << " Not Exist" << std::endl;
@@ -561,7 +562,7 @@ xJson::Value parse_keystore(const string & path) {
     buffer << keyfile.rdbuf();
     string key_info = buffer.str();
 
-    xJson::Reader reader;
+    Json::Reader reader;
     if (!reader.parse(key_info, key_info_js)) {
         std::cout << "keyfile " << path << " parse error" << std::endl;
     }

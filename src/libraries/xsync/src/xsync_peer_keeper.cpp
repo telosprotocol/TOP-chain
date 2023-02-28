@@ -40,8 +40,8 @@ void xsync_peer_keeper_t::on_timer() {
     }
 }
 
-std::vector<vnetwork::xvnode_address_t> xsync_peer_keeper_t::get_random_neighbors(const vnetwork::xvnode_address_t& addr) const {
-    std::vector<vnetwork::xvnode_address_t> all_neighbors;
+std::vector<common::xnode_address_t> xsync_peer_keeper_t::get_random_neighbors(const common::xnode_address_t& addr) const {
+    std::vector<common::xnode_address_t> all_neighbors;
     // rec,zec,consensus,archive
     if (common::has<common::xnode_type_t::rec>(addr.type()) || common::has<common::xnode_type_t::zec>(addr.type()) ||
         common::has<common::xnode_type_t::fullnode>(addr.type()) ||
@@ -50,7 +50,7 @@ std::vector<vnetwork::xvnode_address_t> xsync_peer_keeper_t::get_random_neighbor
         all_neighbors = m_role_xips_mgr->get_all_neighbors(addr);
     }
 
-    std::vector<vnetwork::xvnode_address_t> random_neighbors;
+    std::vector<common::xnode_address_t> random_neighbors;
     // sqrt(N)*N < N*N, but it is enough
     uint32_t select = sqrt(all_neighbors.size()) + 1;
     uint32_t size = all_neighbors.size();
@@ -65,7 +65,7 @@ std::vector<vnetwork::xvnode_address_t> xsync_peer_keeper_t::get_random_neighbor
     return random_neighbors;
 }
 
-void xsync_peer_keeper_t::add_role(const vnetwork::xvnode_address_t& addr) {
+void xsync_peer_keeper_t::add_role(const common::xnode_address_t& addr) {
 
     XMETRICS_TIME_RECORD("sync_cost_peerkeeper_add_role_event");
 
@@ -82,10 +82,10 @@ void xsync_peer_keeper_t::add_role(const vnetwork::xvnode_address_t& addr) {
     }
 
     auto random_neighbors = get_random_neighbors(addr);
-    std::vector<vnetwork::xvnode_address_t> add_list;
+    std::vector<common::xnode_address_t> add_list;
     std::unique_lock<std::mutex> lock(m_lock);
     if (m_maps.find(addr) == m_maps.end()) {
-        std::set<vnetwork::xvnode_address_t> peer_group;
+        std::set<common::xnode_address_t> peer_group;
         for (auto &neighbor: random_neighbors) {
             peer_group.insert(neighbor);
             add_list.push_back(neighbor);
@@ -101,7 +101,7 @@ void xsync_peer_keeper_t::add_role(const vnetwork::xvnode_address_t& addr) {
         m_peerset->add_peer(addr, it);
     }
 
-    std::vector<vnetwork::xvnode_address_t> peers_neighbors;
+    std::vector<common::xnode_address_t> peers_neighbors;
     m_peerset->get_group_nodes(addr, peers_neighbors);
     xsync_info("xsync_peer_keeper add_role neighbor count is %u %s", peers_neighbors.size(), addr.to_string().c_str());
     for (auto &it: peers_neighbors) {
@@ -115,7 +115,7 @@ void xsync_peer_keeper_t::add_role(const vnetwork::xvnode_address_t& addr) {
     walk_role(addr, m_maps[addr], role_chains);
 }
 
-void xsync_peer_keeper_t::remove_role(const vnetwork::xvnode_address_t& addr) {
+void xsync_peer_keeper_t::remove_role(const common::xnode_address_t& addr) {
 
     xsync_info("xsync_peer_keeper remove_role %s", addr.to_string().c_str());
 
@@ -124,7 +124,7 @@ void xsync_peer_keeper_t::remove_role(const vnetwork::xvnode_address_t& addr) {
     m_peerset->remove_group(addr);
 }
 
-void xsync_peer_keeper_t::handle_message(const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address,
+void xsync_peer_keeper_t::handle_message(const common::xnode_address_t &network_self, const common::xnode_address_t &from_address,
         const std::vector<xchain_state_info_t> &info_list) {
 
     m_peerset->update(network_self, from_address, info_list);
@@ -134,7 +134,7 @@ uint32_t xsync_peer_keeper_t::get_frozen_broadcast_factor() {
     return frozen_broadcast_factor;
 }
 
-void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr, const std::set<vnetwork::xvnode_address_t> &target_list, const std::shared_ptr<xrole_chains_t> &role_chains) {
+void xsync_peer_keeper_t::walk_role(const common::xnode_address_t &self_addr, const std::set<common::xnode_address_t> &target_list, const std::shared_ptr<xrole_chains_t> &role_chains) {
 
     std::vector<xchain_state_info_t> info_list;
 
@@ -181,7 +181,7 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
         send_chain_state(self_addr, target_list, info_list);
     }
 }
-void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_addr, const map_chain_info_t &chains) {
+void xsync_peer_keeper_t::prune_table(const common::xnode_address_t &self_addr, const map_chain_info_t &chains) {
     common::xminer_type_t miner_type = m_role_xips_mgr->miner_type();
     xsync_info("xsync_peer_keeper walk_role, %s", to_string(miner_type).c_str());
     if (m_role_xips_mgr->genesis() || 
@@ -191,7 +191,7 @@ void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_add
 
     for (const auto &it: chains) {
         const std::string &address = it.first;
-        const xchain_info_t &chain_info = it.second;
+        // const xchain_info_t &chain_info = it.second;
         if (common::has<common::xminer_type_t::advance>(miner_type)) {
             uint64_t height = m_sync_store->get_latest_block_with_state(address);
             xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height);
@@ -238,7 +238,7 @@ void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_add
 
             uint64_t peer_start_height = 0;
             uint64_t peer_end_height = 0;
-            vnetwork::xvnode_address_t peer_addr;
+            common::xnode_address_t peer_addr;
             if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
                 xsync_prune_sigleton_t::instance().update(address, enum_height_type::confirm_height, peer_end_height);
             }
@@ -256,8 +256,8 @@ void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_add
 void xsync_peer_keeper_t::process_timer() {
 
     for (auto &it: m_maps) {
-        const vnetwork::xvnode_address_t &self_addr = it.first;
-        std::set<vnetwork::xvnode_address_t> &peers = it.second;
+        const common::xnode_address_t &self_addr = it.first;
+        std::set<common::xnode_address_t> &peers = it.second;
         std::shared_ptr<xrole_chains_t> role_chains = m_role_chains_mgr->get_role(self_addr);
         if (role_chains == nullptr)
             continue;
@@ -265,7 +265,7 @@ void xsync_peer_keeper_t::process_timer() {
     }
 }
 
-void xsync_peer_keeper_t::send_chain_state(const xvnode_address_t &self_addr, const std::set<vnetwork::xvnode_address_t> &target_list, std::vector<xchain_state_info_t> &info_list) {
+void xsync_peer_keeper_t::send_chain_state(const common::xnode_address_t &self_addr, const std::set<common::xnode_address_t> &target_list, std::vector<xchain_state_info_t> &info_list) {
 
     if (info_list.empty())
         return;
@@ -277,7 +277,7 @@ void xsync_peer_keeper_t::send_chain_state(const xvnode_address_t &self_addr, co
     }
 }
 
-void xsync_peer_keeper_t::send_frozen_chain_state(const xvnode_address_t &self_addr, std::vector<xchain_state_info_t> &info_list) {
+void xsync_peer_keeper_t::send_frozen_chain_state(const common::xnode_address_t &self_addr, std::vector<xchain_state_info_t> &info_list) {
 
     if (info_list.empty())
         return;
@@ -299,7 +299,7 @@ void xsync_peer_keeper_t::send_frozen_chain_state(const xvnode_address_t &self_a
     }
     xinfo("send_frozen_chain_state, %d", rand_seeds.size());
     for (auto const & item : rand_seeds) {
-        xgroup_address_t group_addr = common::build_frozen_sharding_address(self_addr.network_id());
+        common::xgroup_address_t group_addr = common::build_frozen_sharding_address(self_addr.network_id());
         top::common::xslot_id_t slot_id{0};
         common::xtop_node_address target_addr(group_addr, common::xaccount_election_address_t{item.m_account, slot_id});
         m_sync_sender->send_broadcast_chain_state(info_list, self_addr, target_addr);

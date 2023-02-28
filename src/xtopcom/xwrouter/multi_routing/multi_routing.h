@@ -4,7 +4,12 @@
 
 #pragma once
 
-#include "xkad/proto/kadmlia.pb.h"
+#include "xbase/xcxx_config.h"
+#if defined(XCXX20)
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 #include "xkad/routing_table/elect_routing_table.h"
 #include "xkad/routing_table/root_routing_table.h"
 #include "xkad/routing_table/routing_utils.h"

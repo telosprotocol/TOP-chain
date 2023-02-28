@@ -6,7 +6,7 @@
 #include "xBFT/xconsevent.h"
 #include "xunit_service/xrelay_packer2.h"
 #include "xdata/xblockextract.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xbasic/xhex.h"
 #include "xsafebox/safebox_proxy.h"
 
@@ -323,9 +323,11 @@ bool xrelay_packer2::set_election_round(bool is_leader, data::xblock_consensus_p
     m_local_electset.clear();
     get_elect_set(local_xip, m_local_electset);
 
+#if defined(DEBUG)
     for (auto & node : m_local_electset) {
         xdbg("xrelay_packer2::set_election_round pubkey=%s", node.election_info.public_key().to_string().c_str());
     }
+#endif
 
     xdbg("xrelay_packer2::set_election_round update.xip=%s,round=%ld,electset=%zu",
         xcons_utl::xip_to_hex(local_xip).c_str(), election_round, m_local_electset.size());

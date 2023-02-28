@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "json/json.h"
+#include <json/json.h>
 #include "xbase/xobject.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
@@ -21,13 +21,13 @@ namespace top {
 
 namespace xrpc {
 
-using namespace data::election;
-using namespace top::data;
+// using namespace data::election;
+// using namespace top::data;
 const uint8_t ARG_TYPE_UINT64 = 1;
 const uint8_t ARG_TYPE_STRING = 2;
 const uint8_t ARG_TYPE_BOOL = 3;
 
-using query_method_handler = std::function<void(xJson::Value &, xJson::Value &, std::string &, uint32_t &)>;
+using query_method_handler = std::function<void(Json::Value &, Json::Value &, std::string &, uint32_t &)>;
 
 #define ADDRESS_CHECK_VALID(x)                                                                                                                                                     \
     if (xverifier::xtx_utl::address_is_valid(x) != xverifier::xverifier_error::xverifier_success) {                                                                                \
@@ -114,102 +114,102 @@ public:
         REGISTER_QUERY_METHOD(getConsortiumReward);
 #endif 
     }
-    void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
-    xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
-    xJson::Value get_blocks_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
-    //void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, top::data::xunitstate_ptr_t unitstate, bool compatible_mode);
-    //void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
-    //void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
-    void getLatestBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getLatestFullBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getBlockByHeight(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getBlocksByHeight(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getAccount(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void call_method(std::string strMethod, Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    bool handle(std::string & strReq, Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
+    Json::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
+    Json::Value get_blocks_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
+    //void query_account_property_base(Json::Value & jph, const std::string & owner, const std::string & prop_name, top::data::xunitstate_ptr_t unitstate, bool compatible_mode);
+    //void query_account_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
+    //void query_account_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
+    void getLatestBlock(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getLatestFullBlock(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getBlockByHeight(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getBlocksByHeight(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getAccount(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     uint64_t get_timer_height() const;
-    void getTimerInfo(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getCGP(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getIssuanceDetail(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getWorkloadDetail(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getTimerInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getCGP(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getIssuanceDetail(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getWorkloadDetail(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     uint64_t get_timer_clock() const;
-    xJson::Value parse_account(const std::string & account, string & strResult, uint32_t & nErrorCode);
-    void update_tx_state(xJson::Value & result, const xJson::Value & cons, const std::string & rpc_version);
-    xJson::Value parse_tx(top::data::xtransaction_t * tx_ptr, const std::string & version);
-    int parse_tx(const std::string & tx_hash, xtransaction_t * txpool_tx, xtxindex_detail_ptr_t const& sendindex, const std::string & version, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
-    xJson::Value parse_action(const top::data::xaction_t & action, data::xtransaction_t const * tx);
-    void getRecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getZecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getEdges(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getArcs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getExchangeNodes(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    //void getFullNodes(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getFullNodes2(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getConsensus(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getStandbys(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void queryAllNodeInfo(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void queryNodeReward(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    xJson::Value parse_sharding_reward(const std::string & target, const std::string & prop_name, string & version);
-    void getChainId(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    Json::Value parse_account(const std::string & account, string & strResult, uint32_t & nErrorCode);
+    void update_tx_state(Json::Value & result, const Json::Value & cons, const std::string & rpc_version);
+    Json::Value parse_tx(top::data::xtransaction_t * tx_ptr, const std::string & version);
+    int parse_tx(const std::string & tx_hash, data::xtransaction_t * txpool_tx, xtxindex_detail_ptr_t const& sendindex, const std::string & version, Json::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
+    Json::Value parse_action(const top::data::xaction_t & action, data::xtransaction_t const * tx);
+    void getRecs(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getZecs(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getEdges(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getArcs(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getEVMs(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getExchangeNodes(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    //void getFullNodes(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getFullNodes2(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getConsensus(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getStandbys(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void queryAllNodeInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void queryNodeReward(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    Json::Value parse_sharding_reward(const std::string & target, const std::string & prop_name, string & version);
+    void getChainId(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getCrossReceiptIds(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 #if defined(XBUILD_CONSORTIUM)
-    void getConsortiumReward(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void getConsortiumReward(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 #endif 
 
 private:
-    void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getProperty(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void set_shared_info(xJson::Value & root, data::xblock_t * bp);
-    void set_header_info(xJson::Value & header, data::xblock_t * bp);
+    void getBlock(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getProperty(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void set_shared_info(Json::Value & root, data::xblock_t * bp);
+    void set_header_info(Json::Value & header, data::xblock_t * bp);
 
-    void set_property_info(xJson::Value & jph, const std::map<std::string, std::string> & ph);
-    void set_addition_info(xJson::Value & body, data::xblock_t * bp);
-    void set_fullunit_state(xJson::Value & body, data::xblock_t * bp);
-    void set_body_info(xJson::Value & body, data::xblock_t * bp, const std::string & rpc_version);
+    void set_property_info(Json::Value & jph, const std::map<std::string, std::string> & ph);
+    void set_addition_info(Json::Value & body, data::xblock_t * bp);
+    void set_fullunit_state(Json::Value & body, data::xblock_t * bp);
+    void set_body_info(Json::Value & body, data::xblock_t * bp, const std::string & rpc_version);
 
-    void getGeneralInfos(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getRootblockInfo(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getGeneralInfos(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getRootblockInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
-    void getTransaction(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getTransaction(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
     void get_node_infos();
 
-    void set_redeem_token_num(data::xunitstate_ptr_t ac, xJson::Value & value);
+    void set_redeem_token_num(data::xunitstate_ptr_t ac, Json::Value & value);
 
-    void set_proposal_map(xJson::Value & j, std::map<std::string, std::string> & ms);
-    void set_proposal_map_v2(xJson::Value & j, std::map<std::string, std::string> & ms);
+    void set_proposal_map(Json::Value & j, std::map<std::string, std::string> & ms);
+    void set_proposal_map_v2(Json::Value & j, std::map<std::string, std::string> & ms);
 
-    void set_accumulated_issuance_yearly(xJson::Value & j, const std::string & value);
+    void set_accumulated_issuance_yearly(Json::Value & j, const std::string & value);
 
     // set json for slash
-    void set_unqualified_node_map(xJson::Value & j, std::map<std::string, std::string> const & ms);
-    void set_unqualified_slash_info_map(xJson::Value & j, std::map<std::string, std::string> const & ms);
+    void set_unqualified_node_map(Json::Value & j, std::map<std::string, std::string> const & ms);
+    void set_unqualified_slash_info_map(Json::Value & j, std::map<std::string, std::string> const & ms);
 
     // set json for different tx types
-    void parse_asset_out(xJson::Value & j, const data::xaction_t & action);
-    void parse_create_contract_account(xJson::Value & j, const data::xaction_t & action);
-    void parse_run_contract(xJson::Value & j, const data::xaction_t & action, data::xtransaction_t const * tx) const;
-    void parse_asset_in(xJson::Value & j, const data::xaction_t & action);
-    void parse_pledge_token(xJson::Value & j, const data::xaction_t & action);
-    void parse_redeem_token(xJson::Value & j, const data::xaction_t & action);
-    void parse_pledge_token_vote(xJson::Value & j, const data::xaction_t & action);
-    void parse_redeem_token_vote(xJson::Value & j, const data::xaction_t & action);
-    void set_account_keys_info(xJson::Value & j, const data::xaction_t & action);
-    void set_lock_token_info(xJson::Value & j, const data::xaction_t & action);
-    void set_unlock_token_info(xJson::Value & j, const data::xaction_t & action);
-    void set_create_sub_account_info(xJson::Value & j, const data::xaction_t & action);
-    void set_alias_name_info(xJson::Value & j, const data::xaction_t & action);
+    void parse_asset_out(Json::Value & j, const data::xaction_t & action);
+    void parse_create_contract_account(Json::Value & j, const data::xaction_t & action);
+    void parse_run_contract(Json::Value & j, const data::xaction_t & action, data::xtransaction_t const * tx) const;
+    void parse_asset_in(Json::Value & j, const data::xaction_t & action);
+    void parse_pledge_token(Json::Value & j, const data::xaction_t & action);
+    void parse_redeem_token(Json::Value & j, const data::xaction_t & action);
+    void parse_pledge_token_vote(Json::Value & j, const data::xaction_t & action);
+    void parse_redeem_token_vote(Json::Value & j, const data::xaction_t & action);
+    void set_account_keys_info(Json::Value & j, const data::xaction_t & action);
+    void set_lock_token_info(Json::Value & j, const data::xaction_t & action);
+    void set_unlock_token_info(Json::Value & j, const data::xaction_t & action);
+    void set_create_sub_account_info(Json::Value & j, const data::xaction_t & action);
+    void set_alias_name_info(Json::Value & j, const data::xaction_t & action);
 
-    void getSyncNeighbors(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getSyncNeighbors(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
-    void get_property(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getChainInfo(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void queryNodeInfo(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getElectInfo(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void listVoteUsed(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void queryVoterDividend(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void queryProposal(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-    void getLatestTables(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void get_property(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getChainInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void queryNodeInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getElectInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void listVoteUsed(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void queryVoterDividend(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void queryProposal(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getLatestTables(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
 
 
@@ -224,12 +224,12 @@ private:
     std::string HexEncode(const std::string & str);
 
 private:
-    void set_sharding_vote_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
-    void set_sharding_reward_claiming_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
+    void set_sharding_vote_prop(Json::Value & js_req, Json::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
+    void set_sharding_reward_claiming_prop(Json::Value & js_req, Json::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
     int get_transaction_on_demand(const std::string & account,
                                   const std::string & version,
                                   const uint256_t & tx_hash,
-                                  xJson::Value & result_json,
+                                  Json::Value & result_json,
                                   std::string & strResult,
                                   uint32_t & nErrorCode);
 

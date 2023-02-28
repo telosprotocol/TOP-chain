@@ -19,10 +19,10 @@ void xtop_standby_network_storage_result::set_activate_state(bool _activated) no
 xstandby_network_result_t xtop_standby_network_storage_result::network_result(common::xnode_type_t const node_type) const {
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
-        auto const & node_id = get<common::xnode_id_t const>(p);
-        auto const & standby_node_info = get<election::v0::xstandby_node_info_t>(p);
+        // auto const & node_id = top::get<common::xnode_id_t const>(p);
+        auto const & standby_node_info = top::get<election::v0::xstandby_node_info_t>(p);
         for (auto & _stake : standby_node_info.stake_container) {
-            if (node_type == get<common::xnode_type_t const>(_stake))
+            if (node_type == top::get<common::xnode_type_t const>(_stake))
                 standby_network_result.result_of(node_type).insert(std::make_pair(p.first, standby_node_info));
         }
     }
@@ -31,11 +31,11 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result(co
 xstandby_network_result_t xtop_standby_network_storage_result::network_result() const {
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
-        auto const & node_id = get<common::xnode_id_t const>(p);
-        auto const & standby_node_info = get<election::v0::xstandby_node_info_t>(p);
+        auto const & node_id = top::get<common::xnode_id_t const>(p);
+        auto const & standby_node_info = top::get<election::v0::xstandby_node_info_t>(p);
         if (m_mainnet_activated || standby_node_info.genesis) {
             for (auto const & stake : standby_node_info.stake_container) {
-                auto const & node_type = get<common::xnode_type_t const>(stake);
+                auto const & node_type = top::get<common::xnode_type_t const>(stake);
                 standby_network_result.result_of(node_type).insert(std::make_pair(node_id, standby_node_info));
             }
         }
@@ -45,10 +45,10 @@ xstandby_network_result_t xtop_standby_network_storage_result::network_result() 
 xstandby_network_result_t xtop_standby_network_storage_result::all_network_result() const {
     xstandby_network_result_t standby_network_result;
     for (auto const & p : m_results) {
-        auto const & node_id = get<common::xnode_id_t const>(p);
-        auto const & standby_node_info = get<election::v0::xstandby_node_info_t>(p);
-        for (auto & _stake : standby_node_info.stake_container) {
-            auto const & node_type = get<common::xnode_type_t const>(_stake);
+        // auto const & node_id = top::get<common::xnode_id_t const>(p);
+        auto const & standby_node_info = top::get<election::v0::xstandby_node_info_t>(p);
+        for (auto & stake : standby_node_info.stake_container) {
+            auto const & node_type = top::get<common::xnode_type_t const>(stake);
             standby_network_result.result_of(node_type).insert(std::make_pair(p.first, standby_node_info));
         }
     }

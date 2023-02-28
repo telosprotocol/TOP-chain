@@ -5,7 +5,7 @@
 #include "xdata/xlightunit.h"
 #include "xtxpool_v2/xtxmgr_table.h"
 #include "xtxpool_v2/xtxpool_error.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xtxpool_v2/xtxpool_para.h"
 #include "xstatistic/xstatistic.h"
 
@@ -48,7 +48,7 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     int32_t ret = txmgr_table.push_send_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
     auto tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_tx_hash());
-    ASSERT_NE(tx_tmp, nullptr);
+    ASSERT_NE(tx_tmp.get(), nullptr);
 
     // duplicate push
     ret = txmgr_table.push_send_tx(tx_ent, 0);
@@ -56,15 +56,15 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
 
     // pop out
     auto tx_ent_tmp = txmgr_table.pop_tx(txs[0]->get_tx_hash(), txs[0]->get_tx_subtype(), false);
-    ASSERT_NE(tx_ent_tmp, nullptr);
+    ASSERT_NE(tx_ent_tmp.get(), nullptr);
     tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_tx_hash());
-    ASSERT_EQ(tx_tmp, nullptr);
+    ASSERT_EQ(tx_tmp.get(), nullptr);
 
     // push again
     ret = txmgr_table.push_send_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
     tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_tx_hash());
-    ASSERT_NE(tx_tmp, nullptr);
+    ASSERT_NE(tx_tmp.get(), nullptr);
 
     table_para.send_tx_inc(1025);
     std::shared_ptr<xtx_entry> tx_ent1 = std::make_shared<xtx_entry>(txs[1], para);
@@ -172,17 +172,17 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ASSERT_EQ(tx2b->get_digest_hex_str(), ready_txs3[0]->get_digest_hex_str());
 
     tx_q = txmgr_table.query_tx(tx_ent2b->get_tx()->get_account_addr(), tx_ent2b->get_tx()->get_tx_hash());
-    ASSERT_NE(tx_q, nullptr);
+    ASSERT_NE(tx_q.get(), nullptr);
 
     txmgr_table.updata_latest_nonce(tx2b->get_account_addr(), tx2b->get_transaction()->get_tx_nonce());
     auto ready_txs4 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(0, ready_txs4.size());
 
     tx_q = txmgr_table.query_tx(tx2b->get_account_addr(), tx2b->get_tx_hash());
-    ASSERT_EQ(tx_q, nullptr);
+    ASSERT_EQ(tx_q.get(), nullptr);
 
     tx_q = txmgr_table.query_tx(tx2a->get_account_addr(), tx2a->get_tx_hash());
-    ASSERT_EQ(tx_q, nullptr);
+    ASSERT_EQ(tx_q.get(), nullptr);
 }
 
 TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
@@ -352,7 +352,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
 
     for (uint32_t i = 2; i < 5; i++) {
         auto tx_tmp = txmgr_table.query_tx(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_tx_hash());
-        ASSERT_NE(tx_tmp, nullptr);
+        ASSERT_NE(tx_tmp.get(), nullptr);
     }
 
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
@@ -443,7 +443,7 @@ TEST_F(test_txmgr_table, expired_tx) {
     ASSERT_EQ(0, ret);
 
     auto q_tx = txmgr_table.query_tx(tx2->get_account_addr(), tx2->get_tx_hash());
-    ASSERT_EQ(q_tx, nullptr);
+    ASSERT_EQ(q_tx.get(), nullptr);
 
     sleep(1);
 

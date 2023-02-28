@@ -1,9 +1,9 @@
 #pragma once
 
-#include "json/json.h"
-
 #include <string>
 #include <unordered_map>
+
+#include <json/json.h>
 
 namespace top {
 
@@ -18,7 +18,7 @@ public:
     bool save(const std::string & config_file, std::unordered_map<std::string, std::string> & map);
     std::string get_string(const std::string & item);
     bool get_string(const std::string & item, std::string & value);
-    bool get_json(const std::string & item, xJson::Value & value);
+    bool get_json(const std::string & item, Json::Value & value);
     void set_option_param(std::string & destination, const std::string & item);
     void set_option_param(uint32_t & destination, const std::string & item);
     void set_option_param(uint16_t & destination, const std::string & item);
@@ -50,11 +50,11 @@ public:
     void fetch_all(std::unordered_map<std::string, std::string> & map);
 
 private:
-    void extract(xJson::Value & arr, std::unordered_map<std::string, std::string> & map);
-    void merge_config(xJson::Value & root, const xJson::Value & root_extra);
+    void extract(Json::Value & arr, std::unordered_map<std::string, std::string> & map);
+    void merge_config(Json::Value & root, const Json::Value & root_extra);
 
 private:
-    xJson::Value m_root;
+    Json::Value m_root;
 };
 
 }  // namespace top

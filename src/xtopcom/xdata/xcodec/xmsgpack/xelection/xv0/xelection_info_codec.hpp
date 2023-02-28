@@ -58,7 +58,7 @@ struct convert<top::data::election::v0::xelection_info_t> final {
 
         case xlegacy_election_info_joined_version_index: {
             election_info.joined_epoch(o.via.array.ptr[xlegacy_election_info_joined_version_index].as<top::common::xelection_round_t>());
-            XATTRIBUTE_FALLTHROUGH;
+            break;
         }
         }
         return o;

@@ -2,7 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include <sstream>
+#include <gtest/gtest.h>
+
 #define private public
+
 #include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xblocktool.h"
@@ -14,8 +17,6 @@
 
 // #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
 #include "xdata/xnative_contract_address.h"
-
-#include <gtest/gtest.h>
 
 #include <string>
 
@@ -4756,7 +4757,7 @@ TEST_F(xtest_reward_contract_t, test_get_task_id_1) {
     state_accessor::xstate_accessor_t sa{top::make_observer(vbstate.get()), state_accessor::xstate_access_control_data_t{}}; 
     auto contract_state =
         top::make_unique<contract_common::xcontract_state_t>(common::xaccount_address_t{sys_contract_zec_reward_addr}, top::make_observer(std::addressof(sa)), contract_common::xcontract_execution_param_t{});
-    auto action = make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
+    auto action = top::make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
     auto contract_ctx= top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), make_observer(contract_state.get()));
     reset_execution_context(contract_ctx);
     property_initializer()->initialize();
@@ -4769,7 +4770,7 @@ TEST_F(xtest_reward_contract_t, test_get_task_id_2) {
     state_accessor::xstate_accessor_t sa{top::make_observer(vbstate.get()), state_accessor::xstate_access_control_data_t{}}; 
     auto contract_state =
         top::make_unique<contract_common::xcontract_state_t>(common::xaccount_address_t{sys_contract_zec_reward_addr}, top::make_observer(std::addressof(sa)), contract_common::xcontract_execution_param_t{});
-    auto action = make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
+    auto action = top::make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
     auto contract_ctx= top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), make_observer(contract_state.get()));
     reset_execution_context(contract_ctx);
     property_initializer()->initialize();
@@ -4790,7 +4791,7 @@ TEST_F(xtest_reward_contract_t, test_add_task_1) {
     state_accessor::xstate_accessor_t sa{top::make_observer(vbstate.get()), state_accessor::xstate_access_control_data_t{}}; 
     auto contract_state =
         top::make_unique<contract_common::xcontract_state_t>(common::xaccount_address_t{sys_contract_zec_reward_addr}, top::make_observer(std::addressof(sa)), contract_common::xcontract_execution_param_t{});
-    auto action = make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
+    auto action = top::make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
     auto contract_ctx= top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), make_observer(contract_state.get()));
     reset_execution_context(contract_ctx);
     property_initializer()->initialize();
@@ -4824,7 +4825,7 @@ TEST_F(xtest_reward_contract_t, test_execute_task) {
     state_accessor::xstate_accessor_t sa{top::make_observer(vbstate.get()), state_accessor::xstate_access_control_data_t{}}; 
     auto contract_state =
         top::make_unique<contract_common::xcontract_state_t>(common::xaccount_address_t{sys_contract_zec_reward_addr}, top::make_observer(std::addressof(sa)), contract_common::xcontract_execution_param_t{});
-    auto action = make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
+    auto action = top::make_unique<data::xsystem_consensus_action_t>(make_object_ptr<data::xcons_transaction_t>());;
     auto contract_ctx= top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), make_observer(contract_state.get()));
     reset_execution_context(contract_ctx);
     property_initializer()->initialize();

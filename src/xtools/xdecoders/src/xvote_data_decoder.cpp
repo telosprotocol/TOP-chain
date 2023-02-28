@@ -9,7 +9,7 @@
 #include "xbasic/xhex.h"
 #include "xbasic/xutility.h"
 
-#include <json/json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <cassert>
 #include <cstdint>

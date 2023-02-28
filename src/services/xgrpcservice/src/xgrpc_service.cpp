@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 
-using namespace std;
+// using namespace std;
 
 using grpc::Server;
 using grpc::ServerAsyncResponseWriter;
@@ -28,7 +28,7 @@ namespace rpc {
 
 std::atomic_int rpc_client_num{0};
 std::atomic_int rpc_version{xrpc_version_1};
-std::deque<xJson::Value> tableblock_data;
+std::deque<Json::Value> tableblock_data;
 std::mutex tableblock_mtx;
 std::condition_variable tableblock_cv;
 
@@ -38,15 +38,15 @@ void xrpc_serviceimpl::register_handle(const std::shared_ptr<xrpc_handle_face_t>
 
 Status xrpc_serviceimpl::call(ServerContext * context, const xrpc_request * request, xrpc_reply * reply) {
     std::lock_guard<std::mutex> lock(m_call_mtx);
-    string req = request->body();
-    xJson::Value js_req;
-    xJson::Value js_rsp;
-    xJson::Reader reader;
+    std::string req = request->body();
+    Json::Value js_req;
+    Json::Value js_rsp;
+    Json::Reader reader;
     if (!reader.parse(req, js_req)) {
         xdbg("grpc call: %s json parse error", req.c_str());
         return Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid request argument: json parse error.");
     }
-    string strResult = "ok";
+    std::string strResult = "ok";
     uint32_t nErrorCode = 0;
     m_handle->handle(req, js_req, js_rsp, strResult, nErrorCode);
     reply->set_body(js_rsp.toStyledString());
@@ -54,9 +54,9 @@ Status xrpc_serviceimpl::call(ServerContext * context, const xrpc_request * requ
 }
 
 Status xrpc_serviceimpl::table_stream(ServerContext * context, const xrpc_request * request, ServerWriter<xrpc_reply> * replys) {
-    string req = request->body();
-    xJson::Reader reader;
-    xJson::Value js_req;
+    std::string req = request->body();
+    Json::Reader reader;
+    Json::Value js_req;
     if (!reader.parse(req, js_req)) {
         xdbg("grpc stream: %s json parse error", req.c_str());
         return Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid request argument: json parse error.");
@@ -84,7 +84,7 @@ Status xrpc_serviceimpl::table_stream(ServerContext * context, const xrpc_reques
 
         xdbg("grpc stream: tableblock_data before pop size %zu", tableblock_data.size());
         auto tmp_tb = tableblock_data.front();
-        string rsp = tmp_tb.toStyledString();
+        std::string rsp = tmp_tb.toStyledString();
         tableblock_data.pop_front();
         xdbg("grpc stream: tableblock_data after pop size %zu, json string size: %zu", tableblock_data.size(), rsp.size());
         lck.unlock();

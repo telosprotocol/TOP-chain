@@ -38,7 +38,7 @@ xelect_client_process::xelect_client_process(common::xnetwork_id_t const & netwo
                                              observer_ptr<time::xchain_time_face_t> const & xchain_timer)
   : xbase_sync_event_monitor_t(mb), m_network_id{network_id}, m_update_handler2{std::move(cb2)}, m_xchain_timer(xchain_timer) {
     assert(!broadcast(m_network_id));
-    xdbg("xelect_client_process created %p", mb);
+    xdbg("xelect_client_process created %p", mb.get());
     // mb->add_listener((int)mbus::xevent_major_type_store, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
     mb->add_listener((int)mbus::xevent_major_type_chain_timer, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
     m_xchain_timer->watch("elect_client_process_on_timer", 1, std::bind(&xelect_client_process::update_election_status, this, std::placeholders::_1));
@@ -69,7 +69,7 @@ void xelect_client_process::process_event(const xevent_ptr_t & e) {
 void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
     assert(dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e));
     auto const & event = dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e);
-    auto block = event->time_block;
+    auto const * block = event->time_block;
 
     xdbg("[xelect_client_process::process_timer] update xchain timer to %" PRIu64, block->get_height());
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
@@ -108,7 +108,7 @@ void xelect_client_process::process_election_block(data::xunitstate_ptr_t const&
 
     xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.to_string().c_str(), unitstate->height());
 
-    uint64_t new_election_height = get_new_election_height(unitstate);
+    uint64_t const new_election_height = get_new_election_height(unitstate);
     if (local_height >= new_election_height) {
         xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,new height:%llu,block:%s", local_height, new_election_height, unitstate->get_bstate()->dump().c_str());
         return;
@@ -193,10 +193,14 @@ void xelect_client_process::process_election_contract(common::xaccount_address_t
 }
 
 void xelect_client_process::update_election_status(common::xlogic_time_t current_time) {
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
     constexpr config::xinterval_t update_divider = 4;
+#else
     constexpr config::xinterval_t committee_group_update_interval = 180;
     constexpr config::xinterval_t consensus_group_update_interval = 60;
     constexpr config::xinterval_t nonconsensus_group_update_interval = 60;
+#endif
+
     {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
         auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / update_divider;
@@ -219,11 +223,11 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
         // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
         // if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.standalone_exchange_point, current_time)) {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-        auto const uodate_exchange_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval) / update_divider;
+        auto const update_exchange_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval) / update_divider;
 #else
-        auto const uodate_exchange_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
+        auto const update_exchange_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
 #endif
-        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr}, current_time, uodate_exchange_interval);
+        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr}, current_time, update_exchange_interval);
         // }
     }
 

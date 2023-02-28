@@ -1,3 +1,5 @@
+#include "xbase/xcxx_config.h"
+
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -12,13 +14,11 @@
 #include <fstream>
 
 #include "db_tool.h"
-#include "rocksdb/db.h"
-#include "rocksdb/slice.h"
-#include "rocksdb/options.h"
-#include "rocksdb/table.h"
-#include "rocksdb/convenience.h"
+// #include "rocksdb/slice.h"
+// #include "rocksdb/options.h"
+// #include "rocksdb/table.h"
+// #include "rocksdb/convenience.h"
 #include "rocksdb/utilities/backupable_db.h"
-#include "rocksdb/utilities/backup_engine.h"
 #include "xbase/xbase.h"
 #include <cstring>
 
@@ -36,12 +36,16 @@
         #define _FILE_OFFSET_BIT 64
 #endif
 
-extern "C"
-{
+#if defined(XCXX20)
+#include <zlib.h>
+#include <minizip/zip.h>
+#include <minizip/unzip.h>
+#else
 #include "zlib.h"
 #include "contrib/minizip/zip.h"
 #include "contrib/minizip/unzip.h"
-}
+#endif
+
 #define CASESENSITIVITY (0)
 #define WRITEBUFFERSIZE (8192)
 #define MAXFILENAME (256)
@@ -56,7 +60,7 @@ extern "C"
 #define FSEEKO_FUNC(stream, offset, origin) fseeko64(stream, offset, origin)
 #endif
 
-using namespace std;
+// using namespace std;
 
 int mymkdir(
     const char* dirname)
@@ -119,7 +123,7 @@ int makedir(const char *newdir)
 void handle_error(const rocksdb::Status& status) {
     if (status.ok())
         return;
-    const string errmsg = "[xdb] rocksDB error: " + status.ToString();
+    const std::string errmsg = "[xdb] rocksDB error: " + status.ToString();
     printf("%s\n", errmsg.c_str());
 }
 

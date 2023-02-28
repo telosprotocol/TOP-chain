@@ -47,7 +47,7 @@ NS_END3
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::state_accessor::error::xerrc_t> final {

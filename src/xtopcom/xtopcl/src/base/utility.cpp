@@ -117,7 +117,7 @@ namespace xChainSDK {
         while ((ch = *current++) != '\0' && length-- > 0) {
             if (ch == base64_pad) {
                 if (*current != '=' && (i % 4) == 1) {
-                    return NULL;
+                    return {};
                 }
                 continue;
             }

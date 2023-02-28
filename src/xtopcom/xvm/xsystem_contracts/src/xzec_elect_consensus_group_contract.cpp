@@ -395,8 +395,10 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
     auto const validator_group_count = XGET_CONFIG(validator_group_count);
     auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
-    auto cluster_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
+    auto const cluster_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
+#if !defined(NDEBUG)
     XATTRIBUTE_MAYBE_UNUSED auto zone_election_trigger_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
+#endif
 
     // auto const max_auditor_rotation_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count);
 

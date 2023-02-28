@@ -68,7 +68,7 @@ TEST_F(test_tx_cache, test_cache) {
     EXPECT_EQ(m_transaction_cache->tx_find(tx_hash), 1);
     xtransaction_cache_data_t cache_data;
     EXPECT_EQ(m_transaction_cache->tx_get(tx_hash, cache_data), 1);
-    xJson::Value jv;
+    Json::Value jv;
     m_transaction_cache->tx_set_json(tx_hash, 0, jv);
     m_transaction_cache->tx_set_json(tx_hash, 1, jv);
     m_transaction_cache->tx_erase(tx_hash);

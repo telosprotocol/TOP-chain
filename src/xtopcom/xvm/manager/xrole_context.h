@@ -17,10 +17,10 @@
 
 NS_BEG2(top, contract)
 
-using namespace top::mbus;
-using namespace top::data;
-using namespace top::store;
-using namespace top::vnetwork;
+//using namespace top::mbus;
+//using namespace top::data;
+//using namespace top::store;
+//using namespace top::vnetwork;
 
 struct xtable_schedule_info_t {
     uint16_t    cur_interval{0};
@@ -36,7 +36,7 @@ class xrole_context_t {
 public:
     xrole_context_t(const observer_ptr<store::xsyncvstore_t> & syncstore,
                     const std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face> & unit_service,
-                    const std::shared_ptr<xvnetwork_driver_face_t> & driver,
+                    const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & driver,
                     xcontract_info_t * info);
     virtual ~xrole_context_t();
     /**
@@ -45,14 +45,14 @@ public:
      * @param block
      * @param event_broadcasted
      */
-    void on_block_to_db(const xblock_ptr_t & block, bool & event_broadcasted);
+    void on_block_to_db(const data::xblock_ptr_t & block, bool & event_broadcasted);
 
     /**
      * @brief process chain timer event
      *
      * @param e Event ojbect.
      */
-    void on_block_timer(const xevent_ptr_t & e);
+    void on_block_timer(const mbus::xevent_ptr_t & e);
 
     /**
      * @brief check if this timer round is valid
@@ -134,7 +134,7 @@ protected:
      * @param block_ptr
      * @param types
      */
-    void broadcast(const xblock_ptr_t & block_ptr, common::xnode_type_t types);
+    void broadcast(const data::xblock_ptr_t & block_ptr, common::xnode_type_t types);
     /**
      * @brief check if sys_addr is election contract and do not produce block
      *
@@ -171,7 +171,7 @@ protected:
 protected:
     observer_ptr<store::xsyncvstore_t>                                          m_syncstore{};
     std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face>              m_unit_service{};
-    std::shared_ptr<xvnetwork_driver_face_t>                                    m_driver{};
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t>                                    m_driver{};
     xcontract_info_t *                                                          m_contract_info{};
     std::unordered_map<common::xaccount_address_t, uint64_t>                    m_address_round_map;  // record address and timer round
     std::unordered_map<common::xaccount_address_t, xtable_schedule_info_t>      m_table_contract_schedule; // table schedule

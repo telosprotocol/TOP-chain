@@ -12,7 +12,7 @@
 
 NS_BEG3(top, tests, election)
 
-common::xaccount_address_t build_account_address(size_t const i);
+common::xaccount_address_t build_account_address(size_t i);
 
 class xtop_election_cache_data_accessor_fixture : public testing::Test {
 public:

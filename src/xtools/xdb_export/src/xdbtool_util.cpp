@@ -1,6 +1,9 @@
 
 #include "../xdbtool_util.h"
 
+#include <fstream>
+#include <iomanip>
+
 NS_BEG2(top, db_export)
 
 void xdbtool_util_t::generate_json_file(std::string const & filename, json const & j) {

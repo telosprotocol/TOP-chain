@@ -5,9 +5,7 @@
 #pragma once
 
 #include <string>
-#include <stdexcept>
 #include <map>
-#include <memory>
 #include <mutex>
 #include <set>
 #include <vector>
@@ -31,9 +29,9 @@ class xdb_mem_t : public xdb_face_t {
 
     bool erase(const std::string& key) override;
     bool erase(const std::vector<std::string>& keys) override;
-    bool erase(std::vector<gsl::span<char const>> const & keys) override;
+    bool erase(std::vector<xspan_t<char const>> const & keys) override;
     bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) override;
-    bool batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys) override;
+    bool batch_change(const std::map<std::string, std::string> & objs, std::vector<xspan_t<char const>> const & delete_keys) override;
 
     //prefix must start from first char of key
     bool read_range(const std::string& prefix, std::vector<std::string>& values) override;

@@ -338,7 +338,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
             xdbg("[vnode_house_add_group][overview] %s %lu %lu (%u %u %u)", elect_address.c_str(), elect_height, group_key, zone_id, cluster_id, group_id);
             for (auto &it: pair.second) {
 
-                const xvip2_t &xvip2 = it->get_xip2_addr();
+                // const xvip2_t &xvip2 = it->get_xip2_addr();
 
                 xdbg("[vnode_house_add_group][node] %s %lu %lu", it->get_account().c_str(),
                                 xip2.high_addr,

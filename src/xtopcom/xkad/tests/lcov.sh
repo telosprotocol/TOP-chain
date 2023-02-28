@@ -1,5 +1,6 @@
 set -e
 
+distrib=`cat /etc/*-release | uniq -u | grep ^ID= | grep -oP "ID=\"*\K\w+"`
 pids=$(ps -ef | grep SimpleHTTPServer | grep -v grep | awk -F' ' '{print $2}')
 echo "pids: $pids"
 if [ -n "$pids" ]; then
@@ -40,8 +41,7 @@ do
         $parent_path'/src/xtopcom/xcrypto/*' \
         $parent_path'/src/xtopcom/xdata/*' \
         $parent_path'/src/xtopcom/xnetwork/*' \
-        $parent_path'/src/xtopcom/xverifier/*' \
-        $parent_path'/src/xtopcom/xkad/proto/*' \
+        $parent_path'/src/xtopcom/xkad/proto/'$distrib'/*' \
         -o ${binname}.info
     echo "analyze module:${binname} finished =========================2"
     # end handle test for module

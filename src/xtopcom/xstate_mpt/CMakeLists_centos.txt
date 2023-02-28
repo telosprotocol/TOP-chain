@@ -1,0 +1,4 @@
+aux_source_directory(./src src_dir)
+add_library(xstate_mpt STATIC ${src_dir})
+add_dependencies(xstate_mpt xdata xxbase)
+target_link_libraries(xstate_mpt PRIVATE xdata xxbase rocksdb z bz2 zstd snappy lz4 pthread)

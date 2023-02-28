@@ -102,7 +102,7 @@ int32_t xcons_utl::get_groupid_by_account(const xvip2_t & local_xip, const std::
 
 int32_t xcons_utl::get_groupid_by_table(const xvip2_t & local_xip, uint16_t table_id) {
     auto book_id = base::xvaccount_t::get_book_index_from_subaddr(table_id);
-    auto const & config_register = top::config::xconfig_register_t::get_instance();
+    // auto const & config_register = top::config::xconfig_register_t::get_instance();
     
     auto const zone_count = XGET_CONFIG(zone_count);
     auto const cluster_count = XGET_CONFIG(cluster_count);

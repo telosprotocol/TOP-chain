@@ -4,6 +4,18 @@
 
 #pragma once
 
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#    pragma clang diagnostic ignored "-Wsign-compare"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#    pragma GCC diagnostic ignored "-Wsign-compare"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xbase/xdata.h"
 #include "xbase/xlog.h"
 #include "xbase/xobject.h"
@@ -12,6 +24,15 @@
 #include "xbase/xthread.h"
 #include "xbase/xtimer.h"
 #include "xbase/xutl.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
 #include "xbasic/xbyte_buffer.h"
 #include "xkad/routing_table/node_info.h"
 #include "xpbase/base/top_utils.h"
@@ -30,8 +51,8 @@
 #include <string>
 #include <vector>
 
-using namespace top;
-using namespace base;
+// using namespace top;
+// using namespace base;
 
 namespace top {
 namespace kadmlia {
@@ -72,7 +93,7 @@ private:
 
 class xp2pudp_t : public base::xudp_t {
 public:
-    xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server);
+    xp2pudp_t(base::xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, base::xsocket_property & property, XudpSocket * listen_server);
 
 protected:
     virtual ~xp2pudp_t() {
@@ -99,13 +120,13 @@ protected:
                          uint64_t from_xip_addr_high,
                          uint64_t to_xip_addr_low,
                          uint64_t to_xip_addr_high,
-                         xpacket_t & packet,
+                         base::xpacket_t & packet,
                          int32_t cur_thread_id,
                          uint64_t timenow_ms,
                          xendpoint_t * from_child_end) override;
 
 public:
-    int send(xpacket_t & packet);
+    int send(base::xpacket_t & packet);
     int32_t connect_xudp(const std::string & target_ip, const uint16_t target_port, XudpSocket * udp_server);
     enum_xudp_status GetStatus() {
         return m_status;
@@ -184,7 +205,7 @@ public:
     virtual int CheckRatelimitMap(const std::string & to_addr) override;
 
 protected:
-    virtual xslsocket_t * create_xslsocket(xendpoint_t * parent, xfd_handle_t handle, xsocket_property & property, int32_t cur_thread_id, uint64_t timenow_ms) override;
+    virtual base::xslsocket_t * create_xslsocket(xendpoint_t * parent, xfd_handle_t handle, base::xsocket_property & property, int32_t cur_thread_id, uint64_t timenow_ms) override;
 
     int send_ping_packet(std::string target_ip_addr,
                          uint16_t target_ip_port,
@@ -198,7 +219,7 @@ protected:
         promise_.set_value();  // wake block
         return ret;
     }
-    virtual xslsocket_t * on_xslsocket_accept(xfd_handle_t handle, xsocket_property & property, int32_t cur_thread_id, uint64_t timenow_ms);
+    virtual base::xslsocket_t * on_xslsocket_accept(xfd_handle_t handle, base::xsocket_property & property, int32_t cur_thread_id, uint64_t timenow_ms);
 
 private:
     XudpSocket();

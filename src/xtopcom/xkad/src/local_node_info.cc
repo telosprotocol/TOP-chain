@@ -4,10 +4,9 @@
 
 #include "xkad/routing_table/local_node_info.h"
 
-#include "common/secp256k1.h"
-#include "common/sha2.h"
-#include "common/xaes.h"
-#include "common/xdfcurve.h"
+// #include "common/sha2.h"
+// #include "common/xaes.h"
+// #include "common/xdfcurve.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_log.h"
 

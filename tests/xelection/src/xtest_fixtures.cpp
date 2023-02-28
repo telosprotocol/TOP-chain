@@ -42,7 +42,7 @@ void xtop_committee_fixure::SetUp() {
 
     m_election_cache_data_accessor = top::make_unique<top::election::cache::xdata_accessor_t>(network_id, top::make_observer(top::tests::election::xdummy_chain_timer));
     auto const zone_type = top::common::node_type_from(zone_id);
-    ASSERT_EQ(xnode_type_t::committee, zone_type);
+    ASSERT_TRUE(xnode_type_t::committee == zone_type);
 
     xelection_result_store_t election_result_store;
     auto & group_result = election_result_store.result_of(network_id).result_of(zone_type).result_of(cluster_id).result_of(group_id);

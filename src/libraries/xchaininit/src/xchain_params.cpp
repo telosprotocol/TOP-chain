@@ -73,7 +73,27 @@ int xchain_params::get_uuid(std::string& uuid) {
         return 1;
     }
     char tmp[512]={0};
+
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunused-result"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wunused-result"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
     fgets(tmp, sizeof(tmp), output);
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
     if (tmp[strlen(tmp) - 1] == '\n') {
         tmp[strlen(tmp) - 1] = '\0';
     }

@@ -28,8 +28,8 @@ class test_edge : public testing::Test {
         m_thread = top::make_observer(base::xiothread_t::create_thread(base::xcontext_t::instance(), 0, -1));
 
         m_edge_handler = std::make_shared<xrpc_edge_vhost>(m_vhost, m_router_ptr, m_thread);
-        m_rpc_service = make_unique<xrpc::xrpc_service<xedge_http_method>>(m_edge_handler, m_vhost->address().xip2(), false);
-        m_rpc_ws_service = make_unique<xrpc::xrpc_service<xedge_ws_method>>(m_edge_handler, m_vhost->address().xip2(), false);
+        m_rpc_service = top::make_unique<xrpc::xrpc_service<xedge_http_method>>(m_edge_handler, m_vhost->address().xip2(), false);
+        m_rpc_ws_service = top::make_unique<xrpc::xrpc_service<xedge_ws_method>>(m_edge_handler, m_vhost->address().xip2(), false);
         m_pre_request_handler_mgr_ptr = top::make_unique<xpre_request_handler_mgr>();
         m_rule_mgr_ptr = top::make_unique<xfilter_manager>();
     }
@@ -84,7 +84,7 @@ TEST_F(test_edge, illegal_request) {
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->set_source_addr("m_source_account");
     tx->set_target_addr("m_target_account");
-    xJson::Value tx_json;
+    Json::Value tx_json;
     tx->parse_to_json(tx_json);
     json_proc.m_request_json = tx_json;
     try{
@@ -109,7 +109,7 @@ TEST_F(test_edge, send_transaction) {
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->set_source_addr("m_source_account");
     tx->set_target_addr("m_target_account");
-    xJson::Value tx_json;
+    Json::Value tx_json;
     tx->parse_to_json(tx_json);
 
     xjson_proc_t json_proc;
@@ -128,7 +128,7 @@ TEST_F(test_edge, forward_method) {
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->set_source_addr("m_source_account");
     tx->set_target_addr("m_target_account");
-    xJson::Value tx_json;
+    Json::Value tx_json;
     tx->parse_to_json(tx_json);
 
     xjson_proc_t json_proc;
@@ -160,7 +160,7 @@ TEST_F(test_edge, local_method){
     xjson_proc_t json_proc;
     json_proc.parse_json(pre_request_data);
 
-    auto edge_local_method_ptr = make_unique<xedge_local_method<xedge_http_method>>(nullptr, m_vhost->address().xip2());
+    auto edge_local_method_ptr = top::make_unique<xedge_local_method<xedge_http_method>>(nullptr, m_vhost->address().xip2());
 
     // const string version = "1.0";
     // string method = "account";

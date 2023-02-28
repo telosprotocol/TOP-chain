@@ -9,7 +9,7 @@
 #include "xbase/xdata.h"
 #include "xvblock.h"
 
-#include <gsl/span>
+#include "xbasic/xspan.h"
 
 namespace top
 {
@@ -42,7 +42,7 @@ namespace top
             virtual bool              delete_value(const std::string & key) = 0;
             //batch deleted keys
             virtual bool              delete_values(const std::vector<std::string> & to_deleted_keys) = 0;
-            virtual bool delete_values(std::vector<gsl::span<char const>> const & to_deleted_keys) = 0;
+            virtual bool delete_values(std::vector<xspan_t<char const>> const & to_deleted_keys) = 0;
 
         public://old API, here just for compatible
             virtual bool             set_vblock(const std::string & store_path,xvblock_t* block) = 0;

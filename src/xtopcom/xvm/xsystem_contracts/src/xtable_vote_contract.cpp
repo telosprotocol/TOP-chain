@@ -399,7 +399,7 @@ bool xtable_vote_contract::is_expire(const common::xlogic_time_t onchain_timer_r
 }
 
 void xtable_vote_contract::commit_total_votes_num() {
-    uint64_t total_votes = 0;
+    // uint64_t total_votes = 0;
     std::map<std::string, std::string> pollables;
     try {
         XMETRICS_TIME_RECORD("sysContract_tableVote_get_property_contract_pollable_key");

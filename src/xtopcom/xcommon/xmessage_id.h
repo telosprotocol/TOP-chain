@@ -9,7 +9,7 @@
 #include <cstdint>
 
 #define XDEFINE_MSG_ID(MSG_CATEGORY_ID, MSG_NAME, MSG_ID)                                                                                                                               \
-    XINLINE_CONSTEXPR top::common::xmessage_id_t MSG_NAME                                                                                                                               \
+    constexpr top::common::xmessage_id_t MSG_NAME                                                                                                                               \
     {                                                                                                                                                                                   \
         static_cast<top::common::xmessage_id_t>((static_cast<std::uint32_t>(static_cast<std::uint16_t>(MSG_CATEGORY_ID)) << 16) | (0x0000FFFF & static_cast<std::uint32_t>(MSG_ID)))    \
     }

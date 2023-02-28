@@ -32,8 +32,8 @@ public:
     void setup();
 
     BEGIN_CONTRACT_WITH_PARAM(xtop_rec_standby_pool_contract)
-    CONTRACT_FUNCTION_PARAM(xtop_rec_standby_pool_contract, nodeJoinNetwork2);
-    CONTRACT_FUNCTION_PARAM(xtop_rec_standby_pool_contract, on_timer);
+    CONTRACT_FUNCTION_PARAM(xtop_rec_standby_pool_contract, nodeJoinNetwork2)
+    CONTRACT_FUNCTION_PARAM(xtop_rec_standby_pool_contract, on_timer)
     END_CONTRACT_WITH_PARAM
 
 private:

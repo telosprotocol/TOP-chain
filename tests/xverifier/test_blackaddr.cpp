@@ -4,8 +4,8 @@
 #include <string>
 #include <fstream>
 #include "xconfig/xconfig_register.h"
-#include "xverifier/xblacklist_verifier.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xblacklist_verifier.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xconfig/xpredefined_configurations.h"
 
 using namespace top;

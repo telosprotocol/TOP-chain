@@ -120,7 +120,7 @@ TEST(xobject_ptr_t, dynamic_pointer_cast3) {
         auto base_obj1_casted = top::static_xobject_ptr_cast<xbase_object1>(derived_obj1);
         auto base_obj2_casted = top::dynamic_xobject_ptr_cast<xbase_object2>(base_obj1_casted);
 
-        ASSERT_EQ(nullptr, base_obj2_casted);
+        ASSERT_EQ(nullptr, base_obj2_casted.get());
         ASSERT_EQ(2, derived_obj1->get_refcount());
         ASSERT_EQ(base_obj1_casted->get_refcount(), derived_obj1->get_refcount());
     }
@@ -186,7 +186,7 @@ TEST(xobject_ptr_t, dynamic_pointer_cast6) {
         {
             auto base_obj2_casted = top::dynamic_xobject_ptr_cast<xbase_object2>(base_obj1);
 
-            ASSERT_EQ(nullptr, base_obj2_casted);
+            ASSERT_EQ(nullptr, base_obj2_casted.get());
             ASSERT_EQ(2, derived_obj1->get_refcount());
             ASSERT_EQ(base_obj1->get_refcount(), derived_obj1->get_refcount());
         }

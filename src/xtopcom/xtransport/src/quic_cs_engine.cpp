@@ -257,9 +257,9 @@ int xquic_server_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
     return 0;
 }
 int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
-    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
-    xquic_server_t * server = (xquic_server_t *)srv_user_conn->server;
+    auto srv_user_conn = static_cast<srv_user_conn_t *>(user_data);
 #if defined(DEBUG)
+    xquic_server_t * server = (xquic_server_t *)srv_user_conn->server;
     xqc_conn_stats_t stats = xqc_conn_get_stats(server->engine, cid);
     xdbg("[xquic_server_engine]send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%" PRIu64 " early_data_flag:%d, conn_err:%d, ack_info:%s",
          stats.send_count,
@@ -276,13 +276,13 @@ int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * ci
     return 0;
 }
 void xquic_server_conn_handshake_finished(xqc_connection_t * conn, void * user_data, void * conn_proto_data) {
-    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
+    // srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
 }
 
 /// server app callbacks
 /// stream: create/read/close
 int xquic_server_stream_create_notify(xqc_stream_t * stream, void * user_data) {
-    int ret = 0;
+    // int ret = 0;
 
     // get srv_user_conn by stream;
     // so stream read notify could find cb function.
@@ -614,7 +614,7 @@ static void xqc_server_socket_event_callback(int fd, short what, void * arg) {
 static int xquic_client_create_socket(int type, cli_user_conn_t * conn) {
     int size;
     int fd = -1;
-    int flags;
+    // int flags;
 
     /* create fd & set socket option */
     fd = socket(type, SOCK_DGRAM, 0);
@@ -740,7 +740,7 @@ void xquic_client_socket_read_handler(cli_user_conn_t * cli_user_conn, int fd) {
         uint64_t recv_time = xqc_now();
         cli_user_conn->last_sock_op_time = recv_time;
 
-        static char copy[XQC_PACKET_TMP_BUF_LEN];
+        // static char copy[XQC_PACKET_TMP_BUF_LEN];
 
         if (xqc_engine_packet_process(cli_user_conn->client->engine,
                                       packet_buf,

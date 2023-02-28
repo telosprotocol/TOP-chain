@@ -26,7 +26,7 @@ static string xcodec_errc_map(int const errc) noexcept {
 class xvm_category final : public std::error_category
 {
     const char* name() const noexcept override {
-        return u8"xvm::error";
+        return "xvm::error";
     }
 
     std::string message(int errc) const override {

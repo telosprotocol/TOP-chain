@@ -6,11 +6,15 @@
 #ifndef JSON_FORWARDS_H_INCLUDED
 #define JSON_FORWARDS_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "config.h"
 #endif // if !defined(JSON_IS_AMALGAMATION)
 
-namespace xJson {
+namespace Json {
 
 // writer.h
 class FastWriter;

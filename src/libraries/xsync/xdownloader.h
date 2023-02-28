@@ -73,7 +73,7 @@ public:
     void push_event(const mbus::xevent_ptr_t &e) override;
     uint32_t get_idx_by_address(const std::string &address);
 private:
-    std::string get_address_by_event(const mbus::xevent_ptr_t &e);
+    std::string get_address_by_event(const mbus::xevent_ptr_t &e) const;
     void process_event(uint32_t idx, const mbus::xevent_ptr_t &e);
 
     xchain_downloader_face_ptr_t on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e);

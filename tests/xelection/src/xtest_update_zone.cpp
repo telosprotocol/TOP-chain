@@ -66,20 +66,20 @@ TEST(xtest_update_committee_zone, _) {
     ASSERT_EQ(1, update_result.size());
 
     auto const & sharding_address = top::get<top::common::xsharding_address_t const>(*update_result.begin());
-    auto const & group_update_result = top::get<top::election::cache::xgroup_update_result_t>(*update_result.begin());
+    // auto const & group_update_result = top::get<top::election::cache::xgroup_update_result_t>(*update_result.begin());
 
-    ASSERT_EQ(network_id, sharding_address.network_id());
-    ASSERT_EQ(zone_id, sharding_address.zone_id());
-    ASSERT_EQ(cluster_id, sharding_address.cluster_id());
-    ASSERT_EQ(group_id, sharding_address.group_id());
+    ASSERT_TRUE(network_id == sharding_address.network_id());
+    ASSERT_TRUE(zone_id == sharding_address.zone_id());
+    ASSERT_TRUE(cluster_id == sharding_address.cluster_id());
+    ASSERT_TRUE(group_id == sharding_address.group_id());
 
     auto const & xip = sharding_address.xip();
-    ASSERT_EQ(network_id, xip.network_id());
-    ASSERT_EQ(zone_id, xip.zone_id());
-    ASSERT_EQ(cluster_id, xip.cluster_id());
-    ASSERT_EQ(group_id, xip.group_id());
-    ASSERT_EQ(xbroadcast_id_t::slot, xip.slot_id());
-    ASSERT_EQ(top::common::xdefault_network_version, xip.network_version());
+    ASSERT_TRUE(network_id == xip.network_id());
+    ASSERT_TRUE(zone_id == xip.zone_id());
+    ASSERT_TRUE(cluster_id == xip.cluster_id());
+    ASSERT_TRUE(group_id == xip.group_id());
+    ASSERT_TRUE(xbroadcast_id_t::slot == xip.slot_id());
+    ASSERT_TRUE(top::common::xdefault_network_version == xip.network_version());
 }
 
 TEST(xtest_update_zec_zone, _) {
@@ -129,18 +129,18 @@ TEST(xtest_update_zec_zone, _) {
     auto const & sharding_address = top::get<top::common::xsharding_address_t const>(*update_result.begin());
     auto const & group_update_result = top::get<top::election::cache::xgroup_update_result_t>(*update_result.begin());
 
-    ASSERT_EQ(network_id, sharding_address.network_id());
-    ASSERT_EQ(zone_id, sharding_address.zone_id());
-    ASSERT_EQ(cluster_id, sharding_address.cluster_id());
-    ASSERT_EQ(group_id, sharding_address.group_id());
+    ASSERT_TRUE(network_id == sharding_address.network_id());
+    ASSERT_TRUE(zone_id == sharding_address.zone_id());
+    ASSERT_TRUE(cluster_id == sharding_address.cluster_id());
+    ASSERT_TRUE(group_id == sharding_address.group_id());
 
     auto const & xip = sharding_address.xip();
-    ASSERT_EQ(network_id, xip.network_id());
-    ASSERT_EQ(zone_id, xip.zone_id());
-    ASSERT_EQ(cluster_id, xip.cluster_id());
-    ASSERT_EQ(group_id, xip.group_id());
-    ASSERT_EQ(xbroadcast_id_t::slot, xip.slot_id());
-    ASSERT_EQ(top::common::xdefault_network_version, xip.network_version());
+    ASSERT_TRUE(network_id == xip.network_id());
+    ASSERT_TRUE(zone_id == xip.zone_id());
+    ASSERT_TRUE(cluster_id == xip.cluster_id());
+    ASSERT_TRUE(group_id == xip.group_id());
+    ASSERT_TRUE(xbroadcast_id_t::slot == xip.slot_id());
+    ASSERT_TRUE(top::common::xdefault_network_version == xip.network_version());
 }
 
 TEST(xtest_update_edge_zone, _) {
@@ -190,18 +190,18 @@ TEST(xtest_update_edge_zone, _) {
     auto const & sharding_address = top::get<top::common::xsharding_address_t const>(*update_result.begin());
     auto const & group_update_result = top::get<top::election::cache::xgroup_update_result_t>(*update_result.begin());
 
-    ASSERT_EQ(network_id, sharding_address.network_id());
-    ASSERT_EQ(zone_id, sharding_address.zone_id());
-    ASSERT_EQ(cluster_id, sharding_address.cluster_id());
-    ASSERT_EQ(group_id, sharding_address.group_id());
+    ASSERT_TRUE(network_id == sharding_address.network_id());
+    ASSERT_TRUE(zone_id == sharding_address.zone_id());
+    ASSERT_TRUE(cluster_id == sharding_address.cluster_id());
+    ASSERT_TRUE(group_id == sharding_address.group_id());
 
     auto const & xip = sharding_address.xip();
-    ASSERT_EQ(network_id, xip.network_id());
-    ASSERT_EQ(zone_id, xip.zone_id());
-    ASSERT_EQ(cluster_id, xip.cluster_id());
-    ASSERT_EQ(group_id, xip.group_id());
-    ASSERT_EQ(xbroadcast_id_t::slot, xip.slot_id());
-    ASSERT_EQ(top::common::xdefault_network_version, xip.network_version());
+    ASSERT_TRUE(network_id == xip.network_id());
+    ASSERT_TRUE(zone_id == xip.zone_id());
+    ASSERT_TRUE(cluster_id == xip.cluster_id());
+    ASSERT_TRUE(group_id == xip.group_id());
+    ASSERT_TRUE(xbroadcast_id_t::slot == xip.slot_id());
+    ASSERT_TRUE(top::common::xdefault_network_version == xip.network_version());
 }
 
 TEST(xtest_update_archive_zone, _) {
@@ -251,18 +251,18 @@ TEST(xtest_update_archive_zone, _) {
     auto const & sharding_address = top::get<top::common::xsharding_address_t const>(*update_result.begin());
     auto const & group_update_result = top::get<top::election::cache::xgroup_update_result_t>(*update_result.begin());
 
-    ASSERT_EQ(network_id, sharding_address.network_id());
-    ASSERT_EQ(zone_id, sharding_address.zone_id());
-    ASSERT_EQ(cluster_id, sharding_address.cluster_id());
-    ASSERT_EQ(group_id, sharding_address.group_id());
+    ASSERT_TRUE(network_id == sharding_address.network_id());
+    ASSERT_TRUE(zone_id == sharding_address.zone_id());
+    ASSERT_TRUE(cluster_id == sharding_address.cluster_id());
+    ASSERT_TRUE(group_id == sharding_address.group_id());
 
     auto const & xip = sharding_address.xip();
-    ASSERT_EQ(network_id, xip.network_id());
-    ASSERT_EQ(zone_id, xip.zone_id());
-    ASSERT_EQ(cluster_id, xip.cluster_id());
-    ASSERT_EQ(group_id, xip.group_id());
-    ASSERT_EQ(xbroadcast_id_t::slot, xip.slot_id());
-    ASSERT_EQ(top::common::xdefault_network_version, xip.network_version());
+    ASSERT_TRUE(network_id == xip.network_id());
+    ASSERT_TRUE(zone_id == xip.zone_id());
+    ASSERT_TRUE(cluster_id == xip.cluster_id());
+    ASSERT_TRUE(group_id == xip.group_id());
+    ASSERT_TRUE(xbroadcast_id_t::slot == xip.slot_id());
+    ASSERT_TRUE(top::common::xdefault_network_version == xip.network_version());
 }
 
 TEST(xtest_update_consensus_zone, _) {
@@ -343,18 +343,18 @@ TEST(xtest_update_consensus_zone, _) {
         auto const & sharding_address = top::get<top::common::xsharding_address_t const>(result);
         auto const & group_update_result = top::get<top::election::cache::xgroup_update_result_t>(result);
 
-        ASSERT_EQ(network_id, sharding_address.network_id());
-        ASSERT_EQ(zone_id, sharding_address.zone_id());
-        ASSERT_EQ(cluster_id, sharding_address.cluster_id());
+        ASSERT_TRUE(network_id == sharding_address.network_id());
+        ASSERT_TRUE(zone_id == sharding_address.zone_id());
+        ASSERT_TRUE(cluster_id == sharding_address.cluster_id());
         ASSERT_TRUE(sharding_address.group_id() == auditor_group_id || sharding_address.group_id() == validator_group_id);
 
         auto const & xip = sharding_address.xip();
-        ASSERT_EQ(network_id, xip.network_id());
-        ASSERT_EQ(zone_id, xip.zone_id());
-        ASSERT_EQ(cluster_id, xip.cluster_id());
+        ASSERT_TRUE(network_id == xip.network_id());
+        ASSERT_TRUE(zone_id == xip.zone_id());
+        ASSERT_TRUE(cluster_id == xip.cluster_id());
         ASSERT_TRUE(xip.group_id() == auditor_group_id || xip.group_id() == validator_group_id);
-        ASSERT_EQ(xbroadcast_id_t::slot, xip.slot_id());
-        ASSERT_EQ(top::common::xdefault_network_version, xip.network_version());
+        ASSERT_TRUE(xbroadcast_id_t::slot == xip.slot_id());
+        ASSERT_TRUE(top::common::xdefault_network_version == xip.network_version());
     }
 }
 
@@ -445,27 +445,27 @@ TEST(xtest_update_committee_zone, update_twice) {
     auto const & sharding_address = top::get<top::common::xsharding_address_t const>(update_data);
     auto const & group_update_result = top::get<top::election::cache::xgroup_update_result_t>(update_data);
 
-    ASSERT_EQ(network_id, sharding_address.network_id());
-    ASSERT_EQ(zone_id, sharding_address.zone_id());
-    ASSERT_EQ(cluster_id, sharding_address.cluster_id());
-    ASSERT_EQ(group_id, sharding_address.group_id());
+    ASSERT_TRUE(network_id == sharding_address.network_id());
+    ASSERT_TRUE(zone_id == sharding_address.zone_id());
+    ASSERT_TRUE(cluster_id == sharding_address.cluster_id());
+    ASSERT_TRUE(group_id == sharding_address.group_id());
 
     auto const & xip = sharding_address.xip();
-    ASSERT_EQ(network_id, xip.network_id());
-    ASSERT_EQ(zone_id, xip.zone_id());
-    ASSERT_EQ(cluster_id, xip.cluster_id());
-    ASSERT_EQ(group_id, xip.group_id());
-    ASSERT_EQ(xbroadcast_id_t::slot, xip.slot_id());
-    ASSERT_EQ(top::common::xdefault_network_version, xip.network_version());
+    ASSERT_TRUE(network_id == xip.network_id());
+    ASSERT_TRUE(zone_id == xip.zone_id());
+    ASSERT_TRUE(cluster_id == xip.cluster_id());
+    ASSERT_TRUE(group_id == xip.group_id());
+    ASSERT_TRUE(xbroadcast_id_t::slot == xip.slot_id());
+    ASSERT_TRUE(top::common::xdefault_network_version == xip.network_version());
 
     auto const & updated_group_info = top::get<top::election::cache::xgroup_update_result_t>(update_data);
     auto const & outdated = updated_group_info.outdated;
     auto const & faded = updated_group_info.faded;
     auto const & added = updated_group_info.added;
 
-    ASSERT_EQ(nullptr, outdated);
-    ASSERT_NE(nullptr, faded);
-    ASSERT_NE(nullptr, added);
+    ASSERT_EQ(nullptr, outdated.get());
+    ASSERT_NE(nullptr, faded.get());
+    ASSERT_NE(nullptr, added.get());
 }
 
 NS_END3

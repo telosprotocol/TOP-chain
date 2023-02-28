@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "xbase/xbase.h"
 #include "xcommon/xip.h"
 #include "xcommon/xnode_type.h"
 

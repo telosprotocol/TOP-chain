@@ -8,7 +8,7 @@
 #include "xdata/xrootblock.h"
 #include "xmetrics/xmetrics.h"
 
-using namespace std;
+// using namespace std;
 
 class xhashtest_t : public top::base::xhashplugin_t
 {

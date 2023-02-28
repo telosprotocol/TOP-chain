@@ -7,8 +7,29 @@
 #include <string>
 #include <vector>
 #include <map>
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#    pragma clang diagnostic ignored "-Wsign-compare"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#    pragma GCC diagnostic ignored "-Wsign-compare"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xbase/xobject.h"
 #include "xbase/xdata.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
 #include "xvaccount.h"
 
 //interface for chain node
@@ -61,7 +82,7 @@ namespace top
             xvnode_t*                                get_node(const uint32_t node_slot) const; //node_slot must be range of [0,size()-1]
             inline const std::vector<xvnode_t*>&     get_nodes() const {return m_nodes;}//caller need xvnodegroup_t first
             inline const uint32_t                    get_size()  const {return (uint32_t)m_nodes.size();}
-        private:
+        protected:
             xvip2_t                 m_group_address;
             uint64_t                m_start_clock_height;   //when the vnode'xip2 address start effective
             uint64_t                m_network_height;       //election height from xip2

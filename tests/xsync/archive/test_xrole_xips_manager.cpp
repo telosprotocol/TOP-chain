@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <sstream>
 #define protected public
 #define private   public
@@ -9,7 +10,6 @@
 #undef protected
 #undef private
 
-#include <gtest/gtest.h>
 
 using namespace top::sync;
 using namespace top::vnetwork;

@@ -104,7 +104,7 @@ void MultiRouting::HandleRootMessage(transport::protobuf::RoutingMessage & messa
 
     switch (root_message.message_type()) {
     case kCompleteNodeRequest:
-        XATTRIBUTE_FALLTHROUGH
+        XATTRIBUTE_FALLTHROUGH;
     case kCompleteNodeResponse:
         return root_routing_table_->HandleMessage(message, packet);
     case kCacheElectNodesRequest:
@@ -438,9 +438,11 @@ void MultiRouting::RemoveElectRoutingTable(base::ServiceType service_type) {
 
     std::vector<base::ServiceType> vec_type;
     GetAllRegisterType(vec_type);
+#if defined(DEBUG)
     for (auto & v : vec_type) {
         xdbg("[ElectRoutingTable]after unregister routing table, still have %llu %s", v.value(), v.info().c_str());
     }
+#endif
 }
 
 void MultiRouting::GetAllRegisterType(std::vector<base::ServiceType> & vec_type) {

@@ -103,7 +103,10 @@ public:
 
         // bn_face is "k" and new_ec_point is "R", here R = k * G
         // or bn_face is "private_key" and new_ec_point is public Key,so  P = pk * G
-        XATTRIBUTE_MAYBE_UNUSED int32_t ret = EC_POINT_mul(m_curve.ec_group(), new_ec_point, bn, NULL, NULL, NULL);
+#if !defined(NDEBUG)
+        XATTRIBUTE_MAYBE_UNUSED int32_t ret =
+#endif
+        EC_POINT_mul(m_curve.ec_group(), new_ec_point, bn, nullptr, nullptr, nullptr);
         assert(0 != ret);
         return new_ec_point;
     }
@@ -124,7 +127,10 @@ public:
         BIGNUM * r = new_bn;
         BIGNUM * m = r;
         BN_CTX * ctx = BN_CTX_new();
-        XATTRIBUTE_MAYBE_UNUSED int ret = BN_nnmod(r, m, m_curve.bn_order(), ctx);
+#if !defined(NDEBUG)
+        XATTRIBUTE_MAYBE_UNUSED int ret =
+#endif
+        BN_nnmod(r, m, m_curve.bn_order(), ctx);
         assert(0 != ret);
         BN_CTX_free(ctx);
 

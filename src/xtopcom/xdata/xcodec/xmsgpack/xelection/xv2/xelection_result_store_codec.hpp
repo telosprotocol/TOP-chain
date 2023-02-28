@@ -36,7 +36,7 @@ struct convert<top::data::election::v2::xelection_result_store_t> final {
 
             case xelection_result_store_results_index: {
                 result.results(o.via.array.ptr[xelection_result_store_results_index].as<std::map<top::common::xnetwork_id_t, top::data::election::v2::xelection_network_result_t>>());
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
 

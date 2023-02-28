@@ -238,7 +238,7 @@ void xstatestore_accessor_t::write_table_bstate_to_cache(common::xtable_address_
         xdbg("xstatestore_accessor_t::write_table_bstate_to_cache update 1.%s,height=%ld",address.to_string().c_str(), height);
     } else if ( (m_state_cache.get_latest_connectted_tablestate() != nullptr)
             && (height > m_state_cache.get_latest_connectted_tablestate()->get_table_state()->height()+2) ) {
-        const auto & latest_connect_state = m_state_cache.get_latest_connectted_tablestate();
+        // const auto & latest_connect_state = m_state_cache.get_latest_connectted_tablestate();
         auto lock_state = m_state_cache.get_prev_tablestate(height-1, state->get_table_state()->get_bstate()->get_last_block_hash());
         if (nullptr != lock_state) {
             auto commit_state = m_state_cache.get_prev_tablestate(height-2, lock_state->get_table_state()->get_bstate()->get_last_block_hash());

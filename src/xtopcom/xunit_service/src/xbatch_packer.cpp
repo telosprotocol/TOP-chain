@@ -549,7 +549,7 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
     // proposal should pass to xbft, so xbft could realize local is beind in view/block and do sync
-    bool is_leader = false;
+    // bool is_leader = false;
     bool valid = true;
     if (type == xconsensus::enum_consensus_msg_type_proposal || type == xconsensus::enum_consensus_msg_type_proposal_v2) {
         valid = verify_proposal_packet(from_addr, to_addr, packet);
@@ -735,9 +735,13 @@ bool  xbatch_packer::on_replicate_finish(const base::xvevent_t & event,xcsobject
 }
 bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
     xcsaccount_t::on_consensus_commit(event, from_child, cur_thread_id, timenow_ms);
-    xconsensus::xconsensus_commit * _evt_obj = (xconsensus::xconsensus_commit *)&event;
+
+#if defined(DEBUG)
+    auto * evt_obj = dynamic_cast<xconsensus::xconsensus_commit const *>(&event);
     xunit_dbg("xbatch_packer::on_consensus_commit, %s class=%d, at_node:%s",
-        _evt_obj->get_target_commit()->dump().c_str(), _evt_obj->get_target_commit()->get_block_class(), xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+        evt_obj->get_target_commit()->dump().c_str(), evt_obj->get_target_commit()->get_block_class(), xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+#endif
+
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
 

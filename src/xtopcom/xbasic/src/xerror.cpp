@@ -162,7 +162,7 @@ NS_END2
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 size_t hash<top::error::xbasic_errc_t>::operator()(top::error::xbasic_errc_t errc) const noexcept {
     return static_cast<size_t>(static_cast<std::underlying_type<top::error::xbasic_errc_t>::type>(errc));

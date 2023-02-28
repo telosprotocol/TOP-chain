@@ -15,7 +15,11 @@
 #include "xevm_contract_runtime/sys_contract/xevm_eth2_client_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_heco_client_contract.h"
-#include "xevm_runner/proto/proto_precompile.pb.h"
+#if defined(XCXX20)
+#include "xevm_runner/proto/ubuntu/proto_precompile.pb.h"
+#else
+#include "xevm_runner/proto/centos/proto_precompile.pb.h"
+#endif
 
 #include <cinttypes>
 

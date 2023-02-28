@@ -1,0 +1,29 @@
+find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+# find_library(RocksDB_LIBRARIES rocksdb REQUIRED)
+# find_library(lz4_LIBRARIES lz4 HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+# find_library(zstd_LIBRARIES zstd REQUIRED)
+# find_library(Snappy_LIBRARIES snappy REQUIRED)
+# find_package(BZip2 REQUIRED)
+# find_package(ZLIB REQUIRED)
+
+aux_source_directory(./src src)
+add_executable(topio ${src})
+
+target_link_libraries(
+    topio
+    PRIVATE
+    xchaininit
+    xsafebox
+    xbasic
+    xpbase
+    xxbase
+    ${jsoncpp_LIBRARIES}
+    #${RocksDB_LIBRARIES}
+    #ZLIB::ZLIB
+    #BZip2::BZip2
+    #${zstd_LIBRARIES}
+    #${Snappy_LIBRARIES}
+    #${lz4_LIBRARIES}
+    pthread
+    dl
+)

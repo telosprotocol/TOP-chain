@@ -1,0 +1,3 @@
+aux_source_directory(./ tests_src)
+add_executable(xstate_sync_test ${tests_src})
+target_link_libraries(xstate_sync_test PRIVATE xstate_sync xloader xgenesis xblockstore xstore xvledger xdata xbase rocksdb z bz2 zstd snappy lz4 pthread gtest)

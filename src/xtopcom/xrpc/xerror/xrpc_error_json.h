@@ -5,7 +5,7 @@
 #pragma once
 #include <string>
 #include "xbase/xns_macro.h"
-#include "json/json.h"
+#include <json/json.h>
 NS_BEG2(top, xrpc)
 
 class xrpc_error_json
@@ -15,8 +15,8 @@ public:
     std::string write();
 
 public:
-    xJson::FastWriter       m_writer;
-    xJson::Value            m_json;
+    Json::FastWriter       m_writer;
+    Json::Value            m_json;
 };
 
 NS_END2

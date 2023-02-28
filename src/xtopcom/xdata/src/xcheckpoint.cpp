@@ -5,7 +5,11 @@
 
 #include "xdata/xcheckpoint.h"
 
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
 #include "nlohmann/fifo_map.hpp"
+#endif
 #include "nlohmann/json.hpp"
 #include "xdata/xcheckpoint_data.h"
 #include "xdata/xerror/xerror.h"

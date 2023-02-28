@@ -22,7 +22,7 @@ namespace top {
 namespace xtxpool_v2 {
 
 using data::xcons_transaction_ptr_t;
-using namespace top::data;
+// using namespace top::data;
 
 enum enum_xtx_type_socre_t {
     enum_xtx_type_socre_normal = 0,
@@ -240,7 +240,7 @@ public:
     virtual void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) = 0;
     virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;
     virtual void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;
-    virtual void on_block_confirmed(xblock_t * block) = 0;
+    virtual void on_block_confirmed(data::xblock_t * block) = 0;
     virtual bool on_block_confirmed(const std::string table_addr, base::enum_xvblock_class blk_class, uint64_t height) = 0;
     virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) = 0;
     virtual void refresh_table(uint8_t zone, uint16_t subaddr) = 0;
@@ -259,7 +259,7 @@ public:
     virtual void print_statistic_values() const = 0;
     virtual void update_peer_receipt_id_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
     virtual std::map<std::string, uint64_t> get_min_keep_heights() const = 0;
-    virtual xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const = 0;
+    virtual data::xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const = 0;
     virtual const std::set<base::xtable_shortid_t> & get_all_table_sids() const = 0;
     virtual uint32_t get_tx_cache_size(const std::string & table_addr) const = 0;
     virtual void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) = 0;

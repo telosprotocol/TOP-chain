@@ -9,7 +9,11 @@
 #include <cstring>
 #include <memory>
 
-namespace xJson {
+#if !defined(Json)
+#    define Json xJson
+#endif
+
+namespace Json {
 template<typename T>
 class SecureAllocator {
 	public:

@@ -161,7 +161,7 @@ int32_t xtransaction_fee_t::update_tgas_disk_contract_recv(uint64_t& used_deposi
 
 int32_t xtransaction_fee_t::update_tgas_contract_recv(uint64_t& used_deposit, uint64_t& frozen_tgas, uint64_t deal_used_tgas){
     // for contract as receiver, do not count tx size as
-    uint64_t tgas_usage = 0;
+    // uint64_t tgas_usage = 0;
     uint64_t sender_used_deposit = m_trans->get_last_action_used_deposit();
     auto ret = m_account_ctx->update_tgas_contract_recv(sender_used_deposit, m_trans->get_transaction()->get_deposit(), used_deposit, frozen_tgas, deal_used_tgas);
     m_trans->set_current_used_tgas(m_account_ctx->m_cur_used_tgas);

@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xpre_request_handler_mgr.h"
-#include "json/json.h"
+#include <json/json.h>
 #include "xrpc/xrpc_method.h"
 
 NS_BEG2(top, xrpc)

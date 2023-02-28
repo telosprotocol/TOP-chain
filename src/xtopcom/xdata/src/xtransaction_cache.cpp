@@ -25,7 +25,7 @@ int xtransaction_cache_t::tx_find(const std::string& tx_hash) {
         return 0;
     return 1;
 }
-int xtransaction_cache_t::tx_get_json(const std::string& tx_hash, const int index, xJson::Value & jv) {
+int xtransaction_cache_t::tx_get_json(const std::string& tx_hash, const int index, Json::Value & jv) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_trans.find(tx_hash) == m_trans.end())
         return 0;
@@ -39,7 +39,7 @@ bool xtransaction_cache_t::tx_get(const std::string& tx_hash, xtransaction_cache
     cache_data = m_trans[tx_hash];
     return true;
 }
-int xtransaction_cache_t::tx_set_json(const std::string& tx_hash, const int index, const xJson::Value & jv) {
+int xtransaction_cache_t::tx_set_json(const std::string& tx_hash, const int index, const Json::Value & jv) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_trans.find(tx_hash) == m_trans.end())
         return 1;

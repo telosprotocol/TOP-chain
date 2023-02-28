@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "json/json.h"
+#include <json/json.h>
 #include "xconfig/xconfig_face.h"
 
 NS_BEG2(top, loader)
@@ -28,7 +28,7 @@ private:
     std::string m_config_extra_file{};
 
     std::string get_file_content(const std::string& filepath);
-    void extract(const std::string& prefix, const xJson::Value& arr, std::map<std::string, std::string>& params);
+    void extract(const std::string& prefix, const Json::Value& arr, std::map<std::string, std::string>& params);
 };
 
 NS_END2

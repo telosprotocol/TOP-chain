@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <string>
-
 #include "xdb/xdb_face.h"
+
+#include <memory>
+#include <string>
 
 namespace top { namespace db {
 

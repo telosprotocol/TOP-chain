@@ -383,13 +383,15 @@ std::map<common::xgroup_address_t, xgroup_workload_t> xtable_statistic_info_coll
         for (auto const & group_item : elect_statistic.group_statistics_data) {
             common::xgroup_address_t const & group_addr = group_item.first;
             xgroup_related_statistics_data_t const & group_account_data = group_item.second;
+#if defined(DEBUG)
             xvip2_t const & group_xvip2 = top::common::xip2_t{group_addr.network_id(),
                                                               group_addr.zone_id(),
                                                               group_addr.cluster_id(),
                                                               group_addr.group_id(),
-                                                              (uint16_t)group_account_data.account_statistics_data.size(),
+                                                              static_cast<uint16_t>(group_account_data.account_statistics_data.size()),
                                                               static_item.first};
             xdbg("[xtable_statistic_info_collection_contract::get_workload] group xvip2: %llu, %llu", group_xvip2.high_addr, group_xvip2.low_addr);
+#endif
 
             auto account_group = statistic_accounts.accounts_detail.at(static_item.first);
             auto group_accounts = account_group.group_data[group_addr];

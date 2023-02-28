@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 message("========== thrid-party BEGIN ============")
 
 if(XBUILD_TEST)
@@ -10,15 +8,15 @@ if (XUSE_JEMALLOC)
     message(STATUS "")
     message(STATUS "========== thrid-party: jemalloc ============")
 
-    SET(JEMALLOC_AUTOGEN_LOG "autogen_jemalloc.log")
-    SET(JEMALLOC_MAKE_LOG "make_jemalloc.log")
-    SET(JEMALLOC_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/jemalloc)
+    set(JEMALLOC_AUTOGEN_LOG "autogen_jemalloc.log")
+    set(JEMALLOC_MAKE_LOG "make_jemalloc.log")
+    set(JEMALLOC_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/jemalloc)
 
     if (ENABLE_JEPROF)
         message(STATUS "enable jeprof")
         SET(JEMALLOC_ENABLE_JEPROF "--enable-prof")
     endif()
-
+    
     execute_process(
         COMMAND bash "-c" "rm ${JEMALLOC_AUTOGEN_LOG} ${JEMALLOC_MAKE_LOG}"
         WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
@@ -34,7 +32,7 @@ if (XUSE_JEMALLOC)
 
     message(STATUS "executing autogen.sh")
     execute_process(
-        COMMAND bash "-c" "./autogen.sh ${JEMALLOC_ENABLE_JEPROF}"
+        COMMAND bash "-c" "./autogen.sh"
         WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
         ERROR_FILE ${JEMALLOC_AUTOGEN_LOG}
         OUTPUT_FILE ${JEMALLOC_AUTOGEN_LOG}
@@ -73,10 +71,10 @@ elseif(BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC)
     message(STATUS "")
     message(STATUS "========== thrid-party: tcmalloc ============")
 
-    SET(GPERFTOOLS_AUTOGEN_LOG "autogen_gperftools.log")
-    SET(GPERFTOOLS_CONFIGURE_LOG "configure_gperftools.log")
-    SET(GPERFTOOLS_MAKE_LOG "make_gperftools.log")
-    SET(GPERFTOOLS_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/gperftools)
+    set(GPERFTOOLS_AUTOGEN_LOG "autogen_gperftools.log")
+    set(GPERFTOOLS_CONFIGURE_LOG "configure_gperftools.log")
+    set(GPERFTOOLS_MAKE_LOG "make_gperftools.log")
+    set(GPERFTOOLS_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/gperftools)
 
     execute_process(
         COMMAND bash "-c" "rm ${GPERFTOOLS_AUTOGEN_LOG} ${GPERFTOOLS_CONFIGURE_LOG} ${GPERFTOOLS_MAKE_LOG}"
@@ -115,8 +113,8 @@ elseif(BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC)
         COMMAND bash "-c" "mv ltmain.sh ltmain.origin"
         WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
     )
-    SET(PATTERN "\"$objname\"")
-    SET(REPLACEMENT "\"$objdir/$objname\"")
+    set(PATTERN "\"$objname\"")
+    set(REPLACEMENT "\"$objdir/$objname\"")
     execute_process(
         COMMAND sed "-e" "2281 s@${PATTERN}@${REPLACEMENT}@" "ltmain.origin"
         WORKING_DIRECTORY ${GPERFTOOLS_WORKING_DIRECTORY}
@@ -199,20 +197,19 @@ add_subdirectory(xquic)
 
 message(STATUS "")
 message(STATUS "========== thrid-party: libevent ============")
-SET(EVENT__LIBRARY_TYPE STATIC CACHE STRING "Build libevent only static")
-SET(EVENT__DISABLE_OPENSSL ON CACHE BOOL "Build libevent library without openssl")
-SET(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "Build libevent disable benchmark")
-SET(EVENT__DISABLE_TESTS ON CACHE BOOL "Build libevent disable test")
-SET(EVENT__DISABLE_REGRESS ON CACHE BOOL "Build libevent disable regress test")
-SET(EVENT__DISABLE_SAMPLES ON CACHE BOOL "Build libevent disable samples")
+set(EVENT__LIBRARY_TYPE STATIC CACHE STRING "Build libevent only static")
+set(EVENT__DISABLE_OPENSSL ON CACHE BOOL "Build libevent library without openssl")
+set(EVENT__DISABLE_BENCHMARK ON CACHE BOOL "Build libevent disable benchmark")
+set(EVENT__DISABLE_TESTS ON CACHE BOOL "Build libevent disable test")
+set(EVENT__DISABLE_REGRESS ON CACHE BOOL "Build libevent disable regress test")
+set(EVENT__DISABLE_SAMPLES ON CACHE BOOL "Build libevent disable samples")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-SET(EVENT__DISABLE_DEBUG_MODE OFF CACHE BOOL "Build libevent enable debug")
+    set(EVENT__DISABLE_DEBUG_MODE OFF CACHE BOOL "Build libevent enable debug")
 else ()
-SET(EVENT__DISABLE_DEBUG_MODE ON CACHE BOOL "Build libevent disable debug")
+    set(EVENT__DISABLE_DEBUG_MODE ON CACHE BOOL "Build libevent disable debug")
 endif ()
 
 add_subdirectory(libevent)
-
 
 message("========== thrid-party END ============")
 

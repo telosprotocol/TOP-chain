@@ -618,7 +618,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
         return false;
     }
 
-    auto recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
+    auto const recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
     if (ec) {
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
@@ -784,10 +784,12 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
+#if !defined(NDEBUG)
     auto const & sender = vnetwork_message.sender();
 
     assert(sender.group_address() != recver.group_address());
     assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+#endif
 
     // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
     // if they have same associated auditor group, their logic epoch should be the same (follow the logic defined in the election contract).
@@ -942,10 +944,12 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_non_associated_
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
+#if !defined(NDEBUG)
+    auto const & sender = vnetwork_message.sender();
     assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()));
+#endif
     if (sender_auditor->address().group_address() == recver_associated_auditor->address().group_address()) {
         return true;
     }
@@ -1449,7 +1453,7 @@ bool xtop_message_filter_recver_is_rec::filter_sender_from_rec(xvnetwork_message
     }
 
     auto const & recver = vnetwork_message.receiver();
-    auto const & sender = vnetwork_message.sender();
+    // auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
         normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
@@ -1523,7 +1527,7 @@ bool xtop_message_filter_recver_is_zec::filter_sender_from_zec(xvnetwork_message
     }
 
     auto const & recver = vnetwork_message.receiver();
-    auto const & sender = vnetwork_message.sender();
+    // auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
         normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {

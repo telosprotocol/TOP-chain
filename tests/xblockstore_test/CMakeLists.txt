@@ -1,7 +1,3 @@
-#add_compile_options(-static -Wall -Werror)
-add_compile_options(-static)
-
-
 aux_source_directory(./ xblockstore_test_dir)
 aux_source_directory(tests/mock/xtestdb.cpp xblockstore_test_dir)
 add_executable(xblockstore_test ${xblockstore_test_dir})

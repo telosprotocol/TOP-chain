@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "json/json.h"
+#include <json/json.h>
 
 #if defined(__clang__)
 
@@ -76,7 +76,7 @@ public:
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
-    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) {};
+    virtual void parse_to_json(Json::Value & root, const std::string & rpc_version) {};
  public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}
     inline base::enum_xvblock_class get_block_class() const {return get_header()->get_block_class();}
@@ -89,7 +89,7 @@ public:
     inline bool     is_emptytable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_nil;}
 
  public:
-    virtual void                        dump_block_data(xJson::Value & json) const {return;}
+    virtual void                        dump_block_data(Json::Value & json) const {return;}
     xtransaction_ptr_t                  query_raw_transaction(const std::string & txhash) const;
     uint32_t                            query_tx_size(const std::string & txhash) const;
 

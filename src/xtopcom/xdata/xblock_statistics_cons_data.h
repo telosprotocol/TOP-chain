@@ -4,14 +4,12 @@
 
 #pragma once
 
-#include "xbase/xobject_ptr.h"
 #include "xbasic/xserializable_based_on.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xaddress.h"
 #include "xdata/xblock.h"
 
 #include <cstdint>
-#include <set>
 #include <sstream>
 #include <vector>
 #include <iomanip>

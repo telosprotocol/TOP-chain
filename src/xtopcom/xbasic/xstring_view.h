@@ -6,6 +6,18 @@
 
 #include "xbase/xns_macro.h"
 
+#if defined(XCXX17)
+
+#include <string_view>
+
+NS_BEG1(top)
+
+using xstring_view_t = std::string_view;
+
+NS_END1
+
+#else
+
 #include <cassert>
 #include <cstddef>
 #include <string>
@@ -26,9 +38,6 @@ NS_BEG1(details)
 template <class TraitsT>
 class xtop_string_view_iterator {
 public:
-#ifdef __cpp_lib_concepts
-    using iterator_concept = contiguous_iterator_tag;
-#endif  // __cpp_lib_concepts
     using iterator_category = std::random_access_iterator_tag;
     using value_type = typename TraitsT::char_type;
     using difference_type = ptrdiff_t;
@@ -116,11 +125,6 @@ public:
         return offset_ == right.offset_;
     }
 
-#if defined(XCXX20_OR_ABOVE)
-    XATTRIBUTE_NODISCARD constexpr strong_ordering operator<=>(xtop_string_view_iterator const & right) const noexcept {
-        return offset_ <=> right.offset_;
-    }
-#else
     XATTRIBUTE_NODISCARD constexpr bool operator!=(xtop_string_view_iterator const & right) const noexcept {
         return !(*this == right);
     }
@@ -140,7 +144,6 @@ public:
     XATTRIBUTE_NODISCARD constexpr bool operator>=(xtop_string_view_iterator const & right) const noexcept {
         return !(*this < right);
     }
-#endif
 };
 
 template <typename TraitsT>
@@ -481,3 +484,5 @@ constexpr typename xtop_basic_string_view<CharT, TraistsT>::size_type xtop_basic
 using xstring_view_t = xbasic_string_view_t<char>;
 
 NS_END1
+
+#endif

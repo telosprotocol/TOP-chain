@@ -1,17 +1,15 @@
-#add_compile_options(-static -Wall -Werror)
-add_compile_options(-static)
-
 include_directories(.)
 include_directories(./src)
 
 aux_source_directory(./src src_dir)
 add_library(xstatectx STATIC ${src_dir})
 
+add_dependencies(xstatectx xstatestore xdata xvledger xxbase)
 target_link_libraries(xstatectx PRIVATE
-    xvledger
     xblockstore
-    xdata
     xstatestore
+    xdata
+    xvledger
     xxbase
 )
 

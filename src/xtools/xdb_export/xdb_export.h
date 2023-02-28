@@ -383,7 +383,7 @@ private:
     static bool table_mpt_read_callback(const std::string& key, const std::string& value,void *cookie);
     void query_table_latest_fullblock(std::string const & account, json & j);
     void query_tx_info_internal(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp);
-    void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root);
+    void query_block_info(std::string const & account, const uint64_t h, Json::Value & root);
     void query_block_state_basic(std::string const & account, const uint64_t h, json & result);
     void query_block_basic(std::string const & account, const uint64_t h, json & result);
     void query_state_basic(std::string const & account, const uint64_t h, json & result);

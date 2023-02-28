@@ -55,7 +55,7 @@ bool xrpc_query_func::is_prop_name_already_set_property(const std::string & prop
         data::XPROPERTY_CONTRACT_GROUP_ASSOC_KEY,
     };
 
-    auto iter = property_names.find(prop_name);
+    auto const iter = property_names.find(prop_name);
     if (iter != property_names.end()) {
         return true;
     }
@@ -104,21 +104,21 @@ bool xrpc_query_func::is_prop_name_not_set_property(const std::string & prop_nam
                                                    PROPOSAL_MAP_ID,
                                                    VOTE_MAP_ID};
 
-    auto iter = property_names.find(prop_name);
+    auto const iter = property_names.find(prop_name);
     if (iter != property_names.end()) {
         return true;
     }
     return false;
 }
 
-bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode) {
+bool xrpc_query_func::query_special_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode) {
     if (is_prop_name_already_set_property(prop_name)) {
         top::contract::xcontract_manager_t::instance().get_contract_data(
             top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jph);
         return true;
     }
     if (is_prop_name_not_set_property(prop_name)) {
-        xJson::Value jm;
+        Json::Value jm;
         top::contract::xcontract_manager_t::instance().get_contract_data(
             top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jm);
         jph[prop_name] = jm;
@@ -139,16 +139,16 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
             xdbg("pledge_redeem_vote %d, %d, %d", vote_num, duration, lock_time);
             if (vote_num == 0)
                 continue;
-            xJson::Value j;
-            j["vote_num"] = static_cast<unsigned long long>(vote_num);
+            Json::Value j;
+            j["vote_num"] = static_cast<Json::UInt64>(vote_num);
             if (duration != 0)
-                j["lock_token"] = static_cast<unsigned long long>(store::xaccount_context_t::get_top_by_vote(vote_num, duration));
+                j["lock_token"] = static_cast<Json::UInt64>(store::xaccount_context_t::get_top_by_vote(vote_num, duration));
             else {
                 auto propobj_str = unitstate->get_bstate()->load_string_var(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY);
                 j["lock_token"] = propobj_str->query();
             }
             j["duration"] = duration;
-            j["lock_time"] = static_cast<unsigned long long>(lock_time);
+            j["lock_time"] = static_cast<Json::UInt64>(lock_time);
             jph[data::XPROPERTY_PLEDGE_VOTE_KEY].append(j);
         }
         return true;
@@ -156,7 +156,7 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
 
     if (prop_name == data::XPROPERTY_TEP1_BALANCE_KEY)
     {
-        xJson::Value j;
+        Json::Value j;
         auto kvs = unitstate->map_get(prop_name);
         for (auto & v : kvs) {
             auto const token_id = top::from_string<common::xtoken_id_t>(v.first);
@@ -168,7 +168,7 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
     }
 
     if (prop_name == data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY) {
-        xJson::Value j;
+        Json::Value j;
         std::error_code ec;
         auto const allowance_data = unitstate->allowance(ec);
         for (auto const & allowance_datum : allowance_data) {
@@ -181,7 +181,7 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
                 continue;
             }
 
-            xJson::Value spenderJson;
+            Json::Value spenderJson;
             for (auto const & a : allowance) {
                 auto const & spender = top::get<common::xaccount_address_t const>(a);
                 auto const & value = top::get<evm_common::u256>(a);
@@ -199,7 +199,7 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
     return false;
 }
 
-void xrpc_query_func::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode) {
+void xrpc_query_func::query_account_property_base(Json::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode) {
     if (unitstate == nullptr || unitstate->is_empty_state()) {
         xwarn("xrpc_query_manager::query_account_property fail-query unit state.account=%s", owner.c_str());
         return;
@@ -216,7 +216,7 @@ void xrpc_query_func::query_account_property_base(xJson::Value & jph, const std:
     if (propobj->get_obj_type() == base::enum_xobject_type_vprop_string_map) {
         auto propobj_map = unitstate->get_bstate()->load_string_map_var(prop_name);
         auto values = propobj_map->query();
-        xJson::Value j;
+        Json::Value j;
         for (auto & v : values) {
             j[v.first] = v.second;
         }
@@ -241,14 +241,14 @@ void xrpc_query_func::query_account_property_base(xJson::Value & jph, const std:
     }
 }
 
-void xrpc_query_func::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode) {
+void xrpc_query_func::query_account_property(Json::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode) {
     xdbg("xrpc_query_manager::query_account_property account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
     // load newest account state
-    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(owner));
+    data::xunitstate_ptr_t const unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(owner));
     query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode == xfull_node_compatible_mode_t::compatible);
 }
 
-void xrpc_query_func::query_account_property(xJson::Value & jph,
+void xrpc_query_func::query_account_property(Json::Value & jph,
                                               const std::string & owner,
                                               const std::string & prop_name,
                                               const uint64_t height,

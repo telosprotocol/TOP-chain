@@ -37,9 +37,6 @@ public:
 private:
     contract_runtime::evm::xevm_output_t execute(data::xcons_transaction_ptr_t const & tx, txexecutor::xvm_para_t const & vm_para);
 
-#if defined(XENABLE_TESTS)
-public:
-#endif
     evm_common::xevm_transaction_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action, txexecutor::xvm_para_t const & vm_para);
 };
 

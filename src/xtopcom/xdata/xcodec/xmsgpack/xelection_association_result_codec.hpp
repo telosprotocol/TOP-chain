@@ -43,7 +43,7 @@ struct convert<top::data::election::xelection_association_result_t> final
 
             case xelection_association_result_results_index: {
                 result.results(o.via.array.ptr[xelection_association_result_results_index].as<std::map<top::common::xgroup_id_t, top::common::xgroup_id_t>>());
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
 

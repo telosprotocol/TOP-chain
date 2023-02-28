@@ -30,7 +30,7 @@ std::error_category const & blockstore_category();
 
 namespace std {
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::store::error::xerrc_t> final {

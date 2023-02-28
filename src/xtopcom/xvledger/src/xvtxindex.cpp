@@ -75,7 +75,7 @@ namespace top
 
         int32_t xvtxkey_vec_t::serialize_to_string(std::string & str) const {
             base::xstream_t _stream(base::xcontext_t::instance());
-            auto size = do_write(_stream);
+            do_write(_stream);
             str.clear();
             str.assign((const char*)_stream.data(), _stream.size());
             return str.size();

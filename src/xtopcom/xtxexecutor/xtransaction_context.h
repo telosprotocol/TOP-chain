@@ -23,7 +23,7 @@
 #include "xbase/xmem.h"
 #include "xstore/xstore_error.h"
 #include "xdata/xgenesis_data.h"
-#include "xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xtx_verifier.h"
 #include "xtxexecutor/xtransaction_fee.h"
 
 NS_BEG2(top, txexecutor)
@@ -230,7 +230,7 @@ class xtransaction_pledge_token : public xtransaction_face_t{
         return 0;
     }
     int32_t target_action_exec() override {
-        int32_t ret{0};
+        // int32_t ret{0};
         if(m_trans->get_source_addr() != m_trans->get_target_addr()){
             xassert(false);  // must self tx, not support parent pledge now
             return -1;

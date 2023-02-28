@@ -496,11 +496,13 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         proposal_para.get_table_account(), tablestate_highqc, proposal_para.get_latest_cert_block().get(), all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
     // std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
 
-    auto pack_resource = get_txpool()->get_pack_resource(txpool_pack_para);
+    auto const pack_resource = get_txpool()->get_pack_resource(txpool_pack_para);
+#if defined(DEBUG)
     for (auto & tx : pack_resource.m_txs) {
         xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
                 proposal_para.dump().c_str(), tx->dump().c_str());
     }
+#endif
     // table_para.set_origin_txs(origin_txs);
     table_para.set_pack_resource(pack_resource);
     return true;

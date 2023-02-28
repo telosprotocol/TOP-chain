@@ -4,22 +4,12 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <atomic>
-#include <map>
-#include <mutex>
-#include "xbase/xint.h"
-#include "xdata/xtransaction.h"
-#include "json/json.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, elect)
 
-class xelect_client_imp {
- public:
-    xelect_client_imp() = default;
-    ~xelect_client_imp() = default;
-
+class xelect_client_imp final {
+public:
     void bootstrap_node_join();
 };
 

@@ -45,12 +45,12 @@ void * xfull_tableblock_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-void xfull_tableblock_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
+void xfull_tableblock_t::parse_to_json(Json::Value & root, const std::string & rpc_version) {
 
 #ifndef  XBUILD_CONSORTIUM
-     root["statistics"] = get_table_statistics().to_json_object<xJson::Value>();
+     root["statistics"] = get_table_statistics().to_json_object<Json::Value>();
 #else 
-     root["statistics"] = get_table_statistics_cons_data().to_json_object<xJson::Value>();
+     root["statistics"] = get_table_statistics_cons_data().to_json_object<Json::Value>();
 #endif 
 }
 

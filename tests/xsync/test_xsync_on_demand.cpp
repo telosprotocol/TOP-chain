@@ -35,9 +35,9 @@ public:
 };
 
 // 1shard(1node) + 1 archive(1node)
-static xJson::Value build_network_xsync_on_demand() {
+static Json::Value build_network_xsync_on_demand() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -71,7 +71,7 @@ TEST(xsync_on_demand, on_behind_unit) {
     xsync_on_demand_t sync_on_demand("", make_observer(&mbus), make_observer(&auth), &sync_store, &role_chains_mgr, &role_xips_mgr, &sync_sender);
 
     // add network
-    xJson::Value network_on_demand = build_network_xsync_on_demand();
+    Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();
@@ -206,7 +206,7 @@ TEST(xsync_on_demand, on_response_unit) {
     xsync_on_demand_t sync_on_demand("", make_observer(&mbus), make_observer(&auth), &sync_store, &role_chains_mgr, &role_xips_mgr, &sync_sender);
 
     // add network
-     xJson::Value network_on_demand = build_network_xsync_on_demand();
+     Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();
@@ -334,7 +334,7 @@ TEST(xsync_on_demand, on_behind_table) {
     xsync_on_demand_t sync_on_demand("", make_observer(&mbus), make_observer(&auth), &sync_store, &role_chains_mgr, &role_xips_mgr, &sync_sender);
 
     // add network
-    xJson::Value network_on_demand = build_network_xsync_on_demand();
+    Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();
@@ -471,7 +471,7 @@ TEST(xsync_on_demand, on_response_table) {
     xsync_on_demand_t sync_on_demand("", make_observer(&mbus), make_observer(&auth), &sync_store, &role_chains_mgr, &role_xips_mgr, &sync_sender);
 
     // add network
-     xJson::Value network_on_demand = build_network_xsync_on_demand();
+     Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();
@@ -575,7 +575,7 @@ TEST(xsync_on_demand, on_behind_by_hash_unit) {
     xsync_on_demand_t sync_on_demand("", make_observer(&mbus), make_observer(&auth), &sync_store, &role_chains_mgr, &role_xips_mgr, &sync_sender);
 
     // add network
-    xJson::Value network_on_demand = build_network_xsync_on_demand();
+    Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();
@@ -669,7 +669,7 @@ TEST(xsync_on_demand, on_response_by_hash_unit) {
     xsync_on_demand_t sync_on_demand("", make_observer(&mbus), make_observer(&auth), &sync_store, &role_chains_mgr, &role_xips_mgr, &sync_sender);
 
     // add network
-     xJson::Value network_on_demand = build_network_xsync_on_demand();
+     Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();

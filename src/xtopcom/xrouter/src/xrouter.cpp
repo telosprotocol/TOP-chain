@@ -2,13 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xrouter/xrouter.h"
+
 #include "xbasic/xutility.h"
 #include "xcommon/xsharding_info.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xbook_id_mapping.h"
 #include "xdata/xgenesis_data.h"
-#include "xrouter/xrouter.h"
-#include "xvm/manager/xcontract_address_map.h"
 
 #include <cinttypes>
 NS_BEG2(top, router)
@@ -113,7 +113,7 @@ common::xsharding_address_t xtop_router::do_address_of_book_id(std::uint16_t con
                                                                common::xnetwork_id_t const & nid) const {
     assert(common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::consensus_auditor>(type));
 
-    auto const & config_register = top::config::xconfig_register_t::get_instance();
+    // auto const & config_register = top::config::xconfig_register_t::get_instance();
 
     auto const zone_count = XGET_CONFIG(zone_count);
     auto const cluster_count = XGET_CONFIG(cluster_count);
@@ -139,7 +139,7 @@ common::xsharding_address_t xtop_router::do_address_of_table_id(std::uint16_t co
                                                                 common::xnetwork_id_t const & nid) const {
     assert(common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::consensus_auditor>(type));
 
-    auto const & config_register = top::config::xconfig_register_t::get_instance();
+    // auto const & config_register = top::config::xconfig_register_t::get_instance();
 
     auto book_id = base::xvaccount_t::get_book_index_from_subaddr(table_id);
 

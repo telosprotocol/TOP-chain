@@ -87,7 +87,7 @@ uint32_t xreceipt_strategy_t::calc_resend_time(uint64_t tx_cert_time, uint64_t n
 #endif
 
 bool xreceipt_strategy_t::is_selected_pos(uint32_t pos, uint32_t rand_pos, uint32_t select_num, uint32_t size) {
-    bool ret = false;
+    // bool ret = false;
     xassert((select_num < size) && (pos < size));
     if (pos >= rand_pos) {
         return pos < rand_pos + select_num;

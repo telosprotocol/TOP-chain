@@ -556,7 +556,7 @@ bool xtop_rec_standby_pool_contract::update_standby_result_store(std::map<common
             it++;
         }
 
-        auto activated_state_updated = update_activated_state(standby_network_storage_result, activation_record);
+        auto const activated_state_updated = update_activated_state(standby_network_storage_result, activation_record);
         if (!updated && activated_state_updated) {
             updated = activated_state_updated;
         }

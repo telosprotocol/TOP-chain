@@ -38,7 +38,7 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
         auto const network_id = top::get<common::xnetwork_id_t const>(election_result_info);
         auto const & election_type_results = top::get<data::election::xelection_network_result_t>(election_result_info);
         for (auto const & election_type_result : election_type_results) {
-            auto node_type = top::get<common::xnode_type_t const>(election_type_result);
+            // auto node_type = top::get<common::xnode_type_t const>(election_type_result);
             auto const & election_result = top::get<data::election::xelection_result_t>(election_type_result);
 
             for (auto const & cluster_result_info : election_result) {
@@ -58,7 +58,7 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                     std::vector<wrouter::WrouterTableNodes> elect_data;
                     for (auto const & node_info : group_result) {
                         auto const & node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
-                        auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
+                        // auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
                         auto const & slot_id = top::get<const common::xslot_id_t>(node_info);
                         // here the slot_id is strict increasing. Start with 0.
                         if (node_id.empty()) {
@@ -160,7 +160,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
             auto const root_kad_key = top::get<base::KadmliaKeyPtr>(_p);
             auto const & root_xip = root_kad_key->Get();
             if (new_round_root_xip_set.find(root_xip) == new_round_root_xip_set.end()) {
-                auto const & node_info = last_round_routing_table_ptr->GetNode(last_election_xip2);
+                // auto const & node_info = last_round_routing_table_ptr->GetNode(last_election_xip2);
                 // here is possible to be nullptr (ths dst node never connected in this p2p)
                 // but set it anyway, must be sure the index is same in every correct nodes
                 // since the dst node(elected out) wasn't even be online in the whole last round,

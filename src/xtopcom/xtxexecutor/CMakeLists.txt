@@ -1,6 +1,3 @@
-#add_compile_options(-static -Wall -Werror)
-add_compile_options(-static)
-
 if (NOT DISABLE_EVM)
     add_definitions(-DTXEXECUTOR_ENABLE_EVM)
 endif()
@@ -22,7 +19,7 @@ target_link_libraries(xtxexecutor PRIVATE
     xstore
     xstatectx
     xgasfee
-    xverifier
+    # xverifier
     xvm
     xchain_upgrade
     xdata
@@ -34,6 +31,6 @@ if (NOT DISABLE_EVM)
 endif()
 
 if (BUILD_METRICS)
-    # add_dependencies(xtxexecutor xmetrics)
+    add_dependencies(xtxexecutor xmetrics)
     target_link_libraries(xtxexecutor PRIVATE xmetrics)
 endif()
