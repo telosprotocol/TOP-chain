@@ -460,11 +460,13 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         xerror("xtable_maker_t::make_light_table_v2 fail-create mpt. %s", cs_para.dump().c_str());
         return nullptr;
     }
+    xinfo("xtable_maker_t::make_light_table_v2 create_new_mpt ok");
     evm_common::xh256_t state_root = table_mpt->get_root_hash(ec);
     if (ec) {
         xerror("xtable_maker_t::make_light_table_v2 fail-get mpt root. %s, ec=%s", cs_para.dump().c_str(), ec.message().c_str());
         return nullptr;
     }
+    xinfo("xtable_maker_t::make_light_table_v2 get_root_hash ok");
     xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), state_root.hex().c_str());
 
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, state_root, execute_output.pack_outputs));
@@ -476,6 +478,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
             is_leader, cs_para.dump().c_str(), ec.message().c_str());
         return nullptr;
     }
+    xinfo("xtable_maker_t::make_light_table_v2 make_table_block_para ok");
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
