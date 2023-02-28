@@ -151,9 +151,11 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
                  m_xtable_info->get_recv_tx_count(),
                  m_xtable_info->get_conf_tx_count());
     }
+#if defined(DEBUG)
     for (auto & tx : ready_txs) {
         xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
     }
+#endif
 
     return ready_txs;
 }

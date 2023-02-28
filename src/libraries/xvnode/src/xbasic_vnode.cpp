@@ -137,10 +137,11 @@ std::vector<common::xip2_t> xtop_basic_vnode::neighbors_xip2(std::error_code & e
                        std::end(neighbors),
                        std::back_inserter(m_neighbors_xip2),
                        [](std::pair<common::xslot_id_t const, std::shared_ptr<election::cache::xnode_element_t>> const & neighbor) {
-                           auto const & slot_id = top::get<common::xslot_id_t const>(neighbor);
                            auto const & node_element = top::get<std::shared_ptr<election::cache::xnode_element_t>>(neighbor);
-
+#if !defined(NDEBUG)
+                           auto const & slot_id = top::get<common::xslot_id_t const>(neighbor);
                            assert(slot_id == node_element->slot_id());
+#endif
 
                            return node_element->xip2();
                        });

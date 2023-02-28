@@ -33,8 +33,10 @@ xshard_rpc_handler::xshard_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> 
 
 void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessage_t const & message, std::uint64_t const timer_height) {
     XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_shard_rpc_handler");
-    auto msgid = message.id();
-    xdbg_rpc("xshard_rpc_handler on_message,id(%x,%s), timer_height %lld", msgid, edge_sender.to_string().c_str(), timer_height);
+#if defined(DEBUG)
+    auto msg_id = message.id();
+    xdbg_rpc("xshard_rpc_handler on_message,id(%x,%s), timer_height %lld", msg_id, edge_sender.to_string().c_str(), timer_height);
+#endif
     xkinfo("[global_trace][shard_rpc][recv advance msg]src %s,dst %s, timer_height %lld, %" PRIx64,
            edge_sender.to_string().c_str(),
            m_shard_vhost->address().to_string().c_str(),

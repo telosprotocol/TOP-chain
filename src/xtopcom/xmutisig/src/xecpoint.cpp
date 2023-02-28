@@ -4,7 +4,7 @@
 #include "xmutisig/xschnorr.h"
 #include "xmutisig/xserialize/xecpoint_serialize.h"
 
-#include <assert.h>
+#include <cassert>
 
 using top::xmutisig::xpoint_face;
 // using top::xmutisig::ec_point_ptr_t;
@@ -21,7 +21,10 @@ xpoint_face::xpoint_face(const xbn_face & bn_face) {
 
     // bn_face is "k" and m_ec_point is "R", here R = k * G
     // or bn_face is "private_key" and m_ec_point is public Key,so  P = pk * G
-    int32_t ret = EC_POINT_mul(xschnorr::instance()->curve()->ec_group(), m_ec_point, bn_face.bn_value(), NULL, NULL, NULL);
+#if !defined(NDEBUG)
+    int32_t ret =
+#endif
+    EC_POINT_mul(xschnorr::instance()->curve()->ec_group(), m_ec_point, bn_face.bn_value(), nullptr, nullptr, nullptr);
     assert(0 != ret);
 }
 
@@ -35,9 +38,10 @@ xpoint_face::xpoint_face(const xpoint_face & point) {
      *  \param  src  source EC_POINT object
      *  \return 1 on success and 0 if an error occurred
      */
-
-    int ret = EC_POINT_copy(m_ec_point, point.ec_point());
-
+#if !defined(NDEBUG)
+    int ret =
+#endif
+    EC_POINT_copy(m_ec_point, point.ec_point());
     assert(0 != ret);
 }
 

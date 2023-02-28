@@ -190,7 +190,10 @@ bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) co
             stream << full_tableblock->get_pledge_balance_change_tgas();
             std::string action_params = std::string((char *)stream.data(), stream.size());
             uint32_t table_id = 0;
-            auto result = data::xdatautil::extract_table_id_from_address(block_address, table_id);
+#if !defined(NDEBUG)
+            auto result =
+#endif
+            data::xdatautil::extract_table_id_from_address(block_address, table_id);
             assert(result);
             {
                 // table id check

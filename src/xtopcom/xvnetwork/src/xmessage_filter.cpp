@@ -784,10 +784,12 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
+#if !defined(NDEBUG)
     auto const & sender = vnetwork_message.sender();
 
     assert(sender.group_address() != recver.group_address());
     assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+#endif
 
     // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
     // if they have same associated auditor group, their logic epoch should be the same (follow the logic defined in the election contract).
@@ -942,10 +944,12 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_non_associated_
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
+#if !defined(NDEBUG)
+    auto const & sender = vnetwork_message.sender();
     assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()));
+#endif
     if (sender_auditor->address().group_address() == recver_associated_auditor->address().group_address()) {
         return true;
     }

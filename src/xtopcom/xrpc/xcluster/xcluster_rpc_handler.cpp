@@ -38,9 +38,10 @@ xcluster_rpc_handler::xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face
 
 void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
     XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_cluster_rpc_handler");
-    auto msgid = message.id();
-
-    xdbg_rpc("xcluster_rpc_handler on_message,id(%x,%s)", msgid, edge_sender.to_string().c_str());  // address to_string
+#if defined(DEBUG)
+    auto msg_id = message.id();
+    xdbg_rpc("xcluster_rpc_handler on_message,id(%x,%s)", msg_id, edge_sender.to_string().c_str());  // address to_string
+#endif
 
     auto self = shared_from_this();
     auto process_request = [self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {

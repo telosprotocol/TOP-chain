@@ -148,10 +148,11 @@ contract_runtime::xtransaction_execution_result_t xtop_account_vm::execute_actio
     }
 
     xdbg("[xtop_account_vm::execute] followup_tx size: %" PRIu64, result.output.followup_transaction_data.size());
-    for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
-        auto const & data = result.output.followup_transaction_data[i];
-        xdbg("dump followup tx [%u], tx: %s, %d, %d", i, base::xstring_utl::to_hex(data.followed_transaction->get_tx_hash()).c_str(), data.schedule_type, data.execute_type);
+#if defined(DEBUG)
+    for (auto const & data : result.output.followup_transaction_data) {
+        xdbg("dump followup tx: %s, %d, %d", base::xstring_utl::to_hex(data.followed_transaction->get_tx_hash()).c_str(), data.schedule_type, data.execute_type);
     }
+#endif
     for (size_t i = 0; i < result.output.followup_transaction_data.size(); i++) {
         auto & followup_tx = result.output.followup_transaction_data[i];
         xdbg("[xtop_account_vm::execute] followup_tx[%zu] schedule_type: %" PRIi32 ", execute_type: %" PRIi32, i, followup_tx.schedule_type, followup_tx.execute_type);

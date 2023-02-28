@@ -257,9 +257,9 @@ int xquic_server_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
     return 0;
 }
 int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
-    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
-    xquic_server_t * server = (xquic_server_t *)srv_user_conn->server;
+    auto srv_user_conn = static_cast<srv_user_conn_t *>(user_data);
 #if defined(DEBUG)
+    xquic_server_t * server = (xquic_server_t *)srv_user_conn->server;
     xqc_conn_stats_t stats = xqc_conn_get_stats(server->engine, cid);
     xdbg("[xquic_server_engine]send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%" PRIu64 " early_data_flag:%d, conn_err:%d, ack_info:%s",
          stats.send_count,

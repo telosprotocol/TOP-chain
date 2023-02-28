@@ -154,9 +154,11 @@ struct xsync_committee_t {
     xbytes_t encode_rlp() const {
         assert(!pubkeys.empty());
         assert(!aggregate_pubkey.empty());
+#if !defined(NDEBUG)
         for (auto const & pubkey : pubkeys) {
             assert(pubkey.size() == PUBLIC_KEY_BYTES_LEN);
         }
+#endif
         assert(aggregate_pubkey.size() == PUBLIC_KEY_BYTES_LEN);
         xbytes_t out;
         auto item1 = RLP::encodeList(pubkeys);
@@ -241,9 +243,11 @@ struct xsync_committee_update_t {
 
     xbytes_t encode_rlp() const {
         assert(!next_sync_committee_branch.empty());
+#if !defined(NDEBUG)
         for (auto const & b : next_sync_committee_branch) {
             assert(b.size() == HASH_LEN);
         }
+#endif
         xbytes_t out;
         auto const & item1 = RLP::encode(next_sync_committee.encode_rlp());
         out.insert(out.end(), item1.begin(), item1.end());
@@ -310,9 +314,11 @@ struct xfinalized_header_update_t {
     }
 
     xbytes_t encode_rlp() const {
+#if !defined(NDEBUG)
         for (auto const & b : finality_branch) {
             assert(b.size() == HASH_LEN);
         }
+#endif
         xbytes_t out;
         auto const & item1 = RLP::encode(header_update.encode_rlp());
         out.insert(out.end(), item1.begin(), item1.end());

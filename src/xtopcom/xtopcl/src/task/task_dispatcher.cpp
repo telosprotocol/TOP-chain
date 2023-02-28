@@ -23,7 +23,10 @@ std::once_flag task_dispatcher::m_once_init_flag;
 
 task_dispatcher::task_dispatcher() : seed_fetcher(g_edge_domain) {
     seeds.push_back(g_server_host_port);
-    auto rtn = seed_fetcher.GetEdgeSeeds(seeds);
+#if defined(DEBUG)
+    auto rtn =
+#endif
+    seed_fetcher.GetEdgeSeeds(seeds);
 #ifdef DEBUG
     if (!rtn) {
         std::cout << "[debug]get seeds from " << SEED_URL << " failed" << std::endl;

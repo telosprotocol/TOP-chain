@@ -470,9 +470,11 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get
         auto & need_confirm_ids = need_confirm_ids_pair.second;
         auto it = m_confirm_tx_peer_table_map.find(peer_table_sid);
         if (it == m_confirm_tx_peer_table_map.end()) {
+#if defined(DEBUG)
             for (auto & id : need_confirm_ids.m_ids) {
                 xdbg("xreceipt_queue_new_t::get_lacking_discrete_confirm_tx_ids peer table:%d,receipt id:%llu", peer_table_sid, id);
             }
+#endif
             lacking_receipt_ids.insert(lacking_receipt_ids.end(), need_confirm_ids.m_ids.begin(), need_confirm_ids.m_ids.end());
             total_num += need_confirm_ids.m_ids.size();
         } else {

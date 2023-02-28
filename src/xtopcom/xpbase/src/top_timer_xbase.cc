@@ -119,7 +119,10 @@ void TimerXbase::Start() {
     Lock lock(mutex_);
     assert(!started_);
 
-    auto ret = xtimer_->start(delay_, repeat_);
+#if !defined(NDEBUG)
+    auto ret =
+#endif
+    xtimer_->start(delay_, repeat_);
     assert(ret == enum_xcode_successful);
 
     future_ = promise_.get_future();

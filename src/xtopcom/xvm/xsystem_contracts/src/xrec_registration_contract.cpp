@@ -983,7 +983,9 @@ void xrec_registration_contract::slash_staking_time(std::string const & node_add
 
 void xrec_registration_contract::slash_unqualified_node(std::string const & punish_node_str) {
     XMETRICS_TIME_RECORD(XREG_CONTRACT "slash_unqualified_node_ExecutionTime");
+#if defined(DEBUG)
     auto const & account = SELF_ADDRESS();
+#endif
     auto const & source_addr = SOURCE_ADDRESS();
 
     std::string base_addr = "";

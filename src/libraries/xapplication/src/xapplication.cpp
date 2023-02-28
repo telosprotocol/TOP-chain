@@ -539,6 +539,7 @@ NS_END2
 #if !defined(XCXX14)
 
 NS_BEG1(std)
+
 std::size_t hash<top::application::xthread_pool_type_t>::operator()(top::application::xthread_pool_type_t const type) const noexcept {
     return static_cast<std::size_t>(type);
 };

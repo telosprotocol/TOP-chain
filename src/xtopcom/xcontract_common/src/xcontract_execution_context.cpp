@@ -41,11 +41,13 @@ xcontract_execution_result_t const & xtop_contract_execution_context::execution_
 
 void xtop_contract_execution_context::add_followup_transaction(data::xcons_transaction_ptr_t tx, xfollowup_transaction_schedule_type_t type) {
     m_execution_result.output.followup_transaction_data.emplace_back(std::move(tx), type);
+#if defined(DEBUG)
     xdbg("xtop_contract_execution_context::add_followup_transaction add followup tx, now size: %zu", m_execution_result.output.followup_transaction_data.size());
     for (size_t i = 0; i < m_execution_result.output.followup_transaction_data.size(); i++) {
         auto const & data = m_execution_result.output.followup_transaction_data[i];
         xdbg("dump followup tx: %u, %s, %d, %d", i, base::xstring_utl::to_hex(data.followed_transaction->get_tx_hash()).c_str());
     }
+#endif
 }
 
 std::vector<xfollowup_transaction_datum_t> const & xtop_contract_execution_context::followup_transaction() const noexcept {
@@ -736,8 +738,9 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confi
     uint64_t lock_tgas = last_action_send_tx_lock_tgas();
     uint64_t used_deposit = last_action_used_deposit();
     uint64_t target_used_tgas = last_action_recv_tx_use_send_tx_tgas();
-    uint64_t status = last_action_exec_status();
     uint64_t tx_deposit = deposit();
+#if defined(DEBUG)
+    uint64_t status = last_action_exec_status();
     xdbg("[xtop_contract_execution_context::execute_default_confirm_action] tx: %s, deposit: %u, recv_tx_use_send_tx_tgas: %llu, used_deposit: %u, lock_tgas: %u, status: %d",
          digest_hex().c_str(),
          tx_deposit,
@@ -745,8 +748,9 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confi
          used_deposit,
          lock_tgas,
          status);
+#endif
     if (lock_tgas > 0) {
-        auto cur_lock_tgas = contract_state()->lock_tgas();
+        auto const cur_lock_tgas = contract_state()->lock_tgas();
         assert(cur_lock_tgas >= lock_tgas);
         contract_state()->lock_tgas(cur_lock_tgas - lock_tgas);
     }

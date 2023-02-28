@@ -71,7 +71,10 @@ void xrole_context_t::on_block_to_db(const data::xblock_ptr_t & block, bool & ev
             auto node_service = contract::xcontract_manager_t::instance().get_node_service();
             // xblock_monitor_info_t * info = m_contract_info->find(m_contract_info->address);
             uint32_t table_id = 0;
-            auto result = data::xdatautil::extract_table_id_from_address(block_owner, table_id);
+#if !defined(NDEBUG)
+            auto result =
+#endif
+            data::xdatautil::extract_table_id_from_address(block_owner, table_id);
             assert(result);
             XMETRICS_GAUGE(metrics::xmetrics_tag_t::contract_table_fullblock_event, 1);
 

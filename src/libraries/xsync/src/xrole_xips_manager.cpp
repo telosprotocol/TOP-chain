@@ -29,10 +29,12 @@ void xrole_xips_manager_t::add_role(const common::xnode_address_t & self_xip,
             break;
         }
     }
+#if defined(DEBUG)
     for (auto const & neighbour : neighbours)
         xsync_dbg("xrole_xips_manager_t::add_role, neighbours: %s", neighbour.to_string().c_str());
     for (auto const & p : parents)
         xsync_dbg("xrole_xips_manager_t::add_role, parents: %s", p.to_string().c_str());
+#endif
     m_map[self_xip] = {self_xip,
                        create_xip_vector_ptr(neighbours, self_xip),
                        create_xip_vector_ptr(parents, self_xip),

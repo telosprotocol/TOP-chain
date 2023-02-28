@@ -451,9 +451,11 @@ namespace top
                 auto key_size = get_size(pair.first);
                 auto value_size = sizeof(pair.second);
                 if (pair.second != nullptr) {
+#if defined(DEBUG)
                     auto vexeunit_size = sizeof(*pair.second);
                     auto vexeunit_ex_size = pair.second->get_ex_alloc_size();
                     xdbg("-----cache size----- xvexemodule_t vexeunit_size:%d,vexeunit_ex_size:%d", vexeunit_size, vexeunit_ex_size);
+#endif
                 }
                 // each map node alloc 48B
                 ex_size += (key_size + value_size + 48);

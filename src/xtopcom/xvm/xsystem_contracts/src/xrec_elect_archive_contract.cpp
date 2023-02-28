@@ -159,14 +159,17 @@ void xtop_rec_elect_archive_contract::elect_archive(const uint64_t current_time)
 
     auto const range = archive_group_range;
 
+#if defined(XBUILD_GALILEO)
     auto const pre_election_timestamp =
         election_network_result.result_of(common::xnode_type_t::storage_archive).result_of(common::xdefault_cluster_id).result_of(archive_gid).timestamp();
     assert(pre_election_timestamp < current_time);
-#if defined(XBUILD_GALILEO)
     bool const force_update = pre_election_timestamp == static_cast<common::xlogic_time_t>(9013680);  // force update archive. fix ID1002557.
 #elif defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_BOUNTY)
     constexpr bool force_update = false;
 #else
+    auto const pre_election_timestamp =
+        election_network_result.result_of(common::xnode_type_t::storage_archive).result_of(common::xdefault_cluster_id).result_of(archive_gid).timestamp();
+    assert(pre_election_timestamp < current_time);
     bool const force_update = pre_election_timestamp == static_cast<common::xlogic_time_t>(7481520);  // force update archive. fix ID1002557.
 #endif
 
