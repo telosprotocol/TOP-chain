@@ -11,6 +11,7 @@ target_link_libraries(xtxpool_v2 PRIVATE
     xblockstore
     xstate_mpt
     xxbase
+    xpreprocess
 )
 
 if (BUILD_METRICS)

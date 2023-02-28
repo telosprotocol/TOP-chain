@@ -600,7 +600,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
     xtable_state_cache_t table_state_cache2(nullptr, table_addr2);
     xtxpool_table_info_t table_para2(table_addr2, &shard, &statistic, &table_state_cache2);
     xtxmgr_table_t txmgr_table2(&table_para2, &resource);
-    
+
     mock::xdatamock_table mocktable3(3, loop_num + 1);
     std::string table_addr3 = mocktable3.get_account();
     xtable_state_cache_t table_state_cache3(nullptr, table_addr3);
