@@ -14,6 +14,7 @@
 #include "xcommon/xmessage_id.h"
 #include "xvledger/xvcertauth.h"
 #include "xvledger/xvpropertyprove.h"
+#include "xplugin/xplugin_manager.h"
 
 #include <string>
 #include <vector>
@@ -269,7 +270,8 @@ class xtxpool_instance {
 public:
     static xobject_ptr_t<xtxpool_face_t> create_xtxpool_inst(const observer_ptr<base::xvblockstore_t> & blockstore,
                                                              const observer_ptr<base::xvcertauth_t> & certauth,
-                                                             const observer_ptr<mbus::xmessage_bus_face_t> & bus);
+                                                             const observer_ptr<mbus::xmessage_bus_face_t> & bus,
+                                                             const observer_ptr<data::xplugin_manager_t> & xplugin_mgr);
 };
 
 }  // namespace xtxpool_v2

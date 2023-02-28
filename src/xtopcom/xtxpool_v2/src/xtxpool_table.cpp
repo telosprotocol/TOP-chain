@@ -82,7 +82,7 @@ int32_t xtxpool_table_t::check_send_tx_nonce(const std::shared_ptr<xtx_entry> & 
 int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     if (is_reach_limit(tx)) {
         return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
-    }    
+    }
     int32_t ret;
     uint64_t latest_nonce = 0;
     ret = check_send_tx_nonce(tx, latest_nonce);

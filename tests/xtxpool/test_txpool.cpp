@@ -40,7 +40,7 @@ TEST_F(test_xtxpool, sub_unsub) {
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t * blockstore = creator.get_blockstore();
     store::xstore_face_t * xstore = creator.get_xstore();
-    auto para = std::make_shared<xtxpool_resources>(make_observer(blockstore), nullptr, nullptr);
+    auto para = std::make_shared<xtxpool_resources>(make_observer(blockstore), nullptr, nullptr, nullptr);
     xtxpool_t xtxpool(para);
 
     pthread_t tid;
@@ -56,7 +56,7 @@ TEST_F(test_xtxpool, black_white_list) {
     mock::xdatamock_table mocktable(1, 6);
     auto & table_addr = mocktable.get_address();
     auto table_sid = mocktable.get_short_table_id();
-    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts(); 
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
     std::string addr0 = unit_addrs[0];
     std::string addr1 = unit_addrs[1];
     std::string addr2 = unit_addrs[2];
@@ -89,7 +89,7 @@ TEST_F(test_xtxpool, black_white_list) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxpool_table_t txpool_table(&resource, table_addr, &shard, &statistic);
 
     // case 1: white list not enable, white list empty, black list empty

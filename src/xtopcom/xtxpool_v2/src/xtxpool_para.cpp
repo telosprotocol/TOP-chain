@@ -12,8 +12,9 @@ NS_BEG2(top, xtxpool_v2)
 
 xtxpool_resources::xtxpool_resources(const observer_ptr<base::xvblockstore_t> & blockstore,
                                      const observer_ptr<base::xvcertauth_t> & certauth,
-                                     const observer_ptr<mbus::xmessage_bus_face_t> & bus)
-  : m_blockstore(blockstore), m_certauth(certauth), m_bus(bus) {
+                                     const observer_ptr<mbus::xmessage_bus_face_t> & bus,
+                                     const observer_ptr<data::xplugin_manager_t> & xplugin_mgr)
+  : m_blockstore(blockstore), m_certauth(certauth), m_bus(bus) , m_xplugin_mgr(xplugin_mgr) {
 }
 
 xtxpool_resources::~xtxpool_resources() {
@@ -32,6 +33,10 @@ mbus::xmessage_bus_face_t * xtxpool_resources::get_bus() const {
 
 xreceiptid_state_cache_t & xtxpool_resources::get_receiptid_state_cache() {
     return m_receiptid_state_cache;
+}
+
+data::xplugin_manager_t * xtxpool_resources::get_plugin_mgr() const {
+    return m_xplugin_mgr.get();
 }
 
 NS_END2

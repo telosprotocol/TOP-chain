@@ -3,12 +3,16 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xtransaction.h"
-#include <cinttypes>
+
 #include "xbase/xutl.h"
+#include "xbasic/xhex.h"
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 
+#include <nlohmann/json.hpp>
+
+#include <cinttypes>
 namespace top { namespace data {
 
 bool xtransaction_t::transaction_type_check() const {
@@ -24,7 +28,7 @@ bool xtransaction_t::transaction_type_check() const {
             case xtransaction_type_vote:
             case xtransaction_type_abolish_vote:
             case xtransaction_type_pledge_token_vote:
-            case xtransaction_type_redeem_token_vote: 
+            case xtransaction_type_redeem_token_vote:
                 return true;
 #endif
             case xtransaction_type_pledge_token_tgas:
@@ -130,7 +134,7 @@ void xtransaction_t::set_action_type_by_tx_type(const enum_xtransaction_type tx_
         set_source_action_type(xaction_type_source_null);
         set_target_action_type(xaction_type_pledge_token_vote);
         break;
-    
+
     case xtransaction_type_redeem_token_vote:
         set_source_action_type(xaction_type_source_null);
         set_target_action_type(xaction_type_redeem_token_vote);

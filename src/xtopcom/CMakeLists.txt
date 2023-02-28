@@ -85,3 +85,7 @@ if (XBUILD_CONSORTIUM)
 endif()
 
 add_subdirectory(xstatistic)
+
+add_subdirectory(xplugin)
+add_subdirectory(xplugin_audit)
+

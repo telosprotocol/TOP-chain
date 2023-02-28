@@ -190,6 +190,11 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual xbytes_t const& get_data() const { static xbytes_t strNull; return strNull; }
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
+    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return 0; }
+    virtual const top::evm_common::u256 get_signR() const { return  0; }
+    virtual const top::evm_common::u256 get_signV() const { return  0; }
+    virtual const top::evm_common::u256 get_signS() const { return  0; }
+
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const;
 };
 

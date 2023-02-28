@@ -44,7 +44,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     uint256_t last_tx_hash = {};
     xtx_para_t para;
 
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr,nullptr);
     xreceipt_queue_new_t receipt_queue(&table_para, &resource);
 
     uint32_t tx_num = 5;

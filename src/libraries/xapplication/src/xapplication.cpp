@@ -33,6 +33,7 @@
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xmbus/xmessage_bus.h"
+#include "xplugin/xplugin_manager.h"
 #include "xrouter/xrouter.h"
 #include "xsafebox/safebox_proxy.h"
 #include "xstore/xstore_error.h"
@@ -68,7 +69,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
-
+    m_plugin_mgr = std::make_shared<data::xplugin_manager_t>();
     m_txstore = xobject_ptr_t<base::xvtxstore_t>(
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
@@ -103,8 +104,7 @@ void xtop_application::start() {
     config::xconfig_register_t::get_instance().load();
 
     base::xvblock_fork_t::instance().init(chain_fork::xutility_t::is_block_forked);
-
-    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_blockstore), make_observer(m_cert_ptr), make_observer(m_bus));
+    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_blockstore), make_observer(m_cert_ptr), make_observer(m_bus), make_observer(m_plugin_mgr));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
     contract::xcontract_manager_t::instance().init(m_syncstore);
@@ -210,7 +210,7 @@ void xtop_application::start() {
     {
         contract::xcontract_manager_t::instance().install_monitors(make_observer(m_bus), make_observer(m_message_callback_hub.get()), m_syncstore);
         load_last_election_data();
-
+        m_plugin_mgr->start();
         m_txpool_service_mgr->start();
         m_vhost->start();
         m_message_callback_hub->start();

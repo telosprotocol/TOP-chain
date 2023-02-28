@@ -60,3 +60,5 @@ if (XBUILD_CONSORTIUM)
     add_subdirectory(xca_auth_test)
 endif()
 add_subdirectory(xstatistic_test)
+add_subdirectory(xplugins_test)
+

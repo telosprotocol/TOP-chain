@@ -33,7 +33,7 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -78,7 +78,7 @@ TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -104,7 +104,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -193,7 +193,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -269,7 +269,7 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -311,7 +311,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -423,7 +423,7 @@ TEST_F(test_txmgr_table, expired_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -474,7 +474,7 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 
@@ -510,7 +510,7 @@ TEST_F(test_txmgr_table, sendtx_mem_loss) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 
@@ -545,7 +545,7 @@ TEST_F(test_txmgr_table, receipt_mem_loss) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 
@@ -586,7 +586,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
     uint32_t loop_num = 1024/tx_num;
     xtxpool_statistic_t statistic;
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
-    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
     xtx_para_t para;
 
     mock::xdatamock_table mocktable(1, loop_num + 1);
@@ -600,7 +600,7 @@ TEST_F(test_txmgr_table, large_number_of_send_tx) {
     xtable_state_cache_t table_state_cache2(nullptr, table_addr2);
     xtxpool_table_info_t table_para2(table_addr2, &shard, &statistic, &table_state_cache2);
     xtxmgr_table_t txmgr_table2(&table_para2, &resource);
-    
+
     mock::xdatamock_table mocktable3(3, loop_num + 1);
     std::string table_addr3 = mocktable3.get_account();
     xtable_state_cache_t table_state_cache3(nullptr, table_addr3);

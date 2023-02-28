@@ -22,7 +22,7 @@ using data::xcons_transaction_ptr_t;
 
 int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce) {
     auto & account_addr = tx->get_tx()->get_transaction()->get_source_addr();
-
+    
     if (nullptr != query_tx(account_addr, tx->get_tx()->get_tx_hash())) {
         xtxpool_warn("xtxmgr_table_t::push_send_tx tx repeat tx:%s", tx->get_tx()->dump().c_str());
         return xtxpool_error_request_tx_repeat;

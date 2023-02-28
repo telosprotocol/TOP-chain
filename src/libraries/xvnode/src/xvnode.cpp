@@ -282,7 +282,7 @@ void xtop_vnode::sync_add_vnet() {
         }
         base::xvchain_t::instance().set_node_type(is_storage_node, has_other_node);
     }
-    
+
     m_sync_obj->add_vnet(vnetwork_driver(), miner_type(), genesis());
 
     xinfo("vnode (%p) at address %s starts synchronizing. miner_type=%d,genesis=%d", this, address().to_string().c_str(), miner_type(), genesis());

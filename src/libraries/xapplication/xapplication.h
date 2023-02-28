@@ -129,6 +129,7 @@ private:
     std::shared_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
     std::shared_ptr<state_sync::xstate_downloader_t> m_downloader;
     std::shared_ptr<vnode::xvnode_manager_face_t> m_vnode_manager;
+    std::shared_ptr<data::xplugin_manager_t> m_plugin_mgr;
 
 public:
     xtop_application(xtop_application const &) = delete;
