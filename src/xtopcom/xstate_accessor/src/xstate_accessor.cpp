@@ -357,6 +357,12 @@ void xtop_state_accessor::clear_property(properties::xproperty_identifier_t cons
         return;
     }
 
+    // should check if property exist, the below code `bstate_->load_xxx` has `xerror()` if not exist.
+    if (!bstate_->find_property(property_id.full_name())) {
+        ec = error::xerrc_t::property_not_exist;
+        return;
+    }
+
     switch (property_id.type()) {
     case properties::xproperty_type_t::map:
     {

@@ -42,6 +42,7 @@ public:
 using xevm_logs_t = std::vector<xevm_log_t>;
 
 /// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
+// 23.02.22 future update to: `xtvm_engine_rs/tvm-engine/src/types.rs`
 enum xevm_transaction_status_t : uint32_t {
     Success = 0,
     Revert = 1,
@@ -54,6 +55,7 @@ enum xevm_transaction_status_t : uint32_t {
     OtherExecuteError = 5,
 
     Invalid = 32,
+    FAILED = UINT32_MAX,
 };
 
 class xevm_transaction_result_t {
