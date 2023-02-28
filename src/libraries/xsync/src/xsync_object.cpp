@@ -27,16 +27,15 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
     //m_session_mgr(top::make_unique<sync::xsession_manager_t>(XGET_CONFIG(executor_max_sessions))),
     m_role_chains_mgr(top::make_unique<sync::xrole_chains_mgr_t>(m_instance)),
     m_role_xips_mgr(top::make_unique<sync::xrole_xips_manager_t>(m_instance)),
-    m_sync_sender(top::make_unique<sync::xsync_sender_t>(m_instance, vhost, m_role_xips_mgr.get(), m_sync_store.get(), m_session_mgr.get())),
+    m_sync_sender(top::make_unique<sync::xsync_sender_t>(m_instance, vhost, m_role_xips_mgr.get(), m_session_mgr.get())),
     m_sync_ratelimit(top::make_unique<sync::xsync_ratelimit_t>(sync_thread, (uint32_t)100)),
     m_peerset(top::make_unique<sync::xsync_peerset_t>(m_instance)),
     m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get(), m_role_chains_mgr.get(), m_sync_store.get())),
-    m_sync_broadcast(top::make_unique<sync::xsync_broadcast_t>(m_instance, m_peerset.get(), m_sync_sender.get())),
-    m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), bus, make_observer(cert_ptr), m_role_xips_mgr.get(), m_role_chains_mgr.get(),
+    m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), make_observer(cert_ptr), m_role_xips_mgr.get(), m_role_chains_mgr.get(),
         m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get(), m_store_shadow.get())),
-    m_block_fetcher(top::make_unique<sync::xblock_fetcher_t>(m_instance, sync_thread, bus, make_observer(cert_ptr), m_role_chains_mgr.get(), m_sync_store.get(),
-        m_sync_broadcast.get(), m_sync_sender.get())),
-    m_sync_gossip(top::make_unique<sync::xsync_gossip_t>(m_instance, m_bus, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
+    m_block_fetcher(top::make_unique<sync::xblock_fetcher_t>(m_instance, sync_thread, make_observer(cert_ptr), m_role_chains_mgr.get(), m_sync_store.get(),
+        m_sync_sender.get())),
+    m_sync_gossip(top::make_unique<sync::xsync_gossip_t>(m_instance, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
     m_sync_on_demand(top::make_unique<sync::xsync_on_demand_t>(m_instance, m_bus, make_observer(cert_ptr), m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
     m_peer_keeper(top::make_unique<sync::xsync_peer_keeper_t>(m_instance, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get(), m_peerset.get())),
     m_behind_checker(top::make_unique<sync::xsync_behind_checker_t>(m_instance, m_sync_store.get(), m_role_chains_mgr.get(), m_peerset.get(), m_downloader.get())),
@@ -53,7 +52,6 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
                 m_block_fetcher.get(),
                 m_sync_gossip.get(),
                 m_sync_pusher.get(),
-                m_sync_broadcast.get(),
                 m_sync_sender.get(),
                 m_sync_on_demand.get(),
                 m_peerset.get(),
@@ -63,9 +61,9 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
     m_sync_event_dispatcher(make_object_ptr<sync::xsync_event_dispatcher_t>(
             sync_thread,
             m_instance,
-            bus,
+            m_bus,
             m_sync_handler.get())),
-    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_handler.get())){
+    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, m_bus, vhost, m_sync_handler.get())){
         xtop_sync_out_object::instance().set_xsync_shadow(m_store_shadow.get());
 }
 
@@ -197,8 +195,10 @@ std::string xtop_sync_object::status() const {
 
                 std::string table_prefix;
                 uint32_t table_id = 0;
-                if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
-                    continue;
+                if (address != sys_drand_addr) {
+                    if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
+                        continue;
+                }
 
                 if (it.second.sync_policy != i) {
                     continue;

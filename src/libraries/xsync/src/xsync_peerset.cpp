@@ -108,9 +108,9 @@ bool xsync_peerset_t::get_newest_peer(const vnetwork::xvnode_address_t &self_add
     if (it == m_multi_role_peers.end())
         return false;
 
-    start_height = 0;
-    end_height = 0;
-
+    uint64_t local_start_height = start_height; 
+    uint64_t local_end_height = end_height;
+ 
     xsync_role_peers_t &peers = it->second;
 
     for (auto &it2: peers) {
@@ -130,7 +130,10 @@ bool xsync_peerset_t::get_newest_peer(const vnetwork::xvnode_address_t &self_add
         }
     }
 
-    return true;
+    if(local_start_height != start_height || local_end_height!= end_height) {
+        return true;
+    } 
+    return false;
 }
 
 bool xsync_peerset_t::get_group_size(const vnetwork::xvnode_address_t &self_address, uint32_t &count) {

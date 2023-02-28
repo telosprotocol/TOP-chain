@@ -11,7 +11,6 @@
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_message.h"
-#include "xsync/xsync_broadcast.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xsync/xchain_block_fetcher.h"
@@ -51,11 +50,10 @@ private:
 class xblock_fetcher_t {
 public:
     friend class xblock_fetcher_event_monitor_t;
-    xblock_fetcher_t(std::string vnode_id, observer_ptr<base::xiothread_t> const & iothread, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
+    xblock_fetcher_t(std::string vnode_id, observer_ptr<base::xiothread_t> const & iothread,
         const observer_ptr<base::xvcertauth_t> &certauth,
         xrole_chains_mgr_t *role_chains_mgr,
         xsync_store_face_t *sync_store,
-        xsync_broadcast_t *sync_broadcast,
         xsync_sender_t *sync_sender);
 
 public:
@@ -78,11 +76,9 @@ private:
 
 private:
     std::string m_vnode_id;
-    observer_ptr<mbus::xmessage_bus_face_t> m_mbus;
     observer_ptr<base::xvcertauth_t> m_certauth;
     xrole_chains_mgr_t *m_role_chains_mgr;
     xsync_store_face_t *m_sync_store;
-    xsync_broadcast_t *m_sync_broadcast;
     xsync_sender_t *m_sync_sender;
 
     std::unique_ptr<mbus::xmessage_bus_face_t> m_self_mbus{};

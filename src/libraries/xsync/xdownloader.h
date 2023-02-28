@@ -38,8 +38,6 @@ protected:
 private:
     std::string m_vnode_id;
     std::vector<xchain_downloader_face_ptr_t> m_chains;
-    xsync_time_rejecter_t m_time_rejecter{600};
-    //const uint32_t m_max_concurrent_chains{30};
     uint32_t m_current_index_Of_chain{0};
     uint64_t m_count{0};
     uint64_t m_shadow_time_out{50};
@@ -51,7 +49,6 @@ class xevent_monitor_t : public mbus::xbase_sync_event_monitor_t {
 public:
     xevent_monitor_t(uint32_t idx, observer_ptr<mbus::xmessage_bus_face_t> const &mb, 
         observer_ptr<base::xiothread_t> const & iothread,
-        xaccount_timer_t *timer,
         xdownloader_t* downloader);
     void before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) override;
     bool filter_event(const mbus::xevent_ptr_t& e) override;
@@ -59,7 +56,6 @@ public:
 
 private:
     uint32_t m_idx{0};
-    xaccount_timer_t *m_timer;
     xdownloader_t* m_downloader;
 };
 
@@ -68,7 +64,6 @@ public:
     friend class xevent_monitor_t;
 
     xdownloader_t(std::string vnode_id, xsync_store_face_t *sync_store,
-                const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
                 const observer_ptr<base::xvcertauth_t> &certauth,
                 xrole_xips_manager_t *role_xips_mgr,
                 xrole_chains_mgr_t *role_chains_mgr, xsync_sender_t *sync_sender,
@@ -79,14 +74,13 @@ public:
     uint32_t get_idx_by_address(const std::string &address);
 private:
     std::string get_address_by_event(const mbus::xevent_ptr_t &e);
-    void process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer);
+    void process_event(uint32_t idx, const mbus::xevent_ptr_t &e);
 
-    xchain_downloader_face_ptr_t on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer);
-    xchain_downloader_face_ptr_t on_remove_role(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer);
+    xchain_downloader_face_ptr_t on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e);
+    xchain_downloader_face_ptr_t on_remove_role(uint32_t idx, const mbus::xevent_ptr_t &e);
     xchain_downloader_face_ptr_t on_response_event(uint32_t idx, const mbus::xevent_ptr_t &e);
     xchain_downloader_face_ptr_t on_archive_blocks(uint32_t idx, const mbus::xevent_ptr_t &e);
     xchain_downloader_face_ptr_t on_behind_event(uint32_t idx, const mbus::xevent_ptr_t &e);
-    xchain_downloader_face_ptr_t on_chain_snapshot_response_event(uint32_t idx, const mbus::xevent_ptr_t &e);
     xchain_downloader_face_ptr_t on_block_committed_event(uint32_t idx, const mbus::xevent_ptr_t &e);
 private:
     xchain_downloader_face_ptr_t find_chain_downloader(uint32_t idx, const std::string &address);
@@ -96,7 +90,6 @@ private:
 protected:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store{};
-    observer_ptr<mbus::xmessage_bus_face_t> m_mbus;
     observer_ptr<base::xvcertauth_t> m_certauth;
     xrole_xips_manager_t *m_role_xips_mgr;
     xrole_chains_mgr_t *m_role_chains_mgr;

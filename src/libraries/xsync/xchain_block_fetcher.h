@@ -12,7 +12,6 @@
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_message.h"
-#include "xsync/xsync_broadcast.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 
 NS_BEG2(top, sync)
@@ -43,7 +42,6 @@ public:
         const std::string &address,
         const observer_ptr<base::xvcertauth_t> &certauth,
         xsync_store_face_t *sync_store,
-        xsync_broadcast_t *sync_broadcast,
         xsync_sender_t *sync_sender);
 
 public:
@@ -67,7 +65,6 @@ private:
     std::string m_address;
     observer_ptr<base::xvcertauth_t> m_certauth;
     xsync_store_face_t *m_sync_store;
-    xsync_broadcast_t *m_sync_broadcast;
     xsync_sender_t *m_sync_sender;
 
     // announced->fetching->completing
