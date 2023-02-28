@@ -34,14 +34,13 @@ int32_t verify_standby_transaction(data::xtransaction_t const * trx) {
     auto const & pub_key = get_reg_info(common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
     xdbg("verify_standby_transaction: tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
-    auto const check_success = !pub_key.empty() && trx->pub_key_sign_check(pub_key);
-    if (!check_success) {
-        xwarn("verify_standby_transaction: fail .tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
-    } else {
+    if (!pub_key.empty() && trx->pub_key_sign_check(pub_key)) {
         xdbg("verify_standby_transaction: success .tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
+        return xverifier::xverifier_error::xverifier_success;
     }
 
-    return check_success ? xverifier::xverifier_error::xverifier_success : xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
+    xwarn("verify_standby_transaction: fail .tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
+    return xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
 }
 
 NS_END2
