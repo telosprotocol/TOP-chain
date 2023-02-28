@@ -532,21 +532,36 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool
     if (ret) {
         return ret;
     }
-    // 2.0 special check for standby pool contract call.
-    if (raw_tx->get_target_addr() == rec_standby_pool_contract_address.to_string()) {
-#if !defined(XENABLE_MOCK_ZEC_STAKE)
-        common::xaccount_address_t const src_address{raw_tx->get_source_addr()};
-        if (!is_t0_address(src_address) && !is_t8_address(src_address) && (src_address == rec_standby_pool_contract_address && raw_tx->get_target_action_name() != "on_timer")) {
-            xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
-            return xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
-        }
 
-        ret = statestore::verify_standby_transaction(raw_tx);
-        if (ret) {
-            return ret;
+#if !defined(XENABLE_MOCK_ZEC_STAKE)
+    // 2.0 special check for standby pool contract call.
+    do {
+        if (raw_tx->get_target_addr() == rec_standby_pool_contract_address.to_string()) {
+            common::xaccount_address_t const src_address{raw_tx->get_source_addr()};
+            if (src_address == rec_standby_pool_contract_address) {
+                if (raw_tx->get_target_action_name() != "on_timer") {
+                    xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
+                    assert(false);
+                    return xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
+                }
+
+                xdbg("xtxpool_table_t::verify_send_tx caught rec standby poll contract on_timer call");
+                break;
+            }
+
+            if (!is_t0_address(src_address) && !is_t8_address(src_address)) {
+                xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
+                return xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
+            }
+
+            ret = statestore::verify_standby_transaction(raw_tx);
+            if (ret) {
+                return ret;
+            }
         }
+    } while (false);
 #endif
-    }
+
     // 2.1 legal check, include hash/signature check and white/black check
     ret = xverifier::xtx_verifier::verify_send_tx_legitimacy(raw_tx);
     if (ret) {
