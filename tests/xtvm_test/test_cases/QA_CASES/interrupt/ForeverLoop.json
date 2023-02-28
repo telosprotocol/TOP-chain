@@ -1,0 +1,48 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600040fe636046a92ae04c0df0364120e0223bb319446",
+                                  
+            "code_file_path": "ForeverLoop_sol_ForeverLoop.bin",
+            "gas_limit": 138009,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 138009,
+                "logs": []
+            }
+        }        
+    ],
+    "test_cases": [
+        {
+            "__comments":"获取成员变量i，初始0",
+            "src_address": "T600040fe636046a92ae04c0df0364120e0223bb319446",
+            "target_address": "contract_one",
+            "data": "0xe5aa3d58",
+            "gas_limit": 23493,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "gas_used": 23493,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行forever死循环，执行消耗完gas退出",
+            "src_address": "T600040fe636046a92ae04c0df0364120e0223bb319446",
+            "target_address": "contract_one",
+            "data": "0x9ff9a603",
+            "gas_limit": 2349300,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "",
+                "gas_used": 2349300,
+                "logs": []
+            }
+        }  
+    ]
+}

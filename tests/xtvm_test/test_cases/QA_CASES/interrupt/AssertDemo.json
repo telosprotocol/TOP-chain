@@ -1,0 +1,47 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "code_file_path": "AssertDemo_sol_AssertDemo.bin",
+            "gas_limit": 386507,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 386507,
+                "logs": []
+            }
+        }        
+    ],
+    "test_cases": [
+        {
+            "__comments":"执行get",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x6d4ce63c",
+            "gas_limit": 24521,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 24521,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"set(111), 返回assert(false)，合约执行不成功",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x4ed3885e000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000033131310000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 22474,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 22474,
+                "logs": []
+            }
+        }         
+    ]
+}

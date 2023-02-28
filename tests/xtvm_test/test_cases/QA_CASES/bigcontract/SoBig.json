@@ -1,0 +1,33 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "code_file_path": "SoBig.bin",
+            "gas_limit": 3195493,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 2778689,
+                "logs": []
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "__comments":"调用超大合约",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x773d45e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 26107,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 22701,
+                "logs": []
+            }
+        }
+    ]
+}
