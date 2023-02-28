@@ -670,7 +670,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
     std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)m_zone_index, table_id);
     base::xvaccount_t vaccount(table_addr);
     base::xvproperty_prove_ptr_t property_prove = nullptr;
-    uint64_t height = 0;
+    // uint64_t height = 0;
 
     auto iter = m_table_info_cache.find(table_id);
     if (iter != m_table_info_cache.end()) {
@@ -682,7 +682,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
                   table_info.m_last_property_height,
                   cur_height);
             property_prove = table_info.m_property_prove;
-            height = table_info.m_last_property_height;
+            // height = table_info.m_last_property_height;
         }
     }
     if (property_prove == nullptr) {
@@ -703,14 +703,14 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
             iter->second.m_last_property_height = receiptid_state->get_block_height();
             iter->second.m_property_prove = property_prove;
         }
-        height = receiptid_state->get_block_height();
+        // height = receiptid_state->get_block_height();
     }
 
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     property_prove->serialize_to(stream);
     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_receipt_id_state);
-    xinfo("xtxpool_service::send_table_receipt_id_state table:%d,height:%llu", table_id, height);
+    // xinfo("xtxpool_service::send_table_receipt_id_state table:%d,height:%llu", table_id, height);
 
     std::error_code ec = vnetwork::xvnetwork_errc2_t::success;
     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all

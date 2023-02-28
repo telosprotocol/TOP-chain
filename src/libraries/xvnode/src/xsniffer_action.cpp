@@ -17,7 +17,7 @@ void xtop_sniffer_action::call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_fa
                                std::string const & action_params,
                                const uint64_t timestamp) {                              
     base::xaccount_index_t accountindex;
-    int32_t ret_pushtx = xsuccess;
+    // int32_t ret_pushtx = xsuccess;
     bool ret = statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, address, accountindex);
     if (ret) {
         auto tx = data::xtx_factory::create_v2_run_contract_tx(address,
@@ -25,13 +25,13 @@ void xtop_sniffer_action::call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_fa
                                                         action_name,
                                                         action_params,
                                                         timestamp);
-        ret_pushtx = txpool->request_transaction_consensus(tx, true);                        
-        xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %ld, %lld",
-            ret_pushtx,
-            tx->get_digest_hex_str().c_str(),
-            address.to_string().c_str(),
-            accountindex.get_latest_tx_nonce(),
-            timestamp);
+        /*ret_pushtx = */txpool->request_transaction_consensus(tx, true);                        
+        // xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %ld, %lld",
+        //     ret_pushtx,
+        //     tx->get_digest_hex_str().c_str(),
+        //     address.to_string().c_str(),
+        //     accountindex.get_latest_tx_nonce(),
+        //     timestamp);
     }
 }
 
