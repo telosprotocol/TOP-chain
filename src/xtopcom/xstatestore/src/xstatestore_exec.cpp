@@ -405,14 +405,24 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
 #endif
 
     // write all table "state" to db
+    std::map<std::string, std::string> batch_kvs;
     for (auto & v : tablestate_store->get_unitstates()) {
-        m_state_accessor.write_unitstate_to_db(v.first, v.second, ec);
+        // m_state_accessor.write_unitstate_to_db(v.first, v.second, ec);
+        m_state_accessor.unit_bstate_to_kv(v.first, v.second, batch_kvs, ec);
         if (ec) {
             xerror("xstatestore_executor_t::write_table_all_states fail-write unitstate,block:%s", current_block->dump().c_str());
             return nullptr;
         }
         m_state_accessor.write_unitstate_to_cache(v.first, v.second);
         xdbg("xstatestore_executor_t::write_table_all_states unitstate=%s.block=%s", v.first->get_bstate()->dump().c_str(), current_block->dump().c_str());
+    }
+
+    if (!batch_kvs.empty()) {
+        m_state_accessor.batch_write_unit_bstate(batch_kvs, ec);
+        if (ec) {
+            xerror("xstatestore_executor_t::write_table_all_states fail-write unitstate,block:%s", current_block->dump().c_str());
+            return nullptr;
+        }
     }
 
     m_state_accessor.write_table_bstate_to_db(m_table_addr, current_block->get_block_hash(), tablestate_store->get_table_state(), ec);

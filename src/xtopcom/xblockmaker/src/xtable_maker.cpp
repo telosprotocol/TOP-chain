@@ -116,6 +116,7 @@ std::vector<xcons_transaction_ptr_t> xtable_maker_t::check_input_txs(bool is_lea
 
 void xtable_maker_t::execute_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, const std::vector<xcons_transaction_ptr_t> & input_txs, txexecutor::xexecute_output_t & execute_output, std::error_code & ec) {
     // create batch executor
+    XMETRICS_TIME_RECORD("tps_execute_txs");
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), cs_para.get_coinbase());
     txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
@@ -248,7 +249,7 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
 }
 
 void xtable_maker_t::make_account_unit_and_index(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, data::xtable_block_para_t & lighttable_para, std::error_code & ec) {
-    XMETRICS_TIME_RECORD("cons_make_units_cost");
+    XMETRICS_TIME_RECORD("tps_make_units");
 
     // create units
     std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
@@ -754,7 +755,7 @@ bool xtable_maker_t::is_evm_table_chain() const {
 std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const data::xblock_consensus_para_t & cs_para,
                                                                           const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                           const base::xaccount_indexs_t & accountindexs) {
-    XMETRICS_TIME_RECORD("cons_create_new_mpt_cost");
+    XMETRICS_TIME_RECORD("tps_create_new_mpt");
     std::error_code ec;
     auto mpt = table_state_ctx->get_prev_tablestate_ext()->get_state_mpt();
     xassert(nullptr != mpt);

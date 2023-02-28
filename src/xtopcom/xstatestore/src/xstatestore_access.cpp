@@ -136,6 +136,27 @@ void xstatestore_dbaccess_t::write_unit_bstate(data::xunitstate_ptr_t const& uni
     xerror("xstatestore_dbaccess_t::write_unit_bstate fail.state=%s",unitstate->get_bstate()->dump().c_str());
 }
 
+void xstatestore_dbaccess_t::unit_bstate_to_kv(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::map<std::string, std::string> & batch_kvs, std::error_code & ec) const {
+    XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
+    std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(unitstate->account_address().vaccount(), unitstate->height(), block_hash);
+    std::string state_db_bin;
+    int32_t ret = unitstate->get_bstate()->serialize_to_string(state_db_bin);
+    if(ret > 0) {
+        batch_kvs.emplace(std::make_pair(state_db_key, state_db_bin));
+        return;
+    }
+    ec = error::xerrc_t::statestore_db_write_err;
+    xerror("xstatestore_dbaccess_t::unit_bstate_to_kv fail.state=%s",unitstate->get_bstate()->dump().c_str());
+}
+
+void xstatestore_dbaccess_t::batch_write_unit_bstate(const std::map<std::string, std::string> & batch_kvs, std::error_code & ec) const {
+    if (m_statestore_base.get_dbstore()->set_values(batch_kvs)) {
+        xinfo("xstatestore_dbaccess_t::batch_write_unit_bstate succ");
+        return;
+    }
+    ec = error::xerrc_t::statestore_db_write_err;
+}
+
 data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {
     std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(address.vaccount(), height, block_hash);
     const std::string state_db_bin = m_statestore_base.get_dbstore()->get_value(state_db_key);
@@ -272,5 +293,12 @@ void xstatestore_accessor_t::write_unitstate_to_cache(data::xunitstate_ptr_t con
     m_state_cache.set_unitstate(block_hash, unitstate);
 }
 
+void xstatestore_accessor_t::unit_bstate_to_kv(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::map<std::string, std::string> & batch_kvs, std::error_code & ec) const {
+    m_dbaccess.unit_bstate_to_kv(unitstate, block_hash, batch_kvs, ec);
+}
+
+void xstatestore_accessor_t::batch_write_unit_bstate(const std::map<std::string, std::string> & batch_kvs, std::error_code & ec) const {
+    m_dbaccess.batch_write_unit_bstate(batch_kvs, ec);
+}
 
 NS_END2

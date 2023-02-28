@@ -31,9 +31,13 @@ NS_BEG2(top, xunit_service)
 // #define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (20)
 // #define MIN_TRANSACTION_NUM_FOR_LOW_TPS (10)
 
-#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (360)
-#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (200)
-#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (100)
+// #define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (360)
+// #define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (200)
+// #define MIN_TRANSACTION_NUM_FOR_LOW_TPS (100)
+
+#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (540)
+#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (300)
+#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (160)
 
 #define TRY_MAKE_BLOCK_TIMER_INTERVAL (50)
 #define TRY_HIGH_TPS_TIME_WINDOW (400)
@@ -714,6 +718,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         xdbgassert(vblock->is_body_and_offdata_ready(false));
 
         if (vblock->get_excontainer() != nullptr) {
+            XMETRICS_TIME_RECORD("tps_leader_commit");
             vblock->get_excontainer()->commit(vblock);
         }
         vblock->add_ref();

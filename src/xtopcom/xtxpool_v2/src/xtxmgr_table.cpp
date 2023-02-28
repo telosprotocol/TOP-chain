@@ -109,6 +109,7 @@ void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shor
 }
 
 std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para, const xunconfirm_id_height & unconfirm_id_height) {
+    XMETRICS_TIME_RECORD("tps_get_ready_txs");
     uint32_t confirm_tx_num = 0;
     uint32_t recv_tx_num = 0;
     xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s in", m_xtable_info->get_table_addr().c_str());
