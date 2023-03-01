@@ -53,7 +53,7 @@ namespace top
 
         xblockacct_t::~xblockacct_t()
         {
-            xinfo("xblockacct_t::destroy,account=%s objectid=% " PRId64 " ",
+            xdbg("xblockacct_t::destroy,account=%s objectid=% " PRId64 " ",
                   get_address().c_str(),
                   (int64_t)get_obj_id());
 
@@ -229,7 +229,7 @@ namespace top
             if(is_close() == false)
             {
                 xvblockplugin_t::close(force_async); //mark close status first
-                xkinfo("xblockacct_t::close,account=%s,objectid=% " PRId64 " and this=% " PRId64 "ptr",dump().c_str(),get_obj_id(),this);
+                xdbg("xblockacct_t::close,account=%s,objectid=% " PRId64 " and this=% " PRId64 "ptr",dump().c_str(),get_obj_id(),this);
 
                 //then clean all blocks at memory
                 close_blocks();
@@ -2623,7 +2623,7 @@ namespace top
             }
 
             update_bindex_to_committed(exist_cert.get());
-            xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
+            xdbg("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
             return ret;
         }
 

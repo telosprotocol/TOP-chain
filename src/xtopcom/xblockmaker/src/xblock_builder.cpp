@@ -81,7 +81,7 @@ base::xvblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t 
     bodypara.set_binlog(binlog);
     bodypara.set_fullstate_bin(snapshot);
     base::xvblock_ptr_t proposal_block = create_unit(unitstate->account_address().to_string(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), bodypara, cs_para);
-    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
+    xdbg("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
         proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size());
     return proposal_block;
 }

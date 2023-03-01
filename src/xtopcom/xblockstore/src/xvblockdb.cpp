@@ -385,7 +385,7 @@ namespace top
             {
                 const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
-                xinfo("xvblockdb_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
+                xdbg("xvblockdb_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
             }
             else
             {
@@ -492,7 +492,7 @@ namespace top
                 {
                     update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_object, blockobj_bin.size());
                     
-                    xinfo("xvblockdb_t::write_block_object_to_db,stored DB at key(%s) for block(%s) and index_ptr(%s)",blockobj_key.c_str(),block_ptr->dump().c_str(), index_ptr->dump().c_str());
+                    xdbg("xvblockdb_t::write_block_object_to_db,stored DB at key(%s) for block(%s) and index_ptr(%s)",blockobj_key.c_str(),block_ptr->dump().c_str(), index_ptr->dump().c_str());
                     
                     block_ptr->reset_modified_count();//cleanup flag of modification
                     //has stored entity of input/output inside of block

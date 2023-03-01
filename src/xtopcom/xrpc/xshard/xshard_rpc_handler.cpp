@@ -106,9 +106,9 @@ void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg) {
 
         if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
             // throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx hash or sign error"};
-            xwarn("[global_trace][shard_rpc][push unit_service] fail %s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
+            xdbg("[global_trace][shard_rpc][push unit_service] fail %s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
         } else {
-            xkinfo("[global_trace][shard_rpc][push unit_service] succ %s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
+            xdbg("[global_trace][shard_rpc][push unit_service] succ %s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
         }
         break;
     }

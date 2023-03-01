@@ -97,7 +97,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     }
 
     auto default_token_type = XGET_CONFIG(evm_token_type);
-    xinfo("xaccount_context_t::create_user_account address:%s token type is %s.", address.c_str(), default_token_type.c_str());
+    xdbg("xaccount_context_t::create_user_account address:%s token type is %s.", address.c_str(), default_token_type.c_str());
     if (default_token_type.empty()) {
         xerror("xaccount_context_t::create_user_account  configuration evm token empty");
         return ret;

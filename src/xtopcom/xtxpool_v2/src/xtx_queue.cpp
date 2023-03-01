@@ -31,7 +31,7 @@ void xsend_tx_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_
     xsed_tx_set_iters_t iters(it, it_timeout_queue);
     m_tx_map[tx_ent->get_tx()->get_tx_hash()] = iters;
     m_xtable_info->send_tx_inc(1);
-    xtxpool_info("xsend_tx_queue_internal_t::insert_tx push tx to send queue,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+    xtxpool_dbg("xsend_tx_queue_internal_t::insert_tx push tx to send queue,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
 void xsend_tx_queue_internal_t::erase_tx(const uint256_t & hash) {

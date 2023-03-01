@@ -22,7 +22,7 @@ namespace top
             m_account_obj->add_ref();
             
             //XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvactplugin_t, 1);
-            xinfo("xvactplugin_t::xvactplugin_t,acccount(%s)-type(%d),objectid(%lld)",m_account_obj->get_address().c_str(),get_plugin_type(),get_obj_id());
+            xdbg("xvactplugin_t::xvactplugin_t,acccount(%s)-type(%d),objectid(%lld)",m_account_obj->get_address().c_str(),get_plugin_type(),get_obj_id());
         }
         
         xvactplugin_t::~xvactplugin_t()
@@ -30,7 +30,7 @@ namespace top
             m_account_obj->release_ref();
             
             //XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvactplugin_t, -1);
-            xinfo("xvactplugin_t::destroy,acccount(%s)-type(%d),objectid(%lld)",m_account_obj->get_address().c_str(),get_plugin_type(),get_obj_id());
+            xdbg("xvactplugin_t::destroy,acccount(%s)-type(%d),objectid(%lld)",m_account_obj->get_address().c_str(),get_plugin_type(),get_obj_id());
         }
         
         void   xvactplugin_t::stop()//mark idle flag
@@ -40,7 +40,7 @@ namespace top
         
         bool   xvactplugin_t::close(bool force_async)
         {
-            xinfo("xvactplugin_t::close,acccount(%s)-type(%d),objectid(%lld)",m_account_obj->get_address().c_str(),get_plugin_type(),get_obj_id());
+            xdbg("xvactplugin_t::close,acccount(%s)-type(%d),objectid(%lld)",m_account_obj->get_address().c_str(),get_plugin_type(),get_obj_id());
             return xobject_t::close(force_async);
         }
     

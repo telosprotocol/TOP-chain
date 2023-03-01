@@ -24,7 +24,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
     auto & account_addr = tx->get_tx()->get_transaction()->get_source_addr();
 
     if (nullptr != query_tx(account_addr, tx->get_tx()->get_tx_hash())) {
-        xtxpool_warn("xtxmgr_table_t::push_send_tx tx repeat tx:%s", tx->get_tx()->dump().c_str());
+        xtxpool_dbg("xtxmgr_table_t::push_send_tx tx repeat tx:%s", tx->get_tx()->dump().c_str());
         return xtxpool_error_request_tx_repeat;
     }
 
@@ -112,7 +112,9 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_TIME_RECORD("tps_get_ready_txs");
     uint32_t confirm_tx_num = 0;
     uint32_t recv_tx_num = 0;
-    xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s in", m_xtable_info->get_table_addr().c_str());
+    xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s,height=%llu in",
+                 m_xtable_info->get_table_addr().c_str(),
+                 pack_para.get_table_state_highqc()->get_bstate()->get_block_height() + 1);
     std::vector<xcons_transaction_ptr_t> ready_txs = m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(),
                                                                                  pack_para.get_confirm_txs_max_num(),
                                                                                  pack_para.get_table_state_highqc()->get_receiptid_state(),
@@ -130,8 +132,9 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
 
-    xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u,expired_num:%u,unconituous_num:%u",
+    xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s,height=%llu,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u,expired_num:%u,unconituous_num:%u",
                  m_xtable_info->get_table_addr().c_str(),
+                 pack_para.get_table_state_highqc()->get_bstate()->get_block_height() + 1,
                  ready_txs.size(),
                  send_tx_num,
                  recv_tx_num,
