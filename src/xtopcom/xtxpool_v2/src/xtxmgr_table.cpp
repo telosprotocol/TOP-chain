@@ -112,7 +112,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_TIME_RECORD("tps_get_ready_txs");
     uint32_t confirm_tx_num = 0;
     uint32_t recv_tx_num = 0;
-    xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key tps_key table:%s in", m_xtable_info->get_table_addr().c_str());
+    xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s in", m_xtable_info->get_table_addr().c_str());
     std::vector<xcons_transaction_ptr_t> ready_txs = m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(),
                                                                                  pack_para.get_confirm_txs_max_num(),
                                                                                  pack_para.get_table_state_highqc()->get_receiptid_state(),
@@ -130,7 +130,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
 
-    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u,expired_num:%u,unconituous_num:%u",
+    xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u,expired_num:%u,unconituous_num:%u",
                  m_xtable_info->get_table_addr().c_str(),
                  ready_txs.size(),
                  send_tx_num,
@@ -173,7 +173,7 @@ data::xcons_transaction_ptr_t xtxmgr_table_t::query_tx(const std::string & accou
 }
 
 void xtxmgr_table_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
-    xtxpool_info("xtxmgr_table_t::updata_latest_nonce.table %s,account:%s,last nonce:%u", m_xtable_info->get_table_addr().c_str(), account_addr.c_str(), latest_nonce);
+    xtxpool_dbg("xtxmgr_table_t::updata_latest_nonce.table %s,account:%s,last nonce:%u", m_xtable_info->get_table_addr().c_str(), account_addr.c_str(), latest_nonce);
     m_send_tx_queue.updata_latest_nonce(account_addr, latest_nonce);
 }
 

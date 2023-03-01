@@ -406,6 +406,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         reseter.exec_reset();
     }
 
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key before execute txs is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+
     execute_txs(is_leader, cs_para, statectx_ptr, input_txs, execute_output, ec);
     for (auto & txout : execute_output.drop_outputs) {  // drop tx from txpool
         xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
@@ -443,7 +445,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         }
     }
 
-    xinfo("xtable_maker_t::make_light_table_v2 tps_key execute txs finish packtx is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key execute txs finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
 
     make_account_unit_and_index(is_leader, cs_para, statectx_ptr, lighttable_para, ec);
     if (ec) {
@@ -452,7 +454,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         return nullptr;
     }
 
-    xinfo("xtable_maker_t::make_light_table_v2 tps_key make unit and index finish packtx is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key make unit and index finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
 
     // TODO(jimmy) update confirm ids in table state
     update_receiptid_state(table_para, statectx_ptr);

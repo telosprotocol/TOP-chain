@@ -677,13 +677,14 @@ bool xbatch_packer::set_start_time(const common::xlogic_time_t& start_time) {
 }
 
 bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
-    xcsaccount_t::on_proposal_finish(event, from_child, cur_thread_id, timenow_ms);
     xconsensus::xproposal_finish * _evt_obj = (xconsensus::xproposal_finish *)&event;
     auto xip = get_xip2_addr();
     bool is_leader = xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_validator())
                   || xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_auditor())
                   || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_validator())
                   || xcons_utl::xip_equals(m_last_xip2, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
+    xunit_info("xbatch_packer::on_proposal_finish tps_key in leader:%d,proposal=%s",is_leader, _evt_obj->get_target_proposal()->dump().c_str());
+    xcsaccount_t::on_proposal_finish(event, from_child, cur_thread_id, timenow_ms);
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
         // accumulated table failed value
         auto fork_tag = "cons_table_failed_accu_" + get_account();
@@ -721,6 +722,9 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
             XMETRICS_TIME_RECORD("tps_leader_commit");
             vblock->get_excontainer()->commit(vblock);
         }
+        
+        xunit_info("xbatch_packer::on_proposal_finish tps_key after commit leader:%d,proposal=%s", is_leader, _evt_obj->get_target_proposal()->dump().c_str());
+
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
         m_para->get_resources()->get_bus()->push_event(ev);

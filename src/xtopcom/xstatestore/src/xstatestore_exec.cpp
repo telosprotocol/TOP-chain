@@ -388,7 +388,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         xwarn("xstatestore_executor_t::write_table_all_states fork blocks write states.block=%s", current_block->dump().c_str());
     }
 
-    xinfo("xstatestore_executor_t::write_table_all_states begin,block:%s",current_block->dump().c_str());
+    xinfo("xstatestore_executor_t::write_table_all_states tps_key begin,block:%s",current_block->dump().c_str());
 
 #ifdef DEBUG
     auto table_full_state_hash = current_block->get_fullstate_hash();

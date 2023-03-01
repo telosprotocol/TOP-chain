@@ -82,7 +82,6 @@ xaccount_context_t::~xaccount_context_t() {
 
 int32_t xaccount_context_t::create_user_account(const std::string& address) {
     assert(address == get_address());
-    xinfo("xaccount_context_t::create_user_account address:%s", address.c_str());
 
     auto old_token = token_balance(data::XPROPERTY_BALANCE_AVAILABLE);
     if (old_token != 0) {
@@ -98,7 +97,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     }
 
     auto default_token_type = XGET_CONFIG(evm_token_type);
-    xinfo("xaccount_context_t::create_user_account token type is %s.", default_token_type.c_str());
+    xinfo("xaccount_context_t::create_user_account address:%s token type is %s.", address.c_str(), default_token_type.c_str());
     if (default_token_type.empty()) {
         xerror("xaccount_context_t::create_user_account  configuration evm token empty");
         return ret;

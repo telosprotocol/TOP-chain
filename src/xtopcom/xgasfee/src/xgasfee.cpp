@@ -64,11 +64,9 @@ void xtop_gasfee::init(std::error_code & ec) {
         xwarn("[xtop_gasfee::init] account_balance_not_enough, eth_max_gasfee: %s, balance: %lu", eth_max_gasfee.str().c_str(), balance);
         return;
     }
-    xinfo("[xtop_gasfee::init] eth_max_gasfee: %s, balance: %lu", eth_max_gasfee.str().c_str(), balance);
-
     m_converted_tgas = balance_to_tgas(eth_max_gasfee);
     m_free_tgas = account_available_tgas(m_time, m_onchain_tgas_deposit);
-    xinfo("[xtop_gasfee::init] final, m_free_tgas: %s, m_converted_tgas: %s", m_free_tgas.str().c_str(), m_converted_tgas.str().c_str());
+    xinfo("[xtop_gasfee::init] final, eth_max_gasfee: %s, balance: %lu, m_free_tgas: %s, m_converted_tgas: %s", eth_max_gasfee.str().c_str(), balance, m_free_tgas.str().c_str(), m_converted_tgas.str().c_str());
     return;
 }
 
