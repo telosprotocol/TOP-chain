@@ -1,6 +1,6 @@
 #!/bin/sh
 
-function command_line_option_include_item {
+command_line_option_include_item() {
     local list="$1"
     local value="$2"
     local result=1
