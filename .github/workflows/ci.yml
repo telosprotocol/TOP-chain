@@ -6,22 +6,18 @@ on:
   push:
     branches:
       - master
-      - feat/**
       - dev/**
-      - release/**
   pull_request:
     branches:
       - master
-      - feat/**
       - dev/**
-      - release/**
 
 jobs:
   build:
     if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
     # if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event_name == 'push'
     runs-on: [self-hosted, Linux, X64]
-    
+
     # for ci telos only
     steps:
       - name: Print event
@@ -35,11 +31,18 @@ jobs:
         with:
           clean: false
           submodules: recursive
-      
-      - name: Run Git Clean
-        run: git clean -ffdx -e cbuild/
 
-      - name: Build XTOP DEBUG
+      - name: Run Git Clean
+        run: git clean -ffdx -e cbuild/ -e cbuild_release/
+
+      - name: Build Release
+        run: |
+          bash .github/scripts/build_xtop.sh release
+
+      - name: Run Git Clean
+        run: git clean -ffdx -e cbuild/ -e cbuild_release/
+
+      - name: Build Debug
         run: |
           bash .github/scripts/build_xtop.sh "test build_ci chain_forked_by_default"
 
