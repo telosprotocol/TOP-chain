@@ -345,6 +345,84 @@ TEST_F(test_block_executed, xstatestore_executor_t_test_5) {
     EXPECT_EQ(state_executor.get_latest_executed_block_height(), max_count-2);
 }
 
+void check_unitstates_stored(mock::xdatamock_table & mocktable, bool all_unitstates_store) {
+    statestore::xstatestore_dbaccess_t _dbaccess;
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+    for (auto & mockunit: mockunits) {
+        ASSERT_TRUE(mockunit.get_history_units().front()->get_height() < max_limit_lightunit_count);
+        for (auto & unit : mockunit.get_history_units()) {
+            if (unit->get_height() == 0) {
+                continue;
+            }
+            auto unitstate = _dbaccess.read_unit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
+            if (all_unitstates_store || unit->get_height() == max_limit_lightunit_count) {
+                xassert(unitstate != nullptr);
+            } else {
+                xassert(unitstate == nullptr);
+            }
+        }
+    }
+}
+
+void store_all_table_blocks(mock::xdatamock_table & mocktable, mock::xvchain_creator & creator) {
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+}
+
+void execute_all_table_blocks(mock::xdatamock_table & mocktable, mock::xvchain_creator & creator) {
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    // xexecute_listener_test listener_test;
+    // statestore::xstatestore_executor_t state_executor{common::xtable_address_t::build_from(mocktable.get_account()), &listener_test};
+    // std::error_code ec;
+    // for (uint64_t height=0;height<=tableblocks.size()-3;height++) {
+    //     auto block = blockstore->load_block_object(mocktable, height, base::enum_xvblock_flag_committed, false);
+    //     xassert(block != nullptr);
+    //     state_executor.on_table_block_committed(block.get());
+    // }
+    for (auto & block : tableblocks) {
+        auto state = statestore::xstatestore_hub_t::instance()->get_table_state_by_block(block.get());
+        xassert(state != nullptr);
+    }
+}
+
+TEST_F(test_block_executed, unitstates_store_rule) {
+    {
+        mock::xvchain_creator creator;
+        base::xvblockstore_t* blockstore = creator.get_blockstore();
+        uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+        uint64_t max_count = max_limit_lightunit_count + 5;
+        mock::xdatamock_table mocktable(1, 4);
+        mocktable.genrate_table_chain(max_count, blockstore);
+
+        // rule1 archive nodes need store units and only store fullunit's offchain state
+        base::xvchain_t::instance().set_node_type(true, true);
+        store_all_table_blocks(mocktable, creator);
+        execute_all_table_blocks(mocktable, creator);
+        check_unitstates_stored(mocktable, false);
+    }
+    {
+        mock::xvchain_creator creator;
+        base::xvblockstore_t* blockstore = creator.get_blockstore();
+        uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+        uint64_t max_count = max_limit_lightunit_count + 5;
+        mock::xdatamock_table mocktable(1, 4);
+        mocktable.genrate_table_chain(max_count, blockstore);
+
+        // rule1 archive nodes need store units and only store fullunit's offchain state
+        base::xvchain_t::instance().set_node_type(false, true);
+        store_all_table_blocks(mocktable, creator);
+        execute_all_table_blocks(mocktable, creator);
+        check_unitstates_stored(mocktable, true);        
+    }
+}
+
+
+
 TEST_F(test_block_executed, latest_executed_state_1) {
     {
         mock::xvchain_creator creator;
@@ -370,26 +448,74 @@ TEST_F(test_block_executed, latest_executed_state_1) {
     }
 }
 
-TEST_F(test_block_executed, not_store_units_1) {
+void check_all_units_stored(mock::xdatamock_table & mocktable, base::xvblockstore_t* blockstore) {
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+    for (auto & v : mockunits) {
+        for (uint64_t height = 0; height <= v.get_cert_block()->get_height(); height++) {
+            auto unit = blockstore->load_block_object(common::xaccount_address_t{v.get_account()}.vaccount(), height, base::enum_xvblock_flag_authenticated, false);
+            ASSERT_TRUE(nullptr != unit);
+        }        
+    }
+}
+
+TEST_F(test_block_executed, store_units_rule) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    base::xvchain_t::instance().set_node_type(false, false);
     {
-        mock::xvchain_creator creator;
-        base::xvblockstore_t* blockstore = creator.get_blockstore();
-        base::xvchain_t::instance().set_node_type(true, true);
+        // rec-table should always store units
+        uint64_t max_count = 8;
+        mock::xdatamock_table mocktable(base::enum_chain_zone_beacon_index, 0, 2);
+        mocktable.genrate_table_chain(max_count, blockstore);
+        check_all_units_stored(mocktable, blockstore);
+    }
+    {
+        // zec-table should always store units
+        uint64_t max_count = 8;
+        mock::xdatamock_table mocktable(base::enum_chain_zone_zec_index, 0, 2);
+        mocktable.genrate_table_chain(max_count, blockstore);
+        check_all_units_stored(mocktable, blockstore);
+    }
+    {
+        // relay-table should always store units
+        uint64_t max_count = 8;
+        mock::xdatamock_table mocktable(base::enum_chain_zone_relay_index, 0, 2);
+        mocktable.genrate_table_chain(max_count, blockstore);
+        check_all_units_stored(mocktable, blockstore);
+    }        
+    base::xvchain_t::instance().set_node_type(true, false);
+    // other tables store units if archive node
+    {
         uint64_t max_count = 8;
         mock::xdatamock_table mocktable(1, 4);
         mocktable.genrate_table_chain(max_count, blockstore);
-        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
-        xassert(tableblocks.size() == max_count + 1);
+        check_all_units_stored(mocktable, blockstore);
+    }
+}
+
+TEST_F(test_block_executed, store_meta_check) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    base::xvchain_t::instance().set_node_type(true, false);
+    // other tables store units if archive node
+    {
+        uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+        uint64_t max_count = max_limit_lightunit_count + 5;
+        mock::xdatamock_table mocktable(1, 4);
+        mocktable.genrate_table_chain(max_count, blockstore);
+        check_all_units_stored(mocktable, blockstore);
+
         const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
-
-        for (auto & block : tableblocks) {
-            ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
-        }
-
         for (auto & v : mockunits) {
-            auto unit = blockstore->load_block_object(common::xaccount_address_t{v.get_account()}.vaccount(), 1, base::enum_xvblock_flag_authenticated, false);
-            xassert(nullptr != unit);
-        }
+            ASSERT_EQ(max_limit_lightunit_count, blockstore->get_latest_full_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+            ASSERT_EQ(v.get_cert_block()->get_height(), blockstore->get_latest_cert_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+            ASSERT_EQ(v.get_cert_block()->get_height() - 2, blockstore->get_latest_committed_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+            ASSERT_EQ(v.get_cert_block()->get_height() - 2, blockstore->get_latest_connected_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+        } 
     }
 }
 

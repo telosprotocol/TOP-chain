@@ -56,8 +56,6 @@ public:
     virtual bool delete_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual const std::string get_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual xsync_store_shadow_t* get_shadow() =  0;
-    virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) = 0;
-    virtual const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) = 0;
     virtual bool remove_empty_unit_forked() = 0;
     virtual bool is_sync_protocal_forked() = 0;
     virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
@@ -135,8 +133,6 @@ public:
     virtual xsync_store_shadow_t* get_shadow() override;
     uint32_t add_listener(int major_type, mbus::xevent_queue_cb_t cb) override;
     void remove_listener(int major_type, uint32_t id) override;
-    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) override;
-    const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) override;
     bool remove_empty_unit_forked() override;
     bool is_sync_protocal_forked() override;
     base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;

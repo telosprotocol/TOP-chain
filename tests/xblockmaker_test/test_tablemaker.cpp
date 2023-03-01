@@ -1239,6 +1239,43 @@ TEST_F(test_tablemaker, fullunit) {
     }
 }
 
+TEST_F(test_tablemaker, unit_content_check) {
+    uint64_t count = 25;
+    mock::xdatamock_table mocktable;
+    mocktable.genrate_table_chain(count, nullptr);
+
+    auto & tables = mocktable.get_history_tables();
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    uint64_t full_table_height = XGET_CONFIG(fulltable_interval_block_num);
+    ASSERT_TRUE(max_limit_lightunit_count > 1 && full_table_height > 1);
+
+    for(auto & tableblock : tables) {
+        if (tableblock->get_height() == 0 || tableblock->get_height() % full_table_height == 0) {
+            continue;
+        }
+        std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+        tableblock->extract_sub_blocks(sub_blocks);
+        xassert(sub_blocks.size() > 0);
+
+        if (tableblock->get_height() == max_limit_lightunit_count) {
+            for (auto & unit : sub_blocks) {
+                EXPECT_TRUE(unit->is_fullunit());
+                ASSERT_FALSE(unit->get_binlog().empty());
+                ASSERT_TRUE(unit->get_full_state().empty());
+                ASSERT_FALSE(unit->get_fullstate_hash().empty());
+            }
+        } else {
+            for (auto & unit : sub_blocks) {
+                EXPECT_TRUE(unit->is_lightunit());
+                ASSERT_FALSE(unit->get_binlog().empty());
+                ASSERT_TRUE(unit->get_full_state().empty());
+                ASSERT_FALSE(unit->get_fullstate_hash().empty());
+            }
+        }
+    }
+}
+
+
 bool convert_func_all_true(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index) {
     uint64_t i = old_account_index.get_latest_unit_height() - 10;
     std::string unit_hash = std::to_string(i + 100);

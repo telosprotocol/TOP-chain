@@ -34,30 +34,20 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_bstate(base::x
     return proposal_bstate;    
 }
 
-xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_unit_bstate(std::string const& account, uint64_t height, std::string const& last_block_hash, base::xvbstate_t* prev_bstate, uint64_t clock) {
-    // create proposal header, clock use to set block version
-    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(account, height, last_block_hash, clock);
-    // always clone new state
-    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate);
+xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_unit_bstate(base::xvbstate_t* prev_bstate, std::string const& last_block_hash) {
+    // clone new state for proposal
+    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(last_block_hash, *prev_bstate);
     return proposal_bstate;    
-}
-
-xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::change_to_proposal_block_state(base::xaccount_index_t const& account_index, base::xvbstate_t* prev_bstate) const {
-    // if (account_index.get_latest_unit_hash().empty()) {
-    //     xassert(false);
-    //     return nullptr;
-    // }
-    return create_proposal_unit_bstate(prev_bstate->get_account(), account_index.get_latest_unit_height()+1, account_index.get_latest_unit_hash(), prev_bstate, m_clock);
-}
-
-xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::change_to_proposal_block_state(base::xvblock_t* prev_block, base::xvbstate_t* prev_bstate) const {
-    return create_proposal_bstate(prev_block, prev_bstate, m_clock);
 }
 
 void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_t end_height) const {
     base::xaccount_index_t commit_accountindex;
     auto ret = get_account_index(m_commit_table_state, _vaddr.get_account(), commit_accountindex);
     if (!ret) {
+        return;
+    }
+    if (commit_accountindex.get_latest_unit_hash().empty()) {
+        // XTODO unit sync should only by unit hash of account index
         return;
     }
     uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(_vaddr);

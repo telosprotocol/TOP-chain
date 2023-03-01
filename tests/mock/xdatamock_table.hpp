@@ -35,18 +35,26 @@ class xdatamock_table : public base::xvaccount_t {
         enum_default_full_table_state_count = 2,
     };
  public:
+    explicit xdatamock_table(base::enum_xchain_zone_index zone, uint16_t tableid, uint32_t user_count = 4)
+    : base::xvaccount_t(xblocktool_t::make_address_table_account(zone, tableid)) {
+        init(*this, user_count);
+    }
+
     explicit xdatamock_table(uint16_t tableid = 1, uint32_t user_count = 4, bool is_fixed = false)
     : base::xvaccount_t(xblocktool_t::make_address_shard_table_account(tableid)) {
+        if (is_fixed) {
+            user_count = 2;// two account is enough as reference block
+        }
+        init(*this, user_count);
+    }
+    void init(base::xvaccount_t const& table_addr, uint32_t user_count) {
         m_fulltable_builder = std::make_shared<blockmaker::xfulltable_builder_t>();
 
         xblock_ptr_t _block = build_genesis_table_block();
         on_table_finish(_block);
 
-        if (is_fixed) {
-            user_count = 2;// two account is enough as reference block
-        }
         for (uint32_t i = 0; i < user_count; i++) {
-            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
+            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(get_ledger_subaddr());
             xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
             m_mock_units.push_back(datamock_unit);
         }        

@@ -275,6 +275,7 @@ void xtable_maker_t::make_account_unit_and_index(bool is_leader, const data::xbl
                                                                unitblock->get_fullstate_hash(),
                                                                unitctx->get_accoutstate()->get_tx_nonce());
         unitctx->get_accoutstate()->update_account_index(aindex); // TODO(jimmy) update to state ctx for save unitstate
+        unitctx->get_accoutstate()->get_unitstate()->get_bstate()->update_final_block_info(unitblock.get());
 
         lighttable_para.set_unit(unitblock);
         lighttable_para.set_accountindex(unitblock->get_account(), aindex);

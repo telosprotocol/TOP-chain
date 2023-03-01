@@ -241,14 +241,6 @@ public:
         return "";
     }
 
-    bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, const uint64_t height) override {
-        return true;
-    }
-
-    const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) override {
-        return "";
-    }
-
     uint64_t update_get_latest_cp_connected_block_height(const base::xvaccount_t & account, const int atag = 0) override {
         return 0;
     }
