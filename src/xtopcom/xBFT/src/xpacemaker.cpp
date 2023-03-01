@@ -267,7 +267,7 @@ namespace top
             }
             if(new_view_id > m_latest_view_id)
             {
-                xkinfo("xclockcert_view::update_view,at node=0x%llx, account %s old viewid=%llu --> new_view_id=%llu =  cert'view=%llu + 1 + {clock:%llu - %llu}",
+                xkinfo("xclockcert_view::update_view,tps_key at node=0x%llx, account %s old viewid=%llu --> new_view_id=%llu =  cert'view=%llu + 1 + {clock:%llu - %llu}",
                        get_xip2_addr().low_addr,
                        get_address().c_str(),
                        m_latest_view_id,

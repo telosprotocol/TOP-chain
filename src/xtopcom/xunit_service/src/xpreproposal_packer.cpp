@@ -88,7 +88,7 @@ void xpreproposal_packer::send_preproposal(const data::xblock_consensus_para_t &
     auto to_xip = local_xip;
     set_node_id_to_xip2(to_xip, common::xbroadcast_slot_id_value);
 
-    xinfo("xpreproposal_packer::send_preproposal cs_para=%s", cs_para.dump().c_str());
+    xinfo("xpreproposal_packer::send_preproposal tps_key cs_para=%s", cs_para.dump().c_str());
 
     xpreproposal_msg_t msg(cs_para, txs, receiptid_state_proves);
     std::string msg_content;

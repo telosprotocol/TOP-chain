@@ -452,7 +452,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     m_state_accessor.write_table_bstate_to_cache(m_table_addr, current_block->get_height(), current_block->get_block_hash(), tablestate, current_block->check_block_flag(base::enum_xvblock_flag_committed));
 
     set_latest_executed_info(current_block->check_block_flag(base::enum_xvblock_flag_committed), current_block->get_height());
-    xinfo("xstatestore_executor_t::write_table_all_states succ,block:%s,execute_height=%ld,unitstates=%zu,state_root=%s",
+    xinfo("xstatestore_executor_t::write_table_all_states tps_key succ,block:%s,execute_height=%ld,unitstates=%zu,state_root=%s",
         current_block->dump().c_str(), get_commit_executed_height_inner(),tablestate_store->get_unitstates().size(),tablestate_store->get_state_root().hex().c_str());
     return tablestate;
 }

@@ -670,7 +670,7 @@ namespace top
                 xproposal_t * _local_proposal = (xproposal_t*)block_ptr;
                 if(_local_proposal->check_block_flag(base::enum_xvblock_flag_authenticated))
                 {
-                    xinfo("xBFTdriver_t::handle_vote_msg,finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
+                    xinfo("xBFTdriver_t::handle_vote_msg, tps_key finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
  
                     xdbgassert(_local_proposal->get_block()->is_body_and_offdata_ready(true));
                     

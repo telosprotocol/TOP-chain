@@ -524,7 +524,7 @@ void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block
         data::xtablestate_ptr_t tablestate_ptr = nullptr;
         auto ret = statestore::xstatestore_hub_t::instance()->get_receiptid_state_and_prove(common::xaccount_address_t(m_table_maker->get_account()), _commit_block, property_prove_ptr, tablestate_ptr);
         if (!ret) {
-            xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), _commit_block->get_height());
+            xwarn("xproposal_maker_t::update_txpool_table_state create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), _commit_block->get_height());
         }
         get_txpool()->update_table_state(property_prove_ptr, commit_tablestate);
     }

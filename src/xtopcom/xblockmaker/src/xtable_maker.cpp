@@ -443,12 +443,16 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         }
     }
 
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key execute txs finish packtx is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+
     make_account_unit_and_index(is_leader, cs_para, statectx_ptr, lighttable_para, ec);
     if (ec) {
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
         xwarn("xtable_maker_t::make_light_table_v2 fail-make units.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
         return nullptr;
     }
+
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key make unit and index finish packtx is_leader=%d,%s", is_leader, cs_para.dump().c_str());
 
     // TODO(jimmy) update confirm ids in table state
     update_receiptid_state(table_para, statectx_ptr);
@@ -460,13 +464,13 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         xerror("xtable_maker_t::make_light_table_v2 fail-create mpt. %s", cs_para.dump().c_str());
         return nullptr;
     }
-    xinfo("xtable_maker_t::make_light_table_v2 create_new_mpt ok");
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key create_new_mpt finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
     evm_common::xh256_t state_root = table_mpt->get_root_hash(ec);
     if (ec) {
         xerror("xtable_maker_t::make_light_table_v2 fail-get mpt root. %s, ec=%s", cs_para.dump().c_str(), ec.message().c_str());
         return nullptr;
     }
-    xinfo("xtable_maker_t::make_light_table_v2 get_root_hash ok");
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key get_root_hash finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
     xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), state_root.hex().c_str());
 
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, state_root, execute_output.pack_outputs));
@@ -478,7 +482,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
             is_leader, cs_para.dump().c_str(), ec.message().c_str());
         return nullptr;
     }
-    xinfo("xtable_maker_t::make_light_table_v2 make_table_block_para ok");
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key make_table_block_para finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
@@ -488,7 +492,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
                                                                         cs_para,
                                                                         lighttable_para);
     if (nullptr != tableblock) {
-        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,units=%zu,indexs=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu,txnum=%u",
+        xinfo("xtable_maker_t::make_light_table_v2-succ tps_key is_leader=%d,%s,binlog=%zu,snapshot=%zu,units=%zu,indexs=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu,txnum=%u",
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(),
             lighttable_para.get_units().size(), lighttable_para.get_accountindexs().get_account_indexs().size(), 
             lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),tableblock->get_output_offdata().size(),

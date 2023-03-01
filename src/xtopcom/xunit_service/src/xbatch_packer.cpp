@@ -314,7 +314,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
     xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), _cert_block.get(), local_xip, local_xip, election_epoch, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
-    xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d,timenow_ms:%llu",
+    xunit_info("xbatch_packer::on_view_fire tps_key is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d,timenow_ms:%llu",
             is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), _cert_block->get_height(),
             _cert_block->get_viewid(), this, node_account.c_str(),
             xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode, timenow_ms);
@@ -504,7 +504,7 @@ bool xbatch_packer::on_pdu_event_up(const base::xvevent_t & event, xcsobject_t *
 }
 
 bool xbatch_packer::send_out(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
-    xunit_info("xbatch_packer::send_out pdu=%s,body_size:%d,from_xip=%s,to_xip=%s,node_xip=%s,this:%p",
+    xunit_info("xbatch_packer::send_out tps_key pdu=%s,body_size:%d,from_xip=%s,to_xip=%s,node_xip=%s,this:%p",
                 packet.dump().c_str(), packet.get_msg_body().size(), xcons_utl::xip_to_hex(from_addr).c_str(),xcons_utl::xip_to_hex(to_addr).c_str(),xcons_utl::xip_to_hex(from_addr).c_str(), this);
 
     auto network_proxy = m_para->get_resources()->get_network();
@@ -555,7 +555,7 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
         return false;
     }
     
-    xunit_info("xbatch_packer::recv_in, consensus_tableblock  pdu_recv_in=%s, clock=%llu, viewid=%llu, from_xip=%s,to_xip=%s,node_xip=%s.",
+    xunit_info("xbatch_packer::recv_in,tps_key consensus_tableblock pdu_recv_in=%s, clock=%llu, viewid=%llu, from_xip=%s,to_xip=%s,node_xip=%s.",
                 packet.dump().c_str(), m_last_view_clock, m_last_view_id, xcons_utl::xip_to_hex(from_addr).c_str(),xcons_utl::xip_to_hex(to_addr).c_str(),xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
@@ -708,7 +708,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_SET( fork_tag , 0);
 
-        xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s,m_last_xip2:%s",
+        xunit_info("xbatch_packer::on_proposal_finish succ. tps_key leader:%d,proposal=%s,at_node:%s,m_last_xip2:%s",
             is_leader,
             _evt_obj->get_target_proposal()->dump().c_str(),
             xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
