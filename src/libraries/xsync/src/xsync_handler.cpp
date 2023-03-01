@@ -659,6 +659,11 @@ void xsync_handler_t::on_block_response_process(uint32_t msg_size,
         network_self.to_string().c_str(), from_address.to_string().c_str(), response_ptr->get_address().c_str());
 
     auto blocks_vec = response_ptr->get_all_xblock_ptr();
+    if (blocks_vec.empty()) {
+        xsync_warn("xsync_handler::on_block_response_process blocks_vec szie(%ld) : %" PRIx64 "  %s %s", blocks_vec.size(),
+            msg_hash, network_self.to_string().c_str(), from_address.to_string().c_str());
+        return;
+    }
 
     switch (response_ptr->get_request_type()) {
     case enum_sync_block_request_demand: {
@@ -716,7 +721,7 @@ void xsync_handler_t::on_block_push_newblock(uint32_t msg_size,
     }
 
    auto blocks_vec = msg_push_ptr->get_all_xblock_ptr(); 
-    if (blocks_vec.size() < 1 ) {
+    if (blocks_vec.empty()) {
         xsync_warn("xsync_handler::on_block_push_newblock blocks_vec szie(%ld) : %" PRIx64 "  %s %s", blocks_vec.size(),
             msg_hash, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;

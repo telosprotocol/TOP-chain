@@ -329,3 +329,17 @@ TEST_F(test_xsync_span, test_xsync_or_cp_reflash_disconnect_BENCH)
     ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_connect_height);
 }
 
+TEST(test_xsync_span, test_xsync_empty_block_response)
+{
+    std::vector<data::xblock_ptr_t> blocks_vec{};
+    vnetwork::xvnode_address_t network_self;
+    vnetwork::xvnode_address_t from_address;
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_response_blocks_t>(blocks_vec, network_self, from_address);
+
+    if(e->major_type == mbus::xevent_major_type_sync_executor ){
+        if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
+            ASSERT_EQ(bme->blocks.size(), 0);
+        }
+    }
+}
