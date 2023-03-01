@@ -4,9 +4,6 @@
 [submodule "src/xtopcom/xdepends/googletest"]
 	path = src/xtopcom/xdepends/googletest
 	url = git@github.com:google/googletest.git
-[submodule "src/xtopcom/xdepends/xquic"]
-	path = src/xtopcom/xdepends/xquic
-	url = git@github.com:alibaba/xquic.git
 [submodule "src/xtopcom/xdepends/boringssl"]
 	path = src/xtopcom/xdepends/boringssl
 	url = git@github.com:google/boringssl.git
@@ -43,12 +40,15 @@
 [submodule "third_party/asio"]
 	path = third_party/asio
 	url = git@github.com:chriskohlhoff/asio.git
-[submodule "third_party/xquic"]
-	path = third_party/xquic
-	url = git@github.com:alibaba/xquic.git
 [submodule "third_party/trezor/trezor-crypto"]
 	path = third_party/trezor/trezor-crypto
 	url = git@github.com:trezor/trezor-crypto.git
 [submodule "third_party/boringssl"]
 	path = third_party/boringssl
 	url = git@github.com:google/boringssl.git
+[submodule "third_party/xquic"]
+	path = third_party/xquic
+	url = git@github.com:telosprotocol/xquic.git
+[submodule "src/xtopcom/xdepends/xquic"]
+	path = src/xtopcom/xdepends/xquic
+	url = git@github.com:telosprotocol/xquic.git
