@@ -41,7 +41,7 @@ NS_BEG2(top, xunit_service)
 
 #define TRY_MAKE_BLOCK_TIMER_INTERVAL (50)
 #define TRY_HIGH_TPS_TIME_WINDOW (200)
-#define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (600)
+#define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (500)
 #define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (1000)
 
 xbatch_packer::xbatch_packer(base::xtable_index_t                             &tableid,
