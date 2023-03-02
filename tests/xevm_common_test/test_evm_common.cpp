@@ -8,7 +8,6 @@
 #include "xcommon/rlp.h"
 #include "xevm_common/address.h"
 
-#include <nlohmann/json.hpp>
 #include <stdio.h>
 
 #include <gtest/gtest.h>
