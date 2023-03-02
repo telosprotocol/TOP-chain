@@ -1196,10 +1196,10 @@ namespace top
             };
             base::xcall_t asyn_verify_call(_verify_function,(base::xobject_t*)test_cert,&_after_verify_cert_job,(base::xobject_t*)this);
             asyn_verify_call.bind_taskid(get_account_index());
-            base::xworkerpool_t * _workers_pool = get_workerpool();
-            if(_workers_pool != NULL)
-                return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
-            else
+            // base::xworkerpool_t * _workers_pool = get_workerpool();
+            // if(_workers_pool != NULL)
+            //     return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
+            // else
                 return (dispatch_call(asyn_verify_call) == enum_xcode_successful);
         }
 
@@ -1290,10 +1290,10 @@ namespace top
             };
             base::xcall_t asyn_verify_call(_verify_function,(base::xobject_t*)target_block,&_after_verify_commit_job,(base::xobject_t*)this);
             asyn_verify_call.bind_taskid(get_account_index());
-            base::xworkerpool_t * _workers_pool = get_workerpool();
-            if(_workers_pool != NULL)
-                return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
-            else
+            // base::xworkerpool_t * _workers_pool = get_workerpool();
+            // if(_workers_pool != NULL)
+            //     return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
+            // else
                 return (dispatch_call(asyn_verify_call) == enum_xcode_successful);
         }
 
@@ -1379,10 +1379,10 @@ namespace top
 
             base::xcall_t asyn_verify_call(_verify_function,(base::xobject_t*)local_proposal,&callback,(base::xobject_t*)this);
             asyn_verify_call.bind_taskid(get_account_index());
-            base::xworkerpool_t * _workers_pool = get_workerpool();
-            if(_workers_pool != NULL)
-                return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
-            else
+            // base::xworkerpool_t * _workers_pool = get_workerpool();
+            // if(_workers_pool != NULL)
+            //     return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
+            // else
                 return (dispatch_call(asyn_verify_call) == enum_xcode_successful);
         }
 
@@ -1481,10 +1481,10 @@ namespace top
 
             base::xcall_t asyn_verify_call(_verify_function,(base::xobject_t*)target_proposal,&callback,(base::xobject_t*)this);
             asyn_verify_call.bind_taskid(get_account_index());
-            base::xworkerpool_t * _workers_pool = get_workerpool();
-            if(_workers_pool != NULL)
-                return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
-            else
+            // base::xworkerpool_t * _workers_pool = get_workerpool();
+            // if(_workers_pool != NULL)
+            //     return (_workers_pool->send_call(asyn_verify_call) == enum_xcode_successful);
+            // else
                 return (dispatch_call(asyn_verify_call) == enum_xcode_successful);
         }
 
