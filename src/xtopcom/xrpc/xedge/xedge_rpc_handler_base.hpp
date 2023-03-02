@@ -130,7 +130,6 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                 }
                 ec.clear();
                 vd->broadcast(validator_dst.xip2(), msg, ec);
-                XMETRICS_GAUGE(metrics::rpc_edge_tx_request, 1);
                 if (ec) {
                     xwarn("[global_trace][edge][forward validator] failed. %s,%s,src %s, dst %s,%" PRIx64,
                           tx_hash.c_str(),
