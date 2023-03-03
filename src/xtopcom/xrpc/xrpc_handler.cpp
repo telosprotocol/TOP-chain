@@ -34,7 +34,7 @@ xrpc_handler::xrpc_handler(std::shared_ptr<xvnetwork_driver_face_t>           ar
   , m_txpool_service(txpool_service)
   , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
   , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(block_store, nullptr, txpool_service, txstore, exchange_flag))
-  , m_rpc_eth_query_mgr(std::make_shared<xrpc_eth_query_manager>(block_store, nullptr, txpool_service, txstore, exchange_flag))
+  , m_rpc_eth_query_mgr(std::make_shared<xrpc_eth_query_manager>(block_store))
   , m_thread(thread) {
 }
 

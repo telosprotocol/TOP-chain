@@ -35,7 +35,14 @@ enum enum_xrpc_version {
 class xrpc_handle_face_t
 {
 public:
-    virtual bool handle(std::string & request, Json::Value& js_req, Json::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) = 0;
+    xrpc_handle_face_t() = default;
+    xrpc_handle_face_t(xrpc_handle_face_t const &) = delete;
+    xrpc_handle_face_t & operator=(xrpc_handle_face_t const &) = delete;
+    xrpc_handle_face_t(xrpc_handle_face_t &&) = default;
+    xrpc_handle_face_t & operator=(xrpc_handle_face_t &&) = delete;
+    virtual ~xrpc_handle_face_t() = default;
+
+    virtual bool handle(std::string & request, Json::Value& js_req, Json::Value& js_rsp, std::string & str_result, uint32_t & error_code) = 0;
 };
 
 class xgrpc_service
