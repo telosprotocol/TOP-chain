@@ -158,7 +158,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 3, 3, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 128, 64, 512);
 #else
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 3600, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 6, 6, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t, normal, 64, 32, 256);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 6, 6, 32);
