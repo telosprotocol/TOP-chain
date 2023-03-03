@@ -8,7 +8,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xtoken_metadata.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)

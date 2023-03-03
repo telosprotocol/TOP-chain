@@ -16,7 +16,7 @@
 #include "xdata/xerror/xerror.h"
 #include "xdata/xmemcheck_dbg.h"
 #include "xcrypto/xckey.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 
 // using namespace std;
 using namespace top::evm_common;

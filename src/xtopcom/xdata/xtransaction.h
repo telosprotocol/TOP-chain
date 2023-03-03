@@ -11,10 +11,9 @@
 #include "xvledger/xdataobj_base.hpp"
 #include "xbase/xrefcount.h"
 #include "xbase/xmem.h"
-#include "xevm_common/common.h"
 
 #include <json/json.h>
-
+#include "xcommon/common.h"
 namespace top { namespace data {
 
 enum enum_xtransaction_type {

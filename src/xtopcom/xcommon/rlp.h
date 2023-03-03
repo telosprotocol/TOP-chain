@@ -8,8 +8,8 @@
 #include "xbasic/xspan.h"
 #include "fixed_hash.h"
 #include "vector_ref.h"
-#include "xevm_common/common.h"
-#include "xevm_common/data.h"
+#include "xcommon/common.h"
+#include "xcommon/data.h"
 
 #include <array>
 #include <exception>

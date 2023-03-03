@@ -36,6 +36,7 @@ enum class xenum_errc {
     table_base_address_is_empty,
     invalid_table_base_address,
     invalid_table_address,
+    not_enough_data,
 };
 using xerrc_t = xenum_errc;
 

@@ -8,7 +8,7 @@
 #include "xbasic/xspan.h"
 #include "xevm_common/rlp/xrlp_encodable.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 
 #include <array>
 #include <memory>

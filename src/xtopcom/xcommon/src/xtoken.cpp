@@ -8,7 +8,7 @@
 #include "xbasic/xerror/xerror.h"
 #include "xcommon/xerror/xerror.h"
 #include "xcontract_common/xerror/xerror.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xutility/xhash.h"
 
 #include <cassert>

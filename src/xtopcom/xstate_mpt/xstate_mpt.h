@@ -7,7 +7,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xtable_address.h"
 #include "xevm_common/trie/xsecure_trie.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xstate_mpt/xstate_mpt_store_fwd.h"
 #include "xstate_mpt/xstate_object.h"
 #include "xvledger/xvdbstore.h"

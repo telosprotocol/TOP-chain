@@ -9,7 +9,7 @@
 #include "xcommon/xeth_address.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xevm_common/xabi_decoder.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)

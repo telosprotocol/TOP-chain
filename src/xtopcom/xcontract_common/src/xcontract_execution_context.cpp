@@ -8,7 +8,7 @@
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 
 #include <cinttypes>
 

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xspan.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/trie/xtrie_node.h"
 
 NS_BEG3(top, evm_common, trie)

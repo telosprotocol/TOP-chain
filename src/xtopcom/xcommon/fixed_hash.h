@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 
 #include "xbasic/xspan.h"
 
@@ -72,7 +72,11 @@ public:
     }
 
     /// Convert from unsigned
-    explicit FixedHash(unsigned _u) {
+    // explicit FixedHash(unsigned _u) {
+    //     toBigEndian(_u, m_data);
+    // }
+
+    explicit FixedHash(uint64_t _u) {
         toBigEndian(_u, m_data);
     }
 

@@ -8,7 +8,7 @@
 #include "xbasic/xhex.h"
 #include "xcommon/xtoken_metadata.h"
 #include "xcontract_runtime/xerror/xerror.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xevm_contract_runtime/xevm_memory_tools.h"
 #if defined(XCXX20)
 #include "xevm_runner/proto/ubuntu/proto_basic.pb.h"

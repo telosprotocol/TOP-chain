@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "fixed_hash.h"
+#include "xcommon/fixed_hash.h"
 #include <vector>
 
 namespace top {

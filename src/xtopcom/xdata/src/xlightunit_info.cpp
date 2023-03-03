@@ -6,6 +6,7 @@
 #include "xbase/xutl.h"
 #include "xdata/xlightunit_info.h"
 #include "xdata/xdata_common.h"
+#include "xcommon/xtop_log.h"
 
 namespace top { namespace data {
 
@@ -88,6 +89,13 @@ void xtransaction_exec_state_t::set_evm_tx_receipt(data::xeth_store_receipt_t & 
     std::string str_evm_tx_receipt = from_bytes<std::string>(evm_tx_receipt.encodeBytes());
     if (!str_evm_tx_receipt.empty()) {
         set_value(XTX_EVM_TRANSACTION_RECEIPT, str_evm_tx_receipt);
+    }
+}
+
+void xtransaction_exec_state_t::set_tvm_tx_receipt(data::xtop_store_receipt_t & tvm_tx_receipt) {
+   std::string tx_receipt = from_bytes<std::string>(tvm_tx_receipt.encodeBytes());
+    if (!tx_receipt.empty()) {
+        set_value(XTX_TVM_TRANSACTION_RECEIPT, tx_receipt);
     }
 }
 

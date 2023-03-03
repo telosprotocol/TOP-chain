@@ -27,6 +27,8 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvpropertyrules.h"
 #include "xvm/manager/xcontract_address_map.h"
+#include "xbasic/xhex.h"
+#include "ethash/keccak.hpp"
 
 using namespace top::base;
 
@@ -1380,6 +1382,23 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;
+}
+
+common::xtop_logs_t const & xaccount_context_t::logs() const noexcept { return logs_; }
+
+void xaccount_context_t::add_log(common::xtop_log_t log) {
+    logs_.emplace_back(std::move(log));
+#if defined(DEBUG)
+    for (auto l : logs_) {
+        xdbg("[xaccount_context_t::add_log] set-logs address(%s),data(%s),bloom(%s)",
+             l.address.to_string().c_str(),
+             top::to_hex_prefixed(l.data).c_str(),
+             l.bloom().to_hex_string().c_str());
+        for (auto const & topic : l.topics) {
+            xdbg("[xaccount_context_t::add_log] set-logs topic(%s)", top::to_hex_prefixed(topic.asBytes()).c_str());
+        }
+    }
+#endif
 }
 
 }  // namespace store

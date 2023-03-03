@@ -9,6 +9,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xstatectx/xstatectx_face.h"
 #include "xevm_common/xevm_transaction_result.h"
+#include "xcommon/xtop_log.h"
 
 NS_BEG2(top, txexecutor)
 
@@ -120,6 +121,7 @@ class xvm_output_t {
     std::error_code m_ec;
     int64_t         m_tgas_balance_change{0};
     uint64_t        m_total_gas_burn{0};
+    common::xtop_logs_t  logs;
     std::vector<xcons_transaction_ptr_t> m_contract_create_txs;
     xvm_gasfee_detail_t m_gasfee_detail;
 };

@@ -5,8 +5,8 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-#include "xevm_common/common.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common.h"
+#include "xcommon/common_data.h"
 
 #include <msgpack.hpp>
 

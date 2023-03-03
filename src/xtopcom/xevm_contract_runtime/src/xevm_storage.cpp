@@ -7,7 +7,7 @@
 #include "xbasic/xhex.h"
 #include "xcommon/xaccount_address_fwd.h"
 #include "xdata/xproperty.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xstate_accessor.h"
 

@@ -21,7 +21,8 @@
 #endif
 
 #include "xbasic/xhex.h"
-#include "xevm_common/rlp.h"
+#include "xdepends/include/json/reader.h"
+#include "xcommon/rlp.h"
 #include "xutility/xhash.h"
 
 NS_BEG2(top, evm_common)

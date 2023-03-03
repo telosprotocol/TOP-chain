@@ -14,11 +14,12 @@
 #include "xvledger/xvstate.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcommon/xlogic_time.h"
+#include "xcommon/xtop_log.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xproperty.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xunit_bstate.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xstatectx/xstatectx_face.h"
 
 namespace top { namespace store {
@@ -201,8 +202,13 @@ class xaccount_context_t {
 
     std::string         m_current_table_addr;
     uint64_t            m_current_table_commit_height{0};
-
     uint64_t            m_total_gas_burn{0};
+
+ public:
+    common::xtop_logs_t const & logs() const noexcept;
+    void add_log(common::xtop_log_t log_);
+ private:
+    common::xtop_logs_t logs_;
 };
 
 using xaccount_context_ptr_t = std::shared_ptr<xaccount_context_t>;

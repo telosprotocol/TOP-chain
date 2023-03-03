@@ -6,7 +6,7 @@
 
 #include "xbasic/xspan.h"
 #include "xevm_common/trie/xtrie_node.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 
 
 #include <map>

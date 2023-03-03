@@ -6,7 +6,7 @@
 
 #include <string>
 #include "xdata/xunit_bstate.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xstate_mpt/xstate_mpt.h"
 #include "xvledger/xvstatestore.h"
 

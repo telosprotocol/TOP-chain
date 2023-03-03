@@ -9,7 +9,7 @@
 #include "xcommon/xaccount_address.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xvpropertyprove.h"
 #include "xcommon/xaccount_address.h"

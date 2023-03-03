@@ -7,7 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 
 #include <memory>
 #include <vector>

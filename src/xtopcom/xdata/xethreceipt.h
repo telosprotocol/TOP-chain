@@ -5,12 +5,12 @@
 #pragma once
 
 #include <string>
-#include "xevm_common/common.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/common.h"
+#include "xcommon/xfixed_hash.h"
 #include "xevm_common/xevm_transaction_result.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/address.h"
-#include "xevm_common/xbloom9.h"
+#include "xcommon/xbloom9.h"
 #include "xdata/xethtransaction.h"
 
 NS_BEG2(top, data)

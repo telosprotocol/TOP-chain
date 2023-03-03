@@ -9,7 +9,7 @@
 #include "xdata/xethtransaction.h"
 #include "xdata/xtx_factory.h"
 #include "xbasic/xhex.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 
 using namespace top;
 using namespace top::base;

@@ -23,6 +23,7 @@ optional<xfork_point_t> v10902_enable_voting = xfork_point_t{xfork_point_type_t:
 optional<xfork_point_t> v1_10_0_block_fork_point    = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.10 block object optimize"};
 optional<xfork_point_t> v1_11_0_unit_optimize_fork_point    = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.11 unit block optimize"};
 optional<xfork_point_t> v1_11_0_genesis_account_mpt_fork_point   = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.11 genesis account mpt fork"};
+optional<xfork_point_t> v11100_event = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.11.0 add event"};
 
 #else
 
@@ -30,6 +31,7 @@ optional<xfork_point_t> v1_7_0_block_fork_point           = xfork_point_t{xfork_
 optional<xfork_point_t> v1_7_0_sync_point                 = xfork_point_t{xfork_point_type_t::logic_time, 9460080, "v1.7 sync protocol fork"};
 optional<xfork_point_t> v1_9_0_state_fork_point           = xfork_point_t{xfork_point_type_t::logic_time, 10038600, "v1.9 unitstate fork"};
 optional<xfork_point_t> xbft_msg_upgrade                  = xfork_point_t{xfork_point_type_t::logic_time, 10038600, "xbft msg upgrade"};
+
 optional<xfork_point_t> v10900_upgrade_table_tickets_contract = xfork_point_t{xfork_point_type_t::logic_time, 10038600, "v1.9 vote contract update"};
 optional<xfork_point_t> v10901_table_tickets_reset = xfork_point_t{xfork_point_type_t::logic_time, 10087200, "v1.9 vote contract data reset"};
 optional<xfork_point_t> v10901_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 10091880, "v1.9 vote contract re-enabling"};
@@ -38,6 +40,7 @@ optional<xfork_point_t> v10902_enable_voting = xfork_point_t{xfork_point_type_t:
 optional<xfork_point_t> v1_10_0_block_fork_point          = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.10 block object optimize"};
 optional<xfork_point_t> v1_11_0_unit_optimize_fork_point          = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.11 unit block optimize"};
 optional<xfork_point_t> v1_11_0_genesis_account_mpt_fork_point   = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.11 genesis account mpt fork"};
+optional<xfork_point_t> v11100_event = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.11.0 add event"};
 #endif
 
 NS_END2

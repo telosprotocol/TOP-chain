@@ -8,6 +8,8 @@
 #include "xchain_fork/xutility.h"
 #include "xstore/xstore_error.h"
 #include "xvm/xerror/xvm_error.h"
+#include "xbasic/xhex.h"
+#include "ethash/keccak.hpp"
 
 using namespace top::data;
 
@@ -354,6 +356,14 @@ int32_t xcontract_helper::get_gas_and_disk_usage(std::uint32_t &gas, std::uint32
         xdbg("[xcontract_helper::get_gas_and_disk_usage] size: %u, gas: %u, disk: %u\n", size, gas, disk);
     }
     return 0;
+}
+
+void xcontract_helper::event(common::xtop_event_t & e) {
+    if (true == e.get_name().empty()) {
+        xwarn("[xcontract_helper::event] set-logs the signature cannot be empty");
+        return;
+    }
+    m_account_context->add_log(e.pack());
 }
 
 NS_END2

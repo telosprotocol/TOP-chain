@@ -7,9 +7,9 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xeth_address.h"
 #include "xbase/xmem.h"
-#include "xevm_common/rlp.h"
-#include "xevm_common/xbloom9.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/rlp.h"
+#include "xcommon/xbloom9.h"
+#include "xcommon/xfixed_hash.h"
 
 #include <string>
 #include <vector>

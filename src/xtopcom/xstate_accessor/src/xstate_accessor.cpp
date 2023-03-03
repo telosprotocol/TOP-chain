@@ -7,7 +7,7 @@
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xmetrics/xmetrics.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xvledger/xvledger.h"

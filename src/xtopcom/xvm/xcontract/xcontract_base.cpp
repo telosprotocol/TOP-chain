@@ -6,6 +6,9 @@
 #include "xrouter/xrouter.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
+#include "xchain_fork/xfork_points.h"
+#include "xchain_fork/xutility.h"
+#include "xcommon/xtop_event.h"
 
 using namespace top::data;
 
@@ -103,6 +106,9 @@ void xcontract_base::TRANSFER(const std::string& target_addr, uint64_t amount) {
     // if amount = 0, then not create transfer tx, because consesenus not allowed
     if (0 == amount) return;
     m_contract_helper->create_transfer_tx(target_addr, amount);
+    if (true == chain_fork::xutility_t::is_forked(fork_points::v11100_event, TIME())) {
+        EVENT_TRANSFER(SELF_ADDRESS().to_string(),target_addr,amount);
+    }
 }
 
 bool xcontract_base::EXISTS(const std::string& addr) {
@@ -278,6 +284,23 @@ void xcontract_base::GET_STRING_PROPERTY(const std::string& key, std::string& va
 
 void xcontract_base::GENERATE_TX(common::xaccount_address_t const & target_addr, const string& func_name, const string& func_param) {
     m_contract_helper->generate_tx(target_addr, func_name, func_param);
+}
+
+void xcontract_base::EVENT(const std::string & func_sign, const std::string & data) {
+    common::arguments_t args;
+    args.emplace_back(common::argument_t(data, common::enum_event_data_type::string, false));
+    common::xtop_event_t event(func_sign, m_contract_helper->get_self_account(), args);
+    m_contract_helper->event(event);
+}
+
+void xcontract_base::EVENT_TRANSFER(const std::string & indexed_from, const std::string & indexed_to, const uint64_t & data) {
+    common::arguments_t args;
+    std::string func_sign = R"(Transfer(address,address,uint256))";
+    args.emplace_back(common::argument_t(data, common::enum_event_data_type::uint64, false));
+    args.emplace_back(common::argument_t(indexed_from, common::enum_event_data_type::address, true));
+    args.emplace_back(common::argument_t(indexed_to, common::enum_event_data_type::address, true));
+    common::xtop_event_t e(func_sign, m_contract_helper->get_self_account(), args);
+    m_contract_helper->event(e);
 }
 
 base::xauto_ptr<xblock_t>

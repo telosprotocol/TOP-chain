@@ -15,7 +15,7 @@
 #include "xvledger/xvledger.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xrpc/xjson_proc.h"
-#include "xevm_common/fixed_hash.h"
+#include "xcommon/fixed_hash.h"
 #include "xrpc/eth_rpc/eth_error_code.h"
 
 namespace top {

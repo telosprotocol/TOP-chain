@@ -17,8 +17,9 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xevm_common/address.h"
-#include "xevm_common/data.h"
 #include "xstatistic/xstatistic.h"
+#include "xcommon/data.h"
+
 
 namespace top { namespace data {
 
