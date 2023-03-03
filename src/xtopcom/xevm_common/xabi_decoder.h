@@ -173,11 +173,11 @@ private:
             ec = error::xerrc_t::abi_decode_outofrange;
             return {};
         }
-        auto real_position = decode_as_real_position(start_pos + offset_pos, ec) + start_pos;
+        auto const real_position = decode_as_real_position(start_pos + offset_pos, ec) + start_pos;
         if (ec) {
             return {};
         }
-        auto sz = decode_as_u256(real_position);
+        auto const sz = decode_as_u256(real_position);
         std::vector<ElementType> res;
         for (std::size_t data_pos_offset = 0; data_pos_offset < sz; ++data_pos_offset) {
             auto r = variant_decode<ElementType>(real_position + 1, data_pos_offset, ec);
@@ -194,11 +194,11 @@ private:
             ec = error::xerrc_t::abi_decode_outofrange;
             return {};
         }
-        auto real_position = decode_as_real_position(start_pos + offset_pos, ec) + start_pos;
+        auto const real_position = decode_as_real_position(start_pos + offset_pos, ec) + start_pos;
         if (ec) {
             return {};
         }
-        auto sz = decode_as_u256(real_position);
+        auto const sz = decode_as_u256(real_position);
         if (m_data.size() < FS_BYTES_SIZE + (real_position + 1) * BYTES_WIDTH + sz.convert_to<std::size_t>()) {
             ec = error::xerrc_t::abi_decode_outofrange;
             return {};
@@ -206,14 +206,14 @@ private:
         return at_raw(real_position + 1, sz.convert_to<std::size_t>());
     }
 
-    inline xbytes_t at(std::size_t pos) {
-        auto begin = std::next(std::begin(m_data), FS_BYTES_SIZE + pos * BYTES_WIDTH);
+    xbytes_t at(std::size_t const pos) {
+        auto begin = std::next(std::begin(m_data), static_cast<long>(FS_BYTES_SIZE + pos * BYTES_WIDTH));
         auto end = std::next(begin, BYTES_WIDTH);
 
         return xbytes_t{begin, end};
     }
 
-    inline xbytes_t at_raw(std::size_t start_pos, std::size_t sz) {
+    xbytes_t at_raw(std::size_t start_pos, std::size_t sz) {
         auto begin = std::next(std::begin(m_data), FS_BYTES_SIZE + start_pos * BYTES_WIDTH);
         auto end = std::next(begin, sz);
 

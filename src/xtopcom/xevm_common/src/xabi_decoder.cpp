@@ -9,6 +9,8 @@
 
 #include <endian.h>
 
+#include <utility>
+
 NS_BEG2(top, evm_common)
 
 xtop_abi_decoder::xtop_abi_decoder(xbytes_t input_data) : m_data{std::move(input_data)} {
@@ -23,7 +25,7 @@ xtop_abi_decoder::xtop_abi_decoder(xbytes_t input_data) : m_data{std::move(input
     m_max_data_field_number = m_data.size() / BYTES_WIDTH;
 }
 
-xtop_abi_decoder::xtop_abi_decoder(xbytes_t input_data, std::error_code & ec) : m_data{input_data} {
+xtop_abi_decoder::xtop_abi_decoder(xbytes_t input_data, std::error_code & ec) : m_data{std::move(input_data)} {
     assert(!ec);
     // assert(m_data.size() % 32 == FS_BYTES_SIZE);
     if (m_data.size() % BYTES_WIDTH != FS_BYTES_SIZE) {
@@ -36,7 +38,7 @@ xtop_abi_decoder xtop_abi_decoder::build_from_hex_string(std::string const & inp
     assert(!ec);
     auto hex_data = top::from_hex(input_hex_string, ec);
     if (!ec) {
-        return xtop_abi_decoder{hex_data, ec};
+        return xtop_abi_decoder{std::move(hex_data), ec};
     }
     return {};
 }
@@ -132,10 +134,13 @@ template <>
 evm_common::xfunction_selector_t xtop_abi_decoder::extract<evm_common::xfunction_selector_t>(std::error_code & ec) {
     assert(!ec);
 
-    assert(m_data.size() >= FS_BYTES_SIZE);
     xfunction_selector_t func_selector;
+    if (m_data.size() < FS_BYTES_SIZE) {
+        ec = error::xerrc_t::not_enough_data;
+        return func_selector;
+    }
 
-    std::memcpy(std::addressof(func_selector.method_id), m_data.data(), 4);
+    std::memcpy(std::addressof(func_selector.method_id), m_data.data(), FS_BYTES_SIZE);
     func_selector.method_id = be32toh(func_selector.method_id);
 
     return func_selector;
@@ -144,7 +149,7 @@ evm_common::xfunction_selector_t xtop_abi_decoder::extract<evm_common::xfunction
 template <>
 evm_common::xfunction_selector_t xtop_abi_decoder::extract<evm_common::xfunction_selector_t>() {
     std::error_code ec;
-    auto ret = extract<evm_common::xfunction_selector_t>(ec);
+    auto const ret = extract<evm_common::xfunction_selector_t>(ec);
     top::error::throw_error(ec);
     return ret;
 }
