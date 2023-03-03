@@ -1,8 +1,6 @@
+#include <gtest/gtest.h>
+
 #include "ethash/keccak.hpp"
-#include "gtest/gtest.h"
-#include "json/json.h"
-#include "json/json.hpp"
-#include "json/value.h"
 #include "trezor-crypto/sha3.h"
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
@@ -24,11 +22,15 @@
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xevm_transaction_result.h"
 
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
-#include <stdio.h>
+#if defined(XCXX20)
+#    include <secp256k1.h>
+#    include <secp256k1_recovery.h>
+#else
+#    include "secp256k1/secp256k1.h"
+#    include "secp256k1/secp256k1_recovery.h"
+#endif
 
-#include <gtest/gtest.h>
+#include <json/value.h>
 
 #include <iomanip>
 #include <iostream>
@@ -71,8 +73,8 @@ TEST(test_top_log, json_logs) {
    "logs" : []
 })";
 
-    xJson::Value js;
-    js["logs"] = xJson::arrayValue;
+    Json::Value js;
+    js["logs"] = Json::arrayValue;
     js["logBloom"] = evm_common::xbloom9_t{}.to_hex_string();
 
     auto src = js.toStyledString();

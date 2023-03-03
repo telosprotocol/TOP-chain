@@ -39,7 +39,7 @@ public:
     /// @return Block created.
     base::xauto_ptr<base::xvblock_t> create_genesis_block(base::xvaccount_t const & account, std::error_code & ec);
 
-    static std::set<common::xaccount_address_t> const& get_all_genesis_accounts() {return m_all_genesis_accounts;}
+    static std::set<common::xaccount_address_t> const & get_all_genesis_accounts();
 
 private:
     /// @brief Create genesis block of root account.
