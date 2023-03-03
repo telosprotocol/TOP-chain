@@ -1,22 +1,15 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
 
-#include <string>
-#include <utility>
-#include <vector>
-#include <set>
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+#include "xcommon/xrole_type.h"
+#endif
+#include "xcommon/xaccount_address.h"
 
-#include "xcommon/xnode_id.h"
-#include "xbasic/xrange.hpp"
-#include "xcommon/xsharding_info.h"
-#include "xbase/xobject_ptr.h"
-#include "xdata/xdata_common.h"
-#include "xconfig/xpredefined_configurations.h"
-#include <json/value.h>
-#include "xverifier/xverifier_utl.h"
+#include <string>
 
 namespace top { namespace data {
 
@@ -33,10 +26,10 @@ public:
     }
     // bool is_valid();
 
-    common::xnode_id_t                    account;                   // account for the node
+    common::xaccount_address_t            account;                   // account for the node
     std::string                           publickey;                 // node public key(hex)
     // std::string                           signkey;                 // node private key(hex)
-#if defined XENABLE_MOCK_ZEC_STAKE
+#if defined(XENABLE_MOCK_ZEC_STAKE)
     common::xminer_type_t                  node_role_type;
 #endif
 private:

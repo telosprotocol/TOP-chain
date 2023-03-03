@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(XTOPCHAIN CXX C)
-
 cmake_host_system_information(RESULT XOS_ID QUERY DISTRIB_ID)
 if (${XOS_ID} MATCHES "centos")
     set(XSYS_VER 0)
@@ -26,12 +24,16 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if (NOT CMAKE_CXX_COMPILER)
-    message(FATAL_ERROR "C++ Compiler not found")
-endif()
-
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+
+project(XTOPCHAIN CXX C)
+
+if (NOT CMAKE_CXX_COMPILER)
+    message(FATAL_ERROR "C++ Compiler not found")
 endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} XBUILD_TYPE)
@@ -39,8 +41,6 @@ if ("${XBUILD_TYPE}" MATCHES "rel")
     set(XBUILD_TYPE release)
 endif()
 string(TOLOWER ${CMAKE_SYSTEM_NAME} XSYSTEM_NAME_LOWERCASE)
-
-SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 if (${XSYS_VER} EQUAL 1)
     add_definitions(-DMSGPACK_NO_BOOST)
@@ -73,6 +73,7 @@ endif()
 option(DISABLE_REAL_STAKE "Disable real stake require" OFF) # Real Stake requied as default, use build option mock_zec_stake to disable it.
 if(DISABLE_REAL_STAKE)
     message(STATUS "DISABLE real stake ${DISABLE_REAL_STAKE}")
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
 endif()
 
 option(STATIC_CONSENSUS "Enable static consensus" OFF)
@@ -148,9 +149,13 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
         -fno-short-enums
         -Wno-deprecated-declarations
         -Wno-unused-function
-        -fpie
-        -fPIE
     )
+
+    if (${XOS_ID} MATCHES "ubuntu")
+        add_compile_options(-static-pie)
+    else()
+        add_compile_options(-fpie -fPIE)
+    endif()
 
     # CXX only
     add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-frtti>)
@@ -174,7 +179,7 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
 
     # options for Release & RelWithDebInfo
     # add_compile_options($<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:-fomit-frame-pointer -ffunction-sections -fdata-sections>)
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:-ffunction-sections -fdata-sections>)
+    set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:-ffunction-sections -fdata-sections -flto=auto -fuse-linker-plugin>)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:NDEBUG>)
 
     # options for Release

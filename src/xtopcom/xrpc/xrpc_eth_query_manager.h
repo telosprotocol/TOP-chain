@@ -17,6 +17,7 @@
 #include "xrpc/xjson_proc.h"
 #include "xcommon/fixed_hash.h"
 #include "xrpc/eth_rpc/eth_error_code.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 namespace top {
 namespace xrpc {

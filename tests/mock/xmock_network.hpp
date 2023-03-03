@@ -9,6 +9,7 @@
 #include "xmock_network_config.hpp"
 #include "xmock_nodesrv.hpp"
 #include "xcertauth/xcertauth_face.h"
+#include "xcrypto/xckey.h"
 
 namespace top { namespace mock {
 

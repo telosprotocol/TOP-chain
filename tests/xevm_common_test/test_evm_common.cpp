@@ -1,5 +1,4 @@
-#include "json/json.h"
-#include "json/json.hpp"
+#include <cstdlib>
 #include "trezor-crypto/sha3.h"
 #include "xbase/xcontext.h"
 #include "xbase/xmem.h"
@@ -7,8 +6,6 @@
 #include "xcommon/fixed_hash.h"
 #include "xcommon/rlp.h"
 #include "xevm_common/address.h"
-
-#include <stdio.h>
 
 #include <gtest/gtest.h>
 

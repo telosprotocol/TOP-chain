@@ -3,9 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+
 #include <string>
-#include "xdata/xchain_param.h"
-#include "xconfig/xconfig_register.h"
+
 namespace top {
 
 class xchain_params {

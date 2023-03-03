@@ -1,5 +1,6 @@
 #include "xsync/xrole_chains.h"
 
+#include "xdata/xdatautil.h"
 #include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_log.h"
 

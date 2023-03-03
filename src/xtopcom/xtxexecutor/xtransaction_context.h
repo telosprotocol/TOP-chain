@@ -24,6 +24,7 @@
 #include "xstore/xstore_error.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xverifier_errors.h"
 #include "xtxexecutor/xtransaction_fee.h"
 
 NS_BEG2(top, txexecutor)

@@ -21,7 +21,7 @@
 #endif
 
 #include "xbasic/xhex.h"
-#include "xdepends/include/json/reader.h"
+#include "json/reader.h"
 #include "xcommon/rlp.h"
 #include "xutility/xhash.h"
 

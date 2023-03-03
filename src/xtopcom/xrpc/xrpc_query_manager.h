@@ -16,6 +16,7 @@
 #include "xrpc/xjson_proc.h"
 #include "xrpc/xrpc_query_func.h"
 #include "xrpc/xrpc_loader.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 namespace top {
 
