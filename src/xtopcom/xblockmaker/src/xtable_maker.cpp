@@ -735,6 +735,10 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
     return true;
 }
 
+bool xtable_maker_t::can_make_block_with_no_tx(const data::xblock_consensus_para_t & cs_para) const {
+    return (can_make_next_empty_block(cs_para) || is_make_relay_chain());
+}
+
 bool xtable_maker_t::can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const {
     const xblock_ptr_t & current_block = cs_para.get_latest_cert_block();
     if (current_block->get_height() == 0) {

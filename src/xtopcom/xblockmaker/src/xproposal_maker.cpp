@@ -94,7 +94,7 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
 
     // TODO(jimmy) keep for help txpool clear cache
     update_txpool_table_state(latest_blocks.get_latest_committed_block(), tablestate_commit);
-    // get_txpool()->update_uncommit_txs(latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block());
+    get_txpool()->update_uncommit_txs(latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_cert_block());
     return cs_para;
 }
 
@@ -213,12 +213,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     xtablemaker_para_t table_para(tablestate, tablestate_commit);
     // get batch txs
     update_txpool_txs(proposal_para, table_para);
-    if (table_para.get_origin_txs().size() < min_tx_num) {
-        xinfo("xproposal_maker_t::make_proposal tx number too small:%d,min num:%d. %s,cert_height=%" PRIu64 "",
+    if (table_para.get_origin_txs().size() < min_tx_num || (table_para.get_origin_txs().empty() && !m_table_maker->can_make_block_with_no_tx(proposal_para))) {
+        xinfo("xproposal_maker_t::make_proposal tx number too small:%d,min num:%d. %s",
               table_para.get_origin_txs().size(),
               min_tx_num,
-              proposal_para.dump().c_str(),
-              latest_cert_block->get_height());
+              proposal_para.dump().c_str());
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());

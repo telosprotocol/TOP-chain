@@ -112,6 +112,9 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     XMETRICS_TIME_RECORD("tps_get_ready_txs");
     uint32_t confirm_tx_num = 0;
     uint32_t recv_tx_num = 0;
+    if (m_send_tx_queue.size() == 0 && m_xtable_info->get_recv_tx_count() == 0 && m_xtable_info->get_conf_tx_count() == 0) {
+        return {};
+    }
     xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s,height=%llu in",
                  m_xtable_info->get_table_addr().c_str(),
                  pack_para.get_table_state_highqc()->get_bstate()->get_block_height() + 1);

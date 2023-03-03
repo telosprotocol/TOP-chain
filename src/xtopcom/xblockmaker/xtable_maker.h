@@ -38,8 +38,7 @@ class xtable_maker_t : public xblock_maker_t {
     xblock_ptr_t            make_proposal(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
     xblock_ptr_t            make_proposal_backup(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, bool empty_block);
     bool                    verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const;
-    bool                    is_make_relay_chain() const;
-    bool                    is_evm_table_chain() const;
+    bool                    can_make_block_with_no_tx(const data::xblock_consensus_para_t & cs_para) const;
 
  protected:
     int32_t                 check_latest_state(const xblock_ptr_t & latest_block); // check table latest block and state
@@ -69,7 +68,9 @@ private:
     
     std::vector<xcons_transaction_ptr_t> plugin_make_txs_after_execution(statectx::xstatectx_ptr_t const& statectx_ptr, const data::xblock_consensus_para_t & cs_para, 
                                                                          std::vector<txexecutor::xatomictx_output_t> const& pack_outputs, std::error_code & ec);
-                                                                         
+    bool is_make_relay_chain() const;
+    bool is_evm_table_chain() const;
+                                                 
     xblock_resource_plugin_face_ptr_t           m_resource_plugin{nullptr};
     uint32_t                                    m_full_table_interval_num;
     xblock_builder_face_ptr_t                   m_fulltable_builder;
