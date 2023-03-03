@@ -1,6 +1,11 @@
+#include <gtest/gtest.h>
+
 #include "xevm_common/xabi_decoder.h"
 
-#include <gtest/gtest.h>
+#include <random>
+#include <cstring>
+
+#include <endian.h>
 
 NS_BEG3(top, evm_common, tests)
 
@@ -418,6 +423,90 @@ TEST(test_abi, array_recursive_test) {
     ASSERT_TRUE(!ec);
     auto expected_vstr = std::vector<std::string>{"one", "two", "three"};
     ASSERT_EQ(vstr, expected_vstr);
+}
+
+TEST(test_abi, fuzzy_bytes_less_than_4) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<std::size_t> size_distrib(0, 3);
+    std::uniform_int_distribution<xbyte_t> byte_distrib{};
+
+    for (int n = 0; n != 5000; ++n) {
+        auto const sz = size_distrib(gen);
+
+        xbytes_t raw_data(sz);
+        for (auto i = 0u; i < sz; ++i) {
+            raw_data[i] = byte_distrib(gen);
+        }
+
+        {
+            std::error_code ec;
+            auto const decoder = xabi_decoder_t::build_from(std::move(raw_data), ec);
+            ASSERT_TRUE(!!ec);
+            ASSERT_TRUE(decoder.empty());
+
+            ec.clear();
+            auto const fs = decoder.extract<xfunction_selector_t>(ec);
+            ASSERT_TRUE(!!ec);
+            ASSERT_TRUE(fs.method_id == 0);
+        }
+    }
+}
+
+TEST(test_abi, fuzzy_bytes_equal_4) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<xbyte_t> byte_distrib{};
+
+    for (int n = 0; n != 5000; ++n) {
+        xbytes_t raw_data(xabi_decoder_t::function_selector_size);
+        for (auto i = 0u; i < xabi_decoder_t::function_selector_size; ++i) {
+            raw_data[i] = byte_distrib(gen);
+        }
+
+        {
+            std::error_code ec;
+            auto const decoder = xabi_decoder_t::build_from(raw_data, ec);
+            ASSERT_TRUE(!ec);
+            ASSERT_TRUE(decoder.empty());
+
+            auto const fs = decoder.extract<xfunction_selector_t>(ec);
+            uint32_t method_id = htobe32(fs.method_id);
+            ASSERT_EQ(0, std::memcmp(raw_data.data(), &method_id, xabi_decoder_t::function_selector_size));
+        }
+    }
+}
+
+TEST(test_abi, fuzzy_bytes_more_than_4) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<std::size_t> size_distrib(5, 10000);
+    std::uniform_int_distribution<xbyte_t> byte_distrib{};
+
+    for (int n = 0; n != 20; ++n) {
+        auto sz = size_distrib(gen);
+        while (sz % xabi_decoder_t::function_selector_size == 0) {
+            if (sz % xabi_decoder_t::solidity_word_size == xabi_decoder_t::function_selector_size) {
+                sz = size_distrib(gen);
+            }
+        }
+
+        xbytes_t raw_data(sz);
+        for (auto i = 0u; i < sz; ++i) {
+            raw_data[i] = byte_distrib(gen);
+        }
+
+        {
+            std::error_code ec;
+            auto const decoder = xabi_decoder_t::build_from(raw_data, ec);
+            ASSERT_TRUE(!!ec);
+            ASSERT_TRUE(decoder.empty());
+
+            ec.clear();
+            auto const fs = decoder.extract<xfunction_selector_t>(ec);
+            ASSERT_EQ(0, fs.method_id);
+        }
+    }
 }
 
 NS_END3
