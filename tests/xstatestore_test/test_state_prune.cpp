@@ -359,6 +359,66 @@ TEST_F(test_state_prune, prune_exec_cons) {
     }
 }
 
+TEST_F(test_state_prune, prune_exec_cons_rec) {
+    char buffer[200];
+    getcwd(buffer, 200);
+    std::string dir = buffer;
+    std::string cmd = "rm -rf " + dir + "/test_db_prune_exec_cons";
+    system(cmd.data());
+    std::cout << cmd << std::endl;
+    mock::xvchain_creator creator(true, "test_db_prune_exec_cons");
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    auto xdb = creator.get_xdb();
+    base::xvchain_t::instance().set_node_type(false, true);
+
+    uint64_t max_block_height = 100;
+    mock::xdatamock_table mocktable(base::enum_chain_zone_beacon_index, 0, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    for (auto & block : tableblocks) {
+        auto state = statestore::xstatestore_hub_t::instance()->get_table_state_by_block(block.get());
+        xassert(state != nullptr);
+    }
+
+    std::shared_ptr<xstatestore_resources_t> para;
+    xstatestore_prune_t pruner(common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), para);
+    base::xvchain_t::instance().set_node_type(false, true);
+
+    auto mock_units = mocktable.get_mock_units();
+
+    pruner.prune_imp(80);
+
+    for (auto & mock_unit : mock_units) {
+        auto account = mock_unit.get_account();
+        base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
+        EXPECT_EQ(0, account_obj->get_lowest_executed_block_height());
+    }
+
+    statestore::xstatestore_dbaccess_t _dbaccess;
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+    for (auto & mockunit: mockunits) {
+        ASSERT_TRUE(mockunit.get_history_units().back()->get_height() > max_limit_lightunit_count);
+        for (auto & unit : mockunit.get_history_units()) {
+            if (unit->get_height() == 0) {
+                continue;
+            }
+            auto unitstate = _dbaccess.read_unit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
+            if (unit->get_height() % max_limit_lightunit_count == 0) {
+                xassert(unitstate != nullptr);
+            } else {
+                xassert(unitstate == nullptr);
+            }
+        }
+    }
+}
+
 TEST_F(test_state_prune, prune_height) {
     mock::xvchain_creator creator(true);
     std::shared_ptr<xstatestore_resources_t> para;

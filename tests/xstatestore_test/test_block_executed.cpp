@@ -374,16 +374,7 @@ void store_all_table_blocks(mock::xdatamock_table & mocktable, mock::xvchain_cre
 }
 
 void execute_all_table_blocks(mock::xdatamock_table & mocktable, mock::xvchain_creator & creator) {
-    base::xvblockstore_t* blockstore = creator.get_blockstore();
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
-    // xexecute_listener_test listener_test;
-    // statestore::xstatestore_executor_t state_executor{common::xtable_address_t::build_from(mocktable.get_account()), &listener_test};
-    // std::error_code ec;
-    // for (uint64_t height=0;height<=tableblocks.size()-3;height++) {
-    //     auto block = blockstore->load_block_object(mocktable, height, base::enum_xvblock_flag_committed, false);
-    //     xassert(block != nullptr);
-    //     state_executor.on_table_block_committed(block.get());
-    // }
     for (auto & block : tableblocks) {
         auto state = statestore::xstatestore_hub_t::instance()->get_table_state_by_block(block.get());
         xassert(state != nullptr);

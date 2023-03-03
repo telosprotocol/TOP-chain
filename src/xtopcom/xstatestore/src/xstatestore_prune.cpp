@@ -303,6 +303,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
          from_height,
          to_height);
 
+    bool need_prune_unitstates = !base::xvchain_t::instance().need_store_units(m_table_vaddr.get_zone_index());
     xtablestate_and_offdata_prune_info_t prune_info;
     xaccounts_prune_info_t accounts_prune_info;
     uint32_t delete_mpt_num = 0;
@@ -336,7 +337,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
                     }
                 }
                 xdbg("xstatestore_prune_t::prune_exec_cons prune mpt after.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.hex().c_str());
-                if (block->check_block_flag(base::enum_xvblock_flag_committed)) {
+                if (need_prune_unitstates && block->check_block_flag(base::enum_xvblock_flag_committed)) {
                     accounts_prune_info.insert_from_tableblock(block);
                 }
             }
