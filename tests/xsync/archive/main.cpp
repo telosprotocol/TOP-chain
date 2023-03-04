@@ -29,7 +29,7 @@ main(int argc, char * argv[]) {
     testing::InitGoogleTest(&argc, argv);
 
     xinit_log("./xsync_test.log", true, true);
-    xset_log_level(enum_xlog_level_debug);
+    xset_log_level(enum_xlog_level_info);
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
 

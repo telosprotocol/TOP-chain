@@ -60,6 +60,7 @@ public:
     virtual const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) = 0;
     virtual bool remove_empty_unit_forked() = 0;
     virtual bool is_sync_protocal_forked() = 0;
+    virtual bool is_support_big_pack_forked() = 0;
     virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
@@ -139,6 +140,7 @@ public:
     const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) override;
     bool remove_empty_unit_forked() override;
     bool is_sync_protocal_forked() override;
+    bool is_support_big_pack_forked()override;
     base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 private:
     void set_fork_point();
@@ -148,6 +150,7 @@ private:
     xsync_store_shadow_t *m_shadow;
     bool m_remove_empty_unit_forked{true};
     bool m_sync_forked{true};
+    bool m_sync_big_pack{false};
 };
 
 NS_END2

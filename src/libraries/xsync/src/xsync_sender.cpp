@@ -17,10 +17,11 @@ NS_BEG2(top, sync)
 using namespace data;
 
 xsync_sender_t::xsync_sender_t(std::string vnode_id, const observer_ptr<vnetwork::xvhost_face_t> &vhost,
-            xrole_xips_manager_t *role_xips_mgr, xsync_session_manager_t *session_mgr,  int min_compress_threshold):
+            xrole_xips_manager_t *role_xips_mgr, xsync_store_face_t *sync_store,xsync_session_manager_t *session_mgr,  int min_compress_threshold):
 m_vnode_id(vnode_id),
 m_vhost(vhost),
 m_role_xips_mgr(role_xips_mgr),
+m_sync_store(sync_store),
 m_session_mgr(session_mgr),
 m_min_compress_threshold(min_compress_threshold) {
 }
@@ -35,7 +36,7 @@ void xsync_sender_t::send_gossip(const std::vector<xgossip_chain_info_ptr_t> &in
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_gossip);
 
     vnetwork::xmessage_t msg;
-    xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
+    xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg, m_sync_store->is_support_big_pack_forked());
 
     std::vector<vnetwork::xvnode_address_t> lists;
 
@@ -78,7 +79,7 @@ void xsync_sender_t::send_frozen_gossip(const std::vector<xgossip_chain_info_ptr
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_frozen_gossip);
 
     vnetwork::xmessage_t msg;
-    xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
+    xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg, m_sync_store->is_support_big_pack_forked());
 
     XMETRICS_COUNTER_INCREMENT("sync_bytes_frozen_gossip_send", msg.payload().size());
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
@@ -231,7 +232,12 @@ void xsync_sender_t::send_block_response(const xsync_msg_block_request_ptr_t& re
     auto block_str_vec = convert_blocks_to_stream(request_ptr->get_data_type(), vector_blocks); 
     auto body = make_object_ptr<xsync_msg_block_response_t>(request_ptr->get_sessionID(), request_ptr->get_address(), request_ptr->get_option(),
                  block_str_vec, response_extend_option, extend_data);
-    send_message(body, xmessage_id_sync_block_response, "send_block_response", self_addr, target_addr);
+
+    if (!m_sync_store->is_support_big_pack_forked()) {
+        send_message(body, xmessage_id_sync_block_response, "xmessage_id_sync_block_response", self_addr, target_addr);
+    } else {
+        send_message(body, xmessage_id_sync_block_response_bigpack, "xmessage_id_sync_block_response", self_addr, target_addr, true);
+    }
     xsync_dbg("send_block_response sessionid(%lx) %s send to %s. block size(%ld), response_option(%ld), extend_data(%s). ", 
             request_ptr->get_sessionID(), self_addr.to_string().c_str(), target_addr.to_string().c_str(), vector_blocks.size(), response_extend_option, extend_data.c_str());
 }
@@ -241,18 +247,25 @@ bool xsync_sender_t::send_message(
             const common::xmessage_id_t msgid, 
             const std::string metric_key,
             const vnetwork::xvnode_address_t &self_addr,
-            const vnetwork::xvnode_address_t &target_addr) {
+            const vnetwork::xvnode_address_t &target_addr,
+            bool  without_dataunit_serialize) {
 
     xsync_dbg("xsync_sender_t %s %s send to %s", self_addr.to_string().c_str(), metric_key.c_str(),target_addr.to_string().c_str());
 
     base::xstream_t stream(base::xcontext_t::instance());
     auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
     header->serialize_to(stream);
-    serializer->serialize_to(stream);
+    if(!without_dataunit_serialize) {
+        serializer->serialize_to(stream);
+    } else {
+        //no serialize dataunit to stream after forked.only sync_block_response use it now.
+        serializer->do_write(stream);
+    }
+    
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, msgid);
 
     vnetwork::xmessage_t msg;
-    xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
+    xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg, m_sync_store->is_support_big_pack_forked());
 
     std::string bytes_metric_name = "sync_pkgs_" + metric_key + "_send";
     XMETRICS_COUNTER_INCREMENT(bytes_metric_name, msg.payload().size());

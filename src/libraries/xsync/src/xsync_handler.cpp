@@ -76,7 +76,7 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_newblock_push, std::bind(&xsync_handler_t::on_block_push_newblock, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_block_request,  std::bind(&xsync_handler_t::on_block_request_process, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_block_response, std::bind(&xsync_handler_t::on_block_response_process, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-    
+    register_handler(xmessage_id_sync_block_response_bigpack, std::bind(&xsync_handler_t::on_block_response_process_bigpack, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -646,7 +646,30 @@ void xsync_handler_t::on_block_response_process(uint32_t msg_size,
 {
     auto response_ptr = make_object_ptr<xsync_msg_block_response_t>();
     response_ptr->serialize_from(stream);
+    on_block_response_process_handler(msg_size, from_address, network_self, header, response_ptr, msg_hash, recv_time);
+}
 
+void xsync_handler_t::on_block_response_process_bigpack(uint32_t msg_size,
+    const vnetwork::xvnode_address_t& from_address,
+    const vnetwork::xvnode_address_t& network_self,
+    const xsync_message_header_ptr_t& header,
+    base::xstream_t& stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time)
+{
+    auto response_ptr = make_object_ptr<xsync_msg_block_response_t>();
+    response_ptr->do_read_from(stream);
+    on_block_response_process_handler(msg_size, from_address, network_self, header, response_ptr, msg_hash, recv_time);
+}
+
+void xsync_handler_t::on_block_response_process_handler(uint32_t msg_size,
+    const vnetwork::xvnode_address_t& from_address,
+    const vnetwork::xvnode_address_t& network_self,
+    const xsync_message_header_ptr_t& header,
+    const xsync_msg_block_response_ptr_t& response_ptr,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time)
+{
      xsync_msg_block_request_ptr_t reuqest_ptr = nullptr;
     if (false == m_session_mgr->sync_block_resopnse_valid_check(response_ptr, reuqest_ptr)) {
         xsync_warn("xsync_handler::on_block_response_process response not compare %" PRIx64 " %lx %s %s",
