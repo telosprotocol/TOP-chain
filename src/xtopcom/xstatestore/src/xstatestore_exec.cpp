@@ -862,14 +862,15 @@ data::xunitstate_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_un
         return nullptr;
     }
 
-    if (current_block->is_fullunit()) {
+    // old version fullunit should not run here
+    if (current_block->is_fullunit() && (current_block->get_block_type() != base::enum_xvblock_type_fullunit) ) {
         ec = error::xerrc_t::statestore_block_unmatch_prev_err;
         xerror("xstatestore_executor_t::make_state_from_prev_state_and_unit fail-should not be full.block=%s,state=%s",current_block->dump().c_str(),prev_bstate->get_bstate()->dump().c_str());
         return nullptr;
     }
 
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *prev_bstate->get_bstate());
-    if (current_block->is_lightunit()) {
+    if (false == current_block->is_emptyunit()) {// fullunit or lightunit both has binlog
         if (false == m_statestore_base.get_blockstore()->load_block_output(unit_addr.vaccount(), current_block)) {
             ec = error::xerrc_t::statestore_db_read_abnormal_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_unit fail-load output for block(%s)",current_block->dump().c_str());

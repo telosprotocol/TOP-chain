@@ -256,13 +256,15 @@ bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_addr
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const {
-    auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount());
-    if (nullptr == _block) {
-        xerror("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get block");
-        return nullptr;
-    }
+    // auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount());
+    // if (nullptr == _block) {
+    //     xerror("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get block");
+    //     return nullptr;
+    // }
 
-    return get_unit_state_from_block(account_address, _block.get());
+    // return get_unit_state_from_block(account_address, _block.get());
+    // TODO(jimmy) should always get unitstate by executed table for fullunit off state feature
+    return get_unit_latest_connectted_state(account_address);
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unitstate(xblock_number_t number, common::xaccount_address_t const & account_address) const {

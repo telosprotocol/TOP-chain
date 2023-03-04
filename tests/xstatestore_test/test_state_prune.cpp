@@ -363,10 +363,10 @@ TEST_F(test_state_prune, prune_exec_cons_rec) {
     char buffer[200];
     getcwd(buffer, 200);
     std::string dir = buffer;
-    std::string cmd = "rm -rf " + dir + "/test_db_prune_exec_cons";
+    std::string cmd = "rm -rf " + dir + "/test_db_prune_exec_cons_rec";
     system(cmd.data());
     std::cout << cmd << std::endl;
-    mock::xvchain_creator creator(true, "test_db_prune_exec_cons");
+    mock::xvchain_creator creator(true, "test_db_prune_exec_cons_rec");
     base::xvblockstore_t * blockstore = creator.get_blockstore();
     auto xdb = creator.get_xdb();
     base::xvchain_t::instance().set_node_type(false, true);
