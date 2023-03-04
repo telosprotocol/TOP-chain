@@ -111,7 +111,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
         }
     } catch (top::error::xtop_error_t const & eh) {
         top::evm_engine::precompile::PrecompileFailure return_error;
-        return_error.set_fail_status(static_cast<uint32_t>(precompile_error::Fatal));
+        return_error.set_fail_status(static_cast<uint32_t>(precompile_error::fatal));
         return_error.set_minor_status(static_cast<uint32_t>(precompile_error_ExitFatal::Other));
 
         output = top::to_bytes(return_error.SerializeAsString());

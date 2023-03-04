@@ -4,34 +4,33 @@
 
 #include "xevm_contract_runtime/sys_contract/xevm_eth2_client_contract.h"
 
-#include "xbasic/endianness.h"
-#include "xcommon/xaccount_address.h"
-#include "xcommon/xeth_address.h"
-#include "xdata/xdata_common.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xcommon/common_data.h"
+#include "xcommon/xeth_address.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xevm_common/xabi_decoder.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 using namespace evm_common::eth2;
 
-#define EPOCHS_PER_SYNC_COMMITTEE_PERIOD 256U
-#define SLOTS_PER_EPOCH 32U
-#define MIN_SYNC_COMMITTEE_PARTICIPANTS 1U
-#define FINALITY_TREE_DEPTH 6U
-#define FINALITY_TREE_INDEX 41U
-#define SYNC_COMMITTEE_TREE_DEPTH 5U
-#define SYNC_COMMITTEE_TREE_INDEX 23U
+enum {
+    epochs_per_sync_committee_period = 256U,
+    slots_per_epoch = 32U,
+    min_sync_committee_participants = 1U,
+    finality_tree_depth = 6U,
+    finality_tree_index = 41U,
+    sync_committee_tree_depth = 5U,
+    sync_committee_tree_index = 23U
+};
 
 constexpr uint64_t hashes_gc_threshold = 51000;
 
 static uint64_t compute_epoch_at_slot(uint64_t const slot) {
-    return slot / SLOTS_PER_EPOCH;
+    return slot / slots_per_epoch;
 }
 
 static uint64_t compute_sync_committee_period(uint64_t const slot) {
-    return compute_epoch_at_slot(slot) / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
+    return compute_epoch_at_slot(slot) / epochs_per_sync_committee_period;
 }
 
 static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
@@ -65,7 +64,7 @@ xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract() : m_network(xeth2
     xinfo("xtop_evm_eth2_client_contract network: %u", m_network);
 }
 
-xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract(xeth2_client_net_t version) : m_network(version) {
+xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract(xeth2_client_net_t const version) : m_network(version) {
     m_whitelist = load_whitelist();
     if (m_whitelist.empty()) {
         xwarn("[xtop_evm_eth2_client_contract] whitelist empty!");
@@ -139,22 +138,22 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         return false;
     }
     if (input.empty()) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
         xwarn("[xtop_evm_eth2_client_contract::execute] invalid input");
         return false;
     }
     std::error_code ec;
-    evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(xbytes_t{std::begin(input), std::end(input)}, ec);
+    evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(input, ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
         xwarn("[xtop_evm_eth2_client_contract::execute] illegal input data");
         return false;
     }
     auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
         xwarn("[xtop_evm_eth2_client_contract::execute] illegal input function selector");
         return false;
@@ -172,33 +171,33 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] init is not allowed in static context");
             return false;
         }
         auto headers_rlp = abi_decoder.extract<xbytes_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
         xinit_input_t init_put;
         if (false == init_put.decode_rlp(headers_rlp)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] init_put decode error");
             return false;
         }
         if (!init(state, init_put)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] init headers error");
             return false;
@@ -224,7 +223,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     case method_id_block_hash_safe: {
         auto number = abi_decoder.extract<uint64_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
@@ -266,14 +265,14 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     case method_id_is_confirmed: {
         u256 height = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
         auto hash_bytes = abi_decoder.decode_bytes(32, ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
@@ -290,7 +289,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     case method_id_is_known_execution_header: {
         auto hash_bytes = abi_decoder.decode_bytes(32, ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
@@ -318,33 +317,33 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] method_id_submit_beacon_chain_light_client_update is not allowed in static context");
             return false;
         }
         auto update_bytes = abi_decoder.extract<xbytes_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
         xlight_client_update_t update;
         if (false == update.decode_rlp(update_bytes)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] update decode error");
             return false;
         }
         if (!submit_beacon_chain_light_client_update(state, update)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] submit_beacon_chain_light_client_update error");
             return false;
@@ -363,20 +362,20 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] method_id_submit_execution_header is not allowed in static context");
             return false;
         }
         auto bytes = abi_decoder.extract<xbytes_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
@@ -396,7 +395,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
                 }
             }
             if (!submit_execution_header(state, header)) {
-                err.fail_status = precompile_error::Revert;
+                err.fail_status = precompile_error::revert;
                 err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
                 xwarn("[xtop_evm_eth2_client_contract::execute] submit_execution_header error");
                 return false;
@@ -416,13 +415,13 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (!reset(state)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] reset error");
             return false;
@@ -438,7 +437,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
@@ -451,7 +450,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     }
     default: {
         xwarn("[xtop_evm_eth2_client_contract::execute] not found method id: 0x%x", function_selector.method_id);
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
         return false;
     }
@@ -646,7 +645,7 @@ bool xtop_evm_eth2_client_contract::validate_light_client_update(state_ptr const
     for (auto const & b : bits_str) {
         sync_committee_bits_sum += (b == '1' ? 1 : 0);
     }
-    if (sync_committee_bits_sum < MIN_SYNC_COMMITTEE_PARTICIPANTS) {
+    if (sync_committee_bits_sum < min_sync_committee_participants) {
         xwarn("xtop_evm_eth2_client_contract::validate_light_client_update error sync_committee_bits_sum: %lu", sync_committee_bits_sum);
         return false;
     }
@@ -696,8 +695,8 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
     if (false == unsafe_merkle_proof(update.finality_update.header_update.beacon_header.tree_hash_root().data(),
                                      branch_data.data(),
                                      branch_data.size(),
-                                     FINALITY_TREE_DEPTH,
-                                     FINALITY_TREE_INDEX,
+                                     finality_tree_depth,
+                                     finality_tree_index,
                                      merkle_root.data())) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch header unsafe_merkle_proof error");
         return false;
@@ -717,8 +716,8 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
         if (false == unsafe_merkle_proof(update.sync_committee_update.next_sync_committee.tree_hash_root().data(),
                                          branch_data.data(),
                                          branch_data.size(),
-                                         SYNC_COMMITTEE_TREE_DEPTH,
-                                         SYNC_COMMITTEE_TREE_INDEX,
+                                         sync_committee_tree_depth,
+                                         sync_committee_tree_index,
                                          merkle_root.data())) {
             xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
             return false;

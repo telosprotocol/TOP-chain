@@ -27,7 +27,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
     // chain_uuid (1 byte) | erc20_method_id (4 bytes) | parameters (depends)
     if (input.empty()) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
         xwarn("precompiled top contract: invalid input");
@@ -37,7 +37,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
     common::xchain_uuid_t const chain_uuid{top::from_byte<common::xchain_uuid_t>(input.front())};
     if (chain_uuid != common::xchain_uuid_t::eth) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
         xwarn("precompiled top contract: not supported token: %d", static_cast<int>(chain_uuid));
@@ -48,7 +48,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     std::error_code ec;
     evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(xbytes_t{std::next(std::begin(input), 1), std::end(input)}, ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
         xwarn("precompiled top contract: illegal input data");
@@ -58,7 +58,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
     auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
         xwarn("precompiled top contract: illegal input function selector");
@@ -82,7 +82,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         uint64_t constexpr total_supply_gas_cost = 2538;
         if (target_gas < total_supply_gas_cost) {
-            err.fail_status = Error;
+            err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled top contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
@@ -91,7 +91,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (!abi_decoder.empty()) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: totalSupply with non-empty parameter");
@@ -120,7 +120,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 1) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: balance_of with invalid parameter (parameter count not one)");
@@ -130,7 +130,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         common::xeth_address_t const eth_address = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: balance_of invalid account");
@@ -156,7 +156,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         xbytes_t result(32, 0);
 
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = transfer_gas_cost;
             err.output = result;
@@ -176,7 +176,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 2) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: transfer with invalid parameter");
@@ -186,7 +186,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const & recipient_address = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: transfer with invalid account");
@@ -197,7 +197,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: transfer with invalid value");
@@ -229,7 +229,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         } else {
             uint64_t constexpr transfer_reverted_gas_cost = 3662;
 
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = transfer_reverted_gas_cost;
             err.output = result;
@@ -247,7 +247,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         xbytes_t result(32, 0);
 
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = transfer_from_gas_cost;
             err.output = result;
@@ -267,7 +267,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 3) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: transferFrom with invalid parameters");
@@ -277,7 +277,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const & owner_address = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: transferFrom invalid owner account");
@@ -287,7 +287,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const recipient_address = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: transferFrom invalid recipient account");
@@ -300,7 +300,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const value = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: transferFrom invalid value");
@@ -339,7 +339,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             output.logs.push_back(log);
         } else {
             uint64_t constexpr transfer_from_reverted_gas_cost = 4326;
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = transfer_from_reverted_gas_cost;
             err.output = result;
@@ -356,7 +356,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         uint64_t constexpr approve_gas_cost = 18599;
         xbytes_t result(32, 0);
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = approve_gas_cost;
             err.output = result;
@@ -376,7 +376,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 2) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: approve with invalid parameter");
@@ -386,7 +386,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const & spender_address = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: approve invalid spender account");
@@ -397,7 +397,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const amount = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: approve invalid value");
@@ -424,7 +424,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = approve_gas_cost / 2;
             err.output = result;
@@ -450,7 +450,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         xbytes_t result(32, 0);
         if (abi_decoder.size() != 2) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: allowance with invalid parameter");
@@ -460,7 +460,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const & owner_address = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: allowance invalid owner account");
@@ -470,7 +470,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         auto const & spender_address = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled top contract: allowance invalid spender account");
@@ -493,7 +493,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     }
 
     default: {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
         xwarn("precompiled top contract: not supported method_id: %" PRIx32, function_selector.method_id);

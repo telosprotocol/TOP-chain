@@ -128,7 +128,7 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
         return false;
     }
     if (input.empty()) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
         xwarn("[xtop_evm_crosschain_syscontract_face::execute] invalid input");
         return false;
@@ -136,14 +136,14 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
     std::error_code ec;
     evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(xbytes_t{std::begin(input), std::end(input)}, ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
         xwarn("[xtop_evm_crosschain_syscontract_face::execute] illegal input data");
         return false;
     }
     auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
         xwarn("[xtop_evm_crosschain_syscontract_face::execute] illegal input function selector");
         return false;
@@ -161,28 +161,28 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] init is not allowed in static context");
             return false;
         }
         auto headers_rlp = abi_decoder.extract<xbytes_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] abi_decoder.extract bytes error");
             return false;
         }
         if (!init(headers_rlp, state)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] init headers error");
@@ -202,28 +202,28 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] sync is not allowed in static context");
             return false;
         }
         auto headers_rlp = abi_decoder.extract<xbytes_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] abi_decoder.extract error");
             return false;
         }
         if (!sync(headers_rlp, state)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] sync headers error");
             return false;
@@ -245,7 +245,7 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
     case method_id_query_height: {
         auto height = abi_decoder.extract<u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract bytes error");
             return false;
@@ -258,14 +258,14 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
     case method_id_is_known: {
         auto height = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] abi_decoder.extract bytes error");
             return false;
         }
         auto hash_bytes = abi_decoder.decode_bytes(32, ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] abi_decoder.extract bytes error");
             return false;
@@ -282,14 +282,14 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
     case method_id_is_confirmed: {
         auto height = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] abi_decoder.extract bytes error");
             return false;
         }
         auto hash_bytes = abi_decoder.decode_bytes(32, ec);
         if (ec) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] abi_decoder.extract bytes error");
             return false;
@@ -309,14 +309,14 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (!reset(state)) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] reset error");
@@ -333,7 +333,7 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
 #else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
 #endif
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
@@ -347,7 +347,7 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
     }
     default: {
         xwarn("[xtop_evm_crosschain_syscontract_face::execute] not found method id: 0x%x", function_selector.method_id);
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
         return false;
     }
