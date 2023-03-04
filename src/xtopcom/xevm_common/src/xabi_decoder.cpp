@@ -227,15 +227,15 @@ uint64_t xtop_abi_decoder::extract<uint64_t>(std::error_code & ec) const {
     return decode_uint<uint64_t>(ec);
 }
 
-template <>
-s256 xtop_abi_decoder::extract<s256>(std::error_code & ec) const {
-    assert(!ec);
+//template <>
+//s256 xtop_abi_decoder::extract<s256>(std::error_code & ec) const {
+//    assert(!ec);
+//
+//    return decode_int<s256>(ec);
+//}
 
-    return decode_int<s256>(ec);
-}
-
 template <>
-evm_common::u256 xtop_abi_decoder::extract<evm_common::u256>(std::error_code & ec) const {
+u256 xtop_abi_decoder::extract<u256>(std::error_code & ec) const {
     assert(!ec);
 
     if (empty()) {
@@ -243,7 +243,7 @@ evm_common::u256 xtop_abi_decoder::extract<evm_common::u256>(std::error_code & e
         return {};
     }
 
-    return top::from_bytes<evm_common::u256>(at(m_decoded_count++), ec);
+    return top::from_bytes<u256>(at(m_decoded_count++), ec);
 }
 
 template <>

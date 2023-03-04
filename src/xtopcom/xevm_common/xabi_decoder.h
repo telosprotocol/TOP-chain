@@ -184,7 +184,7 @@ private:
     }
 
     // decode as bytes
-    xbytes_t do_decode_bytes(std::size_t start_pos, std::size_t offset_pos, std::error_code & ec) const {
+    xbytes_t do_decode_bytes(std::size_t const start_pos, std::size_t const offset_pos, std::error_code & ec) const {
         if (start_pos + offset_pos > m_max_data_field_number) {
             ec = error::xerrc_t::abi_decode_outofrange;
             return {};
@@ -210,7 +210,7 @@ private:
 
     xbytes_t at_raw(std::size_t const start_pos, std::size_t const sz) const {
         auto const begin = std::next(std::begin(m_data), static_cast<ptrdiff_t>(function_selector_size + start_pos * solidity_word_size));
-        auto const end = std::next(begin, sz);
+        auto const end = std::next(begin, static_cast<ptrdiff_t>(sz));
 
         return xbytes_t{begin, end};
     }
@@ -285,14 +285,17 @@ uint32_t xtop_abi_decoder::extract<uint32_t>(std::error_code & ec) const;
 template <>
 uint64_t xtop_abi_decoder::extract<uint64_t>(std::error_code & ec) const;
 
-template <>
-s256 xtop_abi_decoder::extract<s256>(std::error_code & ec) const;
+//template <>
+//s256 xtop_abi_decoder::extract<s256>(std::error_code & ec) const;
 
 template <>
 u256 xtop_abi_decoder::extract<u256>(std::error_code & ec) const;
 
 template <>
 std::string xtop_abi_decoder::extract<std::string>(std::error_code & ec) const;
+
+template <>
+std::string xtop_abi_decoder::extract<std::string>() const;
 
 template <>
 xbytes_t xtop_abi_decoder::extract<xbytes_t>(std::error_code & ec) const;
