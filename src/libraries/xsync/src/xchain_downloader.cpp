@@ -826,6 +826,11 @@ uint64_t xchain_object_t::get_behind_height_real(const int64_t now, xsync_store_
         } else {
             m_fix_height = cur_height;
         }
+
+        if(cur_height < m_fix_height) {
+            cur_height = m_fix_height;
+            request_height = cur_height;
+        }
         
     }
 

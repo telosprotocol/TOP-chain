@@ -243,6 +243,9 @@ namespace top
             
             //call from lower layer to higher layer(parent)
             virtual bool  on_certificate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms);
+
+            //call from lower layer to higher layer(parent)
+            virtual bool  on_update_view(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms);
             
         public: //help function and allow called from outside
             

@@ -39,7 +39,7 @@ namespace top
         protected: //just used to update commit block
             virtual bool  on_proposal_start(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms) override;//call from higher layer to lower layer(child)
             
-            virtual bool  on_proposal_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) override;//call from lower layer to higher layer(parent)
+            // virtual bool  on_proposal_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) override;//call from lower layer to higher layer(parent)
             
             virtual bool  on_replicate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) override;  //call from lower layer to higher layer(parent)
             
@@ -53,8 +53,10 @@ namespace top
             
             //notify this node that is joined into parent-node
             virtual bool  on_join_parent_node(const int32_t error_code,const int32_t cur_thread_id,const uint64_t timenow_ms,const xvip2_t & alloc_address,const std::string & extra_data,xionode_t* from_parent) override;
+
+            virtual bool  on_update_view(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) override;//call from lower layer to higher layer(parent)
         protected:
-            virtual bool  update_view(); //return true if change view successful
+            bool  update_view(bool directly_call = false); //return true if change view successful
             //return specific error code(enum_xconsensus_result_code) to let caller know reason
             virtual int   verify_proposal(base::xvblock_t * proposal_block,base::xvqcert_t * bind_clock_cert,xcsobject_t * _from_child) override; //load and execute block at sanbox
             bool          fire_verify_pduevent_job(xcspdu_fire * _evt_obj);
@@ -70,8 +72,8 @@ namespace top
             //manange latest block cert(aka HQC)
             bool    load_vblock_cert();
             bool    safe_check_vblock_cert(base::xvqcert_t * hqc_block);
-            bool    update_vblock_cert(base::xvqcert_t * hqc_cert);
-            bool    update_vblock_cert(base::xvblock_t * hqc_block);
+            bool    update_vblock_cert(base::xvqcert_t * hqc_cert, bool directly_call = false);
+            bool    update_vblock_cert(base::xvblock_t * hqc_block, bool directly_call = false);
             
         protected:
             uint64_t            m_latest_view_id;
