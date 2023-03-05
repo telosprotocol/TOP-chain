@@ -1638,8 +1638,8 @@ namespace top
             }
             
             char local_param_buf[400];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",validator=0x%" PRIx64 ":%" PRIx64 ",auditor=0x%" PRIx64 ":%" PRIx64 ",ver:0x%x,parent:%ld,%ld,hash:%s->%s}",
-            get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,type=%d,clock=%" PRIu64 ",validator=0x%" PRIx64 ":%" PRIx64 ",auditor=0x%" PRIx64 ":%" PRIx64 ",ver:0x%x,parent:%ld,%ld,hash:%s->%s}",
+            get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_block_type(),get_clock(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,
             get_block_version(),get_cert()->get_parent_block_height(),get_cert()->get_parent_block_viewid(),xstring_utl::to_hex(get_block_hash()).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
 
 // #endif
@@ -2252,11 +2252,11 @@ namespace top
             // TODO(jimmy) move to xvunit_t
             if (get_block_level() == base::enum_xvblock_level_unit
                 && get_block_class() == base::enum_xvblock_class_nil
-                && get_block_type() == base::enum_xvblock_type_lightunit) {
+                && (get_block_type() == base::enum_xvblock_type_lightunit || get_block_type() == base::enum_xvblock_type_fullunit) ) {// && get_block_type() == base::enum_xvblock_type_lightunit
                 xunit_header_extra_t _unit_extra;
                 _unit_extra.deserialize_from_string(get_header()->get_extra_data());
                 xassert(!_unit_extra.get_binlog().empty());
-                return _unit_extra.get_binlog();
+                return _unit_extra.get_binlog(); // simple unit always has binlog
             }
             auto binlog_hash = get_binlog_hash();
             return query_output_resource(binlog_hash);
@@ -2265,11 +2265,12 @@ namespace top
             // TODO(jimmy) move to xvunit_t
             if (get_block_level() == base::enum_xvblock_level_unit
                 && get_block_class() == base::enum_xvblock_class_nil
-                && get_block_type() == base::enum_xvblock_type_fullunit) {
-                xunit_header_extra_t _unit_extra;
-                _unit_extra.deserialize_from_string(get_header()->get_extra_data());
-                xassert(!_unit_extra.get_binlog().empty());
-                return _unit_extra.get_binlog();
+                ) {// && get_block_type() == base::enum_xvblock_type_fullunit
+                // xunit_header_extra_t _unit_extra;
+                // _unit_extra.deserialize_from_string(get_header()->get_extra_data());
+                // xassert(!_unit_extra.get_binlog().empty());
+                // return _unit_extra.get_binlog();
+                return {}; // simple unit has not state
             }
             std::string state_hash = get_fullstate_hash();
             if (!state_hash.empty())

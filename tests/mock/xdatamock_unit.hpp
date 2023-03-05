@@ -142,7 +142,7 @@ class xdatamock_unit {
 
     bool  execute_block(const xblock_ptr_t & _block) {
         xobject_ptr_t<base::xvbstate_t> current_state = nullptr;
-        if (_block->get_height() == 0 || _block->is_fullunit()) {
+        if (_block->get_height() == 0) {
             current_state = make_object_ptr<base::xvbstate_t>(*_block.get());
         } else {
             xassert(m_unit_bstate != nullptr);
@@ -152,10 +152,10 @@ class xdatamock_unit {
         }
 
         if (false == _block->is_emptyunit()) {
-            std::string prev_snapshot_bin;
-            current_state->take_snapshot(prev_snapshot_bin);
-
             std::string binlog = _block->is_fullunit() ? _block->get_full_state() : _block->get_binlog();
+            if (binlog.empty() && _block->is_fullunit()) {
+                binlog = _block->get_binlog();
+            }
             xassert(!binlog.empty());
             if(false == current_state->apply_changes_of_binlog(binlog)) {
                 xerror("execute_block,invalid binlog and abort it for block(%s)",_block->dump().c_str());
@@ -171,9 +171,9 @@ class xdatamock_unit {
                     return false;
                 }                
             }
-            xdbg("JIMMY_TEST execute_block account=%s,height=%ld,binlog=%ld,snapshot=%ld,prev_snapshot=%ld",
+            xdbg("JIMMY_TEST execute_block account=%s,height=%ld,binlog=%ld,snapshot=%ld",
                 _block->get_account().c_str(),_block->get_height(),base::xhash64_t::digest(binlog),
-                base::xhash64_t::digest(snapshot_bin),base::xhash64_t::digest(prev_snapshot_bin));
+                base::xhash64_t::digest(snapshot_bin));
         }
 
         m_unit_bstate = std::make_shared<xunit_bstate_t>(current_state.get(), false);

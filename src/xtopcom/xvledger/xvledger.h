@@ -323,8 +323,6 @@ namespace top
             inline const uint64_t       get_process_start_time() const {return m_proces_start_time;}//gmt
             inline const std::string&   get_data_dir_path()      const {return m_data_dir_path;}
             inline bool                 is_auto_prune_enable()   const {return (m_is_auto_prune != 0);}
-            inline bool                 is_storage_node()        const {return m_is_storage_node;}
-            inline bool                 has_other_node()      const {return m_has_other_node;}
              
         public://note:each bucket/ledger may have own db and blockstore etc
             xvdbstore_t*                get_xdbstore(); //global shared db instance
@@ -335,7 +333,14 @@ namespace top
             xveventbus_t*               get_xevmbus(); //global mbus object
             xvdrecycle_mgr*             get_xrecyclemgr(); //global recycler manager
             xvdrecycle_t*               get_xrecycler(enum_vdata_recycle_type type);//quick path
-            
+
+        public://node storage and prune settings
+            void                        set_node_type(bool is_storage_node, bool has_other_node);
+            inline bool                 is_storage_node() const {return m_is_storage_node.load();}
+            inline bool                 has_other_node() const {return m_has_other_node.load();}                      
+            bool                        need_store_unitstate(int zone_index) const;
+            bool                        need_store_units(int zone_index) const;  
+
         public:
             bool                        set_xdbstore(xvdbstore_t * new_store);//set global shared instance
             bool                        set_xtxstore(xvtxstore_t * new_store);
@@ -346,7 +351,6 @@ namespace top
             
             bool                        set_data_dir_path(const std::string & dir_path);
             void                        enable_auto_prune(bool enable);
-            void                        set_node_type(bool is_storage_node, bool has_other_node);
             
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
@@ -362,8 +366,11 @@ namespace top
         private:
             std::recursive_mutex    m_lock;
             uint8_t                 m_is_auto_prune;//1 means on,0 means off
-            bool                    m_is_storage_node{true}; //default yes for all store
-            bool                    m_has_other_node{true};//default yes for all store
+            bool                    m_node_init{false};
+            std::atomic<bool>       m_is_storage_node{true}; //default yes for all store
+            std::atomic<bool>       m_has_other_node{true};//default yes for all store
+            std::atomic<bool>       m_store_units{true};//default store all units
+            std::atomic<bool>       m_store_unitstates{true};//default store all unitstates
             uint8_t                 m_reserved_2;
             uint16_t                m_round_number;
             uint32_t                m_chain_id;//aka network_id

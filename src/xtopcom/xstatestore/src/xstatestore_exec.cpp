@@ -379,9 +379,16 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     }
 
     if (current_block->get_height() != 0 && current_block->get_height() <= get_cert_executed_height_inner()) {
+        auto tablestate_ext = m_state_accessor.read_table_bstate(m_table_addr, current_block);
+        if (nullptr != tablestate_ext) {
+            xwarn("xstatestore_executor_t::write_table_all_states repeat write states.block=%s", current_block->dump().c_str());
+            return tablestate_ext;
+        }
         // fork blocks may execute some times with same height
-        xwarn("xstatestore_executor_t::write_table_all_states repeat write states.block=%s", current_block->dump().c_str());
+        xwarn("xstatestore_executor_t::write_table_all_states fork blocks write states.block=%s", current_block->dump().c_str());
     }
+
+    xinfo("xstatestore_executor_t::write_table_all_states begin,block:%s",current_block->dump().c_str());
 
 #ifdef DEBUG
     auto table_full_state_hash = current_block->get_fullstate_hash();
@@ -397,15 +404,18 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     }
 #endif
 
-    // write all table "state" to db
+    // only need store fullunit offchain state
+    bool need_store_unitstate = base::xvchain_t::instance().need_store_unitstate(m_table_vaddr.get_zone_index());
     for (auto & v : tablestate_store->get_unitstates()) {
-        m_state_accessor.write_unitstate_to_db(v.first, v.second, ec);
-        if (ec) {
-            xerror("xstatestore_executor_t::write_table_all_states fail-write unitstate,block:%s", current_block->dump().c_str());
-            return nullptr;
+        if (need_store_unitstate || v.first->get_bstate()->get_block_type() == base::enum_xvblock_type_fullunit) {             
+            m_state_accessor.write_unitstate_to_db(v.first, v.second, ec);
+            if (ec) {
+                xerror("xstatestore_executor_t::write_table_all_states fail-write unitstate,block:%s", current_block->dump().c_str());
+                return nullptr;
+            }
         }
         m_state_accessor.write_unitstate_to_cache(v.first, v.second);
-        xdbg("xstatestore_executor_t::write_table_all_states unitstate=%s.block=%s", v.first->get_bstate()->dump().c_str(), current_block->dump().c_str());
+        xdbg("xstatestore_executor_t::write_table_all_states unitstate=%s.block=%s", v.first->get_bstate()->dump().c_str(), current_block->dump().c_str());        
     }
 
     m_state_accessor.write_table_bstate_to_db(m_table_addr, current_block->get_block_hash(), tablestate_store->get_table_state(), ec);
@@ -586,13 +596,8 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
     }
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
-    if (true == base::xvchain_t::instance().has_other_node() && account_indexs.get_account_indexs().size() > 0) {
-        // if (false == m_statestore_base.get_blockstore()->load_block_input(m_table_vaddr, current_block)) {
-        //     ec = error::xerrc_t::statestore_load_tableblock_err;
-        //     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load input for block(%s)",current_block->dump().c_str());
-        //     return nullptr;
-        // }
-
+    // XTODO always apply table block's binlogs for unitstates
+    if (account_indexs.get_account_indexs().size() > 0) {
         if (false == m_statestore_base.get_blockstore()->load_block_output_offdata(m_table_vaddr, current_block)) {
             ec = error::xerrc_t::statestore_load_tableblock_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load output offdata for block(%s)",current_block->dump().c_str());
@@ -828,11 +833,21 @@ data::xunitstate_ptr_t xstatestore_executor_t::make_state_from_current_unit(comm
 
     if (false == current_block->is_emptyunit()) {
         std::string binlog = current_block->is_fullunit() ? current_block->get_full_state() : current_block->get_binlog();
-        xassert(!binlog.empty());
-        if(false == current_state->apply_changes_of_binlog(binlog)) {
-            ec = error::xerrc_t::statestore_binlog_apply_err;
-            xerror("xstatestore_executor_t::make_state_from_current_unit,invalid binlog and abort it for block(%s)",current_block->dump().c_str());
-            return nullptr;
+        if (!binlog.empty()) {
+            if(false == current_state->apply_changes_of_binlog(binlog)) {
+                ec = error::xerrc_t::statestore_binlog_apply_err;
+                xerror("xstatestore_executor_t::make_state_from_current_unit,invalid binlog and abort it for block(%s)",current_block->dump().c_str());
+                return nullptr;
+            }
+        } else if (current_block->is_fullunit()) {// try to load fullunit off state
+            data::xunitstate_ptr_t unitstate2 = m_state_accessor.read_unit_bstate(unit_addr, current_block->get_height(), current_block->get_block_hash());
+            if (nullptr == unitstate2) {
+                // ec = error::xerrc_t::statestore_binlog_apply_err;
+                // XTODO it may happen for fullunit without off sate, try to read prev lightunit
+                xwarn("xstatestore_executor_t::make_state_from_current_unit,fail read fullunit off state for block(%s)",current_block->dump().c_str());
+                return nullptr;                
+            }
+            return unitstate2;
         }
     }
     xdbg("xstatestore_executor_t::make_state_from_current_unit succ,block=%s",current_block->dump().c_str());
@@ -847,14 +862,15 @@ data::xunitstate_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_un
         return nullptr;
     }
 
-    if (current_block->is_fullunit()) {
+    // old version fullunit should not run here
+    if (current_block->is_fullunit() && (current_block->get_block_type() != base::enum_xvblock_type_fullunit) ) {
         ec = error::xerrc_t::statestore_block_unmatch_prev_err;
         xerror("xstatestore_executor_t::make_state_from_prev_state_and_unit fail-should not be full.block=%s,state=%s",current_block->dump().c_str(),prev_bstate->get_bstate()->dump().c_str());
         return nullptr;
     }
 
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *prev_bstate->get_bstate());
-    if (current_block->is_lightunit()) {
+    if (false == current_block->is_emptyunit()) {// fullunit or lightunit both has binlog
         if (false == m_statestore_base.get_blockstore()->load_block_output(unit_addr.vaccount(), current_block)) {
             ec = error::xerrc_t::statestore_db_read_abnormal_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_unit fail-load output for block(%s)",current_block->dump().c_str());
@@ -882,16 +898,13 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unitstate_from_prev_state
                                                                                  base::xauto_ptr<base::xvheader_t> const& current_header,
                                                                                  std::string const& binlog, std::error_code & ec) const {
     xassert(current_header->get_height() > 0);
-    data::xunitstate_ptr_t prev_unitstate = m_state_accessor.read_unit_bstate(unit_addr, current_header->get_height() - 1, current_header->get_last_block_hash());
+    data::xunitstate_ptr_t prev_unitstate = nullptr; //m_state_accessor.read_unit_bstate(unit_addr, current_header->get_height() - 1, current_header->get_last_block_hash());
+    build_unitstate_by_hash(unit_addr, current_header->get_height() - 1, current_header->get_last_block_hash(), prev_unitstate, ec);
     if (nullptr == prev_unitstate) {
-        // TODO(jimmy) fail to load prev state may happen because of node role changing
-        build_unitstate_by_hash(unit_addr, current_header->get_height() - 1, current_header->get_last_block_hash(), prev_unitstate, ec);
-        if (nullptr == prev_unitstate) {
-            ec = error::xerrc_t::statestore_try_limit_arrive_err;
-            xerror("xstatestore_executor_t::execute_unitstate_from_prev_state fail-load prev state.address=%s,height=%ld,hash=%s", 
-                unit_addr.to_string().c_str(),current_header->get_height() - 1,base::xstring_utl::to_hex(current_header->get_last_block_hash()).c_str());
-            return nullptr;
-        }
+        ec = error::xerrc_t::statestore_try_limit_arrive_err;
+        xerror("xstatestore_executor_t::execute_unitstate_from_prev_state fail-load prev state.address=%s,height=%ld,hash=%s", 
+            unit_addr.to_string().c_str(),current_header->get_height() - 1,base::xstring_utl::to_hex(current_header->get_last_block_hash()).c_str());
+        return nullptr;
     }
 
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_header, *prev_unitstate->get_bstate());
@@ -928,23 +941,20 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
         return unitstate;
     }
 
-    // 2.try load prev-state from cache or db
+    // 2.try load prev-unit for history state
     data::xunitstate_ptr_t prev_unitstate = nullptr;
-    if (block->get_height() > 1) {
+    xobject_ptr_t<base::xvblock_t> prev_block = m_statestore_base.get_blockstore()->load_block_object(unit_addr.vaccount(), block->get_height()-1, block->get_last_block_hash(), false);
+    if (nullptr == prev_block) {
+        // for history states, try load unit firstly, then try to load unitstate
         prev_unitstate = m_state_accessor.read_unit_bstate(unit_addr, block->get_height() - 1, block->get_last_block_hash());
         if (nullptr == prev_unitstate) {
-            xwarn("xstatestore_executor_t::execute_unit_recursive fail-read prev state from db.limit=%d,cur_block=%s", limit,block->dump().c_str());
-        }
-    }
-    if (nullptr == prev_unitstate) {
-        // try load prev-state by recursive
-        xobject_ptr_t<base::xvblock_t> prev_block = m_statestore_base.get_blockstore()->load_block_object(unit_addr.vaccount(), block->get_height()-1, block->get_last_block_hash(), false);
-        if (nullptr == prev_block) {
             XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 0);
             ec = error::xerrc_t::statestore_load_unitblock_err;
-            xwarn("xstatestore_executor_t::execute_unit_recursive fail-load prev block.limit=%d,cur_block=%s", limit,block->dump().c_str());
+            xwarn("xstatestore_executor_t::execute_unit_recursive fail-load prev block and prev unitstate.limit=%d,cur_block=%s", limit,block->dump().c_str());
             return nullptr;
         }
+    } else {
+        // for history states, try to make unitstate by units
         prev_unitstate = execute_unit_recursive(unit_addr, prev_block.get(), limit, ec);
         if (nullptr == prev_unitstate) {
             XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 0);
@@ -962,7 +972,7 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
 
     XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 1);
     xassert(nullptr != unitstate);
-    xdbg("xstatestore_executor_t::execute_unit_recursive succ by recursive from prev.limit=%d,cur_block=%s", limit,block->dump().c_str());
+    xinfo("xstatestore_executor_t::execute_unit_recursive succ by recursive from prev.limit=%d,cur_block=%s", limit,block->dump().c_str());
     return unitstate;
 }
 

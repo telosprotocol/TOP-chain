@@ -24,7 +24,7 @@ protected:
 public:
     xstatestore_cache_t();
 public:
-    data::xunitstate_ptr_t  get_unitstate(std::string const& block_hash) const;
+    data::xunitstate_ptr_t  get_unitstate(std::string const& account, std::string const& block_hash) const;
     xtablestate_ext_ptr_t const&    get_latest_connectted_tablestate() const;
     xtablestate_ext_ptr_t   get_tablestate(uint64_t height, std::string const& block_hash) const;
 
@@ -37,8 +37,9 @@ private:
     xtablestate_ext_ptr_t   get_tablestate_inner(uint64_t height, std::string const& block_hash) const;
 
     xtablestate_ext_ptr_t    m_latest_connectted_tablestate{nullptr};
-    mutable base::xlru_cache<std::string, data::xunitstate_ptr_t> m_unitstate_cache;  //unitstate cache
+    std::unordered_map<std::string, std::pair<std::string, data::xunitstate_ptr_t>> m_unitstates_cache; // account's unitstate cache
     std::map<uint64_t, std::map<std::string, xtablestate_ext_ptr_t>>  m_table_states;
+    mutable std::mutex m_unitstates_cache_mutex;
 };
 
 

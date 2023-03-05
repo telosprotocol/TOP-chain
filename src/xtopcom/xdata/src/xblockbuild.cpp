@@ -444,11 +444,8 @@ bool xunit_build2_t::build_block_body(const xunit_block_para_t & para) {
 
 bool xunit_build2_t::build_block_body_for_simple_unit(const xunit_block_para_t & para) {
     base::xunit_header_extra_t _header_extra;
-    if (get_header()->get_block_type() == base::enum_xvblock_type_fullunit) {
-        _header_extra.set_binlog(para.get_fullstate_bin());
-    } else {
-        _header_extra.set_binlog(para.get_property_binlog());        
-    }
+    // always set binlog only for fullunit offchain state
+    _header_extra.set_binlog(para.get_property_binlog());
     std::string _state_hash = get_qcert()->hash(para.get_fullstate_bin());
     _header_extra.set_state_hash(_state_hash);
     std::string header_extra_bin;

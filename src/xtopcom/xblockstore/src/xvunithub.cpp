@@ -1137,12 +1137,6 @@ namespace top
                 return false;                    
             }
                         
-            auto cert_blocks = load_block_object(*index_ptr, index_ptr->get_height() + 2);
-            if (cert_blocks.get_vector().empty()) {
-                xerror("xvblockstore_impl::store_units_to_db_before_fork,fail-load cert tableblock.index=%s,cert height=%llu",index_ptr->dump().c_str(), index_ptr->get_height() + 2);
-                return false;
-            }
-
             xdbgassert(container_block->is_input_ready(true));
             xdbgassert(container_block->is_output_ready(true));
 
@@ -1175,14 +1169,6 @@ namespace top
                     {
                         xdbg("xvblockstore_impl::store_units_to_db_before_fork,stored unit-block=%s",unit_block->dump().c_str());                                
                     }
-                    // store corresponding table proof for latest commit unit block
-                    base::xunit_proof_t unit_proof(unit_block->get_height(), unit_block->get_viewid(), cert_blocks.get_vector().at(0)->get_cert());
-                    std::string unit_proof_str;
-                    unit_proof.serialize_to(unit_proof_str);
-                    if (!set_unit_proof(unit_account, unit_proof_str, unit_block->get_height())) {
-                        xerror("xvblockstore_impl::store_units_to_db_before_fork account %s,fail to writed into db,block=%s",unit_account.get_address().c_str(), unit_block->dump().c_str());
-                        return false;
-                    }
                 }
 
                 //update to block'flag acccording table_extract_all_unit_successful
@@ -1198,15 +1184,7 @@ namespace top
         } 
 
         bool xvblockstore_impl::should_store_units(int zone_index) const {
-            bool is_store_units = true;
-            if (base::xvchain_t::instance().is_storage_node() == false) {
-                if (zone_index != base::enum_chain_zone_beacon_index
-                    && zone_index != base::enum_chain_zone_zec_index
-                    && zone_index != base::enum_chain_zone_relay_index) {
-                    is_store_units = false;
-                }
-            }
-            return is_store_units;         
+            return base::xvchain_t::instance().need_store_units(zone_index); 
         }
 
         bool  xvblockstore_impl::store_units_to_db_after_fork(xblockacct_t* target_account,base::xvbindex_t* index_ptr,base::xvblock_t* container_block)
@@ -1353,26 +1331,7 @@ namespace top
             const std::string key_path = base::xvdbkey_t::create_account_span_key(account, height);
             return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
-
-        bool xvblockstore_impl::set_unit_proof(const base::xvaccount_t & account, const std::string& unit_proof, uint64_t height){
-            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
-            return account_obj->set_unit_proof(unit_proof, height);
-        }
         
-        const std::string xvblockstore_impl::get_unit_proof(const base::xvaccount_t & account, uint64_t height){
-            if (is_close()) {
-                xwarn_err("xvblockstore has closed at store_path=%s", m_store_path.c_str());
-                return {};
-            }
-            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
-            if (target_table == nullptr) {
-                xwarn_err("xvblockstore invalid account=%s", account.get_address().c_str());
-                return {};
-            }
-            auto_xblockacct_ptr account_obj(target_table->get_lock(), this);
-            get_block_account(target_table, account.get_address(), account_obj);
-            return account_obj->get_unit_proof(height);
-        }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_block_by_hash(const std::string& hash)
         {
             std::string account;

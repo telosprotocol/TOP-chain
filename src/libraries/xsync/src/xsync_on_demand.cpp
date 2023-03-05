@@ -327,14 +327,6 @@ void xsync_on_demand_t::store_on_demand_sync_blocks(const std::vector<data::xblo
             xsync_info("xsync_on_demand_t::store_on_demand_sync_blocks failed %s,height=%lu,viewid=%lu,", block->get_account().c_str(), block->get_height(), block->get_viewid());
         }
     }
-
-    if (!unit_proof_str.empty()) {
-        auto & account = blocks[0]->get_account();
-        auto height = blocks[blocks.size() - 1]->get_height();
-        if (!m_sync_store->set_unit_proof(account, unit_proof_str, height)) {
-            xsync_error("xsync_on_demand_t::store_on_demand_sync_blocks account %s,fail to writed unit proof into db,height=%llu", account.c_str(), height);
-        }
-    }
 }
 
 void xsync_on_demand_t::handle_blocks_response_with_params(const std::vector<data::xblock_ptr_t> &blocks, const std::string& unit_proof_str,

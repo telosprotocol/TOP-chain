@@ -20,19 +20,6 @@
 #ifdef __ALLOW_FORK_LOCK__
     #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
 #endif
- 
-#ifndef __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
-    // #define __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
-#endif
-
-#ifndef __LAZY_SAVE_UNIT_BLOCK_UNTIL_COMMIT__
-    //#define __LAZY_SAVE_UNIT_BLOCK_UNTIL_COMMIT__  // XTODO not enable this feature now
-#endif
-
-//XTODO,turn on __CACHE_RAW_BLOCK_PTR_AT_FIRST_PLACE__ to improve cache effect but need test memory usage first
-#ifndef __CACHE_RAW_BLOCK_PTR_AT_FIRST_PLACE__
-    //#define __CACHE_RAW_BLOCK_PTR_AT_FIRST_PLACE__
-#endif
 
 namespace top
 {
@@ -339,60 +326,6 @@ namespace top
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1 * erase_count);
 
                     }
-                }
-            }
-            else if(force_release_unused_block) //force release block that only hold by internal
-            {
-                //just return if dont cache block at first place
-                #ifndef __CACHE_RAW_BLOCK_PTR_AT_FIRST_PLACE__
-                    return true;
-                #endif
-                
-                for(auto height_it = m_all_blocks.begin(); height_it != m_all_blocks.end();)//search from lowest hight to higher
-                {
-                    auto old_height_it = height_it; //copy first
-                    ++height_it;                    //move next in advance
-                    if(old_height_it->second.empty()) //clean empty first if have
-                    {
-                        m_all_blocks.erase(old_height_it);
-                        
-                        XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
-                        
-                        continue;
-                    }
-
-                    bool cleaned_one = false;
-                    if(   (old_height_it->first != m_meta->_highest_full_block_height)    //keep latest_full_block
-                       && (old_height_it->first <  m_meta->_highest_commit_block_height)  //keep latest_committed block
-                       && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
-                       && (old_height_it->first != m_meta->_highest_cert_block_height)    //keep latest_cert block
-                       && (old_height_it->first != m_meta->_highest_connect_block_height))//keep latest_connect_block
-                    {
-                        auto & view_map = old_height_it->second;
-                        for(auto it = view_map.begin(); it != view_map.end(); ++it)
-                        {
-                            if(it->second->check_store_flag(base::enum_index_store_flag_non_index) == false)
-                            {
-                                //normal case for block with index associated
-                                if(it->second->get_this_block() != NULL) //clean any block that just reference by index only
-                                {
-                                    if(it->second->get_this_block()->get_refcount() == 1)//no any other hold
-                                    {
-                                        xdbg_info("xblockacct_t::clean_caches,block=%s",it->second->dump().c_str());
-                                        
-                                        //store any modified blocks again if need
-                                        write_block(it->second);
-                                        write_index(it->second);
-                                        
-                                        it->second->reset_this_block(NULL);
-                                        cleaned_one = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if(cleaned_one)
-                        break;
                 }
             }
             return true;
@@ -1279,55 +1212,8 @@ namespace top
                 }
                 update_meta_metric(final_cached_index); //update other meta and connect info
 
-                #ifdef __CACHE_RAW_BLOCK_PTR_AT_FIRST_PLACE__
-                bool keep_raw_block_ptr = true; //init to cache raw block
-                #else
-                bool keep_raw_block_ptr = false;
-                #endif
-                if(!final_cached_index->is_table_address()) // table still has bindex
-                {
-                    //just store raw-block without index
-                    if(final_cached_index->check_store_flag(base::enum_index_store_flag_non_index))
-                    {
-                        keep_raw_block_ptr = true; //force keep raw block for non_index case
-                        if(final_cached_index->get_this_block() == NULL)
-                            final_cached_index->reset_this_block(new_raw_block);//force to bind raw block ptr
-                        
-                        #ifdef __LAZY_SAVE_UNIT_BLOCK_UNTIL_COMMIT__
-                        //lazy to save raw block unti committed or closing
-                        if(final_cached_index->check_block_flag(base::enum_xvblock_flag_committed))
-                        #endif
-                        {
-                            //write_block_to_db may do double-check whether raw block not stored yet
-                            write_block(final_cached_index);
-                            
-                            //we not save index seperately
-                            final_cached_index->reset_modify_flag(); //clean up modified flags
-                            //NOTE: raw_block ptr must be valid at all time
-                        }
-                    }
-                    else //model of store block and index
-                    {
-                        //write_block_to_db may do double-check whether raw block not stored yet
-                        write_block(final_cached_index,new_raw_block);
-                        
-                        #ifdef __LAZY_SAVE_UNIT_BLOCK_UNTIL_COMMIT__
-                        //lazy to save index unti committed or closing
-                        if(final_cached_index->check_block_flag(base::enum_xvblock_flag_committed))
-                        #endif
-                        {
-                            //try save index finally
-                            write_index(final_cached_index); //save index then
-                        }
-                        //Note: reset_this_block(NULL) here if want save memory more and not care cache effect
-                    }
-                }
-                else //instant save block and index for table/book blocks
-                {
-                    //write_block_to_db may do double-check whether raw block not stored yet
-                    write_block(final_cached_index,new_raw_block);
-                    write_index(final_cached_index); //save index then
-                }
+                write_block(final_cached_index,new_raw_block);
+                write_index(final_cached_index); //save index then
 
                 xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 
@@ -1339,8 +1225,8 @@ namespace top
                     push_event(enum_blockstore_event_stored, final_cached_index);
                 }
 
-                if(false == keep_raw_block_ptr)
-                    final_cached_index->reset_this_block(NULL);
+                // TODO(jimmy) may keep latest blocks in cache better
+                final_cached_index->reset_this_block(NULL);
 
                 return true;
             }
@@ -1499,7 +1385,7 @@ namespace top
                 auto view_map_pos = target_height_map.emplace(this_block->get_viewid(),this_block);
                 xassert(view_map_pos.second); //insert successful
                 
-                this_block->set_modified_flag(); //add flag since it brand inserted
+                // this_block->set_modified_flag(); //add flag since it brand inserted  TODO(jimmy) it cause repeatly store block index
                 if(target_height_map.size() == 1) //assign main-entry for first one
                 {
                     this_block->set_store_flag(base::enum_index_store_flag_main_entry);
@@ -1745,7 +1631,7 @@ namespace top
                     m_meta->_highest_commit_block_height = new_block_height;
 
                 if(  (new_block_height > m_meta->_highest_full_block_height)
-                   &&(new_block_ptr->get_block_class() == base::enum_xvblock_class_full) )
+                   &&(new_block_ptr->get_block_class() == base::enum_xvblock_class_full || new_block_ptr->get_block_type() == base::enum_xvblock_type_fullunit) )// TODO(jimmy)
                 {
                     m_meta->_highest_full_block_height = new_block_height;
                 }
@@ -2167,25 +2053,7 @@ namespace top
             base::xvbindex_t * cached_index_ptr = cache_index(new_idx(),height_view_map);
             if(cached_index_ptr != nullptr) //insert or updated successful
             {
-                if(cached_index_ptr->check_store_flag(base::enum_index_store_flag_non_index))
-                {
-                    base::xauto_ptr<base::xvblock_t> cloned_block(new_raw_block->clone_block());
-                    cloned_block->reset_modified_count();//clean modifed count as fresh start
-                    
-                    //sync flags from index to raw block
-                    if(cached_index_ptr->check_block_flag(base::enum_xvblock_flag_locked))
-                        cloned_block->set_block_flag(base::enum_xvblock_flag_locked);
-                    
-                    if(cached_index_ptr->check_block_flag(base::enum_xvblock_flag_committed))
-                        cloned_block->set_block_flag(base::enum_xvblock_flag_committed);
-                    
-                    //force to bind raw block ptr until block to commit or saved
-                    cached_index_ptr->reset_this_block(cloned_block());
-                }
-                else //directly link  raw block first
-                {
-                    cached_index_ptr->reset_this_block(new_raw_block);
-                }
+                cached_index_ptr->reset_this_block(new_raw_block);
                 cached_index_ptr->set_modified_flag(); //force set flag to store later
                 
                 //connect as chain,and check connected_flag and meta
@@ -2417,55 +2285,18 @@ namespace top
         base::xvbindex_t*  xunitbkplugin::create_index(base::xvblock_t & new_raw_block)
         {
             base::xvbindex_t* new_index = new base::xvbindex_t(new_raw_block);
-            #ifdef __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
-            //force to save raw block only to DB by adding enum_index_store_flag_non_index
-            new_index->set_store_flag(base::enum_index_store_flag_non_index);
-            #endif
             return new_index;
         }
         
         //unit raw block must save fullly(dont split input/output/resource)
         std::vector<base::xvbindex_t*> xunitbkplugin::read_index(const uint64_t target_height)
         {
-            #ifdef __PERSIST_SAVE_UNIT_WITHOUT_INDEX__
-            std::vector<base::xvblock_t*> target_blocks(get_blockdb_ptr()->read_prunable_block_object_from_db(*get_account_obj(),target_height));
-            
-            std::vector<base::xvbindex_t*>  index_list;
-            for(auto block_ptr : target_blocks)
-            {
-                base::xvbindex_t * target_index = create_index(*block_ptr);
-                
-                //recover flags back to index
-                const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
-                target_index->reset_store_flags(everything_flags);
-                target_index->set_block_flag(base::enum_xvblock_flag_stored);
-                if(block_ptr->check_block_flag(base::enum_xvblock_flag_committed))
-                {
-                    //committed block always stored at height'key to improve I/O
-                    target_index->set_store_flag(base::enum_index_store_flag_main_entry);
-                }
-                //force to save raw block only to DB by adding enum_index_store_flag_non_index
-                target_index->set_store_flag(base::enum_index_store_flag_non_index);
-                block_ptr->reset_modified_count(); //clean flag of modification if have
-                target_index->reset_this_block(block_ptr); //hook to raw block within index
-                block_ptr->release_ref(); //release it since reset_this_block has hold reference now
-                
-                target_index->reset_modify_flag(); //clean flag of modified
-                index_list.push_back(target_index); //transfer ownership of target_index to here
-            }
-            return index_list;
-            #else //new key-format
             return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height);
-            #endif
         }
         
         bool  xunitbkplugin::write_index(base::xvbindex_t* this_index)
         {   
-            if(this_index->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
-            {
-                return true;//do nothing
-            }
-            else if(this_index->check_modified_flag()) //still store index and raw block both
+            if(this_index->check_modified_flag()) //still store index and raw block both
             {
                 return get_blockdb_ptr()->write_index_to_db(this_index);
             }
@@ -2476,37 +2307,8 @@ namespace top
         {            
             bool reset_modified_flag_after_saved = false;
             base::xvblock_t * raw_block_ptr = this_index->get_this_block();
-            if(this_index->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
-            {
-                //handle 3 cases:
-                /*
-                    case#1: Index has changed
-                    case#2: raw block not saved yet
-                    case#3: raw block has changed
-                    */
-                if(  (this_index->check_modified_flag())
-                    ||(this_index->check_store_flag(base::enum_index_store_flag_mini_block) == false)
-                    ||((raw_block_ptr != NULL) && (raw_block_ptr->get_modified_count() > 0))
-                    )
-                {
-                    xassert(raw_block_ptr != NULL);//always keep raw block for non_index case
-                    if(raw_block_ptr == NULL)
-                    {
-                        get_blockdb_ptr()->load_block_object(this_index);
-                        raw_block_ptr = this_index->get_this_block();
-                    }
-                    reset_modified_flag_after_saved = true;//reset index since it not save
-                }
-                else //nothing need save
-                {
-                    return true;
-                }
-            }
-            else //new key-format but still have index
-            {
-                if(this_index->check_store_flag(base::enum_index_store_flag_mini_block))
-                    return true;//nothing need save
-            }
+            if(this_index->check_store_flag(base::enum_index_store_flag_mini_block))
+                return true;//nothing need save
             
             xassert(raw_block_ptr != NULL);
             if(raw_block_ptr != NULL) //sync index to raw block
@@ -2552,21 +2354,6 @@ namespace top
         bool  xunitbkplugin::store_block(base::xvblock_t* new_raw_block)
         {
             return xchainacct_t::store_block(new_raw_block);
-        }
-
-        bool        xunitbkplugin::set_unit_proof(const std::string& unit_proof, uint64_t height){
-            const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*get_account_obj(), height);
-            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, unit_proof)) {
-                xerror("xunitbkplugin::set_unit_proof key %s,fail to writed into db,index dump(%s)",key_path.c_str(), unit_proof.c_str());            
-                return false;
-            }
-            xdbg("xunitbkplugin::set_unit_proof %s,height=%ld", get_account().c_str(), height);
-            return true;
-        }
-
-        const std::string xunitbkplugin::get_unit_proof(uint64_t height){
-            const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*get_account_obj(), height);
-            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
 
         bool    xunitbkplugin::store_committed_unit_block(base::xvblock_t* new_raw_block)

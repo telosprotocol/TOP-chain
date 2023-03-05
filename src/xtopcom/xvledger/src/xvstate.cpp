@@ -1087,6 +1087,21 @@ namespace top
             
             clone_properties_from(clone_from);
         }
+
+        xvbstate_t::xvbstate_t(const std::string & last_block_hash, xvbstate_t & clone_from, enum_xdata_type type)
+        :xvexestate_t(clone_from.get_account(),type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
+        {
+            XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, 1);
+            //init unit name and block height first          
+            m_block_height = clone_from.get_block_height() + 1;            
+            m_last_block_hash = last_block_hash;
+            
+            //then set unit name
+            set_unit_name(make_unit_name(get_address(),m_block_height));
+            //ask compressed data while serialization
+            set_unit_flag(enum_xdata_flag_acompress);                      
+            clone_properties_from(clone_from);
+        }
         
         xvbstate_t::xvbstate_t(const xvheader_t& proposal_header,xvexeunit_t * parent_unit,enum_xdata_type type)
         :xvexestate_t(proposal_header.get_account(),type), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_vbstate)
@@ -1165,7 +1180,21 @@ namespace top
             statistic_del();
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, -1);
         }
-        
+
+        void xvbstate_t::update_final_block_info(xvblock_t* for_block) {
+            m_block_types    = for_block->get_header()->get_block_raw_types();
+            m_block_versions = for_block->get_header()->get_block_raw_versions();
+            
+            xassert(m_block_height == for_block->get_height());
+            xassert(m_last_block_hash == for_block->get_last_block_hash());
+            m_block_height = for_block->get_height();
+            m_block_viewid = for_block->get_viewid();
+            
+            m_last_block_hash = for_block->get_last_block_hash();
+            m_last_full_block_hash = for_block->get_last_full_block_hash();
+            m_last_full_block_height = for_block->get_last_full_block_height();
+        }
+
         xvexeunit_t* xvbstate_t::clone() //each property is readonly after clone
         {
             return new xvbstate_t(*this);
@@ -1178,8 +1207,8 @@ namespace top
         std::string xvbstate_t::dump() const
         {
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{xvbstate:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 "}",
-             get_account().c_str(),get_block_height(),get_block_viewid());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvbstate:%s,height=%" PRIu64 ",viewid=%" PRIu64 ",class=%d,type=%d}",
+             get_account().c_str(),get_block_height(),get_block_viewid(),get_block_class(),get_block_type());
             return std::string(local_param_buf);
         }
         

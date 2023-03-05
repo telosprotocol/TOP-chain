@@ -27,13 +27,11 @@ private:
 
 class xtablestate_and_offdata_prune_info_t {
 public:
-    void insert_from_tableblock(base::xvblock_t * table_block, bool pune_offdata = true);
+    void insert_from_tableblock(base::xvblock_t * table_block);
     const std::vector<std::string> & get_tablestate_prune_keys() const;
-    const std::vector<std::string> & get_offdata_prune_keys() const;
 
 private:
     std::vector<std::string> m_tablestate_keys;
-    std::vector<std::string> m_offdata_keys;
 };
 
 class xstatestore_prune_t : public std::enable_shared_from_this<xstatestore_prune_t> {
