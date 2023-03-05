@@ -182,6 +182,24 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
     }
 }
 
+uint64_t xsync_store_t::get_commit_block_next_height(const std::string & account, enum_chain_sync_policy sync_policy) {
+    base::xvaccount_t _vaddress(account);
+    uint64_t commit_next_height = 0;
+    uint64_t connect_immutable_height = 0;
+    if (sync_policy == enum_chain_sync_policy_full) {
+        commit_next_height = m_shadow->genesis_connect_height(account);         //full last commit block height
+        return (commit_next_height + 1);
+    } else {
+        commit_next_height = get_latest_mutable_connected_checkpoint_height(account);
+        connect_immutable_height = get_latest_immutable_connected_checkpoint_height(account);
+        if (commit_next_height <= connect_immutable_height) {
+            return connect_immutable_height;
+        } else {
+            return commit_next_height; //cp last commit block height: 
+        }
+    }
+}
+
 uint64_t xsync_store_t::get_latest_immutable_connected_checkpoint_height(const std::string & account) {
     common::xaccount_address_t _vaddress(account);
     std::error_code err;

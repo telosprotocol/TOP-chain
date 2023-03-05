@@ -100,20 +100,6 @@ bool xevent_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
     int32_t queue_size = m_observed_thread->count_calls(in, out);
     XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_downloader_cur, queue_size);
 #endif
-    //check on behind
-    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_behind_download_t>(e);
-
-    if (e->minor_type == mbus::xevent_behind_t::type_download) {
-        auto chain_downloader = m_downloader->find_chain_downloader(m_idx, bme->address);
-        if (chain_downloader != nullptr) {
-            uint64_t end_height = bme->end_height;
-            enum_chain_sync_policy sync_policy = bme->sync_policy;
-            if (end_height == chain_downloader->get_chain_last_end_height(sync_policy)) {
-               // xsync_kinfo("filter_event address %s old_end_height %ld == new_end_height %ld", bme->address.c_str(), end_height, chain_downloader->get_chain_last_end_height(sync_policy));
-                return false;
-            }
-        }
-    }
 
     return true;
 }

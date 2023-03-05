@@ -45,13 +45,6 @@ xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
     xsync_info("chain_downloader create_chain %s", m_address.c_str());
     XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", 1);
     m_is_elect_chain = is_elect_chain();
-
-    for (int i = (int)enum_chain_sync_policy_full; i < (int)enum_chain_sync_policy_max; i++) {
-        uint64_t height = m_sync_store->get_latest_end_block_height(m_address, (enum_chain_sync_policy)i);
-        m_chain_objects[i].set_height(height);
-        xsync_info("xchain_downloader_t init chain address %s cur_height %llu sync policy %d",
-            m_address.c_str(), height, i);
-    }
 }
 
 
@@ -708,18 +701,25 @@ uint64_t xchain_object_t::get_behind_height_real(const int64_t now, xsync_store_
                                                  const uint32_t sync_type, const std::string& address)
 {
     uint64_t request_height = m_current_height;
-    if (now - m_regular_time > 120000) {
+    if ( (m_fix_height == 0) || (now - m_regular_time > 120000) || (m_regular_time = 0)) {
         m_regular_time = now;
-        uint64_t cur_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type);
+        uint64_t cur_height = xsync_store->get_commit_block_next_height(address, (enum_chain_sync_policy)sync_type);
+
         if (m_fix_height == cur_height) {
-            if((m_fix_height + 2) < m_end_height) {
+            if((m_fix_height + 1) < m_end_height) {
                 xwarn("get_behind_height_real lost height account is %s,m_fix_height %llu m_end_height %llu ", address.c_str(), m_fix_height, m_end_height);
                 request_height = cur_height;
             }
         } else {
             m_fix_height = cur_height;
+            xinfo("get_behind_height_real lost height account is %s,m_fix_height %llu m_end_height %llu ", address.c_str(), m_fix_height, m_end_height);
         }
-        
+    }
+
+    if (m_current_height < m_fix_height) {
+        m_current_height = m_fix_height;
+        request_height = m_current_height;
+        xinfo("get_behind_height_real request height account is %s, genesis height %llu", address.c_str(), m_current_height);
     }
 
     xdbg("get_behind_height_real request height account is %s, genesis height %llu", address.c_str(), request_height);
