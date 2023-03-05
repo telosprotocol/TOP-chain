@@ -494,6 +494,9 @@ public:
     const std::vector<std::string>& get_blocks_data() const { return blocks_data; }
     const std::string& get_extend_data() const { return extend_data; }
     std::vector<data::xblock_ptr_t> get_all_xblock_ptr() const;
+    int32_t do_read_from(base::xstream_t& stream) {
+        return do_read(stream);
+    }
 
 private:
 

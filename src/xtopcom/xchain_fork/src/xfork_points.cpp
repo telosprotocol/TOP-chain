@@ -24,7 +24,7 @@ optional<xfork_point_t> v1_10_0_block_fork_point    = xfork_point_t{xfork_point_
 optional<xfork_point_t> v1_11_0_unit_optimize_fork_point    = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.11 unit block optimize"};
 optional<xfork_point_t> v1_11_0_genesis_account_mpt_fork_point   = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.11 genesis account mpt fork"};
 optional<xfork_point_t> v11100_event = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.11.0 add event"};
-
+optional<xfork_point_t> v1_11_0_sync_big_packet = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.11 sync big packet optimize"};
 #else
 
 optional<xfork_point_t> v1_7_0_block_fork_point           = xfork_point_t{xfork_point_type_t::logic_time, 9459720, "v1.7 version control"};
@@ -41,6 +41,7 @@ optional<xfork_point_t> v1_10_0_block_fork_point          = xfork_point_t{xfork_
 optional<xfork_point_t> v1_11_0_unit_optimize_fork_point          = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.11 unit block optimize"};
 optional<xfork_point_t> v1_11_0_genesis_account_mpt_fork_point   = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.11 genesis account mpt fork"};
 optional<xfork_point_t> v11100_event = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.11.0 add event"};
+optional<xfork_point_t> v1_11_0_sync_big_packet = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.11 sync big packet optimize"};
 #endif
 
 NS_END2

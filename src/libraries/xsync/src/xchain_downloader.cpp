@@ -24,6 +24,7 @@ using namespace mbus;
 using namespace data;
 
 #define BATCH_SIZE 20
+#define BATCH_MAX_END (130)  //130  BATCH_SIZE < BATCH_MAX_END
 
 xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
                                  xsync_store_face_t * sync_store,
@@ -672,7 +673,7 @@ bool xchain_object_t::pick(std::pair<uint64_t, uint64_t> &interval, vnetwork::xv
     if (m_current_height > m_end_height) {
         return false;
     } else {
-        interval.second = (m_current_height + 130) > m_end_height ? m_end_height : m_current_height + 130;
+        interval.second = (m_current_height + BATCH_MAX_END) > m_end_height ? m_end_height : m_current_height + BATCH_MAX_END;
     }
 
     interval.first = m_start_height;
