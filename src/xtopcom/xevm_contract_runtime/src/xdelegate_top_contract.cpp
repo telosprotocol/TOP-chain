@@ -82,7 +82,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         uint64_t constexpr total_supply_gas_cost = 2538;
         if (target_gas < total_supply_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled top contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
@@ -111,7 +111,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         uint64_t constexpr balance_of_gas_cost = 3268;
         if (target_gas < balance_of_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled top contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
@@ -167,7 +167,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (target_gas < transfer_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled top contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
@@ -258,7 +258,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (target_gas < transfer_from_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled top contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
@@ -367,7 +367,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         }
 
         if (target_gas < approve_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled top contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
@@ -440,7 +440,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
 
         uint64_t constexpr allowance_gas_cost = 3987;
         if (target_gas < allowance_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled top contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
