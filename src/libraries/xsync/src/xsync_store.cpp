@@ -333,7 +333,7 @@ void xsync_store_t::set_fork_point() {
 
     xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
     // TODO(jimmy) remove fork points
-    bool forked = chain_fork::xutility_t::is_forked(fork_points::v1_11_0_sync_big_packet, vb->get_height());
+    bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_sync_big_packet, vb->get_height());
     if (forked) {
         m_sync_big_pack = true;
         xinfo("xsync_store_t::block fork point already forked clock:%llu", vb->get_height());

@@ -41,9 +41,7 @@ extern top::optional<xfork_point_t> v10901_table_tickets_reset;
 extern top::optional<xfork_point_t> v10901_enable_voting;
 extern top::optional<xfork_point_t> v10902_table_tickets_reset;
 extern top::optional<xfork_point_t> v10902_enable_voting;
-extern top::optional<xfork_point_t> v1_10_0_block_fork_point;
-extern top::optional<xfork_point_t> v1_11_0_unit_optimize_fork_point;
-extern top::optional<xfork_point_t> v1_11_0_genesis_account_mpt_fork_point;
 extern top::optional<xfork_point_t> v11100_event;
-extern top::optional<xfork_point_t> v1_11_0_sync_big_packet;
+extern top::optional<xfork_point_t> v11200_block_fork_point;
+extern top::optional<xfork_point_t> v11200_sync_big_packet;
 NS_END2

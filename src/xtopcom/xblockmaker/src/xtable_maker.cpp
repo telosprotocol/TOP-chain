@@ -147,7 +147,7 @@ void xtable_maker_t::execute_txs(bool is_leader, const data::xblock_consensus_pa
 }
 
 void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, data::xtable_block_para_t & lighttable_para, std::error_code & ec) {
-    if (false == chain_fork::xutility_t::is_forked(fork_points::v1_11_0_genesis_account_mpt_fork_point, cs_para.get_clock()) ) { // TODO(jimmy) forked
+    if (false == chain_fork::xutility_t::is_forked(fork_points::v11200_block_fork_point, cs_para.get_clock()) ) { // TODO(jimmy) forked
         return;
     }
     
