@@ -719,7 +719,11 @@ uint64_t xchain_object_t::get_behind_height_real(const int64_t now, xsync_store_
         } else {
             m_fix_height = cur_height;
         }
-        
+
+        if(m_current_height < m_fix_height) {
+            m_current_height = m_fix_height;
+            request_height = m_current_height;
+        }
     }
 
     xdbg("get_behind_height_real request height account is %s, genesis height %llu", address.c_str(), request_height);
