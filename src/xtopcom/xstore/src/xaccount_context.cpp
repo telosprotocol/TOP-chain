@@ -64,7 +64,7 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate,
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_canvas = unitstate->get_canvas();
     m_statectx = statectx;
-    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xdbg("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate) {
@@ -73,7 +73,7 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate)
     m_latest_exec_sendtx_nonce = 0;  // TODO(jimmy) for test
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_canvas = make_object_ptr<base::xvcanvas_t>();
-    xinfo(
+    xdbg(
         "create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 

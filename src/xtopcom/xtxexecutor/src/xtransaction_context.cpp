@@ -157,7 +157,7 @@ int32_t xtransaction_context_t::exec() {
                 m_trans->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
-            xinfo("[global_trace][unit_service][tx consensus][tx exec source action][success]%s",
+            xdbg("[global_trace][unit_service][tx consensus][tx exec source action][success]%s",
                 m_trans->dump().c_str());
         }
     }
@@ -168,7 +168,7 @@ int32_t xtransaction_context_t::exec() {
                 m_trans->dump().c_str(), m_trans_obj->get_function_name().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
-            xinfo("[global_trace][unit_service][tx consensus][tx exec target action][success]%s action_name:%s",
+            xdbg("[global_trace][unit_service][tx consensus][tx exec target action][success]%s action_name:%s",
                 m_trans->dump().c_str(), m_trans_obj->get_function_name().c_str());
         }
     }

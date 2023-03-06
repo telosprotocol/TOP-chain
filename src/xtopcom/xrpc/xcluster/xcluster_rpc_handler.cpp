@@ -95,7 +95,7 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
 
         tx_hash = tx_ptr->get_digest_hex_str();
         account = tx_ptr->get_source_addr();
-        xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
+        xdbg("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
                tx_hash.c_str(),
                tx_ptr->get_tx_version(),
                account.c_str(),

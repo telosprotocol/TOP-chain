@@ -403,7 +403,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio, uint64_t, 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price, uint64_t, normal, 40000000000, 1, std::numeric_limits<uint64_t>::max());
 // how many micro second 1 tgas can consume
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cpu_gas_exchange_ratio, uint32_t, normal, 40, 1, std::numeric_limits<uint32_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit, uint64_t, normal, 20000000, 1, std::numeric_limits<uint64_t>::max());// TODO(jimmy)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit, uint64_t, normal, 12000000, 1, std::numeric_limits<uint64_t>::max());// TODO(jimmy)
 
 #ifdef ENABLE_SCALE
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle, xinterval_t, normal, 2 * 6, 1, std::numeric_limits<xinterval_t>::max());

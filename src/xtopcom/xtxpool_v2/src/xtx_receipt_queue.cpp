@@ -31,7 +31,7 @@ void xreceipt_queue_internal_t::erase_tx(const std::string & hash_str) {
     if (it_tx_map != m_tx_map.end()) {
         auto & tx_ent = *it_tx_map->second;
         uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
-        xtxpool_info("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+        xtxpool_dbg("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
         if (tx_ent->get_tx()->is_confirm_tx()) {
             XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_recv, delay);
         } else {

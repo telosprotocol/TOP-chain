@@ -35,9 +35,9 @@ NS_BEG2(top, xunit_service)
 // #define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (200)
 // #define MIN_TRANSACTION_NUM_FOR_LOW_TPS (100)
 
-#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (400)
-#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (200)
-#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (100)
+#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (200)
+#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (100)
+#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (50)
 
 #define TRY_MAKE_BLOCK_TIMER_INTERVAL (50)
 #define TRY_HIGH_TPS_TIME_WINDOW (200)
@@ -238,9 +238,12 @@ void xbatch_packer::reset_leader_info() {
 // then start new consensus from leader
 bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
     auto view_ev = dynamic_cast<const xconsensus::xcsview_fire *>(&event);
-    xassert(view_ev != nullptr);
-    xassert(view_ev->get_viewid() >= m_last_view_id);
-    xassert(view_ev->get_account() == get_account());
+    assert(view_ev != nullptr);
+    assert(view_ev->get_account() == get_account());
+    if (view_ev->get_viewid() < m_last_view_id) {
+        xerror("xbatch_packer::on_view_fire invalid view_ev account:%s viewid:%llu:%llu:%s", get_account().c_str(), view_ev->get_viewid(), m_last_view_id);
+        return false;
+    }
     m_raw_timer->stop();
     reset_leader_info();
     xdbg_info("xbatch_packer::on_view_fire account=%s,clock=%ld,viewid=%ld,start_time=%ld", get_account().c_str(), view_ev->get_clock(), view_ev->get_viewid(), m_start_time);
