@@ -195,10 +195,9 @@ std::string xtop_sync_object::status() const {
 
                 std::string table_prefix;
                 uint32_t table_id = 0;
-                if (address != sys_drand_addr) {
-                    if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
-                        continue;
-                }
+                
+                if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
+                    continue;
 
                 if (it.second.sync_policy != i) {
                     continue;
