@@ -378,7 +378,7 @@ base::xauto_ptr<base::xvblock_t> xfullunit_build_t::create_new_block() {
 
 xunit_build2_t::xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
     xassert(para.get_parent_height() > 0);
-    if (false == chain_fork::xutility_t::is_forked(fork_points::v1_11_0_unit_optimize_fork_point, para.get_clock())) {
+    if (false == chain_fork::xutility_t::is_forked(fork_points::v11200_block_fork_point, para.get_clock())) {
         base::enum_xvblock_class _class = is_full_unit ? base::enum_xvblock_class_full : base::enum_xvblock_class_light;
         base::enum_xvblock_level _level = base::enum_xvblock_level_unit;
         base::enum_xvblock_type  _type = base::enum_xvblock_type_txs;

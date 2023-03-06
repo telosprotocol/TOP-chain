@@ -171,7 +171,7 @@ TEST_F(test_block_store_load, load_unexsit_block_3) {
     {
         auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, false);
         ASSERT_NE(_block, nullptr);
-        xassert(_block->get_block_version() == base::enum_xvblock_fork_version_7_0_0);
+        xassert(_block->get_block_version() == base::xvblock_fork_t::get_block_fork_new_version());
         xassert(_block->get_block_level() == base::enum_xvblock_level_unit);
         xassert(_block->get_block_class() == base::enum_xvblock_class_nil);
         ASSERT_EQ(_block->is_output_ready(true), true);
