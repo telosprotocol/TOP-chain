@@ -97,21 +97,21 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
                                             sys_contract_precompile_error & err) {
     // method ids:
     //--------------------------------------------------------------
-    // "4ddf47d4": "init(bytes)",
-    // "158ef93e": "initialized()",
-    // "3bcdaaab": "block_hash_safe(uint64)",
-    // "55b39f6e": "finalized_beacon_block_header()",
-    // "4b469132": "finalized_beacon_block_root()",
-    // "074b1681": "finalized_beacon_block_slot()",
-    // "3ae8d743": "get_light_client_state()",
-    // "d398572f": "is_confirmed(uint256,bytes32)",
-    // "43b1378b": "is_known_execution_header(bytes32)",
-    // "b15ad2e8": "get_height()"
-    // "1eeaebb2": "last_block_number()",
-    // "2e139f0c": "submit_beacon_chain_light_client_update(bytes)",
-    // "3c1a38b6": "submit_execution_header(bytes)",
-    // "d826f88f": "reset()",
-    // "b5a61069": "disable_reset()",
+    // "0x4ddf47d4": "init(bytes)",
+    // "0x158ef93e": "initialized()",
+    // "0x3bcdaaab": "block_hash_safe(uint64)",
+    // "0x55b39f6e": "finalized_beacon_block_header()",
+    // "0x4b469132": "finalized_beacon_block_root()",
+    // "0x074b1681": "finalized_beacon_block_slot()",
+    // "0x3ae8d743": "get_light_client_state()",
+    // "0xd398572f": "is_confirmed(uint256,bytes32)",
+    // "0x43b1378b": "is_known_execution_header(bytes32)",
+    // "0xb15ad2e8": "get_height()"
+    // "0x1eeaebb2": "last_block_number()",
+    // "0x2e139f0c": "submit_beacon_chain_light_client_update(bytes)",
+    // "0x3c1a38b6": "submit_execution_header(bytes)",
+    // "0xd826f88f": "reset()",
+    // "0xb5a61069": "disable_reset()",
     //--------------------------------------------------------------
 
     constexpr uint32_t method_id_init{0x4ddf47d4};
@@ -380,12 +380,12 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
-        evm_common::xeth_header_t header;
+        // evm_common::xeth_header_t header;
         auto left_bytes = std::move(bytes);
-        while (left_bytes.size() != 0) {
+        while (!left_bytes.empty()) {
             evm_common::RLP::DecodedItem item = evm_common::RLP::decode(left_bytes);
             left_bytes = std::move(item.remainder);
-            evm_common::xeth_header_t header;
+            xeth_header_t header;
             {
                 auto item_header = evm_common::RLP::decode_once(item.decoded[0]);
                 auto header_bytes = item_header.decoded[0];
@@ -491,7 +491,7 @@ bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t 
     return true;
 }
 
-bool xtop_evm_eth2_client_contract::initialized(state_ptr const & state) {
+bool xtop_evm_eth2_client_contract::initialized(state_ptr const & state) const {
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     return !finalized_beacon_header.empty();
 }
@@ -611,7 +611,7 @@ bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & st
         return false;
     }
     if (finalized_beacon_header.execution_block_hash != block_header.parent_hash) {
-        auto unfinalized_header = get_unfinalized_headers(state, block_header.parent_hash);
+        auto const unfinalized_header = get_unfinalized_headers(state, block_header.parent_hash);
         if (unfinalized_header.empty()) {
             xwarn("xtop_evm_eth2_client_contract::submit_execution_header parent %s not submitted", block_header.parent_hash.hex().c_str());
             return false;
@@ -633,7 +633,7 @@ bool xtop_evm_eth2_client_contract::validate_light_client_update(state_ptr const
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch get_finalized_beacon_header empty");
         return false;
     }
-    auto finalized_period = compute_sync_committee_period(finalized_beacon_header.header.slot);
+    auto const finalized_period = compute_sync_committee_period(finalized_beacon_header.header.slot);
     if (false == verify_finality_branch(state, update, finalized_period)) {
         xwarn("xtop_evm_eth2_client_contract::validate_light_client_update verify_finality_branch error");
         return false;
@@ -663,7 +663,7 @@ bool xtop_evm_eth2_client_contract::validate_light_client_update(state_ptr const
     return true;
 }
 
-bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & state, xlight_client_update_t const & update, uint64_t const finalized_period) {
+bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & state, xlight_client_update_t const & update, uint64_t const finalized_period) const {
     auto const & active_header = update.finality_update.header_update.beacon_header;
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     if (finalized_beacon_header.empty()) {
@@ -682,7 +682,7 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch slot mismatch, %lu, %lu", update.signature_slot, update.attested_beacon_header.slot);
         return false;
     }
-    auto update_period = compute_sync_committee_period(active_header.slot);
+    auto const update_period = compute_sync_committee_period(active_header.slot);
     if (update_period != finalized_period && update_period != finalized_period + 1) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch period mismatch, %lu, %lu", update_period, finalized_period);
         return false;
@@ -737,7 +737,7 @@ bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & stat
                                                           xlight_client_update_t const & update,
                                                           std::string const & sync_committee_bits,
                                                           uint64_t const finalized_period) {
-    auto signature_period = compute_sync_committee_period(update.signature_slot);
+    auto const signature_period = compute_sync_committee_period(update.signature_slot);
     if (signature_period != finalized_period && signature_period != finalized_period + 1) {
         xwarn("xtop_evm_eth2_client_contract::verify_bls_signatures signature_period mismatch: %lu, %lu", signature_period, finalized_period);
         return false;
@@ -851,7 +851,7 @@ bool xtop_evm_eth2_client_contract::commit_light_client_update(state_ptr const &
 
 void xtop_evm_eth2_client_contract::release_finalized_execution_blocks(state_ptr const & state, uint64_t number) {
     for (;;) {
-        if (del_finalized_execution_blocks(state, number) == true) {
+        if (del_finalized_execution_blocks(state, number)) {
             if (number == 0) {
                 break;
             } else {
