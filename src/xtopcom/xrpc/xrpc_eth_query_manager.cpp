@@ -530,7 +530,7 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
     }
 
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_zero_address);
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_miner_zero_address);
     txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
     txexecutor::xvm_output_t output;
     top::evm::xtop_evm evm{top::make_observer(contract_runtime::evm::xevm_contract_manager_t::instance()), statectx_ptr};
@@ -671,7 +671,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     }
 
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_zero_address);
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_miner_zero_address);
 
     txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
     txexecutor::xvm_output_t output;

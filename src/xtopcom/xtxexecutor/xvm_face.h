@@ -32,9 +32,6 @@ enum enum_execute_result_type {
 
 class xvm_para_t {
  public:
-    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit)  // for test
-    : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit) {
-    }
     xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit, uint64_t block_height, common::xaccount_address_t const& coinbase)
     : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit), m_block_height(block_height), m_block_coinbase(coinbase) {
     }

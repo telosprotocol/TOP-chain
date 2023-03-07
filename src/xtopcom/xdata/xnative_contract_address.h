@@ -96,6 +96,7 @@ extern common::xaccount_address_t const eth_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address;
 
 extern common::xaccount_address_t const eth_zero_address;
+extern common::xaccount_address_t const eth_miner_zero_address;
 extern common::xaccount_address_t const relay_table_address;
 
 // extern common::xaccount_address_t const evm_erc20_contract_address;

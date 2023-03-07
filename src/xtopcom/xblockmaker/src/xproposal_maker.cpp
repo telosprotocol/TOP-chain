@@ -554,11 +554,12 @@ bool xproposal_maker_t::leader_xip_to_leader_address(xvip2_t _xip, common::xacco
     if (leader_address.empty()) {
         return false;
     }
-    // only T6 and T8 node can change to leader address for eth compatibility
+    // XTODO only support T0 or T8 miner address, only T8 address can change to leader address for eth compatibility
     common::xaccount_address_t _coinbase;
     base::enum_vaccount_addr_type addr_type = base::xvaccount_t::get_addrtype_from_account(leader_address);
-    if (addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account && addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        _coinbase = eth_zero_address;
+    if (addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
+        assert(addr_type == base::enum_vaccount_addr_type_secp256k1_user_account);
+        _coinbase = eth_miner_zero_address;
     } else {
         _coinbase = common::xaccount_address_t(leader_address);
     }
