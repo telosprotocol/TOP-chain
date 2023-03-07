@@ -100,6 +100,13 @@ void print_version() {
 #endif
 }
 
-
+std::string dump_version() {
+    #include "version.inc"
+    std::string info;
+    info = " topio version:" + PROGRAM_VERSION;
+    info = " git commit:" + TOP_GIT_LOG_LATEST;
+    info = " MD5:" + get_md5();
+    return info;
+}
 
 }

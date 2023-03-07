@@ -31,6 +31,8 @@ struct xtop_fork_point {
 };
 using xfork_point_t = xtop_fork_point;
 
+std::string dump_fork_points();
+
 extern top::optional<xfork_point_t> v1_7_0_block_fork_point;
 extern top::optional<xfork_point_t> v1_7_0_sync_point;
 extern top::optional<xfork_point_t> v1_9_0_state_fork_point;  // unitstate not include tx related info
