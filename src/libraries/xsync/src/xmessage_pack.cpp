@@ -171,7 +171,7 @@ int32_t xmessage_pack_t::serialize_from_big_pack(const xbyte_buffer_t& packed_ms
         if(compress_h.compress_type == static_cast<std::uint8_t>(enum_compress_type::xstream_compress)) {
             base::xstream_t::decompress_from_stream(stream_src, stream_src.size(), stream_dst);
         } else if(compress_h.compress_type == static_cast<std::uint8_t>(enum_compress_type::no_compress)){
-            stream_dst << stream_src;
+          stream_src >> stream_dst;
         } else {
             xerror("not suporrt compress_type%d protocol_version%d now.",compress_h.compress_type, compress_h.protocol_version);
         }
@@ -183,15 +183,16 @@ int32_t xmessage_pack_t::serialize_from_big_pack(const xbyte_buffer_t& packed_ms
 }
 
 int32_t xmessage_pack_t::serialize_to_big_pack(vnetwork::xmessage_t& unpack_msg, base::xstream_t& stream_dst, bool require_compress) {
-    base::xstream_t stream_src(base::xcontext_t::instance(), (uint8_t*)unpack_msg.payload().data(), unpack_msg.payload().size());
+
     message_compress_header compress_header(require_compress);
     compress_header.serialize_to(stream_dst);
     if(require_compress == true) {
+        base::xstream_t stream_src(base::xcontext_t::instance(), (uint8_t*)unpack_msg.payload().data(), unpack_msg.payload().size());
         base::xstream_t::compress_to_stream(stream_src, stream_src.size(), stream_dst);
     } else {
-        stream_dst << stream_src;
+        stream_dst << unpack_msg.payload();
     }
-    xdbg("serialize_to_big_pack message size %ld, serialize size %d, require_compress%d ", unpack_msg.payload().size(), stream_dst.size(), require_compress);
+    xdbg("serialize_to_big_pack message size %ld, serialize size %d, require_compress %d ", unpack_msg.payload().size(), stream_dst.size(), require_compress);
     return stream_dst.size();
 }
 NS_END2

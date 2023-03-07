@@ -214,12 +214,19 @@ TEST(test_xmessage_pack_t, test_xsync_message_by_string_compress_BENCH)
 
 bool send_message_mock(const xobject_ptr_t<basic::xserialize_face_t> serializer,
     const common::xmessage_id_t msgid,
-    vnetwork::xmessage_t& msg)
+    vnetwork::xmessage_t& msg, bool require_compress, bool without_dataunit_serialize = false)
 {
     base::xstream_t stream(base::xcontext_t::instance());
-    serializer->do_write(stream);
+    auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+    header->serialize_to(stream);
+    if(!without_dataunit_serialize) {
+        serializer->serialize_to(stream);
+    } else {
+        serializer->do_write(stream);
+    }
+
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t({ stream.data(), stream.data() + stream.size() }, msgid);
-    xmessage_pack_t::pack_message(_msg, ((int)_msg.payload().size()) >= 100, msg, true);
+    xmessage_pack_t::pack_message(_msg, require_compress, msg, true);
 }
 
 TEST(test_xmessage_pack_t, test_xsync_message_by_stream_compress__BENCH)
@@ -240,13 +247,15 @@ TEST(test_xmessage_pack_t, test_xsync_message_by_stream_compress__BENCH)
     auto response_body = make_object_ptr<xsync_msg_block_response_t>(body->get_sessionID(), body->get_address(), body->get_option(),
         block_str_vec, 0, "");
     vnetwork::xmessage_t msg;
-    send_message_mock(response_body, xmessage_id_sync_block_response, msg);
+    send_message_mock(response_body, xmessage_id_sync_block_response, msg, true, true);
 
     xbyte_buffer_t msg_unpack;
     vnetwork::xmessage_t::message_type msg_type = msg.id();
     xmessage_pack_t::unpack_message(msg.payload(), msg_type, msg_unpack);
 
     base::xstream_t stream_unpack(base::xcontext_t::instance(), (uint8_t*)msg_unpack.data(), msg_unpack.size());
+    xsync_message_header_ptr_t header = make_object_ptr<xsync_message_header_t>();
+    header->serialize_from(stream_unpack);
     xsync_msg_block_response_t response_body_unpack;
     response_body_unpack.do_read_from(stream_unpack);
 
@@ -430,4 +439,97 @@ TEST(test_xmessage_pack_t, test_xmessage_pack_t_BENCH)
     vnetwork::xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, true, msg, true);
     std::cout << "test_xmessage_pack_t_BENCH after compress msg  size:" << msg.payload().size() << std::endl;
+}
+
+void big_pack_serialize_unserialize_test(vnetwork::xmessage_t& unpack_msg, bool require_compress)
+{
+    base::xstream_t stream_dst(base::xcontext_t::instance());
+    int32_t serialize_size = xmessage_pack_t::serialize_to_big_pack(unpack_msg, stream_dst, require_compress);
+    ASSERT_TRUE(serialize_size > 0);
+    xbyte_buffer_t packed_buffer = { stream_dst.data(), stream_dst.data() + stream_dst.size() };
+    base::xstream_t unpack_stream_dst(base::xcontext_t::instance());
+    int32_t unserialize_size = xmessage_pack_t::serialize_from_big_pack(packed_buffer, unpack_stream_dst);
+    ASSERT_TRUE(unserialize_size > 0);
+    xbyte_buffer_t unpack_buffer2 = { unpack_stream_dst.data(), unpack_stream_dst.data() + unpack_stream_dst.size() };
+    ASSERT_EQ(unpack_buffer2, unpack_msg.payload());
+    ASSERT_EQ(unpack_buffer2.size(), unpack_msg.payload().size());
+    std::cout << "require_compress " << require_compress << " unpack_size " << unpack_buffer2.size() << " pack_size " << packed_buffer.size() << std::endl;
+}
+
+TEST(test_xmessage_pack_t, xmessage_pack_big_test)
+{
+    {
+        bool require_compress = false;
+        std::string payload = "123456789";
+        vnetwork::xmessage_t unpack_msg = vnetwork::xmessage_t(top::to_bytes(payload), static_cast<common::xmessage_id_t>(100));
+        big_pack_serialize_unserialize_test(unpack_msg, require_compress);
+    }
+
+    {
+        bool require_compress = true;
+        std::string payload = "123456789";
+        vnetwork::xmessage_t unpack_msg = vnetwork::xmessage_t(top::to_bytes(payload), static_cast<common::xmessage_id_t>(100));
+        big_pack_serialize_unserialize_test(unpack_msg, require_compress);
+    }
+
+    {
+        bool require_compress = false;
+        xbyte_buffer_t msg_payload;
+        for (uint32_t i = 0; i < 100000; i++) {
+            msg_payload.push_back((uint8_t)i);
+        }
+        vnetwork::xmessage_t unpack_msg = vnetwork::xmessage_t(msg_payload, static_cast<common::xmessage_id_t>(100));
+        big_pack_serialize_unserialize_test(unpack_msg, require_compress);
+    }
+
+    {
+        bool require_compress = true;
+        xbyte_buffer_t msg_payload;
+        for (uint32_t i = 0; i < 100000; i++) {
+            msg_payload.push_back((uint8_t)i);
+        }
+        vnetwork::xmessage_t unpack_msg = vnetwork::xmessage_t(msg_payload, static_cast<common::xmessage_id_t>(100));
+        big_pack_serialize_unserialize_test(unpack_msg, require_compress);
+    }
+}
+
+TEST(test_xmessage_pack_t, xmessage_pack_big_pack_message_test)
+{
+    std::vector<xchain_state_info_t> rsp_info_list;
+    for (int i = 0; i < 50; i++) {
+        xchain_state_info_t chain_info;
+        chain_info.address = "T800001753d40631a3ad31568c3141272cac45692888d1";
+        chain_info.start_height = i;
+        chain_info.end_height = i * i;
+        rsp_info_list.push_back(chain_info);
+    }
+
+    for (int i = 0; i < 2; i++) {
+        bool require_compress = false;
+        if (i == 1) {
+            require_compress = true;
+        }
+
+        auto body = make_object_ptr<xsync_message_chain_state_info_t>(rsp_info_list);
+        vnetwork::xmessage_t msg;
+        send_message_mock(body, xmessage_id_sync_broadcast_chain_state, msg, require_compress);
+        xbyte_buffer_t msg_unpack;
+        vnetwork::xmessage_t::message_type msg_type = msg.id();
+        xmessage_pack_t::unpack_message(msg.payload(), msg_type, msg_unpack);
+
+        base::xstream_t stream_unpack(base::xcontext_t::instance(), (uint8_t*)msg_unpack.data(), msg_unpack.size());
+        xsync_message_header_ptr_t header = make_object_ptr<xsync_message_header_t>();
+        header->serialize_from(stream_unpack);
+
+        auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
+        ptr->serialize_from(stream_unpack);
+        std::vector<xchain_state_info_t>& info_list = ptr->info_list;
+        ASSERT_EQ(ptr->info_list.size(), rsp_info_list.size());
+        ASSERT_EQ(ptr->info_list.size(), 50);
+        for (int i = 0; i < 50; i++) {
+            ASSERT_EQ(ptr->info_list[i].address, rsp_info_list[i].address);
+            ASSERT_EQ(ptr->info_list[i].start_height, rsp_info_list[i].start_height);
+            ASSERT_EQ(ptr->info_list[i].end_height, rsp_info_list[i].end_height);
+        }
+    }
 }
