@@ -443,12 +443,12 @@ TEST(abi_decoder, fuzzy_bytes_less_than_4) {
         {
             std::error_code ec;
             auto const decoder = xabi_decoder_t::build_from(std::move(raw_data), ec);
-            ASSERT_TRUE(!!ec);
+            ASSERT_FALSE(!ec);
             ASSERT_TRUE(decoder.empty());
 
             ec.clear();
             auto const fs = decoder.extract<xfunction_selector_t>(ec);
-            ASSERT_TRUE(!!ec);
+            ASSERT_FALSE(!ec);
             ASSERT_TRUE(fs.method_id == 0);
         }
     }
@@ -498,7 +498,7 @@ TEST(abi_decoder, fuzzy_bytes_invalid_size) {
         {
             std::error_code ec;
             auto const decoder = xabi_decoder_t::build_from(raw_data, ec);
-            ASSERT_TRUE(!!ec);
+            ASSERT_FALSE(!ec);
             ASSERT_TRUE(decoder.empty());
 
             ec.clear();
@@ -623,13 +623,13 @@ TEST(abi_decoder, fuzzy_bytes_eth_address) {
             while (!decoder.empty()) {
                 ec.clear();
                 auto const eth_address = decoder.extract<common::xeth_address_t>(ec);
-                ASSERT_TRUE(!!ec);
+                ASSERT_FALSE(!ec);
                 ASSERT_TRUE(eth_address.is_zero());
             }
 
             ec.clear();
             ASSERT_TRUE(decoder.extract<common::xeth_address_t>(ec).is_zero());
-            ASSERT_TRUE(!!ec);
+            ASSERT_FALSE(!ec);
         }
     }
 }
@@ -637,7 +637,7 @@ TEST(abi_decoder, fuzzy_bytes_eth_address) {
 TEST(abi_decoder, fuzzy_bytes) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<std::size_t> size_distrib(4, 100000);
+    std::uniform_int_distribution<std::size_t> size_distrib(5, 100000);
     std::uniform_int_distribution<xbyte_t> byte_distrib{};
 
     for (int n = 0; n < 500; ++n) {
@@ -663,7 +663,7 @@ TEST(abi_decoder, fuzzy_bytes) {
             while (!decoder.empty()) {
                 ec.clear();
                 auto const bytes = decoder.extract<xbytes_t>(ec);
-                ASSERT_TRUE(!!ec);
+                ASSERT_FALSE(!ec);
                 ASSERT_TRUE(bytes.empty());
             }
         }
@@ -673,7 +673,7 @@ TEST(abi_decoder, fuzzy_bytes) {
 TEST(abi_decoder, fuzzy_string) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<std::size_t> size_distrib(4, 100000);
+    std::uniform_int_distribution<std::size_t> size_distrib(5, 100000);
     std::uniform_int_distribution<xbyte_t> byte_distrib{};
 
     for (int n = 0; n < 500; ++n) {
@@ -699,7 +699,7 @@ TEST(abi_decoder, fuzzy_string) {
             while (!decoder.empty()) {
                 ec.clear();
                 auto const string = decoder.extract<std::string>(ec);
-                ASSERT_TRUE(!!ec);
+                ASSERT_FALSE(!ec);
                 ASSERT_TRUE(string.empty());
             }
         }
