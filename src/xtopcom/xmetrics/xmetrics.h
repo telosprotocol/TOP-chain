@@ -601,6 +601,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     state_delete_mpt,
     state_delete_by_full_table,
     state_delete_create_mpt_fail,
+    statestore_repeat_write_states,
 
     // data structure
     data_table_unpack_units,

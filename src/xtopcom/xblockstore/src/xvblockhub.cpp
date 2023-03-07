@@ -1329,7 +1329,7 @@ namespace top
                     write_index(final_cached_index); //save index then
                 }
 
-                xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
+                xinfo("xblockacct_t::store_block,done for block, tps_key cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 
                 //update meta right now
                 if(new_raw_block->get_height() != 0)//genesis block might be created by load_index

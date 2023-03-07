@@ -158,6 +158,7 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
     proposal_para.set_clock(m_para->get_resources()->get_chain_timer()->logic_time());
     xunit_dbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s", proposal_para.dump().c_str());
 
+    uint64_t viewid = proposal_para.get_viewid();
     data::xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num, get_preproposal_send_cb());
     if (proposal_block == nullptr) {
         xunit_dbg("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
@@ -168,6 +169,14 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
 
     base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
     push_event_down(*_event_obj, this, 0, 0);
+
+    if (viewid != m_last_view_id || m_leader_cs_para == nullptr) {
+        xunit_warn("xbatch_packer::start_proposal fail-finally viewid changed. proposal_block=%s,viewid=%llu:%llu",
+            proposal_block->dump().c_str(), viewid, m_last_view_id);
+        XMETRICS_GAUGE(metrics::cons_fail_make_proposal_view_changed, 1);
+        XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
+        return false;
+    }
     // check viewid again, may changed
     if (m_last_view_id != proposal_block->get_viewid()) {
         xunit_warn("xbatch_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
