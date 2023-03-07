@@ -128,6 +128,7 @@ void EcVHost::send_to_through_root(common::xip2_t const & src, common::xnode_id_
 
     auto kroot_rt = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
     if (!kroot_rt || kroot_rt->nodes_size() == 0) {
+        ec = std::make_error_code(std::errc::network_unreachable);
         TOP_WARN("network not joined, send failed, try again ...");
         return;
     }

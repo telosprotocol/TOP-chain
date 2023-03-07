@@ -87,8 +87,8 @@ XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_block_request, 0x30);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_block_response, 0x31);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_block_response_bigpack, 0x32);
 
-//restrict sync message:  increase message id 200 when packet size > 16m, and reduce 200 after unserialize 
-#define sync_big_pack_increase_index  (200)
+//restrict sync message:  increase message id 0x100 when packet size > 16m, and reduce 0x100 after unserialize 
+#define sync_big_pack_increase_index  (0x100)
 
 // message ids for block broadcast
 XDEFINE_MSG_ID(xmessage_block_broadcast, xmessage_block_broadcast_id, 0x01);
