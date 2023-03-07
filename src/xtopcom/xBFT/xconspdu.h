@@ -26,6 +26,7 @@ namespace top
             enum_consensus_msg_type_vote_report = 7, //diagnostic or debug purpose
             enum_consensus_msg_type_proposal_v2 = 8, //allow nil
             enum_consensus_msg_type_sync_resp_v2= 9, //response sync command v2
+            enum_consensus_msg_type_preproposal = 10,
             
             enum_xclockview_msg_type_clock_reqt = 11, //request pull clock certificaiton from peer
             enum_xclockview_msg_type_clock_resp = 12, //respond to send clock certification to peer

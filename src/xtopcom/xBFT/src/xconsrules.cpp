@@ -478,6 +478,49 @@ namespace top
             xinfo("xBFTRules::add_proposal,successful for new proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),get_xip2_addr().low_addr);
             return true;
         }
+
+        bool  xBFTRules::permit_preproposal(uint64_t height, uint64_t viewid) {
+            // must have and only have one prev cert block. not permit preproposal if forked.
+            if(m_certified_blocks.empty()) {
+                xinfo("xBFTRules::permit_preproposal,fail-no cert block h:%llu v:%llu,at node=0x%llx", height, viewid, get_xip2_addr().low_addr);
+                return false;
+            }
+            bool found_prev_cert = false;
+            for(auto it = m_certified_blocks.rbegin(); it != m_certified_blocks.rend(); ++it)
+            {
+                if(height <= it->second->get_height())
+                {
+                    xinfo("xBFTRules::permit_preproposal,fail-lc h:%llu v:%llu vs cert(%s),at node=0x%llx", height, viewid, it->second->dump().c_str(),get_xip2_addr().low_addr);
+                    return false;
+                } else if(height == (it->second->get_height() + 1)) 
+                {
+                    if(viewid > it->second->get_viewid())
+                    {
+                        found_prev_cert = true;
+                        break;
+                    } else {
+                        xinfo("xBFTRules::permit_preproposal,fail-hc h:%llu v:%llu vs prev cert(%s),at node=0x%llx", height, viewid, it->second->dump().c_str(),get_xip2_addr().low_addr);
+                        return false;
+                    }
+                } else {
+                    xinfo("xBFTRules::permit_preproposal,fail-hc h:%llu v:%llu vs prev cert(%s),at node=0x%llx", height, viewid, it->second->dump().c_str(),get_xip2_addr().low_addr);
+                    return false;
+                }
+            }
+            if(!found_prev_cert) {
+                xinfo("xBFTRules::permit_preproposal,fail-hc h:%llu v:%llu, have no prev cert block at node=0x%llx", height, viewid, get_xip2_addr().low_addr);
+                return false;
+            }
+
+            // not permit preproposal if already have prposal with same or higher height.
+            for(auto it = m_proposal_blocks.rbegin(); it != m_proposal_blocks.rend(); ++it)
+            {
+                if (height <= it->second->get_height()) {
+                    xinfo("xBFTRules::permit_preproposal,fail-lp h:%llu v:%llu, vs exsit proposal(%s),at node=0x%llx", height, viewid, it->second->dump().c_str(),get_xip2_addr().low_addr);
+                }
+            }
+            return true;
+        }
     
         void  xBFTRules::update_voted_metric(base::xvblock_t * _block)
         {

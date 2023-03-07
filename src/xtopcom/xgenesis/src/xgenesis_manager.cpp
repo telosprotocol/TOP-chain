@@ -303,7 +303,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_genesis
 }
 
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_common_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
-    xinfo("[xtop_genesis_manager::create_genesis_of_common_account] account: %s", account.get_account().c_str());
+    xdbg("[xtop_genesis_manager::create_genesis_of_common_account] account: %s", account.get_account().c_str());
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
     // check
@@ -312,7 +312,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_common_
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_empty_table(account.get_account());
     xassert(genesis_block != nullptr);
     genesis_block->reset_modified_count();
-    xinfo("[xtop_genesis_manager::create_genesis_of_common_account] account: %s, create empty genesis block success", account.get_account().c_str());
+    xdbg("[xtop_genesis_manager::create_genesis_of_common_account] account: %s, create empty genesis block success", account.get_account().c_str());
     return genesis_block;
 }
 

@@ -436,6 +436,19 @@ namespace top
             return enum_xconsensus_code_successful;
         }
 
+        int   xBFTdriver_t::handle_preproposal_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent) {
+            base::xcspdu_t & packet = event_obj->_packet;
+            bool ret = permit_preproposal(packet.get_block_height(), packet.get_session_id());
+            if (ret)
+            {
+                xdbg("xBFTdriver_t::handle_preproposal_msg packet:%s get_session_key:%u", packet.dump().c_str(), packet.get_session_key());
+                proc_preproposal(from_addr, packet.get_block_height(), packet.get_session_id(), packet.get_block_clock(), packet.get_session_key(), packet.get_msg_body());
+                return enum_xconsensus_code_successful;
+            }
+
+            return enum_xconsensus_error_fail;
+        }
+
         int  xBFTdriver_t::sync_for_proposal(xproposal_t* new_proposal)
         {
             if(NULL == new_proposal)
@@ -657,28 +670,29 @@ namespace top
                 xproposal_t * _local_proposal = (xproposal_t*)block_ptr;
                 if(_local_proposal->check_block_flag(base::enum_xvblock_flag_authenticated))
                 {
-                    xinfo("xBFTdriver_t::handle_vote_msg,finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
+                    xinfo("xBFTdriver_t::handle_vote_msg, tps_key finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
  
                     xdbgassert(_local_proposal->get_block()->is_body_and_offdata_ready(true));
                     
+                    //collect data from propoal first
+                    std::string msg_stream;
+                    std::string   _commit_block_cert; //ship by packet' header instead of xcommit_msg_t for optimization
+                    xcommit_msg_t _commit_msg(enum_xconsensus_code_successful);
+                    _commit_msg.set_proof_certificate(std::string(), _local_proposal->get_height());//just carry empty cert
+                    _commit_msg.serialize_to_string(msg_stream);
+
+                    _local_proposal->get_cert()->serialize_to_string(_commit_block_cert);//here generated full data of cert
+
+                    //at last send out commit message
+                    //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
+                    xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
+                    fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert,std::string());//ship block cert by packet
+
                     bool found_matched_proposal = false;
                     //step#8: call on_consensus_finish() to let upper layer know it
                     if(add_cert_block(_local_proposal->get_block(),found_matched_proposal))//set certified block(QC block)
                     {
-                        //collect data from propoal first
-                        std::string msg_stream;
-                        std::string   _commit_block_cert; //ship by packet' header instead of xcommit_msg_t for optimization
-                        xcommit_msg_t _commit_msg(enum_xconsensus_code_successful);
-                        _commit_msg.set_proof_certificate(std::string(), _local_proposal->get_height());//just carry empty cert
-                        _commit_msg.serialize_to_string(msg_stream);
 
-                        _local_proposal->get_cert()->serialize_to_string(_commit_block_cert);//here generated full data of cert
-
-                        //at last send out commit message
-                        //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
-                        xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
-                        fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert,std::string());//ship block cert by packet
-                        
                         // xassert(found_matched_proposal);
                         if(false == found_matched_proposal)//exception case
                             fire_replicate_finish_event(_local_proposal->get_block());//call on_replicate_finish(block) to driver context layer
@@ -1586,6 +1600,21 @@ namespace top
             return true;
         }
 
+        bool  xBFTdriver_t::on_preproposal_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent) {
+            base::xcspdu_t & packet = event_obj->_packet;
+            xdbg_info("xcsdriver_t::on_preproposal_msg_recv start --> packet=%s at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+
+            const int result = handle_preproposal_msg(from_addr,to_addr,event_obj,cur_thread_id,timenow_ms,_parent);
+            if(result != enum_xconsensus_code_successful)
+            {
+                xwarn("handle_preproposal_msg err-code(%d) --> respond={height=%llu,viewid=%llu,viewtoken=%u} vs local=%s from 0x%llx to 0x%llx",result,packet.get_block_height(),packet.get_block_viewid(),packet.get_block_viewtoken(),dump().c_str(),from_addr.low_addr,to_addr.low_addr);
+                return false;
+            }
+
+            //xdbg("xcsdriver_t::on_preproposal_msg_recv finish --> packet=%s at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+            return true;
+        }
+
         bool  xBFTdriver_t::send_report(const int result,const xvip2_t & from_addr,const xvip2_t & to_addr)
         {
             std::string msg_stream;
@@ -1656,6 +1685,9 @@ namespace top
 
                 case enum_consensus_msg_type_vote_report:
                     return on_votereport_msg_recv(from_addr,to_addr,_evt_obj,cur_thread_id,timenow_ms,(xcsobject_t*)from_parent);
+                
+                case enum_consensus_msg_type_preproposal:
+                    return on_preproposal_msg_recv(from_addr,to_addr,_evt_obj,cur_thread_id,timenow_ms,(xcsobject_t*)from_parent);
             }
             return false;
         }

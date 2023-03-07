@@ -12,6 +12,7 @@
 #include "xrpc/xuint_format.h"
 #include "xvledger/xvaccount.h"
 #include "xvnetwork/xvnetwork_error.h"
+#include "xtxpool_v2/xtxpool_error.h"
 
 #include <cinttypes>
 
@@ -95,7 +96,7 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
 
         tx_hash = tx_ptr->get_digest_hex_str();
         account = tx_ptr->get_source_addr();
-        xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
+        xdbg("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
                tx_hash.c_str(),
                tx_ptr->get_tx_version(),
                account.c_str(),
@@ -111,15 +112,17 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
         }
         XMETRICS_GAUGE(metrics::txdelay_from_client_to_auditor, tx_ptr->get_delay_from_fire_timestamp(now));
 
-        if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
-            xwarn("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
-                  tx_hash.c_str(),
-                  account.c_str(),
-                  edge_sender.to_string().c_str(),
-                  m_cluster_vhost->address().to_string().c_str(),
-                  message.hash());
-            return;
-        }
+        // todo: check return value. if signature is invalid, not forward to validators.
+        m_txpool_service->request_transaction_consensus(tx_ptr, false);
+        // if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
+        //     // xwarn("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
+        //     //       tx_hash.c_str(),
+        //     //       account.c_str(),
+        //     //       edge_sender.to_string().c_str(),
+        //     //       m_cluster_vhost->address().to_string().c_str(),
+        //     //       message.hash());
+        //     return;
+        // }
     } else {
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;

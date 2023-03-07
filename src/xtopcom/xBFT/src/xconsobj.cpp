@@ -139,6 +139,14 @@ namespace top
 
             return false;//not handled
         }
+
+        bool    xcsobject_t::proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata) {
+            xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();
+            if(parent_obj != NULL)
+                return parent_obj->proc_preproposal(leader_xip, height, viewid, clock, viewtoken, msgdata);
+
+            return false;//not handled
+        }
         
         bool    xcsobject_t::verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) {
             xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();
@@ -422,6 +430,9 @@ namespace top
                     
                 case enum_xcsevent_type_on_certificate_finish:
                     return on_certificate_finish(event,(xcsobject_t*)from_child,cur_thread_id,timenow_ms);
+                    
+                case enum_xcsevent_type_update_view:
+                    return on_update_view(event,(xcsobject_t*)from_child,cur_thread_id,timenow_ms);
 
             }
             return xcsobject_t::on_event_up(event,from_child,cur_thread_id,timenow_ms);
@@ -475,6 +486,10 @@ namespace top
         {
             return false;//return false to let event continuely throw up
         }
+
+        bool  xcscoreobj_t::on_update_view(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) {
+            return false;//return false to let event continuely throw up
+        }
         
         //proposal_start_event should give chance of  this layer handle as well,so start from current object then go down
         bool   xcscoreobj_t::fire_proposal_start_event(base::xvblock_t*proposal_block)
@@ -502,7 +517,15 @@ namespace top
                 _event_obj->set_latest_cert(latest_cert_block);
                 _event_obj->set_latest_proposal(latest_proposal_block);
                 _event_obj->set_route_path(base::enum_xevent_route_path_up);
-                return get_parent_node()->push_event_up(*_event_obj, this, get_current_thread_id(), get_time_now());
+                get_parent_node()->push_event_up(*_event_obj, this, get_current_thread_id(), get_time_now());
+
+                base::xauto_ptr<xupdate_view>_event_obj_1(new xupdate_view(target_proposal));
+                _event_obj_1->set_latest_commit(latest_commit_block);
+                _event_obj_1->set_latest_lock(latest_lock_block);
+                _event_obj_1->set_latest_cert(latest_cert_block);
+                _event_obj_1->set_latest_proposal(latest_proposal_block);
+                _event_obj_1->set_route_path(base::enum_xevent_route_path_up);
+                return get_parent_node()->push_event_up(*_event_obj_1, this, get_current_thread_id(), get_time_now());
             }
             return false;
         }
@@ -517,7 +540,15 @@ namespace top
                 _event_obj->set_latest_cert(latest_cert_block);
                 _event_obj->set_latest_proposal(latest_proposal_block);
                 _event_obj->set_route_path(base::enum_xevent_route_path_up);
-                return get_parent_node()->push_event_up(*_event_obj, this, get_current_thread_id(), get_time_now());
+                get_parent_node()->push_event_up(*_event_obj, this, get_current_thread_id(), get_time_now());
+
+                base::xauto_ptr<xupdate_view>_event_obj_1(new xupdate_view(errcode,err_detail,target_proposal));
+                _event_obj_1->set_latest_commit(latest_commit_block);
+                _event_obj_1->set_latest_lock(latest_lock_block);
+                _event_obj_1->set_latest_cert(latest_cert_block);
+                _event_obj_1->set_latest_proposal(latest_proposal_block);
+                _event_obj_1->set_route_path(base::enum_xevent_route_path_up);
+                return get_parent_node()->push_event_up(*_event_obj_1, this, get_current_thread_id(), get_time_now());
             }
             return false;
         }

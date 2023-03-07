@@ -10,6 +10,7 @@
 #include "xunit_service/xcons_utl.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xunit_service/xrelay_packer2.h"
+#include "xunit_service/xpreproposal_packer.h"
 
 #include <cinttypes>
 
@@ -215,6 +216,8 @@ bool xworkpool_dispatcher::subscribe(const std::vector<base::xtable_index_t> & t
                 xbatch_packer_ptr_t packer_ptr;
                 if (table_id.get_zone_index() == base::enum_chain_zone_relay_index) {
                     packer_ptr = make_object_ptr<xrelay_packer2>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
+                } else if (table_id.get_zone_index() == base::enum_chain_zone_evm_index) {
+                    packer_ptr = make_object_ptr<xpreproposal_packer>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
                 } else {
                     packer_ptr = make_object_ptr<xbatch_packer>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
                 }

@@ -294,7 +294,8 @@ xfilter_result_t xtop_message_filter_recver_is_validator::filter(xvnetwork_messa
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type())) {
+    if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) &&
+        !common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type())) {
         return xfilter_result_t::continue_filtering;
     }
 
@@ -308,7 +309,8 @@ xfilter_result_t xtop_message_filter_recver_is_validator::filter(xvnetwork_messa
 bool xtop_message_filter_recver_is_validator::filter_sender_from_nonconsensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -326,7 +328,8 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_nonconsensus_gr
 bool xtop_message_filter_recver_is_validator::filter_sender_from_consensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
 
     return filter_sender_from_rec(vnetwork_message, ec)       &&
            filter_sender_from_zec(vnetwork_message, ec)       &&
@@ -337,7 +340,8 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_consensus_group
 bool xtop_message_filter_recver_is_validator::filter_sender_from_edge(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -348,7 +352,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_edge(xvnetwork_
     }
 
     // we don't allow edge to send message to validator directly.
-    ec = xvnetwork_errc2_t::invalid_src_address;
+    // ec = xvnetwork_errc2_t::invalid_src_address;
     xinfo("[vnetwork][message_filter] hash: %" PRIx64 " node %s receives msg sent to %s from %s. ignored. error: %s",
             vnetwork_message.hash(),
           m_vhost->host_node_id().to_string().c_str(),
@@ -362,7 +366,8 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_edge(xvnetwork_
 bool xtop_message_filter_recver_is_validator::filter_sender_from_fullnode(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -384,7 +389,8 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_fullnode(xvnetw
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_storage(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
@@ -410,7 +416,8 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_storage(xvnetwo
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_rec(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
@@ -436,7 +443,8 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_rec(xvnetwork_m
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_zec(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
@@ -462,14 +470,16 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_zec(xvnetwork_m
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_validator(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type())) {
+    if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) &&
+        !common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type())) {
         return true;
     }
 
@@ -478,14 +488,16 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_validator(xvnet
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_auditor(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type())) {
+    if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()) &&
+        !common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.sender().type())) {
         return true;
     }
 
@@ -524,9 +536,11 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_auditor(xvnetwo
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_same_validator_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -572,9 +586,11 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_same_validator_
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_different_validator_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -623,9 +639,11 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
                                                                                                                         std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
                                                                                                                         std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -635,7 +653,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     auto const & sender = vnetwork_message.sender();
 
     assert(sender.group_address() != recver.group_address());
-    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()) || common::has<common::xnode_type_t::evm_validator>(sender.type()));
 
     // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
     // if they have same associated auditor group, their logic epoch should be the same (follow the logic defined in the election contract).
@@ -758,9 +776,11 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
                                                                                                                            std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
                                                                                                                            std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -771,7 +791,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     auto const & sender = vnetwork_message.sender();
 
     assert(sender.group_address() != recver.group_address());
-    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()) || common::has<common::xnode_type_t::evm_validator>(sender.type()));
 #endif
 
     // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
@@ -796,9 +816,11 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
                                                                                     std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
                                                                                     std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -807,7 +829,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
     auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
-    assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()) || common::has<common::xnode_type_t::evm_auditor>(sender.type()));
     if (sender_auditor->address().group_address() != recver_associated_auditor->address().group_address()) {
         // not from associated auditor group.
         return true;
@@ -919,9 +941,11 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_non_associated_
                                                                                         std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
                                                                                         std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -931,7 +955,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_non_associated_
 
 #if !defined(NDEBUG)
     auto const & sender = vnetwork_message.sender();
-    assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()) || common::has<common::xnode_type_t::evm_auditor>(sender.type()));
 #endif
     if (sender_auditor->address().group_address() == recver_associated_auditor->address().group_address()) {
         return true;
@@ -961,7 +985,8 @@ xfilter_result_t xtop_message_filter_recver_is_auditor::filter(xvnetwork_message
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type())) {
+    if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) &&
+        !common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type())) {
         return xfilter_result_t::continue_filtering;
     }
 
@@ -975,7 +1000,8 @@ xfilter_result_t xtop_message_filter_recver_is_auditor::filter(xvnetwork_message
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_nonconsensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -993,7 +1019,8 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_nonconsensus_grou
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_consensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -1015,7 +1042,8 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_consensus_group(x
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_edge(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -1042,7 +1070,8 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_edge(xvnetwork_me
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_fullnode(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -1064,7 +1093,8 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_fullnode(xvnetwor
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_storage(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
@@ -1090,7 +1120,8 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_storage(xvnetwork
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_rec(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
@@ -1116,7 +1147,8 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_rec(xvnetwork_mes
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_zec(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
@@ -1142,14 +1174,16 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_zec(xvnetwork_mes
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_auditor(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type())) {
+    if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()) &&
+        !common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.sender().type())) {
         return true;
     }
 
@@ -1158,10 +1192,12 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_auditor(xvnetwork
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_validator(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
 
-    if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type())) {
+    if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) &&
+        !common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type())) {
         return true;
     }
 
@@ -1206,9 +1242,11 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_validator(xvnetwo
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_same_auditor_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -1253,9 +1291,11 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_same_auditor_grou
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_different_auditor_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -1286,9 +1326,11 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_valida
                                                                                     std::shared_ptr<election::cache::xgroup_element_t> const & recver_auditor,
                                                                                     std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -1297,7 +1339,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_valida
     auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
-    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()) || common::has<common::xnode_type_t::evm_validator>(sender.type()));
 //#if defined(DEBUG)
 //    auto const & sender_associated_group_address = sender_associated_group->address().group_address();
 //    auto const & auditor_group_address = auditor_group->address().group_address();
@@ -1354,9 +1396,11 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_non_associated_va
                                                                                         std::shared_ptr<election::cache::xgroup_element_t> const & recver_auditor,
                                                                                         std::error_code & ec) const {
     assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()) ||
+           common::has<common::xnode_type_t::evm_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()) ||
+           common::has<common::xnode_type_t::evm_validator>(vnetwork_message.sender().type()));
     assert(!broadcast(vnetwork_message.receiver().network_id()));
     assert(!broadcast(vnetwork_message.receiver().zone_id()));
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
@@ -1365,7 +1409,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_non_associated_va
     auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
-    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()) || common::has<common::xnode_type_t::evm_validator>(sender.type()));
 
     if (sender_associated_auditor->address().group_address() == recver_auditor->address().group_address()) {
         return true;
