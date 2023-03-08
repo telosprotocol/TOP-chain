@@ -40,4 +40,12 @@ optional<xfork_point_t> v11200_block_fork_point    = xfork_point_t{xfork_point_t
 optional<xfork_point_t> v11200_sync_big_packet = xfork_point_t{xfork_point_type_t::logic_time, 1000000000, "v1.12 sync big packet optimize"};
 #endif
 
+std::string dump_fork_points() {
+    std::string info;
+    info += " v11100_event=" + std::to_string(v11100_event.value().point);
+    info += " v11200_block_fork_point=" + std::to_string(v11200_block_fork_point.value().point);
+    info += " v11200_sync_big_packet=" + std::to_string(v11200_sync_big_packet.value().point);
+    return info;
+}
+
 NS_END2
