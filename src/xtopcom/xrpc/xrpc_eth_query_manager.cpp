@@ -179,7 +179,7 @@ void xrpc_eth_query_manager::eth_getBalance(Json::Value & js_req, Json::Value & 
 
     if (ret == enum_block_not_found) {
         std::string msg = "header not found";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
@@ -216,7 +216,7 @@ void xrpc_eth_query_manager::eth_getTransactionCount(Json::Value & js_req, Json:
     if (false == statestore::xstatestore_hub_t::instance()->get_accountindex(js_req[1].asString(), common::xaccount_address_t(account), accountindex)) {
         xwarn("xrpc_eth_query_manager::eth_getTransactionCount fail-load. account=%s,table_height=%s", account.c_str(),js_req[1].asString().c_str());
         std::string msg = "header not found";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     }
 
@@ -442,7 +442,7 @@ void xrpc_eth_query_manager::eth_getCode(Json::Value & js_req, Json::Value & js_
     enum_query_result ret = query_account_by_number(account, js_req[1].asString(), account_ptr);
     if (ret == enum_block_not_found) {
         std::string msg = "header not found";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
@@ -532,7 +532,7 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
     xobject_ptr_t<base::xvblock_t> block = query_block_by_height(js_req[1].asString());
     if (block == nullptr) {
         std::string msg = "header not found";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     }
     uint64_t gmtime = block->get_second_level_gmtime();
@@ -543,7 +543,7 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
     if (statectx_ptr == nullptr) {
         xwarn("create_statectx fail: %s", addr.c_str());
         std::string msg = "err: statectx create fail";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     }
 
@@ -552,7 +552,7 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
     if (nullptr == unitstate) {
         xwarn("eth_call fail-load unit state, %s", from.c_str());
         std::string msg = "err: unit state load fail";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);        
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);        
         return;
     }
 
@@ -566,18 +566,18 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
     if (ret != txexecutor::enum_exec_success) {
         xwarn("evm call fail.");
         std::string msg = "err: evm execute fail " + std::to_string(ret);
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);        
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);        
         return;
     }
     xinfo("evm call: %d, %s", output.m_tx_result.status, output.m_tx_result.extra_msg.c_str());
     if (output.m_tx_result.status == evm_common::OutOfFund) {
         std::string msg = "insufficient funds for transfer";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     } else if (output.m_tx_result.status == evm_common::OutOfGas) {
         std::string msg = std::string("err: intrinsic gas too low: have ") + gas_u256.str() + ", want " + std::to_string(output.m_tx_result.used_gas)
             + " (supplied gas " + gas_u256.str() + ")";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     } else if (output.m_tx_result.status == evm_common::Success) {
         if (output.m_tx_result.extra_msg.empty())
@@ -587,16 +587,17 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
         auto const & extra_msg = output.m_tx_result.extra_msg;
         js_rsp["error"]["message"] = "execution reverted";
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
-        js_rsp["error"]["data"] = extra_msg; 
+        js_rsp["error"]["data"] = extra_msg;
         if (false == extra_msg.empty() && extra_msg != "0x"){
             auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg);
             auto selector = t.extract<evm_common::xfunction_selector_t>();
             if (selector.method_id == abi_error) {
                 js_rsp["error"]["message"] = "execution reverted: " + t.extract<std::string>();
+                js_rsp["error"]["data"] = extra_msg;
             }
-        }
+        } 
     }else {
-        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_default_error;
         js_rsp["error"]["message"] = "execution reverted";
     }
 }
@@ -674,7 +675,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     xobject_ptr_t<base::xvblock_t> block = query_block_by_height(block_number);
     if (block == nullptr) {
         std::string msg = "block not found";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     }
     uint64_t gmtime = block->get_second_level_gmtime();
@@ -684,7 +685,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     if (statectx_ptr == nullptr) {
         xwarn("create statectx fail: %s", addr.c_str());
         std::string msg = "err: statectx create fail";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);        
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);        
         return;
     }
 
@@ -693,7 +694,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     if (nullptr == unitstate) {
         xwarn("eth_estimateGas fail-load unit state, %s", from.c_str());
         std::string msg = "err: unit state load fail";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);              
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);              
         return;
     }
 
@@ -708,7 +709,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     if (ret != txexecutor::enum_exec_success) {
         xwarn("evm call fail.");
         std::string msg = "err: evm execute fail " + std::to_string(ret);
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);              
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);              
         return;
     }
     auto const & extra_msg = output.m_tx_result.extra_msg;
@@ -724,7 +725,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
 
     case evm_common::OutOfFund: {
         std::string msg = "insufficient funds for transfer";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         break;
     }
 
@@ -743,17 +744,17 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     }
 
     case evm_common::OutOfGas:
-        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_default_error;
         js_rsp["error"]["message"] = "execution out of gas";
         break;
 
     case evm_common::OutOfOffset:
-        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_default_error;
         js_rsp["error"]["message"] = "execution out of offset";
         break;
 
     case evm_common::OtherExecuteError:
-        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_default_error;
         js_rsp["error"]["message"] = "execution unknown error";
         break;
 
@@ -784,7 +785,7 @@ void xrpc_eth_query_manager::eth_getStorageAt(Json::Value & js_req, Json::Value 
     enum_query_result ret = query_account_by_number(account, js_req[2].asString(), account_ptr);
     if (ret == enum_block_not_found) {
         std::string msg = "header not found";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
@@ -914,7 +915,7 @@ void xrpc_eth_query_manager::eth_getLogs(Json::Value & js_req, Json::Value & js_
         base::xauto_ptr<base::xvblock_t> block = m_block_store->get_block_by_hash(block_hash_str);
         if (block == nullptr) {
             std::string msg = "unknown block";
-            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
             return;
         }
         begin = block->get_height();
@@ -1409,7 +1410,7 @@ void xrpc_eth_query_manager::top_getBalance(Json::Value & js_req, Json::Value & 
 
     if (ret == enum_block_not_found) {
         std::string msg = "header not found";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_default_error, msg);
         return;
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
