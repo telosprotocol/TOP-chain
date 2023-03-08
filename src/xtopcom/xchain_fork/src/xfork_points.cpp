@@ -42,9 +42,9 @@ optional<xfork_point_t> v11200_sync_big_packet = xfork_point_t{xfork_point_type_
 
 std::string dump_fork_points() {
     std::string info;
-    info += " v11100_event=" + std::to_string(v11100_event.value().point);
-    info += " v11200_block_fork_point=" + std::to_string(v11200_block_fork_point.value().point);
-    info += " v11200_sync_big_packet=" + std::to_string(v11200_sync_big_packet.value().point);
+    info += "v11100_event=" + std::to_string(v11100_event.value().point);
+    info += ",v11200_block_fork_point=" + std::to_string(v11200_block_fork_point.value().point);
+    info += ",v11200_sync_big_packet=" + std::to_string(v11200_sync_big_packet.value().point);
     return info;
 }
 
