@@ -21,6 +21,8 @@ namespace xtxpool_v2 {
 #define table_recv_tx_queue_size_max (1024)
 #define table_conf_tx_queue_size_max (1024)
 
+#define table_send_tx_queue_size_max_large (10000)
+
 #define role_send_tx_queue_size_max_for_each_table (800)
 #define role_recv_tx_queue_size_max_for_each_table (800)
 #define role_confirm_tx_queue_size_max_for_each_table (800)
@@ -350,6 +352,7 @@ public:
       : base::xvaccount_t(address), m_statistic(statistic), m_table_state_cache(table_state_cache), m_all_table_sids(all_table_sids) {
         XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtxpool_table_info_t, 1);
         m_roles.push_back(role);
+        m_large_queue_size = (get_zone_index() == base::enum_chain_zone_evm_index);
     }
     ~xtxpool_table_info_t() {
         XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xtxpool_table_info_t, -1);
@@ -457,7 +460,8 @@ public:
     }
 
     int32_t check_send_tx_reached_upper_limit() {
-        if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max) {
+        int32_t max_size = m_large_queue_size ? table_send_tx_queue_size_max_large : table_send_tx_queue_size_max;
+        if (m_counter.get_send_tx_count() >= max_size) {
             XMETRICS_GAUGE(metrics::txpool_alarm_send_tx_reached_upper_limit, 1);
             return xtxpool_error_table_reached_upper_limit;
         }/* else if (any_role_send_tx_reached_upper_limit()) {
@@ -595,6 +599,7 @@ private:
     xtable_state_cache_t * m_table_state_cache{nullptr};
     std::set<base::xtable_shortid_t> * m_all_table_sids{nullptr};
     std::set<base::xtable_shortid_t> m_empty{};
+    bool m_large_queue_size{false};
 };
 
 }  // namespace xtxpool_v2

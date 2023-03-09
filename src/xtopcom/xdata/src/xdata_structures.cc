@@ -398,7 +398,7 @@ bool xreg_node_info::can_be_exchange() const noexcept {
 }
 
 bool xreg_node_info::can_be_fullnode() const noexcept {
-    return could_be_auditor();
+    return could_be_auditor(); 
 }
 
 bool xreg_node_info::can_be_evm_auditor() const noexcept {

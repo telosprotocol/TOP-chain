@@ -37,7 +37,7 @@ private:
     friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
-    basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_{5000};
+    basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_;
     std::map<xh256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xh256_t> pruned_hashes_;
 
@@ -49,19 +49,19 @@ private:
     mutable std::mutex mutex;
 
 public:
-    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb) : diskdb_(std::move(diskdb)) {
+    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t cache_size) : diskdb_(std::move(diskdb)), cleans_(cache_size) {
     }
 
 public:
     // NewDatabase creates a new trie database to store ephemeral trie content before
     // its written out to disk or garbage collected. No read cache is created, so all
     // data retrievals will hit the underlying disk database.
-    static std::shared_ptr<xtop_trie_db> NewDatabase(xkv_db_face_ptr_t diskdb);
+    static std::shared_ptr<xtop_trie_db> NewDatabase(xkv_db_face_ptr_t diskdb, size_t cache_size = 5000);
 
     // NewDatabaseWithConfig creates a new trie database to store ephemeral trie content
     // before its written out to disk or garbage collected. It also acts as a read cache
     // for nodes loaded from disk.
-    static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config);
+    static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config, size_t cache_size);
 
 public:
     xkv_db_face_ptr_t DiskDB() const {

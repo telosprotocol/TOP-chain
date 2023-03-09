@@ -139,13 +139,26 @@ enum e_cons_type {
     e_table,
 };
 
+using xpreproposal_send_cb = std::function<void(const data::xblock_consensus_para_t &,
+                                                const std::vector<data::xcons_transaction_ptr_t> &,
+                                                const std::vector<base::xvproperty_prove_ptr_t> &)>;
+
 class xproposal_maker_face {
 public:
-    virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) {return nullptr;}
-    virtual bool                        can_make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
-    virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
-    virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
-    virtual void                        set_certauth(base::xvcertauth_t* _ca) {}
+    virtual data::xblock_consensus_para_ptr_t leader_set_consensus_para_basic(base::xvblock_t * _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) {
+        return nullptr;
+    }
+    virtual bool can_make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
+    virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num, xpreproposal_send_cb cb) = 0;
+    virtual data::xblock_ptr_t make_proposal_backup(base::xvblock_t * proposal_block, data::xblock_consensus_para_t & proposal_para) = 0;
+    virtual data::xblock_ptr_t make_proposal_backup(data::xblock_consensus_para_t & proposal_para,
+                                                    const std::string & m_last_block_hash,
+                                                    const std::string & justify_cert_hash,
+                                                    const std::vector<data::xcons_transaction_ptr_t> & input_txs,
+                                                    const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_prove) = 0;
+    virtual int verify_proposal(base::xvblock_t * proposal_block, base::xvblock_t * local_block) = 0;
+    virtual void set_certauth(base::xvcertauth_t * _ca) {
+    }
 };
 
 // block maker face

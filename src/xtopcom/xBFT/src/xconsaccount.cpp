@@ -69,6 +69,10 @@ namespace top
             return true;
         }
 
+        bool    xcsaccount_t::proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata) {
+            return true;
+        }
+
         //clock block always pass by higher layer to lower layer
         bool  xcsaccount_t::on_clock_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {

@@ -18,7 +18,7 @@ xresources::xresources(const std::string & account,
                        const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                        const observer_ptr<state_sync::xstate_downloader_t> & downloader)
   : m_worker_pool(pwork)
-  , m_xbft_worker_pool(pwork)
+  , m_xbft_worker_pool(xbft_pwork)
   , m_network(network)
   , m_certauth(auth)
   , m_blockstore(blockstore)
