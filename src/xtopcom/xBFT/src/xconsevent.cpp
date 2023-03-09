@@ -304,6 +304,33 @@ namespace top
             if(old_ptr != NULL)
                 old_ptr->release_ref();
         }
+
+        xupdate_view::xupdate_view(base::xvblock_t* proposal)   //successful case
+        :xcsevent_t(enum_xcsevent_type_update_view)
+        {
+            m_target_proposal = NULL;
+            if(proposal != NULL)
+                proposal->add_ref();
+            m_target_proposal = proposal;
+        }
+        
+        xupdate_view::xupdate_view(const int errcode,const std::string & err_detail,base::xvblock_t* proposal)
+        :xcsevent_t(enum_xcsevent_type_update_view)
+        {
+            m_target_proposal = NULL;
+            if(proposal != NULL)
+                proposal->add_ref();
+            m_target_proposal = proposal;
+            
+            m_error_code    = errcode;
+            m_result_data   = err_detail;
+        }
+        
+        xupdate_view::~xupdate_view()
+        {
+            if(m_target_proposal != NULL)
+                m_target_proposal->release_ref();
+        }
         
         xconsensus_commit::xconsensus_commit(base::xvblock_t * target_commit)
         :xcsevent_t(enum_xcsevent_type_on_consensus_commit)

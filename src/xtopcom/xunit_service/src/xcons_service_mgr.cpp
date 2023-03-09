@@ -40,15 +40,15 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
                                       observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
                                       observer_ptr<router::xrouter_face_t> const & router,
                                       observer_ptr<state_sync::xstate_downloader_t> const & downloader) {
-    auto work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
-    auto xbft_work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
+    auto work_pool = make_object_ptr<base::xworkerpool_t_impl<5>>(top::base::xcontext_t::instance());
+    // auto xbft_work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
 
     auto face = std::make_shared<xunit_service::xelection_cache_imp>();
     std::shared_ptr<xunit_service::xleader_election_face> pelection = std::make_shared<xunit_service::xrotate_leader_election>(blockstore, face);
     std::shared_ptr<xunit_service::xnetwork_proxy_face> network = std::make_shared<xunit_service::xnetwork_proxy>(face, router);
 
     // global lifecyle
-    auto p_res = new xunit_service::xresources(node_account, work_pool, xbft_work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool, downloader);
+    auto p_res = new xunit_service::xresources(node_account, work_pool, nullptr, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool, downloader);
     auto p_para = new xunit_service::xconsensus_para(xconsensus::enum_xconsensus_pacemaker_type_clock_cert,  // useless parameter
                                                      base::enum_xconsensus_threshold_2_of_3);
     auto p_srv_para = std::make_shared<xunit_service::xcons_service_para>(p_res, p_para);

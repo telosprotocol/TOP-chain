@@ -230,7 +230,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
     stream >> nodes_hashes;
     stream >> units_hashes;
     auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, common::xtable_address_t::build_from(xstring_view_t{table.data(), table.size()}));
-    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
+    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db, 10000);
     for (auto const & hash : nodes_hashes) {
         std::error_code ec;
         auto v = trie_db->Node(evm_common::xh256_t(hash), ec);
