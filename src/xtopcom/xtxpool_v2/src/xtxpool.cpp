@@ -119,7 +119,16 @@ data::xcons_transaction_ptr_t xtxpool_t::query_tx(const std::string & account_ad
         xtxpool_warn("xtxpool_t::query_tx table not found, account:%s", account_addr.c_str());
         return nullptr;
     }
-    return table->query_tx(account_addr, hash);
+    return table->query_tx(hash);
+}
+
+data::xcons_transaction_ptr_t xtxpool_t::query_tx(const std::string & account_addr, const std::string & hash_hex) const {
+    auto table = get_txpool_table_by_addr(account_addr);
+    if (table == nullptr) {
+        xtxpool_warn("xtxpool_t::query_tx table not found, account:%s", account_addr.c_str());
+        return nullptr;
+    }
+    return table->query_tx(hash_hex);
 }
 
 void xtxpool_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
@@ -235,7 +244,7 @@ int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xco
         return xtxpool_error_account_not_in_charge;
     }
 
-    return table->verify_txs(account, txs);
+    return table->verify_txs(txs);
 }
 
 void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {

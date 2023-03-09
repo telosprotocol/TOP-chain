@@ -85,9 +85,9 @@ void xstatestore_impl_t::on_table_block_committed(base::xvblock_t* block) const 
     tablestore->on_table_block_committed(block);
 }
 
-xtablestate_ext_ptr_t xstatestore_impl_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
+xtablestate_ext_ptr_t xstatestore_impl_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(current_block->get_account());
-    return tablestore->do_commit_table_all_states(current_block, tablestate_store, ec);
+    return tablestore->do_commit_table_all_states(current_block, tablestate_store, account_index_map, ec);
 }
 
 void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
@@ -363,7 +363,8 @@ bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xaccou
     // TODO(jimmy) get latest commit and cert executed state
     xobject_ptr_t<base::xvblock_t> _block = nullptr;
     if (number == LatestBlock || number == PendingBlock) {
-        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_address.vaccount());
+        // _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_address.vaccount());
+        return get_accountindex_from_latest_connected_table(table_address, account_address, account_index);
     } else if (number == 0) {
         _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table_address.vaccount());
     } else {
@@ -436,7 +437,7 @@ bool xstatestore_impl_t::get_accountindex(const std::string& table_height, commo
     else {
         number = std::strtoul(table_height.c_str(), NULL, 16);
     }
-
+    
     return get_accountindex(number, account_address, account_index);
 }
 

@@ -12,6 +12,7 @@
 #include "xstatestore/xstatestore_base.h"
 #include "xstatestore/xtablestate_ext.h"
 #include "xstatestore/xstatestore_access.h"
+#include "xstatestore/xaccount_index_cache.h"
 
 NS_BEG2(top, statestore)
 
@@ -34,7 +35,7 @@ public:
 public:
     xtablestate_ext_ptr_t   execute_and_get_tablestate_ext(base::xvblock_t* target_block, bool bstate_must, std::error_code & ec) const;
     xtablestate_ext_ptr_t   get_latest_executed_tablestate_ext() const;
-    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
+    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const;
     void                    on_table_block_committed(base::xvblock_t* block) const;
     bool                    on_table_block_committed_by_height(uint64_t height, const std::string & block_hash) const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
@@ -83,6 +84,7 @@ protected:
     xstatestore_base_t          m_statestore_base;
     mutable xstatestore_accessor_t m_state_accessor;
     xexecute_listener_face_t *  m_execute_listener{nullptr};
+    mutable xaccount_index_cache_t m_account_index_cache;
 };
 
 NS_END2

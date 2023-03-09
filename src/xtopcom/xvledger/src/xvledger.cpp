@@ -42,7 +42,7 @@ namespace top
     
         xvaccountobj_t::~xvaccountobj_t()
         {
-            xinfo("xvaccountobj_t::destroy,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
+            xdbg("xvaccountobj_t::destroy,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
             for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
             {
                 xvactplugin_t* old_ptr = m_plugins[i];
@@ -1021,7 +1021,7 @@ namespace top
                             _test_for_account->save_meta();//do heavy job at this thread to reduce io within table' spinlock
                             if(try_close_account(current_time_ms, _test_for_account->get_address()))
                             {
-                                xkinfo("xvtable_t::timer,closed account(%s)",_test_for_account->get_address().c_str());
+                                xdbg("xvtable_t::timer,closed account(%s)",_test_for_account->get_address().c_str());
                                 _test_for_account->release_ref();//destroy it finally
                             }
                             else
@@ -1084,7 +1084,7 @@ namespace top
                                 //force to save meta once one plugin is offline
                                 _test_for_plugin->get_account_obj()->save_meta();
                                 
-                                xinfo("xvtable_t::timer,closed plugin(%d) of account(%s)",_test_for_plugin->get_plugin_type(),_test_for_plugin->get_account_obj()->get_address().c_str());
+                                xdbg("xvtable_t::timer,closed plugin(%d) of account(%s)",_test_for_plugin->get_plugin_type(),_test_for_plugin->get_account_obj()->get_address().c_str());
                                 _test_for_plugin->release_ref();//destroy it finally
                             }
                             else
