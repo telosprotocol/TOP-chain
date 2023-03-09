@@ -24,14 +24,14 @@ void xreceipt_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_
     auto it = m_tx_queue.insert(tx_ent);
     m_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->tx_inc(tx_ent->get_tx()->get_tx_subtype(), 1);
-    xtxpool_info("xreceipt_queue_internal_t::insert_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+    xtxpool_dbg("xreceipt_queue_internal_t::insert_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
 void xreceipt_queue_internal_t::erase_tx(const std::string & hash_str) {
     auto it_tx_map = m_tx_map.find(hash_str);
     if (it_tx_map != m_tx_map.end()) {
         auto & tx_ent = *it_tx_map->second;
-        xtxpool_info("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+        xtxpool_dbg("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 #if defined(ENABLE_METRICS)
         uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
         if (tx_ent->get_tx()->is_confirm_tx()) {
@@ -311,7 +311,7 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::pop_tx(const std::string 
     return tx_ent;
 }
 
-const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & account_addr, const std::string & hash_str) const {
+const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & hash_str) const {
     return m_receipt_queue_internal.find(hash_str);
 }
 

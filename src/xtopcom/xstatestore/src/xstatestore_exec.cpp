@@ -183,12 +183,18 @@ xtablestate_ext_ptr_t xstatestore_executor_t::get_latest_executed_tablestate_ext
     return m_state_accessor.get_latest_connectted_table_state();
 }
 
-xtablestate_ext_ptr_t xstatestore_executor_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
+xtablestate_ext_ptr_t xstatestore_executor_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
+    m_account_index_cache.update_new_cert_block(current_block, account_index_map);
     std::lock_guard<std::mutex> l(m_execute_lock);
     return write_table_all_states(current_block, tablestate_store, ec);
 }
 
 void xstatestore_executor_t::execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const {
+    auto ret = m_account_index_cache.get_account_index(block, unit_addr.to_string(), account_index);
+    XMETRICS_GAUGE(metrics::statestore_get_account_index_from_cache, ret ? 1 : 0);
+    if (ret) {
+        return;
+    }   
     xtablestate_ext_ptr_t tablestate_ext = execute_and_get_tablestate_ext(block, false, ec);
     if (nullptr != tablestate_ext) {
         tablestate_ext->get_accountindex(unit_addr.to_string(), account_index, ec);
@@ -381,14 +387,14 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     if (current_block->get_height() != 0 && current_block->get_height() <= get_cert_executed_height_inner()) {
         auto tablestate_ext = m_state_accessor.read_table_bstate(m_table_addr, current_block);
         if (nullptr != tablestate_ext) {
-            xwarn("xstatestore_executor_t::write_table_all_states repeat write states.block=%s", current_block->dump().c_str());
+            xwarn("xstatestore_executor_t::write_table_all_states tps_key repeat write states.block=%s", current_block->dump().c_str());
             return tablestate_ext;
         }
         // fork blocks may execute some times with same height
         xwarn("xstatestore_executor_t::write_table_all_states fork blocks write states.block=%s", current_block->dump().c_str());
     }
 
-    xinfo("xstatestore_executor_t::write_table_all_states begin,block:%s",current_block->dump().c_str());
+    xinfo("xstatestore_executor_t::write_table_all_states tps_key begin,block:%s",current_block->dump().c_str());
 
 #ifdef DEBUG
     auto table_full_state_hash = current_block->get_fullstate_hash();
@@ -408,21 +414,26 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     std::map<std::string, std::string> unitstate_db_kvs;
     bool need_store_unitstate = base::xvchain_t::instance().need_store_unitstate(m_table_vaddr.get_zone_index());
     for (auto & v : tablestate_store->get_unitstates()) {
+        std::string unitstate_bin = v.m_unitstate_bin;
+        if (unitstate_bin.empty()) {
+            v.m_unitstate->get_bstate()->serialize_to_string(unitstate_bin);            
+        }
+
         if (need_store_unitstate || v.m_unitstate->get_bstate()->get_block_type() == base::enum_xvblock_type_fullunit) {       
             std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(v.m_unitstate->account_address().vaccount(), v.m_unitstate->height(), v.m_unit_hash);
-            if (!v.m_unitstate_bin.empty())  {
-                unitstate_db_kvs[state_db_key] = v.m_unitstate_bin;
-            } else {
-                std::string state_db_bin;
-                v.m_unitstate->get_bstate()->serialize_to_string(state_db_bin);
-                unitstate_db_kvs[state_db_key] = state_db_bin; 
-            }
+            unitstate_db_kvs[state_db_key] = unitstate_bin;
+        } else {
+            // TODO(jimmy) write latest unitstate for load on-demand
+            std::string latest_state_db_key = base::xvdbkey_t::create_latest_unit_state_key(v.m_unitstate->account_address().vaccount());
+            std::string latest_state_db_value;
+            xstatestore_dbaccess_t::latest_unitstate_serialize_to_string(v.m_unit_hash, unitstate_bin, latest_state_db_value);
+            unitstate_db_kvs[latest_state_db_key] = latest_state_db_value;
         }
         m_state_accessor.write_unitstate_to_cache(v.m_unitstate, v.m_unit_hash);
         xdbg("xstatestore_executor_t::write_table_all_states unitstate=%s.block=%s", v.m_unitstate->get_bstate()->dump().c_str(), current_block->dump().c_str());        
     }
     if (!unitstate_db_kvs.empty()) {
-        m_state_accessor.write_batch_unitstates_to_db(unitstate_db_kvs, ec);
+        m_state_accessor.batch_write_unit_bstate(unitstate_db_kvs, ec);
         if (ec) {
             xerror("xstatestore_executor_t::write_table_all_states fail-write batch unitstate,block:%s", current_block->dump().c_str());
             return nullptr;
@@ -457,7 +468,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     m_state_accessor.write_table_bstate_to_cache(m_table_addr, current_block->get_height(), current_block->get_block_hash(), tablestate, current_block->check_block_flag(base::enum_xvblock_flag_committed));
 
     set_latest_executed_info(current_block->check_block_flag(base::enum_xvblock_flag_committed), current_block->get_height());
-    xinfo("xstatestore_executor_t::write_table_all_states succ,block:%s,execute_height=%ld,unitstates=%zu,state_root=%s",
+    xinfo("xstatestore_executor_t::write_table_all_states tps_key succ,block:%s,execute_height=%ld,unitstates=%zu,state_root=%s",
         current_block->dump().c_str(), get_commit_executed_height_inner(),tablestate_store->get_unitstates().size(),tablestate_store->get_state_root().hex().c_str());
     return tablestate;
 }

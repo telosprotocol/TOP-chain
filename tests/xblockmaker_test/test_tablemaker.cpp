@@ -56,8 +56,10 @@ TEST_F(test_tablemaker, make_proposal_1) {
 
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
@@ -74,8 +76,10 @@ TEST_F(test_tablemaker, make_proposal_1) {
 
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
@@ -92,8 +96,10 @@ TEST_F(test_tablemaker, make_proposal_1) {
 
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
@@ -292,8 +298,10 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
        /* std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
@@ -353,8 +361,10 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(all_txs);
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
         /*std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \

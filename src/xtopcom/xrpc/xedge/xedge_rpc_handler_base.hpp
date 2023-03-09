@@ -99,10 +99,10 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
             }
 
             auto vd = m_edge_vhost_ptr->get_vnetwork_driver();
-            auto group_addr =
-                m_edge_vhost_ptr->get_router()->sharding_address_from_account(common::xaccount_address_t{msg_ptr->m_account}, vd->network_id(), xnode_type_t::consensus_auditor);
-            vnetwork::xvnode_address_t dst{ group_addr };
             if (msg_ptr->m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
+                auto group_addr =
+                    m_edge_vhost_ptr->get_router()->sharding_address_from_account(common::xaccount_address_t{msg_ptr->m_account}, vd->network_id(), xnode_type_t::consensus_auditor);
+                vnetwork::xvnode_address_t dst{ group_addr };
                 xdbg("[global_trace][edge][forward advance]%s,%s,src %s, dst %s,%" PRIx64,
                    tx_hash.c_str(),
                    msg_ptr->m_account.c_str(),

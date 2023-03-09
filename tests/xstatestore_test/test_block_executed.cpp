@@ -380,7 +380,8 @@ void check_unitstates_stored(mock::xdatamock_table & mocktable, bool all_unitsta
             if (all_unitstates_store || unit->get_height() == max_limit_lightunit_count) {
                 xassert(unitstate != nullptr);
             } else {
-                xassert(unitstate == nullptr);
+                // always update latest unitstate to db, so here unitstate can be loaded.
+                // xassert(unitstate == nullptr);
             }
         }
     }

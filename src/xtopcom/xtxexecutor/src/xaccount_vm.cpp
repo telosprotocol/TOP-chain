@@ -61,7 +61,6 @@ int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, cons
             return xunit_contract_exec_no_property_change;
         }
     }
-    // xinfo("xaccount_vm_t::exec_tx succ.tx=%s,state=%s",tx->dump().c_str(),tx->dump_execute_state().c_str());
 
     // copy create txs from account context
     std::vector<xcons_transaction_ptr_t> create_txs = account_context->get_create_txs();
@@ -83,7 +82,7 @@ int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, cons
             contract_create_txs.push_back(new_tx);  // return create tx for unit pack
         }
     }
-    xinfo("xaccount_vm_t::exec_tx succ. tx=%s,tx_state=%s", tx->dump().c_str(), tx->dump_execute_state().c_str());
+    xdbg("xaccount_vm_t::exec_tx succ. tx=%s,tx_state=%s", tx->dump().c_str(), tx->dump_execute_state().c_str());
     return xsuccess;
 }
 

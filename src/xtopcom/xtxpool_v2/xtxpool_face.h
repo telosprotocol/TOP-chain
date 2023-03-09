@@ -237,6 +237,7 @@ public:
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
     virtual xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para) = 0;
     virtual data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const = 0;
+    virtual data::xcons_transaction_ptr_t query_tx(const std::string & account, const std::string & hash_hex) const = 0;
     virtual void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) = 0;
     virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;
     virtual void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) = 0;

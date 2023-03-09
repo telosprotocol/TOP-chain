@@ -28,14 +28,18 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     xcons_transaction_t(xtransaction_t* raw_tx);
     xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt);
     xcons_transaction_t(const base::xfull_txreceipt_t & full_txreceipt);
+
+    virtual int32_t serialize_to_string(std::string & bin_data) override {return xbase_dataunit_t<xcons_transaction_t, xdata_type_cons_transaction>::serialize_to_string(bin_data);}
+    virtual int32_t serialize_from_string(const std::string & bin_data) override {return xbase_dataunit_t<xcons_transaction_t, xdata_type_cons_transaction>::serialize_from_string(bin_data);}
+
  protected:
     virtual ~xcons_transaction_t();
  private:
     xcons_transaction_t & operator = (const xcons_transaction_t & other);
 
  protected:
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
+    virtual int32_t do_write(base::xstream_t & stream) override;
+    virtual int32_t do_read(base::xstream_t & stream) override;
 
  public:
     bool                            set_raw_tx(xtransaction_t* raw_tx);  //on-demand load and set raw tx

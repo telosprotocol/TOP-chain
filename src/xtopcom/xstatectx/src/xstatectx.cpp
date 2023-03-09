@@ -203,9 +203,10 @@ void xstatectx_t::finish_execution() {
 void xstatectx_t::do_commit(base::xvblock_t* current_block) {
     XMETRICS_TIME_RECORD("cons_statectx_commit_cost");
     auto const & state_root_hash = data::xblockextract_t::get_state_root_from_block(current_block);
-    
+   
     auto const& unitctxs = get_modified_unit_ctx();
     std::vector<data::xunitstate_store_para_t> _unitstate_paras(unitctxs.size());
+    std::map<std::string, base::xaccount_index_t> account_index_map;
     int i = 0;
     for (auto & v : unitctxs) {
         auto & unitctx = v.second;
@@ -214,15 +215,15 @@ void xstatectx_t::do_commit(base::xvblock_t* current_block) {
         _para.m_unit_hash = unitctx->get_unit_hash();
         _para.m_unitstate_bin = unitctx->get_unitstate_bin();
         _unitstate_paras[i++] = std::move(_para);
+        account_index_map[unitctx->get_unitstate()->get_bstate()->get_account()] = unitctx->get_accoutstate()->get_accountindex();
     }
-
     // XTODO create store table bstate by final block
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *get_table_state()->get_bstate());
     data::xtablestate_ptr_t table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
 
     std::error_code ec;
     statestore::xtablestate_store_ptr_t tablestate_store = std::make_shared<statestore::xtablestate_store_t>(table_bstate, m_prev_tablestate_ext->get_state_mpt(), state_root_hash, std::move(_unitstate_paras));
-    statestore::xstatestore_hub_t::instance()->do_commit_table_all_states(current_block, tablestate_store, ec);
+    statestore::xstatestore_hub_t::instance()->do_commit_table_all_states(current_block, tablestate_store, account_index_map, ec);
     if (ec) {
         xerror("xstatectx_t::do_commit fail. block:%s", current_block->dump().c_str());
         return;
