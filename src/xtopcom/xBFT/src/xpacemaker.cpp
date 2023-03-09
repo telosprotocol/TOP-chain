@@ -267,7 +267,7 @@ namespace top
             }
             if(new_view_id > m_latest_view_id)
             {
-                xkinfo("xclockcert_view::update_view,at node=0x%llx, account %s old viewid=%llu --> new_view_id=%llu =  cert'view=%llu + 1 + {clock:%llu - %llu}",
+                xkinfo("xclockcert_view::update_view,tps_key at node=0x%llx, account %s old viewid=%llu --> new_view_id=%llu =  cert'view=%llu + 1 + {clock:%llu - %llu}",
                        get_xip2_addr().low_addr,
                        get_address().c_str(),
                        m_latest_view_id,
@@ -282,7 +282,8 @@ namespace top
                 std::function<void(void*)> _aysn_update_view = [this,new_view_id,clock_height_from_latest_clock](void*)->void{
                     fire_view(get_account(), new_view_id, clock_height_from_latest_clock, get_thread_id(), get_time_now());
                 };
-                send_call(_aysn_update_view,(void*)NULL);
+                // send_call(_aysn_update_view,(void*)NULL);
+                dispatch_call(_aysn_update_view,(void*)NULL);
                 return true;
             }
             return false;
@@ -560,7 +561,7 @@ namespace top
         }
 
         //call from lower layer to higher layer(parent)
-        bool  xclockcert_view::on_proposal_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms)
+        bool  xclockcert_view::on_update_view(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
             xproposal_finish* _evt_obj = (xproposal_finish*)&event;
             //try all of them,and pick highest one

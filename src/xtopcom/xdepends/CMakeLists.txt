@@ -32,7 +32,7 @@ if (XUSE_JEMALLOC)
 
     message(STATUS "executing autogen.sh")
     execute_process(
-        COMMAND bash "-c" "./autogen.sh  ${JEMALLOC_ENABLE_JEPROF}"
+        COMMAND bash "-c" "./autogen.sh ${JEMALLOC_ENABLE_JEPROF}"
         WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
         ERROR_FILE ${JEMALLOC_AUTOGEN_LOG}
         OUTPUT_FILE ${JEMALLOC_AUTOGEN_LOG}

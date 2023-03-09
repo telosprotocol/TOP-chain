@@ -19,11 +19,11 @@ constexpr uint32_t IdealBatchSize = 1024;
 
 constexpr auto PreimagePrefix = ConstBytes<11>("secure-key-");
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
-    return NewDatabaseWithConfig(std::move(diskdb), nullptr);
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb, size_t cache_size) {
+    return NewDatabaseWithConfig(std::move(diskdb), nullptr, cache_size);
 }
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t /*config*/) {
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t /*config*/, size_t cache_size) {
     //if (config != nullptr && config->Cache_size > 0) {
     //    if (config->Journal.empty()) {
     //        // todo
@@ -32,7 +32,7 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
     //    }
     //}
 
-    return std::make_shared<xtop_trie_db>(std::move(diskdb));
+    return std::make_shared<xtop_trie_db>(std::move(diskdb), cache_size);
 }
 
 void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_face_ptr_t const & node) {

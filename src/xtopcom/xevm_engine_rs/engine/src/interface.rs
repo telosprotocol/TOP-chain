@@ -27,7 +27,7 @@ mod interface {
 
     #[no_mangle]
     pub extern "C" fn deploy_code() -> bool {
-        sdk::log("========= deploy_code =========");
+        // sdk::log("========= deploy_code =========");
         let io = Runtime;
         let input = io.read_input().to_vec();
         let mut engine = Engine::new(io.sender_address(), io, &io, &io).sdk_unwrap();
@@ -42,11 +42,11 @@ mod interface {
 
     #[no_mangle]
     pub extern "C" fn call_contract() -> bool {
-        sdk::log("========= call_contract =========");
+        // sdk::log("========= call_contract =========");
         let io = Runtime;
         let bytes = io.read_input().to_vec();
         let args = FunctionCallArgs::parse_from_bytes(&bytes).sdk_expect("ERR_DESERIALIZE");
-        sdk::log(format!("{:?}", args).as_str());
+        // sdk::log(format!("{:?}", args).as_str());
         let mut engine = Engine::new(io.sender_address(), io, &io, &io).sdk_unwrap();
         Engine::call_with_args(&mut engine, args)
             .map(|res| {

@@ -20,6 +20,7 @@ namespace top
             
             //related event for basic function
             enum_xcsevent_type_on_view_fire         = 3, //on_new_view event about new-view# is issued
+            enum_xcsevent_type_update_view          = 4,
             
             //related event for proposal status
             enum_xcsevent_type_on_proposal_start    = 11,
@@ -220,6 +221,23 @@ namespace top
         public:
             base::xvblock_t*  get_target_proposal() const {return m_target_proposal;}
             void              reset_target_proposal(base::xvblock_t* new_proposal);
+        protected:
+            base::xvblock_t*  m_target_proposal;
+        };
+
+        class xupdate_view : public xcsevent_t
+        {
+        public:
+            xupdate_view(base::xvblock_t* proposal);  //successful case
+            xupdate_view(const int errcode,const std::string & err_detail,base::xvblock_t* proposal);//failue case
+        protected:
+            virtual ~xupdate_view();
+        private:
+            xupdate_view();
+            xupdate_view(const xupdate_view & obj);
+            xupdate_view& operator = (const xupdate_view & obj);
+        public:
+            base::xvblock_t*  get_target_proposal() const {return m_target_proposal;}
         protected:
             base::xvblock_t*  m_target_proposal;
         };

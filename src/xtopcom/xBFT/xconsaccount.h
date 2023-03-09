@@ -61,10 +61,14 @@ namespace top
             //return specific error code(enum_xconsensus_result_code) to let caller know reason
             virtual int     verify_proposal(base::xvblock_t * proposal_block,base::xvqcert_t * bind_clock_cert,xcsobject_t * _from_child) override; //load and execute block at sanbox
 
+            // for relay block consensus
             virtual bool    verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, std::string & result) override;
             virtual void    add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, const std::string & result) override;
             virtual bool    proc_vote_complate(base::xvblock_t * proposal_block) override;
             virtual bool    verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) override;
+
+            // for preproposal
+            virtual bool    proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata) override;
         };
         
     }; //end of namespace of xconsensus

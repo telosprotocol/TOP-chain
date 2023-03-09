@@ -77,11 +77,12 @@ protected:
     void set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader);
     void    invoke_sync(const std::string & account, const std::string & reason);
     xresources_face * get_resources();
+    std::shared_ptr<xproposal_maker_face> get_proposal_maker() const;
+    bool    connect_to_checkpoint();
 
 private:
-    bool    connect_to_checkpoint();
     bool    start_proposal(uint32_t min_tx_num);
-    bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
+    bool    verify_proposal_viewid(const xvip2_t & from_addr, const xvip2_t & local_addr, uint64_t viewid);
     void    check_latest_cert_block(base::xvblock_t* _cert_block, const xconsensus::xcsview_fire* viewfire, std::error_code & ec);
     void    reset_leader_info();
     void    make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
@@ -92,6 +93,13 @@ private:
     virtual bool set_election_round(bool is_leader, data::xblock_consensus_para_t & proposal_para);
     bool    check_state_sync(base::xvblock_t * latest_committed_block);
     bool    do_state_sync(uint64_t sync_height);
+
+    void send_preproposal(const data::xblock_consensus_para_t & cs_para,
+                          const std::vector<data::xcons_transaction_ptr_t> & txs,
+                          const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_proves);
+    virtual xunit_service::xpreproposal_send_cb get_preproposal_send_cb();
+    virtual bool process_msg(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms);
+    virtual int veriry_proposal_by_preproposal_block(base::xvblock_t * proposal_block);
 
 private:
     base::xtable_index_t                     m_tableid;
@@ -111,7 +119,7 @@ private:
     xvip2_t                                  m_faded_xip2{};
     // record last xip in case of consensus success but leader xip changed.
     xvip2_t                                  m_last_xip2{};
-    common::xtable_address_t               m_table_addr;
+    common::xtable_address_t                 m_table_addr;
     xpack_strategy_t                         m_pack_strategy;
 };
 

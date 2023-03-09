@@ -86,7 +86,7 @@ void xtop_chain_checkpoint::load() {
 xcheckpoint_data_t xtop_chain_checkpoint::get_latest_checkpoint(common::xaccount_address_t const & account, std::error_code & ec) {
     auto it = m_checkpoints_map.find(account);
     if (it == m_checkpoints_map.end()) {
-        xwarn("[xtop_chain_checkpoint::get_latest_checkpoint] %s not found!", account.to_string().c_str());
+        xdbg("[xtop_chain_checkpoint::get_latest_checkpoint] %s not found!", account.to_string().c_str());
         ec = error::xenum_errc::checkpoint_not_found;
         return {};
     }
