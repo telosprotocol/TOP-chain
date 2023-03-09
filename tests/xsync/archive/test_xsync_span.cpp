@@ -288,11 +288,10 @@ TEST_F(test_xsync_span, test_xsync_cp_reflash_lost_BENCH)
  
     // first record
     int64_t now = 200000;
-    cp_object.get_behind_height_real(now, &sync_store, 2, address);
-    now = 400000;
-    // timeout,reset request height
-    uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
-    ASSERT_EQ(8, cp_connect_height);
+    cp_object.check_and_fix_behind_height(now, &sync_store, 2, address);
+    std::pair<uint64_t, uint64_t> interval;
+    cp_object.pick(interval, self_addr, target_addr);
+    ASSERT_EQ(7, interval.first);
 }
 
 TEST_F(test_xsync_span, test_xsync_or_cp_reflash_disconnect_BENCH)
@@ -320,12 +319,10 @@ TEST_F(test_xsync_span, test_xsync_or_cp_reflash_disconnect_BENCH)
     uint64_t cp_disconnect_height = sync_store.get_latest_end_block_height(address, (enum_chain_sync_policy)2);
     ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_disconnect_height);
 
-    // first record
     int64_t now = 200000;
-    cp_object.get_behind_height_real(now, &sync_store, 2, address);
-    now = 400000;
-    // timeout,reset request height
-    uint64_t cp_connect_height = cp_object.get_behind_height_real(now, &sync_store, 2, address);
-    ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_connect_height);
+    cp_object.check_and_fix_behind_height(now, &sync_store, 2, address);
+    std::pair<uint64_t, uint64_t> interval;
+    cp_object.pick(interval, self_addr, target_addr);
+    ASSERT_EQ(MAX_BLOCK_TEST, interval.first);
 }
 
