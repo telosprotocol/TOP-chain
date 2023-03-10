@@ -46,13 +46,6 @@ xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
     xsync_info("chain_downloader create_chain %s", m_address.c_str());
     XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", 1);
     m_is_elect_chain = is_elect_chain();
-
-    for (int i = (int)enum_chain_sync_policy_full; i < (int)enum_chain_sync_policy_max; i++) {
-        uint64_t height = m_sync_store->get_latest_end_block_height(m_address, (enum_chain_sync_policy)i);
-        m_chain_objects[i].set_height(height);
-        xsync_info("xchain_downloader_t init chain address %s cur_height %llu sync policy %d",
-            m_address.c_str(), height, i);
-    }
 }
 
 
@@ -703,7 +696,7 @@ void xchain_object_t::clear() {
 
 bool xchain_object_t::check_and_fix_behind_height(const int64_t now, xsync_store_face_t* xsync_store,
                                                  const uint32_t sync_type, const std::string& address) {
-    if (m_end_height == 0) {
+    if (m_end_height == 0 || (m_current_height > m_end_height)) {
         return false;
     } 
 
@@ -711,16 +704,16 @@ bool xchain_object_t::check_and_fix_behind_height(const int64_t now, xsync_store
         m_regular_time = now;
         m_fix_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type); // m_fix_height is commit + 2
         // check lost block
-        if ((m_fix_height > 1) && (m_fix_height < (m_current_height - 2))) {
-            xwarn("check_and_fix_behind_height lost account  %s, current %llu reset  to new height %llu, sync_type %d ", address.c_str(), m_current_height, (m_fix_height - 1),sync_type);
+        if ((m_fix_height > 1) && ((m_fix_height+2) < m_current_height )) {
+            xwarn("check_and_fix_behind_height 11 lost account  %s, current %llu reset  to new height %llu, sync_type %d ", address.c_str(), m_current_height, m_fix_height,sync_type);
             m_current_height = m_fix_height - 1;
             return true;
         }
     }
     // behind envet before long time
     if (m_current_height < m_fix_height) {
-        xinfo("check_and_fix_behind_height fix height account is %s, current %llu reset  to new height %llu, sync_type %d", address.c_str(), m_current_height, m_fix_height-1, sync_type);
         m_current_height = m_fix_height-1;
+        xinfo("check_and_fix_behind_height fix height account is %s, current %llu reset  to new height %llu, sync_type %d", address.c_str(), m_current_height, m_fix_height-1, sync_type);
     }
     return true;
 }
