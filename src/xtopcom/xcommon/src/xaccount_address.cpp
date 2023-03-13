@@ -31,15 +31,15 @@ bool address_belongs_to_zone(xaccount_address_t const & account_address, xzone_i
     return account_address.ledger_id().zone_id() == target_zone_id;
 }
 
-xaccount_address_t append_table_id(xaccount_base_address_t const & base_address, xtable_id_t const & table_id) {
-    return xaccount_address_t{base_address, table_id};
+xaccount_address_t append_table_id(xaccount_base_address_t const & base_address, xtable_id_t const table_id) {
+    return xaccount_address_t::build_from(base_address, table_id);
 }
 
-xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id_t const & table_id, std::error_code & ec) {
+xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id_t const table_id, std::error_code & ec) {
     assert(!ec);
 
     if (!address.has_assigned_table_id()) {
-        return xaccount_address_t{address.base_address(), table_id};
+        return xaccount_address_t::build_from(address.base_address(), table_id);
     }
 
     if (address.table_id() == table_id) {
@@ -52,7 +52,7 @@ xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id
     return {};
 }
 
-common::xaccount_address_t append_table_id(common::xaccount_address_t const & address, common::xtable_id_t const & table_id) {
+common::xaccount_address_t append_table_id(common::xaccount_address_t const & address, common::xtable_id_t const table_id) {
     std::error_code ec;
     auto r = append_table_id(address, table_id, ec);
     top::error::throw_error(ec);

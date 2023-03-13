@@ -207,7 +207,7 @@ std::string xtransaction_v3_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,    sizeof(local_param_buf),
     "{transaction:hash=%s,type=%u,from=%s,to=%s,nonce=%lu,refcount=%d,this=%p}",
-    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), get_source_addr().c_str(), get_target_addr().c_str(),
+    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), source_address().to_string().c_str(), target_address().to_string().c_str(),
     get_tx_nonce(), get_refcount(), this);
     return std::string(local_param_buf);
 }

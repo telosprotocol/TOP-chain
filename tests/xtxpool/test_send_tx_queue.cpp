@@ -324,7 +324,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     // push first time
     int32_t ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    auto tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
+    auto tx_tmp = send_tx_queue.find(tx->get_transaction()->source_address().to_string(), tx->get_tx_hash());
     ASSERT_NE(tx_tmp.get(), nullptr);
 
     // duplicate push
@@ -334,13 +334,13 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     // pop out
     auto tx_ent_tmp = send_tx_queue.pop_tx(tx->get_tx_hash(), false);
     ASSERT_NE(tx_ent_tmp.get(), nullptr);
-    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
+    tx_tmp = send_tx_queue.find(tx->get_transaction()->source_address().to_string(), tx->get_tx_hash());
     ASSERT_EQ(tx_tmp.get(), nullptr);
 
     // push again
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
+    tx_tmp = send_tx_queue.find(tx->get_transaction()->source_address().to_string(), tx->get_tx_hash());
     ASSERT_NE(tx_tmp.get(), nullptr);
 
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
@@ -353,7 +353,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
 
     // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
 
-    send_tx_queue.updata_latest_nonce(tx->get_transaction()->get_source_addr(), tx->get_transaction()->get_tx_nonce());
+    send_tx_queue.updata_latest_nonce(tx->get_transaction()->source_address().to_string(), tx->get_transaction()->get_tx_nonce());
 
     get_txs = send_tx_queue.get_txs(100, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(get_txs.size(), 0);
@@ -410,7 +410,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     auto tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents2.size(), 3);
 
-    send_tx_queue.updata_latest_nonce(txs[3]->get_transaction()->get_source_addr(), txs[3]->get_transaction()->get_tx_nonce());
+    send_tx_queue.updata_latest_nonce(txs[3]->get_transaction()->source_address().to_string(), txs[3]->get_transaction()->get_tx_nonce());
     tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents2.size(), txs_num - 4);
 }
@@ -453,7 +453,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     ASSERT_EQ(0, ret);
 
     for (uint32_t i = 2; i < 5; i++) {
-        auto tx_tmp = send_tx_queue.find(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_tx_hash());
+        auto tx_tmp = send_tx_queue.find(txs[i]->get_transaction()->source_address().to_string(), txs[i]->get_tx_hash());
         ASSERT_NE(tx_tmp.get(), nullptr);
     }
 

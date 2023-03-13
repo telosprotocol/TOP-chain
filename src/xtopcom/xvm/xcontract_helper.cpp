@@ -21,7 +21,7 @@ using store::xstore_success;
 using store::xaccount_property_not_create;
 using store::xaccount_property_map_field_not_create;
 
-xcontract_helper::xcontract_helper(xaccount_context_t* account_context, common::xnode_id_t const & contract_account, const string& exec_account)
+xcontract_helper::xcontract_helper(xaccount_context_t* account_context, common::xaccount_address_t const & contract_account, common::xaccount_address_t const & exec_account)
 :m_account_context(account_context)
 ,m_contract_account(contract_account)
 ,m_exec_account(exec_account) {
@@ -36,7 +36,7 @@ xtransaction_ptr_t xcontract_helper::get_transaction() const {
 }
 
 string xcontract_helper::get_source_account() const {
-    return m_exec_account;
+    return m_exec_account.to_string();
 }
 
 std::string xcontract_helper::get_parent_account() const {

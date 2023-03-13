@@ -54,7 +54,7 @@ void xrole_context_t::on_block_to_db(const data::xblock_ptr_t & block, bool & ev
         auto block_owner = block->get_block_owner();
         // table fulltable block process
         bool is_sharding_statistic =
-            (contract_base_address == sharding_statistic_info_contract_base_address) && (block_owner.find(common::con_table_base_address.to_string()) != std::string::npos);
+            (contract_base_address == table_statistic_info_contract_base_address) && (block_owner.find(common::con_table_base_address.to_string()) != std::string::npos);
         bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(common::eth_table_base_address.to_string()) != std::string::npos);
 
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
@@ -193,7 +193,7 @@ void xrole_context_t::on_block_timer(const mbus::xevent_ptr_t & e) {
                     block_timestamp = block->get_timestamp();
 
                     auto const & contract_base_address = m_contract_info->address.base_address();
-                    if ((contract_base_address == sharding_statistic_info_contract_base_address || contract_base_address == sharding_vote_contract_base_address
+                    if ((contract_base_address == table_statistic_info_contract_base_address || contract_base_address == sharding_vote_contract_base_address
                         || m_contract_info->address == eth_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
 
                         int table_num = m_driver->table_ids().size();
@@ -203,7 +203,7 @@ void xrole_context_t::on_block_timer(const mbus::xevent_ptr_t & e) {
                         }
 
                         int clock_interval = 1;
-                        if (contract_base_address == sharding_statistic_info_contract_base_address) {
+                        if (contract_base_address == table_statistic_info_contract_base_address) {
                             clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
                         } else if (contract_base_address == sharding_vote_contract_base_address) {
                             clock_interval = 1;

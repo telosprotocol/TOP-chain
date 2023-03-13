@@ -252,15 +252,15 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
                          "chain_id",
                          common::network_id().value(),
                          "from",
-                         tx->get_source_addr(),
+                         tx->source_address().to_string(),
                          "to",
-                         tx->get_target_addr(),
+                         tx->target_address().to_string(),
                          "timestamp",
                          tx->get_fire_timestamp(),
                          "from_ip",
                          ip);
-    const auto & from = tx->get_source_addr();
-    json_proc.m_account_set.emplace(from);
+    const auto & from = tx->source_address();
+    json_proc.m_account_set.emplace(from.to_string());
     json_proc.m_response_json["result"] = tx_hash;
 }
 
@@ -333,7 +333,7 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
             }
             // uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
             XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now));
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr(), rpc_msg_eth_request);
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->source_address().to_string(), rpc_msg_eth_request);
         } else {
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_eth_query_request);
         }

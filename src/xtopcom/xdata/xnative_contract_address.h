@@ -80,15 +80,15 @@ extern common::xaccount_address_t const zec_group_assoc_contract_address;
 extern common::xaccount_address_t const zec_elect_eth_contract_address;
 extern common::xaccount_address_t const zec_elect_relay_contract_address;
 
-extern common::xaccount_address_t const sharding_vote_contract_address;
-extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
+extern common::xaccount_address_t const table_vote_contract_address;
+extern common::xaccount_address_t const table_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
 extern common::xaccount_address_t const sharding_fork_info_contract_address;
 extern common::xaccount_base_address_t const table_vote_contract_base_address;
 
 extern common::xaccount_base_address_t const sharding_vote_contract_base_address;
 extern common::xaccount_base_address_t const sharding_reward_claiming_contract_base_address;
-extern common::xaccount_base_address_t const sharding_statistic_info_contract_base_address;
+extern common::xaccount_base_address_t const table_statistic_info_contract_base_address;
 extern common::xaccount_base_address_t const sharding_fork_info_contract_base_address;
 
 extern common::xaccount_address_t const eth_fork_info_contract_address;

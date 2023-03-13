@@ -115,11 +115,11 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void        set_fire_and_expire_time(uint16_t const expire_duration) = 0;
 
     void set_action_type_by_tx_type(const enum_xtransaction_type tx_type);
-    virtual void        set_source_addr(const std::string & addr) = 0;
+    // virtual void        set_source_addr(const std::string & addr) = 0;
     virtual void        set_source_action_type(const enum_xaction_type type) = 0;
     virtual void        set_source_action_name(const std::string & name) = 0;
     virtual void        set_source_action_para(const std::string & para) = 0;
-    virtual void        set_target_addr(const std::string & addr) = 0;
+    // virtual void        set_target_addr(const std::string & addr) = 0;
     virtual void        set_target_action_type(const enum_xaction_type type) = 0;
     virtual void        set_target_action_name(const std::string & name) = 0;
     virtual void        set_target_action_para(const std::string & para) = 0;
@@ -136,9 +136,9 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual uint256_t           digest() const = 0;
     virtual std::string         get_digest_str()const = 0;
     virtual std::string         get_digest_hex_str() const = 0;
-    virtual std::string get_source_addr()const = 0;
-    virtual std::string get_target_addr()const = 0;
-    virtual std::string get_origin_target_addr()const = 0;
+    // virtual std::string get_source_addr()const = 0;
+    // virtual std::string get_target_addr()const = 0;
+    // virtual std::string get_origin_target_addr()const = 0;
     virtual uint64_t            get_tx_nonce() const = 0;
     virtual std::string         dump() const = 0;  // just for debug purpose
     virtual const std::string & get_source_action_name() const = 0;

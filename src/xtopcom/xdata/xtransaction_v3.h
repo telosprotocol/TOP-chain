@@ -56,11 +56,11 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
 
     void                set_source(const std::string & addr, const std::string & action_name, const std::string & para);
     void                set_target(const std::string & addr, const std::string & action_name, const std::string & para);
-    virtual void        set_source_addr(const std::string & addr) override { m_source_addr = common::xaccount_address_t::build_from(addr); }
+    // virtual void        set_source_addr(const std::string & addr) override { m_source_addr = common::xaccount_address_t::build_from(addr); }
     virtual void        set_source_action_type(const enum_xaction_type type) {}
     virtual void        set_source_action_name(const std::string & name) {}
     virtual void        set_source_action_para(const std::string & para) {}
-    virtual void        set_target_addr(const std::string & addr) override { m_target_addr = common::xaccount_address_t::build_from(addr); }
+    // virtual void        set_target_addr(const std::string & addr) override { m_target_addr = common::xaccount_address_t::build_from(addr); }
     virtual void        set_target_action_type(const enum_xaction_type type) {}
     virtual void        set_target_action_name(const std::string & name) {}
     virtual void        set_target_action_para(const std::string & para) {}
@@ -78,9 +78,9 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
      virtual uint256_t digest() const override { return m_ethtx.get_tx_hash(); }
     virtual std::string         get_digest_str()const override;
     virtual std::string         get_digest_hex_str() const override;
-    virtual std::string get_source_addr()const override {return m_source_addr.to_string();}
-    virtual std::string get_target_addr()const override {return m_target_addr.to_string();}
-    virtual std::string get_origin_target_addr()const override {return m_target_addr.to_string();}
+    // virtual std::string get_source_addr()const override {return m_source_addr.to_string();}
+    // virtual std::string get_target_addr()const override {return m_target_addr.to_string();}
+    // virtual std::string get_origin_target_addr()const override {return m_target_addr.to_string();}
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
     virtual std::string         dump() const override;  // just for debug purpose
     void set_action_type();

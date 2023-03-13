@@ -25,7 +25,6 @@
 #define private public
 #include "tests/xelection/xmocked_vnode_service.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
-#include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
 #include "xdata/xgenesis_data.h"
@@ -41,8 +40,6 @@ using namespace top::contract;
 using namespace top::tests::election;
 using namespace top::xvm::xcontract;
 using json = nlohmann::json;
-
-std::string shard_table_slash_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
 
 static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
     auto account_string = account_prefix + std::to_string(index);
@@ -92,11 +89,11 @@ public:
         target_stream << tgas;
 
         data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<data::xtransaction_v2_t>();
-        slash_colletion_trx->set_source_addr(shard_table_slash_addr);
-        slash_colletion_trx->set_target_addr(shard_table_slash_addr);
+        slash_colletion_trx->source_address(shard_table_slash_addr);
+        slash_colletion_trx->target_address(shard_table_slash_addr);
         slash_colletion_trx->set_target_action_name("on_collect_statistic_info");
         slash_colletion_trx->set_target_action_para(std::string((char*) target_stream.data(), target_stream.size()));
-        slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr);
+        slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr.to_string());
         return slash_colletion_trx;
     }
 
@@ -105,17 +102,18 @@ public:
         target_stream << timestamp;
 
         data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<data::xtransaction_v2_t>();
-        slash_colletion_trx->set_source_addr(shard_table_slash_addr);
-        slash_colletion_trx->set_target_addr(shard_table_slash_addr);
+        slash_colletion_trx->source_address(shard_table_slash_addr);
+        slash_colletion_trx->target_address(shard_table_slash_addr);
         slash_colletion_trx->set_target_action_name("report_summarized_statistic_info");
         slash_colletion_trx->set_target_action_para(std::string((char*) target_stream.data(), target_stream.size()));
-        slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr);
+        slash_colletion_trx->set_same_source_target_address(shard_table_slash_addr.to_string());
         return slash_colletion_trx;
     }
 
    xobject_ptr_t<store::xstore_face_t> m_store;
    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
    shared_ptr<xaccount_context_t> m_table_slash_account_ctx_ptr;
+   common::xaccount_address_t shard_table_slash_addr{common::xaccount_address_t::build_from(table_statistic_info_contract_base_address, common::xtable_id_t{3})};
 };
 
 
@@ -288,13 +286,13 @@ TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
     }
 
     using namespace top::mock;
-    xdatamock_unit  table_account{shard_table_slash_addr};
+    xdatamock_unit  table_account{shard_table_slash_addr.to_string()};
 
     m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(table_account.get_account_state());
     m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
     m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
     m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);
-    set_contract_helper(std::make_shared<xcontract_helper>(m_table_slash_account_ctx_ptr.get(), top::common::xnode_id_t{table_account.get_account()}, table_account.get_account()));
+    set_contract_helper(std::make_shared<xcontract_helper>(m_table_slash_account_ctx_ptr.get(), top::common::xnode_id_t{table_account.get_account()}, shard_table_slash_addr));
 
 
     update_slash_statistic_info(node_info, 32, 2);

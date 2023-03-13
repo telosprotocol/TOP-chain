@@ -1060,7 +1060,7 @@ public:
     common::xgroup_address_t m_group_addr1{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{1}};
     common::xgroup_address_t m_group_addr2{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{2}};
     common::xgroup_address_t m_group_addr3{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3}};
-    std::string m_table{std::string{sys_contract_sharding_statistic_info_addr} + "@" + std::to_string(1)};
+    common::xaccount_address_t m_table{common::xaccount_address_t::build_from(table_statistic_info_contract_base_address, common::xtable_id_t(1))};
 };
 using xtest_workload_contract_t = xtop_test_workload_contract;
 

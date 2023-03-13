@@ -97,14 +97,14 @@ TEST_F(test_bstate, token_id_1) {
 
 TEST_F(test_bstate, empty_state) {
 {
-    std::string account = "T000000000000000000000000000";
+    std::string account = "T000000000000000000000000000000000000000";
     base::xauto_ptr<base::xvblock_t> unit = data::xblocktool_t::create_genesis_empty_unit(account);
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*unit);
     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(current_state.get());
     ASSERT_TRUE(unitstate->is_empty_state());
 }
 {
-    std::string account = "T000000000000000000000000000";
+    std::string account = "T000000000000000000000000000000000000000";
     base::xauto_ptr<base::xvblock_t> unit = data::xblocktool_t::create_genesis_lightunit(account, 10000);
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*unit);
     std::string binlog = unit->get_binlog();

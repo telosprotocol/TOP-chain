@@ -641,9 +641,9 @@ Json::Value xrpc_query_manager::parse_tx(xtransaction_t * tx_ptr, const std::str
         ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
         ori_tx_info.removeMember("receiver_action");
         // for sys shard addr, the account must return with table id suffix
-        ori_tx_info["tx_action"]["receiver_action"]["tx_receiver_account_addr"] = tx_ptr->get_target_addr();
+        ori_tx_info["tx_action"]["receiver_action"]["tx_receiver_account_addr"] = tx_ptr->target_address().to_string();
     } else {
-        ori_tx_info["receiver_account"] = tx_ptr->get_target_addr();
+        ori_tx_info["receiver_account"] = tx_ptr->target_address().to_string();
     }
     return ori_tx_info;
 }
@@ -669,7 +669,7 @@ int xrpc_query_manager::parse_tx(const std::string & tx_hash_str, xtransaction_t
 
         const xtx_exec_json_key jk(rpc_version);
         Json::Value sendjson = xrpc_loader_t::parse_send_tx(sendindex);
-        bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->get_target_addr() == black_hole_addr;
+        bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->target_address() == black_hole_system_address;
         if (is_self_tx) {
             cons[jk.m_confirm] = sendjson;  // XTODO set to confirm block info
             xrpc_loader_t::parse_logs(sendindex,cons[jk.m_confirm]);
@@ -854,12 +854,12 @@ void xrpc_query_manager::getTransaction(Json::Value & js_req, Json::Value & js_r
             if (map_jv.find(base::enum_transaction_subtype_recv) != map_jv.end()) {
                 jv[jk.m_recv] = map_jv[base::enum_transaction_subtype_recv];
                 if (version == RPC_VERSION_V2)
-                    jv[jk.m_recv]["account"] = tx_ptr->get_target_addr();
+                    jv[jk.m_recv]["account"] = tx_ptr->target_address().to_string();
             }
             if (map_jv.find(base::enum_transaction_subtype_confirm) != map_jv.end()) {
                 jv[jk.m_confirm] = map_jv[base::enum_transaction_subtype_confirm];
                 if (version == RPC_VERSION_V2)
-                    jv[jk.m_confirm]["account"] = tx_ptr->get_source_addr();
+                    jv[jk.m_confirm]["account"] = tx_ptr->source_address().to_string();
             }
             result_json["tx_consensus_state"] = jv;
             update_tx_state(result_json, jv, version);

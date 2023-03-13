@@ -140,15 +140,15 @@ int32_t xtransaction_v1_t::do_read(base::xstream_t & stream) {
     stream >> m_edge_nodeid;
     stream >> m_target_addr;
 
-    std::error_code ec;
-    auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
-    if (ec) {
-        throw enum_xerror_code_bad_transaction;
-    }
-    auto const source_account_address = common::xaccount_address_t::build_from(get_source_addr(), ec);
-    if (ec) {
-        throw enum_xerror_code_bad_transaction;
-    }
+    //std::error_code ec;
+    //auto const & target_account_address = target_address();
+    //if (ec) {
+    //    throw enum_xerror_code_bad_transaction;
+    //}
+    //auto const source_account_address = source_address();
+    //if (ec) {
+    //    throw enum_xerror_code_bad_transaction;
+    //}
 
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
@@ -343,15 +343,16 @@ void xtransaction_v1_t::set_fire_and_expire_time(uint16_t expire_duration) {
 }
 
 bool xtransaction_v1_t::sign_check() const {
-    std::string addr_prefix;
-    if (std::string::npos != get_source_addr().find_last_of('@')) {
-        uint16_t subaddr;
-        base::xvaccount_t::get_prefix_subaddr_from_account(get_source_addr(), addr_prefix, subaddr);
-    } else {
-        addr_prefix = get_source_addr();
-    }
+    //std::string addr_prefix;
+    //if (std::string::npos != get_source_addr().find_last_of('@')) {
+    //    uint16_t subaddr;
+    //    base::xvaccount_t::get_prefix_subaddr_from_account(get_source_addr(), addr_prefix, subaddr);
+    //} else {
+    //    addr_prefix = get_source_addr();
+    //}
+    auto const & address_base = source_address().base_address();
 
-    utl::xkeyaddress_t key_address(addr_prefix);
+    utl::xkeyaddress_t key_address(address_base.to_string());
     uint8_t     addr_type{255};
     uint16_t    network_id{65535};
     //get param from config
@@ -378,7 +379,7 @@ std::string xtransaction_v1_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,    sizeof(local_param_buf),
     "{transaction:hash=%s,type=%u,from=%s,to=%s,nonce=%" PRIu64 ",refcount=%d,this=%p}",
-    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), get_source_addr().c_str(), get_target_addr().c_str(),
+    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), source_address().to_string().c_str(), target_address().to_string().c_str(),
     get_tx_nonce(), get_refcount(), this);
     return std::string(local_param_buf);
 }

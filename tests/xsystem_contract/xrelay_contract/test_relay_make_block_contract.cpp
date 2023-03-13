@@ -56,8 +56,8 @@ public:
 };
 
 #define PREPAIR                                                                                                                                                                    \
-    auto exe_addr = std::string{sys_contract_relay_make_block_addr};                                                                                                               \
-    auto contract_addr = common::xnode_id_t{sys_contract_relay_make_block_addr};                                                                                                   \
+    auto exe_addr = relay_make_block_contract_address;                                                                                                               \
+    auto contract_addr = relay_make_block_contract_address;                                                                                                   \
     auto vbstate = make_object_ptr<xvbstate_t>(sys_contract_relay_make_block_addr, 1, 1, std::string{}, std::string{}, 0, 0, 0);                                                   \
     auto unitstate = std::make_shared<data::xunit_bstate_t>(vbstate.get());                                                                                                        \
     auto account_context = std::make_shared<xaccount_context_t>(unitstate);                                                                                                        \

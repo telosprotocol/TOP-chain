@@ -163,15 +163,15 @@ int xtransaction_v2_t::do_read(base::xstream_t & in) {
         m_source_action_para = action.get_action_param();
         m_target_action_para = action.get_action_param();
     }
-    std::error_code ec;
-    auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
-    if (ec) {
-        throw enum_xerror_code_bad_transaction;
-    }
-    auto const source_account_address = common::xaccount_address_t::build_from(get_source_addr(), ec);
-    if (ec) {
-        throw enum_xerror_code_bad_transaction;
-    }
+    //std::error_code ec;
+    auto const & target_account_address = target_address();
+    //if (ec) {
+    //    throw enum_xerror_code_bad_transaction;
+    //}
+    auto const & source_account_address = source_address();
+    //if (ec) {
+    //    throw enum_xerror_code_bad_transaction;
+    //}
 
     if (is_sys_sharding_contract_address(target_account_address)) {
         auto tableid = data::account_map_to_table_id(source_account_address);
@@ -195,7 +195,7 @@ int32_t xtransaction_v2_t::release_ref() {
 
 void xtransaction_v2_t::adjust_target_address(uint32_t table_id) {
     if (m_adjust_target_addr.empty()) {
-        m_adjust_target_addr = common::xaccount_address_t::build_from(make_address_by_prefix_and_subaddr(m_unadjusted_target_addr.to_string(), table_id).to_string());
+        m_adjust_target_addr = common::xaccount_address_t::build_from(m_unadjusted_target_addr.base_address(), common::xtable_id_t{static_cast<uint16_t>(table_id)});
         xdbg("xtransaction_v2_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
             get_digest_hex_str().c_str(), m_unadjusted_target_addr.to_string().c_str(), m_adjust_target_addr.to_string().c_str());
     }
@@ -324,15 +324,16 @@ void xtransaction_v2_t::set_fire_and_expire_time(uint16_t expire_duration) {
 }
 
 bool xtransaction_v2_t::sign_check() const {
-    std::string addr_prefix;
-    if (std::string::npos != get_source_addr().find_last_of('@')) {
-        uint16_t subaddr;
-        base::xvaccount_t::get_prefix_subaddr_from_account(get_source_addr(), addr_prefix, subaddr);
-    } else {
-        addr_prefix = get_source_addr();
-    }
+    //std::string addr_prefix;
+    //if (std::string::npos != get_source_addr().find_last_of('@')) {
+    //    uint16_t subaddr;
+    //    base::xvaccount_t::get_prefix_subaddr_from_account(get_source_addr(), addr_prefix, subaddr);
+    //} else {
+    //    addr_prefix = get_source_addr();
+    //}
+    auto const & base_address = source_address().base_address();
 
-    utl::xkeyaddress_t key_address(addr_prefix);
+    utl::xkeyaddress_t key_address(base_address.to_string());
     // uint8_t     addr_type{255};
     // uint16_t    network_id{65535};
     // //get param from config
@@ -359,7 +360,7 @@ std::string xtransaction_v2_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,    sizeof(local_param_buf),
     "{transaction:hash=%s,type=%u,from=%s,to=%s,nonce=%" PRIu64 ",m_token_name:%s,refcount=%d,this=%p}",
-    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), get_source_addr().c_str(), get_target_addr().c_str(),
+    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), source_address().to_string().c_str(), target_address().to_string().c_str(),
     get_tx_nonce(), m_token_name.c_str(), get_refcount(), this);
     return std::string(local_param_buf);
 }

@@ -51,7 +51,7 @@ void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_de
     std::string block_hash = top::to_hex_prefixed(sendindex->get_block_hash());
     std::string block_num = uint64_to_hex_prefixed(sendindex->get_txindex()->get_block_height());
     std::string tx_idx = uint64_to_hex_prefixed((uint64_t)sendindex->get_transaction_index());
-    common::xeth_address_t _from_addr = common::xeth_address_t::build_from(common::xaccount_address_t(sendindex->get_raw_tx()->get_source_addr()));
+    common::xeth_address_t _from_addr = common::xeth_address_t::build_from(sendindex->get_raw_tx()->source_address());
     std::string _from_addr_str = _from_addr.to_hex_string();
     xtx_location_t txlocation(block_hash,block_num,tx_hash,tx_idx);
 

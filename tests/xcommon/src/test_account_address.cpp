@@ -80,7 +80,7 @@ TEST(account_address, valid_construction_3) {
         std::string const account_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
         std::uint16_t table_id_value{32};
 
-        top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
+        top::common::xaccount_address_t account_address = top::common::xaccount_address_t::build_from(top::common::xaccount_base_address_t::build_from(account_string), top::common::xtable_id_t{table_id_value});
 
         ASSERT_FALSE(account_address.empty());
         EXPECT_EQ(account_address.table_id().value(), table_id_value);
@@ -95,7 +95,8 @@ TEST(account_address, valid_construction_3) {
         std::string const account_string{"T00000LXWe8Z1CRrrMB54dVBH9mKn4AJukpEGi9j"};
         std::uint16_t table_id_value{3};
 
-        top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
+        top::common::xaccount_address_t account_address =
+            top::common::xaccount_address_t::build_from(top::common::xaccount_base_address_t::build_from(account_string), top::common::xtable_id_t{table_id_value});
 
         ASSERT_FALSE(account_address.empty());
         EXPECT_EQ(account_address.table_id().value(), table_id_value);

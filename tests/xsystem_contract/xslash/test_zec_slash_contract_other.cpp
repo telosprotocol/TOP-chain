@@ -41,7 +41,6 @@ using namespace top::tests::election;
 using namespace top::xvm::xcontract;
 using json = nlohmann::json;
 
-std::string shard_table_statistic_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
 static top::common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t index) {
     auto account_string = account_prefix + std::to_string(index);
     if (account_string.length() < top::common::xaccount_base_address_t::LAGACY_USER_ACCOUNT_LENGTH) {
@@ -84,11 +83,11 @@ public:
 
     data::xtransaction_ptr_t summarize_slash_info(std::string const& slash_info) {
         data::xtransaction_ptr_t slash_summarize_trx = make_object_ptr<data::xtransaction_v2_t>();
-        slash_summarize_trx->set_source_addr(shard_table_statistic_addr);
-        slash_summarize_trx->set_target_addr(sys_contract_zec_slash_info_addr);
+        slash_summarize_trx->source_address(shard_table_statistic_addr);
+        slash_summarize_trx->target_address(zec_slash_info_contract_address);
         slash_summarize_trx->set_target_action_name("summarize_slash_info");
         slash_summarize_trx->set_target_action_para(slash_info);
-        slash_summarize_trx->set_different_source_target_address(shard_table_statistic_addr, sys_contract_zec_slash_info_addr);
+        slash_summarize_trx->set_different_source_target_address(shard_table_statistic_addr.to_string(), sys_contract_zec_slash_info_addr);
         return slash_summarize_trx;
     }
 
@@ -97,8 +96,8 @@ public:
         target_stream << timestamp;
 
         data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<data::xtransaction_v2_t>();
-        slash_colletion_trx->set_source_addr(sys_contract_zec_slash_info_addr);
-        slash_colletion_trx->set_target_addr(sys_contract_zec_slash_info_addr);
+        slash_colletion_trx->source_address(zec_slash_info_contract_address);
+        slash_colletion_trx->target_address(zec_slash_info_contract_address);
         slash_colletion_trx->set_target_action_name("do_unqualified_node_slash");
         slash_colletion_trx->set_target_action_para(std::string((char*) target_stream.data(), target_stream.size()));
         slash_colletion_trx->set_same_source_target_address(sys_contract_zec_slash_info_addr);
@@ -108,7 +107,7 @@ public:
    xobject_ptr_t<store::xstore_face_t> m_store;
    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
    shared_ptr<xaccount_context_t> m_zec_slash_account_ctx_ptr;
-
+   common::xaccount_address_t shard_table_statistic_addr{common::xaccount_address_t::build_from(table_statistic_info_contract_base_address, common::xtable_id_t{3})};
 };
 
 TEST_F(test_zec_slash_contract_other, zec_setup_reset_data) {
@@ -127,7 +126,8 @@ TEST_F(test_zec_slash_contract_other, zec_setup_reset_data) {
         db_kv_131.push_back(std::make_pair(base::xstring_utl::base64_decode(_p.key()), base::xstring_utl::base64_decode(_p.value())));
     }
 
-    set_contract_helper(std::make_shared<xcontract_helper>(m_zec_slash_account_ctx_ptr.get(), top::common::xnode_id_t{zec_account.get_account()}, zec_account.get_account()));
+    set_contract_helper(std::make_shared<xcontract_helper>(
+        m_zec_slash_account_ctx_ptr.get(), top::common::xaccount_address_t{zec_account.get_account()}, common::xaccount_address_t{zec_account.get_account()}));
     process_reset_data(db_kv_131);
 
 }
