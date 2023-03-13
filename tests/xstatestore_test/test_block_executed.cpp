@@ -75,6 +75,27 @@ TEST_F(test_block_executed, order_execute_block_1) {
     EXPECT_EQ(statestore::xstatestore_hub_t::instance()->get_latest_executed_block_height(common::xtable_address_t::build_from(mocktable.get_account())), max_count - 2);    
 }
 
+TEST_F(test_block_executed, get_unit_latest_connectted_change_state) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 10;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+
+    mocktable.store_genesis_units(blockstore);
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(common::xaccount_address_t{mockunits[0].get_account()});
+    std::cout << "unitstate " << unitstate->get_bstate()->dump().c_str() << std::endl;
+    ASSERT_TRUE(unitstate->height() == max_count-2);
+}
+
+
 
 TEST_F(test_block_executed, recover_execute_height) {
 
