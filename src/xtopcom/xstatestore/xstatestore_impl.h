@@ -64,7 +64,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
     // void prune();
 
  private:
-    static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
+    base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) const;
     static base::xauto_ptr<base::xvblock_t> get_committed_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account, uint64_t max_height);   
     void    init_all_tablestate();    
     data::xunitstate_ptr_t       get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const;

@@ -256,15 +256,13 @@ bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_addr
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const {
-    // auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount());
-    // if (nullptr == _block) {
-    //     xerror("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get block");
-    //     return nullptr;
-    // }
+    auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount());
+    if (nullptr == _block) {
+        xerror("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get block");
+        return nullptr;
+    }
 
-    // return get_unit_state_from_block(account_address, _block.get());
-    // TODO(jimmy) should always get unitstate by executed table for fullunit off state feature
-    return get_unit_latest_connectted_state(account_address);
+    return get_unit_state_from_block(account_address, _block.get());
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unitstate(xblock_number_t number, common::xaccount_address_t const & account_address) const {
@@ -509,10 +507,26 @@ int32_t xstatestore_impl_t::get_string_property(common::xaccount_address_t const
 }
 
 
-base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
-    // TODO(jimmy) check if the binlog hash exists
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
+base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) const {
+    base::xaccount_index_t account_index;
+    common::xaccount_address_t account_address(account.get_account());
+    auto ret = get_accountindex(LatestConnectBlock, account_address, account_index);
+    if (!ret) {
+        xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-get accountindex addr.%s",account_address.to_string().c_str());
+        return nullptr;
+    }
+    xobject_ptr_t<base::xvblock_t> vblock = nullptr;
+    if (!account_index.get_latest_unit_hash().empty()) {
+        vblock = blockstore->load_block_object(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash(), false);
+    } else {
+        vblock = blockstore->load_block_object(account, account_index.get_latest_unit_height(), base::enum_xvblock_flag_committed, false);
+    }
+    if (vblock == nullptr) {
+        xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load object addr.%s %s",account_address.to_string().c_str(), account_index.dump().c_str());
+        return nullptr;
+    }
     if (vblock->is_state_changed_unit()) {
+        xinfo("xstatestore_impl_t::get_latest_connectted_state_changed_block latest succ. %s",vblock->dump().c_str());
         return vblock;
     }
 
@@ -524,10 +538,12 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
             return prev_vblock;
         }
         if (prev_vblock->is_state_changed_unit()) {
+            xinfo("xstatestore_impl_t::get_latest_connectted_state_changed_block prev succ. %s",prev_vblock->dump().c_str());
             return prev_vblock;
         }
         current_height = prev_vblock->get_height();
     }
+    xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-find addr.%s %s",account_address.to_string().c_str(), account_index.dump().c_str());
     return nullptr;
 }
 
