@@ -84,7 +84,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
         return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     }
 
-    auto tx_inside = query_tx(tx->get_tx()->get_account_addr(), tx->get_tx()->get_tx_hash());
+    auto tx_inside = query_tx(tx->get_tx()->get_tx_hash());
     if (tx_inside != nullptr) {
         return xtxpool_error_request_tx_repeat;
     }
@@ -243,15 +243,15 @@ xpack_resource xtxpool_table_t::get_pack_resource(const xtxs_pack_para_t & pack_
     return xpack_resource(txs, receiptid_state_prove_map);
 }
 
-xcons_transaction_ptr_t xtxpool_table_t::query_tx(const std::string & account, const uint256_t & hash) {
+xcons_transaction_ptr_t xtxpool_table_t::query_tx(const uint256_t & hash) {
     std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    return query_tx(account, hash_str);
+    return query_tx(hash_str);
 }
 
-xcons_transaction_ptr_t xtxpool_table_t::query_tx(const std::string & account, const std::string & hash_str) {
+xcons_transaction_ptr_t xtxpool_table_t::query_tx(const std::string & hash_str) {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        auto tx = m_txmgr_table.query_tx(account, hash_str);
+        auto tx = m_txmgr_table.query_tx(hash_str);
         if (tx != nullptr) {
             return tx;
         }
@@ -353,9 +353,9 @@ bool xtxpool_table_t::on_block_confirmed(base::enum_xvblock_class blk_class, uin
     return true;
 }
 
-int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
+int32_t xtxpool_table_t::verify_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
     for (auto & tx : txs) {
-        auto tx_inside = query_tx(tx->get_account_addr(), tx->get_tx_hash());
+        auto tx_inside = query_tx(tx->get_tx_hash());
         if (tx_inside != nullptr) {
             if (tx_inside->get_tx_subtype() == tx->get_tx_subtype()) {
                 continue;

@@ -15,7 +15,7 @@ public:
                        const std::vector<data::xcons_transaction_ptr_t> & txs,
                        const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_proves);
     int32_t serialize_to_string(std::string & _str) const;
-    int32_t serialize_from_string(const std::string & _str);
+    int32_t serialize_from_string(const std::string & _str, const std::string & table_addr, xtxpool_v2::xtxpool_face_t * txpool);
 
 public:
     const std::string & get_last_block_hash() const {
@@ -50,7 +50,7 @@ public:
 
 private:
     int32_t do_write(base::xstream_t & stream) const;
-    int32_t do_read(base::xstream_t & stream);
+    int32_t do_read(base::xstream_t & stream, const std::string & table_addr, xtxpool_v2::xtxpool_face_t * txpool);
 
 private:
     std::string m_last_block_hash;
