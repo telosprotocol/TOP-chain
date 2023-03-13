@@ -110,7 +110,7 @@ public:
                                                        const xunconfirm_id_height & unconfirm_id_height,
                                                        uint32_t & confirm_txs_num) const;                                              
     const std::shared_ptr<xtx_entry> pop_tx(const std::string & tx_hash, base::enum_transaction_subtype subtype);
-    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const std::string & hash_str) const;
+    const std::shared_ptr<xtx_entry> find(const std::string & hash_str) const;
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(const std::set<base::xtable_shortid_t> & all_table_sids, uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;

@@ -99,6 +99,7 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
 }
 
 int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consensus_para_t & cs_para, const std::string & last_block_hash, const std::string & justify_cert_hash) {
+    xinfo("xproposal_maker_t::backup_verify_and_set_consensus_para_basic tps_key cs_para:%s", cs_para.dump().c_str());
     uint64_t gmtime = cs_para.get_gmtime();
     uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
     if ( (gmtime > (now + 60)) || (gmtime < (now - 60))) { // the gmtime of leader should in +-60s with backup node
@@ -168,7 +169,7 @@ int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consens
     }
 
     cs_para.set_latest_blocks(proposal_prev_block, prev_lock_block, prev_commit_block);
-    xdbg_info("xproposal_maker_t::backup_verify_and_set_consensus_para_basic. set latest_cert_block.cs_para=%s,last_block_hash=%s, latest_cert_block=%s",
+    xinfo("xproposal_maker_t::backup_verify_and_set_consensus_para_basic. tps_key set latest_cert_block.cs_para=%s,last_block_hash=%s, latest_cert_block=%s",
         cs_para.dump().c_str(), last_block_hash.c_str(), proposal_prev_block->dump().c_str());
 
     // update txpool receiptid state
@@ -521,6 +522,7 @@ void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block
     if (_commit_block->get_height() > 0) {
         base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
         data::xtablestate_ptr_t tablestate_ptr = nullptr;
+        xinfo("xproposal_maker_t::update_txpool_table_state tps_key create receipt state.table:%s, commit height=%llu", get_account().c_str(), _commit_block->get_height());
         auto ret = statestore::xstatestore_hub_t::instance()->get_receiptid_state_and_prove(common::xaccount_address_t(m_table_maker->get_account()), _commit_block, property_prove_ptr, tablestate_ptr);
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_table_state create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), _commit_block->get_height());

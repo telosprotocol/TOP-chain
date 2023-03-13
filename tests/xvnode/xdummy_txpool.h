@@ -26,6 +26,9 @@ public:
     data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     }
+    data::xcons_transaction_ptr_t query_tx(const std::string & account, const std::string & hash_hex) const override {
+        return nullptr;
+    }
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) override {
     }
     void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) override {

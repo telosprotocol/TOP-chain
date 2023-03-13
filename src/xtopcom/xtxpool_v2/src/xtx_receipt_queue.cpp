@@ -311,7 +311,7 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::pop_tx(const std::string 
     return tx_ent;
 }
 
-const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & account_addr, const std::string & hash_str) const {
+const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & hash_str) const {
     return m_receipt_queue_internal.find(hash_str);
 }
 
