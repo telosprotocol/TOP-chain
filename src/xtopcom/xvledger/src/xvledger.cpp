@@ -7,9 +7,9 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xmetrics/xmetrics.h"
-#include "json/value.h"
-#include "json/reader.h"
-#include "json/writer.h"
+#include <json/value.h>
+#include <json/reader.h>
+#include <json/writer.h>
 #include <fstream>
 #include <sstream>
 #ifdef DEBUG
@@ -1617,18 +1617,46 @@ namespace top
         }
         void xvchain_t::set_node_type(bool is_storage, bool has_other_node)
         {
-            if (m_is_storage_node == is_storage && m_has_other_node == has_other_node) {
+            if (m_node_init && m_is_storage_node == is_storage && m_has_other_node == has_other_node) {
                 return;
             }
-            xkinfo("xvchain_t::set_node_type,is_storage=%d->%d,is_consensus=%d->%d",m_is_storage_node,is_storage,m_has_other_node,has_other_node);
+            xkinfo("xvchain_t::set_node_type,is_storage=%d->%d,is_consensus=%d->%d",m_is_storage_node.load(),is_storage,m_has_other_node.load(),has_other_node);
             if (m_is_storage_node != is_storage) {
                 m_is_storage_node = is_storage;
             }
             if (m_has_other_node != has_other_node) {
                 m_has_other_node = has_other_node;
             }
+            if (m_is_storage_node) {
+                m_store_units = true;
+                m_store_unitstates = false;
+            } else {
+                m_store_units = false;
+                m_store_unitstates = true;
+            }
+            m_node_init = true;
         }
 
+        bool xvchain_t::need_store_unitstate(int zone_index) const
+        {
+            // beacon,zec,relay always store history state, otherwise 
+            if (zone_index == base::enum_chain_zone_beacon_index
+                || zone_index == base::enum_chain_zone_zec_index
+                || zone_index == base::enum_chain_zone_relay_index) {
+                return false;
+            }
+            return m_store_unitstates.load();
+        }
+        bool xvchain_t::need_store_units(int zone_index) const
+        {
+            // beacon,zec,relay always store history state, otherwise 
+            if (zone_index == base::enum_chain_zone_beacon_index
+                || zone_index == base::enum_chain_zone_zec_index
+                || zone_index == base::enum_chain_zone_relay_index) {
+                return true;
+            }
+            return m_store_units.load();
+        }
         void    xvchain_t::get_db_config_custom(std::vector<db::xdb_path_t> &extra_db_path, int &extra_db_kind)
         {
             int db_kind = top::db::xdb_kind_kvdb;
@@ -1643,12 +1671,12 @@ namespace top
             std::ifstream keyfile(extra_config, std::ios::in);
             xinfo("xvchain_t:get_db_path  extra_config %s", extra_config.c_str());
             if (keyfile) {
-                xJson::Value key_info_js;
+                Json::Value key_info_js;
                 std::stringstream buffer;
                 buffer << keyfile.rdbuf();
                 keyfile.close();
                 std::string key_info = buffer.str();
-                xJson::Reader reader;
+                Json::Reader reader;
                 reader.parse(key_info, key_info_js);
 
                 //get db kind

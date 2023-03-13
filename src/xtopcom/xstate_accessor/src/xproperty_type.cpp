@@ -4,7 +4,7 @@
 
 #include "xstate_accessor/xproperties/xproperty_type.h"
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 #    include <type_traits>
 #endif
 
@@ -34,7 +34,7 @@ std::string to_string(xproperty_type_t const type) {
 NS_END3
 
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 NS_BEG1(std)
 
 size_t hash<top::state_accessor::properties::xproperty_type_t>::operator()(top::state_accessor::properties::xproperty_type_t const property_type) const noexcept {

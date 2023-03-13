@@ -39,15 +39,27 @@ ServiceType::ServiceType(uint64_t type) : m_type{type} {
     update_info();
 }
 
-void ServiceType::update_info(){
-    std::string info{""};
-    info += "[ver " + std::to_string((m_type >> 63)) + "]-";
-    info += "[network " + std::to_string((m_type << 1) >> (1 + 43)) + "]-";
-    info += "[zone " + std::to_string((m_type << 21) >> (21 + 36)) + "]-";
-    info += "[cluster " + std::to_string((m_type << 28) >> (28 + 29)) + "]-";
-    info += "[group " + std::to_string((m_type << 35) >> (35 + 21)) + "]-";
-    info += "[height " + std::to_string((m_type << 43) >> 43) + "]";
-    m_info = info;
+void ServiceType::update_info() {
+    // std::string info{""};
+    // info += "[ver " + std::to_string((m_type >> 63)) + "]-";
+    // info += "[network " + std::to_string((m_type << 1) >> (1 + 43)) + "]-";
+    // info += "[zone " + std::to_string((m_type << 21) >> (21 + 36)) + "]-";
+    // info += "[cluster " + std::to_string((m_type << 28) >> (28 + 29)) + "]-";
+    // info += "[group " + std::to_string((m_type << 35) >> (35 + 21)) + "]-";
+    // info += "[height " + std::to_string((m_type << 43) >> 43) + "]";
+    // m_info = info;
+    std::string buffer;
+    buffer.reserve(100);
+    std::ostringstream oss(buffer);
+
+    oss << "[ver " << ((m_type >> 63)) << "]-"
+        << "[network " << ((m_type << 1) >> (1 + 43)) << "]-"
+        << "[zone " << ((m_type << 21) >> (21 + 36)) << "]-"
+        << "[cluster " << ((m_type << 28) >> (28 + 29)) << "]-"
+        << "[group " << ((m_type << 35) >> (35 + 21)) << "]-"
+        << "[height " << ((m_type << 43) >> 43) << "]";
+
+    m_info = oss.str();
 }
 
 #define IS_BROADCAST_HEIGHT(service_type_value)                                \

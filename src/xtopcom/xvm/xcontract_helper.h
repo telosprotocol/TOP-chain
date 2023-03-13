@@ -11,6 +11,7 @@
 #include "xcommon/xlogic_time.h"
 #include "xstore/xaccount_context.h"
 #include "xvm/xerror/xvm_error_code.h"
+#include "xcommon/xtop_event.h"
 
 NS_BEG2(top, xvm)
 #define XCONTRACT_ENSURE(condition, msg)                                                     \
@@ -90,6 +91,8 @@ public:
 
     int32_t
     get_gas_and_disk_usage(std::uint32_t &gas, std::uint32_t &disk) const;
+
+    void event(common::xtop_event_t & event);
 
 private:
     store::xaccount_context_t*      m_account_context;

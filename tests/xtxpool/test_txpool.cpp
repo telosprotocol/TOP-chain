@@ -1,6 +1,6 @@
+#include "gtest/gtest.h"
 #define private public
 #define protected public
-#include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xvchain_creator.hpp"

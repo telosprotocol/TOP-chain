@@ -3,9 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-// #define private public
+
+#define private public
 
 #include "tests/xsystem_contract/xrec_standby_algorithm/xtest_registration_data_manager_fixture.h"
+#include "xdata/xelection/xstandby_result_store.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract.h"
 
 NS_BEG3(top, tests, rec_standby)

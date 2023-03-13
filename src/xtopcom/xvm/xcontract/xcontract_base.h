@@ -475,6 +475,23 @@ public:
      */
     virtual void GENERATE_TX(common::xaccount_address_t const & target_addr, const std::string& func_name, const std::string& func_param) final;
 
+      /**
+     * @brief Generate a log for the transaction
+     *
+     * @param func_sign  The log content description can be customized
+     * @param data  log information
+     */
+    virtual void EVENT(const std::string& func_sign , const std::string& data);
+
+      /**
+     * @brief Generate a log for the transaction
+     *
+     * @param indexed_form transfer source  address
+     * @param indexed_to  transfer target  information
+     * @param data  log information
+     */
+    virtual void EVENT_TRANSFER(const std::string& indexed_form ,const std::string& indexed_to , const uint64_t& data);
+    
     /**
      * @brief Get the block by height object
      *

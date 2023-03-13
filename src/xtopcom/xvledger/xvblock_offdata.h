@@ -12,8 +12,17 @@ namespace top
     namespace base
     {
 
-        struct subblock_build_info_t {
-            std::string     m_header_bin;  // TODO(jimmy)
+        class subblock_build_info_t {
+        public:
+            subblock_build_info_t(base::xvblock_t* unit);
+            subblock_build_info_t(xvheader_ptr_t const& header, std::string const& binlog, std::string const& state_hash);
+        public:
+            xvheader_ptr_t const&   get_header() const {return m_header;}
+            std::string const&      get_binlog() const {return m_binlog;}
+            std::string const&      get_state_hash() const {return m_fullstate_hash;}
+
+        private:
+            xvheader_ptr_t  m_header{nullptr};
             std::string     m_binlog;
             std::string     m_fullstate_hash;
         };

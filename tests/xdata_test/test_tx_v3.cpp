@@ -9,7 +9,7 @@
 #include "xdata/xethtransaction.h"
 #include "xdata/xtx_factory.h"
 #include "xbasic/xhex.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 
 using namespace top;
 using namespace top::base;
@@ -27,7 +27,7 @@ protected:
 // TEST_F(test_tx_v3, serialize) {
 //     xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
 
-//     xJson::Value jv;
+//     Json::Value jv;
 //     jv["id"] = "12231";
 //     jv["jsonrpc"] = "2.0";
 //     jv["method"] = "eth_sendRawTransaction";
@@ -46,7 +46,7 @@ protected:
 // TEST_F(test_tx_v3, exception) {
 //     {
 //         xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -60,7 +60,7 @@ protected:
 //     }
 //     {
 //         xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -76,7 +76,7 @@ protected:
 
 //     {
 //         xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -92,7 +92,7 @@ protected:
 
 //     {
 //         xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -109,7 +109,7 @@ protected:
 //     //0xf8671185174876e80082754194d8ae0197425c0ea651264b06978580dcb62f3c918203e880820a94a01d3aac56ba977387ae9e8fb87b9baee0759c75c306ba8ef9983ff20d284f1c839ff9d7100bceeb191ddd4ca9dfd03b1be1717660572d77adeb16d514c0ed2634
 //     {
 //         xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -124,7 +124,7 @@ protected:
 
 //     {
 //         xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -217,7 +217,7 @@ protected:
 //         std::string strParams;
 //         strParams.append("0x");
 //         strParams.append(top::evm_common::toHex(std::string((char*)encoded.data(), encoded.size())));
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -235,7 +235,7 @@ protected:
 // TEST_F(test_tx_v3, serialize_by_base) {
 //     xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
 
-//     xJson::Value jv;
+//     Json::Value jv;
 //     jv["id"] = "12231";
 //     jv["jsonrpc"] = "2.0";
 //     jv["method"] = "eth_sendRawTransaction";
@@ -549,7 +549,7 @@ protected:
 //         std::string strParams;
 //         strParams.append("0x");
 //         strParams.append(top::evm_common::toHex(std::string((char*)encoded.data(), encoded.size())));
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";
@@ -565,7 +565,7 @@ protected:
 //     {
 //         xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
 
-//         xJson::Value jv;
+//         Json::Value jv;
 //         jv["id"] = "12231";
 //         jv["jsonrpc"] = "2.0";
 //         jv["method"] = "eth_sendRawTransaction";

@@ -142,29 +142,38 @@ class xdatamock_unit {
 
     bool  execute_block(const xblock_ptr_t & _block) {
         xobject_ptr_t<base::xvbstate_t> current_state = nullptr;
-        if (_block->get_height() == 0 || _block->get_block_class() == base::enum_xvblock_class_full) {
+        if (_block->get_height() == 0) {
             current_state = make_object_ptr<base::xvbstate_t>(*_block.get());
-            if (_block->get_block_class() != base::enum_xvblock_class_nil) {
-                std::string binlog = _block->get_block_class() == enum_xvblock_class_light ? _block->get_binlog() : _block->get_full_state();
-                xassert(!binlog.empty());
-                if(false == current_state->apply_changes_of_binlog(binlog)) {
-                    xerror("execute_block,invalid binlog and abort it for block(%s)",_block->dump().c_str());
-                    return false;
-                }
-            }
         } else {
             xassert(m_unit_bstate != nullptr);
             xobject_ptr_t<base::xvbstate_t> base_state = m_unit_bstate->get_bstate();
             xassert(_block->get_height() == base_state->get_block_height() + 1);
             current_state = make_object_ptr<xvbstate_t>(*_block.get(), *base_state.get());
-            if (_block->get_block_class() != enum_xvblock_class_nil) {
-                std::string binlog = _block->get_block_class() == enum_xvblock_class_light ? _block->get_binlog() : _block->get_full_state();
-                xassert(!binlog.empty());
-                if(false == current_state->apply_changes_of_binlog(binlog)) {
-                    xerror("execute_block,invalid binlog and abort it for block(%s)",_block->dump().c_str());
-                    return false;
-                }
+        }
+
+        if (false == _block->is_emptyunit()) {
+            std::string binlog = _block->is_fullunit() ? _block->get_full_state() : _block->get_binlog();
+            if (binlog.empty() && _block->is_fullunit()) {
+                binlog = _block->get_binlog();
             }
+            xassert(!binlog.empty());
+            if(false == current_state->apply_changes_of_binlog(binlog)) {
+                xerror("execute_block,invalid binlog and abort it for block(%s)",_block->dump().c_str());
+                return false;
+            }
+            std::string snapshot_bin;
+            current_state->take_snapshot(snapshot_bin);
+            auto full_state_hash = _block->get_fullstate_hash();
+            if (!full_state_hash.empty()) {                
+                std::string _state_hash = base::xcontext_t::instance().hash(snapshot_bin, enum_xhash_type_sha2_256);
+                if (_state_hash != full_state_hash) {
+                    xerror("execute_block,snapshot hash unmatch for block(%s)",_block->dump().c_str());
+                    return false;
+                }                
+            }
+            xdbg("JIMMY_TEST execute_block account=%s,height=%ld,binlog=%ld,snapshot=%ld",
+                _block->get_account().c_str(),_block->get_height(),base::xhash64_t::digest(binlog),
+                base::xhash64_t::digest(snapshot_bin));
         }
 
         m_unit_bstate = std::make_shared<xunit_bstate_t>(current_state.get(), false);

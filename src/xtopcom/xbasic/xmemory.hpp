@@ -225,7 +225,7 @@ swap(observer_ptr<T> & p1, observer_ptr<T> & p2) noexcept {
     p1.swap(p2);
 }
 
-#if !defined XCXX14_OR_ABOVE
+#if !defined(XCXX14)
 
 template<typename T>
 struct xtop_make_unique

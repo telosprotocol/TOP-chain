@@ -60,7 +60,7 @@ xtop_system_contract_execution_error::xtop_system_contract_execution_error(std::
 }
 
 xtop_system_contract_execution_error::xtop_system_contract_execution_error(std::error_code ec, std::string extra_msg)
-  : std::runtime_error{extra_msg += ":" + ec.message()}, m_ec{std::move(ec)} {
+  : std::runtime_error{extra_msg += ":" + ec.message()}, m_ec{ec} {
 }
 
 std::error_code const & xtop_system_contract_execution_error::code() const noexcept {
@@ -71,8 +71,12 @@ NS_END4
 
 NS_BEG1(std)
 
+#if !defined(XCXX14)
+
 size_t hash<top::xvm::system_contracts::error::xsystem_contract_errc_t>::operator()(top::xvm::system_contracts::error::xsystem_contract_errc_t errc) const noexcept {
     return static_cast<size_t>(static_cast<std::underlying_type<top::xvm::system_contracts::error::xsystem_contract_errc_t>::type>(errc));
 }
+
+#endif
 
 NS_END1

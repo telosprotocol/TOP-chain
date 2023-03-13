@@ -100,6 +100,7 @@ int32_t xaccount_vm_t::execute(const xvm_input_t & input, xvm_output_t & output)
     if (ret != xsuccess) {
         return ret;
     }
+    output.logs = m_account_context->logs();
     output.m_contract_create_txs = contract_create_txs;
     output.m_tgas_balance_change = m_account_context->get_tgas_balance_change();
     return xsuccess;

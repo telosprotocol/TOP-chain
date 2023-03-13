@@ -20,7 +20,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xevm/xevm.h"
-#include "xevm_common/fixed_hash.h"
+#include "xcommon/fixed_hash.h"
 #include "xevm_common/xcodec/xmsgpack/xboost_u256_codec.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_utils.h"

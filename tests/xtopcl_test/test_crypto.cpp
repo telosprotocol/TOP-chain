@@ -5,7 +5,7 @@
 
 #if 0
 TEST(test_crypto, decrypt_T0) {
-    xJson::Value keystore_info;
+    Json::Value keystore_info;
     EXPECT_TRUE(xChainSDK::xcrypto::parse_keystore("./T0", keystore_info));
 
     std::string pri_key;
@@ -15,7 +15,7 @@ TEST(test_crypto, decrypt_T0) {
 }
 
 TEST(test_crypto, decrypt_T8) {
-    xJson::Value keystore_info;
+    Json::Value keystore_info;
     EXPECT_TRUE(xChainSDK::xcrypto::parse_keystore("./T8", keystore_info));
 
     std::string pri_key;  // hex string

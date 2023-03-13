@@ -115,6 +115,61 @@ namespace top
                 return base::xstring_utl::touint64(value);
             }
         }            
+
+        //-------------------xunit_header_extra_t-------------------------//
+        int32_t xunit_header_extra_t::do_write(base::xstream_t & stream) const {
+            const int32_t begin_size = stream.size();
+            stream.write_compact_var(static_cast<uint32_t>(m_paras.size()));
+            for (auto & pair : m_paras) {
+                stream.write_compact_var(pair.first);
+                stream.write_compact_var(pair.second);
+            }
+            return (stream.size() - begin_size);
+        }
+        int32_t xunit_header_extra_t::do_read(base::xstream_t & stream) {
+            const int32_t begin_size = stream.size();
+            uint32_t size;
+            stream.read_compact_var(size);
+            for (uint32_t i = 0; i < size; ++i) {
+                uint16_t key;
+                std::string val;
+                stream.read_compact_var(key);
+                stream.read_compact_var(val);
+                m_paras[key] = val;
+            }
+            return (begin_size - stream.size());
+        }     
+        std::string xunit_header_extra_t::get_value(uint16_t type) const {
+            auto iter = m_paras.find(type);
+            if (iter != m_paras.end()) {
+                return iter->second;
+            }
+            return {};
+        }
+        void xunit_header_extra_t::set_value(uint16_t type, std::string const& value) {
+            if (!value.empty()) {
+                m_paras[type] = value;
+            } else {
+                xassert(false);
+            }
+        }
+        int32_t xunit_header_extra_t::deserialize_from_string(const std::string & extra_data) {
+            if (!extra_data.empty()) {
+                base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)extra_data.data(), (uint32_t)extra_data.size());
+                return do_read(_stream);
+            }
+            return 0;
+        }
+        int32_t xunit_header_extra_t::serialize_to_string(std::string & extra_data) {
+            if (!m_paras.empty()) {
+                base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+                int32_t ret = do_write(_stream);
+                extra_data.clear();
+                extra_data.assign((const char *)_stream.data(), _stream.size());
+                return ret;
+            }
+            return 0;
+        }
     }//end of namespace of base
 
 }//end of namespace top

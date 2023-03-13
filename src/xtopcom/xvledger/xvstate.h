@@ -157,6 +157,7 @@ namespace top
             xvbstate_t(const xvblock_t& for_block,xvbstate_t & clone_from,xvexeunit_t * parent_unit = NULL,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             // for proposal block build
             xvbstate_t(const xvheader_t& proposal_header,xvbstate_t & clone_from,uint64_t viewid = 0,xvexeunit_t * parent_unit = NULL,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
+            xvbstate_t(const std::string & last_block_hash, xvbstate_t & clone_from, enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             // for genesis block build
             xvbstate_t(const xvheader_t& genesis_header,xvexeunit_t * parent_unit = NULL,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             //debug & ut-test only
@@ -204,6 +205,8 @@ namespace top
             void set_property_value_from_bytes(std::string const & name, std::vector<uint8_t> const & bin_data, xvcanvas_t * canvas);
 
             virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vbstate;}
+
+            void        update_final_block_info(xvblock_t* for_block);
 
         protected:
             //subclass extend behavior and load more information instead of a raw one

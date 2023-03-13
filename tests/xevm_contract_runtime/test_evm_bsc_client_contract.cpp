@@ -1,6 +1,6 @@
 #include "tests/xevm_contract_runtime/test_evm_eth_bridge_contract_fixture.h"
 #include "xbasic/xhex.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 #include "xevm_contract_runtime/sys_contract/xevm_bsc_client_contract.h"
@@ -32,7 +32,7 @@ public:
         auto bytes = (evm_common::h256(0)).asBytes();
         bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
         contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
-        statectx = make_unique<xmock_statectx_t>(contract_state);
+        statectx = top::make_unique<xmock_statectx_t>(contract_state);
         statectx_observer = make_observer<statectx::xstatectx_face_t>(statectx.get());
         context.address = common::xtop_eth_address::build_from("ff00000000000000000000000000000000000003");
         context.caller = common::xtop_eth_address::build_from("f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38");

@@ -4,7 +4,11 @@
 
 #include "xwrouter/root/root_routing.h"
 
-#include "xkad/proto/kadmlia.pb.h"
+#if defined(XCXX20)
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 #include "xkad/routing_table/local_node_info.h"
 #include "xkad/routing_table/node_detection_manager.h"
 #include "xkad/routing_table/root_routing_table.h"

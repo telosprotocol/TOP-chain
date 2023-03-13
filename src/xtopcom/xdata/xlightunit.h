@@ -33,17 +33,14 @@ class xunit_block_para_t {
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_fullstate_bin_hash(const std::string & hash) {m_fullstate_bin_hash = hash;}
     void    set_binlog(const std::string & binlog) {m_property_binlog = binlog;}
-    void    set_txkeys(const base::xvtxkey_vec_t & txkeys) {m_txkeys = txkeys;}
  public:
     const std::string &     get_property_binlog() const {return m_property_binlog;}
     const std::string &     get_fullstate_bin() const {return m_fullstate_bin;}
     const std::string &     get_fullstate_bin_hash() const {return m_fullstate_bin_hash;}
-    const base::xvtxkey_vec_t & get_txkeys() const {return m_txkeys;}
  private:
     std::string         m_fullstate_bin;
     std::string         m_fullstate_bin_hash;
     std::string         m_property_binlog;
-    base::xvtxkey_vec_t m_txkeys;
 };
 
 class xlightunit_block_para_t : public xunit_block_para_t {
@@ -90,7 +87,11 @@ class xlightunit_block_t : public xblock_t {
  public:
     static  const std::string   unconfirm_tx_num_name() { return std::string("i0");}  // input resource #0
  protected:
+#if defined(XCXX20)
+     static inline constexpr int object_type_value = static_cast<int>(enum_xdata_type_max) - static_cast<int>(xdata_type_lightunit_block);
+#else
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_lightunit_block };
+#endif
  public:
     xlightunit_block_t();
     xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
@@ -100,13 +101,13 @@ class xlightunit_block_t : public xblock_t {
  private:
     xlightunit_block_t(const xlightunit_block_t &);
     xlightunit_block_t & operator = (const xlightunit_block_t &);
-    void parse_to_json_v1(xJson::Value & root);
-    void parse_to_json_v2(xJson::Value & root);
+    void parse_to_json_v1(Json::Value & root);
+    void parse_to_json_v2(Json::Value & root);
  public:
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
-    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
+    virtual void parse_to_json(Json::Value & root, const std::string & rpc_version) override;
 
  public:  // override base block api
     const std::vector<xlightunit_action_ptr_t> get_txs() const;

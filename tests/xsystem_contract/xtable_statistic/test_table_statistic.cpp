@@ -1,7 +1,8 @@
-#ifndef private
 #include <sstream>
+#include <gtest/gtest.h>
+
 #define private public
-#endif
+
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
@@ -25,8 +26,6 @@
 #include "xelection/xvnode_house.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 #include "xdata/xnative_contract_address.h"
-
-#include <gtest/gtest.h>
 
 #include <cinttypes>
 #include <fstream>

@@ -31,23 +31,23 @@ TEST(xobject_ptr_t, copy_assignment2) {
 
 TEST(xobject_ptr_t, copy_assignment3) {
     xobject_ptr_t<xbase_object1> object;
-    ASSERT_EQ(nullptr, object);
+    //ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 
     xobject_ptr_t<xbase_object1> another;
     another = object;
-    ASSERT_EQ(nullptr, another);
+    //ASSERT_EQ(nullptr, another);
     ASSERT_EQ(nullptr, another.get());
 }
 
 TEST(xobject_ptr_t, copy_assignment4) {
     xobject_ptr_t<xderived_object1> object;
-    ASSERT_EQ(nullptr, object);
+    //ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 
     xobject_ptr_t<xbase_object1> another;
     another = object;
-    ASSERT_EQ(nullptr, another);
+    //ASSERT_EQ(nullptr, another);
     ASSERT_EQ(nullptr, another.get());
 }
 
@@ -86,7 +86,7 @@ TEST(xobject_ptr_t, move_assignment1) {
     xobject_ptr_t<xbase_object1> another;
     another = std::move(object);
     ASSERT_EQ(1, another->get_refcount());
-    ASSERT_EQ(nullptr, object);
+    // ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 }
 
@@ -97,29 +97,29 @@ TEST(xobject_ptr_t, move_assignment2) {
     xobject_ptr_t<xbase_object1> another;
     another = std::move(object);
     ASSERT_EQ(1, another->get_refcount());
-    ASSERT_EQ(nullptr, object);
+    // ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 }
 
 TEST(xobject_ptr_t, move_assignment3) {
     xobject_ptr_t<xbase_object1> object;
-    ASSERT_EQ(nullptr, object);
+    // ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 
     xobject_ptr_t<xbase_object1> another;
     another = std::move(object);
-    ASSERT_EQ(nullptr, another);
+    // ASSERT_EQ(nullptr, another);
     ASSERT_EQ(nullptr, another.get());
 }
 
 TEST(xobject_ptr_t, move_assignment4) {
     xobject_ptr_t<xderived_object1> object;
-    ASSERT_EQ(nullptr, object);
+    // ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 
     xobject_ptr_t<xbase_object1> another;
     another = std::move(object);
-    ASSERT_EQ(nullptr, another);
+    // ASSERT_EQ(nullptr, another);
     ASSERT_EQ(nullptr, another.get());
 }
 
@@ -133,7 +133,7 @@ TEST(xobject_ptr_t, move_assignment5) {
 
     another = std::move(object);
     ASSERT_EQ(1, another->get_refcount());
-    ASSERT_EQ(nullptr, object);
+    // ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 
     // ASSERT_ANY_THROW(another_ptr->get_refcount());
@@ -148,7 +148,7 @@ TEST(xobject_ptr_t, move_assignment6) {
 
     another = std::move(object);
     ASSERT_EQ(1, another->get_refcount());
-    ASSERT_EQ(nullptr, object);
+    // ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 
     // ASSERT_ANY_THROW(another_ptr->get_refcount());
@@ -156,22 +156,22 @@ TEST(xobject_ptr_t, move_assignment6) {
 
 TEST(xobject_ptr_t, copy_from_xauto_ptr1) {
     top::base::xauto_ptr<xbase_object1> object{nullptr};
-    ASSERT_EQ(nullptr, object);
+    ASSERT_EQ(nullptr, object.get());
 
     top::xobject_ptr_t<xbase_object1> another;
     another = object;
-    ASSERT_EQ(nullptr, another);
+    ASSERT_EQ(nullptr, another.get());
 }
 
 TEST(xobject_ptr_t, copy_assignment_from_xauto_ptr2) {
     top::base::xauto_ptr<xbase_object1> object{nullptr};
-    ASSERT_EQ(nullptr, object);
+    ASSERT_EQ(nullptr, object.get());
 
     auto another = top::make_object_ptr<xbase_object1>();
     auto * another_ptr = another.get();
 
     another = object;
-    ASSERT_EQ(nullptr, another);
+    ASSERT_EQ(nullptr, another.get());
 
     // ASSERT_ANY_THROW(another_ptr->get_refcount());
 }

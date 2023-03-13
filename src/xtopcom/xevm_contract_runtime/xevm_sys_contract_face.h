@@ -7,10 +7,14 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xeth_address.h"
 #include "xdata/xnative_contract_address.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xevm_transaction_result.h"
-#include "xevm_runner/proto/proto_precompile.pb.h"
+#if defined(XCXX20)
+#include "xevm_runner/proto/ubuntu/proto_precompile.pb.h"
+#else
+#include "xevm_runner/proto/centos/proto_precompile.pb.h"
+#endif
 
 #if defined(__clang__)
 #    pragma clang diagnostic push

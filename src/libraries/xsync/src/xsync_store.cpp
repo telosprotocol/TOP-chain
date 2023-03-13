@@ -299,18 +299,6 @@ xsync_store_shadow_t* xsync_store_t::get_shadow() {
     return m_shadow;
 };
 
-bool xsync_store_t::set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) {
-    if (!m_blockstore->set_unit_proof(account, unit_proof, height)) {
-        xerror("xsync_store_t::store_unit_proof account %s,fail to writed into db,unit_proof=%s",account.get_address().c_str(), unit_proof.c_str());
-        return false;
-    }
-    return true;
-}
-
-const std::string xsync_store_t::get_unit_proof(const base::xvaccount_t & account, uint64_t height) {
-    return m_blockstore->get_unit_proof(account, height);
-}
-
 bool xsync_store_t::remove_empty_unit_forked() {
     if (m_remove_empty_unit_forked) {
         return true;
@@ -321,12 +309,16 @@ bool xsync_store_t::remove_empty_unit_forked() {
 }
 
 bool xsync_store_t::is_sync_protocal_forked() {
-    if (m_sync_forked) {
+    return m_sync_forked;
+}
+
+bool xsync_store_t::is_support_big_pack_forked() {
+    if (m_sync_big_pack) {
         return true;
     }
 
     set_fork_point();
-    return m_sync_forked;
+    return m_sync_big_pack;
 }
 
 base::xauto_ptr<base::xvbindex_t> xsync_store_t::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
@@ -341,10 +333,9 @@ void xsync_store_t::set_fork_point() {
 
     xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
     // TODO(jimmy) remove fork points
-    m_remove_empty_unit_forked = true;
-    bool forked = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_sync_point, vb->get_height());
+    bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_sync_big_packet, vb->get_height());
     if (forked) {
-        m_sync_forked = true;
+        m_sync_big_pack = true;
         xinfo("xsync_store_t::block fork point already forked clock:%llu", vb->get_height());
     }
     return;

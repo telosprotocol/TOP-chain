@@ -13,7 +13,11 @@
 #if defined(__LINUX_PLATFORM__)
 #    include <sys/prctl.h>
 #endif
-#include "CLI11.hpp"
+#if defined(XCXX20)
+#    include "CLI/CLI.hpp"
+#else
+#    include "CLI11.hpp"
+#endif
 #include "generated/version.h"
 #include "topio_setproctitle.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
@@ -28,7 +32,7 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xhex.h"
-#include "xevm_common/xbloom9.h"
+#include "xcommon/xbloom9.h"
 
 #include <gtest/gtest.h>
 

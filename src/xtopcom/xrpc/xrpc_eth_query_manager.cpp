@@ -1,10 +1,13 @@
 #include "xrpc_eth_query_manager.h"
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
-#include <trezor-crypto/sha3.h>
+#if defined(XCXX20)
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
+#else
 #include <secp256k1/secp256k1.h>
 #include <secp256k1/secp256k1_recovery.h>
+#endif
 
 #include "xbase/xbase.h"
 #include "xbase/xcontext.h"
@@ -22,10 +25,10 @@
 #include "xdata/xproposal_data.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
-#include "xevm_common/fixed_hash.h"
-#include "xevm_common/common_data.h"
-#include "xevm_common/common.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/fixed_hash.h"
+#include "xcommon/common_data.h"
+#include "xcommon/common.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/address.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
@@ -53,22 +56,23 @@
 #include "xstatestore/xstatestore_face.h"
 
 using namespace top::data;
-
+// Error(message)
+static const uint32_t abi_error = 0x08c379a0;
 namespace top {
 namespace xrpc {
-using namespace std;
+// using namespace std;
 using namespace base;
 using namespace store;
 using namespace xrpc;
 
-void xrpc_eth_query_manager::call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::call_method(std::string strMethod, Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     auto iter = m_query_method_map.find(strMethod);
     if (iter != m_query_method_map.end()) {
         (iter->second)(js_req, js_rsp, strResult, nErrorCode);
     }
 }
 
-bool xrpc_eth_query_manager::handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+bool xrpc_eth_query_manager::handle(std::string & strReq, Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     std::string action = js_req["action"].asString();
     auto iter = m_query_method_map.find(action);
     if (iter != m_query_method_map.end()) {
@@ -127,7 +131,7 @@ uint64_t xrpc_eth_query_manager::get_block_height(const std::string& table_heigh
     }
     return height;
 }
-void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getBalance(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
@@ -166,7 +170,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
         xdbg("xrpc_eth_query_manager::eth_getBalance address=%s,balance=%s,%s", account.c_str(), balance.str().c_str(), xrpc_eth_parser_t::u256_to_hex_prefixed(balance).c_str());
     }
 }
-void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getTransactionCount(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
@@ -195,7 +199,7 @@ void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJso
     outstr << "0x" << std::hex << nonce;
     js_rsp["result"] = std::string(outstr.str());
 }
-void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getTransactionByHash(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;
     std::string tx_hash = js_req[0].asString();
@@ -211,7 +215,7 @@ void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJs
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_ethtx_indx_detail(tx_hash_str);
     if (sendindex == nullptr) {
         xwarn("xrpc_eth_query_manager::eth_getTransactionByHash fail.tx hash:%s", tx_hash.c_str());
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return;
     }
 
@@ -220,12 +224,12 @@ void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJs
     std::string tx_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(sendindex->get_transaction_index());
     xtx_location_t txlocation(block_hash, block_num, tx_hash, tx_index);
 
-    xJson::Value js_result;
+    Json::Value js_result;
     std::error_code ec;
     xrpc_eth_parser_t::transaction_to_json(txlocation, sendindex->get_raw_tx(), js_result, ec);
     if (ec) {
         xerror("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return;
     }
     js_rsp["result"] = js_result;
@@ -233,7 +237,7 @@ void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJs
     return;
 }
 
-void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getTransactionReceipt(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;
     std::string tx_hash = js_req[0].asString();
@@ -255,23 +259,23 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
     if (sendindex == nullptr) {
         xwarn("xrpc_query_manager::eth_getTransactionReceipt load tx index fail.%s", tx_hash.c_str());
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return;
     }
 
-    xJson::Value js_result;    
+    Json::Value js_result;    
     xrpc_eth_parser_t::receipt_to_json(tx_hash, sendindex, js_result, ec);
     if (ec) {
         xerror("xrpc_query_manager::eth_getTransactionReceipt parse json fail.%s", tx_hash.c_str());
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return;
     }
     js_rsp["result"] = js_result;
     xdbg("xrpc_query_manager::eth_getTransactionReceipt ok.tx hash:%s", js_req[0].asString().c_str());
     return;
 }
-void xrpc_eth_query_manager::eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_blockNumber(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
         return;
     std::string addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).to_string();
@@ -284,7 +288,7 @@ void xrpc_eth_query_manager::eth_blockNumber(xJson::Value & js_req, xJson::Value
     xinfo("xarc_query_manager::eth_blockNumber: %llu", height);
 }
 
-void xrpc_eth_query_manager::eth_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getBlockByHash(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     std::string tx_hash = js_req[0].asString();
@@ -304,17 +308,17 @@ void xrpc_eth_query_manager::eth_getBlockByHash(xJson::Value & js_req, xJson::Va
 
     base::xauto_ptr<base::xvblock_t>  block = m_block_store->get_block_by_hash(block_hash_str);
     if (block == nullptr) {
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return;
     }
 
     std::error_code ec;
-    xJson::Value js_result;
+    Json::Value js_result;
     set_block_result(block, js_result, js_req[1].asBool(), ec);
     js_rsp["result"] = js_result;
     return;
 }
-void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getBlockByNumber(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_block))
@@ -327,17 +331,17 @@ void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::
 
     xobject_ptr_t<base::xvblock_t>  block = query_block_by_height(js_req[0].asString());
     if (block == nullptr) {
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return;
     }
 
     std::error_code ec;
-    xJson::Value js_result;
+    Json::Value js_result;
     set_block_result(block, js_result, js_req[1].asBool(), ec);
     js_rsp["result"] = js_result;
     return;
 }
-void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx, std::error_code & ec) {
+void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, Json::Value& js_result, bool fullTx, std::error_code & ec) {
     base::xvaccount_t _vaddress(block->get_account());
     if (!_vaddress.is_table_address()) {
         ec = common::error::xerrc_t::invalid_db_load;
@@ -381,7 +385,7 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
             }
 
             xtx_location_t txlocation(block_hash, block_num, tx_hash, xrpc_eth_parser_t::uint64_to_hex_prefixed(txindex));
-            xJson::Value js_tx;
+            Json::Value js_tx;
             xrpc_eth_parser_t::transaction_to_json(txlocation, raw_tx, js_tx, ec);
             if (ec) {
                 xerror("xrpc_eth_query_manager::set_block_result fail-transaction_to_json.tx hash:%s", to_hex_str(action.get_org_tx_hash()).c_str());
@@ -391,7 +395,7 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
         }
     }    
 }
-void xrpc_eth_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getCode(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
@@ -424,12 +428,12 @@ void xrpc_eth_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & j
     }
     return;
 }
-std::string xrpc_eth_query_manager::safe_get_json_value(xJson::Value & js_req, const std::string& key) {
+std::string xrpc_eth_query_manager::safe_get_json_value(Json::Value & js_req, const std::string& key) {
     if (js_req.isMember(key))
         return js_req[key].asString();
     return "";
 }
-void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_block))
@@ -526,7 +530,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     }
 
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_zero_address);
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_miner_zero_address);
     txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
     txexecutor::xvm_output_t output;
     top::evm::xtop_evm evm{top::make_observer(contract_runtime::evm::xevm_contract_manager_t::instance()), statectx_ptr};
@@ -552,13 +556,25 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
         if (output.m_tx_result.extra_msg.empty())
             output.m_tx_result.extra_msg = "0x";
         js_rsp["result"] = output.m_tx_result.extra_msg;
-    } else {
+    } else if (output.m_tx_result.status == evm_common::Revert) {
+        auto const & extra_msg = output.m_tx_result.extra_msg;
+        js_rsp["error"]["message"] = "execution reverted";
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["data"] = extra_msg; 
+        if (false == extra_msg.empty() && extra_msg != "0x"){
+            auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg);
+            auto selector = t.extract<evm_common::xfunction_selector_t>();
+            if (selector.method_id == abi_error) {
+                js_rsp["error"]["message"] = "execution reverted: " + t.extract<std::string>();
+            }
+        }
+    }else {
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["message"] = "execution reverted";
     }
 }
 
-void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string block_number = "latest";
     if (js_req.size() >= 2)
         block_number = js_req[1].asString();
@@ -655,7 +671,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     }
 
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_zero_address);
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_miner_zero_address);
 
     txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
     txexecutor::xvm_output_t output;
@@ -668,7 +684,8 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);              
         return;
     }
-    xinfo("eth_estimateGas call: %d, %d, %s, %llu", ret, output.m_tx_result.status, output.m_tx_result.extra_msg.c_str(), output.m_tx_result.used_gas);
+    auto const & extra_msg = output.m_tx_result.extra_msg;
+    xinfo("eth_estimateGas call: %d, %d, %s, %llu", ret, output.m_tx_result.status, extra_msg.c_str(), output.m_tx_result.used_gas);
 
     switch (output.m_tx_result.status) {
     case evm_common::Success: {
@@ -684,10 +701,19 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         break;
     }
 
-    case evm_common::Revert:
-        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+    case evm_common::Revert: {
         js_rsp["error"]["message"] = "execution reverted";
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["data"] = extra_msg;
+        if (false == extra_msg.empty() && extra_msg != "0x"){
+            auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg);
+            auto selector = t.extract<evm_common::xfunction_selector_t>();
+            if (selector.method_id == abi_error) {
+                js_rsp["error"]["message"] = "execution reverted: " + t.extract<std::string>();
+            }
+        }       
         break;
+    }
 
     case evm_common::OutOfGas:
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
@@ -709,7 +735,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         break;
     }
 }
-void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getStorageAt(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 3))
         return;
     std::string account = js_req[0].asString();
@@ -746,9 +772,9 @@ void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Valu
         top::HexEncode(value_str).c_str());
     js_rsp["result"] = std::string("0x") + top::HexEncode(value_str);
 }
-int xrpc_eth_query_manager::parse_topics(const xJson::Value& topics, std::vector<std::set<std::string>>& vTopics, xJson::Value & js_rsp) {
+int xrpc_eth_query_manager::parse_topics(const Json::Value& topics, std::vector<std::set<std::string>>& vTopics, Json::Value & js_rsp) {
     for (int i = 0; i < (int)topics.size(); i++) {
-        xJson::Value one_topic = topics[i];
+        Json::Value one_topic = topics[i];
         if (one_topic.isString()) {
             if (!eth::EthErrorCode::check_hex(one_topic.asString(), js_rsp, 0, eth::enum_rpc_type_topic))
                 return 1;
@@ -785,7 +811,7 @@ int xrpc_eth_query_manager::parse_topics(const xJson::Value& topics, std::vector
     }
     return 0;
 }
-void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::eth_getLogs(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (js_req.size() == 0) {
         std::string msg = std::string("missing value for required argument 0");
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
@@ -816,7 +842,7 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
 
     std::vector<std::set<std::string>> vTopics;
     if (js_req[0].isMember("topics")) {
-        xJson::Value t = js_req[0]["topics"];
+        Json::Value t = js_req[0]["topics"];
         if (!t.isArray()) {
             std::string msg = "parse error";
             eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_parse_error, msg);
@@ -827,7 +853,7 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
     }
     std::set<std::string> sAddress;
     if (js_req[0].isMember("address")) {
-        xJson::Value t = js_req[0]["address"];
+        Json::Value t = js_req[0]["address"];
         if (t.isString()) {
             if (!eth::EthErrorCode::check_hex(t.asString(), js_rsp, 0, eth::enum_rpc_type_address))
                 return;
@@ -867,7 +893,7 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
         begin = block->get_height();
         end = block->get_height();
     } else if (from_block.empty() && to_block.empty()){
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return;
     } else {
         if (from_block.empty()) {
@@ -883,7 +909,7 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
         } else
             end = get_block_height(to_block);
         if (begin > end) {
-            js_rsp["result"] = xJson::Value::null;
+            js_rsp["result"] = Json::Value::null;
             return;
         }
         if (end - begin > 1024)
@@ -984,7 +1010,7 @@ bool xrpc_eth_query_manager::check_block_log_bloom(xobject_ptr_t<base::xvblock_t
 
     return true;
 }
-int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) {
+int xrpc_eth_query_manager::get_log(Json::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) {
     auto table_addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).vaccount();
     for (uint64_t i = begin; i <= end; i++) {  // traverse blocks
         xobject_ptr_t<base::xvblock_t> block = m_block_store->load_block_object(table_addr, i, base::enum_xvblock_flag_authenticated, false);
@@ -1026,7 +1052,7 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
             std::string tx_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(txindex);
             xlog_location_t loglocation(block_hash, block_num, tx_hash, tx_index);
 
-            uint32_t index = 0;
+            // uint32_t index = 0;
             for (uint64_t logindex = 0; logindex < (uint64_t)evm_tx_receipt.get_logs().size(); logindex++) {
                 auto & log = evm_tx_receipt.get_logs()[logindex];
                 if (false == check_log_is_match(log, vTopics, sAddress)) {
@@ -1034,7 +1060,7 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
                 }
                 loglocation.m_log_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(logindex);
 
-                xJson::Value js_log;
+                Json::Value js_log;
                 xrpc_eth_parser_t::log_to_json(loglocation, log, js_log);
                 js_rsp["result"].append(js_log);
                 if (js_rsp["result"].size() >= 1024) {
@@ -1067,9 +1093,9 @@ xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_relay_block_by_heig
     return _block;
 }
 
-int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs, std::string blocklist_type) {
+int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, Json::Value & js_rsp, int have_txs, std::string blocklist_type) {
     if (block == nullptr) {
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         return 1;
     }
 
@@ -1077,14 +1103,14 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     data::xrelay_block relay_block;
     data::xblockextract_t::unpack_relayblock_from_wrapblock(block.get(), relay_block, ec);
     if (ec) {
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
         xerror("xrpc_eth_query_manager::set_relay_block_result, fail-unpack relayblock.error %s; err msg %s", ec.category().name(), ec.message().c_str());
         return 1;
     }
 
     xbytes_t header_data = relay_block.streamRLP_header_to_contract();
 
-    xJson::Value js_result;
+    Json::Value js_result;
     js_result["header"] = top::to_hex_prefixed(header_data);
     relay_block.build_finish();
     js_result["timestamp"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(relay_block.get_timestamp());
@@ -1101,7 +1127,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
 
     if (have_txs != 0) {
         const std::vector<xeth_transaction_t> txs = relay_block.get_all_transactions();
-        xJson::Value js_txs;
+        Json::Value js_txs;
         js_txs.resize(0);
         uint64_t index = 0;
         for ( auto &tx: txs) {
@@ -1117,7 +1143,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
             std::string tx_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(index++);
             xtx_location_t txlocation(block_hash, block_num, tx_hash, tx_index);
             std::error_code ec;
-            xJson::Value js_tx;
+            Json::Value js_tx;
 
             xrpc_eth_parser_t::transaction_to_json(txlocation, tx, js_tx, ec);
             if (ec) {
@@ -1129,7 +1155,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         js_result["transactions"] = js_txs;
     }
 
-    xJson::Value js_block_list;
+    Json::Value js_block_list;
     js_block_list.resize(0);
     uint64_t index = 0;
     
@@ -1140,7 +1166,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         if (block_type == cache_poly_tx_block) {
             auto &leaf_block_map = relay_block.get_blocks_from_poly();
             for (auto &block_pair:leaf_block_map) {
-                xJson::Value js_block;
+                Json::Value js_block;
                 std::string block_hash = std::string("0x") + block_pair.second.hex();
                 js_block["blockIndex"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(index);
                 js_block["blockHash"] =  block_hash;
@@ -1148,7 +1174,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
                 index++;
             }
             
-            xJson::Value js_block;
+            Json::Value js_block;
             std::string block_hash = std::string("0x") + relay_block.get_block_hash().hex();
             js_block["blockIndex"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(index);
             js_block["blockHash"] =  block_hash;
@@ -1159,7 +1185,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         std::map<uint64_t, evm_common::h256> block_hash_map;
         data::xrelay_block_store::get_all_poly_block_hash_list_from_cache(relay_block, block_hash_map);
         for (auto &iter: block_hash_map) {
-            xJson::Value js_block;
+            Json::Value js_block;
             std::string block_hash = std::string("0x") + iter.second.hex();
             js_block["blockHeight"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(iter.first);
             js_block["blockHash"] =  block_hash;
@@ -1173,7 +1199,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     return 0;
 }
 
-void xrpc_eth_query_manager::topRelay_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::topRelay_getBlockByHash(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (js_req.size() == 0) {
         std::string msg = std::string("missing value for required argument 1");
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
@@ -1217,7 +1243,7 @@ void xrpc_eth_query_manager::topRelay_getBlockByHash(xJson::Value & js_req, xJso
     set_relay_block_result(block, js_rsp, have_txs, blocklist_type);
 }
 
-void xrpc_eth_query_manager::topRelay_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::topRelay_getBlockByNumber(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (js_req.size() == 0) {
         std::string msg = std::string("missing value for required argument 1");
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
@@ -1253,7 +1279,7 @@ void xrpc_eth_query_manager::topRelay_getBlockByNumber(xJson::Value & js_req, xJ
     set_relay_block_result(block, js_rsp, have_txs, blocklist_type);
 }
 
-void xrpc_eth_query_manager::topRelay_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::topRelay_blockNumber(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
         return;
 
@@ -1266,7 +1292,7 @@ void xrpc_eth_query_manager::topRelay_blockNumber(xJson::Value & js_req, xJson::
     js_rsp["result"] = std::string(outstr.str());
 }
 
-void xrpc_eth_query_manager::topRelay_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::topRelay_getTransactionByHash(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;
     std::string tx_hash = js_req[0].asString();
@@ -1279,7 +1305,7 @@ void xrpc_eth_query_manager::topRelay_getTransactionByHash(xJson::Value & js_req
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
     xdbg("top_getRelayTransactionByHash tx hash: %s",  tx_hash.c_str());
 
-    xJson::Value js_result;
+    Json::Value js_result;
     xtx_location_t  txlocation{"", ""};
     data::xeth_transaction_t eth_transaction;
     data::xeth_store_receipt_t evm_tx_receipt;
@@ -1290,12 +1316,12 @@ void xrpc_eth_query_manager::topRelay_getTransactionByHash(xJson::Value & js_req
         xdbg("xrpc_eth_query_manager::top_getRelayTransactionByHash ok.tx hash:%s", tx_hash.c_str());
     } else {
         xdbg("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
     }    
     return;
 }
 
-void xrpc_eth_query_manager::topRelay_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::topRelay_getTransactionReceipt(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;
     std::string tx_hash = js_req[0].asString();
@@ -1313,7 +1339,7 @@ void xrpc_eth_query_manager::topRelay_getTransactionReceipt(xJson::Value & js_re
     std::string raw_tx_hash = top::to_string(tx_hash_bytes);
     xdbg("xrpc_eth_query_manager::top_getRelayTransactionReceipt tx hash: %s",  tx_hash.c_str());
 
-    xJson::Value js_result;
+    Json::Value js_result;
     xtx_location_t  txlocation{"", ""};
     data::xeth_transaction_t eth_transaction;
     data::xeth_store_receipt_t evm_tx_receipt;
@@ -1323,19 +1349,19 @@ void xrpc_eth_query_manager::topRelay_getTransactionReceipt(xJson::Value & js_re
         xrpc_eth_parser_t::receipt_to_json(txlocation, eth_transaction,evm_tx_receipt, js_result, ec);
         if (ec) {
             xerror("xrpc_eth_query_manager::top_getRelayTransactionReceipt fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
-            js_rsp["result"] = xJson::Value::null;
+            js_rsp["result"] = Json::Value::null;
             return;
         }
         js_rsp["result"] = js_result;
         xdbg("xrpc_eth_query_manager::top_getRelayTransactionReceipt ok.tx hash:%s", tx_hash.c_str());
     } else {
         xwarn("xrpc_eth_query_manager::top_getRelayTransactionReceipt fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
-        js_rsp["result"] = xJson::Value::null;
+        js_rsp["result"] = Json::Value::null;
     }    
     return;
 }
 
-void xrpc_eth_query_manager::top_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_eth_query_manager::top_getBalance(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))

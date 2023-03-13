@@ -59,49 +59,49 @@ public:
         std::swap(m_id, other.m_id);
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool operator==(xtop_simple_id const & other) const noexcept {
         return m_id == other.m_id;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool operator!=(xtop_simple_id const & other) const noexcept {
         return !(*this == other);
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool operator<(xtop_simple_id const & other) const noexcept {
         return m_id < other.m_id;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool operator>(xtop_simple_id const & other) const noexcept {
         return other < *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool operator<=(xtop_simple_id const & other) const noexcept {
         return !(other < *this);
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     bool operator>=(xtop_simple_id const & other) const noexcept {
         return !(*this < other);
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id operator++(int) {
@@ -110,7 +110,7 @@ public:
         return ret;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id & operator++() {
@@ -118,7 +118,7 @@ public:
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id operator--(int) {
@@ -127,7 +127,7 @@ public:
         return ret;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id & operator--() {
@@ -135,21 +135,21 @@ public:
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     explicit operator value_type() const {
         return value();
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     value_type value() const {
         return m_id;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id & operator|=(xtop_simple_id const & other) noexcept {
@@ -157,7 +157,7 @@ public:
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id operator|(xtop_simple_id const & other) const noexcept {
@@ -165,7 +165,7 @@ public:
         return ret |= other;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id & operator&=(xtop_simple_id const & other) noexcept {
@@ -173,7 +173,7 @@ public:
         return *this;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     xtop_simple_id operator&(xtop_simple_id const & other) const noexcept {
@@ -181,7 +181,7 @@ public:
         return ret &= other;
     }
 
-#if defined XCXX14_OR_ABOVE
+#if defined(XCXX14)
     constexpr
 #endif
     uint64_t hash() const {
@@ -299,7 +299,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //    value_type m_id{};
 //    bool m_initialized{ false };
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    value_type
@@ -331,7 +331,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        std::swap(m_initialized, other.m_initialized);
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -348,7 +348,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return m_id == other.m_id;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -356,7 +356,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return !(*this == other);
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -372,7 +372,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return m_id < other.m_id;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -380,7 +380,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return other < *this;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -388,7 +388,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return !(other < *this);
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -396,7 +396,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return !(*this < other);
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id
@@ -406,7 +406,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return ret;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id &
@@ -419,7 +419,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return *this;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id
@@ -429,7 +429,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return ret;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id &
@@ -442,7 +442,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return *this;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    explicit
@@ -450,7 +450,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return value();
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    explicit
@@ -458,7 +458,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return m_initialized;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    value_type
@@ -466,7 +466,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return get_value();
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    value_type
@@ -477,7 +477,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return default_value;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -485,7 +485,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return !has_value();
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    bool
@@ -493,7 +493,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return m_initialized;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id &
@@ -507,7 +507,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return *this;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id
@@ -516,7 +516,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return ret |= other;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id &
@@ -530,7 +530,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return *this;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    xtop_nullable_id
@@ -539,7 +539,7 @@ std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinV
 //        return ret &= other;
 //    }
 //
-//#if defined XCXX14_OR_ABOVE
+//#if defined(XCXX14)
 //    constexpr
 //#endif
 //    hash_result_type

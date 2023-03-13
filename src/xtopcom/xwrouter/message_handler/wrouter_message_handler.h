@@ -4,21 +4,18 @@
 
 #pragma once
 
-#include "xbase/xdata.h"
-#include "xbase/xlog.h"
-#include "xbase/xobject.h"
+#include "xbase/xcxx_config.h"
 #include "xbase/xpacket.h"
-#include "xbase/xsocket.h"
-#include "xbase/xthread.h"
-#include "xbase/xtimer.h"
-#include "xbase/xutl.h"
-#include "xkad/proto/kadmlia.pb.h"
+#if defined(XCXX20)
+#include "xkad/proto/ubuntu/kadmlia.pb.h"
+#else
+#include "xkad/proto/centos/kadmlia.pb.h"
+#endif
 #include "xwrouter/register_message_handler.h"
-#include "xwrouter/wrouter_utils/wrouter_utils.h"
 
 #include <array>
 #include <map>
-#include <string>
+#include <mutex>
 
 namespace top {
 

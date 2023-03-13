@@ -2,6 +2,7 @@
 #include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
 #include "xmetrics/xmetrics.h"
+#include "xdata/xnative_contract_address.h"
 NS_BEG2(top, sync)
 
 xsync_behind_checker_t::xsync_behind_checker_t(std::string vnode_id, xsync_store_face_t *sync_store, xrole_chains_mgr_t *role_chains_mgr, xsync_peerset_t *peerset, xdownloader_face_t *downloader):
@@ -49,11 +50,14 @@ void xsync_behind_checker_t::on_behind_check_event(const mbus::xevent_ptr_t &e) 
     uint32_t table_id = 0;
 
     bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
-    if (!is_table_address)
+    bool is_drand_address = data::is_drand_address(common::xaccount_address_t{address}); 
+    if (!is_table_address && !is_drand_address)
         return;
 
-    if (!data::xdatautil::extract_parts(address, account_prefix, table_id))
-        return;
+    if (is_table_address) {
+        if (!data::xdatautil::extract_parts(address, account_prefix, table_id))
+            return;
+    }
 
     std::string reason = "trigger_check";
 
@@ -86,7 +90,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
     vnetwork::xvnode_address_t peer_addr;
 
     if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
-        xsync_dbg("xsync_behind_checker_t::check_one, %d, %s,%llu,%llu,%llu,%llu,%s", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, peer_addr.to_string().c_str());
+       // xsync_dbg("xsync_behind_checker_t::check_one, sync_policy %d, %s,%llu,%llu,%llu,%llu,%s", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, peer_addr.to_string().c_str());
         if ((m_counter % 120) == 0) {
             std::string sync_mode;
             std::string gap_metric_tag_name;
@@ -141,18 +145,20 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
             return;
         }
         
-        uint64_t fix_end_block_height = (latest_end_block_height < peer_end_height) ? peer_end_height:latest_end_block_height;
         uint64_t fix_start_block_height = latest_start_block_height;
         if ((sync_policy == enum_chain_sync_policy_fast) && (latest_start_block_height < peer_start_height)) {
             fix_start_block_height = peer_start_height;
         }
 
         xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) request start_height(%lu) request_end_height(%lu) sync_policy(%d) reason=%s, %s", 
-            address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, fix_start_block_height, fix_end_block_height, (int32_t)sync_policy, reason.c_str(), peer_addr.to_string().c_str());
+            address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, fix_start_block_height, peer_end_height, (int32_t)sync_policy, reason.c_str(), peer_addr.to_string().c_str());
 
-        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, fix_start_block_height, fix_end_block_height, sync_policy, self_addr, peer_addr, reason);
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, fix_start_block_height, peer_end_height, sync_policy, self_addr, peer_addr, reason);
         m_downloader->push_event(ev);
     }
+
+    xsync_dbg("xsync_behind_checker_t::check_one end, %d, %s,%llu,%llu,%llu,%llu,%s", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, peer_addr.to_string().c_str());
+     
 }
 
 NS_END2

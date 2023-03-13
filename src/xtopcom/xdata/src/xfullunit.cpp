@@ -35,8 +35,8 @@ void * xfullunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-void xfullunit_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
-    xJson::Value j_fu;
+void xfullunit_block_t::parse_to_json(Json::Value & root, const std::string & rpc_version) {
+    Json::Value j_fu;
     j_fu["latest_full_unit_number"] = static_cast<unsigned int>(get_height());
     j_fu["latest_full_unit_hash"] = to_hex_str(get_block_hash());
     root["fullunit"] = j_fu;
@@ -45,13 +45,13 @@ void xfullunit_block_t::parse_to_json(xJson::Value & root, const std::string & r
         return;
     }
 
-    auto tx_vec = get_txkeys();
-    for (auto & tx : tx_vec) {
-        xJson::Value jv;
-        jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
-        jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
-        root["fullunit"]["txs"].append(jv);
-    }
+    // auto tx_vec = get_txkeys();
+    // for (auto & tx : tx_vec) {
+    //     xJson::Value jv;
+    //     jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
+    //     jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
+    //     root["fullunit"]["txs"].append(jv);
+    // }
 }
 
 NS_END2

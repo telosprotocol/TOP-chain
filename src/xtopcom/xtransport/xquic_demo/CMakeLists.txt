@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 add_executable(xquic_node cs_mini.cpp xquic_node.cpp)
 
 target_include_directories(xquic_node PRIVATE ${PROJECT_SOURCE_DIR}/src/xtopcom/xdepends/xquic/include)

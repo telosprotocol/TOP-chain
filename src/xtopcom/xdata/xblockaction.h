@@ -18,7 +18,8 @@
 #include "xvledger/xvaction.h"
 #include "xvledger/xventity.h"
 #include "xevm_common/xevm_transaction_result.h"
-
+#include "xcommon/xtop_log.h"
+#include "xdata/xtop_receipt.h"
 namespace top { namespace data {
 
 using xreceipt_data_t = xreceipt_data_store_t;
@@ -63,6 +64,7 @@ class xlightunit_action_t : public base::xvaction_t {
     bool                        is_need_make_txreceipt() const;
     bool                        is_txaction() const {return !get_tx_hash().empty();}
     bool                        get_evm_transaction_receipt(data::xeth_store_receipt_t & evm_tx_receipt) const;
+    bool                        get_tvm_transaction_receipt(data::xtop_store_receipt_t & tvm_tx_receipt) const;
 
  private:
     std::string                 get_action_result_property(const std::string & key) const;

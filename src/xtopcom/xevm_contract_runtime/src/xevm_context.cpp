@@ -4,8 +4,13 @@
 
 #include "xevm_contract_runtime/xevm_context.h"
 
-#include "xevm_common/common_data.h"
-#include "xevm_runner/proto/proto_parameters.pb.h"
+#if defined(XCXX20)
+#include "xevm_runner/proto/ubuntu/proto_parameters.pb.h"
+#else
+#include "xevm_runner/proto/centos/proto_parameters.pb.h"
+#endif
+#include "xcommon/common_data.h"
+
 
 NS_BEG2(top, evm_runtime)
 
@@ -15,7 +20,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
     // todo(jimmy) get chain id from? , default is 1023 in xevm_context.h:23
     // m_chain_id = ...
     m_block_coinbase = vm_para.get_block_coinbase();
-    assert(m_block_coinbase.to_string().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
+    assert(common::is_t8_address(m_block_coinbase));// XTODO only support T8 miner address
     m_block_height = vm_para.get_block_height();
     m_block_timestamp = vm_para.get_timestamp();
 

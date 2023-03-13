@@ -35,18 +35,26 @@ class xdatamock_table : public base::xvaccount_t {
         enum_default_full_table_state_count = 2,
     };
  public:
+    explicit xdatamock_table(base::enum_xchain_zone_index zone, uint16_t tableid, uint32_t user_count = 4)
+    : base::xvaccount_t(xblocktool_t::make_address_table_account(zone, tableid)) {
+        init(*this, user_count);
+    }
+
     explicit xdatamock_table(uint16_t tableid = 1, uint32_t user_count = 4, bool is_fixed = false)
     : base::xvaccount_t(xblocktool_t::make_address_shard_table_account(tableid)) {
+        if (is_fixed) {
+            user_count = 2;// two account is enough as reference block
+        }
+        init(*this, user_count);
+    }
+    void init(base::xvaccount_t const& table_addr, uint32_t user_count) {
         m_fulltable_builder = std::make_shared<blockmaker::xfulltable_builder_t>();
 
         xblock_ptr_t _block = build_genesis_table_block();
         on_table_finish(_block);
 
-        if (is_fixed) {
-            user_count = 2;// two account is enough as reference block
-        }
         for (uint32_t i = 0; i < user_count; i++) {
-            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
+            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(get_ledger_subaddr());
             xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
             m_mock_units.push_back(datamock_unit);
         }        
@@ -144,12 +152,13 @@ class xdatamock_table : public base::xvaccount_t {
         }        
     }
 
-    xblock_consensus_para_t  init_consensus_para(uint64_t clock = 10000000) {
+    xblock_consensus_para_t  init_consensus_para(uint64_t clock = 100000000) {
         xblock_consensus_para_t cs_para(xcertauth_util::instance().get_leader_xip(), get_cert_block().get());
         cs_para.set_latest_blocks(get_cert_block(), get_lock_block(), get_commit_block());
         cs_para.set_tableblock_consensus_para(1,"1",1,1);
         cs_para.set_clock(clock);
         cs_para.set_timeofday_s((uint64_t)base::xtime_utl::gettimeofday());
+        cs_para.set_parent_height(get_cert_block()->get_height() + 1);
         return cs_para;
     }
 
@@ -360,13 +369,11 @@ class xdatamock_table : public base::xvaccount_t {
         for (auto & v : proposal_states) {
             xdatamock_unit s_mockunit = find_mock_unit(v.first);
 
-            blockmaker::xunitbuilder_para_t unit_para;
-            data::xblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block_v2(v.second, unit_para, cs_para);
+            base::xvblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block_v2(v.second, cs_para);
             xassert(unitblock != nullptr);
-            // m_batch_units.push_back(unitblock);
             data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(), unitblock->get_block_hash(), unitblock->get_fullstate_hash(), 1);
-             //std::cout << "proposal_table_state=" << proposal_table_state->get_bstate()->dump() << " aindex=" << aindex.dump() << std::endl;
-             m_batch_units.push_back(std::make_pair(unitblock, aindex));
+            // std::cout << "unit=" << unitblock->dump() << " aindex=" << aindex.dump() << std::endl;
+            m_batch_units.push_back(std::make_pair(unitblock, aindex));
         }
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
@@ -380,9 +387,13 @@ class xdatamock_table : public base::xvaccount_t {
             xassert(false);
         }
 
+        data::xtable_block_para_t lighttable_para;
         for (auto & unit_and_index : m_batch_units) {
             auto & unit = unit_and_index.first;
             auto & index = unit_and_index.second;
+
+            lighttable_para.set_unit(unit);
+            lighttable_para.set_accountindex(unit->get_account(), index);       
             table_mpt->set_account_index(common::xaccount_address_t{unit->get_account()}, index, ec);
             if (ec) {
                 xassert(false);
@@ -397,9 +408,8 @@ class xdatamock_table : public base::xvaccount_t {
         eth_header.set_state_root(state_root);
         std::string _ethheader_str = eth_header.serialize_to_string();
         cs_para.set_ethheader(_ethheader_str);
-
-        data::xtable_block_para_t lighttable_para;
-        blockmaker::xtablebuilder_t::make_table_block_para(m_batch_units, proposal_table_state, execute_output, lighttable_para);
+ 
+        blockmaker::xtablebuilder_t::make_table_block_para(proposal_table_state, execute_output, lighttable_para);
         data::xblock_ptr_t proposal_block = blockmaker::xtablebuilder_t::make_light_block(get_cert_block(),
                                                                             cs_para,
                                                                             lighttable_para);
@@ -411,7 +421,7 @@ class xdatamock_table : public base::xvaccount_t {
     void generate_send_tx() {
         xassert(m_mock_units.size() > 1);
         m_proposal_txs.clear();
-        uint32_t txs_count = 0;
+        // uint32_t txs_count = 0;
         for (uint32_t i = 0; i < m_mock_units.size(); i++) {
             uint32_t send_index = (m_last_generate_send_tx_user_index) % m_mock_units.size();
             uint32_t recv_index = (send_index + 1) % m_mock_units.size();
@@ -422,16 +432,16 @@ class xdatamock_table : public base::xvaccount_t {
 
             m_last_generate_send_tx_user_index = (m_last_generate_send_tx_user_index + 1) % m_mock_units.size();
 
-            txs_count++;
-            if (txs_count >= enum_default_batch_table_include_tx_count_max) {
-                break;
-            }
+            // txs_count++;
+            // if (txs_count >= enum_default_batch_table_include_tx_count_max) {
+            //     break;
+            // }
         }
     }
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_proposal_txs;
-    std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> m_batch_units;
+    std::vector<std::pair<base::xvblock_ptr_t, data::xaccount_index_t>> m_batch_units;
 
     std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     xtablestate_ptr_t               m_table_state{nullptr};

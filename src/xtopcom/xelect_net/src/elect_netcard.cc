@@ -3,11 +3,16 @@
 #include <memory>
 #include <cinttypes>
 
+#include "xbase/xcxx_config.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xwrouter/register_message_handler.h"
 #include "xwrouter/xwrouter.h"
-#include "xelect_net/proto/elect_net.pb.h"
+#if defined(XCXX20)
+#include "xelect_net/proto/ubuntu/elect_net.pb.h"
+#else
+#include "xelect_net/proto/centos/elect_net.pb.h"
+#endif
 #include "xelect_net/include/elect_uitils.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xmetrics/xmetrics.h"

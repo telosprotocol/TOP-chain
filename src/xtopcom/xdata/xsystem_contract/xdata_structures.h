@@ -16,7 +16,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xdata_common.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 #include "xdata/xsystem_contract/xallowance.h"
 
 #include <algorithm>

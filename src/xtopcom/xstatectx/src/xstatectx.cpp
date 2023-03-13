@@ -100,12 +100,12 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(common::xaccount_address_t const
             return nullptr;
         }
 
-        bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
+        bstate = xstatectx_base_t::create_proposal_unit_bstate(unitstate->get_bstate().get(), account_index.get_latest_unit_hash());
         if (nullptr == bstate) {
             xerror("xstatectx_t::load_unit_ctx fail-change proposal state.addr=%s,index=%s", address.to_string().c_str(),account_index.dump().c_str());
             return nullptr;
         }
-        xassert(!bstate->get_last_block_hash().empty());
+        xassert(bstate->get_last_block_hash() == account_index.get_latest_unit_hash());
         data::xunitstate_ptr_t unitstate_proposal = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state        
         data::xaccountstate_ptr_t accountstate(std::make_shared<data::xaccount_state_t>(unitstate_proposal, account_index));
         unit_ctx = std::make_shared<xunitstate_ctx_t>(accountstate);

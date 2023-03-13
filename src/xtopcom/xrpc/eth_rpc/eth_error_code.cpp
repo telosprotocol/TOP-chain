@@ -2,12 +2,12 @@
 #include "xbase/xbase.h"
 
 namespace eth {
-void EthErrorCode::deal_error(xJson::Value & js_rsp, eth::enum_eth_rpc_code error_id, const std::string& msg) {
+void EthErrorCode::deal_error(Json::Value & js_rsp, eth::enum_eth_rpc_code error_id, const std::string& msg) {
     js_rsp["error"]["code"] = error_id;
     js_rsp["error"]["message"] = msg;
     return;
 }
-bool EthErrorCode::check_req(const xJson::Value & js_req, xJson::Value & js_rsp, const uint32_t number) {
+bool EthErrorCode::check_req(const Json::Value & js_req, Json::Value & js_rsp, const uint32_t number) {
     if (js_req.size() < number) {
         std::string msg = std::string("missing value for required argument ") + std::to_string(number - 1);
         deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
@@ -20,7 +20,7 @@ bool EthErrorCode::check_req(const xJson::Value & js_req, xJson::Value & js_rsp,
     }
     return true;
 }
-bool EthErrorCode::check_hex(const std::string& value, xJson::Value & js_rsp, uint32_t index, const enum_rpc_check_type type) {
+bool EthErrorCode::check_hex(const std::string& value, Json::Value & js_rsp, uint32_t index, const enum_rpc_check_type type) {
     if (value.empty()) {
         std::string msg = std::string("invalid argument ") + std::to_string(index) + ": empty hex string";
         deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
@@ -75,7 +75,7 @@ bool EthErrorCode::check_hex(const std::string& value, xJson::Value & js_rsp, ui
     }
     return true;
 }
-bool EthErrorCode::check_eth_address(const std::string& account, xJson::Value & js_rsp) {
+bool EthErrorCode::check_eth_address(const std::string& account, Json::Value & js_rsp) {
     if (account.size() != 42) {
         std::string msg = std::string("invalid argument: hex string has length ") + std::to_string(account.size()-2) + ", want 40 for common.Address";
         xinfo("check_eth_address fail: %s", account.c_str());
@@ -84,7 +84,7 @@ bool EthErrorCode::check_eth_address(const std::string& account, xJson::Value & 
     }
     return true;
 }
-bool EthErrorCode::check_hash(const std::string& hash, xJson::Value & js_rsp) {
+bool EthErrorCode::check_hash(const std::string& hash, Json::Value & js_rsp) {
     if (hash.size() != 66) {
         std::string msg = std::string("invalid argument 0: hex string has length ") + std::to_string(hash.size()-2) + ", want 64 for common.Hash";
         deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);

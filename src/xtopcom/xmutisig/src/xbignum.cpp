@@ -24,7 +24,10 @@ xbn_face::xbn_face(const xbn_face & pri) {
     m_private_bn = BN_new();
     assert(nullptr != m_private_bn);
 
-    BIGNUM * bn = BN_copy(m_private_bn, pri.bn_value());
+#if !defined(NDEBUG)
+    BIGNUM * bn =
+#endif
+    BN_copy(m_private_bn, pri.bn_value());
     assert(nullptr != bn);
 }
 

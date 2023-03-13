@@ -101,8 +101,6 @@ namespace mock {
 
         public:
             // read/write corresponding table prove for latest commit unit block
-            virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, const uint64_t height)  {xassert(false);return false;}
-            virtual const std::string get_unit_proof(const base::xvaccount_t & account, const uint64_t height) {xassert(false);return {};}
             virtual bool    store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block)  {xassert(false);return false;}
         private:
             // < account: <height,block*> > sort from lower height to higher,and the first one block is genesis block

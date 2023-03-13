@@ -97,8 +97,8 @@
 //             ++count;
 //             string result = response->content.string();
 //             printf("%s\n", result.c_str());
-//             xJson::Reader reader;
-//             xJson::Value result_json;
+//             Json::Reader reader;
+//             Json::Value result_json;
 //             if (reader.parse(result, result_json)) {
 //                 mock_account_token = result_json["data"]["token"].asString();
 //             }

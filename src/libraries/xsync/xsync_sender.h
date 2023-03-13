@@ -40,41 +40,15 @@ public:
     void send_frozen_gossip(const std::vector<xgossip_chain_info_ptr_t> &info_list, const xbyte_buffer_t &bloom_data, const vnetwork::xvnode_address_t& self_xip);
     void send_frozen_gossip_to_target(const std::vector<xgossip_chain_info_ptr_t> &info_list, const xbyte_buffer_t &bloom_data, const vnetwork::xvnode_address_t& self_xip, const vnetwork::xvnode_address_t& target);
     bool send_get_blocks(const std::string &address, uint64_t start_height, uint32_t count, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
-    void send_archive_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
-
-    void send_get_on_demand_blocks(const std::string &address, uint64_t start_height, uint32_t count, bool is_consensus, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_on_demand_blocks(const std::vector<data::xblock_ptr_t> &blocks, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-
-    void send_get_on_demand_blocks_with_proof(const std::string &address, uint64_t start_height, uint32_t count, bool is_consensus, bool unit_proof, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_on_demand_blocks_with_proof(const std::vector<data::xblock_ptr_t> &blocks, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string& unit_proof_str = "");
-
-    void send_get_on_demand_blocks_with_hash(const std::string &address, uint64_t start_height, uint32_t count, bool is_consensus, const std::string & last_unit_hash, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_on_demand_blocks_with_hash(const std::vector<data::xblock_ptr_t> &blocks, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-
     void send_broadcast_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_response_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_frozen_broadcast_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr);
     void send_frozen_response_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_cross_cluster_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-
     void push_newblock(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
-    void push_newblockhash(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
-    void broadcast_newblockhash(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
-
     void send_get_blocks_by_hashes(std::vector<xblock_hash_t> &hashes, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_blocks_by_hashes(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-
-    void send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const common::xmessage_id_t msgid, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    bool send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const common::xmessage_id_t msgid, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-
     void send_get_on_demand_by_hash_blocks(const std::string &address, const std::string &hash, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_on_demand_by_hash_blocks(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_archive_height(const xchain_state_info_t& info, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_query_archive_height(const std::vector<xchain_state_info_t>& info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_archive_height_list(std::vector<xchain_state_info_t>& info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-
-    void push_newblock_new(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
     void send_get_on_demand_blocks_with_params(const std::string &address,
             uint64_t start_height, uint32_t count, bool is_consensus, const std::string & last_unit_hash,
             const vnetwork::xvnode_address_t &self_addr,
@@ -83,7 +57,10 @@ public:
     void send_block_response(const xsync_msg_block_request_ptr_t& request_ptr, const std::vector< data::xblock_ptr_t> &vector_blocks,uint32_t response_extend_option,
                              std::string extend_data, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
 
-    bool send_message(xobject_ptr_t<basic::xserialize_face_t> serializer, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    bool send_message(xobject_ptr_t<basic::xserialize_face_t> serializer, const common::xmessage_id_t msgid, const std::string metric_key, 
+                     const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, bool without_dataunit_serialize = false);
+
+
 protected:
     std::string m_vnode_id;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost{};

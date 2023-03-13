@@ -53,7 +53,7 @@ public:
     xtop_basic_runnable & operator=(xtop_basic_runnable &&) = default;
     ~xtop_basic_runnable() = default;
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
     xtop_basic_runnable() noexcept {
     }
 #else
@@ -81,7 +81,7 @@ public:
     xtop_trival_runnable & operator=(xtop_trival_runnable &&) = default;
     ~xtop_trival_runnable() = default;
 
-#if !defined XCXX14_OR_ABOVE
+#if !defined(XCXX14)
     xtop_trival_runnable() noexcept {
     }
 #else

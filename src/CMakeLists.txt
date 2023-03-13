@@ -1,6 +1,3 @@
-# xdepends
-add_subdirectory(xtopcom/xdepends)
-
 if(XENABLE_CODE_COVERAGE)
     add_compile_options(--coverage)
     link_libraries(gcov)
@@ -10,11 +7,8 @@ add_compile_options(
     -Wall
     -Werror
     -Wfatal-errors
-
     # -Wpedantic  # recommended
     # -Wextra
-    # -Wconversion
-    # -Wempty-body
     -Werror=return-type
     -Werror=write-strings
     -Werror=unused-label

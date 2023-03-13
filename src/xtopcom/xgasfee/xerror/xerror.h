@@ -37,7 +37,7 @@ std::error_category const & gasfee_category();
 
 namespace std {
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::gasfee::error::xerrc_t> final {

@@ -36,6 +36,7 @@ enum class xenum_errc {
     table_base_address_is_empty,
     invalid_table_base_address,
     invalid_table_address,
+    not_enough_data,
 };
 using xerrc_t = xenum_errc;
 
@@ -48,7 +49,7 @@ NS_END3
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::common::error::xerrc_t> final {

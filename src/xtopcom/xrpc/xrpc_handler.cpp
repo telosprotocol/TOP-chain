@@ -40,9 +40,10 @@ xrpc_handler::xrpc_handler(std::shared_ptr<xvnetwork_driver_face_t>           ar
 
 void xrpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
     XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_cluster_rpc_handler");
-    auto msgid = message.id();
-
-    xdbg_rpc("xarc_rpc_handler on_message,id(%x,%s)", msgid, edge_sender.to_string().c_str());  // address to_string
+#if defined(DEBUG)
+    auto msg_id = message.id();
+    xdbg_rpc("xarc_rpc_handler on_message,id(%x,%s)", msg_id, edge_sender.to_string().c_str());  // address to_string
+#endif
 
     auto self = shared_from_this();
     auto process_request = [self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
@@ -86,7 +87,10 @@ void xrpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, 
     std::string account;
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
         xtransaction_ptr_t tx_ptr;
-        auto ret = xtransaction_t::set_tx_by_serialized_data(tx_ptr, edge_msg.m_message_body);
+#if !defined(NDEBUG)
+        auto ret =
+#endif
+        xtransaction_t::set_tx_by_serialized_data(tx_ptr, edge_msg.m_message_body);
         assert(ret == true);
 
         tx_hash = tx_ptr->get_digest_hex_str();

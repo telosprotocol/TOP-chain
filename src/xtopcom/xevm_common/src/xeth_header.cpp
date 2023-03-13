@@ -22,7 +22,7 @@
 
 #include "xbasic/xhex.h"
 #include "xdepends/include/json/reader.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xutility/xhash.h"
 
 NS_BEG2(top, evm_common)

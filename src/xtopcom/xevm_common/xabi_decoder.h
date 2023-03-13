@@ -8,8 +8,8 @@
 #include "xbasic/xhex.h"
 #include "xbasic/xstring.h"
 #include "xcommon/xeth_address.h"
-#include "xevm_common/common.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common.h"
+#include "xcommon/common_data.h"
 #include "xevm_common/xerror/xerror.h"
 
 #include <cassert>
@@ -48,10 +48,14 @@ private:
 
 public:
     static xtop_abi_decoder build_from_hex_string(std::string const & input_hex_string, std::error_code & ec);
+    static xtop_abi_decoder build_from_hex_string(std::string const & input_hex_string);
     static xtop_abi_decoder build_from(xbytes_t const & input, std::error_code & ec);
 
     template <typename T>
     T extract(std::error_code & ec);
+
+    template <typename T>
+    T extract();
 
     bool empty() const noexcept;
 
@@ -261,6 +265,9 @@ using xabi_decoder_t = xtop_abi_decoder;
 
 template <>
 xfunction_selector_t xtop_abi_decoder::extract<xfunction_selector_t>(std::error_code & ec);
+
+template <>
+xfunction_selector_t xtop_abi_decoder::extract<xfunction_selector_t>();
 
 template <>
 common::xeth_address_t xtop_abi_decoder::extract<common::xeth_address_t>(std::error_code & ec);

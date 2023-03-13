@@ -32,7 +32,7 @@ struct convert<top::data::election::v2::xelection_cluster_result_t> final {
             }
             case xelection_cluster_result_results_index: {
                 result.results(o.via.array.ptr[xelection_cluster_result_results_index].as<std::map<top::common::xgroup_id_t, top::data::election::v2::xelection_group_result_t>>());
-                XATTRIBUTE_FALLTHROUGH;
+                break;
             }
         }
 

@@ -28,8 +28,8 @@
 #define VALID_AUDITOR(node) (node.deposit() > 0 && node.can_be_auditor())
 #define VALID_VALIDATOR(node) (node.deposit() > 0)
 
-enum { total_idx = 0, valid_idx, deposit_zero_num, num_type_idx_num } xreward_num_type_e;
-enum { edger_idx = 0, archiver_idx, auditor_idx, validator_idx, evm_auditor_idx, evm_validator_idx, role_type_idx_num } xreward_role_type_e;
+enum { total_idx = 0, valid_idx, deposit_zero_num, num_type_idx_num } /*xreward_num_type_e*/;
+enum { edger_idx = 0, archiver_idx, auditor_idx, validator_idx, evm_auditor_idx, evm_validator_idx, role_type_idx_num } /*xreward_role_type_e*/;
 
 NS_BEG2(top, xstake)
 
@@ -151,7 +151,7 @@ void xzec_reward_contract::update_reg_contract_read_status(const uint64_t cur_ti
           last_read_time,
           last_read_height,
           latest_height);
-    XCONTRACT_ENSURE(latest_height >= last_read_height, u8"xzec_reward_contract::update_reg_contract_read_status latest_height < last_read_height");
+    XCONTRACT_ENSURE(latest_height >= last_read_height, "xzec_reward_contract::update_reg_contract_read_status latest_height < last_read_height");
     if (latest_height == last_read_height) {
         XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", last_read_height, "current_time", cur_time);
         STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));
@@ -484,7 +484,7 @@ uint64_t xzec_reward_contract::get_activated_time() const {
     return reserve_reward;
 }
 
-::uint128_t xzec_reward_contract::calc_issuance_internal(uint64_t total_height,
+::uint128_t xzec_reward_contract::calc_issuance_internal(uint64_t const total_height,
                                                          uint64_t & last_issuance_time,
                                                          ::uint128_t const & minimum_issuance,
                                                          const uint32_t issuance_rate,
@@ -710,10 +710,10 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
                                             data::system_contract::xissue_detail_v2 & issue_detail) {
     // get time
     auto activation_str = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
-    XCONTRACT_ENSURE(activation_str.size() != 0, "STRING GET XPORPERTY_CONTRACT_GENESIS_STAGE_KEY empty");
+    XCONTRACT_ENSURE(!activation_str.empty(), "STRING GET XPORPERTY_CONTRACT_GENESIS_STAGE_KEY empty");
 
     data::system_contract::xactivation_record record;
-    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)activation_str.c_str(), (uint32_t)activation_str.size());
+    base::xstream_t stream(base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(activation_str.c_str())), static_cast<uint32_t>(activation_str.size()));
     record.serialize_from(stream);
     activation_time = record.activation_time;
     // get onchain param
@@ -738,7 +738,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     xinfo(
         "[xzec_reward_contract::get_reward_param] onchain_timer_round: %u, min_ratio_annual_total_reward: %u, additional_issue_year_ratio: %u, edge_reward_ratio: %u, "
         "archive_reward_ratio: %u, validator_reward_ratio: %u, auditor_reward_ratio: %u, evm_validator_reward_ratio: %u, evm_auditor_reward_ratio: %u, vote_reward_ratio: %u, "
-        "governance_reward_ratio: %u, auditor_group_zero_workload: %u, validator_group_zero_workload: %u, total_ratio: %u",
+        "governance_reward_ratio: %u, auditor_group_zero_workload: %u, validator_group_zero_workload: %u, total_ratio: %u activation_time %" PRIu64,
         current_time,
         onchain_param.min_ratio_annual_total_reward,
         onchain_param.additional_issue_year_ratio,
@@ -752,7 +752,8 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         onchain_param.governance_reward_ratio,
         onchain_param.auditor_group_zero_workload,
         onchain_param.validator_group_zero_workload,
-        total_ratio);
+        total_ratio,
+        static_cast<uint64_t>(activation_time));
     XCONTRACT_ENSURE(total_ratio == 100, "onchain reward total ratio not 100!");
     issue_detail.onchain_timer_round = current_time;
     issue_detail.m_zec_vote_contract_height = get_blockchain_height(sys_contract_zec_vote_addr);
@@ -862,7 +863,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
 /**
  * @brief calculate issuance
  *
- * @param issue_time currnet time - actived time
+ * @param issue_time_length currnet time - actived time
  * @param min_ratio_annual_total_reward onchain_parameter
  * @param additional_issue_year_ratio onchain_parameter
  * @param record accumulated reward record
@@ -872,7 +873,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
                                                       const uint32_t min_ratio_annual_total_reward,
                                                       const uint32_t additional_issue_year_ratio,
                                                       data::system_contract::xaccumulated_reward_record & record) {
-    auto minimum_issuance = static_cast<::uint128_t>(TOTAL_ISSUANCE) * min_ratio_annual_total_reward / 100 * data::system_contract::REWARD_PRECISION;
+    auto const minimum_issuance = static_cast<::uint128_t>(TOTAL_ISSUANCE) * min_ratio_annual_total_reward / 100 * data::system_contract::REWARD_PRECISION;
     return calc_issuance_internal(issue_time_length, record.last_issuance_time, minimum_issuance, additional_issue_year_ratio, record.issued_until_last_year_end);
 }
 
@@ -889,7 +890,7 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
 
     // calc nums
     for (auto const & entity : map_nodes) {
-        auto const & account = entity.first;
+        // auto const & account = entity.first;
         auto const & node = entity.second;
 
         // now statistical method
@@ -962,7 +963,7 @@ uint64_t xzec_reward_contract::calc_votes(std::map<common::xaccount_address_t, s
         auto & node = entity.second;
         uint64_t node_total_votes = 0;
         for (auto const & vote_detail : votes_detail) {
-            auto const & contract = vote_detail.first;
+            // auto const & contract = vote_detail.first;
             auto const & vote = vote_detail.second;
             auto iter = vote.find(account);
             if (iter != vote.end()) {
@@ -1007,9 +1008,9 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     for (auto & entity : map_nodes) {
         auto const & account = entity.first;
-        auto & node = entity.second;
+        // auto & node = entity.second;
         for (auto const & vote_detail : votes_detail) {
-            auto const & contract = vote_detail.first;
+            // auto const & contract = vote_detail.first;
             auto const & vote = vote_detail.second;
             auto iter = vote.find(account);
             if (iter != vote.end()) {

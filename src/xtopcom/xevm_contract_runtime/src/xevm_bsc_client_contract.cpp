@@ -4,20 +4,25 @@
 
 #include "xevm_contract_runtime/sys_contract/xevm_bsc_client_contract.h"
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "xbasic/endianness.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 
-NS_BEG4(top, contract_runtime, evm, sys_contract)
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
+#include <nlohmann/fifo_map.hpp>
+#endif
+#include <nlohmann/json.hpp>
 
 using namespace top::evm_common;
+
+NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 constexpr uint64_t confirm_num = 15;
 constexpr uint64_t validator_num = 21;

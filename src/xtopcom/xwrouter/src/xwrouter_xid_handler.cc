@@ -346,10 +346,12 @@ void WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, 
         for (uint32_t i = 0; i < bloomfilter_vec.size(); ++i) {
             message.add_bloomfilter(bloomfilter_vec[i]);
         }
+#if defined(DEBUG)
         xdbg("finally get destnode size:%u", rest_neighbors.size());
         for (const auto & item : rest_neighbors) {
             xdbg("finally get %s %s:%u", (item->node_id).c_str(), item->public_ip.c_str(), item->public_port);
         }
+#endif
     }
 
     std::string data;

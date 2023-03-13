@@ -58,6 +58,7 @@ class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
     std::string     dump() const;    
 
  public:
+    bool                    is_valid_mpt_index() const {return m_latest_unit_height != 0 || false == m_unit_hash.empty();}
     const uint64_t          get_latest_tx_nonce() const {return m_latest_tx_nonce;}
     uint64_t                get_latest_unit_height() const {return m_latest_unit_height;}
     uint64_t                get_latest_unit_viewid() const {return m_latest_unit_viewid;}

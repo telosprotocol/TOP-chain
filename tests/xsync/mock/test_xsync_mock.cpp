@@ -133,9 +133,9 @@ static int duplicate_block(xobject_ptr_t<base::xvblockstore_t> &from, xobject_pt
 }
 
 // 1shard(2node)
-static xJson::Value test_behind() {
+static Json::Value test_behind() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -153,7 +153,7 @@ static xJson::Value test_behind() {
 
 TEST(test_xsync, behind) {
 
-    xJson::Value validators = test_behind();
+    Json::Value validators = test_behind();
     xmock_network_config_t cfg_network(validators);
     xmock_network_t network(cfg_network);
     xmock_system_t sys(network);
@@ -189,9 +189,9 @@ TEST(test_xsync, behind) {
 }
 
 // 1shard(2node) + 1 archive(6node)
-static xJson::Value test_push_and_broadcast() {
+static Json::Value test_push_and_broadcast() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -218,7 +218,7 @@ static xJson::Value test_push_and_broadcast() {
 
 TEST(test_xsync, push_and_broadcast) {
 
-    xJson::Value virtual_network = test_push_and_broadcast();
+    Json::Value virtual_network = test_push_and_broadcast();
     xmock_network_config_t cfg_network(virtual_network);
     xmock_network_t network(cfg_network);
     xmock_system_t sys(network);
@@ -268,9 +268,9 @@ TEST(test_xsync, push_and_broadcast) {
 }
 
 // 1 archive(2node)
-static xJson::Value test_v1_newblockhash() {
+static Json::Value test_v1_newblockhash() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -284,7 +284,7 @@ static xJson::Value test_v1_newblockhash() {
 
 TEST(test_xsync, v1_newblockhash) {
 
-    xJson::Value virtual_network = test_v1_newblockhash();
+    Json::Value virtual_network = test_v1_newblockhash();
     xmock_network_config_t cfg_network(virtual_network);
     xmock_network_t network(cfg_network);
     xmock_system_t sys(network);
@@ -406,9 +406,9 @@ private:
 };
 
 // 1shard(2node)
-static xJson::Value test_exception() {
+static Json::Value test_exception() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -426,7 +426,7 @@ static xJson::Value test_exception() {
 
 TEST(test_xsync, exception) {
 
-    xJson::Value validators = test_exception();
+    Json::Value validators = test_exception();
     xmock_network_config_t cfg_network(validators);
     xmock_network_t network(cfg_network);
     xmock_system_t sys(network);
@@ -486,9 +486,9 @@ TEST(test_xsync, exception) {
 #endif
 
 // 1shard(1node) + 1 archive(1node)
-static xJson::Value build_network_xsync_on_demand() {
+static Json::Value build_network_xsync_on_demand() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -509,7 +509,7 @@ static xJson::Value build_network_xsync_on_demand() {
 
 TEST(test_xsync, on_demand_sync_unit_no_consensus) {
 
-    xJson::Value network_on_demand = build_network_xsync_on_demand();
+    Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     xmock_system_t sys(network);
@@ -556,7 +556,7 @@ TEST(test_xsync, on_demand_sync_unit_no_consensus) {
 
 TEST(test_xsync, on_demand_sync_unit_consensus) {
 
-    xJson::Value network_on_demand = build_network_xsync_on_demand();
+    Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     xmock_system_t sys(network);
@@ -603,7 +603,7 @@ TEST(test_xsync, on_demand_sync_unit_consensus) {
 
 TEST(test_xsync, on_demand_sync_table_no_consensus) {
 
-    xJson::Value network_on_demand = build_network_xsync_on_demand();
+    Json::Value network_on_demand = build_network_xsync_on_demand();
     xmock_network_config_t cfg_network(network_on_demand);
     xmock_network_t network(cfg_network);
     xmock_system_t sys(network);

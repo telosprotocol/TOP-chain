@@ -110,7 +110,7 @@ NS_BEG3(top, evm_common, trie)
 //    return (!s.empty()) && (s[s.size() - 1] == 16);
 //}
 
-xbytes_t hex_to_compact(gsl::span<xbyte_t const> hex) {
+xbytes_t hex_to_compact(xspan_t<xbyte_t const> hex) {
     auto terminator = xbyte_t{0};
     if (has_terminator(hex)) {
         terminator = 1;
@@ -128,7 +128,7 @@ xbytes_t hex_to_compact(gsl::span<xbyte_t const> hex) {
      */
 
     xbytes_t result(hex.size() / 2 + 1);
-    gsl::span<xbyte_t> const out{result};
+    xspan_t<xbyte_t> const out{result};
 
     out[0] = static_cast<xbyte_t>(terminator << 5);  // the flag byte
     if ((hex.size() & 1) == 1) {
@@ -141,7 +141,7 @@ xbytes_t hex_to_compact(gsl::span<xbyte_t const> hex) {
     return result;
 }
 
-std::size_t hex_to_compact_inplace(gsl::span<xbyte_t> const hex) {
+std::size_t hex_to_compact_inplace(xspan_t<xbyte_t> const hex) {
     auto first_byte = xbyte_t{0};
     auto hex_len = hex.size();
     if (has_terminator(hex)) {
@@ -162,13 +162,13 @@ std::size_t hex_to_compact_inplace(gsl::span<xbyte_t> const hex) {
     return bin_len;
 }
 
-xbytes_t compact_to_hex(gsl::span<xbyte_t const> const compact) {
+xbytes_t compact_to_hex(xspan_t<xbyte_t const> const compact) {
     if (compact.empty()) {
         return {};
     }
 
     auto base = key_bytes_to_hex(compact);
-    gsl::span<xbyte_t const> base_span{base};
+    xspan_t<xbyte_t const> base_span{base};
 
     // delete terminator flag
     if (base_span[0] < 2) {
@@ -180,7 +180,7 @@ xbytes_t compact_to_hex(gsl::span<xbyte_t const> const compact) {
     return {std::begin(base_span), std::end(base_span)};
 }
 
-xbytes_t key_bytes_to_hex(gsl::span<xbyte_t const> const bytes) {
+xbytes_t key_bytes_to_hex(xspan_t<xbyte_t const> const bytes) {
     std::size_t const l = bytes.size() * 2 + 1;
     auto nibbles = xbytes_t(l);
     for (std::size_t index = 0; index < bytes.size(); ++index) {
@@ -191,7 +191,7 @@ xbytes_t key_bytes_to_hex(gsl::span<xbyte_t const> const bytes) {
     return nibbles;
 }
 
-xbytes_t hex_to_key_bytes(gsl::span<xbyte_t const> hex) {
+xbytes_t hex_to_key_bytes(xspan_t<xbyte_t const> hex) {
     if (has_terminator(hex)) {
         hex = hex.first(hex.size() - 1);
     }
@@ -203,13 +203,13 @@ xbytes_t hex_to_key_bytes(gsl::span<xbyte_t const> hex) {
     return key;
 }
 
-void decode_nibbles(gsl::span<xbyte_t const> const nibbles, gsl::span<xbyte_t> out) {
+void decode_nibbles(xspan_t<xbyte_t const> const nibbles, xspan_t<xbyte_t> out) {
     for (std::size_t bi = 0, ni = 0; ni < nibbles.size(); bi += 1, ni += 2) {
         out[bi] = nibbles[ni] << 4 | nibbles[ni + 1];
     }
 }
 
-std::size_t prefix_len(gsl::span<xbyte_t const> const a, gsl::span<xbyte_t const> const b) {
+std::size_t prefix_len(xspan_t<xbyte_t const> const a, xspan_t<xbyte_t const> const b) {
     std::size_t const length = std::min(a.size(), b.size());
 
     for (std::size_t i = 0; i < length; i++) {
@@ -220,7 +220,7 @@ std::size_t prefix_len(gsl::span<xbyte_t const> const a, gsl::span<xbyte_t const
     return length;
 }
 
-bool has_terminator(gsl::span<xbyte_t const> const bytes) {
+bool has_terminator(xspan_t<xbyte_t const> const bytes) {
     return (!bytes.empty()) && (bytes.back() == 16);
 }
 

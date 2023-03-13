@@ -172,7 +172,9 @@ xfilter_result_t xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwo
         constexpr std::uint64_t future_threshold{ 2 };
         constexpr std::uint64_t past_threshold{ 6 };
 
-        if ((local_time != 0) && (local_time + future_threshold < msg_time) && message.id() != xmessage_block_broadcast_id) {
+        auto const message_category = get_message_category(message.id());
+
+        if ((local_time != 0) && (local_time + future_threshold < msg_time) && (message.id() != xmessage_block_broadcast_id && message_category != xmessage_category_timer)) {
             ec = xvnetwork_errc2_t::future_message;
 
             // receive a message from future, ignore
@@ -183,7 +185,7 @@ xfilter_result_t xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwo
             return xfilter_result_t::stop_filtering;
         }
 
-        if ((msg_time != 0) && (msg_time + past_threshold < local_time) && message.id() != xmessage_block_broadcast_id) {
+        if ((msg_time != 0) && (msg_time + past_threshold < local_time) && (message.id() != xmessage_block_broadcast_id && message_category != xmessage_category_timer)) {
             ec = xvnetwork_errc2_t::expired_message;
 
             // receive a message from past, ignore
@@ -221,29 +223,10 @@ xfilter_result_t xtop_message_filter_message_id::filter(xvnetwork_message_t & vn
         static_cast<uint64_t>(vnetwork_message.hash()),
         vnetwork_message.sender().to_string().c_str(),
         vnetwork_message.receiver().to_string().c_str());
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wswitch"
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wswitch"
-#elif defined(_MSC_VER)
-#    pragma warning(push, 0)
-#endif
-    switch (message_category) {
-    case xmessage_category_timer:
-        return xfilter_result_t::stop_filtering;
 
-    default:
-        break;
+    if (message_category == xmessage_category_timer) {
+        return xfilter_result_t::stop_filtering;
     }
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-#    pragma warning(pop)
-#endif
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -256,19 +239,19 @@ xfilter_result_t xtop_message_filter_message_id::filter(xvnetwork_message_t & vn
 #endif
     switch (message_id) {
     case xmessage_block_broadcast_id:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtxpool_msg_send_receipt:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtxpool_msg_recv_receipt:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtxpool_msg_pull_recv_receipt:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtxpool_msg_pull_confirm_receipt:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtxpool_msg_push_receipt:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtxpool_msg_pull_confirm_receipt_v2:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtxpool_msg_receipt_id_state:
     {
         assert(!broadcast(vnetwork_message.receiver().network_id()));
@@ -618,7 +601,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
         return false;
     }
 
-    auto recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
+    auto const recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
     if (ec) {
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
@@ -784,10 +767,12 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
+#if !defined(NDEBUG)
     auto const & sender = vnetwork_message.sender();
 
     assert(sender.group_address() != recver.group_address());
     assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+#endif
 
     // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
     // if they have same associated auditor group, their logic epoch should be the same (follow the logic defined in the election contract).
@@ -942,10 +927,12 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_non_associated_
     assert(!broadcast(vnetwork_message.receiver().cluster_id()));
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
+#if !defined(NDEBUG)
+    auto const & sender = vnetwork_message.sender();
     assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()));
+#endif
     if (sender_auditor->address().group_address() == recver_associated_auditor->address().group_address()) {
         return true;
     }
@@ -1449,7 +1436,7 @@ bool xtop_message_filter_recver_is_rec::filter_sender_from_rec(xvnetwork_message
     }
 
     auto const & recver = vnetwork_message.receiver();
-    auto const & sender = vnetwork_message.sender();
+    // auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
         normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
@@ -1523,7 +1510,7 @@ bool xtop_message_filter_recver_is_zec::filter_sender_from_zec(xvnetwork_message
     }
 
     auto const & recver = vnetwork_message.receiver();
-    auto const & sender = vnetwork_message.sender();
+    // auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
         normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {

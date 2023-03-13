@@ -2,7 +2,7 @@
 
 #include "xbasic/xhex.h"
 #include "xcommon/xnode_id.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xstate_sync/xerror.h"
 #include "xstate_sync/xstate_sync_face.h"
 #include "xvledger/xvdbkey.h"
@@ -321,7 +321,7 @@ static std::vector<std::string> peers_str = {
     "T800001137153c6dc7e8d167a74b0e947b00cd6d2d1b0b",
 };
 
-static auto peers_func = [&](const common::xtable_id_t &, size_t num = 10) -> state_sync::sync_peers {
+static auto peers_func = [](const common::xtable_id_t &, size_t num = 10) -> state_sync::sync_peers {
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network = std::make_shared<xmock_vnetwork_driver_t>();
     std::vector<vnetwork::xvnode_address_t> peers;
     common::xgroup_address_t group{common::xnetwork_id_t(255)};

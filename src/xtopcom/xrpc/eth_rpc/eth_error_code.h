@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #pragma once
 #include <map>
-#include "json/json.h"
+#include <json/json.h>
 
 namespace eth {
 enum enum_error_code {
@@ -36,10 +36,10 @@ struct ErrorMessage {
 };
 class EthErrorCode {
 public:
-    static void deal_error(xJson::Value & js_rsp, eth::enum_eth_rpc_code error_id, const std::string& msg);
-    static bool check_hex(const std::string& account, xJson::Value & js_rsp, uint32_t index, const enum_rpc_check_type type);
-    static bool check_eth_address(const std::string& account, xJson::Value & js_rsp);
-    static bool check_hash(const std::string& hash, xJson::Value & js_rsp);
-    static bool check_req(const xJson::Value & js_req, xJson::Value & js_rsp, const uint32_t number);
+    static void deal_error(Json::Value & js_rsp, eth::enum_eth_rpc_code error_id, const std::string& msg);
+    static bool check_hex(const std::string& account, Json::Value & js_rsp, uint32_t index, const enum_rpc_check_type type);
+    static bool check_eth_address(const std::string& account, Json::Value & js_rsp);
+    static bool check_hash(const std::string& hash, Json::Value & js_rsp);
+    static bool check_req(const Json::Value & js_req, Json::Value & js_rsp, const uint32_t number);
 };
 }

@@ -6,6 +6,10 @@
 #ifndef JSON_AUTOLINK_H_INCLUDED
 #define JSON_AUTOLINK_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #include "config.h"
 
 #ifdef JSON_IN_CPPTL

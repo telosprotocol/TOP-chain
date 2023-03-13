@@ -14,6 +14,7 @@
 #include "xtxexecutor/xtvm.h"
 #include "xtxexecutor/xtvm_v2.h"
 #include "xchain_fork/xutility.h"
+#include "xdata/xtop_receipt.h"
 
 #include <string>
 #include <vector>
@@ -234,6 +235,19 @@ static void set_evm_receipt_info(const xcons_transaction_ptr_t & tx, const xvm_o
     tx->set_evm_tx_receipt(evm_tx_receipt);
 }
 
+static void set_tvm_receipt_info(const xcons_transaction_ptr_t & tx,const xvm_output_t & vmoutput, uint64_t gas_used) {
+    if (tx->get_tx_version() != data::xtransaction_version_2)  {
+        return;
+    }
+    if (true == vmoutput.logs.empty()) {
+        return;
+    }
+    xdbg("[xtxexecutor_top_vm_t::set_tvm_receipt_info] set-logs-tx ready tx(%s)",tx->get_digest_hex_str().c_str());
+    data::xtop_store_receipt_t tvm_tx_receipt(vmoutput.logs);
+    tx->set_tvm_tx_receipt(tvm_tx_receipt);
+    xinfo("[xtxexecutor_top_vm_t::set_tvm_receipt_info] set-logs-tx success,tx(%s)",tx->get_digest_hex_str().c_str());
+}
+
 enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output) {
     // XTODO(TOP-tx or ETH-tx)
     xvm_input_t vminput(m_statectx, m_para, tx);
@@ -402,6 +416,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xaccountstate_pt
 
     if (is_pack_tx) {  // tx packed should update tx related state
         set_evm_receipt_info(tx, output.m_vm_output, gas_used);
+        set_tvm_receipt_info(tx, output.m_vm_output, gas_used);
         bool tx_related_update = update_tx_related_state(tx_accountstate, tx, output.m_vm_output);
         if (false == tx_related_update) {
             xassert(false);

@@ -41,7 +41,7 @@ TransportFilter::~TransportFilter() {
 }
 
 void TransportFilter::Dump() {
-    float time_step = static_cast<float>(kDumpPeriod / 1000.0 / 1000.0);
+    // auto const time_step = static_cast<float>(kDumpPeriod / 1000.0 / 1000.0);
 #ifdef XENABLE_P2P_BENDWIDTH
     static ArrayInfo last_aryinfo;
     for (uint32_t i = 0; i < aryinfo_.size(); ++i) {

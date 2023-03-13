@@ -5,7 +5,11 @@
 #pragma once
 
 #include "xpbase/base/top_string_util.h"
-#include "xtransport/proto/transport.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 
 namespace top {
 namespace transport {

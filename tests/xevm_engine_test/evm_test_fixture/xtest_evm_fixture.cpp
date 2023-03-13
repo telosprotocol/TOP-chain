@@ -1,16 +1,20 @@
 
-#include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
-
-#include "xbasic/xhex.h"
-#include "xdata/xnative_contract_address.h"
-
 #include <dirent.h>
-#include <stdio.h>
 
+#include <cstdio>
 #include <exception>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
+
+#include <gtest/gtest.h>
+
+#define private public
+
+#include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
+#include "xbasic/xhex.h"
+#include "xdata/xnative_contract_address.h"
 
 #define MYEXPECT_TRUE(expr)                                                                                                                                                        \
     {                                                                                                                                                                              \

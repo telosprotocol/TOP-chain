@@ -9,13 +9,14 @@
 #include "xdata/xtransaction.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xverifier/xtx_verifier.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xverifier_utl.h"
+
+using namespace top::data;
 
 namespace top {
 namespace xtxpool_v2 {
 
-using namespace top::data;
 
 void xreceipt_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -30,13 +31,15 @@ void xreceipt_queue_internal_t::erase_tx(const std::string & hash_str) {
     auto it_tx_map = m_tx_map.find(hash_str);
     if (it_tx_map != m_tx_map.end()) {
         auto & tx_ent = *it_tx_map->second;
-        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
         xtxpool_info("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+#if defined(ENABLE_METRICS)
+        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
         if (tx_ent->get_tx()->is_confirm_tx()) {
             XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_recv, delay);
         } else {
             XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_confirm, delay);
         }
+#endif
 
         m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), 1);
         m_tx_queue.erase(it_tx_map->second);
@@ -467,9 +470,11 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get
         auto & need_confirm_ids = need_confirm_ids_pair.second;
         auto it = m_confirm_tx_peer_table_map.find(peer_table_sid);
         if (it == m_confirm_tx_peer_table_map.end()) {
+#if defined(DEBUG)
             for (auto & id : need_confirm_ids.m_ids) {
                 xdbg("xreceipt_queue_new_t::get_lacking_discrete_confirm_tx_ids peer table:%d,receipt id:%llu", peer_table_sid, id);
             }
+#endif
             lacking_receipt_ids.insert(lacking_receipt_ids.end(), need_confirm_ids.m_ids.begin(), need_confirm_ids.m_ids.end());
             total_num += need_confirm_ids.m_ids.size();
         } else {

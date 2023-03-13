@@ -84,7 +84,7 @@ bool xedge_local_method<T>::do_local_method(pair<string, string>& version_method
 //         throw xrpc_error{enum_xrpc_error_code::rpc_param_param_lack, "no private_key find for " + source_action.get_account_addr()};
 //     }
 //     utl::xecdsasig_t signature = iter->second.sign(tx->digest());
-//     xJson::Value dataJson;
+//     Json::Value dataJson;
 //     dataJson["hash"] = uint_to_str(tx->digest().data(), tx->digest().size());
 //     dataJson["signature"] = uint_to_str(signature.get_compact_signature(), signature.get_compact_signature_size());
 //     json_proc.m_response_json["data"] = dataJson;
@@ -97,7 +97,7 @@ bool xedge_local_method<T>::do_local_method(pair<string, string>& version_method
 //     uint8_t addr_type   = static_cast<uint8_t>(request["address_type"].asUInt());
 //     utl::xecprikey_t pri_key_obj;
 //     utl::xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-//     xJson::Value dataJson;
+//     Json::Value dataJson;
 //     std::string account_addr;
 //     dataJson["private_key"] = uint_to_str(pri_key_obj.data(), pri_key_obj.size());
 //     if (request.isMember("parent_account")) {
@@ -137,7 +137,7 @@ bool xedge_local_method<T>::do_local_method(pair<string, string>& version_method
 // template<class T>
 // void xedge_local_method<T>::get_private_keys_method(xjson_proc_t &json_proc) {
 //     std::lock_guard<std::mutex> lock(xedge_local_method<T>::m_mutex);
-//     xJson::Value dataJson;
+//     Json::Value dataJson;
 //     for (auto& kv: m_account_key_map) {
 //         dataJson[kv.first] = uint_to_str(kv.second.data(), kv.second.size());
 //     }
@@ -146,8 +146,8 @@ bool xedge_local_method<T>::do_local_method(pair<string, string>& version_method
 
 template<class T>
 void xedge_local_method<T>::get_edge_neighbors_method(xjson_proc_t &json_proc) {
-    xJson::Value dataJson;
-    xJson::Value::Members ips;
+    Json::Value dataJson;
+    Json::Value::Members ips;
     {
         std::lock_guard<std::mutex> lock(xedge_local_method<T>::m_mutex);
         ips = m_elect_main->GetServiceNeighbours(m_xip2);

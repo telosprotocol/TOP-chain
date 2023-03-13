@@ -1,10 +1,21 @@
 #include "xevm_common/xcrosschain/xethash.h"
 
 #include "xbasic/xhex.h"
+
+#if defined(XCXX20)
+#include "ethash/keccak.hpp"
+#include "ethash/endianness.hpp"
+#include "ethash/ethash-internal.hpp"
+#else
+#include "ethash/keccak.hpp"
+#include "ethash/src/ethash/endianness.hpp"
+#include "ethash/src/ethash/ethash-internal.hpp"
+#endif
+
 #include "xdepends/include/ethash/keccak.hpp"
 #include "xdepends/include/ethash/src/ethash/endianness.hpp"
 #include "xdepends/include/ethash/src/ethash/ethash-internal.hpp"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/src/xethash_data.cpp"
 #include "xevm_common/xcrosschain/xeth_config.h"
 #include "xutility/xhash.h"

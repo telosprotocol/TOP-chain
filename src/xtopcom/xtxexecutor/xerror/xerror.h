@@ -68,7 +68,7 @@ std::error_category const & txexecutor_category();
 
 namespace std {
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::txexecutor::error::xerrc_t> final {

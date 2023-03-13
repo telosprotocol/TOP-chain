@@ -6,11 +6,15 @@
 #ifndef CPPTL_JSON_FEATURES_H_INCLUDED
 #define CPPTL_JSON_FEATURES_H_INCLUDED
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "forwards.h"
 #endif // if !defined(JSON_IS_AMALGAMATION)
 
-namespace xJson {
+namespace Json {
 
 /** \brief Configuration passed to reader and writer.
  * This configuration object can be used to force the Reader or Writer

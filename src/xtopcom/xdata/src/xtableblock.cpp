@@ -42,7 +42,7 @@ void * xtable_block_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-void xtable_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_version) {
+void xtable_block_t::parse_to_json(Json::Value & root, const std::string & rpc_version) {
     if (rpc_version == RPC_VERSION_V2) {
         parse_to_json_v2(root);
     } else {
@@ -50,7 +50,7 @@ void xtable_block_t::parse_to_json(xJson::Value & root, const std::string & rpc_
     }
 }
 
-void xtable_block_t::parse_to_json_v1(xJson::Value & root) {
+void xtable_block_t::parse_to_json_v1(Json::Value & root) {
     std::error_code ec;
     auto input_object = load_input(ec);
     const std::vector<base::xventity_t*> & _table_inentitys = input_object->get_entitys();
@@ -61,10 +61,10 @@ void xtable_block_t::parse_to_json_v1(xJson::Value & root) {
         extend.serialize_from_string(_table_unit_inentity->get_extend_data());
         const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
 
-        xJson::Value jui;
-        jui["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
+        Json::Value jui;
+        jui["unit_height"] = static_cast<Json::UInt64>(_unit_header->get_height());
 
-        xJson::Value jv;
+        Json::Value jv;
         // for block version 2, no action in _table_unit_inentity
         const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
         for (auto & action : input_actions) {
@@ -72,7 +72,7 @@ void xtable_block_t::parse_to_json_v1(xJson::Value & root) {
                 continue;
             }
             xlightunit_action_t txaction(action);
-            xJson::Value juj;
+            Json::Value juj;
             juj["tx_consensus_phase"] = txaction.get_tx_subtype_str();
             juj["sender_tx_locked_gas"] = static_cast<unsigned int>(txaction.get_send_tx_lock_tgas());
 
@@ -96,23 +96,23 @@ void xtable_block_t::parse_to_json_v1(xJson::Value & root) {
     }
 }
 
-void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
-    xJson::Value jv;
+void xtable_block_t::parse_to_json_v2(Json::Value & root) {
+    Json::Value jv;
     const std::vector<xlightunit_action_t> input_actions = xblockextract_t::unpack_txactions(this);
     for(auto txaction : input_actions) {
-        xJson::Value ju;
+        Json::Value ju;
         ju["tx_consensus_phase"] = txaction.get_tx_subtype_str();
         ju["tx_hash"] = "0x" + to_hex_str(txaction.get_org_tx_hash());
         jv["txs"].append(ju);
         // inner table show recvtx and confirm phase for compatibility
         if (txaction.get_inner_table_flag()) {
             xassert(txaction.is_send_tx());
-            xJson::Value ju2;
+            Json::Value ju2;
             ju2["tx_consensus_phase"] = base::xvtxkey_t::transaction_subtype_to_string(base::enum_transaction_subtype_recv);
             ju2["tx_hash"] = "0x" + to_hex_str(txaction.get_org_tx_hash());
             jv["txs"].append(ju2);
             if (!txaction.get_not_need_confirm()) {
-                xJson::Value ju3;
+                Json::Value ju3;
                 ju3["tx_consensus_phase"] = base::xvtxkey_t::transaction_subtype_to_string(base::enum_transaction_subtype_confirm);
                 ju3["tx_hash"] = "0x" + to_hex_str(txaction.get_org_tx_hash());
                 jv["txs"].append(ju3);
@@ -122,8 +122,8 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
 
     auto units_indexes = get_subblocks_index();
     for (auto unit_index : units_indexes) {
-        xJson::Value ju;
-        ju["unit_height"] = static_cast<xJson::UInt64>(unit_index.get_block_height());
+        Json::Value ju;
+        ju["unit_height"] = static_cast<Json::UInt64>(unit_index.get_block_height());
         ju["account"] = unit_index.get_block_address();
         jv["units"].append(ju);
     }

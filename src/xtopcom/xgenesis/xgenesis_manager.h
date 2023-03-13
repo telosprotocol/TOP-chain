@@ -39,6 +39,8 @@ public:
     /// @return Block created.
     base::xauto_ptr<base::xvblock_t> create_genesis_block(base::xvaccount_t const & account, std::error_code & ec);
 
+    static std::set<common::xaccount_address_t> const& get_all_genesis_accounts() {return m_all_genesis_accounts;}
+
 private:
     /// @brief Create genesis block of root account.
     /// @param ec Log the error code.
@@ -105,6 +107,8 @@ private:
     std::set<common::xaccount_address_t> m_evm_contract_accounts;
     std::map<common::xaccount_address_t, uint64_t> m_genesis_accounts_data;
     std::map<common::xaccount_address_t, chain_data::data_processor_t> m_user_accounts_data;
+
+    static std::set<common::xaccount_address_t>     m_all_genesis_accounts;
 };
 using xgenesis_manager_t = xtop_genesis_manager;
 

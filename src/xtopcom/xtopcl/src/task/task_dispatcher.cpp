@@ -10,10 +10,10 @@
 #include <assert.h>
 
 extern xChainSDK::user_info g_userinfo;
-
-namespace xChainSDK {
 using namespace top::xrpc;
 using namespace top::data;
+
+namespace xChainSDK {
 using std::cout;
 using std::endl;
 task_dispatcher * task_dispatcher::s_instance = nullptr;
@@ -23,7 +23,10 @@ std::once_flag task_dispatcher::m_once_init_flag;
 
 task_dispatcher::task_dispatcher() : seed_fetcher(g_edge_domain) {
     seeds.push_back(g_server_host_port);
-    auto rtn = seed_fetcher.GetEdgeSeeds(seeds);
+#if defined(DEBUG)
+    auto rtn =
+#endif
+    seed_fetcher.GetEdgeSeeds(seeds);
 #ifdef DEBUG
     if (!rtn) {
         std::cout << "[debug]get seeds from " << SEED_URL << " failed" << std::endl;
@@ -265,8 +268,8 @@ std::string task_dispatcher::get_result() {
 }
 
 void task_dispatcher::push_result_queue(std::string const & result, RequestTaskPtr & task) {
-    xJson::Reader reader;
-    xJson::Value root;
+    Json::Reader reader;
+    Json::Value root;
     try {
         reader.parse(result, root);
     } catch (...) {

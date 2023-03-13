@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <sstream>
 #define private public
 #define protected public
@@ -18,8 +19,6 @@
 #include "xstatestore/xstatestore_face.h"
 // #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 // #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
-
-#include <gtest/gtest.h>
 
 NS_BEG3(top, tests, contract_vm)
 
@@ -413,7 +412,7 @@ TEST_F(test_contract_vm, test_recv_tx) {
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
             auto value = top::from_bytes<uint256_t>({std::begin(string), std::end(string)});
-            EXPECT_EQ(value, last_hash);
+            EXPECT_TRUE(value == last_hash);
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_RECVTX_NUM);
@@ -789,7 +788,7 @@ TEST_F(test_contract_vm, test_async_call) {
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
             auto value = top::from_bytes<uint256_t>({std::begin(string), std::end(string)});
-            EXPECT_EQ(value, followup_hash);
+            EXPECT_TRUE(value == followup_hash);
         }
         {
             auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_RECVTX_NUM);

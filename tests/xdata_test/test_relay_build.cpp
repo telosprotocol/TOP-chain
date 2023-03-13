@@ -7,7 +7,7 @@
 #include "xdata/xrelayblock_build.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xnative_contract_address.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "tests/xdata_test/test_eth.hpp"
 
 using namespace top;

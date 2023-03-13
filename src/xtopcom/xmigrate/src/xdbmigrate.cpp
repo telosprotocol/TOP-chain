@@ -7,9 +7,6 @@
 #include "xvledger/xvdbfilter.h"
 #include "xdb/xdb_factory.h"
 #include "xdbmigrate.h"
-#include "xkeymigrate.h"
-#include "xblkmigrate.h"
-#include "xtxsmigrate.h"
 
 namespace top
 {
@@ -45,7 +42,7 @@ namespace top
 
         bool xmigratedb_t::set_values(const std::map<std::string, std::string> & batch)
         {
-            return m_db_face_ptr->batch_change(batch, std::vector<gsl::span<char const>>{});
+            return m_db_face_ptr->batch_change(batch, std::vector<xspan_t<char const>>{});
         }
         
         bool xmigratedb_t::delete_value(const std::string &key)
@@ -70,7 +67,7 @@ namespace top
             return m_db_face_ptr->batch_change(empty_put, to_deleted_keys);
         }
 
-        bool xmigratedb_t::delete_values(std::vector<gsl::span<char const >> const & to_deleted_keys) {
+        bool xmigratedb_t::delete_values(std::vector<xspan_t<char const >> const & to_deleted_keys) {
             std::map<std::string, std::string> empty_put;
             return m_db_face_ptr->batch_change(empty_put, to_deleted_keys);
         }
@@ -424,7 +421,7 @@ namespace top
                 }
                 
                 uint32_t thread_index = m_scaned_keys_num++ % THREAD_NUM;
-                size_t queue_size = thread_dbevent_set(thread_index, db_event);
+                /*size_t queue_size = */thread_dbevent_set(thread_index, db_event);
 
                 if (m_scaned_keys_num - m_processed_count > 1000000) {
                     sleep(5);

@@ -25,6 +25,6 @@ namespace xChainSDK {
         int get_int(const std::string& section, const std::string& key);
 
     private:
-        xJson::Value root_;
+        Json::Value root_;
     };
 }

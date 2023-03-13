@@ -9,6 +9,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xstatectx/xstatectx_face.h"
 #include "xevm_common/xevm_transaction_result.h"
+#include "xcommon/xtop_log.h"
 
 NS_BEG2(top, txexecutor)
 
@@ -31,9 +32,6 @@ enum enum_execute_result_type {
 
 class xvm_para_t {
  public:
-    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit)  // for test
-    : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit) {
-    }
     xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit, uint64_t block_height, common::xaccount_address_t const& coinbase)
     : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit), m_block_height(block_height), m_block_coinbase(coinbase) {
     }
@@ -120,6 +118,7 @@ class xvm_output_t {
     std::error_code m_ec;
     int64_t         m_tgas_balance_change{0};
     uint64_t        m_total_gas_burn{0};
+    common::xtop_logs_t  logs;
     std::vector<xcons_transaction_ptr_t> m_contract_create_txs;
     xvm_gasfee_detail_t m_gasfee_detail;
 };

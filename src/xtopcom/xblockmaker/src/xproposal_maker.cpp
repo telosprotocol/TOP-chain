@@ -496,11 +496,13 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         proposal_para.get_table_account(), tablestate_highqc, proposal_para.get_latest_cert_block().get(), all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
     // std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
 
-    auto pack_resource = get_txpool()->get_pack_resource(txpool_pack_para);
+    auto const pack_resource = get_txpool()->get_pack_resource(txpool_pack_para);
+#if defined(DEBUG)
     for (auto & tx : pack_resource.m_txs) {
         xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
                 proposal_para.dump().c_str(), tx->dump().c_str());
     }
+#endif
     // table_para.set_origin_txs(origin_txs);
     table_para.set_pack_resource(pack_resource);
     return true;
@@ -552,11 +554,12 @@ bool xproposal_maker_t::leader_xip_to_leader_address(xvip2_t _xip, common::xacco
     if (leader_address.empty()) {
         return false;
     }
-    // only T6 and T8 node can change to leader address for eth compatibility
+    // XTODO only support T0 or T8 miner address, only T8 address can change to leader address for eth compatibility
     common::xaccount_address_t _coinbase;
     base::enum_vaccount_addr_type addr_type = base::xvaccount_t::get_addrtype_from_account(leader_address);
-    if (addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account && addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        _coinbase = eth_zero_address;
+    if (addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
+        assert(addr_type == base::enum_vaccount_addr_type_secp256k1_user_account);
+        _coinbase = eth_miner_zero_address;
     } else {
         _coinbase = common::xaccount_address_t(leader_address);
     }

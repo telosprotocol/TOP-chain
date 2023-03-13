@@ -2,7 +2,6 @@
 
 #include "xdata/xelection/xelection_result_store.h"
 #include "xpbase/base/top_config.h"
-#include "xtransport/proto/transport.pb.h"
 #include "xtransport/transport.h"
 #include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/multi_routing/net_node.h"
@@ -25,7 +24,7 @@ public:
     ~ElectManager() = default;
 
 public:
-    void OnElectUpdated(const data::election::xelection_result_store_t & election_result_store, common::xzone_id_t const & zid, std::uint64_t const associated_blk_height);
+    void OnElectUpdated(const data::election::xelection_result_store_t & election_result_store, common::xzone_id_t const & zid, std::uint64_t associated_blk_height);
 
     void OnElectQuit(const common::xip2_t & xip2);
 

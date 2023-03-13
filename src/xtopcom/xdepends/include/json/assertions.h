@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <sstream>
 
+#if !defined(Json)
+#    define Json xJson
+#endif
+
 #if !defined(JSON_IS_AMALGAMATION)
 #include "config.h"
 #endif // if !defined(JSON_IS_AMALGAMATION)

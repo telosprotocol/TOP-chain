@@ -233,19 +233,5 @@ uint32_t  xblock_t::query_tx_size(const std::string & txhash) const {
     return value.size();
 }
 
-std::vector<base::xvtxkey_t> xblock_t::get_txkeys() const {
-    // only unit-block has txkeys
-    if (get_block_level() != base::enum_xvblock_level_unit) {
-        xassert(false);
-        return {};
-    }
-    auto & extra_str = get_header()->get_extra_data();
-    if (extra_str.empty()) {
-        return {};
-    }
-    xunitheader_extra_t he;
-    he.serialize_from_string(extra_str);
-    return he.get_txkeys();
-}
 
 NS_END2

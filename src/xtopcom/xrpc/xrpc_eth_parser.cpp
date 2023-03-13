@@ -33,7 +33,7 @@ std::string xrpc_eth_parser_t::u256_to_hex_prefixed(evm_common::u256 const& valu
     return std::string("0x") + value_str.substr(i);
 }
 
-void xrpc_eth_parser_t::log_to_json(xlog_location_t const& loglocation, evm_common::xevm_log_t const& log, xJson::Value & js_v) {
+void xrpc_eth_parser_t::log_to_json(xlog_location_t const& loglocation, evm_common::xevm_log_t const& log, Json::Value & js_v) {
     js_v["blockNumber"] = loglocation.m_block_number;
     js_v["blockHash"] = loglocation.m_block_hash;
     js_v["transactionHash"] = loglocation.m_tx_hash;
@@ -47,7 +47,7 @@ void xrpc_eth_parser_t::log_to_json(xlog_location_t const& loglocation, evm_comm
     js_v["data"] = top::to_hex_prefixed(log.data);
 }
 
-void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, xJson::Value & js_v, std::error_code & ec) {
+void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, Json::Value & js_v, std::error_code & ec) {
     std::string block_hash = top::to_hex_prefixed(sendindex->get_block_hash());
     std::string block_num = uint64_to_hex_prefixed(sendindex->get_txindex()->get_block_height());
     std::string tx_idx = uint64_to_hex_prefixed((uint64_t)sendindex->get_transaction_index());
@@ -71,7 +71,7 @@ void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_de
     receipt_to_json(txlocation, ethtx, evm_tx_receipt, js_v, ec);
 }
 
-void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, data::xtransaction_ptr_t const& rawtx, xJson::Value & js_v, std::error_code & ec) {
+void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, data::xtransaction_ptr_t const& rawtx, Json::Value & js_v, std::error_code & ec) {
     // txlocation
     js_v["blockHash"] = txlocation.m_block_hash;
     js_v["blockNumber"] = txlocation.m_block_number;
@@ -84,7 +84,7 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
     }
     transaction_to_json(txlocation, ethtx, js_v, ec);
 }
-void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Value & js_v, std::error_code & ec) {
+void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, Json::Value & js_v, std::error_code & ec) {
     data::xeth_header_t ethheader;
     data::xblockextract_t::unpack_ethheader(_block, ethheader, ec);
     if (ec) {
@@ -116,7 +116,7 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["transactions"].resize(0);
 }
 
-data::xtransaction_ptr_t xrpc_eth_parser_t::json_to_ethtx(xJson::Value const& request, data::eth_error& ec) {
+data::xtransaction_ptr_t xrpc_eth_parser_t::json_to_ethtx(Json::Value const& request, data::eth_error& ec) {
     if (request["params"].empty()) {
         ec = data::eth_error(data::error::xenum_errc::eth_invalid_params, "missing value for required argument 0");
         return nullptr;
@@ -155,7 +155,7 @@ data::xtransaction_ptr_t xrpc_eth_parser_t::json_to_ethtx(xJson::Value const& re
 
 
 
-void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, data::xeth_transaction_t const& ethtx, xJson::Value & js_v, std::error_code & ec) {
+void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, data::xeth_transaction_t const& ethtx, Json::Value & js_v, std::error_code & ec) {
     // txlocation
     js_v["blockHash"] = txlocation.m_block_hash;
     js_v["blockNumber"] = txlocation.m_block_number;
@@ -172,7 +172,7 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
     if (!ethtx.get_to().is_zero()) {
         js_v["to"] = ethtx.get_to().to_hex_string();
     } else {
-        js_v["to"] = xJson::Value::null;
+        js_v["to"] = Json::Value::null;
     }
     js_v["type"] = uint64_to_hex_prefixed((uint64_t)ethtx.get_tx_version());
     js_v["value"] = u256_to_hex_prefixed(ethtx.get_value());
@@ -183,7 +183,7 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
 
 
 void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data::xeth_transaction_t const& ethtx,
-                                        data::xeth_store_receipt_t const &evm_tx_receipt,xJson::Value & js_v, std::error_code & ec) {
+                                        data::xeth_store_receipt_t const &evm_tx_receipt,Json::Value & js_v, std::error_code & ec) {
 
     js_v["blockNumber"] = txlocation.m_block_number;
     js_v["blockHash"] = txlocation.m_block_hash;
@@ -204,7 +204,7 @@ void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data:
             js_v["contractAddress"] = ethtx.get_to().to_hex_string();
         }
     } else {
-        js_v["to"] = xJson::Value::null;
+        js_v["to"] = Json::Value::null;
         js_v["contractAddress"] = evm_tx_receipt.get_contract_address().to_hex_string();
     }
 
@@ -217,7 +217,7 @@ void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data:
         for (auto & log : evm_tx_receipt.get_logs()) {
             loglocation.m_log_index = uint64_to_hex_prefixed(index);
             index++;
-            xJson::Value js_log;
+            Json::Value js_log;
             log_to_json(loglocation, log, js_log);
             js_v["logs"].append(js_log);
         }

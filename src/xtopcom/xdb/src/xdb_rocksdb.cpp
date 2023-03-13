@@ -195,9 +195,9 @@ public:
     bool write(const std::map<std::string, std::string>& batches);
     bool erase(const std::string& key);
     bool erase(const std::vector<std::string>& keys);
-    bool erase(std::vector<gsl::span<char const>> const & keys);
+    bool erase(std::vector<xspan_t<char const>> const & keys);
     bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys);
-    bool batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys);
+    bool batch_change(const std::map<std::string, std::string> & objs, std::vector<xspan_t<char const>> const & delete_keys);
     bool read_range(const std::string& prefix, std::vector<std::string>& values);
 
     bool single_delete(const std::string& key);
@@ -215,7 +215,7 @@ public:
     static void destroy(const std::string& m_db_name);
 
  private:
-    rocksdb::ColumnFamilyHandle* get_cf_handle(gsl::span<char const> key) const;
+    rocksdb::ColumnFamilyHandle* get_cf_handle(xspan_t<char const> key) const;
     void handle_error(const rocksdb::Status& status) const;
     std::string             m_db_name{};
     rocksdb::DB*            m_db{nullptr};
@@ -617,7 +617,7 @@ xdb::xdb_impl::~xdb_impl() {
 }
 
 
-rocksdb::ColumnFamilyHandle * xdb::xdb_impl::get_cf_handle(gsl::span<char const> const key) const {
+rocksdb::ColumnFamilyHandle * xdb::xdb_impl::get_cf_handle(xspan_t<char const> const key) const {
     if(key.size() >= 2)//hit most case
     {
         const char* key_data = key.data();
@@ -762,7 +762,7 @@ bool xdb::xdb_impl::erase(const std::vector<std::string>& keys) {
     return s.ok();
 }
 
-bool xdb::xdb_impl::erase(std::vector<gsl::span<char const>> const & keys) {
+bool xdb::xdb_impl::erase(std::vector<xspan_t<char const>> const & keys) {
     rocksdb::WriteBatch batch;
     for (const auto & key : keys) {
         rocksdb::ColumnFamilyHandle * target_cf = get_cf_handle(key);
@@ -790,7 +790,7 @@ bool xdb::xdb_impl::batch_change(const std::map<std::string, std::string>& objs,
     return s.ok();
 }
 
-bool xdb::xdb_impl::batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys) {
+bool xdb::xdb_impl::batch_change(const std::map<std::string, std::string> & objs, std::vector<xspan_t<char const>> const & delete_keys) {
     rocksdb::WriteBatch batch;
     for (const auto & entry : objs) {
         rocksdb::ColumnFamilyHandle * target_cf = get_cf_handle(entry.first);
@@ -1074,7 +1074,7 @@ bool xdb::erase(const std::vector<std::string>& keys) {
     return ret;
 }
 
-bool xdb::erase(std::vector<gsl::span<char const>> const & keys) {
+bool xdb::erase(std::vector<xspan_t<char const>> const & keys) {
     XMETRICS_TIMER(metrics::db_delete_tick);
     auto ret = m_db_impl->erase(keys);
     XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
@@ -1085,7 +1085,7 @@ bool xdb::batch_change(const std::map<std::string, std::string>& objs, const std
     return m_db_impl->batch_change(objs, delete_keys);
 }
 
-bool xdb::batch_change(const std::map<std::string, std::string> & objs, std::vector<gsl::span<char const>> const & delete_keys) {
+bool xdb::batch_change(const std::map<std::string, std::string> & objs, std::vector<xspan_t<char const>> const & delete_keys) {
     return m_db_impl->batch_change(objs, delete_keys);
 }
 

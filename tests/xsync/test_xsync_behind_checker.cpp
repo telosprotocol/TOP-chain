@@ -31,9 +31,9 @@ public:
     int m_counter{0};
 };
 
-static xJson::Value build_validators() {
+static Json::Value build_validators() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -69,7 +69,7 @@ TEST(xsync_behind_checker, test) {
     xsync_behind_checker_t checker("", &sync_store, &role_chains_mgr, &peerset, &downloader);
 
     // create network
-    xJson::Value validators = build_validators();
+    Json::Value validators = build_validators();
     xmock_network_config_t cfg_network(validators);
     xmock_network_t network(cfg_network);
     std::vector<vnetwork::xvnode_address_t> addr_list;

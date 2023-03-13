@@ -11,14 +11,15 @@
 #include "xstatestore/xstatestore_face.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xverifier/xtx_verifier.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xvledger/xvledger.h"
+
+using namespace top::data;
 
 namespace top {
 namespace xtxpool_v2 {
 
-using namespace top::data;
 
 #define account_send_tx_queue_size_max (16)
 

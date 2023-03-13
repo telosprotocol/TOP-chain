@@ -1,5 +1,3 @@
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "test_evm_eth2_client_contract_fixture.h"
 #include "test_evm_eth2_client_contract_kiln_header_data.inc"
 #include "test_evm_eth2_client_contract_sepolia_header_data.inc"
@@ -7,8 +5,15 @@
 #include "test_evm_eth2_client_contract_update_data.inc"
 #include "xbasic/xhex.h"
 #include "xdata/xdatautil.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/rlp.h"
 #include "xevm_common/xabi_decoder.h"
+
+#if defined(XCXX20)
+#include <fifo_map.hpp>
+#else
+#include <nlohmann/fifo_map.hpp>
+#endif
+#include <nlohmann/json.hpp>
 
 #include <fstream>
 
@@ -22,7 +27,7 @@ using json = nlohmann::basic_json<my_workaround_fifo_map>;
 TEST_F(xeth2_contract_fixture_t, property_finalized_execution_blocks) {
     // get empty
     for (auto i = 0; i < 10; i++) {
-        EXPECT_EQ(m_contract.get_finalized_execution_blocks(m_contract_state, i), h256());
+        EXPECT_TRUE(m_contract.get_finalized_execution_blocks(m_contract_state, i) == h256());
     }
     // set
     for (auto i = 0; i < 5; i++) {
@@ -31,9 +36,9 @@ TEST_F(xeth2_contract_fixture_t, property_finalized_execution_blocks) {
     // get value
     for (auto i = 0; i < 10; i++) {
         if (i < 5) {
-            EXPECT_EQ(m_contract.get_finalized_execution_blocks(m_contract_state, i), h256(i + 1));
+            EXPECT_TRUE(m_contract.get_finalized_execution_blocks(m_contract_state, i) == h256(i + 1));
         } else {
-            EXPECT_EQ(m_contract.get_finalized_execution_blocks(m_contract_state, i), h256());
+            EXPECT_TRUE(m_contract.get_finalized_execution_blocks(m_contract_state, i) == h256());
         }
     }
     // del
@@ -43,9 +48,9 @@ TEST_F(xeth2_contract_fixture_t, property_finalized_execution_blocks) {
     // get value
     for (auto i = 0; i < 10; i++) {
         if (i >= 3 && i < 5) {
-            EXPECT_EQ(m_contract.get_finalized_execution_blocks(m_contract_state, i), h256(i + 1));
+            EXPECT_TRUE(m_contract.get_finalized_execution_blocks(m_contract_state, i) == h256(i + 1));
         } else {
-            EXPECT_EQ(m_contract.get_finalized_execution_blocks(m_contract_state, i), h256());
+            EXPECT_TRUE(m_contract.get_finalized_execution_blocks(m_contract_state, i) == h256());
         }
     }
 }
@@ -62,9 +67,9 @@ TEST_F(xeth2_contract_fixture_t, property_unfinalized_headers) {
     // get value
     for (auto i = 0; i < 10; i++) {
         if (i < 5) {
-            EXPECT_EQ(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)), xexecution_header_info_t(h256(i), i));
+            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i));
         } else {
-            EXPECT_EQ(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)), xexecution_header_info_t());
+            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
         }
     }
     // del
@@ -74,9 +79,9 @@ TEST_F(xeth2_contract_fixture_t, property_unfinalized_headers) {
     // get value
     for (auto i = 0; i < 10; i++) {
         if (i >= 3 && i < 5) {
-            EXPECT_EQ(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)), xexecution_header_info_t(h256(i), i));
+            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i));
         } else {
-            EXPECT_EQ(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)), xexecution_header_info_t());
+            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
         }
     }
 }
@@ -95,7 +100,7 @@ TEST_F(xeth2_contract_fixture_t, property_finalized_beacon_header) {
     header_ext.execution_block_hash = h256(7);
     EXPECT_TRUE(m_contract.set_finalized_beacon_header(m_contract_state, header_ext));
     // get value
-    EXPECT_EQ(m_contract.get_finalized_beacon_header(m_contract_state), header_ext);
+    EXPECT_TRUE(m_contract.get_finalized_beacon_header(m_contract_state) == header_ext);
 }
 
 TEST_F(xeth2_contract_fixture_t, property_finalized_execution_header) {
@@ -105,7 +110,7 @@ TEST_F(xeth2_contract_fixture_t, property_finalized_execution_header) {
     xexecution_header_info_t info(h256(rand()), rand());
     EXPECT_TRUE(m_contract.set_finalized_execution_header(m_contract_state, info));
     // get value
-    EXPECT_EQ(m_contract.get_finalized_execution_header(m_contract_state), info);
+    EXPECT_TRUE(m_contract.get_finalized_execution_header(m_contract_state) == info);
 }
 
 TEST_F(xeth2_contract_fixture_t, property_current_sync_committee) {
@@ -120,7 +125,7 @@ TEST_F(xeth2_contract_fixture_t, property_current_sync_committee) {
     }
     EXPECT_TRUE(m_contract.set_current_sync_committee(m_contract_state, committee));
     // get value
-    EXPECT_EQ(m_contract.get_current_sync_committee(m_contract_state), committee);
+    EXPECT_TRUE(m_contract.get_current_sync_committee(m_contract_state) == committee);
 }
 
 TEST_F(xeth2_contract_fixture_t, property_next_sync_committee) {
@@ -134,7 +139,7 @@ TEST_F(xeth2_contract_fixture_t, property_next_sync_committee) {
     }
     EXPECT_TRUE(m_contract.set_next_sync_committee(m_contract_state, committee));
     // get value
-    EXPECT_EQ(m_contract.get_next_sync_committee(m_contract_state), committee);
+    EXPECT_TRUE(m_contract.get_next_sync_committee(m_contract_state) == committee);
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_committee_update) {
@@ -149,7 +154,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_committee_update) {
     auto b = update.encode_rlp();
     xsync_committee_update_t update_decode;
     EXPECT_TRUE(update_decode.decode_rlp(b));
-    EXPECT_EQ(update, update_decode);
+    EXPECT_TRUE(update == update_decode);
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_header_update) {
@@ -163,7 +168,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_header_update) {
     auto b = update.encode_rlp();
     xheader_update_t update_decode;
     EXPECT_TRUE(update_decode.decode_rlp(b));
-    EXPECT_EQ(update, update_decode);
+    EXPECT_TRUE(update == update_decode);
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_finalized_header_update) {
@@ -180,7 +185,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_finalized_header_update) {
     auto b = update.encode_rlp();
     xfinalized_header_update_t update_decode;
     EXPECT_TRUE(update_decode.decode_rlp(b));
-    EXPECT_EQ(update, update_decode);
+    EXPECT_TRUE(update == update_decode);
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_sync_aggregate) {
@@ -190,7 +195,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_sync_aggregate) {
     auto b = sync.encode_rlp();
     xsync_aggregate_t sync_decode;
     EXPECT_TRUE(sync_decode.decode_rlp(b));
-    EXPECT_EQ(sync, sync_decode);
+    EXPECT_TRUE(sync == sync_decode);
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_update) {
@@ -222,7 +227,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_update) {
     auto b = update.encode_rlp();
     xlight_client_update_t update_decode;
     EXPECT_TRUE(update_decode.decode_rlp(b));
-    EXPECT_EQ(update, update_decode);
+    EXPECT_TRUE(update == update_decode);
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_state) {
@@ -245,7 +250,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_state) {
     auto b = state.encode_rlp();
     xlight_client_state_t state_decode;
     EXPECT_TRUE(state_decode.decode_rlp(b));
-    EXPECT_EQ(state, state_decode);
+    EXPECT_TRUE(state == state_decode);
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_init_input) {
@@ -284,7 +289,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_init_input) {
     auto b = init.encode_rlp();
     xinit_input_t init_decode;
     EXPECT_TRUE(init_decode.decode_rlp(b));
-    EXPECT_EQ(init, init_decode);
+    EXPECT_TRUE(init == init_decode);
 }
 
 TEST_F(xeth2_contract_fixture_t, test_release_finalized_execution_blocks) {
@@ -295,11 +300,11 @@ TEST_F(xeth2_contract_fixture_t, test_release_finalized_execution_blocks) {
     m_contract.release_finalized_execution_blocks(m_contract_state, 80 - 1);
     for (auto i = 50; i < 80; ++i) {
         auto b = m_contract.get_finalized_execution_blocks(m_contract_state, i);
-        EXPECT_EQ(b, h256());
+        EXPECT_TRUE(b == h256());
     }
     for (auto i = 80; i < 100; ++i) {
         auto b = m_contract.get_finalized_execution_blocks(m_contract_state, i);
-        EXPECT_EQ(b, h256(i));
+        EXPECT_TRUE(b == h256(i));
     }
 }
 
@@ -397,7 +402,7 @@ TEST_F(xeth2_contract_fixture_t, test_submit_update_two_periods) {
     for (auto const & header : headers) {
         m_contract.submit_execution_header(m_contract_state, header);
         EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.hash()));
-        EXPECT_EQ(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)), h256());
+        EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
     }
 
     EXPECT_TRUE(m_contract.submit_beacon_chain_light_client_update(m_contract_state, update_101));
@@ -431,30 +436,30 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
     auto fin_header = m_contract.get_finalized_beacon_header(m_contract_state);
     EXPECT_EQ(fin_header.header.slot, 1024000);
     EXPECT_EQ(fin_header.header.proposer_index, 257);
-    EXPECT_EQ(fin_header.header.parent_root, h256(from_hex("0x96bd1ead9d2932de8b1c626d3a24884a867d01357842c2a73c2bf1e4791cc9e3")));
-    EXPECT_EQ(fin_header.header.state_root, h256(from_hex("0xb7fc02c07bb70b0cd9ff4f58067a058e3990c69f2066a167c1a7b9b6f7873335")));
-    EXPECT_EQ(fin_header.header.body_root, h256(from_hex("0x026612cc702610f126f8ac4fd7b0604628ff2acf8d34da41a89fdda31bfa9710")));
+    EXPECT_TRUE(fin_header.header.parent_root == h256(from_hex("0x96bd1ead9d2932de8b1c626d3a24884a867d01357842c2a73c2bf1e4791cc9e3")));
+    EXPECT_TRUE(fin_header.header.state_root == h256(from_hex("0xb7fc02c07bb70b0cd9ff4f58067a058e3990c69f2066a167c1a7b9b6f7873335")));
+    EXPECT_TRUE(fin_header.header.body_root == h256(from_hex("0x026612cc702610f126f8ac4fd7b0604628ff2acf8d34da41a89fdda31bfa9710")));
     auto beacon_header_rlp = fin_header.header.encode_rlp();
     xbytes_t beacon_header_hash(32);
     EXPECT_TRUE(unsafe_beacon_header_root(beacon_header_rlp.data(), beacon_header_rlp.size(), beacon_header_hash.data()));
     EXPECT_EQ(fin_header.beacon_block_root, h256(beacon_header_hash));
     auto fin_exe_header = m_contract.get_finalized_execution_header(m_contract_state);
     EXPECT_EQ(fin_exe_header.block_number, 2256927);
-    EXPECT_EQ(fin_exe_header.parent_hash, h256(from_hex("2dd3836685ab8c30353c295e078fdfe37d76386d3a2af2aa44025a46f247711f")));
+    EXPECT_TRUE(fin_exe_header.parent_hash == h256(from_hex("2dd3836685ab8c30353c295e078fdfe37d76386d3a2af2aa44025a46f247711f")));
 
     auto update_param_rlp = from_hex(update_param_rlp_hex);
     xlight_client_update_t update_param;
     EXPECT_TRUE(update_param.decode_rlp(update_param_rlp));
     EXPECT_EQ(update_param.attested_beacon_header.slot, 1027776);
     EXPECT_EQ(update_param.attested_beacon_header.proposer_index, 1902);
-    EXPECT_EQ(update_param.attested_beacon_header.parent_root, h256(from_hex("0xbdd9a3c97ba3a5d5d3e50aa48bbf91c558f0af732326af9be1e32e2ddefb9cba")));
-    EXPECT_EQ(update_param.attested_beacon_header.state_root, h256(from_hex("0x3922928c57f96df1093729b3f69f3740ffc7b76195fe1949455e63db91c5e339")));
-    EXPECT_EQ(update_param.attested_beacon_header.body_root, h256(from_hex("0xbf457d4bdc6569d5099d781a074f7c33c8ba450d98606bcc3cdea5c61c24fda7")));
+    EXPECT_TRUE(update_param.attested_beacon_header.parent_root == h256(from_hex("0xbdd9a3c97ba3a5d5d3e50aa48bbf91c558f0af732326af9be1e32e2ddefb9cba")));
+    EXPECT_TRUE(update_param.attested_beacon_header.state_root == h256(from_hex("0x3922928c57f96df1093729b3f69f3740ffc7b76195fe1949455e63db91c5e339")));
+    EXPECT_TRUE(update_param.attested_beacon_header.body_root == h256(from_hex("0xbf457d4bdc6569d5099d781a074f7c33c8ba450d98606bcc3cdea5c61c24fda7")));
     EXPECT_EQ(update_param.finality_update.header_update.beacon_header.slot, 1027712);
     EXPECT_EQ(update_param.finality_update.header_update.beacon_header.proposer_index, 1870);
-    EXPECT_EQ(update_param.finality_update.header_update.beacon_header.parent_root, h256(from_hex("0xec5bbe8719d81005f0e5ac5631dd50e7e3047c6356040d27062514ba091b9678")));
-    EXPECT_EQ(update_param.finality_update.header_update.beacon_header.state_root, h256(from_hex("0x4140d8a7d5e23a386565228e38d4470730e8a7c5fc9f54dbf63d32005f5c10b1")));
-    EXPECT_EQ(update_param.finality_update.header_update.beacon_header.body_root, h256(from_hex("0x5b4abf0a33bc7e423c7c0e623843cab4d6bc70a9b238ad7f1cac8afb7d17f82e")));
+    EXPECT_TRUE(update_param.finality_update.header_update.beacon_header.parent_root == h256(from_hex("0xec5bbe8719d81005f0e5ac5631dd50e7e3047c6356040d27062514ba091b9678")));
+    EXPECT_TRUE(update_param.finality_update.header_update.beacon_header.state_root == h256(from_hex("0x4140d8a7d5e23a386565228e38d4470730e8a7c5fc9f54dbf63d32005f5c10b1")));
+    EXPECT_TRUE(update_param.finality_update.header_update.beacon_header.body_root == h256(from_hex("0x5b4abf0a33bc7e423c7c0e623843cab4d6bc70a9b238ad7f1cac8afb7d17f82e")));
     EXPECT_EQ(update_param.finality_update.finality_branch.size(), 6);
     EXPECT_EQ(update_param.finality_update.finality_branch[0], from_hex("0x747d000000000000000000000000000000000000000000000000000000000000"));
     EXPECT_EQ(update_param.finality_update.finality_branch[1], from_hex("0x3d4be5d019ba15ea3ef304a83b8a067f2e79f46a3fac8069306a6c814a0a35eb"));
@@ -469,7 +474,7 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
     EXPECT_EQ(update_param.sync_aggregate.sync_committee_signature,
               from_hex("0x8aead7714b224c274fe5ab8ca44fcfcb3c607a77ad37f2c8fbedfb88dac99916fb83913675c324140e6aef81e35351460ddf778246baf8d9f1176e9016fb4c67748eda559957d745d03f22667"
                        "d5362708c911c99939c1f3abbd1e251927f5490"));
-    EXPECT_EQ(update_param.finality_update.header_update.execution_block_hash, h256(from_hex("351da499932c0b29f02dd639bf8576a028055758e07af9b4539ad2e0690680d2")));
+    EXPECT_TRUE(update_param.finality_update.header_update.execution_block_hash == h256(from_hex("351da499932c0b29f02dd639bf8576a028055758e07af9b4539ad2e0690680d2")));
 
     auto j = json::parse(sepolia_header_json_data_ptr);
     int cnt{0};
@@ -524,7 +529,7 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
         EXPECT_TRUE(header.decode_rlp(from_hex(it->get<std::string>())));
         EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header));
         EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.hash()));
-        EXPECT_EQ(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)), h256());
+        EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
     }
     EXPECT_TRUE(m_contract.submit_beacon_chain_light_client_update(m_contract_state, update_param_full));
     EXPECT_EQ(m_contract.last_block_number(m_contract_state), 2264207);
@@ -560,7 +565,7 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
         contract_runtime::evm::sys_contract_precompile_output output;
         contract_runtime::evm::sys_contract_precompile_error err;
         EXPECT_TRUE(m_contract.execute(pack_initialized, 0, m_context, false, m_statectx_observer, output, err));
-        EXPECT_EQ(evm_common::fromBigEndian<evm_common::u256>(output.output), 0);
+        EXPECT_TRUE(evm_common::fromBigEndian<evm_common::u256>(output.output) == 0);
     }
 
     auto init_param_rlp_hex_prefix = "4ddf47d40000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000c723";
@@ -590,16 +595,16 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
         auto fin_header = m_contract.get_finalized_beacon_header(m_contract_state);
         EXPECT_EQ(fin_header.header.slot, 1024000);
         EXPECT_EQ(fin_header.header.proposer_index, 257);
-        EXPECT_EQ(fin_header.header.parent_root, h256(from_hex("0x96bd1ead9d2932de8b1c626d3a24884a867d01357842c2a73c2bf1e4791cc9e3")));
-        EXPECT_EQ(fin_header.header.state_root, h256(from_hex("0xb7fc02c07bb70b0cd9ff4f58067a058e3990c69f2066a167c1a7b9b6f7873335")));
-        EXPECT_EQ(fin_header.header.body_root, h256(from_hex("0x026612cc702610f126f8ac4fd7b0604628ff2acf8d34da41a89fdda31bfa9710")));
+        EXPECT_TRUE(fin_header.header.parent_root == h256(from_hex("0x96bd1ead9d2932de8b1c626d3a24884a867d01357842c2a73c2bf1e4791cc9e3")));
+        EXPECT_TRUE(fin_header.header.state_root == h256(from_hex("0xb7fc02c07bb70b0cd9ff4f58067a058e3990c69f2066a167c1a7b9b6f7873335")));
+        EXPECT_TRUE(fin_header.header.body_root == h256(from_hex("0x026612cc702610f126f8ac4fd7b0604628ff2acf8d34da41a89fdda31bfa9710")));
         auto beacon_header_rlp = fin_header.header.encode_rlp();
         xbytes_t beacon_header_hash(32);
         EXPECT_TRUE(unsafe_beacon_header_root(beacon_header_rlp.data(), beacon_header_rlp.size(), beacon_header_hash.data()));
-        EXPECT_EQ(fin_header.beacon_block_root, h256(beacon_header_hash));
+        EXPECT_TRUE(fin_header.beacon_block_root == h256(beacon_header_hash));
         auto fin_exe_header = m_contract.get_finalized_execution_header(m_contract_state);
         EXPECT_EQ(fin_exe_header.block_number, 2256927);
-        EXPECT_EQ(fin_exe_header.parent_hash, h256(from_hex("2dd3836685ab8c30353c295e078fdfe37d76386d3a2af2aa44025a46f247711f")));
+        EXPECT_TRUE(fin_exe_header.parent_hash == h256(from_hex("2dd3836685ab8c30353c295e078fdfe37d76386d3a2af2aa44025a46f247711f")));
     }
     {
         contract_runtime::evm::sys_contract_precompile_output output;
@@ -610,7 +615,7 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
         contract_runtime::evm::sys_contract_precompile_output output;
         contract_runtime::evm::sys_contract_precompile_error err;
         EXPECT_TRUE(m_contract.execute(pack_initialized, 0, m_context, false, m_statectx_observer, output, err));
-        EXPECT_EQ(evm_common::fromBigEndian<evm_common::u256>(output.output), 1);
+        EXPECT_TRUE(evm_common::fromBigEndian<evm_common::u256>(output.output) == 1);
     }
 
     {
@@ -626,7 +631,7 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
             EXPECT_TRUE(header.decode_rlp(from_hex(it->get<std::string>())));
             EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header));
             EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.hash()));
-            EXPECT_EQ(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)), h256());
+            EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
         }
     }
 
@@ -661,7 +666,7 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
         contract_runtime::evm::sys_contract_precompile_output output;
         contract_runtime::evm::sys_contract_precompile_error err;
         EXPECT_TRUE(m_contract.execute(pack_last_block_number, 0, m_context, false, m_statectx_observer, output, err));
-        EXPECT_EQ(evm_common::fromBigEndian<evm_common::u256>(output.output), 2264207);
+        EXPECT_TRUE(evm_common::fromBigEndian<evm_common::u256>(output.output) == 2264207);
     }
 
     std::string pack_get_light_client_state_hex{"3ae8d743"};

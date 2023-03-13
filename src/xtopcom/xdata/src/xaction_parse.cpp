@@ -4,10 +4,10 @@
 
 #include "xdata/xaction_parse.h"
 
-#include "rapidjson/document.h"
-#include "rapidjson/reader.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
+//#include "rapidjson/document.h"
+//#include "rapidjson/reader.h"
+//#include "rapidjson/stringbuffer.h"
+//#include "rapidjson/writer.h"
 #include "xbase/xcontext.h"
 #include "xbase/xlog.h"
 #include "xbase/xmem.h"

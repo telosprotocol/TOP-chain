@@ -47,16 +47,20 @@ ElectRoutingTable::~ElectRoutingTable() {
     xdbg("~ElectRoutingTable %p start", this);
     {
         std::unique_lock<std::mutex> lock(m_nodes_mutex);
+#if defined(DEBUG)
         for (auto const & _pair : m_nodes) {
             xdbg("~ElectRoutingTable %s, %p", _pair.first.c_str(), _pair.second.get());
         }
+#endif
         m_nodes.clear();
     }
     m_expected_kad_keys.clear();
     m_index_map.clear();
+#if defined(DEBUG)
     for (auto const & xip2 : m_xip2_for_shuffle) {
         xdbg("~ElectRoutingTable %s", xip2.c_str());
     }
+#endif
     m_xip2_for_shuffle.clear();
     xdbg("~ElectRoutingTable %p end", this);
 }
@@ -231,9 +235,11 @@ NodeInfoPtr ElectRoutingTable::GetNode(const std::string & id) {
     }
     xdbg("elect routing table get node failed ,id: %s nodes.size:%zu", id.c_str(), m_nodes.size());
 
+#if defined(DEBUG)
     for (auto const & _p : m_nodes) {
         xdbg("now have: %s %s %u", _p.first.c_str(), _p.second->public_ip.c_str(), _p.second->public_port);
     }
+#endif
 
     return nullptr;
 }

@@ -16,7 +16,8 @@
 #include "xdata/xblock_paras.h"
 #include "xdata/xblockaction.h"
 #include "xdata/xethreceipt.h"
-
+#include "xcommon/xtop_log.h"
+#include "xdata/xtop_receipt.h"
 namespace top { namespace data {
 
 #define XTX_NOT_NEED_CONFIRM_FLAG_MASK (0x1)  // BIT#0
@@ -39,6 +40,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     static XINLINE_CONSTEXPR char const * XTX_FLAGS                                    = "d";
     static XINLINE_CONSTEXPR char const * XTX_RSP_ID                                   = "e";
     static XINLINE_CONSTEXPR char const * XTX_EVM_TRANSACTION_RECEIPT                   = "f";
+    static XINLINE_CONSTEXPR char const * XTX_TVM_TRANSACTION_RECEIPT                   = "g";
 
  public:
     xtransaction_exec_state_t();
@@ -58,6 +60,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     void        set_rsp_id(uint64_t rspid);
     void        set_inner_table_flag(bool inner_table);
     void        set_evm_tx_receipt(data::xeth_store_receipt_t & evm_tx_receipt);
+    void        set_tvm_tx_receipt(data::xtop_store_receipt_t & tvm_tx_receipt);
 
  public:
     uint64_t    get_used_disk()const {return get_value_uint64(XPROPERTY_FEE_TX_USED_DISK);}

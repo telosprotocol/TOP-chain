@@ -8,7 +8,11 @@
 #include "xgossip/include/header_block_data.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/top_timer.h"
-#include "xtransport/proto/transport.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 
 #include <mutex>
 #include <queue>

@@ -7,7 +7,7 @@
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xmetrics/xmetrics.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xvledger/xvledger.h"
@@ -669,12 +669,12 @@ properties::xtype_of_t<properties::xproperty_type_t::string>::type xtop_state_ac
     common::xaccount_address_t const & address,
     std::error_code & ec) const {
     assert(!ec);
-    auto const & address_state = state(address, ec);
-    if (ec) {
-        return {};
-    }
+    //auto const & address_state = state(address, ec);
+    //if (ec) {
+    //    return {};
+    //}
 
-    assert(address_state != nullptr);
+    //assert(address_state != nullptr);
     auto const & property_name = property_id.full_name();
     if (!bstate_->find_property(property_name)) {
         if (!properties::system_property(property_id)) {
@@ -685,7 +685,7 @@ properties::xtype_of_t<properties::xproperty_type_t::string>::type xtop_state_ac
             bstate_->load_string_var(property_name)->reset(std::string{}, canvas_.get());
         }
     }
-    auto string_property = bstate_->load_string_var(property_name);
+    auto const string_property = bstate_->load_string_var(property_name);
     assert(string_property != nullptr);
 
     return string_property->query();
@@ -697,12 +697,12 @@ properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_acces
     common::xaccount_address_t const & address,
     std::error_code & ec) const {
     assert(!ec);
-    auto const & address_state = state(address, ec);
-    if (ec) {
-        return {};
-    }
+    //auto const & address_state = state(address, ec);
+    //if (ec) {
+    //    return {};
+    //}
 
-    assert(address_state != nullptr);
+    //assert(address_state != nullptr);
     auto const & property_name = property_id.full_name();
     if (!bstate_->find_property(property_name)) {
         if (!properties::system_property(property_id)) {
@@ -712,13 +712,13 @@ properties::xtype_of_t<properties::xproperty_type_t::map>::type xtop_state_acces
             bstate_->new_string_map_var(property_name, canvas_.get());
         }
     }
-    auto map_property = bstate_->load_string_map_var(property_name);
+    auto const map_property = bstate_->load_string_map_var(property_name);
     assert(map_property != nullptr);
 
     auto map = map_property->query();
     properties::xtype_of_t<properties::xproperty_type_t::map>::type ret;
     for (auto & pair : map) {
-        ret.insert({std::move(pair.first), {std::begin(pair.second), std::end(pair.second)}});
+        ret.insert({pair.first, {std::begin(pair.second), std::end(pair.second)}});
     }
     return ret;
 }
@@ -757,7 +757,7 @@ void xtop_state_accessor::set_property<properties::xproperty_type_t::int64>(prop
             bstate_->load_int64_var(property_name)->set(int64_t(0), canvas_.get());
         }
     }
-    auto int_property = bstate_->load_int64_var(property_name);
+    auto const int_property = bstate_->load_int64_var(property_name);
     assert(int_property != nullptr);
 
     if (!int_property->set(value, canvas_.get())) {
@@ -784,7 +784,7 @@ void xtop_state_accessor::set_property<properties::xproperty_type_t::uint64>(pro
             bstate_->load_uint64_var(property_name)->set(uint64_t(0), canvas_.get());
         }
     }
-    auto int_property = bstate_->load_uint64_var(property_name);
+    auto const int_property = bstate_->load_uint64_var(property_name);
     assert(int_property != nullptr);
 
     if (!int_property->set(value, canvas_.get())) {
@@ -818,7 +818,7 @@ void xtop_state_accessor::set_property<properties::xproperty_type_t::string>(pro
             bstate_->load_string_var(property_name)->reset(std::string{}, canvas_.get());
         }
     }
-    auto string_property = bstate_->load_string_var(property_name);
+    auto const string_property = bstate_->load_string_var(property_name);
     assert(string_property != nullptr);
 
     if (!string_property->reset(value, canvas_.get())) {
@@ -861,7 +861,7 @@ void xtop_state_accessor::set_property_cell_value<properties::xproperty_type_t::
 
         bstate_->new_string_map_var(property_name, canvas_.get());
     }
-    auto map_property = bstate_->load_string_map_var(property_name);
+    auto const map_property = bstate_->load_string_map_var(property_name);
     xassert(map_property != nullptr);
 
     if (!map_property->insert(key, {std::begin(value), std::end(value)}, canvas_.get())) {
@@ -1085,7 +1085,7 @@ size_t xtop_state_accessor::binlog_size(std::error_code & ec) const {
     assert(!ec);
     assert(canvas_ != nullptr);
 
-    size_t r;
+    // size_t r;
     return canvas_.get()->get_op_records_size();
 }
 

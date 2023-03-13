@@ -7,7 +7,7 @@
 #include "xbase/xns_macro.h"
 #include "xbasic/xlru_cache.h"
 #include "xvm_trace.h"
-#include "xlua_engine.h"
+#include "xvm_engine.h"
 #include "xvm_native_func.h"
 #include "xstore/xaccount_context.h"
 NS_BEG2(top, xvm)

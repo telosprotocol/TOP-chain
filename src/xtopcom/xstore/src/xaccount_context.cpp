@@ -27,6 +27,8 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvpropertyrules.h"
 #include "xvm/manager/xcontract_address_map.h"
+#include "xbasic/xhex.h"
+#include "ethash/keccak.hpp"
 
 using namespace top::base;
 
@@ -261,9 +263,16 @@ uint64_t xaccount_context_t::calc_decayed_tgas(){
 }
 
 int32_t xaccount_context_t::check_used_tgas(uint64_t &cur_tgas_usage, uint64_t deposit, uint64_t& deposit_usage){
-    uint32_t last_hour = get_last_tx_hour();
-    xdbg("tgas_disk last_hour: %d, m_timer_height: %d, no decay used_tgas: %d, used_tgas: %d, pledge_token: %d, token_price: %u, total_tgas: %d, tgas_usage: %d, deposit: %d",
-          last_hour, m_timer_height, get_used_tgas(), calc_decayed_tgas(), m_account->tgas_balance(), get_token_price(), get_total_tgas(), cur_tgas_usage, deposit);
+    xdbg("tgas_disk last_hour: %" PRIu64 ", m_timer_height: %d, no decay used_tgas: %d, used_tgas: %d, pledge_token: %d, token_price: %u, total_tgas: %d, tgas_usage: %d, deposit: %d",
+         get_last_tx_hour(),
+         m_timer_height,
+         get_used_tgas(),
+         calc_decayed_tgas(),
+         m_account->tgas_balance(),
+         get_token_price(),
+         get_total_tgas(),
+         cur_tgas_usage,
+         deposit);
 
     auto available_tgas = get_available_tgas();
     xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d available_tgas %lu ", get_address().c_str(), cur_tgas_usage, available_tgas);
@@ -1373,6 +1382,23 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;
+}
+
+common::xtop_logs_t const & xaccount_context_t::logs() const noexcept { return logs_; }
+
+void xaccount_context_t::add_log(common::xtop_log_t log) {
+    logs_.emplace_back(std::move(log));
+#if defined(DEBUG)
+    for (auto l : logs_) {
+        xdbg("[xaccount_context_t::add_log] set-logs address(%s),data(%s),bloom(%s)",
+             l.address.to_string().c_str(),
+             top::to_hex_prefixed(l.data).c_str(),
+             l.bloom().to_hex_string().c_str());
+        for (auto const & topic : l.topics) {
+            xdbg("[xaccount_context_t::add_log] set-logs topic(%s)", top::to_hex_prefixed(topic.asBytes()).c_str());
+        }
+    }
+#endif
 }
 
 }  // namespace store

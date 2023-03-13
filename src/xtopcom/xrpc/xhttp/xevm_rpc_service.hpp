@@ -87,15 +87,15 @@ void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::strin
                 xinfo_rpc("evm rpc request%u:%s", i, content.substr(i * 900).c_str());
             }
 
-            xJson::Reader reader;
+            Json::Reader reader;
             top::xrpc::xjson_proc_t json_proc;
             // reader.
             if (!reader.parse(content, json_proc.m_request_json)) {
-                xJson::Value err;
+                Json::Value err;
                 err["error"]["code"] = eth::enum_eth_rpc_invalid_request;
                 err["error"]["message"] = "invalid json request";
                 xdbg("rpc request err");
-                xJson::FastWriter       writer;
+                Json::FastWriter       writer;
                 m_edge_method_mgr_ptr->write_response(conn, writer.write(err));
                 return;
             }
@@ -103,10 +103,10 @@ void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::strin
             json_proc.m_request_json["id"];
             m_edge_method_mgr_ptr->do_method(conn, json_proc, ip);
     } catch (const xrpc_error & e) {
-        xJson::Value err;
+        Json::Value err;
         err["error"]["code"] = eth::enum_eth_rpc_invalid_request;
         err["error"]["message"] = "invalid json request";
-        xJson::FastWriter writer;
+        Json::FastWriter writer;
         m_edge_method_mgr_ptr->write_response(conn, writer.write(err));
     }
 }

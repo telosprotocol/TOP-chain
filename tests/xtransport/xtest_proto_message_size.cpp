@@ -1,4 +1,9 @@
-#include "xtransport/proto/transport.pb.h"
+#include "xbase/xcxx_config.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 #include "xbase/xcontext.h"
 
 #include <gtest/gtest.h>

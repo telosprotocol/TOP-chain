@@ -17,40 +17,18 @@ extern "C"
     #include "trezor-crypto/secp256k1.h"
     #include "trezor-crypto/ecdsa.h"
 }
+#if defined(XCXX20)
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
+#else
 #include "secp256k1/secp256k1.h"
 #include "secp256k1/secp256k1_recovery.h"
+#endif
 
 namespace top
 {
     namespace utl
     {
-        static int  split_string_impl(const std::string & input,const char split_char,std::vector<std::string> & values)
-        {
-            if(input.empty())
-                return 0;
-
-            std::string::size_type begin_pos = 0;
-            std::string::size_type pos_of_split = input.find_first_of(split_char,begin_pos);
-            while(pos_of_split != std::string::npos)
-            {
-                if(pos_of_split != begin_pos)
-                    values.push_back(input.substr(begin_pos,pos_of_split - begin_pos)); //[)
-                begin_pos = pos_of_split + 1; //skip boundary
-                pos_of_split = input.find_first_of(split_char,begin_pos);
-                if(pos_of_split == std::string::npos) //not find the last split-char
-                {
-                    if(begin_pos < input.size())
-                    {
-                        values.push_back(input.substr(begin_pos)); //put the remaining section
-                    }
-                }
-            }
-            if(values.empty())
-                values.push_back(input);
-
-            return (int)values.size();
-        }
-
         void*    xsecp256k1_t::static_secp256k1_context_sign = NULL;
         void*    xsecp256k1_t::static_secp256k1_context_verify = NULL;
         xsecp256k1_t::xsecp256k1_t()
@@ -174,7 +152,8 @@ namespace top
                 return false;
             }
 
-            std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> secp256k1_context_verify{secp256k1_context_create(SECP256K1_CONTEXT_VERIFY), &secp256k1_context_destroy};
+            std::unique_ptr<secp256k1_context, void (*)(secp256k1_context *)> secp256k1_context_verify{secp256k1_context_create(SECP256K1_CONTEXT_VERIFY),
+                                                                                                       &secp256k1_context_destroy};
 
             if(secp256k1_ecdsa_recoverable_signature_parse_compact((secp256k1_context*)secp256k1_context_verify.get(), &recover_sigature, signature.get_raw_signature(), signature.get_recover_id()) != 1)
             {
@@ -204,7 +183,7 @@ namespace top
              */
             size_t  serialize_pubkey_size = 65;
             uint8_t serialize_pubkey_data[65] = {0};
-            std::unique_ptr<secp256k1_context, decltype(&secp256k1_context_destroy)> secp256k1_context_sign{secp256k1_context_create(SECP256K1_CONTEXT_SIGN), &secp256k1_context_destroy};
+            std::unique_ptr<secp256k1_context, void (*)(secp256k1_context *)> secp256k1_context_sign{secp256k1_context_create(SECP256K1_CONTEXT_SIGN), &secp256k1_context_destroy};
             const int ret = secp256k1_ec_pubkey_serialize((secp256k1_context*)secp256k1_context_sign.get(), serialize_pubkey_data, &serialize_pubkey_size, &native_pubkey,SECP256K1_EC_UNCOMPRESSED);
             xassert(ret == 1);
             xassert(serialize_pubkey_size == 65);

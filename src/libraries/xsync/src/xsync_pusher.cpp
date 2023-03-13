@@ -130,8 +130,8 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     uint32_t random = vrf_value(block->get_block_hash());
-    uint32_t overlap_count = 0;
-    uint32_t overlap_quota = 3;
+    // uint32_t overlap_count = 0;
+    // uint32_t overlap_quota = 3;
     std::vector<std::shared_ptr<std::vector<vnetwork::xvnode_address_t>>> objects;
     objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_archive_list()));
     objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_full_nodes()));
@@ -192,7 +192,7 @@ int xsync_pusher_t::get_chain_info(const vnetwork::xvnode_address_t &network_sel
     for (const auto & it : chains) {
         enum_chain_sync_policy sync_policy = it.second.sync_policy;
         const std::string & address = it.first;
-        const xchain_info_t & chain_info = it.second;
+        // const xchain_info_t & chain_info = it.second;
 
         xchain_state_info_t info;
         info.address = address;
@@ -222,7 +222,7 @@ void xsync_pusher_t::on_timer() {
     common::xnode_type_t node_type;
     for (const auto &role_it: roles) {
         self_addr = role_it.first;
-        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
+        // const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
         node_type = self_addr.type();
 
         if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
@@ -259,8 +259,8 @@ void xsync_pusher_t::on_timer() {
         return;
     }
 
-    uint32_t overlap_count = 0;
-    uint32_t overlap_quota = 3;
+    // uint32_t overlap_count = 0;
+    // uint32_t overlap_quota = 3;
     std::vector<std::shared_ptr<std::vector<vnetwork::xvnode_address_t>>> objects;
     objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_archive_list()));
     objects.push_back(std::make_shared<std::vector<vnetwork::xvnode_address_t>>(m_role_xips_mgr->get_full_nodes()));

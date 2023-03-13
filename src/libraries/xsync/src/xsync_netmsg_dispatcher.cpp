@@ -13,16 +13,20 @@ NS_BEG2(top, sync)
 
 class xsync_netmsg_dispatcher_thread_event_para_t : public top::base::xobject_t {
 public:
-    xsync_netmsg_dispatcher_thread_event_para_t(xsync_handler_t *sync_handler, const vnetwork::xvnode_address_t &from_address,
-    const vnetwork::xvnode_address_t &network_self, const xbyte_buffer_t &msg, 
-    vnetwork::xmessage_t::message_type msg_type, xtop_vnetwork_message::hash_result_type msg_hash, int64_t recv_time):
-    m_sync_handler(sync_handler),
-    m_from_address(from_address),
-    m_network_self(network_self),
-    m_msg(std::move(msg)),
-    m_msg_type(msg_type),
-    m_msg_hash(msg_hash),
-    m_recv_time(recv_time) {
+    xsync_netmsg_dispatcher_thread_event_para_t(xsync_handler_t * sync_handler,
+                                                const vnetwork::xvnode_address_t & from_address,
+                                                const vnetwork::xvnode_address_t & network_self,
+                                                const xbyte_buffer_t & msg,
+                                                vnetwork::xmessage_t::message_type msg_type,
+                                                vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
+                                                int64_t recv_time)
+      : m_sync_handler(sync_handler)
+      , m_from_address(from_address)
+      , m_network_self(network_self)
+      , m_msg(std::move(msg))
+      , m_msg_type(msg_type)
+      , m_msg_hash(msg_hash)
+      , m_recv_time(recv_time) {
     }
 
 private:
@@ -34,7 +38,7 @@ public:
     vnetwork::xvnode_address_t m_network_self;
     xbyte_buffer_t m_msg;
     vnetwork::xmessage_t::message_type m_msg_type;
-    xtop_vnetwork_message::hash_result_type m_msg_hash;
+    vnetwork::xvnetwork_message_t::hash_result_type m_msg_hash;
     int64_t m_recv_time;
 };
 
@@ -46,13 +50,12 @@ static bool xsync_netmsg_dispatcher_thread_event(top::base::xcall_t& call, const
 
 xsync_netmsg_dispatcher_t::xsync_netmsg_dispatcher_t(std::string vnode_id, const std::vector<observer_ptr<base::xiothread_t>> &thread_pool,
             const observer_ptr<mbus::xmessage_bus_face_t> &mbus, const observer_ptr<vnetwork::xvhost_face_t> &vhost,
-            xsync_handler_t *sync_handler, int min_compress_threshold):
+            xsync_handler_t *sync_handler):
 m_vnode_id(vnode_id),
 m_thread_pool(thread_pool),
 m_bus(mbus),
 m_vhost(vhost),
-m_sync_handler(sync_handler),
-m_min_compress_threshold(min_compress_threshold) {
+m_sync_handler(sync_handler){
     m_thread_count = thread_pool.size();
 }
 
@@ -73,12 +76,12 @@ void xsync_netmsg_dispatcher_t::on_receive(vnetwork::xvnode_address_t const & ad
                                                     std::uint64_t const, vnetwork::xvnode_address_t const & vnetwork_self) {
 
     vnetwork::xmessage_t::message_type msg_type = msg.id();
-    uint32_t msg_size = msg.payload().size();
+    // uint32_t msg_size = msg.payload().size();
     XMETRICS_TIME_RECORD("xsync_network_message_dispatch");
-    //xsync_dbg("xsync_netmsg_dispatcher_t on_receive_msg received %x %" PRIx64 " ", msg_type, msg.hash());
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_in", msg_size);
+    xsync_dbg("xsync_netmsg_dispatcher_t on_receive_msg received %x %" PRIx64 " ", msg_type, msg.hash());
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_in", msg.payload().size());
     xbyte_buffer_t message;
-    xmessage_pack_t::unpack_message(msg.payload(), message);
+    xmessage_pack_t::unpack_message(msg.payload(), msg_type, message);
     dispatch(addr, vnetwork_self, message, msg_type, msg.hash());
 }
 
@@ -87,7 +90,7 @@ void xsync_netmsg_dispatcher_t::dispatch(
     const vnetwork::xvnode_address_t &network_self,
     const xbyte_buffer_t &msg,
     vnetwork::xmessage_t::message_type msg_type,
-    xtop_vnetwork_message::hash_result_type msg_hash) {
+    vnetwork::xvnetwork_message_t::hash_result_type msg_hash) {
 
     if (msg.size() == 0) {
         xsync_warn("xsync_netmsg_dispatcher_t wrong message from remote %s",
@@ -101,7 +104,8 @@ void xsync_netmsg_dispatcher_t::dispatch(
     top::base::xparam_t param(para.get());
     top::base::xcall_t tmp_func((top::base::xcallback_ptr)xsync_netmsg_dispatcher_thread_event, param);
 
-    uint32_t idx = xtime_utl::get_fast_randomu()%m_thread_count;
+    static uint32_t thread_index = 0;
+    uint32_t idx = (thread_index++)%m_thread_count;
 
     // TODO use semaphore & task queue
     auto ret = m_thread_pool[idx]->send_call(tmp_func);

@@ -14,6 +14,7 @@
 #include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
 #include "xchaininit/xchain_command_http_server.h"
+#include "xchaininit/version.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_utils.h"
@@ -26,7 +27,7 @@
 #include "xapplication/xapplication.h"
 #include "xtopcl/include/global_definition.h"
 #include "xtopcl/include/topcl.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xtopcl/include/api_method.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmigrate/xvmigrate.h"
@@ -36,6 +37,7 @@
 #include "xelect/client/xelect_client.h"
 #include "xgenesis/xgenesis_manager.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
+#include "xchain_fork/xfork_points.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -287,8 +289,10 @@ int topchain_start(const std::string& datadir, const std::string& config_file) {
     xinit_log(log_path.c_str(), true, true);
     xset_log_level((enum_xlog_level)log_level);
     auto xbase_info = base::xcontext_t::get_xbase_info();
-    xwarn("=== topio start here ===");
-    xwarn("=== xbase info: %s ===", xbase_info.c_str());
+    xkinfo("=== topio start here ===");
+    xkinfo("=== topio start info: forkpoints: %s", fork_points::dump_fork_points().c_str());
+    xkinfo("=== topio start info: xbase info: %s", xbase_info.c_str());
+    xkinfo("=== topio start info: version info: %s", dump_version().c_str());
 
     // load bwlist
     load_bwlist_config(datadir, config_center);

@@ -10,7 +10,7 @@
 
 NS_BEG3(top, state_accessor, properties)
 
-enum class xenum_property_category: std::uint8_t {
+enum class xenum_property_category : unsigned char {
     invalid,
     system,
     user
@@ -21,7 +21,7 @@ char category_character(xproperty_category_t const c) noexcept;
 
 NS_END3
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 NS_BEG1(std)
 
 template <>

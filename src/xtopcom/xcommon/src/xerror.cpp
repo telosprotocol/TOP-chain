@@ -120,7 +120,7 @@ NS_END3
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 size_t hash<top::common::error::xerrc_t>::operator()(top::common::error::xerrc_t const errc) const noexcept {
     return static_cast<size_t>(static_cast<int>(errc));

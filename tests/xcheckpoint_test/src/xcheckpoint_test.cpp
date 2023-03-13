@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <sstream>
 #define private public
 #include "tests/mock/xvchain_creator.hpp"
@@ -5,7 +6,6 @@
 #include "xdata/xcheckpoint.h"
 #include "xvledger/xvblockstore.h"
 
-#include <gtest/gtest.h>
 
 NS_BEG3(top, tests, xcheckpoint)
 

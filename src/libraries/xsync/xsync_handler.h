@@ -34,7 +34,7 @@
 
 NS_BEG2(top, sync)
 
-using xsync_handler_netmsg_callback = std::function<void(uint32_t, const vnetwork::xvnode_address_t &, const vnetwork::xvnode_address_t &, const xsync_message_header_ptr_t &, base::xstream_t &, xtop_vnetwork_message::hash_result_type, int64_t)>;
+using xsync_handler_netmsg_callback = std::function<void(uint32_t, const vnetwork::xvnode_address_t &, const vnetwork::xvnode_address_t &, const xsync_message_header_ptr_t &, base::xstream_t &, vnetwork::xvnetwork_message_t::hash_result_type, int64_t)>;
 
 class xsync_handler_t {
 public:
@@ -44,7 +44,7 @@ public:
         xsync_session_manager_t *session_mgr, xdeceit_node_manager_t *blacklist,
         xrole_chains_mgr_t *role_chains_mgr, xrole_xips_manager_t *role_xips_mgr,
         xdownloader_t *downloader, xblock_fetcher_t *block_fetcher, xsync_gossip_t *sync_gossip, xsync_pusher_t *sync_pusher,
-        xsync_broadcast_t *sync_broadcast, xsync_sender_t *sync_sender, xsync_on_demand_t *sync_on_demand,
+        xsync_sender_t *sync_sender, xsync_on_demand_t *sync_on_demand,
         xsync_peerset_t *peerset, xsync_peer_keeper_t *peer_keeper, xsync_behind_checker_t *behind_checker,
         xsync_cross_cluster_chain_state_t *cross_cluster_chain_state);
     virtual ~xsync_handler_t();
@@ -55,7 +55,7 @@ public:
         const vnetwork::xvnode_address_t &network_self,
         const xbyte_buffer_t &msg,
         vnetwork::xmessage_t::message_type msg_type,
-        vnetwork::xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
     void on_event(const mbus::xevent_ptr_t& e);
@@ -68,7 +68,7 @@ private:
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
     void broadcast_chain_state(
@@ -77,7 +77,7 @@ private:
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
     void response_chain_state(
@@ -86,7 +86,7 @@ private:
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
     void cross_cluster_chain_state(
@@ -95,36 +95,7 @@ private:
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
-        int64_t recv_time);
-
-    
-    void handle_chain_snapshot_request(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-        const vnetwork::xvnode_address_t &network_self,
-        const xsync_message_header_ptr_t &header,
-        base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
-        int64_t recv_time);
-
-    void handle_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-        const vnetwork::xvnode_address_t &network_self,
-        const xsync_message_header_ptr_t &header,
-        base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
-        int64_t recv_time);
-
-    void handle_ondemand_chain_snapshot_request(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-        const vnetwork::xvnode_address_t &network_self,
-        const xsync_message_header_ptr_t &header,
-        base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
-        int64_t recv_time);
-
-    void handle_ondemand_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-        const vnetwork::xvnode_address_t &network_self,
-        const xsync_message_header_ptr_t &header,
-        base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
     void recv_query_archive_height(
@@ -133,20 +104,16 @@ private:
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
-    void handle_push_newblock(const vnetwork::xvnode_address_t &from_address,
-        const vnetwork::xvnode_address_t &network_self,
-        const xsync_msg_block_response_ptr_t &response_ptr,
-        xtop_vnetwork_message::hash_result_type msg_hash);
 
     void on_block_request_process(uint32_t msg_size,
         const vnetwork::xvnode_address_t &from_address,
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
     void on_block_response_process(uint32_t msg_size,
@@ -154,7 +121,7 @@ private:
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
         
     void on_block_push_newblock(uint32_t msg_size,
@@ -162,7 +129,7 @@ private:
         const vnetwork::xvnode_address_t &network_self,
         const xsync_message_header_ptr_t &header,
         base::xstream_t &stream,
-        xtop_vnetwork_message::hash_result_type msg_hash,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
         int64_t recv_time);
 
     void handle_blocks_request_with_height(const xsync_msg_block_request_ptr_t& request,
@@ -185,6 +152,22 @@ private:
         const vnetwork::xvnode_address_t& to_address,
         const vnetwork::xvnode_address_t& network_self);
 
+    void on_block_response_process_bigpack(uint32_t msg_size,
+        const vnetwork::xvnode_address_t& from_address,
+        const vnetwork::xvnode_address_t& network_self,
+        const xsync_message_header_ptr_t& header,
+        base::xstream_t& stream,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
+        int64_t recv_time);
+
+    void on_block_response_process_handler(uint32_t msg_size,
+        const vnetwork::xvnode_address_t& from_address,
+        const vnetwork::xvnode_address_t& network_self,
+        const xsync_message_header_ptr_t& header,
+        const xsync_msg_block_response_ptr_t& response_ptr,
+        vnetwork::xvnetwork_message_t::hash_result_type msg_hash,
+        int64_t recv_time);
+
 private:
     void handle_role_change(const mbus::xevent_ptr_t& e);
     void handle_consensus_result(const mbus::xevent_ptr_t& e);
@@ -192,7 +175,7 @@ private:
 private:
     int64_t get_time();
     void notify_deceit_node(const vnetwork::xvnode_address_t& address);
-    void register_handler(xmessage_t::message_type msgid, xsync_handler_netmsg_callback cb);
+    void register_handler(vnetwork::xmessage_t::message_type msgid, xsync_handler_netmsg_callback cb);
     int init_prune(const map_chain_info_t &chains, const mbus::xevent_ptr_t& e);
 private:
     std::string m_vnode_id;
@@ -206,14 +189,13 @@ private:
     xblock_fetcher_t *m_block_fetcher;
     xsync_gossip_t *m_sync_gossip;
     xsync_pusher_t *m_sync_pusher;
-    xsync_broadcast_t *m_sync_broadcast;
     xsync_sender_t *m_sync_sender;
     xsync_on_demand_t *m_sync_on_demand;
     xsync_peerset_t *m_peerset;
     xsync_peer_keeper_t *m_peer_keeper;
     xsync_behind_checker_t *m_behind_checker;
     xsync_cross_cluster_chain_state_t *m_cross_cluster_chain_state;
-    std::unordered_map<xmessage_t::message_type, xsync_handler_netmsg_callback> m_handlers;
+    std::unordered_map<vnetwork::xmessage_t::message_type, xsync_handler_netmsg_callback> m_handlers;
 };
 
 using xsync_handler_ptr_t = std::shared_ptr<xsync_handler_t>;

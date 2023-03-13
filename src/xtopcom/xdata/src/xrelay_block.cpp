@@ -12,9 +12,9 @@
 #include "xcrypto/xckey.h"
 #include "xevm_common/xtriecommon.h"
 
-NS_BEG2(top, data)
-
 using namespace top::evm_common;
+
+NS_BEG2(top, data)
 
 #define RELAY_BLOCK_VERSION (0)
 

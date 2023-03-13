@@ -298,7 +298,7 @@ void xtop_group_element::associate_child_group(std::shared_ptr<xtop_group_elemen
     assert(zone_id() == child_group->zone_id());
     assert(cluster_id() == child_group->cluster_id());
 
-    bool did_associate_child_group{false};
+    // bool did_associate_child_group{false};
 
     XLOCK(m_associated_child_groups_mutex);
     bool found_child_group{false};

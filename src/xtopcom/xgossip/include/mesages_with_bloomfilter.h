@@ -8,11 +8,13 @@
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/top_timer.h"
 #include "xpbase/base/uint64_bloomfilter.h"
-#include "xtransport/proto/transport.pb.h"
+#if defined(XCXX20)
+#include "xtransport/proto/ubuntu/transport.pb.h"
+#else
+#include "xtransport/proto/centos/transport.pb.h"
+#endif
 
 #include <memory>
-#include <queue>
-#include <unordered_map>
 
 namespace top {
 

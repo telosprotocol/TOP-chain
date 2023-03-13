@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 aux_source_directory(./src xdb_tool_src)
 
 add_executable(xdb_tool ${xdb_tool_src})

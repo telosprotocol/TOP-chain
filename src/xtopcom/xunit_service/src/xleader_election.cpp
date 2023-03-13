@@ -373,7 +373,7 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId,
                                                       uint16_t rotate_mode) {
     uint64_t random = viewId + base::xvaccount_t::get_xid_from_account(account);
     xelection_cache_face::elect_set elect_set;
-    bool leader = false;
+    // bool leader = false;
     bool prev_is_validator = true;
 
     if (rotate_mode == enum_rotate_mode_no_rotate) {

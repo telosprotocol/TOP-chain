@@ -21,15 +21,15 @@ TEST(xobject_ptr_t, default_constructor) {
 
 TEST(xobject_ptr_t, nullptr_t) {
     xobject_ptr_t<xbase_object1> object;
-    ASSERT_EQ(nullptr, object);
+    //ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 
     xobject_ptr_t<xbase_object1> object1{nullptr};
-    ASSERT_EQ(nullptr, object1);
+    //ASSERT_EQ(nullptr, object1);
     ASSERT_EQ(nullptr, object1.get());
 
     xobject_ptr_t<xbase_object1> object2{NULL};
-    ASSERT_EQ(nullptr, object2);
+    //ASSERT_EQ(nullptr, object2);
     ASSERT_EQ(nullptr, object2.get());
 }
 
@@ -57,7 +57,7 @@ TEST(xobject_ptr_t, move_constructor1) {
 
     top::xobject_ptr_t<xbase_object1> another{std::move(object)};
     ASSERT_EQ(1, another->get_refcount());
-    ASSERT_EQ(nullptr, object);
+    //ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 }
 
@@ -67,7 +67,7 @@ TEST(xobject_ptr_t, move_constructor2) {
 
     top::xobject_ptr_t<xbase_object1> another{std::move(object)};
     ASSERT_EQ(1, another->get_refcount());
-    ASSERT_EQ(nullptr, object);
+    //ASSERT_EQ(nullptr, object);
     ASSERT_EQ(nullptr, object.get());
 }
 

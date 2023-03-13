@@ -6,7 +6,7 @@
 #include <string>
 #include <stdlib.h>
 
-#include "json/value.h"
+#include <json/value.h>
 #include "xpbase/base/top_log.h"
 #include "xloader/xconfig_offchain_loader.h"
 
@@ -26,12 +26,12 @@ void xconfig_offchain_loader_t::stop() {
 
 bool xconfig_offchain_loader_t::save_conf(const std::map<std::string, std::string>& map) {
 #if 0
-    xJson::Value root;
+    Json::Value root;
     for(auto& enty : map) {
         root[enty.first.c_str()] = enty.second.c_str();
     }
 
-    xJson::FastWriter writer;
+    Json::FastWriter writer;
     std::string str = writer.write(root);
     std::ofstream ofs;
     ofs.open(out_file.c_str());
@@ -46,9 +46,9 @@ bool xconfig_offchain_loader_t::save_conf(const std::map<std::string, std::strin
 }
 
 bool xconfig_offchain_loader_t::fetch_all(std::map<std::string, std::string>& map) {
-    xJson::Value json_root;
+    Json::Value json_root;
     if (!m_config_file.empty()) {
-        xJson::Reader reader;
+        Json::Reader reader;
 
         auto config_content = get_file_content(m_config_file);
         if (config_content.empty()) {
@@ -63,8 +63,8 @@ bool xconfig_offchain_loader_t::fetch_all(std::map<std::string, std::string>& ma
     }
 
     if (!m_config_extra_file.empty()) {
-        xJson::Reader reader_extra;
-        xJson::Value root_extra;
+        Json::Reader reader_extra;
+        Json::Value root_extra;
         auto config_extra_content = get_file_content(m_config_extra_file);
         bool ret = reader_extra.parse(config_extra_content, root_extra);
         if (!ret) {
@@ -96,7 +96,7 @@ std::string xconfig_offchain_loader_t::get_file_content(const std::string& filep
     return std::move(tmp.str());
 }
 
-void xconfig_offchain_loader_t::extract(const std::string& prefix, const xJson::Value& root, std::map<std::string, std::string>& params) {
+void xconfig_offchain_loader_t::extract(const std::string& prefix, const Json::Value& root, std::map<std::string, std::string>& params) {
     const auto members = root.getMemberNames();
     for(const auto& member : members) {
         std::string key = member + "_";
@@ -108,7 +108,7 @@ void xconfig_offchain_loader_t::extract(const std::string& prefix, const xJson::
                 if (root[member][i].isObject()) {
                     extract(key, root[member][i], params);
                 } else {
-                    xJson::FastWriter writer;
+                    Json::FastWriter writer;
                     params[key] = writer.write(root[member]);
                 }
             }

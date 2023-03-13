@@ -51,17 +51,17 @@ void xvm_context::exec()
     }
 
     //check the cache vm is exist
-    shared_ptr<xengine> engine;
-    string code;
-    if (!m_vm_service.m_vm_cache.get(m_contract_account, engine)) {
-        engine = std::make_shared<xlua_engine>();
-        m_contract_helper->get_contract_code(code);
-        engine->load_script(code, *this);
-        m_vm_service.m_vm_cache.put(m_contract_account, engine);
-    }
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    engine->process(m_contract_account, code, *this);
-    m_trace_ptr->m_duration_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
+    //shared_ptr<xengine> engine;
+    //string code;
+    //if (!m_vm_service.m_vm_cache.get(m_contract_account, engine)) {
+    //    engine = std::make_shared<xlua_engine>();
+    //    m_contract_helper->get_contract_code(code);
+    //    engine->load_script(code, *this);
+    //    m_vm_service.m_vm_cache.put(m_contract_account, engine);
+    //}
+    //std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    //engine->process(m_contract_account, code, *this);
+    //m_trace_ptr->m_duration_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
 }
 #if 0  // not support lua deploy
 void xvm_context::publish_code()

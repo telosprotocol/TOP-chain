@@ -1,7 +1,8 @@
 #pragma once
 
+#include "ethash/ethash.hpp"
 #include "xdepends/include/ethash/ethash.hpp"
-#include "xevm_common/fixed_hash.h"
+#include "xcommon/fixed_hash.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 
 NS_BEG3(top, evm_common, eth)

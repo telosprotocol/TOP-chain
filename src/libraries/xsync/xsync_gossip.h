@@ -40,7 +40,7 @@ public:
 class xsync_gossip_t {
 public:
 
-    xsync_gossip_t(std::string vnode_id, const observer_ptr<mbus::xmessage_bus_face_t> &mbus, xsync_store_face_t* sync_store,
+    xsync_gossip_t(std::string vnode_id, xsync_store_face_t* sync_store,
             xrole_chains_mgr_t *role_chains_mgr, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender);
 
     virtual ~xsync_gossip_t();
@@ -66,7 +66,6 @@ protected:
 
 private:
     std::string m_vnode_id;
-    observer_ptr<mbus::xmessage_bus_face_t> m_mbus;
     xsync_store_face_t *m_sync_store;
     xrole_chains_mgr_t *m_role_chains_mgr;
     xrole_xips_manager_t *m_role_xips_mgr;

@@ -1,8 +1,1 @@
-cmake_minimum_required(VERSION 3.8)
-
-aux_source_directory(./src xmutisig_src)
-add_library(xmutisig ${xmutisig_src})
-
-target_link_libraries(xmutisig PRIVATE ssl crypto xxbase secp256k1)
-
-target_include_directories(xmutisig PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
+include(./CMakeLists_${XOS_ID}.txt)

@@ -1,0 +1,16 @@
+find_library(RocksDB_LIBRARIES rocksdb REQUIRED)
+find_library(lz4_LIBRARIES lz4 HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+find_library(zstd_LIBRARIES zstd REQUIRED)
+find_library(Snappy_LIBRARIES snappy REQUIRED)
+find_package(BZip2 REQUIRED)
+find_package(ZLIB REQUIRED)
+
+aux_source_directory(./ tests_src)
+add_executable(xstate_mpt_test ${tests_src})
+target_link_libraries(xstate_mpt_test PRIVATE xstate_mpt xloader xgenesis xdata xblockstore xstore xdata xxbase pthread ${RocksDB_LIBRARIES}
+    ZLIB::ZLIB
+    BZip2::BZip2
+    ${zstd_LIBRARIES}
+    ${Snappy_LIBRARIES}
+    gtest
+)

@@ -1,11 +1,14 @@
 #pragma once
-#include "CLI11.hpp"
-#include "xtopcl/include/api_method_imp.h"
-#include "xtopcl/include/user_info.h"
-#include "xtopcl/include/xtop/topchain_type.h"
 
-#include <functional>
-#include <map>
+#include "xbase/xcxx_config.h"
+
+#if defined(XCXX20)
+#include "CLI/CLI.hpp"
+#else
+#include "CLI11.hpp"
+#endif
+#include "xtopcl/include/api_method_imp.h"
+
 #include <sstream>
 #include <string>
 #include <vector>
@@ -31,7 +34,7 @@ public:
     ~ApiMethod();
     bool set_default_prikey(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str);
-    int update_account(std::ostringstream & out_str, xJson::Value & root);
+    int update_account(std::ostringstream & out_str, Json::Value & root);
     string get_account_from_daemon();
     string get_prikey_from_daemon();
     int set_prikey_to_daemon(const string & account, const string & pri_key, std::ostringstream & out_str, uint32_t expired_time = kExpirePeriod);
@@ -152,10 +155,10 @@ public:
         api_method_imp_.reset_tx_deposit();
     }
     void get_token();
-    int get_account_info(std::ostringstream & out_str, xJson::Value & root);
+    int get_account_info(std::ostringstream & out_str, Json::Value & root);
 
 private:
-    std::string get_keystore_hint(xJson::Value const & keystore_info);
+    std::string get_keystore_hint(Json::Value const & keystore_info);
     std::string input_same_pswd_twice();
     std::string input_pswd_hint();
     std::string input_hiding_no_empty(std::string const & empty_msg);

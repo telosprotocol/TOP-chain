@@ -207,7 +207,7 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
     m_statistic.dec_table_num(remove_table_num);
 }
 
-void xtxpool_t::on_block_confirmed(xblock_t * block) {
+void xtxpool_t::on_block_confirmed(data::xblock_t * block) {
     if (!block->is_tableblock() || block->is_genesis_block()) {
         return;
     }
@@ -338,7 +338,7 @@ std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
     return table_height_map;
 }
 
-xtransaction_ptr_t xtxpool_t::get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
+data::xtransaction_ptr_t xtxpool_t::get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
     auto table = get_txpool_table_by_addr(account_addr);
     if (table == nullptr) {
         return nullptr;

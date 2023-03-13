@@ -102,7 +102,7 @@ public:
         return std::move(m_id);
     }
 
-#if defined XCXX14 || defined XBEYOND_CXX14     // C++14 and above
+#if defined(XCXX14)    // C++14 and above
     value_type const &&
     value() const && {
         return std::move(m_id);

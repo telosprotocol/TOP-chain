@@ -1,9 +1,13 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#include <gtest/gtest.h>
+
 #include <sstream>
+
 #define private public
-#define protected public
+
 #include "xconfig/xconfig_register.h"
 #include "xdata/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_info_bundle.h"
@@ -13,8 +17,6 @@
 #include "xunit_service/xcons_face.h"
 #include "xvm/xsystem_contracts/xelection/xelect_consensus_group_contract.h"
 #include "xvm/xsystem_contracts/xreward/xzec_reward_contract.h"
-
-#include <gtest/gtest.h>
 
 using namespace top;
 

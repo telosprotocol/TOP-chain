@@ -1,5 +1,3 @@
-#add_compile_options(-static -Wall -Werror)
-add_compile_options(-static)
 aux_source_directory(../xsystem_contract/xelection_algorithm/fixture xelection_algorithm_fixture)
 aux_source_directory(./ xelect_net_test_dir)
 add_executable(xelect_net_test ${xelection_algorithm_fixture} ${xelect_net_test_dir})

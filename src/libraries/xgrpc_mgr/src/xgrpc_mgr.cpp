@@ -82,7 +82,7 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
 
     top::xrpc::xrpc_query_manager bh(nullptr, nullptr, nullptr, nullptr);
     auto bp = block.get();
-    xJson::Value j;
+    Json::Value j;
     if (rpc::rpc_version == rpc::xrpc_version_2) {
         j["value"] = bh.get_block_json(bp, data::RPC_VERSION_V2);
     } else {
@@ -92,13 +92,13 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
     static std::atomic_int cnt{0};
     j["result"] = cnt++;
 
-#ifdef DEBUG
-    // adding push tx log info
-    auto txactions = data::xblockextract_t::unpack_txactions(bp);
-    for (auto & txaction : txactions) {
-        xdbg("grpc stream tx hash: tx_key=%s", txaction.get_tx_dump_key().c_str());
-    }
-#endif
+// #ifdef DEBUG
+//     // adding push tx log info
+//     auto txactions = data::xblockextract_t::unpack_txactions(bp);
+//     for (auto & txaction : txactions) {
+//         xdbg("grpc stream tx hash: tx_key=%s", txaction.get_tx_dump_key().c_str());
+//     }
+// #endif
 
     {
         std::unique_lock<std::mutex> lck(tableblock_mtx);
@@ -126,7 +126,7 @@ void handler_mgr::add_handler(std::shared_ptr<xrpc_handle_face_t> handle) {
     m_handles.push_back(handle);
 }
 
-bool handler_mgr::handle(std::string & request, xJson::Value& js_req, xJson::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+bool handler_mgr::handle(std::string & request, Json::Value& js_req, Json::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     for (auto v : m_handles) {
         auto ret = v->handle(request, js_req, js_rsp, strResult, nErrorCode);
         js_rsp["result"] = strResult;

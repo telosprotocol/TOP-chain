@@ -1,18 +1,10 @@
-add_compile_options(-static -Wall -Werror)
+if (NOT ${XSYS_VER} EQUAL 0)
+    find_library(secp256k1_LIBRARY secp256k1 REQUIRED)
+    find_library(cryptopp_LIBRARY cryptopp REQUIRED)
+endif()
 
 if (DISABLE_REAL_STAKE)
     add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
-endif()
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
-    add_definitions(-DLOG_CONSOLE)
-    if (NOT MSVC)
-        add_compile_options("-g")
-    endif()
 endif()
 
 set(PROJ_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -22,25 +14,11 @@ aux_source_directory(${SRC_DIR}/base cppsdk_src)
 aux_source_directory(${SRC_DIR}/network cppsdk_src)
 aux_source_directory(${SRC_DIR}/task cppsdk_src)
 
-#compile definitions
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_compile_options(-Wno-deprecated-declarations)
-    add_compile_options(-Wno-write-strings)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    add_compile_options(-Wno-writable-strings)
-    add_compile_options(-Wno-deprecated-declarations)
-    add_compile_options(-Wno-write-strings)
-    add_compile_options(-Wno-unused-variable)
-    add_compile_options(-Wno-unused-function)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_definitions(-D_WIN32_WINNT=0x0501)
-    add_definitions(-DNOMINMAX)  # enable std::min/std::max
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS) # disable strncpy -> strncpy_s warnings
-    add_compile_options(/Zc:__cplusplus) # using correct __cplusplus value
-    add_compile_options(/utf-8) # input/output as utf-8
+if (${XSYS_VER} EQUAL 0)
+    set(LINK_ARGS secp256k1 trezor-crypto cryptopp)
+else()
+    set(LINK_ARGS ${secp256k1_LIBRARY} trezor-crypto ${cryptopp_LIBRARY})
 endif()
-
-set(LINK_ARGS secp256k1 trezor-crypto cryptopp)
 
 if(NOT MSVC)
     set(LINK_ARGS ${LINK_ARGS} pthread)

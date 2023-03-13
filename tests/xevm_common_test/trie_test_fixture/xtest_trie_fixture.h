@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include <gsl/span>
+#include "xbasic/xspan.h"
 
 #include <atomic>
 
@@ -12,7 +12,7 @@ NS_BEG4(top, evm_common, trie, tests)
 
 class xmock_disk_db : public xkv_db_face_t {
 public:
-    void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
+    void Put(xspan_t<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
         xdbg("xmock_disk_db Put key: %s", top::to_hex(key).c_str());
         m[xbytes_t{std::begin(key), std::end(key)}] = value;
     }
@@ -21,11 +21,11 @@ public:
         m.erase(key);
     }
 
-    bool has(gsl::span<xbyte_t const> const key, std::error_code & ec) const {
+    bool has(xspan_t<xbyte_t const> const key, std::error_code & ec) const {
         return m.find(xbytes_t{key.begin(), key.end()}) != m.end();
     }
 
-    xbytes_t get(gsl::span<xbyte_t const> const key, std::error_code & ec) const override {
+    xbytes_t get(xspan_t<xbyte_t const> const key, std::error_code & ec) const override {
         if (!has(key, ec)) {
             ec = error::xerrc_t::trie_proof_missing;
             return xbytes_t{};
@@ -66,7 +66,7 @@ public:
         }
     }
 
-    void DeleteBatch(std::vector<gsl::span<xbyte_t const>> const & batch, std::error_code &) override {
+    void DeleteBatch(std::vector<xspan_t<xbyte_t const>> const & batch, std::error_code &) override {
         for (auto const & key : batch) {
             m.erase(xbytes_t{std::begin(key), std::end(key)});
         }
@@ -88,7 +88,7 @@ using xmock_disk_db_ptr = std::shared_ptr<xmock_disk_db>;
 
 class xmock_prove_db : public xkv_db_face_t {
 public:
-    void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
+    void Put(xspan_t<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
         xdbg("xmock_prove_db Put key: %s", top::to_hex(key).c_str());
         m[xbytes_t{std::begin(key), std::end(key)}] = value;
     }
@@ -96,11 +96,11 @@ public:
         m.erase(key);
     }
 
-    bool has(gsl::span<xbyte_t const> const key, std::error_code & ec) const override {
+    bool has(xspan_t<xbyte_t const> const key, std::error_code & ec) const override {
         return m.find(xbytes_t{std::begin(key), std::end(key)}) != m.end();
     }
 
-    xbytes_t get(gsl::span<xbyte_t const> const key, std::error_code & ec) const override {
+    xbytes_t get(xspan_t<xbyte_t const> const key, std::error_code & ec) const override {
         if (!has(key, ec)) {
             ec = error::xerrc_t::trie_proof_missing;
             return xbytes_t{};
@@ -130,7 +130,7 @@ public:
     void PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_code & ec) override {
     }
 
-    void DeleteBatch(std::vector<gsl::span<xbyte_t const>> const & batch, std::error_code & ec) override {
+    void DeleteBatch(std::vector<xspan_t<xbyte_t const>> const & batch, std::error_code & ec) override {
         for (auto const & key : batch) {
             m.erase(xbytes_t{std::begin(key), std::end(key)});
         }

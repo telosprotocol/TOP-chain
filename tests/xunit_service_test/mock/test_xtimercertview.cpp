@@ -226,9 +226,9 @@ public:
 #endif
 
 // beacon(4node)
-static xJson::Value create_timercert() {
+static Json::Value create_timercert() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -247,7 +247,7 @@ void test_xtc() {
 
     // auto bs = new test::xunitblockstore_t{}; // error: cannot allocate an object of abstract type ‘top::test::xunitblockstore_t’ auto bs = new test::xunitblockstore_t{};
 
-    xJson::Value timercert_cfg = create_timercert();
+    Json::Value timercert_cfg = create_timercert();
 
     // 4 nodes
     xmock_network_config_t cfg_network(timercert_cfg);

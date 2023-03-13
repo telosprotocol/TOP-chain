@@ -1,5 +1,3 @@
-add_compile_options(-static)
-
 add_subdirectory(xapplication)
 add_subdirectory(xelect)
 add_subdirectory(xvnode)

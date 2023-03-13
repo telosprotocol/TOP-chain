@@ -11,7 +11,7 @@
 #include <type_traits>
 
 #define XDEFINE_MSG_CATEGORY(MSG_CATEGORY_NAME, MSG_CATEGORY_ID)                                                                                    \
-    XINLINE_CONSTEXPR top::common::xmessage_category_t MSG_CATEGORY_NAME                                                                            \
+    constexpr top::common::xmessage_category_t MSG_CATEGORY_NAME                                                                            \
     {                                                                                                                                               \
         static_cast<top::common::xmessage_category_t>(static_cast<std::underlying_type<top::common::xmessage_category_t>::type>(MSG_CATEGORY_ID))   \
     }

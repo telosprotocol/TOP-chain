@@ -74,48 +74,79 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
     return index_detail;
 }
 
+void xrpc_loader_t::parse_logs(const xtxindex_detail_ptr_t & index, xJson::Value & jv) {
+    if (index == nullptr) {
+        return;
+    }
+    data::xtop_store_receipt_t tx_receipt;
+    if (false == index->get_txaction().get_tvm_transaction_receipt(tx_receipt)) {
+        jv["logs"] = xJson::arrayValue;
+        jv["logsBloom"] = evm_common::xbloom9_t{}.to_hex_string();
+        return;
+    }
+    xJson::Value i;
+    uint64_t idx = 0;
+    for (auto & log: tx_receipt.get_logs()) {
+        xJson::Value j;
+        j["logIndex"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(idx);
+        idx++;
+        j["address"] = log.address.to_string();
+        for (auto & topic : log.topics){
+            j["topics"].append(top::to_hex_prefixed(topic.asBytes()));
+        }
+        j["data"] = top::to_hex_prefixed(log.data);
+        i.append(j);
+    }
+    // js_v["blockNumber"] = loglocation.m_block_number;
+    // js_v["blockHash"] = loglocation.m_block_hash;
+    // js_v["transactionHash"] = loglocation.m_tx_hash;
+    // js_v["transactionIndex"] = loglocation.m_transaction_index;
+    // js_v["removed"] = false;
+    jv["logs"] = i;
+    jv["logsBloom"] = tx_receipt.get_logsBloom().to_hex_string();
+}
 
-void xrpc_loader_t::parse_common_info(const xtxindex_detail_ptr_t & txindex, xJson::Value & jv) {
+void xrpc_loader_t::parse_common_info(const xtxindex_detail_ptr_t & txindex, Json::Value & jv) {
     jv["account"] = txindex->get_txindex()->get_block_addr();
-    jv["height"] = static_cast<xJson::UInt64>(txindex->get_txindex()->get_block_height());
-    jv["used_gas"] = static_cast<xJson::UInt64>(txindex->get_txaction().get_used_tgas());
+    jv["height"] = static_cast<Json::UInt64>(txindex->get_txindex()->get_block_height());
+    jv["used_gas"] = static_cast<Json::UInt64>(txindex->get_txaction().get_used_tgas());
     // jv["used_deposit"] = txindex->get_txaction().get_used_deposit();
     // jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(txindex->get_txaction().get_tx_exec_status());
 }
 
-xJson::Value xrpc_loader_t::parse_send_tx(const xtxindex_detail_ptr_t & sendindex) {
-    xJson::Value jv;
+Json::Value xrpc_loader_t::parse_send_tx(const xtxindex_detail_ptr_t & sendindex) {
+    Json::Value jv;
     parse_common_info(sendindex, jv);
-    jv["used_deposit"] = static_cast<xJson::UInt64>(sendindex->get_txaction().get_used_deposit());
+    jv["used_deposit"] = static_cast<Json::UInt64>(sendindex->get_txaction().get_used_deposit());
     auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(sendindex->get_raw_tx()->get_source_addr(), sendindex->get_raw_tx()->get_target_addr());
-    jv["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
+    jv["tx_fee"] = static_cast<Json::UInt64>(beacon_tx_fee);
     if (sendindex->get_txaction().is_self_tx()) {  // XTODO sendtx not need set exec_status, only confirmtx and selftx need set exec_status
         jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(sendindex->get_txaction().get_tx_exec_status());
     }
 
     return jv;
 }
-xJson::Value xrpc_loader_t::parse_recv_tx(const xtxindex_detail_ptr_t & sendindex, const xtxindex_detail_ptr_t & recvindex) {
-    xJson::Value jv;
+Json::Value xrpc_loader_t::parse_recv_tx(const xtxindex_detail_ptr_t & sendindex, const xtxindex_detail_ptr_t & recvindex) {
+    Json::Value jv;
     if (nullptr != recvindex) {
         parse_common_info(recvindex, jv);
     } else {
         jv["account"] = sendindex->get_txindex()->get_block_addr();
-        jv["height"] = static_cast<xJson::UInt64>(sendindex->get_txindex()->get_block_height());
+        jv["height"] = static_cast<Json::UInt64>(sendindex->get_txindex()->get_block_height());
         jv["used_gas"] = 0;
         // jv["used_deposit"] = 0;  // XTODO recvtx not has used_deposit now
         // jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(sendindex->get_txaction().get_tx_exec_status());  // XTODO recvtx not has exec_status now
     }
     return jv;
 }
-xJson::Value xrpc_loader_t::parse_confirm_tx(const xtxindex_detail_ptr_t & sendindex, data::enum_xunit_tx_exec_status recvtx_status, const xtxindex_detail_ptr_t & confirmindex) {
-    xJson::Value jv;
+Json::Value xrpc_loader_t::parse_confirm_tx(const xtxindex_detail_ptr_t & sendindex, data::enum_xunit_tx_exec_status recvtx_status, const xtxindex_detail_ptr_t & confirmindex) {
+    Json::Value jv;
     if (nullptr != confirmindex) {  // set real confirmtx info
         parse_common_info(confirmindex, jv);
-        jv["used_deposit"] = static_cast<xJson::UInt64>(confirmindex->get_txaction().get_used_deposit());
+        jv["used_deposit"] = static_cast<Json::UInt64>(confirmindex->get_txaction().get_used_deposit());
     } else {
         jv["account"] = sendindex->get_txindex()->get_block_addr();
-        jv["height"] = static_cast<xJson::UInt64>(sendindex->get_txindex()->get_block_height());
+        jv["height"] = static_cast<Json::UInt64>(sendindex->get_txindex()->get_block_height());
         jv["used_gas"] = 0;
         jv["used_deposit"] = 0;
     }
@@ -124,13 +155,13 @@ xJson::Value xrpc_loader_t::parse_confirm_tx(const xtxindex_detail_ptr_t & sendi
     return jv;
 }
 
-xJson::Value xrpc_loader_t::load_and_parse_recv_tx(const std::string & raw_tx_hash, const xtxindex_detail_ptr_t & sendindex, data::enum_xunit_tx_exec_status & recvtx_status) {
+xJson::Value xrpc_loader_t::load_and_parse_recv_tx(const std::string & raw_tx_hash, const xtxindex_detail_ptr_t & sendindex, xtxindex_detail_ptr_t & recvindex, data::enum_xunit_tx_exec_status & recvtx_status) {
     xJson::Value jv;
     if (sendindex->get_txaction().get_inner_table_flag()) {  // not need recvindex, create a mock recv json
         jv = xrpc_loader_t::parse_recv_tx(sendindex, nullptr);
         recvtx_status = sendindex->get_txaction().get_tx_exec_status();
     } else {
-        xtxindex_detail_ptr_t recvindex = xrpc_loader_t::load_tx_indx_detail(raw_tx_hash, base::enum_transaction_subtype_recv);
+        recvindex = xrpc_loader_t::load_tx_indx_detail(raw_tx_hash, base::enum_transaction_subtype_recv);
         if (recvindex != nullptr) {
             jv = xrpc_loader_t::parse_recv_tx(sendindex, recvindex);
             recvtx_status = recvindex->get_txaction().get_tx_exec_status();
@@ -139,8 +170,8 @@ xJson::Value xrpc_loader_t::load_and_parse_recv_tx(const std::string & raw_tx_ha
     return jv;
 }
 
-xJson::Value xrpc_loader_t::load_and_parse_confirm_tx(const std::string & raw_tx_hash, const xtxindex_detail_ptr_t & sendindex, data::enum_xunit_tx_exec_status recvtx_status) {
-    xJson::Value jv;
+Json::Value xrpc_loader_t::load_and_parse_confirm_tx(const std::string & raw_tx_hash, const xtxindex_detail_ptr_t & sendindex, data::enum_xunit_tx_exec_status recvtx_status) {
+    Json::Value jv;
     if (sendindex->get_txaction().get_not_need_confirm()) {
         jv = xrpc_loader_t::parse_confirm_tx(sendindex, recvtx_status, nullptr);
     } else {

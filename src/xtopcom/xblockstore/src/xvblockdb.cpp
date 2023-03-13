@@ -385,13 +385,13 @@ namespace top
             {
                 const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
-                xdbg("xvblockdb_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
+                xinfo("xvblockdb_t::write_index_to_db for main entry.index=%s,flag=0x%x,size=%zu",index_obj->dump().c_str(), index_obj->get_block_flags(),index_bin.size());
             }
             else
             {
                 const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height(),index_obj->get_viewid());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
-                xdbg("xvblockdb_t::write_index_to_db for other entry.index=%s",index_obj->dump().c_str());
+                xinfo("xvblockdb_t::write_index_to_db for other entry.index=%s,flag=0x%x",index_obj->dump().c_str(), index_obj->get_block_flags());
             }
             
             update_block_write_metrics(index_obj->get_block_level(), index_obj->get_block_class(), enum_blockstore_metrics_type_block_index, index_bin.size());
@@ -472,6 +472,7 @@ namespace top
                 xerror("xvblockdb_t::read_index_from_db,dirty index from db for path(%s)",index_db_key_path.c_str());
                 new_index_obj->reset_modify_flag(); //should not happen,but add exception for incase
             }
+            xdbg_info("xvblockdb_t::read_index_from_db,succ %s",new_index_obj->dump().c_str());
             return new_index_obj;
         }
     
@@ -492,7 +493,7 @@ namespace top
                 {
                     update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_object, blockobj_bin.size());
                     
-                    xinfo("xvblockdb_t::write_block_object_to_db,stored DB at key(%s) for block(%s) and index_ptr(%s)",blockobj_key.c_str(),block_ptr->dump().c_str(), index_ptr->dump().c_str());
+                    xinfo("xvblockdb_t::write_block_object_to_db,stored DB at for block(%s) and index_ptr(%s),size=%zu",block_ptr->dump().c_str(), index_ptr->dump().c_str(),blockobj_bin.size());
                     
                     block_ptr->reset_modified_count();//cleanup flag of modification
                     //has stored entity of input/output inside of block
@@ -571,6 +572,7 @@ namespace top
                 
                 if(index_ptr->get_this_block() == NULL)//double check again
                     index_ptr->reset_this_block(new_block_ptr.get(),true);//link to raw block for index
+                xdbg_info("xvblockdb_t::read_block_object_from_db,succ %s",index_ptr->dump().c_str());
             }
             return (index_ptr->get_this_block() != NULL);
         }
@@ -592,7 +594,7 @@ namespace top
                         const std::string input_res_key = create_block_input_resource_key(index_ptr);
                         if(get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
-                            xdbg("xvblockdb_t::write_block_input_to_db,store input resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_res_bin.size());
+                            xinfo("xvblockdb_t::write_block_input_to_db,store input resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_res_bin.size());
                             return base::enum_index_store_flag_input_resource;
                         }
                         else
@@ -641,7 +643,7 @@ namespace top
                         return false;
                     }
                 }
-                xdbg("xvblockdb_t::read_block_input_from_db,read block-input resource,block(%s) ",block_ptr->dump().c_str());
+                xdbg_info("xvblockdb_t::read_block_input_from_db,read block-input resource,block(%s) ",block_ptr->dump().c_str());
             }
            return true;
         }
@@ -666,7 +668,7 @@ namespace top
                         const std::string output_offdata_key = create_block_output_offdata_key(index_ptr);
                         if(get_xdbstore()->set_value(output_offdata_key, output_offdata_bin))
                         {
-                            xdbg("xvblockdb_t::write_block_output_to_db,store output offdata to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_offdata_bin.size());
+                            xinfo("xvblockdb_t::write_block_output_to_db,store output offdata to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_offdata_bin.size());
                             update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_output_offdata, output_offdata_bin.size());
                         }
                         else
@@ -685,7 +687,7 @@ namespace top
                         {
                             update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_output_res, output_res_bin.size());
 
-                            xdbg("xvblockdb_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
+                            xinfo("xvblockdb_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
                             return base::enum_index_store_flag_output_resource;
                         }
                         else
@@ -734,7 +736,7 @@ namespace top
                         return false;
                     }
                 }
-                xdbg("xvblockdb_t::read_block_output_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
+                xdbg_info("xvblockdb_t::read_block_output_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
             }
             return true;
         }
@@ -768,7 +770,7 @@ namespace top
                         return false;
                     }
                 }
-                xdbg("xvblockdb_t::read_block_output_offdata_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
+                xdbg_info("xvblockdb_t::read_block_output_offdata_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
             }
             return true;
         }        
@@ -870,21 +872,7 @@ namespace top
 
         const std::string  xvblockdb_t::create_block_object_key(base::xvbindex_t * index_ptr)
         {
-            if(index_ptr->check_store_flag(base::enum_index_store_flag_non_index))//just store raw-block
-            {
-                if( index_ptr->check_block_flag(base::enum_xvblock_flag_committed)) //main-entry block
-                {
-                    return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height());
-                }
-                else
-                {
-                    return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid());
-                }
-            }
-            else //the persisted index always point to fixed postion to store raw block
-            {
-                return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid());
-            }
+            return base::xvdbkey_t::create_prunable_block_object_key(*index_ptr,index_ptr->get_height(),index_ptr->get_viewid());
         }
     
         const std::string  xvblockdb_t::create_block_input_key(base::xvbindex_t * index_ptr)

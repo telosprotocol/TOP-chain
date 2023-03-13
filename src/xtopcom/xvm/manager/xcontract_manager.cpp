@@ -170,8 +170,8 @@ void xtop_contract_manager::register_address() {
     }
 }
 
-xcontract_base * xtop_contract_manager::get_contract(common::xaccount_address_t const & address) {
-    xcontract_base * pc{};
+xvm::xcontract::xcontract_base * xtop_contract_manager::get_contract(common::xaccount_address_t const & address) {
+    xvm::xcontract::xcontract_base * pc{};
     if (data::is_sys_contract_address(address)) {  // by cluster address
         m_rwlock.lock_read();
         auto it = m_contract_inst_map.find(address);
@@ -438,7 +438,7 @@ void xtop_contract_manager::setup_chain(common::xaccount_address_t const & contr
     }
     xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block not exist", contract_cluster_address.to_string().c_str());
 
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
+    data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v1_t>();
     data::xproperty_asset asset_out{0};
     tx->make_tx_run_contract(asset_out, "setup", "");
     tx->set_same_source_target_address(contract_cluster_address.to_string());
@@ -447,8 +447,8 @@ void xtop_contract_manager::setup_chain(common::xaccount_address_t const & contr
 
     xobject_ptr_t<base::xvbstate_t> bstate =
         make_object_ptr<base::xvbstate_t>(contract_cluster_address.to_string(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    data::xunitstate_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
-    xaccount_context_t ac(unitstate);
+    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+    store::xaccount_context_t ac(unitstate);
 
     xvm::xvm_service s;
     s.deal_transaction(tx, &ac);
@@ -473,7 +473,7 @@ void xtop_contract_manager::register_contract_cluster_address(common::xaccount_a
     m_rwlock.lock_write();
     auto it = m_contract_inst_map.find(cluster_address);
     if (it == m_contract_inst_map.end()) {
-        xcontract_base * pc = m_contract_register.get_contract(address);
+        xvm::xcontract::xcontract_base * pc = m_contract_register.get_contract(address);
         if (pc != nullptr) {
             m_contract_inst_map[cluster_address] = pc;
         }
@@ -500,7 +500,7 @@ base::xvnodesrv_t * xtop_contract_manager::get_node_service() const noexcept {
 
 static void get_election_result_property_data(common::xaccount_address_t const & contract_address,
                                               xjson_format_t const json_format,
-                                              xJson::Value & json) {
+                                              Json::Value & json) {
     assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
@@ -518,7 +518,7 @@ static void get_election_result_property_data(common::xaccount_address_t const &
             for (auto const & election_network_result_info : election_result_store) {
                 auto const network_id = top::get<common::xnetwork_id_t const>(election_network_result_info);
                 auto const & election_network_result = top::get<data::election::xelection_network_result_t>(election_network_result_info);
-                xJson::Value jn;
+                Json::Value jn;
                 for (auto const & election_result_info : election_network_result) {
                     auto const node_type = top::get<common::xnode_type_t const>(election_result_info);
                     std::string node_type_str = to_string(node_type);
@@ -548,10 +548,10 @@ static void get_election_result_property_data(common::xaccount_address_t const &
                                     break;
 
                                 case xjson_format_t::detail: {
-                                    xJson::Value j;
+                                    Json::Value j;
                                     j["group_id"] = group_id.value();
-                                    j["stake"] = static_cast<xJson::UInt64>(election_info.stake());
-                                    j["round"] = static_cast<xJson::UInt64>(election_group_result.group_version().value());
+                                    j["stake"] = static_cast<Json::UInt64>(election_info.stake());
+                                    j["round"] = static_cast<Json::UInt64>(election_group_result.group_version().value());
                                     jn[node_id.to_string()].append(j);
 
                                     break;
@@ -576,7 +576,7 @@ static void get_election_result_property_data(common::xaccount_address_t const &
                                               std::string const & property_name,
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
-                                              xJson::Value & json) {
+                                              Json::Value & json) {
     assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
@@ -597,7 +597,7 @@ static void get_election_result_property_data(common::xaccount_address_t const &
                 auto const node_type = top::get<common::xnode_type_t const>(election_result_info);
                 std::string node_type_str = compatible_mode ? common::to_presentation_string_compatible(node_type) : common::to_presentation_string(node_type);
                 auto const & election_result = top::get<data::election::xelection_result_t>(election_result_info);
-                xJson::Value jn;
+                Json::Value jn;
                 for (auto const & election_cluster_result_info : election_result) {
                     // auto const & cluster_id = top::get<common::xcluster_id_t const>(election_cluster_result_info);
                     auto const & election_cluster_result = top::get<data::election::xelection_cluster_result_t>(election_cluster_result_info);
@@ -619,10 +619,10 @@ static void get_election_result_property_data(common::xaccount_address_t const &
                                 break;
 
                             case xjson_format_t::detail: {
-                                xJson::Value j;
+                                Json::Value j;
                                 j["group_id"] = group_id.value();
-                                j["stake"] = static_cast<xJson::UInt64>(election_info.v1().stake());
-                                j["round"] = static_cast<xJson::UInt64>(election_group_result.group_version().value());
+                                j["stake"] = static_cast<Json::UInt64>(election_info.v1().stake());
+                                j["round"] = static_cast<Json::UInt64>(election_group_result.group_version().value());
                                 j["public_key"] = election_info.public_key().to_string();
                                 j["genesis"] = election_info.genesis() ? "true" : "false";
                                 j["miner_type"] = common::to_string(election_info.miner_type());
@@ -661,7 +661,7 @@ static void get_election_result_property_data(const data::xunitstate_ptr_t units
                                               std::string const & property_name,
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
-                                              xJson::Value & json) {
+                                              Json::Value & json) {
     assert(contract_address == rec_elect_rec_contract_address                  || // NOLINT
            contract_address == rec_elect_zec_contract_address                  || // NOLINT
            contract_address == rec_elect_edge_contract_address                 || // NOLINT
@@ -684,7 +684,7 @@ static void get_election_result_property_data(const data::xunitstate_ptr_t units
                 auto const node_type = top::get<common::xnode_type_t const>(election_result_info);
                 std::string node_type_str = compatible_mode ? common::to_presentation_string_compatible(node_type) : common::to_presentation_string(node_type);
                 auto const & election_result = top::get<data::election::xelection_result_t>(election_result_info);
-                xJson::Value jn;
+                Json::Value jn;
                 for (auto const & election_cluster_result_info : election_result) {
                     // auto const & cluster_id = top::get<common::xcluster_id_t const>(election_cluster_result_info);
                     auto const & election_cluster_result = top::get<data::election::xelection_cluster_result_t>(election_cluster_result_info);
@@ -706,10 +706,10 @@ static void get_election_result_property_data(const data::xunitstate_ptr_t units
                                 break;
 
                             case xjson_format_t::detail: {
-                                xJson::Value j;
+                                Json::Value j;
                                 j["group_id"] = group_id.value();
-                                j["stake"] = static_cast<xJson::UInt64>(election_info.stake());
-                                j["round"] = static_cast<xJson::UInt64>(election_group_result.group_version().value());
+                                j["stake"] = static_cast<Json::UInt64>(election_info.stake());
+                                j["round"] = static_cast<Json::UInt64>(election_group_result.group_version().value());
                                 j["public_key"] = election_info.public_key().to_string();
                                 j["genesis"] = election_info.genesis() ? "true" : "false";
                                 j["miner_type"] = common::to_string(election_info.miner_type());
@@ -747,8 +747,8 @@ static void get_rec_standby_pool_property_data(common::xaccount_address_t const 
                                                std::string const property_name,
                                                xjson_format_t const json_format,
                                                bool compatible_mode,
-                                               xJson::Value & json) {
-    assert(property_name == XPROPERTY_CONTRACT_STANDBYS_KEY);
+                                               Json::Value & json) {
+    assert(property_name == data::XPROPERTY_CONTRACT_STANDBYS_KEY);
     assert(contract_address == common::xaccount_address_t{sys_contract_rec_standby_pool_addr});
     std::string serialized_value{};
     if (statestore::xstatestore_hub_t::instance()->string_get(contract_address, property_name, serialized_value) == 0 && !serialized_value.empty()) {
@@ -767,11 +767,11 @@ static void get_rec_standby_pool_property_data(common::xaccount_address_t const 
                         json[node_type_str].append(node_id.to_string());
                         break;
                     case xjson_format_t::detail: {
-                        xJson::Value j;
+                        Json::Value j;
                         auto const & standby_node_info = top::get<data::election::xstandby_node_info_t>(node_info);
                         j["consensus_public_key"] = standby_node_info.consensus_public_key.to_string();
                         j["node_id"] = node_id.to_string();
-                        j["stake"] = static_cast<xJson::UInt64>(standby_node_info.stake(node_type));
+                        j["stake"] = static_cast<Json::UInt64>(standby_node_info.stake(node_type));
                         j["is_genesis_node"] = std::string{standby_node_info.genesis ? "true" : "false"};
                         j["program_version"] = standby_node_info.program_version;
                         j["miner_type"] = common::to_string(standby_node_info.miner_type);
@@ -792,8 +792,8 @@ static void get_rec_standby_pool_property_data(common::xaccount_address_t const 
 
 static void get_zec_standby_pool_property_data(common::xaccount_address_t const & contract_address,
                                                std::string const property_name,
-                                               xJson::Value & json) {
-    assert(property_name == XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_LOGIC_TIME || property_name == XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT);
+                                               Json::Value & json) {
+    assert(property_name == data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_LOGIC_TIME || property_name == data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT);
     assert(contract_address == common::xaccount_address_t{sys_contract_zec_standby_pool_addr});
     std::string value{};
     if (statestore::xstatestore_hub_t::instance()->string_get(contract_address, property_name, value) == 0) {
@@ -803,7 +803,7 @@ static void get_zec_standby_pool_property_data(common::xaccount_address_t const 
 
 static void get_association_result_property_data(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     assert(contract_address == xaccount_address_t{sys_contract_zec_group_assoc_addr});
     std::string serialized_value{};
     if (statestore::xstatestore_hub_t::instance()->string_get(contract_address, property_name, serialized_value) == 0 && !serialized_value.empty()) {
@@ -819,7 +819,7 @@ static void get_association_result_property_data(common::xaccount_address_t cons
 
 static void get_genesis_stage(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::string value;
     if ( statestore::xstatestore_hub_t::instance()->string_get(contract_address, property_name, value) != 0 ) return;
     data::system_contract::xactivation_record record;
@@ -828,28 +828,28 @@ static void get_genesis_stage(common::xaccount_address_t const & contract_addres
         record.serialize_from(stream);
     }
 
-    json["activated"] = (xJson::Int)record.activated;
-    json["activation_time"] = (xJson::UInt64)record.activation_time;
+    json["activated"] = (Json::Int)record.activated;
+    json["activation_time"] = (Json::UInt64)record.activation_time;
 }
 
 static void get_rec_nodes_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> nodes;
     if ( statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, nodes) != 0 ) return;
     for (auto m : nodes) {
         data::system_contract::xreg_node_info reg_node_info;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)m.second.data(), m.second.size());
         reg_node_info.serialize_from(stream);
-        xJson::Value j;
+        Json::Value j;
         j["account_addr"] = reg_node_info.m_account.to_string();
-        j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
+        j["node_deposit"] = static_cast<Json::UInt64>(reg_node_info.m_account_mortgage);
         if (reg_node_info.genesis()) {
             j["registered_node_type"] = std::string{"advance,validator,edge,archive"};
         } else {
             j["registered_node_type"] = common::to_string(reg_node_info.miner_type());
         }
-        j["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);
+        j["vote_amount"] = static_cast<Json::UInt64>(reg_node_info.m_vote_amount);
         {
             auto credit = static_cast<double>(reg_node_info.m_auditor_credit_numerator) / reg_node_info.m_auditor_credit_denominator;
             std::stringstream ss;
@@ -864,10 +864,10 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
         }
         j["dividend_ratio"] = reg_node_info.m_support_ratio_numerator * 100 / reg_node_info.m_support_ratio_denominator;
         // j["m_stake"] = static_cast<unsigned long long>(reg_node_info.m_stake);
-        j["auditor_stake"] = static_cast<unsigned long long>(reg_node_info.get_auditor_stake());
-        j["validator_stake"] = static_cast<unsigned long long>(reg_node_info.get_validator_stake());
-        j["rec_stake"] = static_cast<unsigned long long>(reg_node_info.rec_stake());
-        j["zec_stake"] = static_cast<unsigned long long>(reg_node_info.zec_stake());
+        j["auditor_stake"] = static_cast<Json::UInt64>(reg_node_info.get_auditor_stake());
+        j["validator_stake"] = static_cast<Json::UInt64>(reg_node_info.get_validator_stake());
+        j["rec_stake"] = static_cast<Json::UInt64>(reg_node_info.rec_stake());
+        j["zec_stake"] = static_cast<Json::UInt64>(reg_node_info.zec_stake());
         std::string network_ids;
         for (auto const & net_id : reg_node_info.m_network_ids) {
             network_ids += net_id.to_string() + ' ';
@@ -881,7 +881,7 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
 
 static void get_zec_workload_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> workloads;
     if (statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, workloads) != 0) return;
     for (auto m : workloads) {
@@ -889,7 +889,7 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
-        xJson::Value jn;
+        Json::Value jn;
         jn["cluster_total_workload"] = workload.group_total_workload;
         auto const & key_str = m.first;
         common::xcluster_address_t cluster;
@@ -905,7 +905,7 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
 
 static void get_zec_tasks_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> tasks;
     if (statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, tasks) != 0) return;
     for (auto m : tasks) {
@@ -917,10 +917,10 @@ static void get_zec_tasks_map(common::xaccount_address_t const & contract_addres
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         task.serialize_from(stream);
 
-        xJson::Value jv;
-        xJson::Value jvn;
+        Json::Value jv;
+        Json::Value jvn;
         jv["task_id"] = m.first;
-        jv["onchain_timer_round"] = (xJson::UInt64)task.onchain_timer_round;
+        jv["onchain_timer_round"] = (Json::UInt64)task.onchain_timer_round;
         jv["contract"] = task.contract;
         jv["action"] = task.action;
         if (task.action == data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
@@ -950,7 +950,7 @@ static void get_zec_tasks_map(common::xaccount_address_t const & contract_addres
 
 static void get_zec_votes(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> votes;
     if (statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, votes) != 0) return;
     std::map<std::string, std::string> votes_table;
@@ -962,10 +962,10 @@ static void get_zec_votes(common::xaccount_address_t const & contract_address,
             stream >> votes_table;
         }
 
-        xJson::Value jv;
-        xJson::Value jvn;
+        Json::Value jv;
+        Json::Value jvn;
         for (auto v : votes_table) {
-            jvn[v.first] = (xJson::UInt64)base::xstring_utl::touint64(v.second);
+            jvn[v.first] = (Json::UInt64)base::xstring_utl::touint64(v.second);
         }
         jv["vote_infos"] = jvn;
         json[m.first] = jv;
@@ -974,7 +974,7 @@ static void get_zec_votes(common::xaccount_address_t const & contract_address,
 
 static void get_table_votes(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> votes;
     statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, votes);
     std::map<std::string, uint64_t> vote_info;
@@ -986,10 +986,10 @@ static void get_table_votes(common::xaccount_address_t const & contract_address,
             stream >> vote_info;
         }
 
-        xJson::Value jv;
-        xJson::Value jvn;
+        Json::Value jv;
+        Json::Value jvn;
         for (auto v : vote_info) {
-            jvn[v.first] = (xJson::UInt64)v.second;
+            jvn[v.first] = (Json::UInt64)v.second;
         }
         jv["vote_infos"] = jvn;
         json[m.first] = jv;
@@ -998,7 +998,7 @@ static void get_table_votes(common::xaccount_address_t const & contract_address,
 
 static void get_voter_dividend(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     xdbg("[get_voter_dividend] contract_address: %s, property_name: %s", contract_address.to_string().c_str(), property_name.c_str());
     std::map<std::string, std::string> voter_dividends;
 
@@ -1012,25 +1012,25 @@ static void get_voter_dividend(common::xaccount_address_t const & contract_addre
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         record.serialize_from(stream);
 
-        xJson::Value jv;
-        jv["accumulated"] = (xJson::UInt64)static_cast<uint64_t>(record.accumulated / data::system_contract::REWARD_PRECISION);
-        jv["accumulated_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.accumulated % data::system_contract::REWARD_PRECISION);
-        jv["unclaimed"] = (xJson::UInt64)static_cast<uint64_t>(record.unclaimed / data::system_contract::REWARD_PRECISION);
-        jv["unclaimed_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.unclaimed % data::system_contract::REWARD_PRECISION);
-        jv["last_claim_time"] = (xJson::UInt64)record.last_claim_time;
-        jv["issue_time"] = (xJson::UInt64)record.issue_time;
+        Json::Value jv;
+        jv["accumulated"] = (Json::UInt64)static_cast<uint64_t>(record.accumulated / data::system_contract::REWARD_PRECISION);
+        jv["accumulated_decimals"] = (Json::UInt)static_cast<uint32_t>(record.accumulated % data::system_contract::REWARD_PRECISION);
+        jv["unclaimed"] = (Json::UInt64)static_cast<uint64_t>(record.unclaimed / data::system_contract::REWARD_PRECISION);
+        jv["unclaimed_decimals"] = (Json::UInt)static_cast<uint32_t>(record.unclaimed % data::system_contract::REWARD_PRECISION);
+        jv["last_claim_time"] = (Json::UInt64)record.last_claim_time;
+        jv["issue_time"] = (Json::UInt64)record.issue_time;
 
-        xJson::Value jvm;
+        Json::Value jvm;
         int no = 0;
         for (auto n : record.node_rewards) {
-            xJson::Value jvn;
+            Json::Value jvn;
             jvn["account_addr"] = n.account;
-            jvn["accumulated"] = (xJson::UInt64)static_cast<uint64_t>(n.accumulated / data::system_contract::REWARD_PRECISION);
-            jvn["accumulated_decimals"] = (xJson::UInt)static_cast<uint32_t>(n.accumulated % data::system_contract::REWARD_PRECISION);
-            jvn["unclaimed"] = (xJson::UInt64)static_cast<uint64_t>(n.unclaimed / data::system_contract::REWARD_PRECISION);
-            jvn["unclaimed_decimals"] = (xJson::UInt)static_cast<uint32_t>(n.unclaimed % data::system_contract::REWARD_PRECISION);
-            jvn["last_claim_time"] = (xJson::UInt64)n.last_claim_time;
-            jvn["issue_time"] = (xJson::UInt64)n.issue_time;
+            jvn["accumulated"] = (Json::UInt64)static_cast<uint64_t>(n.accumulated / data::system_contract::REWARD_PRECISION);
+            jvn["accumulated_decimals"] = (Json::UInt)static_cast<uint32_t>(n.accumulated % data::system_contract::REWARD_PRECISION);
+            jvn["unclaimed"] = (Json::UInt64)static_cast<uint64_t>(n.unclaimed / data::system_contract::REWARD_PRECISION);
+            jvn["unclaimed_decimals"] = (Json::UInt)static_cast<uint32_t>(n.unclaimed % data::system_contract::REWARD_PRECISION);
+            jvn["last_claim_time"] = (Json::UInt64)n.last_claim_time;
+            jvn["issue_time"] = (Json::UInt64)n.issue_time;
             jvm[no++] = jvn;
         }
         jv["node_dividend"] = jvm;
@@ -1041,7 +1041,7 @@ static void get_voter_dividend(common::xaccount_address_t const & contract_addre
 
 static void get_node_reward(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> node_rewards;
     statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, node_rewards);
     data::system_contract::xreward_node_record record;
@@ -1050,13 +1050,13 @@ static void get_node_reward(common::xaccount_address_t const & contract_address,
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         record.serialize_from(stream);
 
-        xJson::Value jv;
-        jv["accumulated"] = (xJson::UInt64)static_cast<uint64_t>(record.m_accumulated / data::system_contract::REWARD_PRECISION);
-        jv["accumulated_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.m_accumulated % data::system_contract::REWARD_PRECISION);
-        jv["unclaimed"] = (xJson::UInt64)static_cast<uint64_t>(record.m_unclaimed / data::system_contract::REWARD_PRECISION);
-        jv["unclaimed_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.m_unclaimed % data::system_contract::REWARD_PRECISION);
-        jv["last_claim_time"] = (xJson::UInt64)record.m_last_claim_time;
-        jv["issue_time"] = (xJson::UInt64)record.m_issue_time;
+        Json::Value jv;
+        jv["accumulated"] = (Json::UInt64)static_cast<uint64_t>(record.m_accumulated / data::system_contract::REWARD_PRECISION);
+        jv["accumulated_decimals"] = (Json::UInt)static_cast<uint32_t>(record.m_accumulated % data::system_contract::REWARD_PRECISION);
+        jv["unclaimed"] = (Json::UInt64)static_cast<uint64_t>(record.m_unclaimed / data::system_contract::REWARD_PRECISION);
+        jv["unclaimed_decimals"] = (Json::UInt)static_cast<uint32_t>(record.m_unclaimed % data::system_contract::REWARD_PRECISION);
+        jv["last_claim_time"] = (Json::UInt64)record.m_last_claim_time;
+        jv["issue_time"] = (Json::UInt64)record.m_issue_time;
 
         json[m.first] = jv;
     }
@@ -1066,7 +1066,7 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::string serialized_value = unitstate->string_get(property_name);
     if (serialized_value.empty()) {
         xdbg("[get_reward_detail] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -1074,11 +1074,11 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
     }
     data::system_contract::xissue_detail_v2 issue_detail;
     issue_detail.from_string(serialized_value);
-    xJson::Value jv;
-    jv["onchain_timer_round"] = (xJson::UInt64)issue_detail.onchain_timer_round;
-    jv["zec_vote_contract_height"] = (xJson::UInt64)issue_detail.m_zec_vote_contract_height;
-    jv["zec_workload_contract_height"] = (xJson::UInt64)issue_detail.m_zec_workload_contract_height;
-    jv["zec_reward_contract_height"] = (xJson::UInt64)issue_detail.m_zec_reward_contract_height;
+    Json::Value jv;
+    jv["onchain_timer_round"] = (Json::UInt64)issue_detail.onchain_timer_round;
+    jv["zec_vote_contract_height"] = (Json::UInt64)issue_detail.m_zec_vote_contract_height;
+    jv["zec_workload_contract_height"] = (Json::UInt64)issue_detail.m_zec_workload_contract_height;
+    jv["zec_reward_contract_height"] = (Json::UInt64)issue_detail.m_zec_reward_contract_height;
     jv["edge_reward_ratio"] = issue_detail.m_edge_reward_ratio;
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
@@ -1087,11 +1087,11 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
     // jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
-    jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
-    jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
-    jv["evm_validator_group_count"] = (xJson::UInt)issue_detail.m_evm_validator_group_count;
-    jv["evm_auditor_group_count"] = (xJson::UInt)issue_detail.m_evm_auditor_group_count;
-    xJson::Value jr;
+    jv["validator_group_count"] = (Json::UInt)issue_detail.m_validator_group_count;
+    jv["auditor_group_count"] = (Json::UInt)issue_detail.m_auditor_group_count;
+    jv["evm_validator_group_count"] = (Json::UInt)issue_detail.m_evm_validator_group_count;
+    jv["evm_auditor_group_count"] = (Json::UInt)issue_detail.m_evm_auditor_group_count;
+    Json::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;
         ss << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
@@ -1114,7 +1114,7 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
 
 static void get_refunds(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> refunds;
     statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, refunds);
     data::system_contract::xrefund_info refund;
@@ -1123,9 +1123,9 @@ static void get_refunds(common::xaccount_address_t const & contract_address,
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         refund.serialize_from(stream);
 
-        xJson::Value jv;
-        jv["refund_amount"] = (xJson::UInt64)refund.refund_amount;
-        jv["create_time"] = (xJson::UInt64)refund.create_time;
+        Json::Value jv;
+        jv["refund_amount"] = (Json::UInt64)refund.refund_amount;
+        jv["create_time"] = (Json::UInt64)refund.create_time;
 
         json[m.first] = jv;
     }
@@ -1133,10 +1133,10 @@ static void get_refunds(common::xaccount_address_t const & contract_address,
 
 static void get_accumulated_issuance_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> issuances;
     if ( statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, issuances) != 0 ) return;
-    xJson::Value jv;
+    Json::Value jv;
     for (auto const & m : issuances) {
         jv[m.first] = m.second;
     }
@@ -1145,20 +1145,20 @@ static void get_accumulated_issuance_map(common::xaccount_address_t const & cont
 
 static void get_accumulated_issuance_yearly_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::string value;
     if ( statestore::xstatestore_hub_t::instance()->string_get(contract_address, property_name, value) != 0 ) return;
     data::system_contract::xaccumulated_reward_record record;
     xstream_t stream(xcontext_t::instance(), (uint8_t *)value.c_str(), (uint32_t)value.size());
     record.serialize_from(stream);
-    json["last_issuance_time"]                    = (xJson::UInt64)record.last_issuance_time;
-    json["issued_until_last_year_end"]            = (xJson::UInt64)static_cast<uint64_t>(record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION);
-    json["issued_until_last_year_end_decimals"]   = (xJson::UInt)static_cast<uint32_t>(record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION);
+    json["last_issuance_time"]                    = (Json::UInt64)record.last_issuance_time;
+    json["issued_until_last_year_end"]            = (Json::UInt64)static_cast<uint64_t>(record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION);
+    json["issued_until_last_year_end_decimals"]   = (Json::UInt)static_cast<uint32_t>(record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION);
 }
 
 static void get_unqualified_node_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> nodes;
     if ( statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, nodes) != 0 ) return;
     data::system_contract::xunqualified_node_info_v1_t summarize_info;
@@ -1169,18 +1169,18 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             summarize_info.serialize_from(stream);
         }
 
-        xJson::Value jvn;
-        xJson::Value jvn_auditor;
+        Json::Value jvn;
+        Json::Value jvn_auditor;
         for (auto const & v : summarize_info.auditor_info) {
-            xJson::Value auditor_info;
+            Json::Value auditor_info;
             auditor_info["vote_num"] = v.second.block_count;
             auditor_info["subset_num"] = v.second.subset_count;
             jvn_auditor[v.first.to_string()] = auditor_info;
         }
 
-        xJson::Value jvn_validator;
+        Json::Value jvn_validator;
         for (auto const & v : summarize_info.validator_info) {
-            xJson::Value validator_info;
+            Json::Value validator_info;
             validator_info["vote_num"] = v.second.block_count;
             validator_info["subset_num"] = v.second.subset_count;
             jvn_validator[v.first.to_string()] = validator_info;
@@ -1194,7 +1194,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
 
 static void get_unqualified_slash_info_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> nodes;
     if ( statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, nodes) != 0 ) return;
     data::system_contract::xslash_info s_info;
@@ -1205,10 +1205,10 @@ static void get_unqualified_slash_info_map(common::xaccount_address_t const & co
             s_info.serialize_from(stream);
         }
 
-        xJson::Value jvn;
-        jvn["punish_time"] = (xJson::UInt64)s_info.m_punish_time;
-        jvn["staking_lock_time"] = (xJson::UInt64)s_info.m_staking_lock_time;
-        jvn["punish_staking"] = (xJson::UInt)s_info.m_punish_staking;
+        Json::Value jvn;
+        jvn["punish_time"] = (Json::UInt64)s_info.m_punish_time;
+        jvn["staking_lock_time"] = (Json::UInt64)s_info.m_staking_lock_time;
+        jvn["punish_staking"] = (Json::UInt)s_info.m_punish_staking;
 
         json[m.first] = jvn;
     }
@@ -1216,7 +1216,7 @@ static void get_unqualified_slash_info_map(common::xaccount_address_t const & co
 
 static void get_proposal_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> proposals;
     if ( statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, proposals) != 0 ) return;
      tcc::proposal_info pi;
@@ -1225,19 +1225,19 @@ static void get_proposal_map(common::xaccount_address_t const & contract_address
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         pi.deserialize(stream);
 
-        xJson::Value jv;
+        Json::Value jv;
         jv["proposal_id"] = pi.proposal_id;
-        jv["proposal_type"] = (xJson::UInt)pi.type;
+        jv["proposal_type"] = (Json::UInt)pi.type;
         jv["target"] = pi.parameter;
         jv["value"] = pi.new_value;
         // jv["modification_description"] = pi.modification_description;
         jv["proposer_account_addr"] = pi.proposal_client_address;
-        jv["proposal_deposit"] = (xJson::UInt64)(pi.deposit);
-        jv["effective_timer_height"] = (xJson::UInt64)(pi.effective_timer_height);
+        jv["proposal_deposit"] = (Json::UInt64)(pi.deposit);
+        jv["effective_timer_height"] = (Json::UInt64)(pi.effective_timer_height);
         jv["priority"] = pi.priority;
         // jv["cosigning_status"] = pi.cosigning_status;
         jv["voting_status"] = pi.voting_status;
-        jv["expire_time"] = (xJson::UInt64)(pi.end_time);
+        jv["expire_time"] = (Json::UInt64)(pi.end_time);
 
         json["proposal_id_" + m.first] = jv;
     }
@@ -1246,7 +1246,7 @@ static void get_proposal_map(common::xaccount_address_t const & contract_address
 
 static void get_proposal_voting_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> proposal_votings;
     if ( statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, proposal_votings) != 0 ) return;
     for (auto m : proposal_votings) {
@@ -1254,7 +1254,7 @@ static void get_proposal_voting_map(common::xaccount_address_t const & contract_
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         std::map<std::string, bool> nodes;
         stream >> nodes;
-        xJson::Value jn;
+        Json::Value jn;
         for (auto node : nodes) {
             jn[node.first] = node.second;
         }
@@ -1262,13 +1262,13 @@ static void get_proposal_voting_map(common::xaccount_address_t const & contract_
     }
 }
 
-static void get_ineffective_votes_map_impl(std::map<std::string, std::string> const & raw_data, xJson::Value & json) {
+static void get_ineffective_votes_map_impl(std::map<std::string, std::string> const & raw_data, Json::Value & json) {
     if (raw_data.empty()) {
         return;
     }
 
     std::map<common::xaccount_address_t, std::map<common::xlogic_time_t, xstake::xtable_vote_contract::vote_info_map_t>> ineffective_votes;
-    xJson::Value json_voter_data;
+    Json::Value json_voter_data;
     for (auto const & raw_datum : raw_data) {
         common::xaccount_address_t const voter{raw_datum.first};
         auto const & ineffective_votes_str = raw_datum.second;
@@ -1278,14 +1278,14 @@ static void get_ineffective_votes_map_impl(std::map<std::string, std::string> co
             xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(ineffective_votes_str.c_str())), static_cast<uint32_t>(ineffective_votes_str.size())};
         stream >> voter_ineffective_data;
 
-        xJson::Value json_voter_ineffective;
+        Json::Value json_voter_ineffective;
         for (auto const & ineffective_datum : voter_ineffective_data) {
             auto const effective_logic_time = top::get<common::xlogic_time_t const>(ineffective_datum);
             auto const & tickets_detail = top::get<xstake::xtable_vote_contract::vote_info_map_t>(ineffective_datum);
 
-            xJson::Value json_tickets_detail;
+            Json::Value json_tickets_detail;
             for (auto const & ticket_datum : tickets_detail) {
-                json_tickets_detail[top::get<std::string const>(ticket_datum)] = static_cast<xJson::UInt64>(top::get<uint64_t>(ticket_datum));
+                json_tickets_detail[top::get<std::string const>(ticket_datum)] = static_cast<Json::UInt64>(top::get<uint64_t>(ticket_datum));
             }
 
             json_voter_ineffective[std::to_string(effective_logic_time)] = json_tickets_detail;
@@ -1296,8 +1296,8 @@ static void get_ineffective_votes_map_impl(std::map<std::string, std::string> co
     json["ineffective_vote_data"] = json_voter_data;
 }
 
-static void get_ineffective_votes_map(common::xaccount_address_t const & contract_address, std::string const & property_name, xJson::Value & json) {
-    assert(property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY);
+static void get_ineffective_votes_map(common::xaccount_address_t const & contract_address, std::string const & property_name, Json::Value & json) {
+    assert(property_name == data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY);
 
     std::map<std::string, std::string> raw_data;
     if (statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, raw_data) != 0) {
@@ -1311,11 +1311,11 @@ static void get_ineffective_votes_map(common::xaccount_address_t const &,
                                       std::string const & property_name,
                                       data::xunitstate_ptr_t const & unitstate,
                                       const xjson_format_t,
-                                      xJson::Value & json) {
-    assert(property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY);
+                                      Json::Value & json) {
+    assert(property_name == data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY);
 
     std::map<std::string, std::string> const raw_data = unitstate->map_get(property_name);
-    xJson::Value json_voter_data;
+    Json::Value json_voter_data;
     if (raw_data.empty()) {
         return;
     }
@@ -1325,7 +1325,7 @@ static void get_ineffective_votes_map(common::xaccount_address_t const &,
 
 static void get_other_map(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
-                                                 xJson::Value & json) {
+                                                 Json::Value & json) {
     std::map<std::string, std::string> unknowns;
     if ( statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, unknowns) != 0 ) return;
     for (auto m : unknowns) {
@@ -1336,7 +1336,7 @@ static void get_other_map(common::xaccount_address_t const & contract_address,
 static void get_sharding_statistic_contract_property(std::string const & sharding_contract_addr,
                                                     std::string const & property_name,
                                                     uint64_t const height,
-                                                    xJson::Value & json,
+                                                    Json::Value & json,
                                                     std::error_code & ec) {
     assert(!ec);
 
@@ -1380,7 +1380,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
         }
 
         for (auto const & auditor_data : data.auditor_info) {
-            xJson::Value v;
+            Json::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(auditor_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(auditor_data).to_string();
@@ -1391,7 +1391,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
         }
 
         for (auto const & validator_data : data.validator_info) {
-            xJson::Value v;
+            Json::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(validator_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(validator_data).to_string();
@@ -1463,7 +1463,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
         }
 
         for (auto const & m : result) {
-            xJson::Value jm;
+            Json::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
             data::system_contract::xgroup_workload_t workload;
@@ -1477,7 +1477,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
                 return;
             }
             {
-                xJson::Value jn;
+                Json::Value jn;
                 jn["cluster_total_workload"] = workload.group_total_workload;
                 auto const & key_str = m.first;
                 common::xgroup_address_t group_address;
@@ -1496,7 +1496,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
 
 static void get_zec_slash_contract_property(std::string const & property_name,
                                             uint64_t const height,
-                                            xJson::Value & json,
+                                            Json::Value & json,
                                             std::error_code & ec) {
     assert(!ec);
 
@@ -1540,7 +1540,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
         }
 
         for (auto const & auditor_data : data.auditor_info) {
-            xJson::Value v;
+            Json::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(auditor_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(auditor_data).to_string();
@@ -1551,7 +1551,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
         }
 
         for (auto const & validator_data : data.validator_info) {
-            xJson::Value v;
+            Json::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(validator_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(validator_data).to_string();
@@ -1602,7 +1602,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
 
 
         // all table height
-        xJson::Value v;
+        Json::Value v;
         for (auto table_id = 0; table_id < enum_vledger_const::enum_vbucket_has_tables_count; ++table_id) {
             auto const it = result.find(std::to_string(table_id));
 
@@ -1627,7 +1627,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
                 return;
             }
 
-            v[std::to_string(table_id)] = (xJson::UInt64)height;
+            v[std::to_string(table_id)] = (Json::UInt64)height;
 
         }
 
@@ -1638,7 +1638,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
 
 static void get_zec_reward_contract_property(std::string const & property_name,
                                             uint64_t const height,
-                                            xJson::Value & json,
+                                            Json::Value & json,
                                             std::error_code & ec) {
     assert(!ec);
 
@@ -1662,7 +1662,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
         }
 
         for (auto const & m : result) {
-            xJson::Value jm;
+            Json::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
             data::system_contract::xgroup_workload_t workload;
@@ -1676,7 +1676,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
                 return;
             }
             {
-                xJson::Value jn;
+                Json::Value jn;
                 jn["cluster_total_workload"] = workload.group_total_workload;
                 auto const & key_str = m.first;
                 common::xgroup_address_t group_address;
@@ -1711,7 +1711,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
         }
 
         for (auto const & m : result) {
-            xJson::Value jm;
+            Json::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
             data::system_contract::xgroup_workload_t workload;
@@ -1725,7 +1725,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
                 return;
             }
             {
-                xJson::Value jn;
+                Json::Value jn;
                 jn["cluster_total_workload"] = workload.group_total_workload;
                 auto const & key_str = m.first;
                 common::xcluster_address_t group_address;
@@ -1745,7 +1745,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
     }
 }
 
-void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address, xjson_format_t const json_format, bool compatible_mode, xJson::Value & json) const {
+void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address, xjson_format_t const json_format, bool compatible_mode, Json::Value & json) const {
     if (contract_address == rec_elect_rec_contract_address       || // NOLINT
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
@@ -1756,20 +1756,20 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == zec_elect_eth_contract_address) {
         return get_election_result_property_data(contract_address, json_format, json);
     } else if (contract_address == xaccount_address_t{sys_contract_rec_standby_pool_addr}) {
-        return get_rec_standby_pool_property_data(contract_address, XPROPERTY_CONTRACT_STANDBYS_KEY, json_format, compatible_mode, json);
+        return get_rec_standby_pool_property_data(contract_address, data::XPROPERTY_CONTRACT_STANDBYS_KEY, json_format, compatible_mode, json);
     } else if (contract_address == xaccount_address_t{sys_contract_zec_standby_pool_addr}) {
-        get_zec_standby_pool_property_data(contract_address, XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT, json);
-        get_zec_standby_pool_property_data(contract_address, XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_LOGIC_TIME, json);
+        get_zec_standby_pool_property_data(contract_address, data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT, json);
+        get_zec_standby_pool_property_data(contract_address, data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_LOGIC_TIME, json);
         return;
     } else if (contract_address == xaccount_address_t{sys_contract_zec_group_assoc_addr}) {
-        return get_association_result_property_data(contract_address, XPROPERTY_CONTRACT_GROUP_ASSOC_KEY, json);
+        return get_association_result_property_data(contract_address, data::XPROPERTY_CONTRACT_GROUP_ASSOC_KEY, json);
     }
 }
 
 void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address,
                                               std::uint64_t const height,
                                               xjson_format_t const json_format,
-                                              xJson::Value & json,
+                                              Json::Value & json,
                                               std::error_code & ec) const {
     assert(!ec);
     if (contract_address.to_string().find(sys_contract_sharding_statistic_info_addr) != std::string::npos) {
@@ -1825,7 +1825,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
                                               std::string const & property_name,
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
-                                              xJson::Value & json) const {
+                                              Json::Value & json) const {
     if (contract_address == rec_elect_rec_contract_address       || // NOLINT
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
@@ -1834,7 +1834,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == zec_elect_consensus_contract_address ||
         contract_address == rec_elect_fullnode_contract_address  ||
         contract_address == zec_elect_eth_contract_address) {
-        if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
+        if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == data::XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
             std::string res;
             statestore::xstatestore_hub_t::instance()->string_get(contract_address, property_name, res);
             json[property_name] = res;
@@ -1880,7 +1880,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
     } else if (property_name == VOTE_MAP_ID) {
         return get_proposal_voting_map(contract_address, property_name, json);
     }
-    if (contract_address.base_address() == table_vote_contract_base_address && property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY) {
+    if (contract_address.base_address() == table_vote_contract_base_address && property_name == data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY) {
         return get_ineffective_votes_map(contract_address, property_name, json);
     }
 }
@@ -1932,7 +1932,7 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> nodes = unitstate->map_get(property_name);
     if (nodes.empty()) {
         xdbg("[get_rec_nodes_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -1942,9 +1942,9 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
         data::system_contract::xreg_node_info reg_node_info;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)m.second.data(), m.second.size());
         reg_node_info.serialize_from(stream);
-        xJson::Value j;
+        Json::Value j;
         j["account_addr"] = reg_node_info.m_account.to_string();
-        j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
+        j["node_deposit"] = static_cast<Json::UInt64>(reg_node_info.m_account_mortgage);
         if (reg_node_info.genesis()) {
             j["registered_node_type"] = std::string{"advance,validator,edge"};
             j["genesis"] = "true";
@@ -1953,7 +1953,7 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
             j["genesis"] = "false";
         }
         j["miner_type"] = common::to_string(reg_node_info.miner_type());
-        j["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);
+        j["vote_amount"] = static_cast<Json::UInt64>(reg_node_info.m_vote_amount);
         {
             auto credit = static_cast<double>(reg_node_info.m_auditor_credit_numerator) / reg_node_info.m_auditor_credit_denominator;
             std::stringstream ss;
@@ -1968,10 +1968,10 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
         }
         j["dividend_ratio"] = reg_node_info.m_support_ratio_numerator * 100 / reg_node_info.m_support_ratio_denominator;
         // j["m_stake"] = static_cast<unsigned long long>(reg_node_info.m_stake);
-        j["auditor_stake"] = static_cast<unsigned long long>(reg_node_info.get_auditor_stake());
-        j["validator_stake"] = static_cast<unsigned long long>(reg_node_info.get_validator_stake());
-        j["rec_stake"] = static_cast<unsigned long long>(reg_node_info.rec_stake());
-        j["zec_stake"] = static_cast<unsigned long long>(reg_node_info.zec_stake());
+        j["auditor_stake"] = static_cast<Json::UInt64>(reg_node_info.get_auditor_stake());
+        j["validator_stake"] = static_cast<Json::UInt64>(reg_node_info.get_validator_stake());
+        j["rec_stake"] = static_cast<Json::UInt64>(reg_node_info.rec_stake());
+        j["zec_stake"] = static_cast<Json::UInt64>(reg_node_info.zec_stake());
         std::string network_ids;
         for (auto const & net_id : reg_node_info.m_network_ids) {
             network_ids += net_id.to_string() + ' ';
@@ -1987,7 +1987,7 @@ static void get_unqualified_slash_info_map(common::xaccount_address_t const & co
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> nodes = unitstate->map_get(property_name);
     if (nodes.empty()) {
         xdbg("[get_unqualified_slash_info_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2001,10 +2001,10 @@ static void get_unqualified_slash_info_map(common::xaccount_address_t const & co
             s_info.serialize_from(stream);
         }
 
-        xJson::Value jvn;
-        jvn["punish_time"] = (xJson::UInt64)s_info.m_punish_time;
-        jvn["staking_lock_time"] = (xJson::UInt64)s_info.m_staking_lock_time;
-        jvn["punish_staking"] = (xJson::UInt)s_info.m_punish_staking;
+        Json::Value jvn;
+        jvn["punish_time"] = (Json::UInt64)s_info.m_punish_time;
+        jvn["staking_lock_time"] = (Json::UInt64)s_info.m_staking_lock_time;
+        jvn["punish_staking"] = (Json::UInt)s_info.m_punish_staking;
 
         json[m.first] = jvn;
     }
@@ -2014,7 +2014,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> nodes = unitstate->map_get(property_name);
     if (nodes.empty()) {
         xdbg("[get_unqualified_slash_info_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2028,18 +2028,18 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             summarize_info.serialize_from(stream);
         }
 
-        xJson::Value jvn;
-        xJson::Value jvn_auditor;
+        Json::Value jvn;
+        Json::Value jvn_auditor;
         for (auto const & v : summarize_info.auditor_info) {
-            xJson::Value auditor_info;
+            Json::Value auditor_info;
             auditor_info["vote_num"] = v.second.block_count;
             auditor_info["subset_num"] = v.second.subset_count;
             jvn_auditor[v.first.to_string()] = auditor_info;
         }
 
-        xJson::Value jvn_validator;
+        Json::Value jvn_validator;
         for (auto const & v : summarize_info.validator_info) {
-            xJson::Value validator_info;
+            Json::Value validator_info;
             validator_info["vote_num"] = v.second.block_count;
             validator_info["subset_num"] = v.second.subset_count;
             jvn_validator[v.first.to_string()] = validator_info;
@@ -2056,7 +2056,7 @@ static void get_tableblock_num(common::xaccount_address_t const & contract_addre
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> tablenum_map = unitstate->map_get(property_name);
     if (tablenum_map.empty()) {
         xdbg("[get_tableblock_num] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2065,7 +2065,7 @@ static void get_tableblock_num(common::xaccount_address_t const & contract_addre
 
 
     // all table height
-    xJson::Value v;
+    Json::Value v;
     for (auto const& item: tablenum_map) {
         if (item.first == "TABLEBLOCK_NUM") {
             uint32_t summarize_tableblock_count;
@@ -2089,7 +2089,7 @@ static void get_tableblock_num(common::xaccount_address_t const & contract_addre
             }
 
             if (height != 0) {
-                v[item.first] = (xJson::UInt64)height;
+                v[item.first] = (Json::UInt64)height;
             }
         }
     }
@@ -2103,7 +2103,7 @@ static void get_refunds(common::xaccount_address_t const & contract_address,
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> refunds = unitstate->map_get(property_name);
     if (refunds.empty()) {
         xdbg("[get_refunds] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2115,9 +2115,9 @@ static void get_refunds(common::xaccount_address_t const & contract_address,
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         refund.serialize_from(stream);
 
-        xJson::Value jv;
-        jv["refund_amount"] = (xJson::UInt64)refund.refund_amount;
-        jv["create_time"] = (xJson::UInt64)refund.create_time;
+        Json::Value jv;
+        jv["refund_amount"] = (Json::UInt64)refund.refund_amount;
+        jv["create_time"] = (Json::UInt64)refund.create_time;
 
         json[m.first] = jv;
     }
@@ -2127,13 +2127,13 @@ static void get_accumulated_issuance_map(common::xaccount_address_t const & cont
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> issuances = unitstate->map_get(property_name);
     if (issuances.empty()) {
         xdbg("[get_accumulated_issuance_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    xJson::Value jv;
+    Json::Value jv;
     for (auto const & m : issuances) {
         jv[m.first] = m.second;
     }
@@ -2144,7 +2144,7 @@ static void get_accumulated_issuance_yearly_map(common::xaccount_address_t const
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::string value = unitstate->string_get(property_name);
     if (value.empty()) {
         xdbg("[get_accumulated_issuance_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2153,16 +2153,16 @@ static void get_accumulated_issuance_yearly_map(common::xaccount_address_t const
     data::system_contract::xaccumulated_reward_record record;
     xstream_t stream(xcontext_t::instance(), (uint8_t *)value.c_str(), (uint32_t)value.size());
     record.serialize_from(stream);
-    json["last_issuance_time"]                    = (xJson::UInt64)record.last_issuance_time;
-    json["issued_until_last_year_end"]            = (xJson::UInt64)static_cast<uint64_t>(record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION);
-    json["issued_until_last_year_end_decimals"]   = (xJson::UInt)static_cast<uint32_t>(record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION);
+    json["last_issuance_time"]                    = (Json::UInt64)record.last_issuance_time;
+    json["issued_until_last_year_end"]            = (Json::UInt64)static_cast<uint64_t>(record.issued_until_last_year_end / data::system_contract::REWARD_PRECISION);
+    json["issued_until_last_year_end_decimals"]   = (Json::UInt)static_cast<uint32_t>(record.issued_until_last_year_end % data::system_contract::REWARD_PRECISION);
 }
 
 static void get_zec_tasks_map(common::xaccount_address_t const & contract_address,
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> tasks = unitstate->map_get(property_name);
     if (tasks.empty()) {
         xdbg("[get_zec_tasks_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2177,10 +2177,10 @@ static void get_zec_tasks_map(common::xaccount_address_t const & contract_addres
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         task.serialize_from(stream);
 
-        xJson::Value jv;
-        xJson::Value jvn;
+        Json::Value jv;
+        Json::Value jvn;
         jv["task_id"] = m.first;
-        jv["onchain_timer_round"] = (xJson::UInt64)task.onchain_timer_round;
+        jv["onchain_timer_round"] = (Json::UInt64)task.onchain_timer_round;
         jv["contract"] = task.contract;
         jv["action"] = task.action;
         if (task.action == data::system_contract::XREWARD_CLAIMING_ADD_NODE_REWARD || task.action == data::system_contract::XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
@@ -2212,7 +2212,7 @@ static void get_genesis_stage(common::xaccount_address_t const & contract_addres
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::string value = unitstate->string_get(property_name);
     if (value.empty()) {
         xdbg("[get_genesis_stage] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2224,15 +2224,15 @@ static void get_genesis_stage(common::xaccount_address_t const & contract_addres
         record.serialize_from(stream);
     }
 
-    json["activated"] = (xJson::Int)record.activated;
-    json["activation_time"] = (xJson::UInt64)record.activation_time;
+    json["activated"] = (Json::Int)record.activated;
+    json["activation_time"] = (Json::UInt64)record.activation_time;
 }
 
 static void get_voter_dividend(common::xaccount_address_t const & contract_address,
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     xdbg("[get_voter_dividend] contract_address: %s, property_name: %s", contract_address.to_string().c_str(), property_name.c_str());
     std::map<std::string, std::string> voter_dividends = unitstate->map_get(property_name);
 
@@ -2247,25 +2247,25 @@ static void get_voter_dividend(common::xaccount_address_t const & contract_addre
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         record.serialize_from(stream);
 
-        xJson::Value jv;
-        jv["accumulated"] = (xJson::UInt64)static_cast<uint64_t>(record.accumulated / data::system_contract::REWARD_PRECISION);
-        jv["accumulated_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.accumulated % data::system_contract::REWARD_PRECISION);
-        jv["unclaimed"] = (xJson::UInt64)static_cast<uint64_t>(record.unclaimed / data::system_contract::REWARD_PRECISION);
-        jv["unclaimed_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.unclaimed % data::system_contract::REWARD_PRECISION);
-        jv["last_claim_time"] = (xJson::UInt64)record.last_claim_time;
-        jv["issue_time"] = (xJson::UInt64)record.issue_time;
+        Json::Value jv;
+        jv["accumulated"] = (Json::UInt64)static_cast<uint64_t>(record.accumulated / data::system_contract::REWARD_PRECISION);
+        jv["accumulated_decimals"] = (Json::UInt)static_cast<uint32_t>(record.accumulated % data::system_contract::REWARD_PRECISION);
+        jv["unclaimed"] = (Json::UInt64)static_cast<uint64_t>(record.unclaimed / data::system_contract::REWARD_PRECISION);
+        jv["unclaimed_decimals"] = (Json::UInt)static_cast<uint32_t>(record.unclaimed % data::system_contract::REWARD_PRECISION);
+        jv["last_claim_time"] = (Json::UInt64)record.last_claim_time;
+        jv["issue_time"] = (Json::UInt64)record.issue_time;
 
-        xJson::Value jvm;
+        Json::Value jvm;
         int no = 0;
         for (auto n : record.node_rewards) {
-            xJson::Value jvn;
+            Json::Value jvn;
             jvn["account_addr"] = n.account;
-            jvn["accumulated"] = (xJson::UInt64)static_cast<uint64_t>(n.accumulated / data::system_contract::REWARD_PRECISION);
-            jvn["accumulated_decimals"] = (xJson::UInt)static_cast<uint32_t>(n.accumulated % data::system_contract::REWARD_PRECISION);
-            jvn["unclaimed"] = (xJson::UInt64)static_cast<uint64_t>(n.unclaimed / data::system_contract::REWARD_PRECISION);
-            jvn["unclaimed_decimals"] = (xJson::UInt)static_cast<uint32_t>(n.unclaimed % data::system_contract::REWARD_PRECISION);
-            jvn["last_claim_time"] = (xJson::UInt64)n.last_claim_time;
-            jvn["issue_time"] = (xJson::UInt64)n.issue_time;
+            jvn["accumulated"] = (Json::UInt64)static_cast<uint64_t>(n.accumulated / data::system_contract::REWARD_PRECISION);
+            jvn["accumulated_decimals"] = (Json::UInt)static_cast<uint32_t>(n.accumulated % data::system_contract::REWARD_PRECISION);
+            jvn["unclaimed"] = (Json::UInt64)static_cast<uint64_t>(n.unclaimed / data::system_contract::REWARD_PRECISION);
+            jvn["unclaimed_decimals"] = (Json::UInt)static_cast<uint32_t>(n.unclaimed % data::system_contract::REWARD_PRECISION);
+            jvn["last_claim_time"] = (Json::UInt64)n.last_claim_time;
+            jvn["issue_time"] = (Json::UInt64)n.issue_time;
             jvm[no++] = jvn;
         }
         jv["node_dividend"] = jvm;
@@ -2278,7 +2278,7 @@ static void get_node_reward(common::xaccount_address_t const & contract_address,
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> node_rewards = unitstate->map_get(property_name);
     if (node_rewards.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2290,13 +2290,13 @@ static void get_node_reward(common::xaccount_address_t const & contract_address,
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         record.serialize_from(stream);
 
-        xJson::Value jv;
-        jv["accumulated"] = (xJson::UInt64)static_cast<uint64_t>(record.m_accumulated / data::system_contract::REWARD_PRECISION);
-        jv["accumulated_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.m_accumulated % data::system_contract::REWARD_PRECISION);
-        jv["unclaimed"] = (xJson::UInt64)static_cast<uint64_t>(record.m_unclaimed / data::system_contract::REWARD_PRECISION);
-        jv["unclaimed_decimals"] = (xJson::UInt)static_cast<uint32_t>(record.m_unclaimed % data::system_contract::REWARD_PRECISION);
-        jv["last_claim_time"] = (xJson::UInt64)record.m_last_claim_time;
-        jv["issue_time"] = (xJson::UInt64)record.m_issue_time;
+        Json::Value jv;
+        jv["accumulated"] = (Json::UInt64)static_cast<uint64_t>(record.m_accumulated / data::system_contract::REWARD_PRECISION);
+        jv["accumulated_decimals"] = (Json::UInt)static_cast<uint32_t>(record.m_accumulated % data::system_contract::REWARD_PRECISION);
+        jv["unclaimed"] = (Json::UInt64)static_cast<uint64_t>(record.m_unclaimed / data::system_contract::REWARD_PRECISION);
+        jv["unclaimed_decimals"] = (Json::UInt)static_cast<uint32_t>(record.m_unclaimed % data::system_contract::REWARD_PRECISION);
+        jv["last_claim_time"] = (Json::UInt64)record.m_last_claim_time;
+        jv["issue_time"] = (Json::UInt64)record.m_issue_time;
 
         json[m.first] = jv;
     }
@@ -2306,7 +2306,7 @@ static void get_zec_votes(common::xaccount_address_t const & contract_address,
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> votes = unitstate->map_get(property_name);
     if (votes.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2321,10 +2321,10 @@ static void get_zec_votes(common::xaccount_address_t const & contract_address,
             stream >> votes_table;
         }
 
-        xJson::Value jv;
-        xJson::Value jvn;
+        Json::Value jv;
+        Json::Value jvn;
         for (auto v : votes_table) {
-            jvn[v.first] = (xJson::UInt64)base::xstring_utl::touint64(v.second);
+            jvn[v.first] = (Json::UInt64)base::xstring_utl::touint64(v.second);
         }
         jv["vote_infos"] = jvn;
         json[m.first] = jv;
@@ -2335,7 +2335,7 @@ static void get_table_votes(common::xaccount_address_t const & contract_address,
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> votes = unitstate->map_get(property_name);
     if (votes.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2350,10 +2350,10 @@ static void get_table_votes(common::xaccount_address_t const & contract_address,
             stream >> vote_info;
         }
 
-        xJson::Value jv;
-        xJson::Value jvn;
+        Json::Value jv;
+        Json::Value jvn;
         for (auto v : vote_info) {
-            jvn[v.first] = (xJson::UInt64)v.second;
+            jvn[v.first] = (Json::UInt64)v.second;
         }
         jv["vote_infos"] = jvn;
         json[m.first] = jv;
@@ -2364,7 +2364,7 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     std::map<std::string, std::string> workloads = unitstate->map_get(property_name);
     if (workloads.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
@@ -2376,7 +2376,7 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
-        xJson::Value jn;
+        Json::Value jn;
         jn["cluster_total_workload"] = workload.group_total_workload;
         common::xcluster_address_t cluster;
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)group_id.data(), group_id.size());
@@ -2393,7 +2393,7 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     auto headers = unitstate->map_get(property_name);
     if (headers.empty()) {
         xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2406,7 +2406,7 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
         if (header.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
             continue;
         }
-        xJson::Value j_header;
+        Json::Value j_header;
         j_header["parentHash"] = header.parent_hash.hex();
         j_header["uncleHash"] = header.uncle_hash.hex();
         j_header["miner"] = header.miner.hex();
@@ -2434,7 +2434,7 @@ static void get_chain_headers_summary(common::xaccount_address_t const & contrac
                               std::string const & property_name,
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
-                              xJson::Value & json) {
+                              Json::Value & json) {
     auto infos = unitstate->map_get(property_name);
     if (infos.empty()) {
         xdbg("[get_chain_headers_summary] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2447,7 +2447,7 @@ static void get_chain_headers_summary(common::xaccount_address_t const & contrac
         if (info.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
             continue;
         }
-        xJson::Value j_header;
+        Json::Value j_header;
         j_header["difficulty_sum"] = info.difficult_sum.str();
         j_header["parent_hash"] = info.parent_hash.hex();
         j_header["number"] = info.number.str();
@@ -2459,7 +2459,7 @@ static void get_finalized_execution_blocks(common::xaccount_address_t const & co
                                            std::string const & property_name,
                                            const data::xunitstate_ptr_t unitstate,
                                            const xjson_format_t json_format,
-                                           xJson::Value & json) {
+                                           Json::Value & json) {
     auto blocks = unitstate->map_get(property_name);
     if (blocks.empty()) {
         xwarn("[get_finalized_execution_blocks] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2474,7 +2474,7 @@ static void get_unfinalized_headers(common::xaccount_address_t const & contract_
                                     std::string const & property_name,
                                     const data::xunitstate_ptr_t unitstate,
                                     const xjson_format_t json_format,
-                                    xJson::Value & json) {
+                                    Json::Value & json) {
     auto headers = unitstate->map_get(property_name);
     if (headers.empty()) {
         xwarn("[get_unfinalized_headers] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2488,7 +2488,7 @@ static void get_unfinalized_headers(common::xaccount_address_t const & contract_
             return;
         }
         json[key]["parent_hash"] = to_hex(info.parent_hash);
-        json[key]["block_number"] = static_cast<xJson::UInt64>(info.block_number);
+        json[key]["block_number"] = static_cast<Json::UInt64>(info.block_number);
     }
 }
 
@@ -2496,7 +2496,7 @@ static void get_finalized_beacon_header(common::xaccount_address_t const & contr
                                          std::string const & property_name,
                                          const data::xunitstate_ptr_t unitstate,
                                          const xjson_format_t json_format,
-                                         xJson::Value & json) {
+                                         Json::Value & json) {
     auto const & v = unitstate->string_get(property_name);
     if (v.empty()) {
         xwarn("[get_finalized_beacon_header] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2507,8 +2507,8 @@ static void get_finalized_beacon_header(common::xaccount_address_t const & contr
         xwarn("[get_finalized_beacon_header] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    json["header"]["slot"] = static_cast<xJson::UInt64>(beacon.header.slot);
-    json["header"]["proposer_index"] = static_cast<xJson::UInt64>(beacon.header.proposer_index);
+    json["header"]["slot"] = static_cast<Json::UInt64>(beacon.header.slot);
+    json["header"]["proposer_index"] = static_cast<Json::UInt64>(beacon.header.proposer_index);
     json["header"]["parent_root"] = to_hex(beacon.header.parent_root);
     json["header"]["state_root"] = to_hex(beacon.header.state_root);
     json["beacon_block_root"] = to_hex(beacon.beacon_block_root);
@@ -2519,7 +2519,7 @@ static void get_finalized_execution_header(common::xaccount_address_t const & co
                                             std::string const & property_name,
                                             const data::xunitstate_ptr_t unitstate,
                                             const xjson_format_t json_format,
-                                            xJson::Value & json) {
+                                            Json::Value & json) {
     auto const & v = unitstate->string_get(property_name);
     if (v.empty()) {
         xwarn("[get_finalized_execution_header] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2530,7 +2530,7 @@ static void get_finalized_execution_header(common::xaccount_address_t const & co
         xwarn("[get_finalized_execution_header] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    json["block_number"] = static_cast<xJson::UInt64>(info.block_number);
+    json["block_number"] = static_cast<Json::UInt64>(info.block_number);
     json["parent_hash"] = to_hex(info.parent_hash);
 }
 
@@ -2538,7 +2538,7 @@ static void get_current_sync_committee(common::xaccount_address_t const & contra
                                        std::string const & property_name,
                                        const data::xunitstate_ptr_t unitstate,
                                        const xjson_format_t json_format,
-                                       xJson::Value & json) {
+                                       Json::Value & json) {
     auto const & v = unitstate->string_get(property_name);
     if (v.empty()) {
         xwarn("[get_current_sync_committee] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2559,7 +2559,7 @@ static void get_next_sync_committee(common::xaccount_address_t const & contract_
                                     std::string const & property_name,
                                     const data::xunitstate_ptr_t unitstate,
                                     const xjson_format_t json_format,
-                                    xJson::Value & json) {
+                                    Json::Value & json) {
     auto const & v = unitstate->string_get(property_name);
     if (v.empty()) {
         xwarn("[get_next_sync_committee] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2580,7 +2580,7 @@ static void get_chain_last_hash(common::xaccount_address_t const & contract_addr
                                 std::string const & property_name,
                                 const data::xunitstate_ptr_t unitstate,
                                 const xjson_format_t json_format,
-                                xJson::Value & json) {
+                                Json::Value & json) {
     auto hash_str = unitstate->string_get(property_name);
     if (hash_str.empty()) {
         xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2595,7 +2595,7 @@ static void get_chain_all_hashes(common::xaccount_address_t const & contract_add
                                  std::string const & property_name,
                                  const data::xunitstate_ptr_t unitstate,
                                  const xjson_format_t json_format,
-                                 xJson::Value & json) {
+                                 Json::Value & json) {
     auto all_hashes_str = unitstate->map_get(property_name);
     if (all_hashes_str.empty()) {
         xdbg("[get_chain_all_hashes] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
@@ -2615,7 +2615,7 @@ static void get_chain_effective_hash(common::xaccount_address_t const & contract
                                      std::string const & property_name,
                                      const data::xunitstate_ptr_t unitstate,
                                      const xjson_format_t json_format,
-                                     xJson::Value & json) {
+                                     Json::Value & json) {
     std::map<std::string, std::string> hashs;
     hashs = unitstate->map_get(property_name);
     if (hashs.empty()) {
@@ -2635,33 +2635,33 @@ static void get_node_manage_info_map(common::xaccount_address_t const & contract
                                     std::string const & property_name,
                                     const data::xunitstate_ptr_t unitstate,
                                     const xjson_format_t json_format,
-                                    xJson::Value & json) {
+                                    Json::Value & json) {
     std::map<std::string, std::string> info_map = unitstate->map_get(property_name);
     if (info_map.size() < 1) {
         xdbg("[get_node_manage_info_map] contract_address: %s, property_name: %s,info_map.size() %d, error", contract_address.to_string().c_str(), property_name.c_str(), info_map.size());
         return;
     }
     for (auto m : info_map) {
-        auto const &account =  m.first;
+        // auto const &account =  m.first;
         auto const &detail = m.second;
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
         data::system_contract::xnode_manage_account_info_t reg_account_info;
         reg_account_info.serialize_from(stream);
-        xJson::Value jn;
-        jn["reg_time"] =  (xJson::UInt64)reg_account_info.reg_time;
-        jn["expiry_time"] = (xJson::UInt64)reg_account_info.expiry_time;
-        jn["cert_time"] = (xJson::UInt64)reg_account_info.cert_time;
+        Json::Value jn;
+        jn["reg_time"] =  (Json::UInt64)reg_account_info.reg_time;
+        jn["expiry_time"] = (Json::UInt64)reg_account_info.expiry_time;
+        jn["cert_time"] = (Json::UInt64)reg_account_info.cert_time;
         jn["cert_info"] = reg_account_info.cert_info;
         json[m.first] = jn;
     }
 }
 
 void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address,
-                                              const data::xunitstate_ptr_t unitstate,
+                                              data::xunitstate_ptr_t const & unitstate,
                                               std::string const & property_name,
                                               xjson_format_t const json_format,
-                                              bool compatible_mode,
-                                              xJson::Value & json) const {
+                                              bool const compatible_mode,
+                                              Json::Value & json) const {
     if (contract_address == rec_elect_rec_contract_address                  || // NOLINT
         contract_address == rec_elect_zec_contract_address                  || // NOLINT
         contract_address == rec_elect_edge_contract_address                 || // NOLINT
@@ -2672,7 +2672,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == zec_elect_eth_contract_address                  || // NOLINT
         contract_address == zec_elect_relay_contract_address                || // NOLINT
         contract_address == relay_make_block_contract_address) {
-        if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
+        if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == data::XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
             std::string res;
             statestore::xstatestore_hub_t::instance()->string_get(contract_address, property_name, res);
             json[property_name] = res;
@@ -2746,7 +2746,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
     } else if(property_name == data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY) {
         return get_node_manage_info_map(contract_address, property_name, unitstate, json_format, json);
     }
-    if (contract_address.base_address() == table_vote_contract_base_address && property_name == system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY) {
+    if (contract_address.base_address() == table_vote_contract_base_address && property_name == data::system_contract::XPORPERTY_CONTRACT_INEFFECTIVE_VOTES_KEY) {
         return get_ineffective_votes_map(contract_address, property_name, unitstate, json_format, json);
     }
 }

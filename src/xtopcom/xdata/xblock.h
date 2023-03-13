@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "json/json.h"
+#include <json/json.h>
 
 #if defined(__clang__)
 
@@ -44,7 +44,7 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xlightunit_info.h"
 #include "xcommon/xaccount_address.h"
-#include "xevm_common/common.h"
+#include "xcommon/common.h"
 
 NS_BEG2(top, data)
 
@@ -76,26 +76,22 @@ public:
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
-    virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) {};
+    virtual void parse_to_json(Json::Value & root, const std::string & rpc_version) {};
  public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}
     inline base::enum_xvblock_class get_block_class() const {return get_header()->get_block_class();}
     inline bool     is_unitblock() const {return get_block_level() == base::enum_xvblock_level_unit;}
     inline bool     is_tableblock() const {return get_block_level() == base::enum_xvblock_level_table;}
     inline bool     is_fullblock() const {return get_block_class() == base::enum_xvblock_class_full;}
-    inline bool     is_lightunit() const {return get_block_level() == base::enum_xvblock_level_unit && get_block_class() == base::enum_xvblock_class_light;}
-    inline bool     is_fullunit() const {return get_block_level() == base::enum_xvblock_level_unit && get_block_class() == base::enum_xvblock_class_full;}
-    inline bool     is_emptyunit() const {return get_block_level() == base::enum_xvblock_level_unit && get_block_class() == base::enum_xvblock_class_nil;}
     inline bool     is_emptyblock() const {return get_block_class() == base::enum_xvblock_class_nil;}
     inline bool     is_fulltable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_full;}
     inline bool     is_lighttable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_light;}
     inline bool     is_emptytable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_nil;}
 
  public:
-    virtual void                        dump_block_data(xJson::Value & json) const {return;}
+    virtual void                        dump_block_data(Json::Value & json) const {return;}
     xtransaction_ptr_t                  query_raw_transaction(const std::string & txhash) const;
     uint32_t                            query_tx_size(const std::string & txhash) const;
-    std::vector<base::xvtxkey_t>        get_txkeys() const;
 
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}

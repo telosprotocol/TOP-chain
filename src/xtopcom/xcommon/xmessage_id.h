@@ -9,7 +9,7 @@
 #include <cstdint>
 
 #define XDEFINE_MSG_ID(MSG_CATEGORY_ID, MSG_NAME, MSG_ID)                                                                                                                               \
-    XINLINE_CONSTEXPR top::common::xmessage_id_t MSG_NAME                                                                                                                               \
+    constexpr top::common::xmessage_id_t MSG_NAME                                                                                                                               \
     {                                                                                                                                                                                   \
         static_cast<top::common::xmessage_id_t>((static_cast<std::uint32_t>(static_cast<std::uint16_t>(MSG_CATEGORY_ID)) << 16) | (0x0000FFFF & static_cast<std::uint32_t>(MSG_ID)))    \
     }
@@ -85,6 +85,10 @@ XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_on_demand_blocks_with_ha
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_newblock_push, 0x29);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_block_request, 0x30);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_block_response, 0x31);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_block_response_bigpack, 0x32);
+
+//restrict sync message:  increase message id 0x100 when packet size > 16m, and reduce 0x100 after unserialize 
+#define sync_big_pack_increase_index  (0x100)
 
 // message ids for block broadcast
 XDEFINE_MSG_ID(xmessage_block_broadcast, xmessage_block_broadcast_id, 0x01);

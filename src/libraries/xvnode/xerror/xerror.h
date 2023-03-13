@@ -26,7 +26,7 @@ NS_END3
 
 NS_BEG1(std)
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::vnode::error::xerrc_t> final {

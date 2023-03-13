@@ -1,3 +1,1 @@
-aux_source_directory(./ tests_src)
-add_executable(xstate_mpt_test ${tests_src})
-target_link_libraries(xstate_mpt_test PRIVATE xstate_mpt xloader xgenesis xverifier xblockstore xstore xvledger xdata xbase pthread gtest)
+include(./CMakeLists_${XOS_ID}.txt)

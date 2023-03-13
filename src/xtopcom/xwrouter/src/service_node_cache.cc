@@ -45,10 +45,12 @@ ServiceNodes::~ServiceNodes() {
 // get service_type nodes from cache
 bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadmlia::NodeInfoPtr> & node_vec) {
     if (FindNode(service_type, node_vec)) {
+#if defined(DEBUG)
         for (const auto & item : node_vec) {
             TOP_DEBUG("getrootnodes %s %s:%u %llu", item->node_id.c_str(), (item->public_ip).c_str(), item->public_port, item->hash64);
         }
         TOP_DEBUG("getrootnodes of service_type: %llu ok, size: %d", service_type.value(), node_vec.size());
+#endif
         return true;
     }
 

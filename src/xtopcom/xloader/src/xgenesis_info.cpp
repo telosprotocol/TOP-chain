@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xloader/src/xgenesis_info.h"
+#include "xloader/xgenesis_info.h"
 
 namespace top {
 
@@ -357,7 +357,7 @@ static std::string const g_bounty_genesis_config =
 const std::string & get_genesis_info() {
 
 #if defined(XBUILD_CONSORTIUM)
-    #include "xgenesis_info_consortium.h"
+    #include "xloader/xgenesis_info_consortium.h"
     #if defined(XBUILD_CI)
         return g_ci_consortium_genesis_config;
     #elif defined(XBUILD_DEV)

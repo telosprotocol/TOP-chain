@@ -35,9 +35,9 @@ TEST(xsync_pusher, test_algorithm) {
     }
 }
 
-static xJson::Value build_validators() {
+static Json::Value build_validators() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -53,9 +53,9 @@ static xJson::Value build_validators() {
     return v;
 }
 
-static xJson::Value build_archives() {
+static Json::Value build_archives() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -82,7 +82,7 @@ TEST(xsync_pusher, test_push_block) {
 
     std::vector<vnetwork::xvnode_address_t> addr_list;
     {
-        xJson::Value validators = build_validators();
+        Json::Value validators = build_validators();
 
         xmock_network_config_t cfg_network(validators);
         xmock_network_t network(cfg_network);
@@ -96,7 +96,7 @@ TEST(xsync_pusher, test_push_block) {
     // archive
     std::vector<common::xnode_address_t> archive_addresses;
     {
-        xJson::Value archives = build_archives();
+        Json::Value archives = build_archives();
         xmock_network_config_t cfg_network(archives);
         xmock_network_t network(cfg_network);
         std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();

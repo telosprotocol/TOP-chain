@@ -4,7 +4,11 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xelect_net/include/elect_uitils.h"
-#include "xelect_net/proto/elect_net.pb.h"
+#if defined(XCXX20)
+#    include "xelect_net/proto/ubuntu/elect_net.pb.h"
+#else
+#    include "xelect_net/proto/centos/elect_net.pb.h"
+#endif
 #include "xgossip/include/gossip_utils.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_log.h"
@@ -124,6 +128,7 @@ void EcVHost::send_to_through_root(common::xip2_t const & src, common::xnode_id_
 
     auto kroot_rt = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
     if (!kroot_rt || kroot_rt->nodes_size() == 0) {
+        ec = std::make_error_code(std::errc::network_unreachable);
         TOP_WARN("network not joined, send failed, try again ...");
         return;
     }

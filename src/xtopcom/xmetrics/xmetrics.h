@@ -1196,7 +1196,7 @@ private:
 #define XMETRICS_GAUGE(TAG, value)
 #define XMETRICS_GAUGE_DATAOBJECT(TAG, value)
 #define XMETRICS_GAUGE_SET_VALUE(TAG, value)
-#define XMETRICS_GAUGE_GET_VALUE(TAG)
+#define XMETRICS_GAUGE_GET_VALUE(TAG)  (0)
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_SET(metrics_name, index, value)

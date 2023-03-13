@@ -11,7 +11,9 @@
 #include "xvledger/xdataobj_base.hpp"
 #include "xbase/xrefcount.h"
 #include "xbase/xmem.h"
-#include "xevm_common/common.h"
+
+#include <json/json.h>
+#include "xcommon/common.h"
 namespace top { namespace data {
 
 enum enum_xtransaction_type {
@@ -148,8 +150,8 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual enum_xaction_type get_target_action_type() const = 0;
     virtual std::string get_target_action_str() const = 0;
     virtual const std::string & get_authorization() const = 0;
-    virtual void                parse_to_json(xJson::Value& tx_json, const std::string & tx_version = RPC_VERSION_V2) const = 0;
-    virtual void                construct_from_json(xJson::Value& tx_json) = 0;
+    virtual void                parse_to_json(Json::Value& tx_json, const std::string & tx_version = RPC_VERSION_V2) const = 0;
+    virtual void                construct_from_json(Json::Value& tx_json) = 0;
     virtual int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) = 0;
 
  public: // header

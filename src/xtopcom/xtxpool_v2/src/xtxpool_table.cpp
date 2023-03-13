@@ -8,16 +8,17 @@
 #include "xbasic/xmodule_type.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xtable_bstate.h"
 #include "xmbus/xevent_behind.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
-#include "xverifier/xtx_verifier.h"
-#include "xverifier/xverifier_errors.h"
-#include "xverifier/xverifier_utl.h"
-#include "xverifier/xwhitelist_verifier.h"
+#include "xdata/xverifier/xtx_verifier.h"
+#include "xdata/xverifier/xverifier_errors.h"
+#include "xdata/xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock_fork.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvcontract.h"
@@ -127,22 +128,6 @@ int32_t xtxpool_table_t::push_receipt_real(const std::shared_ptr<xtx_entry> & tx
     if (ret != xsuccess) {
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
         m_xtable_info.get_statistic()->inc_push_tx_receipt_fail_num(1);
-    } else {
-        // TODO(jimmy) mpt and all states will be synced together delete future
-        if (tx->get_tx()->is_recv_tx()) {
-            auto account_addr = tx->get_tx()->get_account_addr();
-            base::xaccount_index_t account_index;
-            bool ret2 = m_table_state_cache.get_account_index(account_addr, account_index);
-            if (ret2) {
-                if (account_index.get_latest_unit_hash().empty()) {  // TODO(jimmy) only for old version accountindex delete future
-                    base::xvaccount_t _account_vaddress(account_addr);
-                    uint64_t latest_connect_height = m_para->get_vblockstore()->get_latest_connected_block_height(_account_vaddress);
-                    xblocktool_t::check_lacking_unit_and_try_sync(_account_vaddress, account_index, latest_connect_height, m_para->get_vblockstore(), "txpool");
-                }
-            } else {
-                xtxpool_warn("xtxpool_table_t::push_receipt_real get account index fail account:%s", account_addr.c_str());
-            }
-        }
     }
 
     return ret;
@@ -279,7 +264,7 @@ void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint
 //     return m_txmgr_table.is_account_need_update(account_addr);
 // }
 
-void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool update_txmgr) {
+void xtxpool_table_t::deal_commit_table_block(data::xblock_t * table_block, bool update_txmgr) {
     base::xvaccount_t _vaccount(table_block->get_account());
     if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, table_block, metrics::blockstore_access_from_txpool_refresh_table)) {
         xerror("xtxpool_table_t::deal_commit_table_block fail-load block input output, block=%s", table_block->dump().c_str());
@@ -297,7 +282,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
     for (auto & txaction : tx_actions) {
         bool need_confirm = !txaction.get_not_need_confirm();
         if (need_confirm && txaction.get_tx_subtype() == base::enum_transaction_subtype_send && !txaction.get_inner_table_flag()) {
-            xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
+            data::xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
             if (_rawtx != nullptr) {
                 xdbg("xtxpool_table_t::deal_commit_table_block loaded rawtx:%s", _rawtx->dump().c_str());
                 raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
@@ -345,7 +330,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
     m_unconfirm_raw_txs.add_raw_txs(raw_txs);
 }
 
-void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
+void xtxpool_table_t::on_block_confirmed(data::xblock_t * table_block) {
     deal_commit_table_block(table_block, true);
     m_latest_commit_height.store(table_block->get_height());
 }
@@ -436,7 +421,7 @@ void xtxpool_table_t::refresh_table() {
                 xtxpool_warn("xtxpool_table_t::refresh_table load commit block fail,table:%s", m_xtable_info.get_account().c_str());
                 return;
             }
-            deal_commit_table_block(dynamic_cast<xblock_t *>(latest_committed_block.get()), true);
+            deal_commit_table_block(dynamic_cast<data::xblock_t *>(latest_committed_block.get()), true);
             load_height_max = latest_committed_block->get_height() - 1;
             load_height_min = (load_height_max >= load_table_block_num_max) ? (load_height_max + 1 - load_table_block_num_max) : 1;
         }
@@ -446,7 +431,7 @@ void xtxpool_table_t::refresh_table() {
                 m_para->get_vblockstore()->load_block_object(m_xtable_info, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_refresh_table);
 
             if (commit_block != nullptr) {
-                deal_commit_table_block(dynamic_cast<xblock_t *>(commit_block.get()), true);
+                deal_commit_table_block(dynamic_cast<data::xblock_t *>(commit_block.get()), true);
             } else {
                 uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
                 // try sync table block
@@ -524,19 +509,51 @@ int32_t xtxpool_table_t::verify_cons_tx(const xcons_transaction_ptr_t & tx) cons
 }
 
 int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool is_first_time_push_tx) const {
+    auto const * raw_tx = tx->get_transaction();
+
     // 1. validation check
-    int32_t ret = xverifier::xtx_verifier::verify_send_tx_validation(tx->get_transaction());
+    int32_t ret = xverifier::xtx_verifier::verify_send_tx_validation(raw_tx);
     if (ret) {
         return ret;
     }
-    // 2. legal check, include hash/signature check and white/black check
-    ret = xverifier::xtx_verifier::verify_send_tx_legitimacy(tx->get_transaction());
+
+#if !defined(XENABLE_MOCK_ZEC_STAKE)
+    // 2.0 special check for standby pool contract call.
+    do {
+        if (raw_tx->get_target_addr() == rec_standby_pool_contract_address.to_string()) {
+            common::xaccount_address_t const src_address{raw_tx->get_source_addr()};
+            if (src_address == rec_standby_pool_contract_address) {
+                if (raw_tx->get_target_action_name() != "on_timer") {
+                    xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
+                    assert(false);
+                    return xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
+                }
+
+                xdbg("xtxpool_table_t::verify_send_tx caught rec standby poll contract on_timer call");
+                break;
+            }
+
+            if (!is_t0_address(src_address) && !is_t8_address(src_address)) {
+                xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
+                return xverifier::xverifier_error::xverifier_error_tx_signature_invalid;
+            }
+
+            ret = statestore::verify_standby_transaction(raw_tx);
+            if (ret) {
+                return ret;
+            }
+        }
+    } while (false);
+#endif
+
+    // 2.1 legal check, include hash/signature check and white/black check
+    ret = xverifier::xtx_verifier::verify_send_tx_legitimacy(raw_tx);
     if (ret) {
         return ret;
     }
     // 3. tx duration expire check
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, is_first_time_push_tx);
+    ret = xverifier::xtx_verifier::verify_tx_fire_expiration(raw_tx, now, is_first_time_push_tx);
     if (ret) {
         return ret;
     }
@@ -638,7 +655,7 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_table_t::get_lack
     return m_txmgr_table.get_lacking_discrete_confirm_tx_ids(need_confirm_ids_vec, total_num);
 }
 
-xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype) {
+xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, base::enum_transaction_subtype subtype) {
     base::xauto_ptr<base::xvblock_t> commit_block =
         m_para->get_vblockstore()->load_block_object(m_xtable_info, commit_height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_create_receipt);
     if (commit_block == nullptr) {
@@ -665,7 +682,7 @@ xcons_transaction_ptr_t xtxpool_table_t::build_receipt(base::xtable_shortid_t pe
 
     m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get());
 
-    auto tx = xblocktool_t::create_one_txreceipt(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(cert_block.get()), peer_table_sid, receipt_id, subtype);
+    auto tx = data::xblocktool_t::create_one_txreceipt(dynamic_cast<data::xblock_t *>(commit_block.get()), dynamic_cast<data::xblock_t *>(cert_block.get()), peer_table_sid, receipt_id, subtype);
     xassert(tx != nullptr);
     return tx;
 }
@@ -687,7 +704,7 @@ void xtxpool_table_t::build_recv_tx(base::xtable_shortid_t peer_table_sid, std::
             continue;
         }
 
-        auto receipt = build_receipt(peer_table_sid, receiptid, commit_height, enum_transaction_subtype_send);
+        auto receipt = build_receipt(peer_table_sid, receiptid, commit_height, base::enum_transaction_subtype_send);
         if (receipt != nullptr) {
             receipts.push_back(receipt);
         }
@@ -714,7 +731,7 @@ void xtxpool_table_t::build_confirm_tx(base::xtable_shortid_t peer_table_sid, st
             continue;
         }
 
-        auto receipt = build_receipt(peer_table_sid, receiptid, commit_height, enum_transaction_subtype_recv);
+        auto receipt = build_receipt(peer_table_sid, receiptid, commit_height, base::enum_transaction_subtype_recv);
         if (receipt != nullptr) {
             receipts.push_back(receipt);
         }
@@ -775,8 +792,8 @@ void xtxpool_table_t::move_uncommit_txs(base::xvblock_t * block) {
             }
         } else {
             if (is_send_tx) {
-                xblock_t * table_block = dynamic_cast<xblock_t *>(block);
-                xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
+                data::xblock_t * table_block = dynamic_cast<data::xblock_t *>(block);
+                data::xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
                 if (_rawtx != nullptr) {
                     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(_rawtx.get());
                     send_txs[tx_hash] = cons_tx;
@@ -834,7 +851,7 @@ void xtxpool_table_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::x
     move_uncommit_txs(_cert_block);
 }
 
-xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
+data::xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
     return m_unconfirm_raw_txs.get_raw_tx(peer_table_sid, receipt_id);
 }
 

@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-add_compile_options(-static -Wall -Werror)
-
 if (XBUILD_TEST)
     add_definitions(-DXENABLE_TESTS)
 endif()
@@ -38,9 +35,9 @@ else()
     add_library(xvm STATIC ${xvm} ${manager} ${xcontract} ${xserialization} ${xerror} ${system_contracts_deploy} ${system_contracts_src} ${system_contracts_xeth})
 endif()
 
-add_dependencies(xvm xstatestore xconfig xstore xverifier xdata xcommon xcodec xbasic xxbase xcertauth xchain_upgrade)
+add_dependencies(xvm xstatestore xconfig xstore xchain_upgrade xcertauth xdata xdata xevm_common xcommon xrouter xcodec xbasic xxbase)
 
-target_link_libraries(xvm PRIVATE xstatestore xconfig xevm_common xrouter xverifier xdata xcommon xcodec xbasic xstore xxbase protobuf lua xcertauth xchain_upgrade ethash keccak)
+target_link_libraries(xvm PRIVATE xstatestore xconfig xevm_common xrouter xcertauth xdata xchain_upgrade xdata xcommon xcodec xbasic xstore xxbase protobuf jsoncpp ethash keccak)
 
 if (BUILD_METRICS)
     #add_dependencies(xvm xmetrics)

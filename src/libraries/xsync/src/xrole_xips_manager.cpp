@@ -29,10 +29,12 @@ void xrole_xips_manager_t::add_role(const common::xnode_address_t & self_xip,
             break;
         }
     }
+#if defined(DEBUG)
     for (auto const & neighbour : neighbours)
         xsync_dbg("xrole_xips_manager_t::add_role, neighbours: %s", neighbour.to_string().c_str());
     for (auto const & p : parents)
         xsync_dbg("xrole_xips_manager_t::add_role, parents: %s", p.to_string().c_str());
+#endif
     m_map[self_xip] = {self_xip,
                        create_xip_vector_ptr(neighbours, self_xip),
                        create_xip_vector_ptr(parents, self_xip),
@@ -237,7 +239,7 @@ std::vector<common::xnode_address_t> xrole_xips_manager_t::get_rand_peers(const 
     std::vector<common::xnode_address_t> rand_list;
     uint32_t peers = max_peers > list_ptr->size() ? list_ptr->size() : max_peers;
     uint32_t anchor = RandomUint32() % list_ptr->size();
-    uint32_t count = 0;
+    // uint32_t count = 0;
     for (uint32_t count = 0; count < peers; ++count) {
         rand_list.push_back(list_ptr->at((anchor + count) % list_ptr->size()));
     }

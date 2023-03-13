@@ -29,7 +29,7 @@ std::tuple<xrlp_elem_kind, xbytes_t, xbytes_t> Split(xbytes_t const & b, std::er
     return std::make_tuple(k, xbytes_t{b.begin() + ts, b.begin() + ts + cs}, xbytes_t{b.begin() + ts + cs, b.end()});
 }
 
-std::tuple<xrlp_elem_kind, gsl::span<xbyte_t const>, gsl::span<xbyte_t const>> split(gsl::span<xbyte_t const> const b, std::error_code & ec) {
+std::tuple<xrlp_elem_kind, xspan_t<xbyte_t const>, xspan_t<xbyte_t const>> split(xspan_t<xbyte_t const> const b, std::error_code & ec) {
     // xrlp_elem_kind k;
     // uint64_t ts, cs;
     // std::tie(k, ts, cs) = read_kind(b, ec);
@@ -40,7 +40,7 @@ std::tuple<xrlp_elem_kind, gsl::span<xbyte_t const>, gsl::span<xbyte_t const>> s
 
     xdbg("Split: %d %lu %lu %d", static_cast<int>(k), ts, cs, ec.value());
     if (ec) {
-        return std::make_tuple(k, gsl::span<xbyte_t const>{}, b);
+        return std::make_tuple(k, xspan_t<xbyte_t const>{}, b);
     }
 
     return std::make_tuple(k, b.subspan(ts, cs), b.subspan(ts + cs));
@@ -60,17 +60,17 @@ std::pair<xbytes_t, xbytes_t> SplitString(xbytes_t const & b, std::error_code & 
     return std::make_pair(content, rest);
 }
 
-std::pair<gsl::span<xbyte_t const>, gsl::span<xbyte_t const>> split_string(gsl::span<xbyte_t const> const b, std::error_code & ec) {
+std::pair<xspan_t<xbyte_t const>, xspan_t<xbyte_t const>> split_string(xspan_t<xbyte_t const> const b, std::error_code & ec) {
     // xrlp_elem_kind k;
-    // gsl::span<xbyte_t const> content, rest;
+    // xspan_t<xbyte_t const> content, rest;
     // std::tie(k, content, rest) = split(b, ec);
     auto const result = split(b, ec);
     if (ec) {
-        return {gsl::span<xbyte_t const>{}, b};
+        return {xspan_t<xbyte_t const>{}, b};
     }
     if (std::get<0>(result) == xrlp_elem_kind::List) {
         ec = error::xerrc_t::rlp_expected_string;
-        return {gsl::span<xbyte_t const>{}, b};
+        return {xspan_t<xbyte_t const>{}, b};
     }
     return {std::get<1>(result), std::get<2>(result)};
 }
@@ -117,17 +117,17 @@ std::pair<xbytes_t, xbytes_t> SplitList(xbytes_t const & b, std::error_code & ec
     return std::make_pair(content, rest);
 }
 
-std::pair<gsl::span<xbyte_t const>, gsl::span<xbyte_t const>> split_list(gsl::span<xbyte_t const> const b, std::error_code & ec) {
+std::pair<xspan_t<xbyte_t const>, xspan_t<xbyte_t const>> split_list(xspan_t<xbyte_t const> const b, std::error_code & ec) {
     // xrlp_elem_kind k;
-    // gsl::span<xbyte_t const> content, rest;
+    // xspan_t<xbyte_t const> content, rest;
     // std::tie(k, content, rest) = split(b, ec);
     auto const compound_result = split(b, ec);
     if (ec) {
-        return {gsl::span<xbyte_t const>{}, b};
+        return {xspan_t<xbyte_t const>{}, b};
     }
     if (std::get<0>(compound_result) != xrlp_elem_kind::List) {
         ec = error::xerrc_t::rlp_expected_list;
-        return {gsl::span<xbyte_t const>{}, b};
+        return {xspan_t<xbyte_t const>{}, b};
     }
     return {std::get<1>(compound_result), std::get<2>(compound_result)};
 }
@@ -147,7 +147,7 @@ std::size_t CountValue(xbytes_t const & input, std::error_code & ec) {
     return i;
 }
 
-std::size_t count_value(gsl::span<xbyte_t const> b, std::error_code & ec) {
+std::size_t count_value(xspan_t<xbyte_t const> b, std::error_code & ec) {
     std::size_t i = 0;
     for (; !b.empty(); i++) {
         // xrlp_elem_kind _;
@@ -211,7 +211,7 @@ std::tuple<xrlp_elem_kind, uint64_t, uint64_t> readKind(xbytes_t const & buf, st
     }
 }
 
-std::tuple<xrlp_elem_kind, uint64_t, uint64_t> read_kind(gsl::span<xbyte_t const> const buf, std::error_code & ec) {
+std::tuple<xrlp_elem_kind, uint64_t, uint64_t> read_kind(xspan_t<xbyte_t const> const buf, std::error_code & ec) {
     if (buf.empty()) {
         ec = error::xerrc_t::not_enough_data;
         return std::make_tuple(xrlp_elem_kind{}, 0, 0);
@@ -309,7 +309,7 @@ uint64_t readSize(xbytes_t const & b, uint8_t slen, std::error_code & ec) {
     return res_size;
 }
 
-uint64_t read_size(gsl::span<xbyte_t const> const b, uint8_t const slen, std::error_code & ec) {
+uint64_t read_size(xspan_t<xbyte_t const> const b, uint8_t const slen, std::error_code & ec) {
     if (static_cast<std::size_t>(slen) > b.size()) {
         ec = error::xerrc_t::not_enough_data;
         return 0;

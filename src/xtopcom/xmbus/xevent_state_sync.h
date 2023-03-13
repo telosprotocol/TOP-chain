@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xcommon/xaccount_address.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 #include "xmbus/xevent.h"
 #include "xstatistic/xbasic_size.hpp"
 #include "xstatistic/xstatistic.h"

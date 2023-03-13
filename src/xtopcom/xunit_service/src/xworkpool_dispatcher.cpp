@@ -260,9 +260,11 @@ void xworkpool_dispatcher::fire_clock(base::xvblock_t * block, base::xworker_t *
         return true;
     };
     base::xcall_t asyn_call((base::xcallback_t)_call, packer.get(), block);
-    auto ret = worker->send_call(asyn_call); {
-        xunit_dbg("xworkpool_dispatcher::fire_clock ret:%d TC: %" PRIu64, ret, block->get_height());
-    }
+#if defined(DEBUG)
+    auto ret =
+#endif
+    worker->send_call(asyn_call);
+    xunit_dbg("xworkpool_dispatcher::fire_clock ret:%d TC: %" PRIu64, ret, block->get_height());
 }
 
 NS_END2

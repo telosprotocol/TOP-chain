@@ -4,8 +4,8 @@
 
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 
-#include "secp256k1/secp256k1.h"
-#include "secp256k1/secp256k1_recovery.h"
+// #include "secp256k1.h"
+// #include "secp256k1_recovery.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
@@ -167,11 +167,11 @@ void xrec_registration_contract::setup() {
 #ifdef MAINNET_ACTIVATED
     data::system_contract::xactivation_record record;
     record.activated = 1;
-    record.activation_time = 1;
+    record.activation_time = 10199160;          // 2023-02-01 00:00:00
 
     base::xstream_t stream(base::xcontext_t::instance());
     record.serialize_to(stream);
-    auto value_str = std::string((char *)stream.data(), stream.size());
+    auto value_str = std::string(reinterpret_cast<char *>(stream.data()), stream.size());
     STRING_SET(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, value_str);
 #endif
 
@@ -726,7 +726,7 @@ void xrec_registration_contract::update_batch_stake_v2(uint64_t report_time, std
     //     MAP_CREATE(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY);
     //     MAP_SET(XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY, source_address, base::xstring_utl::tostring(0));
     // }
-    bool replace = true;
+    // bool replace = true;
     std::string value_str;
     uint64_t last_report_time = 0;
     MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY, source_address, value_str);
@@ -983,7 +983,9 @@ void xrec_registration_contract::slash_staking_time(std::string const & node_add
 
 void xrec_registration_contract::slash_unqualified_node(std::string const & punish_node_str) {
     XMETRICS_TIME_RECORD(XREG_CONTRACT "slash_unqualified_node_ExecutionTime");
+#if defined(DEBUG)
     auto const & account = SELF_ADDRESS();
+#endif
     auto const & source_addr = SOURCE_ADDRESS();
 
     std::string base_addr = "";

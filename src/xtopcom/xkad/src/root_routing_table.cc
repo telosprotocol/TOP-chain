@@ -1495,7 +1495,7 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
 
 void RootRoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     xdbg("HandleBootstrapJoinRequest from %s:%d", packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
-    bool allow_add = true;
+    // bool allow_add = true;
     if (!message.has_data() || message.data().empty()) {
         xinfo("HandleBootstrapJoinRequest request in data is empty.");
         return;

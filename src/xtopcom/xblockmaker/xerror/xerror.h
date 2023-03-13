@@ -38,7 +38,7 @@ std::error_category const & blockmaker_category();
 
 namespace std {
 
-#if !defined(XCXX14_OR_ABOVE)
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::blockmaker::error::xerrc_t> final {

@@ -7,9 +7,14 @@
 #include "xmetrics/xmetrics_event.h"
 #include "xmetrics/xmetrics_unit.h"
 #include "xmetrics/xmetrics_config.h"
-#include "nlohmann/json.hpp"
-#include "nlohmann/fifo_map.hpp"
 #include "xbase/xlog.h"
+
+#include <nlohmann/json.hpp>
+#if defined(XCXX20)
+#    include <fifo_map.hpp>
+#else
+#    include <nlohmann/fifo_map.hpp>
+#endif
 
 #include <iomanip>
 #include <iostream>

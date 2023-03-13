@@ -4,35 +4,32 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
 #include "xbasic/xtimer_driver_fwd.h"
-#include "xcommon/xnode_id.h"
-
 #include "xblockstore/xsyncvstore_face.h"
 #include "xchain_timer/xchain_timer_face.h"
+#include "xcommon/xnode_id.h"
+#include "xdata/xelection/xelection_result_store.h"
 #include "xdbstore/xstore_face.h"
+#include "xelect/client/xelect_client_process.h"
+#include "xelection/xcache/xdata_accessor_face.h"
 #include "xgenesis/xgenesis_manager_fwd.h"
 #include "xmbus/xmessage_bus_face.h"
 #include "xrouter/xrouter_face.h"
+#include "xstate_sync/xstate_downloader.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvcertauth.h"
 #include "xvledger/xvcnode.h"
 #include "xvledger/xvtxstore.h"
-
-#include "xdata/xelection/xelection_result_store.h"
-#include "xelect/client/xelect_client_process.h"
-#include "xelection/xcache/xdata_accessor_face.h"
-#include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xvnetwork/xmessage_callback_hub.h"
 #include "xvnetwork/xvhost_face_fwd.h"
 #include "xvnode/xvnode_manager_face.h"
-#include "xstate_sync/xstate_downloader.h"
 
 #include <memory>
 #include <string>
@@ -67,11 +64,11 @@ using xthread_pool_type_t = xtop_thread_pool_type;
 enum class xtop_io_context_type : uint8_t { invalid, general };
 using xio_context_type_t = xtop_io_context_type;
 
-#if !defined XCXX14_OR_ABOVE
-
 NS_END2
 
 NS_BEG1(std)
+
+#if !defined(XCXX14)
 
 template <>
 struct hash<top::application::xthread_pool_type_t> final {
@@ -83,9 +80,11 @@ struct hash<top::application::xio_context_type_t> final {
     std::size_t operator()(top::application::xio_context_type_t const type) const noexcept;
 };
 
+#endif
+
 NS_END1
 
-#endif
+
 NS_BEG2(top, application)
 
 class xtop_application final : public xtrival_runnable_t<xtop_application> {
@@ -153,7 +152,7 @@ private:
 
     void load_last_election_data();
 
-    base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;
+    base::xauto_ptr<::top::base::xvblock_t> last_logic_time() const;
 
     int32_t handle_register_node(std::string const & node_addr, std::string const & node_sign);
 

@@ -12,7 +12,7 @@
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xunit_bstate.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xstore/xaccount_context.h"
@@ -38,6 +38,8 @@ namespace genesis {
         xwarn("[xtop_genesis_manager] error occured, category: %s, msg: %s!", ec.category().name(), ec.message().c_str());                                                         \
         return;                                                                                                                                                                    \
     } while (0)
+
+std::set<common::xaccount_address_t>     xtop_genesis_manager::m_all_genesis_accounts;
 
 xtop_genesis_manager::xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore)
   : m_blockstore{blockstore} {
@@ -337,6 +339,7 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
             store_block(base::xvaccount_t{account.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
         }
+        m_all_genesis_accounts.insert(account);
     }
     for (auto const & account : m_evm_contract_accounts) {
         auto vblock = create_genesis_of_evm_contract_account(base::xvaccount_t{account.to_string()}, src, ec);
@@ -345,6 +348,7 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
             store_block(base::xvaccount_t{account.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
         }
+        m_all_genesis_accounts.insert(account);
     }
     {
         common::xaccount_address_t account(sys_contract_relay_block_addr);
@@ -354,6 +358,7 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
             store_block(base::xvaccount_t{account.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
         }
+        m_all_genesis_accounts.insert(account);
     }
     // step3: user accounts with data(reset)
     if (false == chain_data::xtop_chain_data_processor::check_state()) {
@@ -364,6 +369,7 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
                 store_block(base::xvaccount_t{pair.first.to_string()}, vblock.get(), ec);
                 CHECK_EC_RETURN(ec);
             }
+            m_all_genesis_accounts.insert(pair.first);
         }
         if (false == chain_data::xtop_chain_data_processor::set_state()) {
             xerror("[xtop_genesis_manager::init_genesis_block] chain_data_processor set state failed");
@@ -378,6 +384,7 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
             store_block(base::xvaccount_t{pair.first.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
         }
+        m_all_genesis_accounts.insert(pair.first);
     }
 }
 

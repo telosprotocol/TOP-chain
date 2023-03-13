@@ -26,8 +26,8 @@
 
 #include "xtxstore/xtxstore_face.h"
 #include "xtxstore/xtransaction_prepare.h"
-#include "xverifier/xblacklist_verifier.h"
-#include "xverifier/xwhitelist_verifier.h"
+#include "xdata/xverifier/xblacklist_verifier.h"
+#include "xdata/xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xrpc/eth_rpc/eth_method.h"
@@ -143,11 +143,11 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         xerror("xedge_evm_method_base do_method fail-jsonrpc version not 2.0 version=%s", jsonrpc_version.c_str());
         return;
     }
-    xJson::Value res;
+    Json::Value res;
     res["id"] = json_proc.m_request_json["id"];//.asString();
     res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
     if (m_eth_method.CallMethod(json_proc.m_request_json, res) == 0) {
-        xJson::FastWriter j_writer;
+        Json::FastWriter j_writer;
         std::string s_res = j_writer.write(res);
         xdbg("rpc response:%s", s_res.c_str());
         write_response(response, s_res);
@@ -159,7 +159,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         std::string msg = std::string("the method ") + method +" does not exist/is not available";
         eth::EthErrorCode::deal_error(res, eth::enum_eth_rpc_method_not_find, msg);
 
-        xJson::FastWriter j_writer;
+        Json::FastWriter j_writer;
         std::string s_res = j_writer.write(res);
         xdbg("rpc response:%s", s_res.c_str());
         write_response(response, s_res);
@@ -212,7 +212,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     auto & tx = json_proc.m_tx_ptr;
     if (ec.error_code)
     {
-        xJson::Value errinfo;
+        Json::Value errinfo;
         errinfo["code"] = ec.error_code.value();
         errinfo["message"] = ec.error_message;
         json_proc.m_response_json["error"] = errinfo;
@@ -221,7 +221,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
 
     // TODO(jimmy) refactor tx verifier
     if (xverifier::xtx_verifier::verify_send_tx_validation(tx.get())) {
-        xJson::Value errinfo;
+        Json::Value errinfo;
         errinfo["code"] = -32000;
         errinfo["message"] = "tx validation verify fail";
         json_proc.m_response_json["error"] = errinfo;
@@ -331,8 +331,8 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
             if (now < json_proc.m_tx_ptr->get_fire_timestamp()) {
                 XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
             }
-            uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
-            XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, delay_time_s);
+            // uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
+            XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now));
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr(), rpc_msg_eth_request);
         } else {
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_eth_query_request);

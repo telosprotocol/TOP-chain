@@ -120,7 +120,7 @@ bool  xstore::delete_values(const std::vector<std::string> & to_deleted_keys)
     return m_db->batch_change(empty_put, to_deleted_keys);
 }
 
-bool xstore::delete_values(std::vector<gsl::span<char const>> const & to_deleted_keys) {
+bool xstore::delete_values(std::vector<xspan_t<char const>> const & to_deleted_keys) {
     std::map<std::string, std::string> empty_put;
     return m_db->batch_change(empty_put, to_deleted_keys);
 }

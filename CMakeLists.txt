@@ -1,20 +1,54 @@
-cmake_minimum_required(VERSION 3.8)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+cmake_minimum_required(VERSION 3.22)
 
 project(XTOPCHAIN CXX C)
 
+cmake_host_system_information(RESULT XOS_ID QUERY DISTRIB_ID)
+if (${XOS_ID} MATCHES "centos")
+    set(XSYS_VER 0)
+elseif(${XOS_ID} MATCHES "ubuntu")
+    set(XSYS_VER 1)
+else()
+    message(FATAL_ERROR "Uknown OS distribution ID")
+endif()
+
+if (${XSYS_VER} EQUAL 0)
+    set(CMAKE_CXX_STANDARD 11)
+else()
+    set(CMAKE_CXX_STANDARD 23)
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if (NOT CMAKE_CXX_COMPILER)
+    message(FATAL_ERROR "C++ Compiler not found")
+endif()
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+string(TOLOWER ${CMAKE_BUILD_TYPE} XBUILD_TYPE)
+if ("${XBUILD_TYPE}" MATCHES "rel")
+    set(XBUILD_TYPE release)
+endif()
+string(TOLOWER ${CMAKE_SYSTEM_NAME} XSYSTEM_NAME_LOWERCASE)
+
+SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+
+if (${XSYS_VER} EQUAL 1)
+    add_definitions(-DMSGPACK_NO_BOOST)
+    add_definitions(-DOPENSSL_API_COMPAT=10101)
+endif()
+
 option(XENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(BUILD_METRICS "build metrics" OFF)
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(BUILD_METRICS ON)
-endif()
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
@@ -70,19 +104,6 @@ if (MAINNET_ACTIVATED)
     message(STATUS "Mainnet Activated ${MAINNET_ACTIVATED}")
 endif()
 
-set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if (NOT CMAKE_CXX_COMPILER)
-    message(FATAL_ERROR "C++ Compiler not found")
-endif()
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
-
-string(TOLOWER ${CMAKE_BUILD_TYPE} XBUILD_TYPE)
-
 #=============================================================================
 # for git version
 #==============================================================================
@@ -90,13 +111,6 @@ include(cmake/gitinfo.cmake)
 get_git_info()
 
 include(cmake/version.cmake)
-
-add_definitions(
-    -DBUILD_USER_LIB # for -lcommon
-    -D__TRACKING_PBFT_PROCESS__
-    -DTEST_FOR_ELECTION
-    -DGOSSIP_WITH_WROUTER
-)
 
 #==============================================================================
 # In order to set default executable and library binaries' location,
@@ -114,16 +128,28 @@ add_definitions(
 set(EXECUTABLE_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/)
 set(LIBRARY_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/lib/${CMAKE_SYSTEM_NAME}/)
 
+if ("${LIBRARY_OUTPUT_DIRECTORY}" STREQUAL "")
+    set(LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH})
+endif()
+
+if ("${RUNTIME_OUTPUT_DIRECTORY}" STREQUAL "")
+    set(RUNTIME_OUTPUT_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+endif()
+
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
     # common compiling options
     add_compile_options(
+        -static
+        -static-libgcc
+        -static-libstdc++
         -fno-strict-aliasing
-
-        # -fthreadsafe-statics
         -pthread
         -fstack-protector-strong
         -fno-short-enums
-        -fPIC
+        -Wno-deprecated-declarations
+        -Wno-unused-function
+        -fpie
+        -fPIE
     )
 
     # CXX only
@@ -132,12 +158,6 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
     add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-fthreadsafe-statics>)
 
     add_definitions(-D_GNU_SOURCE)
-
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL AppleClang)
-        # add_compile_options(-Wabstract-final-class -Wshift-overflow -Wint-to-void-pointer-cast)
-        add_compile_options(-Werror=self-assign
-                            -Werror=exceptions)
-    endif()
 
     #==============================================================================
     # Althrough CMake documentation (3.6.3) says add_compile_options supports
@@ -325,11 +345,6 @@ if (XBUILD_CONSORTIUM)
     add_definitions(-DXBUILD_CONSORTIUM)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
-#  find_package(PkgConfig REQUIRED)
-
-endif()
-
 message(STATUS "CMAKE_BUILD_TYPE:" ${CMAKE_BUILD_TYPE})
 message(STATUS "CMAKE_SYSTEM_NAME:" ${CMAKE_SYSTEM_NAME})
 message(STATUS "CMAKE_CXX_COMPILER_ID:" ${CMAKE_CXX_COMPILER_ID})
@@ -341,6 +356,8 @@ message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
 message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
 message(STATUS "DISABLE_SIGNAL_CAPTURE:" ${DISABLE_SIGNAL_CAPTURE})
 message(STATUS "XUSE_JEMALLOC:" ${XUSE_JEMALLOC})
+message(STATUS "LIBRARY_OUTPUT_DIRECTORY:" ${LIBRARY_OUTPUT_DIRECTORY})
+message(STATUS "RUNTIME_OUTPUT_DIRECTORY:" ${RUNTIME_OUTPUT_DIRECTORY})
 
 find_package(Threads REQUIRED)
 if (XUSE_JEMALLOC)
@@ -351,131 +368,54 @@ elseif(BUILD_GPERF OR BUILD_GHPERF OR TCMALLOC)
     link_directories(src/xtopcom/xdepends/gperftools/.libs)
 endif()
 
-include_directories(src/xtopcom)  # xtopcom build warning will not print
-include_directories(SYSTEM src/xtopcom/third_party)
-include_directories(SYSTEM src/xtopcom/xdepends/include/trezor-crypto)
-include_directories(SYSTEM src/xtopcom/xdepends/include)
-include_directories(SYSTEM src/xtopcom/xdepends/GSL/include)
+include_directories(src/xtopcom)
 include_directories(src/xtopcom/xtopcl/src)  # xtopcom build warning will not print
 include_directories(src/xtopcom/xtopcl/include)  # xtopcom build warning will not print
-
 include_directories(src/libraries)
 include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-link_directories(${LIBRARY_OUTPUT_PATH})
-link_directories(libs/Linux/${XBUILD_TYPE})
+if (${XSYS_VER} EQUAL 0)
+    include_directories(SYSTEM src/xtopcom/xdepends/include/trezor-crypto)
+    include_directories(SYSTEM src/xtopcom/xdepends/include)
+    include_directories(SYSTEM src/xtopcom/xdepends/GSL/include)
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_compile_options(
-        # -Wl,-z,relro
-        # -Wl,-z,noexecstack
-        # -Wl,--no-undefined
-        # -Wl,-z,now
-        -Wno-unused-function
-        -Wno-unused-value
-        -Wno-unused-variable
-    )
-    include_directories(SYSTEM src/xtopcom/xdepends/include_linux)
-    # link_directories(src/externals/libs/${CMAKE_SYSTEM_NAME}/)
-    IF (CMAKE_BUILD_TYPE STREQUAL Debug)
-        link_directories(src/xtopcom/xbase/libs/${CMAKE_SYSTEM_NAME}/${XBUILD_TYPE})
-        link_directories(src/xtopcom/libs/${CMAKE_SYSTEM_NAME}/${XBUILD_TYPE})
-        link_directories(src/xtopcom/xdepends/libs/linux)
-    ELSE()
-        link_directories(src/xtopcom/xbase/libs/${CMAKE_SYSTEM_NAME}/release)
-        link_directories(src/xtopcom/libs/${CMAKE_SYSTEM_NAME}/release)
-        link_directories(src/xtopcom/xdepends/libs/linux)
-    ENDIF()
-    
-    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+    link_directories(src/xtopcom/xdepends/libs/${XSYSTEM_NAME_LOWERCASE})
 
-    set(XDB_TYPE "ROCKSDB")
-    add_subdirectory(src)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    add_compile_options(
-        -Wno-unused-private-field
-        -Wno-inconsistent-missing-override
-        # -Wno-constexpr-not-const
-        -Wno-c++14-extensions
-        -Wno-unused-parameter
-        -Wno-sign-conversion
-        -Wno-delete-non-virtual-dtor
-        -Wno-sign-compare
-        -Wno-conversion
-        # -Wno-missing-declarations
-        # -Wno-conversion
-        # -Wno-float-conversion
-        -Wno-unused-variable
-        -Wno-reorder
-        -Wno-pragma-once-outside-header
-        -Wno-shadow
-        # -Wno-tautological-constant-out-of-range-compare
-        # -Wno-shift-op-parentheses
-        -Wno-unreachable-code
-        -Wno-pessimizing-move
-        -Wno-gnu-zero-variadic-macro-arguments
-        -Wno-return-type
-        -Wno-unused-function
-        -Wno-shorten-64-to-32
-        -Wno-unused-value
-        -Wno-c++11-narrowing
-        -Wno-unused-label
-        -Wno-unused-lambda-capture
-        -Wno-defaulted-function-deleted
-        -Wno-overloaded-virtual
-        -Wno-sometimes-uninitialized
+    add_subdirectory(src/xtopcom/xdepends)
+else()
+    include_directories(SYSTEM third_party/include)
+    include_directories(SYSTEM third_party/asio/asio/include)
+    include_directories(SYSTEM third_party/trezor)
+    include_directories(SYSTEM third_party/trezor/trezor-crypto)
+    include_directories(SYSTEM third_party/jsoncpp/include)
+    include_directories(SYSTEM third_party/ethash/include)
+    include_directories(SYSTEM third_party/ethash/lib)
+    include_directories(SYSTEM third_party/nlohmann/json/single_include)
+    include_directories(SYSTEM third_party/nlohmann/fifo_map/src)
+    include_directories(SYSTEM third_party/crossguid/include)
+    include_directories(SYSTEM third_party/lz4/lib)
 
-    )
+    link_directories(third_party/prebuild/libs/${XSYSTEM_NAME_LOWERCASE})
 
-    # for xg
-    find_library(CFLIB CoreFoundation)
-    add_definitions(-DGUID_CFUUID)
-    add_definitions(-DXBUILD_DEV)
-    # message("CFLIB: ${CFLIB}")
-
-    # link_directories(src/externals/libs/${CMAKE_SYSTEM_NAME}/)
-    IF (CMAKE_BUILD_TYPE STREQUAL Debug)
-        link_directories(src/xtopcom/xbase/libs/MacOS/${XBUILD_TYPE})
-    ELSE()
-        link_directories(src/xtopcom/xbase/libs/MacOS/release)
-    ENDIF()
-    link_directories(src/xtopcom/xdepends/libs/mac)
-
-    set(XDB_TYPE "ROCKSDB")
-    add_subdirectory(src)
+    add_subdirectory(third_party)
 endif()
 
+link_directories(${LIBRARY_OUTPUT_DIRECTORY})
+link_directories(src/xtopcom/xbase/libs/${CMAKE_SYSTEM_NAME}/${XBUILD_TYPE}/${XOS_ID})
+
+set(XDB_TYPE "ROCKSDB")
+add_subdirectory(src)
+
 if (XBUILD_TEST)
-    file(STRINGS /etc/os-release distro REGEX "^NAME=")
-    string(REGEX REPLACE "NAME=\"(.*)\"" "\\1" distro "${distro}")
-    message("found ${distro}")
-    if (${distro} STREQUAL "Ubuntu")
-        message("set no pie on ${distro} for test")
-        # todo update libgtest to avoid this
-        set(CMAKE_CXX_FLAGS "-no-pie")
-    endif()
     enable_testing()
-    
-    include_directories(SYSTEM src/xtopcom/xdepends/googletest/googletest/include)
-    include_directories(SYSTEM src/xtopcom/xdepends/googletest/googlemock/include)
+
+    if (${XSYS_VER} EQUAL 0)
+        include_directories(SYSTEM src/xtopcom/xdepends/googletest/googletest/include)
+        include_directories(SYSTEM src/xtopcom/xdepends/googletest/googlemock/include)
+    endif()
     include_directories(.)
 
     add_subdirectory(tests)
 
 endif()
-
-# Users don't have to configure CMAKE_INSTALL_PREFIX unless they want to customize the destination.
-if (CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
-    #set(CMAKE_INSTALL_PREFIX "/usr/local/topio" CACHE STRING "" FORCE)
-endif()
-#message (STATUS "TOPIO Installation directory: CMAKE_INSTALL_PREFIX = " ${CMAKE_INSTALL_PREFIX})
-
-# set(INSTALL_BIN_PATH /usr/bin/)
-# set(INSTALL_LIB_PATH /lib/)
-
-# INSTALL(TARGETS topio xtopchain
-# RUNTIME DESTINATION ${INSTALL_BIN_PATH}
-# LIBRARY DESTINATION ${INSTALL_LIB_PATH}
-# ARCHIVE DESTINATION ${INSTALL_LIB_PATH}
-# )

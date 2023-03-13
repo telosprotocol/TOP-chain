@@ -206,7 +206,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     std::unique_ptr<data::xbasic_top_action_t const> action = top::make_unique<data::xsystem_consensus_action_t>(cons_tx);
     // exec
     // auto obj = m_associated_execution_context->system_contract(target_addr);
-    auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
+    auto ctx = top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
     // ctx->contract_state(target_addr);
     if (source_addr == target_addr) {
         ctx->consensus_action_stage(data::xconsensus_action_stage_t::self);
@@ -254,7 +254,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     std::unique_ptr<data::xbasic_top_action_t const> action = top::make_unique<data::xsystem_consensus_action_t>(cons_tx);
     // exec
     // auto obj = m_associated_execution_context->system_contract(target_addr);
-    auto ctx = make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
+    auto ctx = top::make_unique<contract_common::xcontract_execution_context_t>(std::move(action), contract_state());
     // ctx->contract_state(target_addr);
     if (source_addr == target_addr) {
         ctx->consensus_action_stage(data::xconsensus_action_stage_t::self);

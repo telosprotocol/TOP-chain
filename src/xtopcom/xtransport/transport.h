@@ -6,21 +6,10 @@
 
 #include "transport_fwd.h"
 #include "xbase/xdata.h"
-#include "xbase/xlog.h"
 #include "xbase/xobject.h"
-#include "xbase/xpacket.h"
-#include "xbase/xsocket.h"
-#include "xbase/xthread.h"
-#include "xbase/xtimer.h"
-#include "xbase/xutl.h"
 #include "xbasic/xbyte_buffer.h"
 
-#include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <iostream>
+#include <cstdint>
 #include <string>
 
 namespace top {

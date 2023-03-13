@@ -133,7 +133,7 @@ TEST_F(test_tx_v2, json) {
     tx->construct_tx(tx_type, expire, deposit, nonce, memo, tx_info);
     tx->set_digest();
 
-    xJson::Value jv;
+    Json::Value jv;
     tx->parse_to_json(jv);
     std::cout << jv.toStyledString() << std::endl;
 

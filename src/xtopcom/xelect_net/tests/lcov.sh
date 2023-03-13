@@ -40,7 +40,6 @@ do
         $parent_path'/src/xtopcom/xcrypto/*' \
         $parent_path'/src/xtopcom/xdata/*' \
         $parent_path'/src/xtopcom/xnetwork/*' \
-        $parent_path'/src/xtopcom/xverifier/*' \
         $parent_path'/src/xtopcom/xkad/proto/*' \
         -o ${binname}.info
     echo "analyze module:${binname} finished =========================2"

@@ -4,11 +4,10 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
+#include "xbasic/xspan.h"
 #include "xevm_common/trie/xtrie_node.h"
-#include "xevm_common/xfixed_hash.h"
+#include "xcommon/xfixed_hash.h"
 
-#include <gsl/span>
 
 #include <map>
 #include <memory>
@@ -18,14 +17,14 @@ NS_BEG3(top, evm_common, trie)
 
 class xtop_kv_writer_face {
 public:
-    virtual void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) = 0;
+    virtual void Put(xspan_t<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) = 0;
     virtual void PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_code & ec) = 0;
 
     virtual void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) = 0;
     virtual void PutDirectBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) = 0;
 
     virtual void Delete(xbytes_t const & key, std::error_code & ec) = 0;
-    virtual void DeleteBatch(std::vector<gsl::span<xbyte_t const>> const & batch, std::error_code & ec) = 0;
+    virtual void DeleteBatch(std::vector<xspan_t<xbyte_t const>> const & batch, std::error_code & ec) = 0;
 
     virtual void DeleteDirect(xbytes_t const & key, std::error_code & ec) = 0;
     virtual void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) = 0;
@@ -34,9 +33,9 @@ using xkv_writer_face_t = xtop_kv_writer_face;
 
 class xtop_kv_reader_face {
 public:
-    virtual bool has(gsl::span<xbyte_t const> key, std::error_code & ec) const = 0;
+    virtual bool has(xspan_t<xbyte_t const> key, std::error_code & ec) const = 0;
     virtual bool HasDirect(xbytes_t const & key, std::error_code & ec) const = 0;
-    virtual xbytes_t get(gsl::span<xbyte_t const> key, std::error_code & ec) const = 0;
+    virtual xbytes_t get(xspan_t<xbyte_t const> key, std::error_code & ec) const = 0;
     virtual xbytes_t GetDirect(xbytes_t const & key, std::error_code & ec) const = 0;
 };
 using xkv_reader_face_t = xtop_kv_reader_face;
@@ -95,7 +94,7 @@ inline void DeleteUnitBatch(xkv_db_face_ptr_t db, std::vector<xbytes_t> const & 
 
 inline xbytes_t ReadTrieNode(xkv_db_face_ptr_t db, xh256_t const & hash) {
     std::error_code _;
-    return db->get(gsl::span<xbyte_t const>{hash}, _);
+    return db->get(xspan_t<xbyte_t const>{hash}, _);
 }
 
 inline bool HasTrieNode(xkv_db_face_ptr_t db, xh256_t const & hash) {
@@ -127,7 +126,7 @@ inline void DeleteTrieNode(xkv_db_face_ptr_t db, xh256_t const & hash) {
     }
 }
 
-//inline void DeleteTrieBatch(xkv_db_face_ptr_t db, std::vector<gsl::span<xbyte_t const>> const & batch) {
+//inline void DeleteTrieBatch(xkv_db_face_ptr_t db, std::vector<xspan_t<xbyte_t const>> const & batch) {
 //    std::error_code ec;
 //    db->DeleteBatch(batch, ec);
 //    if (ec) {

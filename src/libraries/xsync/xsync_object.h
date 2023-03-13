@@ -60,7 +60,6 @@ private:
     std::unique_ptr<sync::xsync_ratelimit_face_t> m_sync_ratelimit{};
     std::unique_ptr<sync::xsync_peerset_t> m_peerset{};
     std::unique_ptr<sync::xsync_pusher_t> m_sync_pusher{};
-    std::unique_ptr<sync::xsync_broadcast_t> m_sync_broadcast{};
     std::unique_ptr<sync::xdownloader_t> m_downloader{};
 
     std::unique_ptr<sync::xblock_fetcher_t> m_block_fetcher{};

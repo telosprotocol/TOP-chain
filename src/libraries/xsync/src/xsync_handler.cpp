@@ -42,7 +42,6 @@ xsync_handler_t::xsync_handler_t(std::string vnode_id,
     xdownloader_t *downloader, xblock_fetcher_t *block_fetcher,
     xsync_gossip_t *sync_gossip,
     xsync_pusher_t *sync_pusher,
-    xsync_broadcast_t *sync_broadcast,
     xsync_sender_t *sync_sender,
     xsync_on_demand_t *sync_on_demand,
     xsync_peerset_t *peerset, xsync_peer_keeper_t *peer_keeper, xsync_behind_checker_t *behind_checker,
@@ -58,7 +57,6 @@ m_downloader(downloader),
 m_block_fetcher(block_fetcher),
 m_sync_gossip(sync_gossip),
 m_sync_pusher(sync_pusher),
-m_sync_broadcast(sync_broadcast),
 m_sync_sender(sync_sender),
 m_sync_on_demand(sync_on_demand),
 m_peerset(peerset),
@@ -73,16 +71,12 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_response_chain_state, std::bind(&xsync_handler_t::response_chain_state, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_frozen_response_chain_state, std::bind(&xsync_handler_t::response_chain_state, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_cross_cluster_chain_state, std::bind(&xsync_handler_t::cross_cluster_chain_state, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-    register_handler(xmessage_id_sync_chain_snapshot_request, std::bind(&xsync_handler_t::handle_chain_snapshot_request, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-    register_handler(xmessage_id_sync_chain_snapshot_response, std::bind(&xsync_handler_t::handle_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-    register_handler(xmessage_id_sync_ondemand_chain_snapshot_request, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_request, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-    register_handler(xmessage_id_sync_ondemand_chain_snapshot_response, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_query_archive_height, std::bind(&xsync_handler_t::recv_query_archive_height, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));  
 
     register_handler(xmessage_id_sync_newblock_push, std::bind(&xsync_handler_t::on_block_push_newblock, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_block_request,  std::bind(&xsync_handler_t::on_block_request_process, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_block_response, std::bind(&xsync_handler_t::on_block_response_process, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
-    
+    register_handler(xmessage_id_sync_block_response_bigpack, std::bind(&xsync_handler_t::on_block_response_process_bigpack, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -119,7 +113,9 @@ void xsync_handler_t::on_message(
 
 void xsync_handler_t::on_event(const mbus::xevent_ptr_t& e) {
 
-    m_downloader->push_event(e);
+   // xsync_kinfo("test xevent_monitor_t::xsync_handler_t on_event   major %d minor %d time %d sync %d",
+  //       e->major_type,  e->minor_type,  e->m_time,  e->sync );
+   // m_downloader->push_event(e);
 
     if (e->major_type == mbus::xevent_major_type_timer) {
         m_session_mgr->on_timer();
@@ -239,20 +235,7 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
 
         xchain_state_info_t info;
         info.address = address;
-        // if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
-        //     base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-        //     xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
-        //     if (!block->is_full_state_block()) {
-        //         info.start_height = 0;
-        //         info.end_height = 0;
-        //     } else {
-        //         info.start_height = latest_start_block->get_height();
-        //         info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
-        //     }
-        // } else {
-        //     info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
-        //     info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
-        // }
+     
         info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
         info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);        
         rsp_info_list.push_back(info);
@@ -407,7 +390,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_remove_t>(e);
         std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
         common::xminer_type_t miner_type = bme->m_miner_type;
-        bool genesis = bme->m_genesis;
+        // bool genesis = bme->m_genesis;
 
         vnetwork::xvnode_address_t addr = vnetwork_driver->address();
         std::vector<uint16_t> table_ids = vnetwork_driver->table_ids();
@@ -471,7 +454,7 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_add_t>(e);
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
     common::xminer_type_t miner_type = bme->m_miner_type;
-    bool genesis = bme->m_genesis;
+    // bool genesis = bme->m_genesis;
 
     for (const auto & it : chains) {
         if (common::has<common::xminer_type_t::advance>(miner_type) || common::has<common::xminer_type_t::validator>(miner_type)) {
@@ -539,116 +522,9 @@ void xsync_handler_t::handle_consensus_result(const mbus::xevent_ptr_t& e) {
     auto ptr = dynamic_xobject_ptr_cast<mbus::xevent_consensus_data_t>(e);
     xblock_ptr_t block = autoptr_to_blockptr(ptr->vblock_ptr);
 
-    // const std::string &address = block->get_account();
-    // if (!m_role_chains_mgr->exists(address)) {
-    //     xsync_warn("xsync_handler on_consensus_block role not exist %s", block->get_account().c_str());
-    //     return;
-    // }
-
     xsync_info("xsync_handler on_consensus_block %s", block->dump().c_str());
 
     m_sync_pusher->push_newblock_to_archive(block);
-}
-
-void xsync_handler_t::handle_chain_snapshot_request(
-    uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-    const vnetwork::xvnode_address_t &network_self,
-    const xsync_message_header_ptr_t &header,
-    base::xstream_t &stream,
-    xtop_vnetwork_message::hash_result_type msg_hash,
-    int64_t recv_time) {
-
-    xsync_warn("xsync_handler_t::handle_chain_snapshot_request fail-not support");
-
-    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
-    // ptr->serialize_from(stream);
-
-    // XMETRICS_GAUGE(metrics::xsync_handle_chain_snapshot_request, 1);
-    // xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-    // base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock, false);
-    // if (blk != nullptr) {
-    //     if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
-    //         // it must be full-table block now
-    //         if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_chain_snapshot)) {
-    //             std::string property_snapshot = blk->get_full_state();
-    //             xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
-    //                 property_snapshot, ptr->m_height_of_fullblock);
-    //             m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
-    //         } else {
-    //             xsync_warn("xsync_handler receive chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
-    //                 ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
-    //         }
-    //     } else {
-    //         xsync_error("xsync_handler receive chain_snapshot_request, and it is not full table,account:%s, height:%llu",
-    //                 ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-    //     }
-    // } else {
-    //     xsync_info("xsync_handler receive chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
-    //             ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-    // }
-}
-
-void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-    const vnetwork::xvnode_address_t &network_self,
-    const xsync_message_header_ptr_t &header,
-    base::xstream_t &stream,
-    xtop_vnetwork_message::hash_result_type msg_hash,
-    int64_t recv_time) {
-    // TODO(jimmy)
-    xerror("xsync_handler_t::handle_chain_snapshot_response fail-not support");
-
-    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
-    // ptr->serialize_from(stream);
-
-    // xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
-
-    // XMETRICS_GAUGE(metrics::xsync_handler_chain_snapshot_reponse, 1);
-
-    // mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
-    // m_downloader->push_event(e);
-}
-
-void xsync_handler_t::handle_ondemand_chain_snapshot_request(
-    uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-    const vnetwork::xvnode_address_t &network_self,
-    const xsync_message_header_ptr_t &header,
-    base::xstream_t &stream,
-    xtop_vnetwork_message::hash_result_type msg_hash,
-    int64_t recv_time) {
-
-    // TODO(jimmy)
-    xwarn("xsync_handler_t::handle_ondemand_chain_snapshot_request fail-not support");
-
-    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
-    // ptr->serialize_from(stream);
-
-    // XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_request, 1);
-    // xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
-    // m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);
-}
-
-void xsync_handler_t::handle_ondemand_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-    const vnetwork::xvnode_address_t &network_self,
-    const xsync_message_header_ptr_t &header,
-    base::xstream_t &stream,
-    xtop_vnetwork_message::hash_result_type msg_hash,
-    int64_t recv_time) {
-
-    // TODO(jimmy)
-    xerror("xsync_handler_t::handle_ondemand_chain_snapshot_request fail-not support");
-
-    // auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
-    // ptr->serialize_from(stream);
-
-    // xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
-    //     msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
-
-    // XMETRICS_GAUGE(metrics::xsync_handle_ondemand_chain_snapshot_reponse, 1);
-
-    // m_sync_on_demand->handle_chain_snapshot(*(ptr.get()), from_address, network_self);
 }
 
 // arc recv query from val on_timer
@@ -699,19 +575,6 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
         info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
         info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
         rsp_info_list.push_back(info);
-/*    const std::shared_ptr<xrole_chains_t> &role_chains = m_role_chains_mgr->get_role(network_self);
-    const map_chain_info_t & chains = role_chains->get_chains_wrapper().get_chains();
-    std::vector<xchain_state_info_t> info_list;
-    for (const auto & it : chains) {
-        const std::string & address = it.first;
-        const xchain_info_t & chain_info = it.second;
-
-        xchain_state_info_t info;
-        info.address = address;
-        info.start_height = m_sync_store->get_latest_start_block_height(address, enum_chain_sync_policy_full);
-        info.end_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
-        info_list.push_back(info);
-        */
     }
 
     xsync_info("recv_query_archive_height, send height info %s count(%d)", network_self.to_string().c_str(), rsp_info_list.size());
@@ -783,7 +646,30 @@ void xsync_handler_t::on_block_response_process(uint32_t msg_size,
 {
     auto response_ptr = make_object_ptr<xsync_msg_block_response_t>();
     response_ptr->serialize_from(stream);
+    on_block_response_process_handler(msg_size, from_address, network_self, header, response_ptr, msg_hash, recv_time);
+}
 
+void xsync_handler_t::on_block_response_process_bigpack(uint32_t msg_size,
+    const vnetwork::xvnode_address_t& from_address,
+    const vnetwork::xvnode_address_t& network_self,
+    const xsync_message_header_ptr_t& header,
+    base::xstream_t& stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time)
+{
+    auto response_ptr = make_object_ptr<xsync_msg_block_response_t>();
+    response_ptr->do_read_from(stream);
+    on_block_response_process_handler(msg_size, from_address, network_self, header, response_ptr, msg_hash, recv_time);
+}
+
+void xsync_handler_t::on_block_response_process_handler(uint32_t msg_size,
+    const vnetwork::xvnode_address_t& from_address,
+    const vnetwork::xvnode_address_t& network_self,
+    const xsync_message_header_ptr_t& header,
+    const xsync_msg_block_response_ptr_t& response_ptr,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time)
+{
      xsync_msg_block_request_ptr_t reuqest_ptr = nullptr;
     if (false == m_session_mgr->sync_block_resopnse_valid_check(response_ptr, reuqest_ptr)) {
         xsync_warn("xsync_handler::on_block_response_process response not compare %" PRIx64 " %lx %s %s",
@@ -796,6 +682,11 @@ void xsync_handler_t::on_block_response_process(uint32_t msg_size,
         network_self.to_string().c_str(), from_address.to_string().c_str(), response_ptr->get_address().c_str());
 
     auto blocks_vec = response_ptr->get_all_xblock_ptr();
+    if (blocks_vec.empty()) {
+        xsync_warn("xsync_handler::on_block_response_process blocks_vec szie(%ld) : %" PRIx64 "  %s %s", blocks_vec.size(),
+            msg_hash, network_self.to_string().c_str(), from_address.to_string().c_str());
+        return;
+    }
 
     switch (response_ptr->get_request_type()) {
     case enum_sync_block_request_demand: {
@@ -852,8 +743,8 @@ void xsync_handler_t::on_block_push_newblock(uint32_t msg_size,
         return;
     }
 
-   auto blocks_vec = msg_push_ptr->get_all_xblock_ptr(); 
-    if (blocks_vec.size() < 1 ) {
+    auto blocks_vec = msg_push_ptr->get_all_xblock_ptr(); 
+    if (blocks_vec.empty()) {
         xsync_warn("xsync_handler::on_block_push_newblock blocks_vec szie(%ld) : %" PRIx64 "  %s %s", blocks_vec.size(),
             msg_hash, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -867,7 +758,9 @@ void xsync_handler_t::on_block_push_newblock(uint32_t msg_size,
         return;
     }
 
-    if (!common::has<common::xnode_type_t::rec>(from_address.type()) && !common::has<common::xnode_type_t::zec>(from_address.type()) && !common::has<common::xnode_type_t::consensus>(from_address.type()) && !common::has<common::xnode_type_t::evm>(from_address.type()) && !common::has<common::xnode_type_t::relay>(from_address.type())) {
+    if (!common::has<common::xnode_type_t::rec>(from_address.type()) && !common::has<common::xnode_type_t::zec>(from_address.type()) 
+     && !common::has<common::xnode_type_t::consensus>(from_address.type()) && !common::has<common::xnode_type_t::evm>(from_address.type()) 
+     && !common::has<common::xnode_type_t::relay>(from_address.type())) {
         xsync_warn("xsync_handler_t::on_block_push_newblock  push_newblock(source must be consensus) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
         XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
@@ -902,6 +795,10 @@ void xsync_handler_t::handle_blocks_request_with_height(const xsync_msg_block_re
         return;
     }
 
+    // check prune height
+    uint64_t min_prune_height = 0;
+    xsync_prune_sigleton_t::instance().get_height(address, min_prune_height);
+
     uint64_t end_height = start_height + count - 1;
     if (adjust_height) {
         base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
@@ -913,6 +810,9 @@ void xsync_handler_t::handle_blocks_request_with_height(const xsync_msg_block_re
     }
 
     for (; (start_height <= end_height) && (vector_blocks.size() < max_request_block_count); start_height++) {
+        if(start_height <= min_prune_height) {
+            continue;
+        }
         auto need_blocks = m_sync_store->load_block_objects(address, start_height);
         if (need_blocks.empty()) {
             break;
@@ -949,7 +849,9 @@ void xsync_handler_t::handle_blocks_demand_request_with_hash(const xsync_msg_blo
 
     xsync_info("xsync_handler_t::handle_blocks_demand_request_with_hash receive account %s, %s",
         address.c_str(), request_ptr->dump().c_str());
-
+    // check prune height
+    uint64_t min_prune_height = 0;
+    xsync_prune_sigleton_t::instance().get_height(address, min_prune_height);
     uint64_t end_height = start_height + (uint64_t)heights - 1;
     xblock_ptr_t start_unit_block = nullptr;
     if (adjust_height) {
@@ -962,6 +864,9 @@ void xsync_handler_t::handle_blocks_demand_request_with_hash(const xsync_msg_blo
 
     std::string prev_hash = last_unit_hash;
     for (uint64_t height = end_height; height >= start_height; height--) {
+        if(height <= min_prune_height) {
+            continue;
+        }
         base::xvaccount_t account(address);
         auto block = m_sync_store->load_block_object(account, height, prev_hash);
         if (block == nullptr) {
@@ -1108,7 +1013,14 @@ void xsync_handler_t::handle_blocks_ontime_request_with_height_lists(const xsync
         uint32_t count = 3;
         uint32_t start_height = it.end_height + 1;
         std::vector<xblock_ptr_t> vector_blocks;
+        // check prune height
+        uint64_t min_prune_height = 0;
+        xsync_prune_sigleton_t::instance().get_height(address, min_prune_height);
+
         for (uint32_t height = start_height; height < start_height + count; height++) {
+            if(height <= min_prune_height) {
+                continue;
+            }
             auto blocks = m_sync_store->load_block_objects(address, height);
             if (blocks.empty()) {
                 break;

@@ -9,8 +9,8 @@
 #include "xbasic/xhex.h"
 #include "xdata/xdata_error.h"
 #include "xdata/xproperty.h"
-#include "xevm_common/fixed_hash.h"
-#include "xevm_common/rlp.h"
+#include "xcommon/fixed_hash.h"
+#include "xcommon/rlp.h"
 #include "xvledger/xvproperty.h"
 #include "xvledger/xvpropertyrules.h"
 #include "xmetrics/xmetrics.h"
@@ -44,7 +44,7 @@ xbstate_ctx_t::xbstate_ctx_t(base::xvbstate_t * bstate, bool readonly) {
     if (!readonly) {
         m_canvas = make_object_ptr<base::xvcanvas_t>();
         m_snapshot_canvas_height = 0;
-        base::xvbstate_t * _new_bstate = static_cast<base::xvbstate_t *>(bstate->clone());
+        base::xvbstate_t * _new_bstate = static_cast<base::xvbstate_t *>(bstate->clone());  // TODO(jimmy) performance not clone firstly, pass origin bstate
         xassert(_new_bstate != nullptr);
         m_snapshot_origin_bstate.attach(_new_bstate);  // clone another bstate
     }

@@ -8,7 +8,7 @@
 #include "xstate_accessor/xproperties/xproperty_type.h"
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_common/xbasic_contract.h"
-#include "xevm_common/common_data.h"
+#include "xcommon/common_data.h"
 
 NS_BEG3(top, contract_common, properties)
 
