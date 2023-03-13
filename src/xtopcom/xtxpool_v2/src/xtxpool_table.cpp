@@ -582,8 +582,8 @@ void xtxpool_table_t::filter_txs_by_black_white_list(std::vector<xcons_transacti
             iter++;
             continue;
         }
-        auto & source_addr = (*iter)->get_source_addr();
-        auto & target_addr = (*iter)->get_target_addr();
+        auto const & source_addr = (*iter)->get_source_addr();
+        auto const & target_addr = (*iter)->get_target_addr();
         if (!write_addrs.empty() && std::find(write_addrs.begin(), write_addrs.end(), source_addr) == std::end(write_addrs)) {
             xwarn("xtxpool_table_t::filter_txs_by_black_white_list fail-whitelist limit address,tx:%s", (*iter)->dump().c_str());
             iter = txs.erase(iter);

@@ -520,12 +520,12 @@ uint64_t xrpc_query_manager::get_timer_clock() const {
 }
 
 void xrpc_query_manager::parse_run_contract(Json::Value & j, const xaction_t & action, data::xtransaction_t const * tx) const {
-    std::error_code ec;
-    auto const & action_address = common::xaccount_address_t::build_from(action.get_account_addr(), ec);
-    if (ec) {
-        xwarn("invalid action address %s", action.get_account_addr().c_str());
-        return;
-    }
+    //std::error_code ec;
+    auto const & action_address = action.account_address();
+    //if (ec) {
+    //    xwarn("invalid action address %s", action.account_address().to_string().c_str());
+    //    return;
+    //}
 
     if (is_t2_address(action_address)) {
         if (action_address.base_address() == sharding_vote_contract_base_address && (action.get_action_name() == "voteNode" || action.get_action_name() == "unvoteNode")) {
@@ -902,13 +902,13 @@ int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
                 auto tx = sendindex->get_raw_tx();
 
                 data::xaction_t action;
-                action.set_account_addr(tx->get_source_addr());
+                action.account_address(tx->source_address());
                 action.set_action_type(tx->get_source_action_type());
                 action.set_action_name(tx->get_source_action_name());
                 action.set_action_param(tx->get_source_action_para());
                 auto jsa = parse_action(action, tx.get());
 
-                action.set_account_addr(tx->get_origin_target_addr());
+                action.account_address(tx->target_address_unadjusted());
                 action.set_action_type(tx->get_target_action_type());
                 action.set_action_name(tx->get_target_action_name());
                 action.set_action_param(tx->get_target_action_para());

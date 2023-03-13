@@ -52,9 +52,9 @@ int32_t xtransaction_v2_t::do_write_without_hash_signature(base::xstream_t & out
     out.write_compact_var(m_expire_duration);
     out.write_compact_var(m_fire_timestamp);
 
-    std::string compact_source_account = xvaccount_t::compact_address_to(m_source_addr);
+    std::string compact_source_account = xvaccount_t::compact_address_to(m_source_addr.to_string());
     out << compact_source_account;
-    std::string compact_target_account = xvaccount_t::compact_address_to(m_target_addr);
+    std::string compact_target_account = xvaccount_t::compact_address_to(m_unadjusted_target_addr.to_string());
     out << compact_target_account;
     out.write_compact_var(m_edge_nodeid);
 
@@ -83,7 +83,7 @@ int32_t xtransaction_v2_t::do_uncompact_write_without_hash_signature(base::xstre
     stream << m_expire_duration;
     stream << m_fire_timestamp;
     stream << m_source_addr;
-    stream << m_target_addr;
+    stream << m_unadjusted_target_addr;
     stream << m_edge_nodeid;
 
     stream << m_amount;
@@ -115,10 +115,12 @@ int32_t xtransaction_v2_t::do_read_without_hash_signature(base::xstream_t & in) 
     
     std::string compact_source_account;
     in >> compact_source_account;
-    m_source_addr = xvaccount_t::compact_address_from(compact_source_account);
+    std::string const src_address_string = xvaccount_t::compact_address_from(compact_source_account);
+    m_source_addr = common::xaccount_address_t::build_from(src_address_string);
     std::string compact_target_account;
     in >> compact_target_account;
-    m_target_addr = xvaccount_t::compact_address_from(compact_target_account);
+    std::string const unadjusted_target_address_string = xvaccount_t::compact_address_from(compact_target_account);
+    m_unadjusted_target_addr = common::xaccount_address_t::build_from(unadjusted_target_address_string);
     in.read_compact_var(m_edge_nodeid);
     
     in.read_compact_var(m_amount);
@@ -193,9 +195,9 @@ int32_t xtransaction_v2_t::release_ref() {
 
 void xtransaction_v2_t::adjust_target_address(uint32_t table_id) {
     if (m_adjust_target_addr.empty()) {
-        m_adjust_target_addr = make_address_by_prefix_and_subaddr(m_target_addr, table_id).to_string();
+        m_adjust_target_addr = common::xaccount_address_t::build_from(make_address_by_prefix_and_subaddr(m_unadjusted_target_addr.to_string(), table_id).to_string());
         xdbg("xtransaction_v2_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
-            get_digest_hex_str().c_str(), m_target_addr.c_str(), m_adjust_target_addr.c_str());        
+            get_digest_hex_str().c_str(), m_unadjusted_target_addr.to_string().c_str(), m_adjust_target_addr.to_string().c_str());
     }
 }
 
@@ -236,7 +238,7 @@ bool xtransaction_v2_t::transaction_len_check() const {
 
 int32_t xtransaction_v2_t::make_tx_create_user_account(const std::string & addr) {
     set_tx_type(xtransaction_type_create_user_account);
-    m_target_addr = addr;
+    m_unadjusted_target_addr = common::xaccount_address_t::build_from(addr);
     return xsuccess;
 }
 
@@ -266,8 +268,8 @@ int32_t xtransaction_v2_t::make_tx_run_contract(std::string const & function_nam
 }
 
 int32_t xtransaction_v2_t::set_different_source_target_address(const std::string & src_addr, const std::string & dst_addr) {
-    m_source_addr = src_addr;
-    m_target_addr = dst_addr;
+    m_source_addr = common::xaccount_address_t::build_from(src_addr);
+    m_unadjusted_target_addr = common::xaccount_address_t(dst_addr);
     return xsuccess;
 }
 
@@ -280,13 +282,13 @@ void xtransaction_v2_t::set_last_trans_hash_and_nonce(uint256_t last_hash, uint6
 }
 
 void xtransaction_v2_t::set_source(const std::string & addr, const std::string & action_name, const std::string & para) {
-    m_source_addr = addr;
+    m_source_addr = common::xaccount_address_t(addr);
     m_source_action_name = action_name;
     m_source_action_para = para;
 }
 
 void xtransaction_v2_t::set_target(const std::string & addr, const std::string & action_name, const std::string & para) {
-    m_target_addr = addr;
+    m_unadjusted_target_addr = common::xaccount_address_t(addr);
     m_target_action_name = action_name;
     m_target_action_para = para;
 }
@@ -364,7 +366,7 @@ std::string xtransaction_v2_t::dump() const {
 
 std::string xtransaction_v2_t::get_source_action_str() const {
     std::string str;
-    str += m_source_addr;
+    str += m_source_addr.to_string();
     str += m_source_action_name;
     str += to_hex_str(m_source_action_para);
     return str;
@@ -372,7 +374,7 @@ std::string xtransaction_v2_t::get_source_action_str() const {
 
 std::string xtransaction_v2_t::get_target_action_str() const {
     std::string str;
-    str += m_target_addr;
+    str += m_unadjusted_target_addr.to_string();
     str += m_target_action_name;
     str += to_hex_str(m_target_action_para);
     return str;
@@ -397,8 +399,8 @@ void xtransaction_v2_t::parse_to_json(Json::Value& result_json, const std::strin
     result_json["authorization"] = get_authorization();
 
     if (tx_version == RPC_VERSION_V2) {
-        result_json["sender_account"] = m_source_addr;
-        result_json["receiver_account"] = m_target_addr;
+        result_json["sender_account"] = m_source_addr.to_string();
+        result_json["receiver_account"] = m_unadjusted_target_addr.to_string();
         result_json["amount"] = static_cast<Json::UInt64>(m_amount);
         result_json["token_name"] = m_token_name;
         result_json["edge_nodeid"] = m_edge_nodeid;
@@ -427,7 +429,7 @@ void xtransaction_v2_t::parse_to_json(Json::Value& result_json, const std::strin
         s_action_json["action_hash"] = "";
         s_action_json["action_type"] = m_source_action_type;
         s_action_json["action_size"] = 0;
-        s_action_json["tx_sender_account_addr"] = m_source_addr;
+        s_action_json["tx_sender_account_addr"] = m_source_addr.to_string();
         s_action_json["action_name"] = m_source_action_name;
         s_action_json["action_param"] = data::uint_to_str(source_action_para.data(), source_action_para.size());
         s_action_json["action_ext"] = "";
@@ -437,7 +439,7 @@ void xtransaction_v2_t::parse_to_json(Json::Value& result_json, const std::strin
         t_action_json["action_hash"] = "";
         t_action_json["action_type"] = m_target_action_type;
         t_action_json["action_size"] = 0;
-        t_action_json["tx_receiver_account_addr"] = m_target_addr;
+        t_action_json["tx_receiver_account_addr"] = m_unadjusted_target_addr.to_string();
         t_action_json["action_name"] = m_target_action_name;
         t_action_json["action_param"] = data::uint_to_str(target_action_para.data(), target_action_para.size());
         t_action_json["action_ext"] = "";
@@ -481,7 +483,7 @@ void xtransaction_v2_t::construct_from_json(Json::Value& request) {
 int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) {
 #ifdef ENABLE_CREATE_USER  // debug use
     if (target_type == xaction_type_create_user_account) {
-        tx_parse_data.m_new_account = m_source_addr;
+        tx_parse_data.m_new_account = m_source_addr.to_string();
     }
 #endif
 
@@ -556,10 +558,10 @@ int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_typ
 int32_t xtransaction_v2_t::get_object_size_real() const {
     int32_t total_size = sizeof(*this);
     // add string member variable alloc size.
-    xdbg("------cache size------xtransaction_v2_t this:%d,m_source_addr:%d,m_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",
+    xdbg("------cache size------xtransaction_v2_t this:%d,m_source_addr:%d,m_unadjusted_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",
          sizeof(*this),
-         get_size(m_source_addr),
-         get_size(m_target_addr),
+         get_size(m_source_addr.to_string()),
+         get_size(m_unadjusted_target_addr.to_string()),
          get_size(m_token_name),
          get_size(m_memo),
          get_size(m_authorization),
@@ -572,14 +574,36 @@ int32_t xtransaction_v2_t::get_object_size_real() const {
         get_size(m_target_action_name),
         get_size(m_target_action_para),
         get_size(m_transaction_hash_str),
-        get_size(m_adjust_target_addr));
+        get_size(m_adjust_target_addr.to_string()));
     // m_source_action_para and m_target_action_para might use same memory, here might be calculate twice!!!!
     
-    total_size += get_size(m_source_addr) + get_size(m_target_addr) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
+    total_size += get_size(m_source_addr.to_string()) + get_size(m_unadjusted_target_addr.to_string()) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
                   get_size(m_edge_nodeid) + get_size(m_source_action_name) + get_size(m_source_action_para) + get_size(m_target_action_name) + get_size(m_target_action_para) +
-                  get_size(m_transaction_hash_str) + get_size(m_adjust_target_addr);
+                  get_size(m_transaction_hash_str) + get_size(m_adjust_target_addr.to_string());
     xdbg("------cache size------ xtransaction_v2_t total_size:%d", total_size);
     return total_size;
+}
+
+// new APIs
+
+void xtransaction_v2_t::source_address(common::xaccount_address_t src_addr) {
+    m_source_addr = std::move(src_addr);
+}
+
+common::xaccount_address_t const & xtransaction_v2_t::source_address() const noexcept {
+    return m_source_addr;
+}
+
+void xtransaction_v2_t::target_address(common::xaccount_address_t dst_addr) {
+    m_unadjusted_target_addr = std::move(dst_addr);
+}
+
+common::xaccount_address_t const & xtransaction_v2_t::target_address() const noexcept {
+    return m_adjust_target_addr.empty() ? m_unadjusted_target_addr : m_adjust_target_addr;
+}
+
+common::xaccount_address_t const & xtransaction_v2_t::target_address_unadjusted() const noexcept {
+    return m_unadjusted_target_addr;
 }
 
 }  // namespace data

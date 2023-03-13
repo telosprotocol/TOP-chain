@@ -192,7 +192,7 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
     }
 
     std::shared_ptr<xsend_tx_account_t> send_tx_account;
-    auto & account_addr = tx_ent->get_tx()->get_source_addr();
+    auto const & account_addr = tx_ent->get_tx()->get_source_addr();
     auto it = m_send_tx_accounts.find(account_addr);
     if (it == m_send_tx_accounts.end()) {
         send_tx_account = std::make_shared<xsend_tx_account_t>(&m_send_tx_queue_internal, latest_nonce);
@@ -230,7 +230,7 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
     uint32_t nonce_unconituous_num = 0;
 
     for (auto it_send_tx = send_txs.begin(); (continuous_tx_num < max_num) && (it_send_tx != send_txs.end()); it_send_tx++) {
-        auto & account_addr = it_send_tx->get()->get_tx()->get_source_addr();
+        auto const & account_addr = it_send_tx->get()->get_tx()->get_source_addr();
         uint64_t nonce = it_send_tx->get()->get_tx()->get_transaction()->get_tx_nonce();
         xtxpool_dbg("xsend_tx_queue_t::get_txs tx:%s", it_send_tx->get()->get_tx()->dump().c_str());
 

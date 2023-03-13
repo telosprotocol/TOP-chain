@@ -60,11 +60,11 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
 
     void                set_source(const std::string & addr, const std::string & action_name, const std::string & para);
     void                set_target(const std::string & addr, const std::string & action_name, const std::string & para);
-    virtual void        set_source_addr(const std::string & addr) override { m_source_addr = addr; }
+    virtual void        set_source_addr(const std::string & addr) override { m_source_addr = common::xaccount_address_t::build_from(addr); }
     virtual void        set_source_action_type(const enum_xaction_type type) {m_source_action_type = type;}
     virtual void        set_source_action_name(const std::string & name) {m_source_action_name = name;}
     virtual void        set_source_action_para(const std::string & para) {m_source_action_para = para;}
-    virtual void        set_target_addr(const std::string & addr) override { m_target_addr = addr; }
+    virtual void        set_target_addr(const std::string & addr) override { m_unadjusted_target_addr = common::xaccount_address_t::build_from(addr); }
     virtual void        set_target_action_type(const enum_xaction_type type) {m_target_action_type = type;}
     virtual void        set_target_action_name(const std::string & name) {m_target_action_name = name;}
     virtual void        set_target_action_para(const std::string & para) {m_target_action_para = para;}
@@ -82,9 +82,9 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual uint256_t           digest()const override {return m_transaction_hash; }
     virtual std::string         get_digest_str()const override {return std::string(reinterpret_cast<char*>(m_transaction_hash.data()), m_transaction_hash.size());}
     virtual std::string         get_digest_hex_str() const override;
-    virtual const std::string & get_source_addr()const override {return m_source_addr;}
-    virtual const std::string & get_target_addr()const override {return m_adjust_target_addr.empty() ? m_target_addr : m_adjust_target_addr;}
-    virtual const std::string & get_origin_target_addr()const override {return m_target_addr;}
+    virtual std::string get_source_addr()const override {return m_source_addr.to_string();}
+    virtual std::string get_target_addr() const override { return m_adjust_target_addr.empty() ? m_unadjusted_target_addr.to_string() : m_adjust_target_addr.to_string(); }
+    virtual std::string get_origin_target_addr() const override { return m_unadjusted_target_addr.to_string(); }
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
     virtual std::string         dump() const override;  // just for debug purpose
     void set_action_type();
@@ -136,12 +136,20 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual bool is_evm_tx() const override {return false;}
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_tx_v2;}
+
+    // new transaction APIs
+    void source_address(common::xaccount_address_t account_address) override;
+    common::xaccount_address_t const & source_address() const noexcept override;
+    void target_address(common::xaccount_address_t dst_addr) override;
+    common::xaccount_address_t const & target_address() const noexcept override;
+    common::xaccount_address_t const & target_address_unadjusted() const noexcept override;
+
 private:
     virtual int32_t get_object_size_real() const override;
 
 private:
-    std::string m_source_addr;
-    std::string m_target_addr;
+    common::xaccount_address_t m_source_addr;
+    common::xaccount_address_t m_unadjusted_target_addr;
     enum_xtransaction_type m_transaction_type; // one byte
     uint16_t m_expire_duration{0};
     uint32_t m_deposit{0};   //serialize with compat_var
@@ -165,7 +173,7 @@ private:
     uint256_t m_transaction_hash{};
     mutable uint16_t m_transaction_len{0};     // max 64KB
     mutable std::string m_transaction_hash_str{};
-    std::string m_adjust_target_addr{};
+    common::xaccount_address_t m_adjust_target_addr{};
     // just reserved for compatibility
     enum_xaction_type m_source_action_type;
     enum_xaction_type m_target_action_type;

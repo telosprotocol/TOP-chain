@@ -55,11 +55,11 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void        set_last_trans_hash_and_nonce(uint256_t last_hash, uint64_t last_nonce) override;
     virtual void        set_fire_and_expire_time(uint16_t const expire_duration) override;
 
-    virtual void        set_source_addr(const std::string & addr) {m_source_action.set_account_addr(addr);}
+    virtual void        set_source_addr(const std::string & addr) {m_source_action.account_address(common::xaccount_address_t::build_from(addr));}
     virtual void        set_source_action_type(const enum_xaction_type type) {m_source_action.set_action_type(type);}
     virtual void        set_source_action_name(const std::string & name) {m_source_action.set_action_name(name);}
     virtual void        set_source_action_para(const std::string & para) {m_source_action.set_action_param(para);}
-    virtual void        set_target_addr(const std::string & addr) {m_target_action.set_account_addr(addr);}
+    virtual void set_target_addr(const std::string & addr) { m_target_action.account_address(common::xaccount_address_t::build_from(addr)); }
     virtual void        set_target_action_type(const enum_xaction_type type) {m_target_action.set_action_type(type);}
     virtual void        set_target_action_name(const std::string & name) {m_target_action.set_action_name(name);}
     virtual void        set_target_action_para(const std::string & para) {m_target_action.set_action_param(para);}
@@ -76,19 +76,19 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual uint256_t           digest()const override {return m_transaction_hash; }
     virtual std::string         get_digest_str()const override {return std::string(reinterpret_cast<char*>(m_transaction_hash.data()), m_transaction_hash.size());}
     virtual std::string         get_digest_hex_str() const override;
-    virtual const std::string & get_source_addr()const override {return m_source_action.get_account_addr();}
-    virtual const std::string & get_target_addr()const override {return m_target_addr.empty() ? m_target_action.get_account_addr() : m_target_addr;}
-    virtual const std::string & get_origin_target_addr()const override {return m_target_action.get_account_addr();}
+    virtual std::string get_source_addr()const override {return m_source_action.account_address().to_string();}
+    virtual std::string get_target_addr()const override {return m_target_addr.empty() ? m_target_action.account_address().to_string() : m_target_addr.to_string();}
+    virtual std::string get_origin_target_addr()const override {return m_target_action.account_address().to_string();}
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
     virtual std::string         dump() const override;  // just for debug purpose
     virtual const std::string & get_source_action_name() const override {return m_source_action.get_action_name();}
     virtual const std::string & get_source_action_para() const override {return m_source_action.get_action_param();}
     virtual enum_xaction_type get_source_action_type() const {return m_source_action.get_action_type();}
-    virtual std::string get_source_action_str() const {return m_source_action.get_action_str();};
+    virtual std::string get_source_action_str() const {return m_source_action.to_string();};
     virtual const std::string & get_target_action_name() const override {return m_target_action.get_action_name();}
     virtual const std::string & get_target_action_para() const override {return m_target_action.get_action_param();}
     virtual enum_xaction_type get_target_action_type() const {return m_target_action.get_action_type();}
-    virtual std::string get_target_action_str() const {return m_target_action.get_action_str();};
+    virtual std::string get_target_action_str() const {return m_target_action.to_string();}
     virtual const std::string & get_authorization() const override {return m_authorization;}
     virtual void                parse_to_json(Json::Value& tx_json, const std::string & version = RPC_VERSION_V2) const override;
     virtual void                construct_from_json(Json::Value& tx_json) override;
@@ -138,6 +138,14 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual bool is_evm_tx() const override {return false;}
     // header
+
+    // new transaction APIs
+    void source_address(common::xaccount_address_t account_address) override;
+    common::xaccount_address_t const & source_address() const noexcept override;
+    void target_address(common::xaccount_address_t dst_addr) override;
+    common::xaccount_address_t const & target_address() const noexcept override;
+    common::xaccount_address_t const & target_address_unadjusted() const noexcept override;
+
 private:
     uint16_t          m_transaction_type{0};    // transfer,withdraw,deposit etc
     uint16_t          m_transaction_len{0};     // max 64KB
@@ -163,7 +171,7 @@ private:
     uint256_t         m_transaction_hash{};     // 256 digest for signature as safety
     std::string       m_authorization{};        // signature for whole transaction
     std::string       m_edge_nodeid{};
-    std::string       m_target_addr{};
+    common::xaccount_address_t m_target_addr{};
 
  private:  // local member should not serialize
     mutable std::string m_transaction_hash_str{};

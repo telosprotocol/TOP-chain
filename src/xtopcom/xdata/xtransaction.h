@@ -136,9 +136,9 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual uint256_t           digest() const = 0;
     virtual std::string         get_digest_str()const = 0;
     virtual std::string         get_digest_hex_str() const = 0;
-    virtual const std::string & get_source_addr()const = 0;
-    virtual const std::string & get_target_addr()const = 0;
-    virtual const std::string & get_origin_target_addr()const = 0;
+    virtual std::string get_source_addr()const = 0;
+    virtual std::string get_target_addr()const = 0;
+    virtual std::string get_origin_target_addr()const = 0;
     virtual uint64_t            get_tx_nonce() const = 0;
     virtual std::string         dump() const = 0;  // just for debug purpose
     virtual const std::string & get_source_action_name() const = 0;
@@ -191,6 +191,13 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const;
+
+    // new transaction APIs
+    virtual void source_address(common::xaccount_address_t src_addr) = 0;
+    virtual common::xaccount_address_t const & source_address() const noexcept = 0;
+    virtual void target_address(common::xaccount_address_t dst_addr) = 0;
+    virtual common::xaccount_address_t const & target_address() const noexcept = 0;
+    virtual common::xaccount_address_t const & target_address_unadjusted() const noexcept = 0;
 };
 
 }  // namespace data
