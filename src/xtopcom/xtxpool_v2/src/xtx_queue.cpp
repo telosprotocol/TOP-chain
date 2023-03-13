@@ -332,7 +332,7 @@ const std::shared_ptr<xtx_entry> xsend_tx_queue_t::pop_tx(const std::string & tx
     return tx_ent;
 }
 
-const std::shared_ptr<xtx_entry> xsend_tx_queue_t::find(const std::string & account_addr, const std::string & hash_str) const {
+const std::shared_ptr<xtx_entry> xsend_tx_queue_t::find(const std::string & hash_str) const {
     return m_send_tx_queue_internal.find(hash_str);
 }
 

@@ -36,8 +36,9 @@ bool xpreproposal_packer::close(bool force_async) {
 }
 
 bool xpreproposal_packer::proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata) {
+    xinfo("xpreproposal_packer::proc_preproposal in");
     xpreproposal_msg_t preproposal_msg;
-    if (preproposal_msg.serialize_from_string(msgdata) <= 0) {
+    if (preproposal_msg.serialize_from_string(msgdata, get_account(), get_resources()->get_txpool()) <= 0) {
         xerror("xpreproposal_packer::proc_preproposal preproposal_msg serialize from fail");
         return false;
     }
@@ -47,7 +48,7 @@ bool xpreproposal_packer::proc_preproposal(const xvip2_t & leader_xip,  uint64_t
     }
 
     data::xblock_consensus_para_t cs_para(get_account(), clock, viewid, viewtoken, height, preproposal_msg.get_gmtime());
-    xdbg("xpreproposal_packer::proc_preproposal cs_para:%s", cs_para.dump().c_str());
+    xinfo("xpreproposal_packer::proc_preproposal cs_para:%s", cs_para.dump().c_str());
     cs_para.set_tgas_height(preproposal_msg.get_total_lock_tgas_token_height());
     cs_para.set_xip(preproposal_msg.get_validator_xip(), preproposal_msg.get_auditor_xip());
     cs_para.set_drand_height(preproposal_msg.get_drand_height());
@@ -152,9 +153,9 @@ int32_t xpreproposal_msg_t::serialize_to_string(std::string & _str) const {
     return ret;
 }
 
-int32_t xpreproposal_msg_t::serialize_from_string(const std::string & _str) {
+int32_t xpreproposal_msg_t::serialize_from_string(const std::string & _str, const std::string & table_addr, xtxpool_v2::xtxpool_face_t * txpool) {
     base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)_str.data(), (int32_t)_str.size());
-    int32_t ret = do_read(_stream);
+    int32_t ret = do_read(_stream, table_addr, txpool);
     return ret;
 }
 
@@ -175,7 +176,11 @@ int32_t xpreproposal_msg_t::do_write(base::xstream_t & stream) const {
     uint32_t count = m_input_txs.size();
     stream.write_compact_var(count);
     for (uint32_t i = 0; i < count; i++) {
-        m_input_txs[i]->serialize_to(stream);
+        stream.write_compact_var(m_input_txs[i]->get_tx_hash());
+        stream.write_compact_var((uint8_t)m_input_txs[i]->get_tx_subtype());
+        std::string tx_bin;
+        m_input_txs[i]->serialize_to_string(tx_bin);
+        stream.write_compact_var(tx_bin);
     }
 
     uint32_t prove_count = m_receiptid_state_proves.size();
@@ -189,7 +194,7 @@ int32_t xpreproposal_msg_t::do_write(base::xstream_t & stream) const {
     return (stream.size() - begin_size);
 }
 
-int32_t xpreproposal_msg_t::do_read(base::xstream_t & stream) {
+int32_t xpreproposal_msg_t::do_read(base::xstream_t & stream, const std::string & table_addr, xtxpool_v2::xtxpool_face_t * txpool) {
     const int32_t begin_size = stream.size();
 
     stream.read_compact_var(m_version);
@@ -210,8 +215,20 @@ int32_t xpreproposal_msg_t::do_read(base::xstream_t & stream) {
     uint32_t count;
     stream.read_compact_var(count);
     for (uint32_t i = 0; i < count; i++) {
-        data::xcons_transaction_ptr_t tx = make_object_ptr<data::xcons_transaction_t>();
-        tx->serialize_from(stream);
+        std::string tx_hash;
+        uint8_t tx_subtype;
+        std::string tx_bin;
+        stream.read_compact_var(tx_hash);
+        stream.read_compact_var(tx_subtype);
+        stream.read_compact_var(tx_bin);
+        data::xcons_transaction_ptr_t tx = txpool->query_tx(table_addr, tx_hash);
+        if (tx == nullptr || tx_subtype != (uint8_t)tx->get_tx_subtype()) {
+            tx = make_object_ptr<data::xcons_transaction_t>();
+            tx->serialize_from_string(tx_bin);
+            xdbg("xpreproposal_msg_t::do_read tx serialize from string tx:%s", tx->dump().c_str());
+        } else {
+            xdbg("xpreproposal_msg_t::do_read tx get from cache tx:%s", tx->dump().c_str());
+        }
         m_input_txs.push_back(tx);
     }
 
