@@ -35,7 +35,7 @@ optional<xfork_point_t> v10901_table_tickets_reset = xfork_point_t{xfork_point_t
 optional<xfork_point_t> v10901_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 10091880, "v1.9 vote contract re-enabling"};
 optional<xfork_point_t> v10902_table_tickets_reset = xfork_point_t{xfork_point_type_t::logic_time, 10247400, "v1.9.2 vote contract data reset"};
 optional<xfork_point_t> v10902_enable_voting = xfork_point_t{xfork_point_type_t::logic_time, 10249200, "v1.9.2 vote contract re-enabling"};
-optional<xfork_point_t> v11100_event = xfork_point_t{xfork_point_type_t::logic_time, 10582920, "v1.11.0 add event"};//2023-03-17 10:00:00
+optional<xfork_point_t> v11100_event = xfork_point_t{xfork_point_type_t::logic_time, 10608840, "v1.11.0 add event"};//2023-03-20 10:00:00
 optional<xfork_point_t> v11200_block_fork_point    = xfork_point_t{xfork_point_type_t::logic_time, 16898760, "v1.12 block optimize"};//2025-03-17 10:00:00 XTODO need change future
 optional<xfork_point_t> v11200_sync_big_packet = xfork_point_t{xfork_point_type_t::logic_time, 16898760, "v1.12 sync big packet optimize"};//2025-03-17 10:00:00 XTODO need change future
 #endif
