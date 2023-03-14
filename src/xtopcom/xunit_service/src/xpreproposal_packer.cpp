@@ -36,7 +36,6 @@ bool xpreproposal_packer::close(bool force_async) {
 }
 
 bool xpreproposal_packer::proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata) {
-    xinfo("xpreproposal_packer::proc_preproposal in");
     xpreproposal_msg_t preproposal_msg;
     if (preproposal_msg.serialize_from_string(msgdata, get_account(), get_resources()->get_txpool()) <= 0) {
         xerror("xpreproposal_packer::proc_preproposal preproposal_msg serialize from fail");
@@ -48,7 +47,7 @@ bool xpreproposal_packer::proc_preproposal(const xvip2_t & leader_xip,  uint64_t
     }
 
     data::xblock_consensus_para_t cs_para(get_account(), clock, viewid, viewtoken, height, preproposal_msg.get_gmtime());
-    xinfo("xpreproposal_packer::proc_preproposal cs_para:%s", cs_para.dump().c_str());
+    xdbg("xpreproposal_packer::proc_preproposal cs_para:%s", cs_para.dump().c_str());
     cs_para.set_tgas_height(preproposal_msg.get_total_lock_tgas_token_height());
     cs_para.set_xip(preproposal_msg.get_validator_xip(), preproposal_msg.get_auditor_xip());
     cs_para.set_drand_height(preproposal_msg.get_drand_height());
