@@ -183,12 +183,18 @@ xtablestate_ext_ptr_t xstatestore_executor_t::get_latest_executed_tablestate_ext
     return m_state_accessor.get_latest_connectted_table_state();
 }
 
-xtablestate_ext_ptr_t xstatestore_executor_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
+xtablestate_ext_ptr_t xstatestore_executor_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
+    m_account_index_cache.update_new_cert_block(current_block, account_index_map);
     std::lock_guard<std::mutex> l(m_execute_lock);
     return write_table_all_states(current_block, tablestate_store, ec);
 }
 
 void xstatestore_executor_t::execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const {
+    auto ret = m_account_index_cache.get_account_index(block, unit_addr.to_string(), account_index);
+    XMETRICS_GAUGE(metrics::statestore_get_account_index_from_cache, ret ? 1 : 0);
+    if (ret) {
+        return;
+    }   
     xtablestate_ext_ptr_t tablestate_ext = execute_and_get_tablestate_ext(block, false, ec);
     if (nullptr != tablestate_ext) {
         tablestate_ext->get_accountindex(unit_addr.to_string(), account_index, ec);

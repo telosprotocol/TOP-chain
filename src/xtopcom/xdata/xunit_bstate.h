@@ -122,6 +122,7 @@ public:
     xunitstate_ptr_t const&     get_unitstate() const {return m_unitstate;}
     uint64_t                    get_tx_nonce() const {return m_accountindex.get_latest_tx_nonce();}
     std::string const&          get_unit_hash() const {return m_accountindex.get_latest_unit_hash();}
+    base::xaccount_index_t const& get_accountindex() const {return m_accountindex;}
 public:  // set in consensus
     void                increase_tx_nonce();
     void                set_tx_nonce(uint64_t txnonce);

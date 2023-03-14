@@ -49,8 +49,8 @@ bool xstatestore_table_t::on_table_block_committed_by_height(uint64_t height, co
     return m_table_executor.on_table_block_committed_by_height(height, block_hash);
 }
 
-xtablestate_ext_ptr_t xstatestore_table_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
-    return m_table_executor.do_commit_table_all_states(current_block, tablestate_store, ec);
+xtablestate_ext_ptr_t xstatestore_table_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
+    return m_table_executor.do_commit_table_all_states(current_block, tablestate_store, account_index_map, ec);
 }
 
 xtablestate_ext_ptr_t xstatestore_table_t::get_tablestate_ext_from_block(base::xvblock_t* target_block, bool bstate_must) const {
