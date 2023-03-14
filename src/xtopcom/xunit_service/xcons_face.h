@@ -254,7 +254,7 @@ protected:
         } else {
             XMETRICS_GAUGE(metrics::mailbox_us_total, 1);
             XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_us_cur, queue_size);
-            xunit_info("xnetwork_proxy::async_dispatch,recv_in pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
+            // xunit_info("xnetwork_proxy::async_dispatch,recv_in pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
         }
 
         auto handler = [xip_from, xip_to](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {

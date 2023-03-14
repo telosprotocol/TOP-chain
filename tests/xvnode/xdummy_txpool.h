@@ -22,7 +22,6 @@ public:
     xpack_resource get_pack_resource(const xtxs_pack_para_t & pack_para) override {
         return {};
     }
-    std::vector<xcons_transaction_ptr_t> get_pack_resource(const xtxs_pack_para_t & pack_para) = 0;
     data::xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     }

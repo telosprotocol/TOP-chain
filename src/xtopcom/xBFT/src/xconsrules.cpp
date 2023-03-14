@@ -480,7 +480,6 @@ namespace top
         }
 
         bool  xBFTRules::permit_preproposal(uint64_t height, uint64_t viewid) {
-            xinfo("xBFTRules::permit_preproposal,tps_key block addr:%s,h:%llu v:%llu,at node=0x%llx",get_address().c_str() , height, viewid, get_xip2_addr().low_addr);
             // must have and only have one prev cert block. not permit preproposal if forked.
             if(m_certified_blocks.empty()) {
                 xinfo("xBFTRules::permit_preproposal,fail-no cert block h:%llu v:%llu,at node=0x%llx", height, viewid, get_xip2_addr().low_addr);
