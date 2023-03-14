@@ -531,8 +531,9 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
     }
 
     uint64_t current_height = vblock->get_height();
+    auto block_hash = vblock->get_last_block_hash();
     while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, block_hash, false);
         if (prev_vblock == nullptr) {
             xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
@@ -542,6 +543,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
             return prev_vblock;
         }
         current_height = prev_vblock->get_height();
+        block_hash = prev_vblock->get_last_block_hash();
     }
     xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-find addr.%s %s",account_address.to_string().c_str(), account_index.dump().c_str());
     return nullptr;
