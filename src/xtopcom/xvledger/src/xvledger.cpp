@@ -1628,8 +1628,8 @@ namespace top
                 m_has_other_node = has_other_node;
             }
             if (m_is_storage_node) {
-                m_store_units = true;
-                m_store_unitstates = false;
+                m_store_units = false;
+                m_store_unitstates = true;
             } else {
                 m_store_units = false;
                 m_store_unitstates = true;
