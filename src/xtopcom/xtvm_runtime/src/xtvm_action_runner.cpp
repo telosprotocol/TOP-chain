@@ -32,7 +32,7 @@ evm_common::xevm_transaction_result_t xtop_vm_action_runner::execute_action(std:
     // fetch result
     auto return_result_bytes = logic_ptr->get_return_value();
 
-    xdbg("xtop_vm_action_runner::execute_action result %s return_bytes_size: %zu", bool_result ? "success" : "fail", return_result_bytes.size());
+    xinfo("xtop_vm_action_runner::execute_action result %s return_bytes_size: %zu", bool_result ? "success" : "fail", return_result_bytes.size());
 
     tvm_import_instance::instance()->remove_logic();
 
