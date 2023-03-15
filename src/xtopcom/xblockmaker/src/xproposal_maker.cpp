@@ -535,7 +535,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     // uint16_t confirm_and_recv_txs_max_num = 35;
     // uint16_t confirm_txs_max_num = 30;
 
-    uint16_t all_txs_max_num = 280;     // for shard 0 block gas limit is 12000000, the maximum tx num is 288.
+    uint16_t all_txs_max_num = 288;     // for shard 0 block gas limit is 12000000, the maximum tx num is 288.
     uint16_t confirm_and_recv_txs_max_num = 220;
     uint16_t confirm_txs_max_num = 160;
 

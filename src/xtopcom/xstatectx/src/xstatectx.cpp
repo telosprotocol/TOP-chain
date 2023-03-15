@@ -208,7 +208,7 @@ void xstatectx_t::do_commit(base::xvblock_t* current_block) {
 
     std::error_code ec;
     statestore::xtablestate_store_ptr_t tablestate_store = std::make_shared<statestore::xtablestate_store_t>(table_bstate, m_prev_tablestate_ext->get_state_mpt(), state_root_hash, unitstate_units);
-    statestore::xstatestore_hub_t::instance()->do_commit_table_all_states(current_block, tablestate_store, ec);
+    statestore::xstatestore_hub_t::instance()->do_commit_table_all_states(current_block, tablestate_store, unitctxs, ec);
     if (ec) {
         xerror("xstatectx_t::do_commit fail. block:%s", current_block->dump().c_str());
         return;
