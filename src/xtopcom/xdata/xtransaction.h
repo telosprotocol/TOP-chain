@@ -126,7 +126,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void        set_authorization(const std::string & authorization) = 0;
     virtual void        set_len() = 0;
 
-    virtual int32_t     make_tx_create_user_account(const std::string & addr) = 0;
+    // virtual int32_t     make_tx_create_user_account(const std::string & addr) = 0;
     virtual int32_t     make_tx_transfer(const data::xproperty_asset & asset) = 0;
     virtual int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) = 0;
     virtual int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param) = 0;

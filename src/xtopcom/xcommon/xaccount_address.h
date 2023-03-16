@@ -20,4 +20,6 @@ xaccount_address_t append_table_id(xaccount_base_address_t const & base_address,
 xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id_t table_id, std::error_code & ec);
 xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id_t table_id);
 
+bool is_eoa_address(xaccount_address_t const & account_address) noexcept;
+
 NS_END2

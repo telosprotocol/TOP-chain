@@ -106,17 +106,11 @@ public:
     bool operator>=(xtop_node_id const & other) const noexcept;
     bool operator<=(xtop_node_id const & other) const noexcept;
 
-    //void
-    //random();
-
     std::size_t
     length() const noexcept;
 
     std::size_t
     size() const noexcept;
-
-    //char const *
-    //c_str() const noexcept;
 
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
     base::enum_vaccount_addr_type type() const;

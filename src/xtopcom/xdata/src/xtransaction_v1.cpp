@@ -267,15 +267,15 @@ bool xtransaction_v1_t::transaction_len_check() const {
     return true;
 }
 
-int32_t xtransaction_v1_t::make_tx_create_user_account(const std::string & addr) {
-    set_tx_type(xtransaction_type_create_user_account);
-    int32_t ret = xaction_source_null::serialze_to(m_source_action);
-    if (ret) { return ret; }
-    ret = xaction_create_user_account::serialze_to(m_target_action, addr);
-    if (ret) { return ret; }
-
-    return xsuccess;
-}
+//int32_t xtransaction_v1_t::make_tx_create_user_account(const std::string & addr) {
+//    set_tx_type(xtransaction_type_create_user_account);
+//    int32_t ret = xaction_source_null::serialze_to(m_source_action);
+//    if (ret) { return ret; }
+//    ret = xaction_create_user_account::serialze_to(m_target_action, addr);
+//    if (ret) { return ret; }
+//
+//    return xsuccess;
+//}
 
 int32_t xtransaction_v1_t::make_tx_transfer(const data::xproperty_asset & asset) {
     set_tx_type(xtransaction_type_transfer);

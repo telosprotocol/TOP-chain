@@ -21,6 +21,58 @@
 
 using namespace top::base;
 
+NS_BEG3(top, data, details)
+
+xtop_target_address::xtop_target_address(common::xaccount_address_t original) noexcept : original_{std::move(original)} {
+#if !defined(NDEBUG)
+    if (common::is_eoa_address(original_)) {
+        assert(adjusted_.empty());
+        assert(!original_.has_assigned_table_id());
+    } else {
+        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id());
+    }
+#endif
+}
+
+xtop_target_address::xtop_target_address(common::xaccount_address_t original, common::xtable_id_t const optional_table_id)
+  : original_{std::move(original)}, adjusted_{common::append_table_id(original_.base_address(), optional_table_id)} {
+    assert(!original_.has_assigned_table_id());
+}
+
+xtop_target_address xtop_target_address::build_from(common::xaccount_address_t const & src, common::xaccount_address_t dst) {
+    if (common::is_t2_address(dst) && common::address_belongs_to_zone(dst, common::xconsensus_zone_id)) {
+        if (!dst.has_assigned_table_id()) {
+            return xtop_target_address{std::move(dst), src.table_id()};
+        }
+
+        return xtop_target_address{std::move(dst)};
+    }
+
+    return xtop_target_address{std::move(dst)};
+}
+
+common::xaccount_address_t const & xtop_target_address::original() const noexcept {
+    return original_;
+}
+
+common::xaccount_address_t const & xtop_target_address::adjusted() const noexcept {
+    return adjusted_;
+}
+
+common::xaccount_address_t const & xtop_target_address::address() const noexcept {
+#if !defined(NDEBUG)
+    if (common::is_eoa_address(original_)) {
+        assert(adjusted_.empty());
+        assert(!original_.has_assigned_table_id());
+    } else {
+        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id());
+    }
+#endif
+    return !adjusted_.empty() ? adjusted_ : original_;
+}
+
+NS_END3
+
 namespace top { namespace data {
 
 xtransaction_v2_t::xtransaction_v2_t() : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_tx_v2) {
@@ -54,7 +106,7 @@ int32_t xtransaction_v2_t::do_write_without_hash_signature(base::xstream_t & out
 
     std::string compact_source_account = xvaccount_t::compact_address_to(m_source_addr.to_string());
     out << compact_source_account;
-    std::string compact_target_account = xvaccount_t::compact_address_to(m_unadjusted_target_addr.to_string());
+    std::string compact_target_account = xvaccount_t::compact_address_to(target_address_.original().to_string());
     out << compact_target_account;
     out.write_compact_var(m_edge_nodeid);
 
@@ -83,7 +135,7 @@ int32_t xtransaction_v2_t::do_uncompact_write_without_hash_signature(base::xstre
     stream << m_expire_duration;
     stream << m_fire_timestamp;
     stream << m_source_addr;
-    stream << m_unadjusted_target_addr;
+    stream << target_address_.original();
     stream << m_edge_nodeid;
 
     stream << m_amount;
@@ -120,7 +172,7 @@ int32_t xtransaction_v2_t::do_read_without_hash_signature(base::xstream_t & in) 
     std::string compact_target_account;
     in >> compact_target_account;
     std::string const unadjusted_target_address_string = xvaccount_t::compact_address_from(compact_target_account);
-    m_unadjusted_target_addr = common::xaccount_address_t::build_from(unadjusted_target_address_string);
+    target_address_ = xtarget_address_t::build_from(m_source_addr, common::xaccount_address_t::build_from(unadjusted_target_address_string));
     in.read_compact_var(m_edge_nodeid);
     
     in.read_compact_var(m_amount);
@@ -194,13 +246,13 @@ int32_t xtransaction_v2_t::release_ref() {
 #endif
 
 void xtransaction_v2_t::adjust_target_address(common::xtable_id_t const table_id) {
-    if (m_adjust_target_addr.empty()) {
-        m_adjust_target_addr =
-            m_unadjusted_target_addr.has_assigned_table_id() ? m_unadjusted_target_addr : common::xaccount_address_t::build_from(m_unadjusted_target_addr.base_address(), table_id);
+    //if (m_adjust_target_addr.empty()) {
+    //    m_adjust_target_addr =
+    //        m_unadjusted_target_addr.has_assigned_table_id() ? m_unadjusted_target_addr : common::xaccount_address_t::build_from(m_unadjusted_target_addr.base_address(), table_id);
 
-        xdbg("xtransaction_v2_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
-            get_digest_hex_str().c_str(), m_unadjusted_target_addr.to_string().c_str(), m_adjust_target_addr.to_string().c_str());
-    }
+    //    xdbg("xtransaction_v2_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
+    //        get_digest_hex_str().c_str(), m_unadjusted_target_addr.to_string().c_str(), m_adjust_target_addr.to_string().c_str());
+    //}
 }
 
 void xtransaction_v2_t::set_digest() {
@@ -238,11 +290,11 @@ bool xtransaction_v2_t::transaction_len_check() const {
     return true;
 }
 
-int32_t xtransaction_v2_t::make_tx_create_user_account(const std::string & addr) {
-    set_tx_type(xtransaction_type_create_user_account);
-    m_unadjusted_target_addr = common::xaccount_address_t::build_from(addr);
-    return xsuccess;
-}
+//int32_t xtransaction_v2_t::make_tx_create_user_account(const std::string & addr) {
+//    set_tx_type(xtransaction_type_create_user_account);
+//    m_unadjusted_target_addr = common::xaccount_address_t::build_from(addr);
+//    return xsuccess;
+//}
 
 int32_t xtransaction_v2_t::make_tx_transfer(const data::xproperty_asset & asset) {
     set_tx_type(xtransaction_type_transfer);
@@ -271,7 +323,7 @@ int32_t xtransaction_v2_t::make_tx_run_contract(std::string const & function_nam
 
 int32_t xtransaction_v2_t::set_different_source_target_address(const std::string & src_addr, const std::string & dst_addr) {
     m_source_addr = common::xaccount_address_t::build_from(src_addr);
-    m_unadjusted_target_addr = common::xaccount_address_t(dst_addr);
+    target_address_ = xtarget_address_t::build_from(m_source_addr, common::xaccount_address_t(dst_addr));
     return xsuccess;
 }
 
@@ -290,7 +342,7 @@ void xtransaction_v2_t::set_source(const std::string & addr, const std::string &
 }
 
 void xtransaction_v2_t::set_target(const std::string & addr, const std::string & action_name, const std::string & para) {
-    m_unadjusted_target_addr = common::xaccount_address_t(addr);
+    target_address_ = xtarget_address_t::build_from(m_source_addr, common::xaccount_address_t(addr));
     m_target_action_name = action_name;
     m_target_action_para = para;
 }
@@ -377,7 +429,7 @@ std::string xtransaction_v2_t::get_source_action_str() const {
 
 std::string xtransaction_v2_t::get_target_action_str() const {
     std::string str;
-    str += m_unadjusted_target_addr.to_string();
+    str += target_address_.original().to_string();
     str += m_target_action_name;
     str += to_hex_str(m_target_action_para);
     return str;
@@ -403,7 +455,7 @@ void xtransaction_v2_t::parse_to_json(Json::Value& result_json, const std::strin
 
     if (tx_version == RPC_VERSION_V2) {
         result_json["sender_account"] = m_source_addr.to_string();
-        result_json["receiver_account"] = m_unadjusted_target_addr.to_string();
+        result_json["receiver_account"] = target_address_.original().to_string();
         result_json["amount"] = static_cast<Json::UInt64>(m_amount);
         result_json["token_name"] = m_token_name;
         result_json["edge_nodeid"] = m_edge_nodeid;
@@ -442,7 +494,7 @@ void xtransaction_v2_t::parse_to_json(Json::Value& result_json, const std::strin
         t_action_json["action_hash"] = "";
         t_action_json["action_type"] = m_target_action_type;
         t_action_json["action_size"] = 0;
-        t_action_json["tx_receiver_account_addr"] = m_unadjusted_target_addr.to_string();
+        t_action_json["tx_receiver_account_addr"] = target_address_.original().to_string();
         t_action_json["action_name"] = m_target_action_name;
         t_action_json["action_param"] = data::uint_to_str(target_action_para.data(), target_action_para.size());
         t_action_json["action_ext"] = "";
@@ -564,7 +616,7 @@ size_t xtransaction_v2_t::get_object_size_real() const {
     xdbg("------cache size------xtransaction_v2_t this:%d,m_source_addr:%d,m_unadjusted_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",
          sizeof(*this),
          get_size(m_source_addr.to_string()),
-         get_size(m_unadjusted_target_addr.to_string()),
+         get_size(target_address_.original().to_string()),
          get_size(m_token_name),
          get_size(m_memo),
          get_size(m_authorization),
@@ -577,12 +629,12 @@ size_t xtransaction_v2_t::get_object_size_real() const {
         get_size(m_target_action_name),
         get_size(m_target_action_para),
         get_size(m_transaction_hash_str),
-        get_size(m_adjust_target_addr.to_string()));
+        get_size(target_address_.adjusted().to_string()));
     // m_source_action_para and m_target_action_para might use same memory, here might be calculate twice!!!!
     
-    total_size += get_size(m_source_addr.to_string()) + get_size(m_unadjusted_target_addr.to_string()) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
+    total_size += get_size(m_source_addr.to_string()) + get_size(target_address_.original().to_string()) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
                   get_size(m_edge_nodeid) + get_size(m_source_action_name) + get_size(m_source_action_para) + get_size(m_target_action_name) + get_size(m_target_action_para) +
-                  get_size(m_transaction_hash_str) + get_size(m_adjust_target_addr.to_string());
+                  get_size(m_transaction_hash_str) + get_size(target_address_.adjusted().to_string());
     xdbg("------cache size------ xtransaction_v2_t total_size:%zu", total_size);
     return total_size;
 }
@@ -598,15 +650,15 @@ common::xaccount_address_t const & xtransaction_v2_t::source_address() const noe
 }
 
 void xtransaction_v2_t::target_address(common::xaccount_address_t dst_addr) {
-    m_unadjusted_target_addr = std::move(dst_addr);
+    target_address_ = xtarget_address_t::build_from(m_source_addr, std::move(dst_addr));
 }
 
 common::xaccount_address_t const & xtransaction_v2_t::target_address() const noexcept {
-    return m_adjust_target_addr.empty() ? m_unadjusted_target_addr : m_adjust_target_addr;
+    return target_address_.address();
 }
 
 common::xaccount_address_t const & xtransaction_v2_t::target_address_unadjusted() const noexcept {
-    return m_unadjusted_target_addr;
+    return target_address_.original();
 }
 
 }  // namespace data

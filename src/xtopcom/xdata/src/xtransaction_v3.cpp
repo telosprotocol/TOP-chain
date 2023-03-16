@@ -126,9 +126,9 @@ bool xtransaction_v3_t::transaction_len_check() const {
     return true;
 }
 
-int32_t xtransaction_v3_t::make_tx_create_user_account(const std::string & addr) {
-    return xsuccess;
-}
+//int32_t xtransaction_v3_t::make_tx_create_user_account(const std::string & addr) {
+//    return xsuccess;
+//}
 
 int32_t xtransaction_v3_t::make_tx_transfer(const data::xproperty_asset & asset) {
     return xsuccess;

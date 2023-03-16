@@ -66,7 +66,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void        set_authorization(const std::string & authorization) override {m_authorization = authorization;};
     virtual void        set_len() override;
 
-    virtual int32_t     make_tx_create_user_account(const std::string & addr) override;
+    // virtual int32_t     make_tx_create_user_account(const std::string & addr) override;
     virtual int32_t     make_tx_transfer(const data::xproperty_asset & asset) override;
     virtual int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) override;
     virtual int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param) override;

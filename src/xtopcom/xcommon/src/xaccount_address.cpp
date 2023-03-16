@@ -59,5 +59,8 @@ common::xaccount_address_t append_table_id(common::xaccount_address_t const & ad
     return r;
 }
 
+bool is_eoa_address(xaccount_address_t const & account_address) noexcept {
+    return is_t0_address(account_address) || is_t6_address(account_address) || is_t8_address(account_address);
+}
 
 NS_END2
