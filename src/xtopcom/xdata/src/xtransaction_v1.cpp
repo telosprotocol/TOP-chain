@@ -166,9 +166,12 @@ int32_t xtransaction_v1_t::release_ref() {
 }
 #endif
 
-void xtransaction_v1_t::adjust_target_address(uint32_t table_id) {
+void xtransaction_v1_t::adjust_target_address(common::xtable_id_t const table_id) {
     if (m_target_addr.empty()) {
-        m_target_addr = common::xaccount_address_t::build_from(make_address_by_prefix_and_subaddr(m_target_action.account_address().to_string(), table_id).to_string());
+        auto const & action_address = m_target_action.account_address();
+
+        m_target_addr = action_address.has_assigned_table_id() ? action_address : common::xaccount_address_t::build_from(action_address.base_address(), table_id);
+
         xdbg("xtransaction_v1_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
             get_digest_hex_str().c_str(), m_target_action.account_address().to_string().c_str(), m_target_addr.to_string().c_str());
     }

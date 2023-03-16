@@ -50,7 +50,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual bool        check_last_nonce(uint64_t account_nonce) override;
 
  public:  // set apis
-    virtual void        adjust_target_address(uint32_t table_id) override ;
+    virtual void        adjust_target_address(common::xtable_id_t table_id) override ;
     virtual void        set_digest() override;
     virtual void        set_digest(const uint256_t & digest) override {m_transaction_hash = digest;};
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) override;

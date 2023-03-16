@@ -174,8 +174,8 @@ int xtransaction_v2_t::do_read(base::xstream_t & in) {
     //}
 
     if (is_sys_sharding_contract_address(target_account_address)) {
-        auto tableid = data::account_map_to_table_id(source_account_address);
-        adjust_target_address(tableid.get_subaddr());
+        // auto tableid = data::account_map_to_table_id(source_account_address);
+        adjust_target_address(source_account_address.table_id());
     }
     const int32_t end_pos = in.size();
     return (begin_pos - end_pos);
@@ -193,9 +193,11 @@ int32_t xtransaction_v2_t::release_ref() {
 }
 #endif
 
-void xtransaction_v2_t::adjust_target_address(uint32_t table_id) {
+void xtransaction_v2_t::adjust_target_address(common::xtable_id_t const table_id) {
     if (m_adjust_target_addr.empty()) {
-        m_adjust_target_addr = common::xaccount_address_t::build_from(m_unadjusted_target_addr.base_address(), common::xtable_id_t{static_cast<uint16_t>(table_id)});
+        m_adjust_target_addr =
+            m_unadjusted_target_addr.has_assigned_table_id() ? m_unadjusted_target_addr : common::xaccount_address_t::build_from(m_unadjusted_target_addr.base_address(), table_id);
+
         xdbg("xtransaction_v2_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
             get_digest_hex_str().c_str(), m_unadjusted_target_addr.to_string().c_str(), m_adjust_target_addr.to_string().c_str());
     }

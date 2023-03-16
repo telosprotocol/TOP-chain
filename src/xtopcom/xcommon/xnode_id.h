@@ -94,7 +94,7 @@ public:
     std::string to_string() const;
     void clear();
 
-    explicit operator bool() const noexcept;
+    // explicit operator bool() const noexcept;
 
     void
     swap(xtop_node_id & other) noexcept;

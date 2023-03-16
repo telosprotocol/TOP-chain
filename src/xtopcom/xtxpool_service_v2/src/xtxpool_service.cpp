@@ -482,7 +482,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
     }
 
     if (data::is_sys_sharding_contract_address(account_address)) {
-        tx->adjust_target_address(tableid.get_subaddr());
+        tx->adjust_target_address(account_address.table_id());
     }
 
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
