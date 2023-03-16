@@ -102,7 +102,7 @@ public:
     void stop() override;
     components::sniffing::xsniffer_config_t sniff_config() const override;
 
-    xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const override;
+    // xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const override;
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const override;
 
 private:

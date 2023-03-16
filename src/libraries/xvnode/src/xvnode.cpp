@@ -58,8 +58,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
         joined_election_round)}
    {
-    bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
-    bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
+    bool const is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
+    bool const is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
     if (!is_edge_archive && !is_frozen && !common::has<common::xnode_type_t::fullnode>(m_the_binding_driver->type())) {
         m_txpool_face = txpool_service_mgr->create(m_the_binding_driver, m_router);
 
@@ -115,9 +115,9 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & xtop_vnode::vnetwork_
     return m_the_binding_driver;
 }
 
-xtxpool_service_v2::xtxpool_proxy_face_ptr const & xtop_vnode::txpool_proxy() const {
-    return m_txpool_face;
-}
+//xtxpool_service_v2::xtxpool_proxy_face_ptr const & xtop_vnode::txpool_proxy() const {
+//    return m_txpool_face;
+//}
 
 void xtop_vnode::synchronize() {
     m_the_binding_driver->start();
