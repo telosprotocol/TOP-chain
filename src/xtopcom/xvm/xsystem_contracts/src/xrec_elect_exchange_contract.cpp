@@ -75,7 +75,7 @@ void xtop_rec_elect_exchange_contract::elect_config_nodes(common::xlogic_time_t 
     auto property = data::election::get_property_by_group_id(common::xexchange_group_id);
 
     auto election_result_store = xvm::serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, property);
-    auto & election_network_result = election_result_store.result_of(network_id());
+    // auto & election_network_result = election_result_store.result_of(network_id());
     auto node_type = common::xnode_type_t::storage_exchange;
 
     auto nodes_info = xstatic_election_center::instance().get_static_election_nodes("exchange_start_nodes");
@@ -84,13 +84,13 @@ void xtop_rec_elect_exchange_contract::elect_config_nodes(common::xlogic_time_t 
         return;
     }
     auto & election_group_result = election_result_store.result_of(network_id()).result_of(node_type).result_of(common::xexchange_cluster_id).result_of(common::xexchange_group_id);
-    for (auto nodes : nodes_info) {
+    for (auto const & nodes : nodes_info) {
         xelection_info_t new_election_info{};
-        new_election_info.consensus_public_key = nodes.pub_key;
-        new_election_info.stake = nodes.stake;
-        new_election_info.joined_version = common::xelection_round_t{0};
-        new_election_info.genesis = true;
-        new_election_info.miner_type = common::xminer_type_t::advance | common::xminer_type_t::validator | common::xminer_type_t::edge;
+        new_election_info.public_key(nodes.pub_key);
+        new_election_info.stake(nodes.stake);
+        new_election_info.joined_epoch(common::xelection_round_t{0});
+        new_election_info.genesis(true);
+        new_election_info.miner_type(common::xminer_type_t::advance | common::xminer_type_t::validator | common::xminer_type_t::edge);
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.account_address(nodes.node_id);
