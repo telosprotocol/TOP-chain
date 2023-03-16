@@ -85,9 +85,9 @@ void xstatestore_impl_t::on_table_block_committed(base::xvblock_t* block) const 
     tablestore->on_table_block_committed(block);
 }
 
-xtablestate_ext_ptr_t xstatestore_impl_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::vector<statectx::xunitstate_ctx_ptr_t> const& unitctxs, std::error_code & ec) const {
+xtablestate_ext_ptr_t xstatestore_impl_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(current_block->get_account());
-    return tablestore->do_commit_table_all_states(current_block, tablestate_store, unitctxs, ec);
+    return tablestore->do_commit_table_all_states(current_block, tablestate_store, account_index_map, ec);
 }
 
 void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {

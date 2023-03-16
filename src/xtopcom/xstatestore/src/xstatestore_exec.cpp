@@ -183,8 +183,8 @@ xtablestate_ext_ptr_t xstatestore_executor_t::get_latest_executed_tablestate_ext
     return m_state_accessor.get_latest_connectted_table_state();
 }
 
-xtablestate_ext_ptr_t xstatestore_executor_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::vector<statectx::xunitstate_ctx_ptr_t> const& unitctxs, std::error_code & ec) const {
-    m_nonce_cache.update_new_cert_block(current_block, unitctxs);
+xtablestate_ext_ptr_t xstatestore_executor_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
+    m_nonce_cache.update_new_cert_block(current_block, account_index_map);
     std::lock_guard<std::mutex> l(m_execute_lock);
     return write_table_all_states(current_block, tablestate_store, ec);
 }

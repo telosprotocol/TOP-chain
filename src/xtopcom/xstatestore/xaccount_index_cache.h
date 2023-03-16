@@ -22,7 +22,7 @@ private:
 
 class xaccount_index_cache_t {
 public:
-    void update_new_cert_block(base::xvblock_t* cert_block, const std::vector<statectx::xunitstate_ctx_ptr_t> & unitctxs);
+    void update_new_cert_block(base::xvblock_t* cert_block, const std::map<std::string, base::xaccount_index_t> & account_index_map);
     bool get_account_index(base::xvblock_t* block, const std::string & account, base::xaccount_index_t & account_index);
 private:
     std::map<uint64_t, xblock_account_indexes_t> m_cache;

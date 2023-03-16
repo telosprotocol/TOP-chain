@@ -6,9 +6,9 @@
 
 NS_BEG2(top, statestore)
 
-#define KEEP_CACHE_BLOCK_NUM (5)
+#define KEEP_CACHE_BLOCK_NUM (4)
 
-void xaccount_index_cache_t::update_new_cert_block(base::xvblock_t * cert_block, const std::vector<statectx::xunitstate_ctx_ptr_t> & unitctxs) {
+void xaccount_index_cache_t::update_new_cert_block(base::xvblock_t * cert_block, const std::map<std::string, base::xaccount_index_t> & account_index_map) {
     std::lock_guard<std::mutex> l(m_mutex);
     for (auto it = m_cache.begin(); it != m_cache.end();) {
         uint64_t height = it->first;
@@ -32,11 +32,6 @@ void xaccount_index_cache_t::update_new_cert_block(base::xvblock_t * cert_block,
         it++;
     }
 
-    std::map<std::string, base::xaccount_index_t> account_index_map;
-    for (auto unitctx : unitctxs) {
-        account_index_map[unitctx->get_unitstate()->get_bstate()->get_account()] = unitctx->get_accoutstate()->get_accountindex();
-    }
-
     m_cache.emplace(cert_block->get_height(), xblock_account_indexes_t(cert_block->get_block_hash(), account_index_map));
 }
 
@@ -45,12 +40,13 @@ bool xaccount_index_cache_t::get_account_index(base::xvblock_t * block, const st
     if (m_cache.empty()) {
         return false;
     }
+    uint64_t block_height = block->get_height();
     uint64_t cert_height = m_cache.rbegin()->first;
-    if (cert_height < block->get_height()) {
+    uint64_t lowest_height = m_cache.begin()->first;
+    if (cert_height < block_height || lowest_height > block_height) {
         return false;
     }
     uint64_t last_height = cert_height + 1;
-    uint64_t block_height = block->get_height();
     auto & block_hash = block->get_block_hash();
     bool height_hash_match = false;
     for (auto it = m_cache.rbegin(); it != m_cache.rend();) {
@@ -62,6 +58,7 @@ bool xaccount_index_cache_t::get_account_index(base::xvblock_t * block, const st
         }
         if (height > block_height) {
             it++;
+            last_height = height;
             continue;
         }
         if (!height_hash_match) {
@@ -72,6 +69,7 @@ bool xaccount_index_cache_t::get_account_index(base::xvblock_t * block, const st
                     return false;
                 }
                 it++;
+                last_height = height;
                 continue;
             }
         }
@@ -82,6 +80,7 @@ bool xaccount_index_cache_t::get_account_index(base::xvblock_t * block, const st
             return true;
         }
         it++;
+        last_height = height;
     }
     return false;
 }

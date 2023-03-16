@@ -35,7 +35,7 @@ public:
 public:
     xtablestate_ext_ptr_t   execute_and_get_tablestate_ext(base::xvblock_t* target_block, bool bstate_must, std::error_code & ec) const;
     xtablestate_ext_ptr_t   get_latest_executed_tablestate_ext() const;
-    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::vector<statectx::xunitstate_ctx_ptr_t> const& unitctxs, std::error_code & ec) const;
+    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const;
     void                    on_table_block_committed(base::xvblock_t* block) const;
     bool                    on_table_block_committed_by_height(uint64_t height, const std::string & block_hash) const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);

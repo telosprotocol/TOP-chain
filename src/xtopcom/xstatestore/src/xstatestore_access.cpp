@@ -18,14 +18,18 @@ xtablestate_ext_ptr_t const& xstatestore_cache_t::get_latest_connectted_tablesta
 }
 
 data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& block_hash) const {
-    data::xunitstate_ptr_t state = nullptr;
-    m_unitstate_cache.get(block_hash, state);
-    XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, state != nullptr ? 1 : 0);
-    return state;
+    xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
+    m_unitstate_cache.get(block_hash, bstate);
+    XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, bstate != nullptr ? 1 : 0);
+    if (bstate == nullptr) {
+        return nullptr;
+    }
+    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+    return unitstate;
 }
 
 void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) {
-    m_unitstate_cache.put(block_hash, state);
+    m_unitstate_cache.put(block_hash, state->get_bstate());
     xdbg("xstatestore_cache_t::set_unitstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
 }
 
