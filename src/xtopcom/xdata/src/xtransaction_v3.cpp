@@ -302,12 +302,12 @@ int32_t xtransaction_v3_t::parse(enum_xaction_type source_type, enum_xaction_typ
     return xchain_error_action_param_empty;
 }
 
-int32_t xtransaction_v3_t::get_object_size_real() const {
-    int32_t total_size = sizeof(*this);
+size_t xtransaction_v3_t::get_object_size_real() const {
+    size_t total_size = sizeof(*this);
     // add string member variable alloc size.
     total_size += get_size(m_source_addr.to_string()) + get_size(m_target_addr.to_string()) + get_size(m_authorization) + m_ethtx.get_to().get_ex_alloc_size() +
                   m_ethtx.get_from().get_ex_alloc_size() + m_ethtx.get_data().capacity() + m_ethtx.get_accesslist().capacity()*sizeof(xeth_accesstuple_t);
-    xdbg("------cache size------ xtransaction_v3_t total_size:%d", total_size);
+    xdbg("------cache size------ xtransaction_v3_t total_size:%zu", total_size);
     return total_size;
 }
 

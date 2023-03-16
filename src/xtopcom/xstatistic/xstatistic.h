@@ -123,7 +123,7 @@ public:
     virtual int32_t get_class_type() const = 0;
 
 private:
-    virtual int32_t get_object_size_real() const = 0;
+    virtual size_t get_object_size_real() const = 0;
 
 private:
     // Attention: time unit is millisecond, expression range of int32 is [-2147483648, 2147483647], max time is about 596 hours.
@@ -175,7 +175,7 @@ public:
     void statistic_del() {}
     virtual int32_t get_class_type() const = 0;
 private:
-    virtual int32_t get_object_size_real() const = 0;
+    virtual size_t get_object_size_real() const = 0;
 };
 #endif
 

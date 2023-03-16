@@ -49,14 +49,14 @@ void xtop_state_object::set_account_index_with_unit(const base::xaccount_index_t
     dirty_unit = true;
 }
 
-int32_t xtop_state_object::get_object_size_real() const {
+size_t xtop_state_object::get_object_size_real() const {
     // common::xaccount_address_t account;
     // base::xaccount_index_t index;
     // xbytes_t unit_bytes;
     // bool dirty_unit{false};
-    int32_t total_size = sizeof(*this);
+    size_t total_size = sizeof(*this);
     total_size += get_size(account.to_string()) + unit_bytes.capacity()*sizeof(xbyte_t);
-    xdbg("------cache size------ xtop_state_object total_size:%d account:%d,unit_bytes:%d", total_size, get_size(account.to_string()), unit_bytes.capacity()*sizeof(xbyte_t));
+    xdbg("------cache size------ xtop_state_object total_size:%zu account:%d,unit_bytes:%d", total_size, get_size(account.to_string()), unit_bytes.capacity()*sizeof(xbyte_t));
     return total_size;
 }
 

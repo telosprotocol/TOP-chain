@@ -39,7 +39,7 @@ public:
     bool                    done_{false};
 
 private:
-    int32_t get_object_size_real() const override;
+    size_t get_object_size_real() const override;
 };
 
 using xevent_vnode_ptr_t = xobject_ptr_t<xevent_vnode_t>;

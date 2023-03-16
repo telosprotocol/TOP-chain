@@ -267,12 +267,12 @@ namespace top
             return std::string(local_param_buf);
         }
 
-        int32_t xvheader_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xvheader_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
             total_size += get_size(m_account) + get_size(m_comments) + get_size(m_input_hash) + get_size(m_output_hash) + get_size(m_last_block_hash) +
                           get_size(m_last_full_block_hash) + get_size(m_extra_data);
             xdbg(
-                "------cache size------ xvheader_t total_size:%d "
+                "------cache size------ xvheader_t total_size:%zu "
                 "this:%d,m_account:%d,m_comments:%d,m_input_hash:%d,m_output_hash:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,m_extra_data:%d",
                 total_size,
                 sizeof(*this),
@@ -698,11 +698,11 @@ namespace top
             xassert(0);
         }
 
-        int32_t xvqcert_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xvqcert_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
             total_size += get_size(m_header_hash) + get_size(m_input_root_hash) + get_size(m_output_root_hash) + get_size(m_justify_cert_hash) + get_size(m_verify_signature) +
                           get_size(m_audit_signature) + get_size(m_extend_data) + get_size(m_extend_cert);
-            xdbg("-----cache size----- xvqcert_t total_size:%d this:%d,xvqcert_t:%d,:%d,:%d,:%d,:%d,:%d,:%d,:%d",
+            xdbg("-----cache size----- xvqcert_t total_size:%zu this:%d,xvqcert_t:%d,:%d,:%d,:%d,:%d,:%d,:%d,:%d",
                  total_size,
                  sizeof(*this),
                  get_size(m_header_hash),
@@ -1164,11 +1164,11 @@ namespace top
             return std::string(local_param_buf);
         }
 
-        int32_t xvinput_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xvinput_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
             int32_t ex_alloc_aize = get_ex_alloc_size();
             total_size += get_size(m_root_hash) + ex_alloc_aize;
-            xdbg("------cache size------ xvinput_t total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d", total_size, sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
+            xdbg("------cache size------ xvinput_t total_size:%zu this:%d,m_root_hash:%d,ex_alloc_size:%d", total_size, sizeof(*this), get_size(m_root_hash), ex_alloc_aize);
             return total_size;
         }
 
@@ -1285,11 +1285,11 @@ namespace top
             return std::string(local_param_buf);
         }
 
-        int32_t xvoutput_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xvoutput_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
             int32_t ex_alloc_aize = get_ex_alloc_size();
             total_size += get_size(m_root_hash) + ex_alloc_aize;
-            xdbg("------cache size------ xvoutput_t total_size:%d this:%d,m_root_hash:%d,ex_alloc_size:%d",
+            xdbg("------cache size------ xvoutput_t total_size:%zu this:%d,m_root_hash:%d,ex_alloc_size:%d",
                  total_size,
                  sizeof(*this),
                  get_size(m_root_hash),
@@ -3129,11 +3129,11 @@ namespace top
             return block_ptr;
         }
 
-        int32_t xvblock_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xvblock_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
 
             xdbg(
-                "------cache size------ xvblock_t addr:%s total_size:%d "
+                "------cache size------ xvblock_t addr:%s total_size:%zu "
                 "this:%d,m_cert_hash:%d,m_dump_info:%d,m_parent_account:%d,m_vote_extend_data:%d,m_output_offdata:%d,m_proposal:%d,m_excontainer:%d",
                 get_account().c_str(),
                 total_size,

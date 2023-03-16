@@ -37,7 +37,7 @@ int32_t xevent_vnode_t::get_class_type() const {
     return xstatistic::enum_statistic_event_vnode;
 }
 
-int32_t xevent_vnode_t::get_object_size_real() const {
+size_t xevent_vnode_t::get_object_size_real() const {
     return sizeof(xevent_vnode_t) + get_size(get_result_data());
 }
 

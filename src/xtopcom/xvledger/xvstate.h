@@ -214,7 +214,7 @@ namespace top
             virtual int32_t         do_write(xstream_t & stream) override;//allow subclass extend behavior
             virtual int32_t         do_read(xstream_t & stream)  override;//allow subclass extend behavior
         private:
-            virtual int32_t         get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         private:
             //belong to current block

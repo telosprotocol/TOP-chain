@@ -126,14 +126,14 @@ namespace top
             return xvcontract_t::get_contract_address(m_tx_action.get_contract_uri());
         }
 
-        int32_t xtx_receipt_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xtx_receipt_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
             total_size += m_tx_action.get_ex_alloc_size();
             if (m_tx_action_prove != nullptr) {
                 total_size += m_tx_action_prove->get_object_size();
             }
 
-            xdbg("------cache size------ xtx_receipt_t total_size:%d", total_size);
+            xdbg("------cache size------ xtx_receipt_t total_size:%zu", total_size);
             return total_size;
         }
 

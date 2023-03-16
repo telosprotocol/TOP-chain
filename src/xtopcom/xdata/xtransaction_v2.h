@@ -145,7 +145,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     common::xaccount_address_t const & target_address_unadjusted() const noexcept override;
 
 private:
-    virtual int32_t get_object_size_real() const override;
+    virtual size_t get_object_size_real() const override;
 
 private:
     common::xaccount_address_t m_source_addr;

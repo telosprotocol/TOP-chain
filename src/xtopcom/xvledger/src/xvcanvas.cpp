@@ -372,8 +372,8 @@ namespace top
             }
         }
 
-        int32_t xvcanvas_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xvcanvas_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
 
             // deque alloc 64+504 Bytes.
             total_size += 568;
@@ -408,7 +408,7 @@ namespace top
                 total_size += method_params.size()*48; //see map_utl<std::string>::copy_from(xvmethod.h:291)
                 xdbg("------cache size------- xvcanvas_t record[%d] method_params size:%u*48, deque:64+504", i, method_params.size());
             }
-            xdbg("------cache size------ xvcanvas_t total_size:%d", total_size);
+            xdbg("------cache size------ xvcanvas_t total_size:%zu", total_size);
             return total_size;
         }
 

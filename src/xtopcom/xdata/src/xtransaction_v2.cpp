@@ -556,8 +556,8 @@ int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_typ
     return 0;
 }
 
-int32_t xtransaction_v2_t::get_object_size_real() const {
-    int32_t total_size = sizeof(*this);
+size_t xtransaction_v2_t::get_object_size_real() const {
+    size_t total_size = sizeof(*this);
     // add string member variable alloc size.
     xdbg("------cache size------xtransaction_v2_t this:%d,m_source_addr:%d,m_unadjusted_target_addr:%d,m_token_name:%d,m_memo:%d,m_authorization:%d,m_edge_nodeid:%d",
          sizeof(*this),
@@ -581,7 +581,7 @@ int32_t xtransaction_v2_t::get_object_size_real() const {
     total_size += get_size(m_source_addr.to_string()) + get_size(m_unadjusted_target_addr.to_string()) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
                   get_size(m_edge_nodeid) + get_size(m_source_action_name) + get_size(m_source_action_para) + get_size(m_target_action_name) + get_size(m_target_action_para) +
                   get_size(m_transaction_hash_str) + get_size(m_adjust_target_addr.to_string());
-    xdbg("------cache size------ xtransaction_v2_t total_size:%d", total_size);
+    xdbg("------cache size------ xtransaction_v2_t total_size:%zu", total_size);
     return total_size;
 }
 

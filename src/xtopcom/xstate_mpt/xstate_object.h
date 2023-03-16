@@ -37,7 +37,7 @@ public:
     bool dirty_unit{false};
 
 private:
-    virtual int32_t get_object_size_real() const override;
+    virtual size_t get_object_size_real() const override;
 };
 using xstate_object_t = xtop_state_object;
 

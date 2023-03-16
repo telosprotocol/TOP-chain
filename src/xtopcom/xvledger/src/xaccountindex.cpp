@@ -218,9 +218,9 @@ std::string xaccount_index_t::dump() const {
     return std::string(local_param_buf);
 }
 
-int32_t xaccount_index_t::get_object_size_real() const {
-    int32_t total_size = sizeof(*this) + get_size(m_unit_hash) + get_size(m_state_hash);
-    xdbg("-----cache size----- xaccount_index_t total_size:%d this:%d,%d:%d", total_size, sizeof(*this), get_size(m_unit_hash), get_size(m_state_hash));
+size_t xaccount_index_t::get_object_size_real() const {
+    size_t total_size = sizeof(*this) + get_size(m_unit_hash) + get_size(m_state_hash);
+    xdbg("-----cache size----- xaccount_index_t total_size:%zu this:%d,%d:%d", total_size, sizeof(*this), get_size(m_unit_hash), get_size(m_state_hash));
     return total_size;
 }
 

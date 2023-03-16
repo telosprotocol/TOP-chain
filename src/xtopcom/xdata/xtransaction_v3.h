@@ -148,7 +148,7 @@ public:
     common::xaccount_address_t const & target_address_unadjusted() const noexcept override;
 
 private:
-    virtual int32_t get_object_size_real() const override;
+    virtual size_t get_object_size_real() const override;
     void    update_cache();
 private:
     uint8_t             m_version{0};
