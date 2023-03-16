@@ -31,7 +31,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xbasic_vnode_t{common::xnode_address_t{sharding_address,
@@ -53,12 +52,10 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_logic_timer{logic_timer}
   , m_sync_obj{sync_obj}
   , m_grpc_mgr{grpc_mgr}
-  , m_txpool{txpool}
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost, m_election_cache_data_accessor,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
-
         joined_election_round)}
    {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
@@ -90,7 +87,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xtop_vnode{elect_main,
@@ -111,9 +107,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                logic_timer,
                sync_obj,
                grpc_mgr,
-               //    cons_mgr,
                txpool_service_mgr,
-               txpool,
                election_cache_data_accessor,
                nodesvr} {}
 

@@ -32,13 +32,17 @@ private:
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
-    // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
-    observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
     observer_ptr<base::xvnodesrv_t> m_nodesvr;
 
 public:
+    xtop_vnode_factory(xtop_vnode_factory const &) = delete;
+    xtop_vnode_factory & operator=(xtop_vnode_factory const &) = delete;
+    xtop_vnode_factory(xtop_vnode_factory &&) = default;
+    xtop_vnode_factory & operator=(xtop_vnode_factory &&) = default;
+    ~xtop_vnode_factory() override = default;
+
     xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main,
                        observer_ptr<mbus::xmessage_bus_face_t> bus,
                        observer_ptr<base::xvblockstore_t> blockstore,
@@ -48,14 +52,9 @@ public:
                        observer_ptr<vnetwork::xvhost_face_t> vhost,
                        observer_ptr<sync::xsync_object_t> sync,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> grpc,
-                    //    observer_ptr<xunit_service::xcons_service_mgr_face> cons_service_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
-                       observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr);
-
-    xtop_vnode_factory(xtop_vnode_factory &&) = default;
-    xtop_vnode_factory & operator=(xtop_vnode_factory &&) = default;
 
     std::shared_ptr<xvnode_face_t> create_vnode_at(std::shared_ptr<election::cache::xgroup_element_t> const & group) const override;
 };

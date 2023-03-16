@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,15 +9,12 @@
 #include "xbasic/xtimer_driver_fwd.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xchain_param.h"
-#include "xdata/xtransaction_cache.h"
 #include "xelect_net/include/elect_main.h"
 #include "xelection/xcache/xgroup_element.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
-#include "xmbus/xevent_reg_holder.hpp"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xrpc_init.h"
-
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
@@ -28,6 +25,7 @@
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer.h"
 #include "xvnode/xcomponents/xprune_data/xprune_data.h"
 #include "xvnode/xvnode_face.h"
+
 #include <memory>
 
 NS_BEG2(top, vnode)
@@ -43,7 +41,6 @@ private:
     observer_ptr<time::xchain_time_face_t> m_logic_timer;
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
-    observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
     observer_ptr<data::xuser_params> m_user_params;
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_the_binding_driver;
@@ -73,7 +70,6 @@ public:
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
-               observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                observer_ptr<base::xvnodesrv_t> const & nodesvr);
 
@@ -95,9 +91,7 @@ public:
                observer_ptr<time::xchain_time_face_t> const & logic_timer,
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-               //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
-               observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                observer_ptr<base::xvnodesrv_t> const & nodesvr);
 

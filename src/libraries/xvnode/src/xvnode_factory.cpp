@@ -20,25 +20,22 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
                                        observer_ptr<vnetwork::xvhost_face_t> vhost,
                                        observer_ptr<sync::xsync_object_t> sync,
                                        observer_ptr<grpcmgr::xgrpc_mgr_t> grpc,
-                                      //  observer_ptr<xunit_service::xcons_service_mgr_face> cons_service_mgr,
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
-                                       observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor,
                                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
-  : m_elect_main{std::move(elect_main)}
-  , m_bus{std::move(bus)}
-  , m_block_store{std::move(blockstore)}
-  , m_txstore{std::move(txstore)}
-  , m_logic_timer{std::move(logic_timer)}
-  , m_router{std::move(router)}
-  , m_vhost{std::move(vhost)}
-  , m_sync_obj{std::move(sync)}
-  , m_grpc_mgr{std::move(grpc)}
-  // , m_cons_mgr{std::move(cons_service_mgr)}
-  , m_txpool_service_mgr{std::move(txpool_service_mgr)}
-  , m_txpool{std::move(txpool)}
-  , m_election_cache_data_accessor{std::move(cache_data_accessor)}
-  , m_nodesvr{nodesvr} {}
+  : m_elect_main{elect_main}
+  , m_bus{bus}
+  , m_block_store{blockstore}
+  , m_txstore{txstore}
+  , m_logic_timer{logic_timer}
+  , m_router{router}
+  , m_vhost{vhost}
+  , m_sync_obj{sync}
+  , m_grpc_mgr{grpc}
+  , m_txpool_service_mgr{txpool_service_mgr}
+  , m_election_cache_data_accessor{cache_data_accessor}
+  , m_nodesvr{nodesvr} {
+}
 
 std::shared_ptr<xvnode_face_t> xtop_vnode_factory::create_vnode_at(std::shared_ptr<election::cache::xgroup_element_t> const & group) const {
     return std::make_shared<xvnode_t>(m_elect_main,
@@ -51,9 +48,7 @@ std::shared_ptr<xvnode_face_t> xtop_vnode_factory::create_vnode_at(std::shared_p
                                       m_logic_timer,
                                       m_sync_obj,
                                       m_grpc_mgr,
-                                      // m_cons_mgr,
                                       m_txpool_service_mgr,
-                                      m_txpool,
                                       m_election_cache_data_accessor,
                                       m_nodesvr);
 }
