@@ -2,22 +2,24 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <inttypes.h>
 
 #include "xdata/xtransaction_v2.h"
+
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
-#include "xstatistic/xbasic_size.hpp"
-#include "xdata/xaction_parse.h"
 #include "xcrypto/xckey.h"
-#include "xdata/xgenesis_data.h"
-#include "xdata/xdata_defines.h"
+#include "xbase/xcontext.h"
 #include "xdata/xdata_error.h"
 #include "xbasic/xmodule_type.h"
+#include "xdata/xaction_parse.h"
+#include "xdata/xdata_defines.h"
+#include "xdata/xgenesis_data.h"
 #include "xdata/xmemcheck_dbg.h"
-#include "xbase/xcontext.h"
+#include "xstatistic/xbasic_size.hpp"
+#include "xdata/xnative_contract_address.h"
 
-#include <iostream>
+#include <cinttypes>
+// #include <iostream>
 
 using namespace top::base;
 
@@ -29,7 +31,8 @@ xtop_target_address::xtop_target_address(common::xaccount_address_t original) no
         assert(adjusted_.empty());
         assert(!original_.has_assigned_table_id());
     } else {
-        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id());
+        // Note: block hole address is not eoa account, since its private key should be unknown.
+        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id() || original_ == black_hole_system_address);
     }
 #endif
 }
@@ -65,7 +68,7 @@ common::xaccount_address_t const & xtop_target_address::address() const noexcept
         assert(adjusted_.empty());
         assert(!original_.has_assigned_table_id());
     } else {
-        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id());
+        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id() || original_ == black_hole_system_address);
     }
 #endif
     return !adjusted_.empty() ? adjusted_ : original_;

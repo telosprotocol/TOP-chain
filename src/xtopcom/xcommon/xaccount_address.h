@@ -14,6 +14,7 @@ bool is_t0_address(xaccount_address_t const & account_address);
 bool is_t2_address(xaccount_address_t const & account_address);
 bool is_t6_address(xaccount_address_t const & account_address);
 bool is_t8_address(xaccount_address_t const & account_address);
+bool is_black_hold_address(xaccount_address_t const & account_address);
 
 bool address_belongs_to_zone(xaccount_address_t const & account_address, xzone_id_t const & target_zone_id);
 xaccount_address_t append_table_id(xaccount_base_address_t const & base_address, xtable_id_t table_id);

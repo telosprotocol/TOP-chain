@@ -46,13 +46,13 @@ bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
     && (this->base_fee.value() == rhs.base_fee.value());
 }
 
-Hash xeth_header_t::hash() const {
+xh256_t xeth_header_t::hash() const {
     auto value = encode_rlp();
     auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size());
     return FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
 }
 
-Hash xeth_header_t::hash_without_seal() const {
+xh256_t xeth_header_t::hash_without_seal() const {
     auto value = encode_rlp_withoutseal();
     auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size());
     return FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
@@ -193,20 +193,55 @@ bool xeth_header_t::decode_rlp(const xbytes_t & bytes) {
     if (l.decoded.size() < 15) {
         return false;
     }
-    parent_hash = static_cast<Hash>(l.decoded[0]);
-    uncle_hash = static_cast<Hash>(l.decoded[1]);
+
+    if (l.decoded[0].size() != xh256_t::size()) {
+        return false;
+    }
+    parent_hash = static_cast<xh256_t>(l.decoded[0]);
+
+    if (l.decoded[1].size() != xh256_t::size()) {
+        return false;
+    }
+    uncle_hash = static_cast<xh256_t>(l.decoded[1]);
+
+    if (l.decoded[2].size() != xh160_t::size()) {
+        return false;
+    }
     miner = static_cast<Address>(l.decoded[2]);
-    state_merkleroot = static_cast<Hash>(l.decoded[3]);
-    tx_merkleroot = static_cast<Hash>(l.decoded[4]);
-    receipt_merkleroot = static_cast<Hash>(l.decoded[5]);
+
+    if (l.decoded[3].size() != xh256_t::size()) {
+        return false;
+    }
+    state_merkleroot = static_cast<xh256_t>(l.decoded[3]);
+
+    if (l.decoded[4].size() != xh256_t::size()) {
+        return false;
+    }
+    tx_merkleroot = static_cast<xh256_t>(l.decoded[4]);
+
+    if (l.decoded[5].size() != xh256_t::size()) {
+        return false;
+    }
+    receipt_merkleroot = static_cast<xh256_t>(l.decoded[5]);
+
+    if (l.decoded[6].size() != xh2048_t::size()) {
+        return false;
+    }
     bloom = static_cast<LogBloom>(l.decoded[6]);
+
+
     difficulty = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[7]));
     number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[8]));
     gas_limit = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[9]));
     gas_used = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[10]));
     time = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[11]));
     extra = l.decoded[12];
-    mix_digest = static_cast<Hash>(l.decoded[13]);
+
+    if (l.decoded[13].size() != xh256_t::size()) {
+        return false;
+    }
+    mix_digest = static_cast<xh256_t>(l.decoded[13]);
+
     nonce = static_cast<BlockNonce>(l.decoded[14]);
     if (l.decoded.size() >= 16) {
         base_fee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
@@ -242,7 +277,7 @@ void xeth_header_t::print() const {
     }
 }
 
-xeth_header_info_t::xeth_header_info_t(bigint difficult_sum_, Hash parent_hash_, bigint number_) : difficult_sum{difficult_sum_}, parent_hash{parent_hash_}, number{number_} {
+xeth_header_info_t::xeth_header_info_t(bigint difficult_sum_, xh256_t parent_hash_, bigint number_) : difficult_sum{difficult_sum_}, parent_hash{parent_hash_}, number{number_} {
 }
 
 xbytes_t xeth_header_info_t::encode_rlp() const {
@@ -271,7 +306,7 @@ bool xeth_header_info_t::decode_rlp(const xbytes_t & input) {
         return false;
     }
     difficult_sum = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[0]));
-    parent_hash = static_cast<Hash>(l.decoded[1]);
+    parent_hash = static_cast<xh256_t>(l.decoded[1]);
     number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[2]));
     return true;
 }
