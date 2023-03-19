@@ -13,13 +13,8 @@ using namespace top::data;
 NS_BEG2(top, data)
 
 void xplugin_manager::start() {
-    if (&xaudit_pligin::instance() != nullptr) {
-        std::shared_ptr<xaudit_pligin> plugin(&xaudit_pligin::instance());
-        add(data::AUDITX_PLUGIN, plugin);
-    } else {
-        auto def = std::make_shared<xplugin>(xplugin());
-        add(data::AUDITX_PLUGIN, def);
-    }
+    std::shared_ptr<xaudit_pligin> plugin(&xaudit_pligin::instance());
+    add(data::AUDITX_PLUGIN, plugin);
 }
 
 void xplugin_manager::add(const std::string & plugin_name, std::shared_ptr<xplugin> plugin) {
@@ -38,7 +33,7 @@ void xplugin_manager::remove(const string & plugin_name) {
     auto it = m_xplugin_map.find(plugin_name);
     if (it != m_xplugin_map.end()) {
         xdbg("xplugin_manager::remove audit-tx ");
-        return get(plugin_name)->free();
+        get(plugin_name)->free();
         m_xplugin_map.erase(plugin_name);
     }
 }
