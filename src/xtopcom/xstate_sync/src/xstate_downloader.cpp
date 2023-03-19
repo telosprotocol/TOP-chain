@@ -375,6 +375,7 @@ void xtop_state_downloader::process_unit_request(const vnetwork::xvnode_address_
     info.decode({info_str.begin(), info_str.end()});
     stream >> id;
     std::string state_str;
+    // TODO(jimmy) try load kv directly first for performance
     auto const unitstate = m_store->get_unit_state_by_accountindex(info.m_account, info.m_index);
     if (unitstate == nullptr) {
         xwarn("xtop_state_downloader::process_unit_request unit request not found, unit: %s, index: %s", info.m_account.to_string().c_str(), info.m_index.dump().c_str());
@@ -388,6 +389,7 @@ void xtop_state_downloader::process_unit_request(const vnetwork::xvnode_address_
     stream_back << info.m_account.to_string();
     stream_back << id;
     stream_back << state_str;
+    stream_back << (uint8_t)info.m_index.get_version();  // TODO(jimmy)
     vnetwork::xmessage_t const _msg = vnetwork::xmessage_t({stream_back.data(), stream_back.data() + stream_back.size()}, xmessage_id_sync_unit_response);
     std::error_code ec;
     network->send_to(sender, _msg, ec);
@@ -410,11 +412,15 @@ void xtop_state_downloader::process_unit_request(const vnetwork::xvnode_address_
 void xtop_state_downloader::process_unit_response(const vnetwork::xmessage_t & message) const {
     base::xstream_t stream(base::xcontext_t::instance(), const_cast<uint8_t *>(message.payload().data()), (uint32_t)message.payload().size());
     std::string account;
+    uint8_t version{0};
     xbytes_t value;
     state_res res;
     stream >> account;
     stream >> res.id;
     stream >> value;
+    if (stream.size() > 0) {
+        stream >> version;
+    }
     res.units.emplace_back(value);
     xinfo("xtop_state_downloader::process_unit_response unit: %s, id: %u, data size: %zu", account.c_str(), res.id, value.size());
     auto unit_account = common::xaccount_address_t{account};

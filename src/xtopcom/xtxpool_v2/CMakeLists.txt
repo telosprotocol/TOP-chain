@@ -1,3 +1,7 @@
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 include_directories(.)
 include_directories(./src)
 

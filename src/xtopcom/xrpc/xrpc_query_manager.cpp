@@ -1208,7 +1208,7 @@ void xrpc_query_manager::getCrossReceiptIds(Json::Value & js_req, Json::Value & 
     base::xreceiptid_all_table_states all_states;
     std::vector<std::string> addrs = data::xblocktool_t::make_all_table_addresses();
     for (auto & addr : addrs) {
-        common::xaccount_address_t table_addr(addr);
+        common::xtable_address_t table_addr = common::xtable_address_t::build_from(addr);
         xtablestate_ptr_t tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(table_addr);
         if (tablestate != nullptr) {
             base::xreceiptid_state_ptr_t receipt_state = tablestate->get_receiptid_state();

@@ -46,7 +46,7 @@ public:
                 auto bytes = (evm_common::h256()).asBytes();
                 bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
             }
-            auto unitstate_ptr = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
+            auto unitstate_ptr = std::make_shared<data::xunit_bstate_t>(bstate.get(), bstate.get());
             base::xaccount_index_t aindex;
             auto accountstate_ptr = std::make_shared<data::xaccount_state_t>(unitstate_ptr, aindex);
             m_mock_bstate[address.to_string()] = accountstate_ptr;
@@ -70,12 +70,17 @@ public:
         return true;
     }
 
+    virtual std::map<std::string, statectx::xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const {
+        return m_changed_ctxs;
+    }
+
     // void add_balance()
 
     data::xtablestate_ptr_t m_tablestate_ptr;
     std::string table_address;
 
     std::map<std::string, data::xaccountstate_ptr_t> m_mock_bstate;
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> m_changed_ctxs;
 };
 }  // namespace tests
 }  // namespace evm

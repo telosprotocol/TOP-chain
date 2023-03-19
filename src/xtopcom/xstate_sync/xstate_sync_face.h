@@ -54,6 +54,7 @@ struct state_res {
     uint32_t id;
     std::vector<xbytes_t> nodes;
     std::vector<xbytes_t> units;
+    uint8_t version;
 };
 
 class xtop_state_sync_face {

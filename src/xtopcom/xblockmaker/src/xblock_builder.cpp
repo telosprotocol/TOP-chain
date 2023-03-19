@@ -59,7 +59,7 @@ base::xvblock_ptr_t  xunitbuilder_t::create_unit(std::string const& account, uin
     bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(height);
     xassert(!last_block_hash.empty());
     std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
-        account, height, last_block_hash, is_full_unit, bodypara, cs_para);    
+        account, height, last_block_hash, is_full_unit, cs_para);    
     base::xvblock_ptr_t proposal_block = vblockmaker->build_new_block();
     if (proposal_block->get_cert()->is_consensus_flag_has_extend_cert()) {
         proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
@@ -70,22 +70,97 @@ base::xvblock_ptr_t  xunitbuilder_t::create_unit(std::string const& account, uin
     return proposal_block;
 }
 
-base::xvblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t & unitstate, const data::xblock_consensus_para_t & cs_para){
-    std::string binlog = unitstate->take_binlog();
-    std::string snapshot = unitstate->take_snapshot();
-    if (binlog.empty() || snapshot.empty()) {
-        xerror("xunitbuilder_t::make_block fail-invalid unitstate.");
-        return nullptr;
-    }
+void xunitbuilder_t::make_unitblock_and_unitstate(data::xaccountstate_ptr_t const& accountstate, const data::xblock_consensus_para_t & cs_para, xunit_build_result_t & result) {
+    auto & unitstate = accountstate->get_unitstate();
+    assert(unitstate->is_state_changed());
+    assert(!unitstate->get_bstate()->get_last_block_hash().empty());
+
+    // create unit header firstly for update unitstate information
+    bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
+    std::shared_ptr<data::xunit_build2_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
+        unitstate->get_bstate()->get_account(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, cs_para);    
+
+    // update final unitstate information
+    unitstate->get_bstate()->update_final_block_info(vblockmaker->get_header(), cs_para.get_viewid());
+
+    // make bodypara and create unitblock body
     data::xunit_block_para_t bodypara;
-    bodypara.set_binlog(binlog);
-    bodypara.set_fullstate_bin(snapshot);
-    base::xvblock_ptr_t proposal_block = create_unit(unitstate->account_address().to_string(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), bodypara, cs_para);
-    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu", 
-        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size());
-    return proposal_block;
+    bodypara.m_property_binlog = unitstate->take_binlog();
+    assert(!bodypara.m_property_binlog.empty());
+  
+    base::enum_xaccountindex_version_t _accountindex_version;
+    std::string _accountindex_state_hash;
+    if (false == chain_fork::xutility_t::is_forked(fork_points::v11200_block_fork_point, cs_para.get_clock())) {
+        bodypara.m_snapshot_bin = unitstate->take_snapshot();
+        assert(!bodypara.m_snapshot_bin.empty());
+        bodypara.m_snapshot_hash = vblockmaker->get_qcert()->hash(bodypara.m_snapshot_bin);
+        _accountindex_version = base::enum_xaccountindex_version_snapshot_hash;   
+    } else {
+        unitstate->get_bstate()->serialize_to_string(bodypara.m_state_bin);
+        assert(!bodypara.m_state_bin.empty());
+        bodypara.m_state_hash = vblockmaker->get_qcert()->hash(bodypara.m_state_bin);
+        _accountindex_version = base::enum_xaccountindex_version_state_hash;
+    }
+    
+    vblockmaker->create_block_body(bodypara);
+    base::xvblock_ptr_t proposal_block = vblockmaker->build_new_block();
+    if (proposal_block->get_cert()->is_consensus_flag_has_extend_cert()) {
+        proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
+        proposal_block->set_extend_cert("1");
+        proposal_block->set_extend_data("1");
+    }
+    proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);    
+
+    result.unitblock = proposal_block;
+    result.unitstate = unitstate;
+    result.unitstate_bin = bodypara.m_state_bin;// before fork, it is empty    
+    if (_accountindex_version == base::enum_xaccountindex_version_snapshot_hash) {
+        result.accountindex = base::xaccount_index_t(_accountindex_version, proposal_block->get_height(), proposal_block->get_block_hash(), bodypara.m_snapshot_hash, accountstate->get_tx_nonce());
+    } else {
+        result.accountindex = base::xaccount_index_t(_accountindex_version, proposal_block->get_height(), proposal_block->get_block_hash(), bodypara.m_state_hash, accountstate->get_tx_nonce());
+    }
+    accountstate->update_account_index(result.accountindex);
+    xdbg("xunitbuilder_t::make_unitblock_and_unitstate cs_para=%s,%s,unitstate=%s,unit=%s",cs_para.dump().c_str(), result.accountindex.dump().c_str(),result.unitstate->get_bstate()->dump().c_str(), result.unitblock->dump().c_str());
 }
 
+data::xaccountstate_ptr_t xunitbuilder_t::create_accountstate(base::xvblock_t* _unit) {
+    std::string binlog = _unit->is_fullunit() ? _unit->get_full_state() : _unit->get_binlog();
+    if (binlog.empty() && _unit->is_fullunit()) {
+        binlog = _unit->get_binlog();
+    }
+    xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*_unit);
+    if (!binlog.empty()) {
+        current_state->apply_changes_of_binlog(binlog);
+    }
+    data::xunitstate_ptr_t unit_bstate = std::make_shared<data::xunit_bstate_t>(current_state.get());    
+    std::string state_bin;
+    unit_bstate->get_bstate()->serialize_to_string(state_bin);
+    std::string state_hash = _unit->get_cert()->hash(state_bin);         
+    base::xaccount_index_t accoutindex = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, 0, _unit->get_block_hash(), state_hash, 0);
+    data::xaccountstate_ptr_t account_state = std::make_shared<data::xaccount_state_t>(unit_bstate, accoutindex);
+    return account_state;
+}
+
+data::xaccountstate_ptr_t xunitbuilder_t::create_accountstate(data::xaccountstate_ptr_t const& prev_state, base::xvblock_t* _unit) {
+    xobject_ptr_t<base::xvbstate_t> base_state = prev_state->get_unitstate()->get_bstate();
+    xassert(_unit->get_height() == base_state->get_block_height() + 1);
+    xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*_unit, *base_state.get());
+
+    std::string binlog = _unit->is_fullunit() ? _unit->get_full_state() : _unit->get_binlog();
+    if (binlog.empty() && _unit->is_fullunit()) {
+        binlog = _unit->get_binlog();
+    }
+    if (!binlog.empty()) {
+        current_state->apply_changes_of_binlog(binlog);
+    }
+    data::xunitstate_ptr_t unit_bstate = std::make_shared<data::xunit_bstate_t>(current_state.get());
+    std::string state_bin;
+    unit_bstate->get_bstate()->serialize_to_string(state_bin);
+    std::string state_hash = _unit->get_cert()->hash(state_bin);            
+    base::xaccount_index_t accoutindex = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, _unit->get_height(), _unit->get_block_hash(), state_hash, prev_state->get_tx_nonce());
+    data::xaccountstate_ptr_t account_state = std::make_shared<data::xaccount_state_t>(unit_bstate, accoutindex);
+    return account_state;
+}
 
 void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs) {
     std::string property_receiptid_bin = data::xtable_bstate_t::get_receiptid_property_bin(bstate);
@@ -149,7 +224,7 @@ void     xtablebuilder_t::make_table_block_para(const data::xtablestate_ptr_t & 
     }
 
     lighttable_para.set_property_binlog(binlog);
-    lighttable_para.set_fullstate_bin(snapshot);
+    lighttable_para.set_snapshot_bin(snapshot);
     lighttable_para.set_tgas_balance_change(tgas_balance_change);
     lighttable_para.set_property_hashs(property_hashs);
     lighttable_para.set_txs(txs_info);

@@ -1181,18 +1181,17 @@ namespace top
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, -1);
         }
 
-        void xvbstate_t::update_final_block_info(xvblock_t* for_block) {
-            m_block_types    = for_block->get_header()->get_block_raw_types();
-            m_block_versions = for_block->get_header()->get_block_raw_versions();
-            
-            xassert(m_block_height == for_block->get_height());
-            xassert(m_last_block_hash == for_block->get_last_block_hash());
-            m_block_height = for_block->get_height();
-            m_block_viewid = for_block->get_viewid();
-            
-            m_last_block_hash = for_block->get_last_block_hash();
-            m_last_full_block_hash = for_block->get_last_full_block_hash();
-            m_last_full_block_height = for_block->get_last_full_block_height();
+        void xvbstate_t::update_final_block_info(xvheader_t* _header, uint64_t viewid) {
+            assert(m_block_height == _header->get_height());
+            assert(m_last_block_hash == _header->get_last_block_hash()); 
+            assert(viewid > 0);           
+            m_block_types    = _header->get_block_raw_types();
+            m_block_versions = _header->get_block_raw_versions();
+            m_block_height = _header->get_height();
+            m_block_viewid = viewid;
+            m_last_block_hash = _header->get_last_block_hash();
+            m_last_full_block_hash = _header->get_last_full_block_hash();
+            m_last_full_block_height = _header->get_last_full_block_height();
         }
 
         xvexeunit_t* xvbstate_t::clone() //each property is readonly after clone

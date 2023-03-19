@@ -64,8 +64,8 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
-    bodypara.set_binlog(property_binlog);
-    bodypara.set_fullstate_bin(fullstate_bin);
+    bodypara.m_property_binlog = property_binlog;
+    bodypara.m_snapshot_bin = fullstate_bin;
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
@@ -87,8 +87,8 @@ base::xvblock_t * xblocktool_t::create_genesis_lightunit(const xobject_ptr_t<bas
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
-    bodypara.set_binlog(property_binlog);
-    bodypara.set_fullstate_bin(fullstate_bin);
+    bodypara.m_property_binlog = property_binlog;
+    bodypara.m_snapshot_bin = fullstate_bin;
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
@@ -174,8 +174,8 @@ base::xvblock_t * xblocktool_t::create_genesis_lightunit(std::string const & acc
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
-    bodypara.set_binlog(property_binlog);
-    bodypara.set_fullstate_bin(fullstate_bin);
+    bodypara.m_property_binlog = property_binlog;
+    bodypara.m_snapshot_bin = fullstate_bin;
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
@@ -188,8 +188,8 @@ base::xvblock_t * xblocktool_t::create_genesis_lightunit(const std::string & acc
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(genesis_tx.get());
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
-    bodypara.set_binlog(result.get_property_binlog());
-    bodypara.set_fullstate_bin(result.m_full_state);
+    bodypara.m_property_binlog = result.get_property_binlog();
+    bodypara.m_snapshot_bin = result.m_full_state;
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();

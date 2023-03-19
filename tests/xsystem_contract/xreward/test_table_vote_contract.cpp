@@ -225,7 +225,7 @@ class xmock_statectx_t final : public statectx::xstatectx_face_t {
             m_state->load_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY)
                 ->insert(val, {reinterpret_cast<char *>(stream.data()), static_cast<size_t>(stream.size())}, canvas.get());
         }
-        m_unitstate = std::make_shared<data::xunit_bstate_t>(m_state.get(), false);
+        m_unitstate = std::make_shared<data::xunit_bstate_t>(m_state.get(), m_state.get());
     }
 
     ~xmock_statectx_t() override = default;
@@ -266,7 +266,11 @@ class xmock_statectx_t final : public statectx::xstatectx_face_t {
     bool is_state_dirty() const override {
         return false;
     }
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const override {
+        return m_changed_ctxs;
+    }
 
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> m_changed_ctxs;
     xobject_ptr_t<base::xvbstate_t> m_state{nullptr};
     data::xunitstate_ptr_t m_unitstate{nullptr};
 };

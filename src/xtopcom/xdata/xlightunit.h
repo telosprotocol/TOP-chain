@@ -24,22 +24,11 @@ class xtransaction_result_t {
     std::string                         m_full_state;
 };
 
-class xunit_block_para_t {
- public:
-    xunit_block_para_t() = default;
-    virtual ~xunit_block_para_t() {}
-
- public:
-    void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
-    void    set_fullstate_bin_hash(const std::string & hash) {m_fullstate_bin_hash = hash;}
-    void    set_binlog(const std::string & binlog) {m_property_binlog = binlog;}
- public:
-    const std::string &     get_property_binlog() const {return m_property_binlog;}
-    const std::string &     get_fullstate_bin() const {return m_fullstate_bin;}
-    const std::string &     get_fullstate_bin_hash() const {return m_fullstate_bin_hash;}
- private:
-    std::string         m_fullstate_bin;
-    std::string         m_fullstate_bin_hash;
+struct xunit_block_para_t {
+    std::string         m_snapshot_bin;
+    std::string         m_snapshot_hash;
+    std::string         m_state_bin;
+    std::string         m_state_hash;    
     std::string         m_property_binlog;
 };
 

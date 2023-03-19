@@ -171,6 +171,7 @@ namespace top
             bool    set_input_resource(const std::string & key, const std::string & value);
             bool    set_output_resource(const std::string & key, const std::string & value);
             bool    set_output_full_state(const std::string & value);
+            bool    set_output_full_state_without_hash(const std::string & value);
             bool    set_output_full_state_hash(const std::string & value);
             bool    set_output_binlog(const std::string & value);
             bool    set_output_offdata(const std::string & value);

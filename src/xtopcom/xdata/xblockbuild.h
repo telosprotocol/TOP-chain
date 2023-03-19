@@ -59,7 +59,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     void    set_accountindex(std::string const& address, base::xaccount_index_t const& index) {m_account_indexs.add_account_index(address, index);}
     void    set_txs(const std::vector<xlightunit_tx_info_ptr_t> & txs_info) {m_txs = txs_info;}
     void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
-    void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
+    void    set_snapshot_bin(const std::string & snapshot) {m_snapshot_bin = snapshot;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
     void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
 
@@ -67,7 +67,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     const base::xaccount_indexs_t &     get_accountindexs() const {return m_account_indexs;}
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
     const std::string &             get_property_binlog() const {return m_property_binlog;}
-    const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
+    const std::string &             get_snapshot_bin() const {return m_snapshot_bin;}
     int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
     const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
 
@@ -75,7 +75,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     std::vector<xvblock_ptr_t>          m_units;
     base::xaccount_indexs_t             m_account_indexs;
     std::string                      m_property_binlog;
-    std::string                      m_fullstate_bin;
+    std::string                      m_snapshot_bin;
     int64_t                          m_tgas_balance_change{0};
     std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
     std::vector<xlightunit_tx_info_ptr_t> m_txs;
@@ -129,9 +129,10 @@ class xfullunit_build_t : public base::xvblockmaker_t {
 
 class xunit_build2_t : public base::xvblockmaker_t {
  public:
-    xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
+    xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xblock_consensus_para_t & para);
     xunit_build2_t(base::xvheader_t* header, base::xvblock_t* parentblock, const xunit_block_para_t & bodypara);
 
+    void    create_block_body(const xunit_block_para_t & bodypara);
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
  private:
     bool build_block_body(const xunit_block_para_t & para);

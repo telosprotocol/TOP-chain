@@ -68,7 +68,7 @@ void test_state_sync_fixture::generate_state_mpt() {
         auto unit_state_hash_str = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
         auto unit_block_hash = utl::xkeccak256_t::digest(std::to_string(i));
         std::string unit_block_hash_str((char *)unit_block_hash.data(), unit_block_hash.size());
-        base::xaccount_index_t index{i + 1, unit_block_hash_str, unit_state_hash_str, i + 1};
+        base::xaccount_index_t index{base::enum_xaccountindex_version_snapshot_hash, i + 1, unit_block_hash_str, unit_state_hash_str, i + 1};
         state_mpt::xaccount_info_t info;
         info.m_account = common::xaccount_address_t(units_str[i]);
         info.m_index = index;
@@ -250,7 +250,7 @@ TEST_F(test_state_sync_fixture, test_process_unit_data_sucess) {
         if (!units.empty()) {
             auto const & unit = units[0];
             auto blob = unit_map[unit.hex()];
-            auto hash = m_syncer->process_unit_data(to_bytes(from_hex(blob)), ec);
+            auto hash = m_syncer->process_unit_data(to_bytes(from_hex(blob)), 0, ec);
             EXPECT_EQ(hash, unit);
             EXPECT_FALSE(ec);
             break;
@@ -260,8 +260,10 @@ TEST_F(test_state_sync_fixture, test_process_unit_data_sucess) {
 
 TEST_F(test_state_sync_fixture, test_process_unit_data_error) {
     std::error_code ec;
-    auto hash = m_syncer->process_unit_data(state_bytes, ec);
+    auto hash = m_syncer->process_unit_data(state_bytes, 0, ec);
     EXPECT_EQ(ec, make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested));
+    hash = m_syncer->process_unit_data(state_bytes, 1, ec);
+    EXPECT_EQ(ec, make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested));    
 }
 
 TEST_F(test_state_sync_fixture, test_process_trie_success) {
