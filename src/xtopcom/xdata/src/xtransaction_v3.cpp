@@ -113,9 +113,9 @@ int xtransaction_v3_t::do_read(base::xstream_t & in) {
     return (begin_pos - end_pos);
 }
 
-void xtransaction_v3_t::adjust_target_address(common::xtable_id_t const) {
-    // TODO(jimmy) no need
-}
+//void xtransaction_v3_t::adjust_target_address(common::xtable_id_t const) {
+//    // TODO(jimmy) no need
+//}
 
 void xtransaction_v3_t::set_digest() {
     // TODO(jimmy) no need

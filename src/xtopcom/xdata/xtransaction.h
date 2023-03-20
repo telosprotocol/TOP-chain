@@ -106,7 +106,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual bool        check_last_nonce(uint64_t account_nonce) = 0;
 
  public:  // set apis
-    virtual void        adjust_target_address(common::xtable_id_t table_id) = 0;
+    // virtual void        adjust_target_address(common::xtable_id_t table_id) = 0;
     virtual void        set_digest() = 0;
     virtual void        set_digest(const uint256_t & digest) = 0;
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) = 0;
