@@ -259,7 +259,7 @@ void xrec_consortium_registration_contract::registerNode2(const std::string & mi
          signing_key.c_str(),
          dividend_rate);
 
-    XCONTRACT_ENSURE(common::is_t0(account) || common::is_t8(account), "only T0 or T8 account is allowed to be registered as node account");
+    XCONTRACT_ENSURE(common::is_t0_address(account) || common::is_t8_address(account), "only T0 or T8 account is allowed to be registered as node account");
 
     data::system_contract::xreg_node_info node_info;
     auto ret = get_node_info(account.to_string(), node_info);
