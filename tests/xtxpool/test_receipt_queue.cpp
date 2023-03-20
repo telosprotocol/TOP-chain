@@ -62,7 +62,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
         std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(recv_txs[i], para);
         int32_t ret = receipt_queue.push_tx(tx_ent);
         ASSERT_EQ(ret, 0);
-        auto find_receipt = receipt_queue.find(receiver, recv_txs[i]->get_tx_hash());
+        auto find_receipt = receipt_queue.find(recv_txs[i]->get_tx_hash());
         ASSERT_NE(find_receipt.get(), nullptr);
     }
 
@@ -81,12 +81,12 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
 
     ASSERT_EQ(receipts2.size(), tx_num - 1);
 
-    auto find_receipt0 = receipt_queue.find(receiver, recv_txs[0]->get_tx_hash());
+    auto find_receipt0 = receipt_queue.find(recv_txs[0]->get_tx_hash());
     ASSERT_EQ(find_receipt0.get(), nullptr);
 
     auto pop_receipt = receipt_queue.pop_tx(recv_txs[1]->get_tx_hash(), recv_txs[1]->get_tx_subtype());
     ASSERT_NE(pop_receipt.get(), nullptr);
 
-    auto find_receipt = receipt_queue.find(receiver, recv_txs[1]->get_tx_hash());
+    auto find_receipt = receipt_queue.find(recv_txs[1]->get_tx_hash());
     ASSERT_EQ(find_receipt.get(), nullptr);
 }

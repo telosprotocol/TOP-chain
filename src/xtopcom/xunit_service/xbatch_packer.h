@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <queue>
 #include "xBFT/xconsaccount.h"
 #include "xbase/xobject_ptr.h"
 #include "xunit_service/xcons_face.h"
@@ -24,6 +25,27 @@ public:
     uint32_t get_tx_num_threshold(uint64_t cur_time) const;
 private:
     uint64_t m_vc_time_ms{0};
+};
+
+class xpdu_msg_cache_t {
+public:
+    xpdu_msg_cache_t(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to);
+    xobject_ptr_t<base::xcspdu_t> get_pdu_msg() const {return m_pdu;}
+    const xvip2_t & get_xip_from() const {return m_xip_from;}
+    const xvip2_t & get_xip_to() const {return m_xip_to;}
+private:
+    xobject_ptr_t<base::xcspdu_t> m_pdu;
+    xvip2_t m_xip_from;
+    xvip2_t m_xip_to;
+};
+
+class xpdu_msgs_cache_t {
+public:
+    void push_pdu(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to);
+    std::shared_ptr<xpdu_msg_cache_t> pop_pdu(bool is_leader, uint64_t last_view_id);
+private:
+    std::map<uint64_t, std::queue<std::shared_ptr<xpdu_msg_cache_t>>> m_pdu_msgs;  // key:viewid
+    mutable std::mutex m_mutex;
 };
 
 // default block service entry
@@ -49,7 +71,7 @@ public:
     virtual base::xtable_index_t get_tableid();
 
     // recv_in packet from this object to child layers
-    virtual bool recv_in(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms);
+    virtual bool recv_in(int32_t cur_thread_id, uint64_t timenow_ms);
 
     // send packet by network
     virtual bool send_out(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms);
@@ -63,6 +85,8 @@ public:
     virtual bool on_replicate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms);
     virtual bool on_consensus_commit(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
     virtual bool set_start_time(const common::xlogic_time_t& start_time);
+
+    void set_pdu_msg(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to);
 protected:
     virtual bool on_view_fire(const base::xvevent_t &event, xcsobject_t *from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms);
 
@@ -121,6 +145,7 @@ private:
     xvip2_t                                  m_last_xip2{};
     common::xtable_address_t                 m_table_addr;
     xpack_strategy_t                         m_pack_strategy;
+    xpdu_msgs_cache_t                        m_pdu_msg_cache;
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;

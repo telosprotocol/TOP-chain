@@ -55,8 +55,15 @@ bool xworkpool_dispatcher::dispatch(base::xworkerpool_t * pool, base::xcspdu_t *
     if (packer != nullptr) {
         auto packer_xip = packer->get_xip2_addr();
         if (is_xip2_equal(packer_xip, xip_to) && packer->get_account() == pdu->get_block_account()) {
+            packer->set_pdu_msg(pdu, xip_from, xip_to);
             xunit_dbg("xworkpool_dispatcher::dispatch succ.pdu=%s,at_node:%s,packer=%p", pdu->dump().c_str(), xcons_utl::xip_to_hex(packer_xip).c_str(), packer);
-            return async_dispatch(pdu, xip_from, xip_to, packer) == 0;
+            // return async_dispatch(pdu, xip_from, xip_to, packer) == 0;
+            auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+                auto packer = dynamic_cast<xbatch_packer *>(call.get_param1().get_object());
+                return packer->recv_in(cur_thread_id, timenow_ms);
+            };
+            base::xcall_t asyn_call(handler, packer);
+            return packer->send_call(asyn_call);
         } else {
             xunit_warn("xworkpool_dispatcher::dispatch fail. pdu=%s,table id %d failed packer %p with invalid xip to: %s vs packer: %s, account %s",
                 pdu->dump().c_str(),
