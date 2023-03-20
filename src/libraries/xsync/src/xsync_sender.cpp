@@ -269,7 +269,7 @@ bool xsync_sender_t::send_message(
     XMETRICS_COUNTER_INCREMENT(bytes_metric_name, msg.payload().size());
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
     
-    xsync_dbg("xsync_sender_t %s %s msg_id: %x msg_hash: %" PRIx64" send to %s", self_addr.to_string().c_str(), metric_key.c_str(), msg.id(),  msg.hash(),target_addr.to_string().c_str());
+    xsync_info("xsync_sender_t %s %s msg_id: %x msg_hash: %" PRIx64" send to %s", self_addr.to_string().c_str(), metric_key.c_str(), msg.id(),  msg.hash(),target_addr.to_string().c_str());
     std::error_code ec;
     if (self_addr.zone_id() == common::xfrozen_zone_id)
         m_vhost->send_to_through_frozen(self_addr, target_addr, msg, ec);
