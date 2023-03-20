@@ -299,19 +299,6 @@ xsync_store_shadow_t* xsync_store_t::get_shadow() {
     return m_shadow;
 };
 
-bool xsync_store_t::remove_empty_unit_forked() {
-    if (m_remove_empty_unit_forked) {
-        return true;
-    }
-
-    set_fork_point();
-    return m_remove_empty_unit_forked;
-}
-
-bool xsync_store_t::is_sync_protocal_forked() {
-    return m_sync_forked;
-}
-
 bool xsync_store_t::is_support_big_pack_forked() {
     if (m_sync_big_pack) {
         return true;
@@ -319,6 +306,15 @@ bool xsync_store_t::is_support_big_pack_forked() {
 
     set_fork_point();
     return m_sync_big_pack;
+}
+
+bool xsync_store_t::is_fullnode_elect_forked() {
+    if (m_sync_fullnode_elect_forked) {
+        return true;
+    }
+
+    set_fork_point();
+    return m_sync_fullnode_elect_forked;
 }
 
 base::xauto_ptr<base::xvbindex_t> xsync_store_t::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
@@ -333,11 +329,22 @@ void xsync_store_t::set_fork_point() {
 
     xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
     // TODO(jimmy) remove fork points
-    bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_sync_big_packet, vb->get_height());
-    if (forked) {
-        m_sync_big_pack = true;
-        xinfo("xsync_store_t::block fork point already forked clock:%llu", vb->get_height());
+    if(!m_sync_big_pack) {
+        bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_sync_big_packet, vb->get_height());
+        if (forked) {
+            m_sync_big_pack = true;
+            xinfo("xsync_store_t::block fork point:sync_big_packet already forked clock:%llu", vb->get_height());
+        }
     }
+    
+    if(!m_sync_fullnode_elect_forked) {
+        bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_fullnode_elect, vb->get_height());
+        if (forked) {
+            m_sync_fullnode_elect_forked = true;
+            xinfo("xsync_store_t::block fork point:fullnode_elect already forked clock:%llu", vb->get_height());
+        }
+    }
+
     return;
 }
 

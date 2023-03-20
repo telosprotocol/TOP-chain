@@ -41,7 +41,7 @@ void xrole_chains_t::init_chains() {
     //add_chain(nt::frozen, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
 
     add_tables(nt::consensus_auditor | nt::consensus_validator, common::con_table_base_address.to_string(), enum_chain_sync_policy_fast);
-    add_chain(nt::evm_auditor | nt::evm_validator, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
+    add_chain(nt::evm_auditor | nt::evm_validator, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_fast);
 
     add_tables(nt::storage_archive, common::con_table_base_address.to_string(), enum_chain_sync_policy_full);
     add_chain(nt::storage_archive, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
