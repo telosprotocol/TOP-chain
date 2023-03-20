@@ -46,13 +46,6 @@ xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
     xsync_info("chain_downloader create_chain %s", m_address.c_str());
     XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", 1);
     m_is_elect_chain = is_elect_chain();
-
-    for (int i = (int)enum_chain_sync_policy_full; i < (int)enum_chain_sync_policy_max; i++) {
-        uint64_t height = m_sync_store->get_latest_end_block_height(m_address, (enum_chain_sync_policy)i);
-        m_chain_objects[i].set_height(height);
-        xsync_info("xchain_downloader_t init chain address %s cur_height %llu sync policy %d",
-            m_address.c_str(), height, i);
-    }
 }
 
 
@@ -103,12 +96,15 @@ bool xchain_downloader_t::on_timer(int64_t now) {
 
     for (uint32_t index = (m_current_object_index + 1) % enum_chain_sync_policy_max, count = 0; count < enum_chain_sync_policy_max;
             count++, index = (index + 1) % enum_chain_sync_policy_max){
-        if (!m_chain_objects[index].pick(interval, self_addr, target_addr)){
-            continue;
-        }
 
         if (index == enum_chain_sync_policy_full || index == enum_chain_sync_policy_checkpoint) {
-            interval.first = m_chain_objects[index].get_behind_height_real(now, m_sync_store, index, m_address);
+            if (false == m_chain_objects[index].check_and_fix_behind_height(now, m_sync_store, index, m_address)) {
+                continue;
+            }
+        }
+
+        if (!m_chain_objects[index].pick(interval, self_addr, target_addr)) {
+            continue;
         }
 
         m_current_object_index = index;
@@ -236,18 +232,11 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
 
     uint64_t height = m_chain_objects[sync_policy].height();
     m_chain_objects[sync_policy].set_object_t(start_height, end_height, self_addr, target_addr);
-    if(enum_chain_sync_policy_fast == sync_policy && height == 0) {
-        //init fast 
+    if(start_height > height) {
         m_chain_objects[sync_policy].set_height(start_height);
     }
 
-   /* if (height >= start_height) {
-        m_chain_objects[sync_policy].set_height(height);
-    } else {
-        m_chain_objects[sync_policy].set_height(start_height);
-    }*/
-
-    xsync_info("chain_downloader on_behind expect start_height=%lu,height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s, reason:%s ",
+    xsync_info("chain_downloader on_behind expect start_height=%lu,height=%llu, end_height=%llu, target address %s, sync policy %d, chain is %s, reason:%s ",
                 start_height, height, end_height, target_addr.to_string().c_str(), sync_policy, m_address.c_str(), reason.c_str());
 }
 
@@ -676,7 +665,7 @@ bool xchain_object_t::pick(std::pair<uint64_t, uint64_t> &interval, vnetwork::xv
         interval.second = (m_current_height + BATCH_MAX_END) > m_end_height ? m_end_height : m_current_height + BATCH_MAX_END;
     }
 
-    interval.first = m_start_height;
+    interval.first = m_current_height;
 
     self_addr = m_self_addr;
     target_addr = m_target_addr;
@@ -705,30 +694,29 @@ void xchain_object_t::clear() {
     m_end_height = 0;
 }
 
-uint64_t xchain_object_t::get_behind_height_real(const int64_t now, xsync_store_face_t* xsync_store,
-                                                 const uint32_t sync_type, const std::string& address)
-{
-    uint64_t request_height = m_current_height;
-    if (now - m_regular_time > 120000) {
-        m_regular_time = now;
-        uint64_t cur_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type);
-        if (m_fix_height == cur_height) {
-            if((m_fix_height + 2) < m_end_height) {
-                xwarn("get_behind_height_real lost height account is %s,m_fix_height %llu m_end_height %llu ", address.c_str(), m_fix_height, m_end_height);
-                request_height = cur_height;
-            }
-        } else {
-            m_fix_height = cur_height;
-        }
+bool xchain_object_t::check_and_fix_behind_height(int64_t now, xsync_store_face_t* xsync_store, const uint32_t sync_type, const std::string& address) {
+    if (m_end_height == 0) {
+        return false;
+    }
 
-        if(m_current_height < m_fix_height) {
-            m_current_height = m_fix_height;
-            request_height = m_current_height;
+    if ((m_regular_time == 0) || ((now - m_regular_time) > 60000)) {
+        m_regular_time = now;
+        m_connect_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type); // m_connect_height is commit + 2
+
+        // check lost block
+        if (m_connect_height < 2) { // 0, 1 
+            m_current_height = m_connect_height + 1;
+        } else if ((m_connect_height + 1) < m_current_height) {
+            m_current_height = m_connect_height - 1;
+            return true;
         }
     }
 
-    xdbg("get_behind_height_real request height account is %s, genesis height %llu", address.c_str(), request_height);
-    return request_height;
-}
+    if (m_current_height < m_connect_height) {
+        xinfo("check_and_fix_behind_height fix height account is %s, current %llu reset  to new height %llu, sync_type %d", address.c_str(), m_current_height, m_connect_height, sync_type);
+        m_current_height = m_connect_height;
+    }
 
+    return true;
+}
 NS_END2

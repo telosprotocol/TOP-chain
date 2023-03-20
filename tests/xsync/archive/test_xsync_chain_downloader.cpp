@@ -74,8 +74,8 @@ TEST(test_xsync_chain_downloader, test_chain_downloader_init)
     uint64_t cp_start_height = chain_downloader->m_chain_objects[enum_chain_sync_policy_checkpoint].height();
     
     ASSERT_EQ(fast_start_height, 1);
-    ASSERT_EQ(full_start_height, TEST_CHAIN_HEIGHT+2);  //full height read from span;
-    ASSERT_EQ(cp_start_height, TEST_CHAIN_HEIGHT);
+    ASSERT_EQ(full_start_height, 1);  //full height read from span;
+    ASSERT_EQ(cp_start_height, 1);
 
     for(int sync_type = (int)enum_chain_sync_policy_fast ; sync_type < (int)enum_chain_sync_policy_max; sync_type++){
         uint64_t height = chain_downloader->get_chain_last_end_height((enum_chain_sync_policy)sync_type);
@@ -131,7 +131,7 @@ TEST(test_xsync_chain_downloader, test_chain_downloader_on_behind)
     uint64_t cp_end_height =0; 
     uint64_t full_end_height =0;
 
-    uint64_t set_start_height = 0;
+    uint64_t set_start_height = 1;
     uint64_t set_end_height = 110;
     //mock behind event
     for (int sync_type = (int)enum_chain_sync_policy_fast; sync_type < (int)enum_chain_sync_policy_max; sync_type++) {
@@ -150,48 +150,38 @@ TEST(test_xsync_chain_downloader, test_chain_downloader_on_behind)
                 ASSERT_NE(end_height, set_end_height);
             }
         }
+
         set_start_height += 10;
         set_end_height += 10;
     }
 
     //mock send 
-    set_start_height = 0;
+    set_start_height = 1;
     set_end_height = 110;
+    //check and fix height
     for (int sync_type = (int)enum_chain_sync_policy_fast; sync_type < (int)enum_chain_sync_policy_max; sync_type++) {
         std::pair<uint64_t, uint64_t> interval;
         top::common::xnode_address_t self_addr;
         top::common::xnode_address_t target_addr;
+
         bool ret = chain_downloader->m_chain_objects[sync_type].pick(interval, self_addr, target_addr);
-        ASSERT_EQ(set_start_height, interval.first);
-        ASSERT_EQ(set_end_height, interval.second);
 
-        if(sync_type != (int)enum_chain_sync_policy_fast) {
-            //get real stat height
-            int64_t now =0;
-            interval.first = chain_downloader->m_chain_objects[sync_type].get_behind_height_real(now, &sync_store, sync_type, address);
-            ASSERT_NE(set_start_height, interval.first);
-           
-           if(sync_type == enum_chain_sync_policy_full) {
-              ASSERT_EQ(TEST_CHAIN_HEIGHT+2, interval.first);
-           } else {
-             ASSERT_EQ(TEST_CHAIN_HEIGHT, interval.first);
-           }
-           
-            now = 200000;
-            //no new block, height no change
-            interval.first = chain_downloader->m_chain_objects[sync_type].get_behind_height_real(now, &sync_store, sync_type, address);
-                       if(sync_type == enum_chain_sync_policy_full) {
-              ASSERT_EQ(TEST_CHAIN_HEIGHT+2, interval.first);
-           } else {
-             ASSERT_EQ(TEST_CHAIN_HEIGHT, interval.first);
-           }
+        if (sync_type == (int)enum_chain_sync_policy_fast) {
+            ASSERT_EQ(set_start_height, interval.first);
+            ASSERT_EQ(set_end_height, interval.second);
+        } else {
+            // get real stat height
+            int64_t now = 200000;
+            chain_downloader->m_chain_objects[sync_type].check_and_fix_behind_height(now, &sync_store, sync_type, address);
+            bool ret = chain_downloader->m_chain_objects[sync_type].pick(interval, self_addr, target_addr);
+            ASSERT_EQ(set_end_height, interval.second);
+            if (sync_type == (int)enum_chain_sync_policy_checkpoint) {
+                ASSERT_EQ(TEST_CHAIN_HEIGHT - 1, interval.first);
+            } else {
+                ASSERT_EQ(TEST_CHAIN_HEIGHT + 2, interval.first);
+            }
         }
-
         set_start_height += 10;
         set_end_height += 10;
     }
-    
 }
-
-
-
