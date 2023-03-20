@@ -9,6 +9,7 @@
 #include "xbase/xlru_cache.h"
 #include "xstatestore/xstatestore_base.h"
 #include "xstatestore/xtablestate_ext.h"
+#include "xstatestore/xstatehub.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
 
@@ -60,7 +61,7 @@ class xstatestore_dbaccess_t {
 // access state from cache or db
 class xstatestore_accessor_t {
  public:
-    xstatestore_accessor_t();
+    xstatestore_accessor_t(common::xtable_address_t const& address);
 public:
     xtablestate_ext_ptr_t       get_latest_connectted_table_state() const;
     xtablestate_ext_ptr_t       read_table_bstate_from_cache(common::xtable_address_t const& address, uint64_t height, const std::string & block_hash) const;
@@ -77,6 +78,7 @@ private:
     xtablestate_ext_ptr_t read_table_bstate_from_db_inner(common::xtable_address_t const& address, base::xvblock_t* block, bool bstate_must) const;
 private:
     xstatestore_cache_t         m_state_cache;
+    xvstatehub_ptr_t            m_statehub;
     xstatestore_dbaccess_t      m_dbaccess;
     xstatestore_base_t          m_store_base;
 };

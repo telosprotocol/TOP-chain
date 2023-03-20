@@ -259,25 +259,18 @@ void xtop_vnode::update_contract_manager(bool destory) {
 }
 
 void xtop_vnode::sync_add_vnet() {
-    bool is_storage_node = false;
-    bool has_other_node = false;
-
     if (miner_type() != common::xenum_miner_type::invalid) {
-        if (genesis()) {
+        bool is_storage_node = false;
+        bool has_other_node = false;
+        if (genesis()
+            || common::has<common::xminer_type_t::archive>(miner_type())
+            || common::has<common::xminer_type_t::exchange>(miner_type())) {
             is_storage_node = true;
-            has_other_node = true;
-        } else if (miner_type() == common::xenum_miner_type::archive || miner_type() == common::xenum_miner_type::exchange) {
-            is_storage_node = true;
-            has_other_node = false;
-        } else if (miner_type() == common::xenum_miner_type::advance || miner_type() == common::xenum_miner_type::validator) {
-            is_storage_node = false;
-            has_other_node = true;
-        } else if (miner_type() == common::xenum_miner_type::edge) {
-            is_storage_node = false;
-            has_other_node = true;
-        } else {
-            xassert(false);
-            is_storage_node = true;
+        }
+        if (genesis()
+            || common::has<common::xminer_type_t::advance>(miner_type())
+            || common::has<common::xminer_type_t::validator>(miner_type())
+            || common::has<common::xminer_type_t::edge>(miner_type())) {
             has_other_node = true;
         }
         base::xvchain_t::instance().set_node_type(is_storage_node, has_other_node);
@@ -285,7 +278,7 @@ void xtop_vnode::sync_add_vnet() {
     
     m_sync_obj->add_vnet(vnetwork_driver(), miner_type(), genesis());
 
-    xinfo("vnode (%p) at address %s starts synchronizing. miner_type=%d,genesis=%d", this, address().to_string().c_str(), miner_type(), genesis());
+    xinfo("xtop_vnode::sync_add_vnet vnode (%p) at address %s starts synchronizing. miner_type=%d,genesis=%d", this, address().to_string().c_str(), miner_type(), genesis());
 }
 
 void xtop_vnode::sync_remove_vnet() {

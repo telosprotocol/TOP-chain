@@ -36,7 +36,7 @@ namespace top
             if(is_unit_address() == false) //keep contract/table account forever at memory
                 m_is_keep_forever  = 1;
             
-            xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
+            xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu),m_is_keep_forever(%d),m_is_idle(%d)",get_address().c_str(),get_xvid(),m_is_keep_forever,m_is_idle);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaccountobj, 1);
         }
     
@@ -79,13 +79,14 @@ namespace top
             if(   (is_idle() == false)//still active
                || (get_refcount() > 2) ) //more holder except table(hold 2 reference)
             {
+                xdbg("xvaccountobj_t::is_live %s idle=%d,refcount=%d",get_account().c_str(), is_idle(),get_refcount());
                 return true;
             }
 
             const uint64_t idle_start_time_ms = m_idle_start_time_ms;
             if( timenow_ms > (idle_start_time_ms + m_idle_timeout_ms) )
                 return false;//time to close it since idle too long
-    
+            xdbg_info("xvaccountobj_t::is_live %s idle_start_time_ms=%ld,m_idle_timeout_ms=%ld,timenow_ms=%ld",get_account().c_str(), idle_start_time_ms,m_idle_timeout_ms,timenow_ms);
             return true;//still watching
         }
         
@@ -117,13 +118,20 @@ namespace top
             }
             return true;
         }
+
+        void xvaccountobj_t::update_idle_start_time_ms(uint64_t current_time_ms)
+        {
+            if (current_time_ms > m_idle_start_time_ms) {
+                m_idle_start_time_ms = current_time_ms;      
+            }
+        }
         
         bool xvaccountobj_t::stop() //convert to closing status if possible
         {
             if(is_close())
                 return false;
             
-            xinfo("xvaccountobj_t::stop,acccount(%s)",get_address().c_str());
+            xdbg_info("xvaccountobj_t::stop,acccount(%s)",get_address().c_str());
             if(is_closing() == false)
             {
                 xauto_lock<xspinlock_t> locker(get_spin_lock());
@@ -155,7 +163,7 @@ namespace top
     
         bool xvaccountobj_t::close(bool force_async)
         {
-            xinfo("xvaccountobj_t::close,acccount(%s)",get_address().c_str());
+            xdbg_info("xvaccountobj_t::close,acccount(%s)",get_address().c_str());
             if(is_close() == false)
             {
                 xobject_t::close(false); //force mark close flag
@@ -493,7 +501,8 @@ namespace top
                 {
                     plugin_ptr->add_ref();//note:add reference for xauto_ptr
                     
-                    const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
+                    // const uint64_t _timenow = get_time_now();//XTODO(jimmy) optimize use account access time from table timer time
+                    const uint64_t _timenow = m_idle_start_time_ms;
                     plugin_ptr->set_last_access_time(_timenow);
                 }
             }
@@ -516,10 +525,10 @@ namespace top
                 return nullptr;
             }
 
-            xvactplugin_t* plugin_ptr = xatomic_t::xload(m_plugins[plugin_type]);
+            xvactplugin_t* plugin_ptr = xatomic_t::xload(m_plugins[plugin_type]); // TODO(jimmy) optimize: already spin lock, no need xload
             if(plugin_ptr != nullptr)
             {
-                if( (plugin_ptr->is_close() == false) && (plugin_ptr->is_closing() == false) )
+                if( (plugin_ptr->is_close() == false) && (plugin_ptr->is_closing() == false) )// TODO(jimmy) optimize: no need close check
                 {
                     return plugin_ptr;
                 }
@@ -528,7 +537,7 @@ namespace top
         }
 
         //locked by table or account self in advance
-        bool  xvaccountobj_t::set_plugin_unsafe(xvactplugin_t * new_plugin_obj,xvactplugin_t*& old_plugin_obj)
+        bool  xvaccountobj_t::set_plugin_unsafe(xvactplugin_t * new_plugin_obj,xvactplugin_t*& old_plugin_obj,bool monitor)
         {
             if(nullptr == new_plugin_obj) //valid check
             {
@@ -555,20 +564,20 @@ namespace top
                 old_plugin_obj->stop();//mark closing flag first
                 //caller need release it
             }
-            const uint8_t old_status = m_is_idle;
-            m_is_idle = 0; //actived
-            if(old_status != 0)
-            {
-                #ifdef DEBUG_XVLEDGER
-                xdbg_info("xvaccountobj_t::set_plugin_unsafe,reenter active status for account(%s)",get_address().c_str());
-                #endif
-            }
-            //send to monitoring thread
-            m_ref_table.monitor_plugin(new_plugin_obj);
+            //send to monitoring thread, only monitor plugin can push account to active status
+            if (monitor) {
+                const uint8_t old_status = m_is_idle;
+                m_is_idle = 0; //actived
+                if(old_status != 0)
+                {
+                    xdbg_info("xvaccountobj_t::set_plugin_unsafe,enter active status for account(%s)",get_address().c_str());
+                }                
+                m_ref_table.monitor_plugin(new_plugin_obj);
+            }            
             return true;
         }
         
-        xauto_ptr<xvactplugin_t>  xvaccountobj_t::get_set_plugin(xvactplugin_t * new_plugin_obj)
+        xauto_ptr<xvactplugin_t>  xvaccountobj_t::get_set_plugin(xvactplugin_t * new_plugin_obj, bool monitor)
         {
             if(nullptr == new_plugin_obj) //valid check
             {
@@ -608,7 +617,7 @@ namespace top
                 }
                 new_plugin_obj->init_meta(*get_meta());
                 //now accupy slot and monitor it
-                set_plugin_unsafe(new_plugin_obj,old_plugin_obj);
+                set_plugin_unsafe(new_plugin_obj,old_plugin_obj,monitor);
             }
 
             //do close outside of spin-lock, because it might re-enter
@@ -623,10 +632,11 @@ namespace top
             
             //add reference to auto_ptr
             new_plugin_obj->add_ref();
+            xdbg_info("xvaccountobj_t::get_set_plugin account=%s,plugin type %d", get_address().c_str(), new_plugin_obj->get_plugin_type());
             return new_plugin_obj;
         }
     
-        xauto_ptr<xvactplugin_t> xvaccountobj_t::get_set_plugin(enum_xvaccount_plugin_type plugin_type,std::function<xvactplugin_t*(xvaccountobj_t&)> & lambda)
+        xauto_ptr<xvactplugin_t> xvaccountobj_t::get_set_plugin(enum_xvaccount_plugin_type plugin_type,std::function<xvactplugin_t*(xvaccountobj_t&)> & lambda, bool monitor)
         {
             if(is_close()) //object not avaiable
             {
@@ -677,7 +687,7 @@ namespace top
                 }
                 
                 //finally accupy slot and monitor it
-                set_plugin_unsafe(new_plugin_ptr,old_plugin_obj);//may hold additional reference
+                set_plugin_unsafe(new_plugin_ptr,old_plugin_obj,monitor);//may hold additional reference
             }
             
             //do close outside of spin-lock, because it might re-enter
@@ -847,6 +857,7 @@ namespace top
  
         void    xvtable_t::monitor_plugin(xvactplugin_t * plugin_obj)
         {
+            xinfo("xvtable_t::monitor_plugin account=%s,plugin type(%d)",plugin_obj->get_account().c_str() ,plugin_obj->get_plugin_type());
             //push to monitor queue
             {
                 std::function<void(void*)> _add_new_plugin_job = [this](void* _raw_ptr)->void{
@@ -861,6 +872,7 @@ namespace top
     
         void    xvtable_t::monitor_account(xvaccountobj_t * account_obj)
         {
+            xinfo("xvtable_t::monitor_account account=%s,account_obj=%p",account_obj->get_account().c_str());
             //push to monitor queue
             {
                 std::function<void(void*)> _add_new_account_job = [this](void* _account_ptr)->void{
@@ -900,12 +912,14 @@ namespace top
         
         xvaccountobj_t*   xvtable_t::get_account_unsafe(const std::string & account_address)
         {
+            const uint64_t current_time_ms = m_current_time_ms;  // TODO(jimmy) used table timer time for performance
             auto & exist_account_ptr = m_accounts[account_address];
             if(   (exist_account_ptr != NULL)
                && (exist_account_ptr->is_close() == false)
                && (exist_account_ptr->is_closing() == false)
             ) //valid account object
             {
+                exist_account_ptr->update_idle_start_time_ms(current_time_ms);// refresh access time
                 return exist_account_ptr;
             }
 
@@ -918,12 +932,14 @@ namespace top
                 old_account_obj->release_ref();//release it
             }
             //push to monitor queue
+            new_account_obj->update_idle_start_time_ms(current_time_ms);// refresh access time
             monitor_account(new_account_obj);
             return new_account_obj;
         }
             
         bool xvtable_t::try_close_account(const int64_t current_time_ms,const std::string & account_address)
         {
+            xdbg_info("xvtable_t::try_close_account,account(%s)",account_address.c_str());
             bool  do_close = false;
             xvaccountobj_t * target_account_ptr = NULL;
             {
@@ -1095,6 +1111,7 @@ namespace top
     
         bool   xvtable_t::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms)
         {
+            m_current_time_ms = current_time_ms; // XTODO save for performance
             on_timer_for_plugins(thread_id, timer_id, current_time_ms, start_timeout_ms);
             on_timer_for_accounts(thread_id, timer_id, current_time_ms, start_timeout_ms);
             return true;
@@ -1118,7 +1135,7 @@ namespace top
             
             //each book has own timer
             m_monitor_timer = get_thread()->create_timer((base::xtimersink_t*)this);
-            m_monitor_timer->start(enum_plugin_idle_check_interval, enum_plugin_idle_check_interval); //check account by every 10 seconds
+            m_monitor_timer->start(enum_timer_check_interval, enum_timer_check_interval); //check account by every 10 seconds
             
             xkinfo("xvbook_t::xvbook_t,book_index(%d) with full_addr(%d)",m_book_index,m_book_combine_addr);
         }
