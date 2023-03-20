@@ -66,9 +66,7 @@ xtop_zec_elect_consensus_group_contract::xtop_zec_elect_consensus_group_contract
 bool executed_consensus{false};
 
 void xtop_zec_elect_consensus_group_contract::swap_election_result(common::xlogic_time_t const current_time) {
-    auto auditor_group_count = XGET_CONFIG(auditor_group_count);
-    auto validator_group_count = XGET_CONFIG(validator_group_count);
-    assert(auditor_group_count == 2 && validator_group_count == 4);
+    assert(XGET_CONFIG(auditor_group_count) == 2 && XGET_CONFIG(validator_group_count) == 4);
     uint64_t latest_height = get_blockchain_height(sys_contract_zec_elect_consensus_addr);
     if (latest_height <= 0) {
         return;
@@ -81,7 +79,7 @@ void xtop_zec_elect_consensus_group_contract::swap_election_result(common::xlogi
         all_cluster_election_result_store.insert({common::xgroup_id_t{auditor_group_start_count++}, election_result_store});
     }
 
-    assert(all_cluster_election_result_store.size() == auditor_group_count);
+    assert(all_cluster_election_result_store.size() == XGET_CONFIG(auditor_group_count));
 
     // hard code swap node:
     auto & sharding_1_result_store = all_cluster_election_result_store.at(common::xgroup_id_t{1});
