@@ -40,6 +40,8 @@ xtop_target_address::xtop_target_address(common::xaccount_address_t original) no
 xtop_target_address::xtop_target_address(common::xaccount_address_t original, common::xtable_id_t const optional_table_id)
   : original_{std::move(original)}, adjusted_{common::append_table_id(original_.base_address(), optional_table_id)} {
     assert(!original_.has_assigned_table_id());
+    assert(adjusted_.has_assigned_table_id());
+    assert(!optional_table_id.empty());
 }
 
 xtop_target_address xtop_target_address::build_from(common::xaccount_address_t const & src, common::xaccount_address_t dst) {
@@ -248,15 +250,15 @@ int32_t xtransaction_v2_t::release_ref() {
 }
 #endif
 
-//void xtransaction_v2_t::adjust_target_address(common::xtable_id_t const table_id) {
-//    //if (m_adjust_target_addr.empty()) {
-//    //    m_adjust_target_addr =
-//    //        m_unadjusted_target_addr.has_assigned_table_id() ? m_unadjusted_target_addr : common::xaccount_address_t::build_from(m_unadjusted_target_addr.base_address(), table_id);
-//
-//    //    xdbg("xtransaction_v2_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
-//    //        get_digest_hex_str().c_str(), m_unadjusted_target_addr.to_string().c_str(), m_adjust_target_addr.to_string().c_str());
-//    //}
-//}
+void xtransaction_v2_t::adjust_target_address(common::xtable_id_t const table_id) {
+    //if (m_adjust_target_addr.empty()) {
+    //    m_adjust_target_addr =
+    //        m_unadjusted_target_addr.has_assigned_table_id() ? m_unadjusted_target_addr : common::xaccount_address_t::build_from(m_unadjusted_target_addr.base_address(), table_id);
+
+    //    xdbg("xtransaction_v2_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
+    //        get_digest_hex_str().c_str(), m_unadjusted_target_addr.to_string().c_str(), m_adjust_target_addr.to_string().c_str());
+    //}
+}
 
 void xtransaction_v2_t::set_digest() {
     if (m_transaction_hash == uint256_t()) {

@@ -4,16 +4,18 @@
 
 #pragma once
 
+#include "xbasic/xmemory.hpp"
+#include "xdata/xtransaction.h"
+#include "xdata/xdatautil.h"
+#include "xcommon/xaddress.h"
+
 #include <chrono>
 #include <string>
 #include <vector>
 #include <json/json.h>
 
-#include "xdata/xtransaction.h"
-#include "xdata/xdatautil.h"
-#include "xcommon/xaddress.h"
 
-namespace top { namespace data {
+NS_BEG2(top, data)
 
 class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_transaction>, public xtransaction_t {
  public:
@@ -47,7 +49,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual bool        check_last_nonce(uint64_t account_nonce) override;
 
  public:  // set apis
-    // virtual void        adjust_target_address(common::xtable_id_t table_id) override;
+    virtual void        adjust_target_address(common::xtable_id_t table_id) override;
     virtual void        set_digest() override;
     virtual void        set_digest(const uint256_t & digest) override {m_transaction_hash = digest;};
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) override;
@@ -140,7 +142,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     // header
 
     // new transaction APIs
-    void source_address(common::xaccount_address_t account_address) override;
+    void source_address(common::xaccount_address_t src_address) override;
     common::xaccount_address_t const & source_address() const noexcept override;
     void target_address(common::xaccount_address_t dst_addr) override;
     common::xaccount_address_t const & target_address() const noexcept override;
@@ -179,5 +181,4 @@ private:
 
 using xtransaction_v1_ptr_t = xobject_ptr_t<xtransaction_v1_t>;
 
-}  // namespace data
-}  // namespace top
+NS_END2

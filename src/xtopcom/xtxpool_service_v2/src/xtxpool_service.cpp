@@ -458,7 +458,7 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
     }
 
     std::error_code ec;
-    auto const account_address = tx->source_address();
+    auto account_address = tx->source_address();
     if (ec) {
         xwarn("xtxpool_service::request_transaction_consensus in, invalid source account %s", tx->source_address().to_string().c_str());
         return xtxpool_v2::xtxpool_error_service_invalid_account_address;
@@ -475,15 +475,15 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
         return xtxpool_v2::xtxpool_error_transaction_not_belong_to_this_service;
     }
 
-    //account_address = tx->target_address();
+    account_address = tx->target_address();
     //if (ec) {
     //    xwarn("xtxpool_service::request_transaction_consensus in, invalid target account %s", tx->target_address().to_string().c_str());
     //    return xtxpool_v2::xtxpool_error_service_invalid_account_address;
     //}
 
-    //if (data::is_sys_sharding_contract_address(account_address)) {
-    //    tx->adjust_target_address(account_address.table_id());
-    //}
+    if (data::is_sys_sharding_contract_address(account_address)) {
+        tx->adjust_target_address(tx->source_address().table_id());
+    }
 
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     xtxpool_v2::xtx_para_t para;

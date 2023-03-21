@@ -197,14 +197,25 @@ TEST(account_address, size) {
 }
 
 TEST(account_address, table_id) {
-    top::common::xaccount_address_t const address{"T8000065f5442ab7d7b778394aa83747cb076e089cff0d"};
-    EXPECT_EQ(static_cast<uint16_t>(38), address.table_id().value());
+    {
+        top::common::xaccount_address_t const address{"T8000065f5442ab7d7b778394aa83747cb076e089cff0d"};
+        EXPECT_EQ(static_cast<uint16_t>(38), address.table_id().value());
+    }
 
-    top::common::xaccount_address_t const another{"T80000fa17a9505fb337f7b664e44880f6e0dad3d921a1"};
-    EXPECT_EQ(static_cast<uint16_t>(30), another.table_id().value());
+    {
+        top::common::xaccount_address_t const another{"T80000fa17a9505fb337f7b664e44880f6e0dad3d921a1"};
+        EXPECT_EQ(static_cast<uint16_t>(30), another.table_id().value());
+    }
 
-    top::common::xaccount_address_t const a2{"T800001753d40631a3ad31568c3141272cac45692888d1"};
-    EXPECT_EQ(static_cast<uint16_t>(11), a2.table_id().value());
+    {
+        top::common::xaccount_address_t const a2{"T800001753d40631a3ad31568c3141272cac45692888d1"};
+        EXPECT_EQ(static_cast<uint16_t>(11), a2.table_id().value());
+    }
+
+    {
+        top::common::xaccount_address_t const address{"T00000LTHfpc9otZwKmNcXA24qiA9A6SMHKkxwkg"};
+        EXPECT_FALSE(address.table_id().empty());
+    }
 }
 
 NS_END3

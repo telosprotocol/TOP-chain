@@ -25,6 +25,7 @@
 #include "xvledger/xvaccount.h"
 
 #include <cinttypes>
+
 namespace top { namespace data {
 
 int32_t xtransaction_v1_t::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
@@ -166,16 +167,16 @@ int32_t xtransaction_v1_t::release_ref() {
 }
 #endif
 
-//void xtransaction_v1_t::adjust_target_address(common::xtable_id_t const table_id) {
-//    if (m_target_addr.empty()) {
-//        auto const & action_address = m_target_action.account_address();
-//
-//        m_target_addr = action_address.has_assigned_table_id() ? action_address : common::xaccount_address_t::build_from(action_address.base_address(), table_id);
-//
-//        xdbg("xtransaction_v1_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
-//            get_digest_hex_str().c_str(), m_target_action.account_address().to_string().c_str(), m_target_addr.to_string().c_str());
-//    }
-//}
+void xtransaction_v1_t::adjust_target_address(common::xtable_id_t const table_id) {
+    if (m_target_addr.empty()) {
+        auto const & action_address = m_target_action.account_address();
+
+        m_target_addr = action_address.has_assigned_table_id() ? action_address : common::xaccount_address_t::build_from(action_address.base_address(), table_id);
+
+        xdbg("xtransaction_v1_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
+            get_digest_hex_str().c_str(), m_target_action.account_address().to_string().c_str(), m_target_addr.to_string().c_str());
+    }
+}
 
 void xtransaction_v1_t::set_digest() {
     base::xautostream_t<1024> stream(base::xcontext_t::instance());
