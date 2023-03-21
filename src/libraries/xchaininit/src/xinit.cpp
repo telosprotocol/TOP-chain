@@ -165,7 +165,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
 void catch_system_signals()
 {
 // XTODO disable signal capture for test networks
-#if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO)
+#if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XENABLE_MOCK_ZEC_STAKE)
     #ifndef DISABLE_SIGNAL_CAPTURE
         #define DISABLE_SIGNAL_CAPTURE
     #endif

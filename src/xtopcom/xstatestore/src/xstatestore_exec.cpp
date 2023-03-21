@@ -19,7 +19,7 @@ NS_BEG2(top, statestore)
 std::mutex xstatestore_executor_t::m_global_execute_lock;
 
 xstatestore_executor_t::xstatestore_executor_t(common::xtable_address_t const& table_addr, xexecute_listener_face_t * execute_listener)
-: m_table_addr{table_addr},m_table_vaddr{table_addr.vaccount()},m_execute_listener(execute_listener) {
+: m_table_addr{table_addr},m_table_vaddr{table_addr.vaccount()},m_state_accessor{table_addr},m_execute_listener(execute_listener) {
 
 }
 
@@ -787,10 +787,12 @@ void  xstatestore_executor_t::build_unitstate_by_hash(common::xaccount_address_t
 
 void xstatestore_executor_t::build_unitstate_by_accountindex(common::xaccount_address_t const& unit_addr, base::xaccount_index_t const& account_index, data::xunitstate_ptr_t &unitstate, std::error_code & ec) const {
     // firstly, try get from cache and db
-    unitstate = m_state_accessor.read_unit_bstate(unit_addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash());
-    if (nullptr != unitstate) {
-        xdbg("xstatestore_executor_t::build_unitstate_by_accountindex get from cache account=%s,accountindex=%s", unit_addr.to_string().c_str(), account_index.dump().c_str());
-        return;
+    if (!account_index.get_latest_unit_hash().empty()) {
+        unitstate = m_state_accessor.read_unit_bstate(unit_addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash());
+        if (nullptr != unitstate) {
+            xdbg("xstatestore_executor_t::build_unitstate_by_accountindex get from cache account=%s,accountindex=%s", unit_addr.to_string().c_str(), account_index.dump().c_str());
+            return;
+        }
     }
     xobject_ptr_t<base::xvblock_t> _unit = nullptr;
     if (account_index.get_latest_unit_hash().empty()) {

@@ -17,15 +17,14 @@ namespace top
         enum enum_xvaccount_plugin_type //max 8 plugins
         {
             enum_xvaccount_plugin_start      = 0x00,
-            enum_xvaccount_plugin_txsmgr     = 0x00, //manage transactions
-            enum_xvaccount_plugin_blockmgr   = 0x01, //manage blocks
-            enum_xvaccount_plugin_statemgr   = 0x02, //manage states
-            enum_xvaccount_plugin_indexmgr   = 0x03, //manage indexs
-            enum_xvaccount_plugin_executemgr = 0x04, //manage contract & function execute
+            enum_xvaccount_plugin_blockmgr   = 0x00, //manage blocks
+            enum_xvaccount_plugin_statemgr   = 0x01, //manage states
+            // enum_xvaccount_plugin_indexmgr   = 0x03, //manage indexs
+            // enum_xvaccount_plugin_executemgr = 0x04, //manage contract & function execute
             
             //note:update max once add new plugin at above
-            enum_xvaccount_plugin_end        = enum_xvaccount_plugin_executemgr,
-            enum_xvaccount_plugin_max        = 0x08,
+            enum_xvaccount_plugin_end        = enum_xvaccount_plugin_statemgr,
+            enum_xvaccount_plugin_max        = enum_xvaccount_plugin_end + 2,
         };
         
         class xvactplugin_t : public xobject_t
@@ -79,20 +78,6 @@ namespace top
             uint64_t         m_idle_timeout_ms;     //how long(ms) it will change to idle status
             enum_xvaccount_plugin_type m_plugin_type;
             uint8_t          m_is_closing; //atomic indicate whether is beeing idle status, 1 = true, 0 = false
-        };
-        
-       
-        
-        class xvstateplugin_t : public xvactplugin_t
-        {
-        protected:
-            xvstateplugin_t(xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms);
-            virtual ~xvstateplugin_t();
-        private:
-            xvstateplugin_t();
-            xvstateplugin_t(xvstateplugin_t &&);
-            xvstateplugin_t(const xvstateplugin_t &);
-            xvstateplugin_t & operator = (const xvstateplugin_t &);
         };
     
     }//end of namespace of base

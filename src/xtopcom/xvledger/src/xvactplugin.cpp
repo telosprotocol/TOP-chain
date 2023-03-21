@@ -80,13 +80,5 @@ namespace top
             return true;
         }
         
-        xvstateplugin_t::xvstateplugin_t(xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms)
-            :xvactplugin_t(parent_obj,idle_timeout_ms,enum_xvaccount_plugin_statemgr)
-        {
-        }
-    
-        xvstateplugin_t::~xvstateplugin_t()
-        {
-        }
     };//end of namespace of base
 };//end of namespace of top

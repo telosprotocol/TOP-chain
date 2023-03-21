@@ -73,6 +73,7 @@ endif()
 option(DISABLE_REAL_STAKE "Disable real stake require" OFF) # Real Stake requied as default, use build option mock_zec_stake to disable it.
 if(DISABLE_REAL_STAKE)
     message(STATUS "DISABLE real stake ${DISABLE_REAL_STAKE}")
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
 endif()
 
 option(STATIC_CONSENSUS "Enable static consensus" OFF)

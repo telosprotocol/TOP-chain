@@ -204,7 +204,7 @@ namespace top
                 return true;
             }
             
-            uint64_t timeout_for_block_plugin = base::enum_plugin_idle_timeout_ms;
+            uint64_t timeout_for_block_plugin = base::enum_block_plugin_idle_timeout_ms;
             if(auto_account_ptr->is_table_address())
             {
                 timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
@@ -221,7 +221,7 @@ namespace top
             else
                 new_plugin =  new xtablebkplugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
   
-            base::xauto_ptr<base::xvactplugin_t> final_ptr(auto_account_ptr->get_set_plugin(new_plugin));
+            base::xauto_ptr<base::xvactplugin_t> final_ptr(auto_account_ptr->get_set_plugin(new_plugin, true));
             inout_account_obj.transfer_owner((xblockacct_t*)final_ptr.get());
             new_plugin->release_ref();
             #endif
