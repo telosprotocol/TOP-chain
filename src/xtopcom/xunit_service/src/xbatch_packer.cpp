@@ -548,16 +548,25 @@ bool xbatch_packer::verify_proposal_viewid(const xvip2_t & from_addr, const xvip
     return valid;
 }
 
-bool xbatch_packer::recv_in(int32_t cur_thread_id, uint64_t timenow_ms) {
-    auto pdu_msg = m_pdu_msg_cache.pop_pdu(m_is_leader, m_last_view_id);
+bool xbatch_packer::proc_async_call(int32_t cur_thread_id, uint64_t timenow_ms) {
+    // priority processing new clock block.
+    auto clock_block = m_async_call_cache.pop_new_clock_block();
+    if (clock_block != nullptr) {
+        fire_clock(*clock_block.get(), 0, 0);
+        return true;
+    }
+
+    auto pdu_msg = m_async_call_cache.pop_pdu(m_is_leader, m_last_view_id);
     if (pdu_msg == nullptr) {
         return false;
     }
-
     auto & from_addr = pdu_msg->get_xip_from();
     auto & to_addr = pdu_msg->get_xip_to();
     const base::xcspdu_t & packet = *(pdu_msg->get_pdu_msg().get());
+    return recv_in(from_addr, to_addr, packet, cur_thread_id, timenow_ms);
+}
 
+bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
     auto type = packet.get_msg_type();
     bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, m_para->get_resources()->get_chain_timer()->logic_time());
     if (forked && (type == xconsensus::enum_consensus_msg_type_proposal || type == xconsensus::enum_consensus_msg_type_sync_resp)) {
@@ -876,7 +885,11 @@ int xbatch_packer::veriry_proposal_by_preproposal_block(base::xvblock_t * propos
 }
 
 void xbatch_packer::set_pdu_msg(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) {
-    m_pdu_msg_cache.push_pdu(pdu, xip_from, xip_to);
+    m_async_call_cache.push_pdu(pdu, xip_from, xip_to);
+}
+
+void xbatch_packer::set_new_clock_block(base::xvblock_t * block) {
+    m_async_call_cache.push_new_clock_block(block);
 }
 
 xpdu_msg_cache_t::xpdu_msg_cache_t(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) : m_xip_from(xip_from), m_xip_to(xip_to) {
@@ -884,9 +897,9 @@ xpdu_msg_cache_t::xpdu_msg_cache_t(base::xcspdu_t * pdu, const xvip2_t & xip_fro
     m_pdu.attach(pdu);
 }
 
-void xpdu_msgs_cache_t::push_pdu(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) {
+void xasync_call_cache_t::push_pdu(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) {
     std::lock_guard<std::mutex> lck(m_mutex);
-    xdbg("xpdu_msgs_cache_t::push_pdu pdu:%s", pdu->dump().c_str());
+    xdbg("xasync_call_cache_t::push_pdu pdu:%s", pdu->dump().c_str());
     uint64_t viewid = pdu->get_block_viewid();
     std::shared_ptr<xpdu_msg_cache_t> pdu_msg = std::make_shared<xpdu_msg_cache_t>(pdu, xip_from, xip_to);
     auto it = m_pdu_msgs.find(viewid);
@@ -899,61 +912,31 @@ void xpdu_msgs_cache_t::push_pdu(base::xcspdu_t * pdu, const xvip2_t & xip_from,
     }
 }
 
-std::shared_ptr<xpdu_msg_cache_t> xpdu_msgs_cache_t::pop_pdu(bool is_leader, uint64_t last_view_id) {
+std::shared_ptr<xpdu_msg_cache_t> xasync_call_cache_t::pop_pdu(bool is_leader, uint64_t last_view_id) {
     std::lock_guard<std::mutex> lck(m_mutex);
-    if (m_pdu_msgs.empty()) {
-        xdbg("xpdu_msgs_cache_t::pop_pdu empty");
-        return nullptr;
-    }
-
-    // if highest_viewid > m_last_view_id + 1, process pdu msg from m_last_view_id + 1
-    // else process pdu msg from m_last_view_id.
-    auto & highest_viewid = m_pdu_msgs.rbegin()->first;
-    auto & lowest_viewid = m_pdu_msgs.begin()->first;
-    uint64_t process_viewid;
-    if (last_view_id == 0) {
-        process_viewid = lowest_viewid;
-    } else {
-        process_viewid = (is_leader || (highest_viewid <= last_view_id + 1)) ? last_view_id : (last_view_id + 1);
-    }
-    std::shared_ptr<xpdu_msg_cache_t> pdu;
-    for (auto viewid = process_viewid; viewid <= highest_viewid; viewid++) {
-        auto it = m_pdu_msgs.find(viewid);
-        if (it != m_pdu_msgs.end()) {
-            assert(!it->second.empty());
-            pdu = it->second.front();
-            it->second.pop();
-            if (it->second.empty()) {
-                m_pdu_msgs.erase(viewid);
-            }
-            break;
-        }
-        // leader only process pdu msg with last_view_id.
-        if (is_leader) {
-            xwarn("xpdu_msgs_cache_t::pop_pdu leader has no pdu to process. viewid=%llu", viewid);
-            return nullptr;
-        }
-    }
-
     for (auto it = m_pdu_msgs.begin(); it != m_pdu_msgs.end();) {
-        if (it->first < last_view_id) {
-            auto & timeout_pdus = it->second;
-            if (timeout_pdus.size() > 0) {
-                auto num = timeout_pdus.size();
-                for (uint32_t i = 0; i < num; i++) {
-                    auto & timeout_pdu = timeout_pdus.front();
-                    // todo: lower log level to dbg.
-                    xinfo(
-                        "xpdu_msgs_cache_t::pop_pdu remove pdu=%s,last_view_id=%llu,highest_viewid=%llu", timeout_pdu->get_pdu_msg()->dump().c_str(), last_view_id, highest_viewid);
-                    timeout_pdus.pop();
-                }
-            }
-            m_pdu_msgs.erase(it++);
-            continue;
+        assert(!it->second.empty());
+        std::shared_ptr<xpdu_msg_cache_t> pdu = it->second.front();
+        it->second.pop();
+        if (it->second.empty()) {
+            m_pdu_msgs.erase(it);
         }
-        it++;
+        return pdu;
     }
-    return pdu;
+    return nullptr;
+}
+
+void xasync_call_cache_t::push_new_clock_block(base::xvblock_t * block) {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    block->add_ref();
+    m_new_clock_block.attach(block);
+}
+
+base::xvblock_ptr_t xasync_call_cache_t::pop_new_clock_block() {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    base::xvblock_ptr_t clock_block = m_new_clock_block;
+    m_new_clock_block = nullptr;
+    return clock_block;
 }
 
 void xpack_strategy_t::clear() {

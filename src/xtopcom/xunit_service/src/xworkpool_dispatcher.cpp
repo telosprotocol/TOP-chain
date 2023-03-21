@@ -60,7 +60,7 @@ bool xworkpool_dispatcher::dispatch(base::xworkerpool_t * pool, base::xcspdu_t *
             // return async_dispatch(pdu, xip_from, xip_to, packer) == 0;
             auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 auto packer = dynamic_cast<xbatch_packer *>(call.get_param1().get_object());
-                return packer->recv_in(cur_thread_id, timenow_ms);
+                return packer->proc_async_call(cur_thread_id, timenow_ms);
             };
             base::xcall_t asyn_call(handler, packer);
             return packer->send_call(asyn_call);
@@ -263,10 +263,10 @@ base::xworker_t * xworkpool_dispatcher::get_worker(base::xworkerpool_t * pool, b
 }
 
 void xworkpool_dispatcher::fire_clock(base::xvblock_t * block, base::xworker_t * worker, xbatch_packer_ptr_t packer) {
+    packer->set_new_clock_block(block);
     auto _call = [](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         auto packer = dynamic_cast<xbatch_packer *>(call.get_param1().get_object());
-        auto block_ptr = dynamic_cast<base::xvblock_t *>(call.get_param2().get_object());
-        packer->fire_clock(*block_ptr, 0, 0);
+        packer->proc_async_call(cur_thread_id, timenow_ms);
         return true;
     };
     base::xcall_t asyn_call((base::xcallback_t)_call, packer.get(), block);
