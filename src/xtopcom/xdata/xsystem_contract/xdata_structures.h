@@ -417,6 +417,9 @@ public:
     /// @brief Check to see if this account could be a fullnode node based on miner type.
     bool could_be_fullnode() const noexcept;
 
+    /// @brief Check to see if this account could be a fullnode node based on miner type.
+    bool could_be_fullnode_legacy() const noexcept;
+
     /// @brief Check to see if this account coule be an evm auditor node based on miner type.
     bool could_be_evm_auditor() const noexcept;
 
@@ -449,6 +452,9 @@ public:
 
     /// @brief Check to see if this account can be a fullnode based on miner type and other information (e.g. deposit, amount of received tickects).
     bool can_be_fullnode() const noexcept;
+
+    /// @brief Check to see if this account can be a fullnode based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_fullnode_legacy() const noexcept;
 
     /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
     bool can_be_evm_auditor() const noexcept;

@@ -54,7 +54,7 @@ public:
     void remove_peer(const vnetwork::xvnode_address_t &self_address, const vnetwork::xvnode_address_t &peer_address);
     void frozen_add_peer(xsync_role_peers_t &role_peers, const vnetwork::xvnode_address_t &peer_address);
     void update(const vnetwork::xvnode_address_t &self_address, const vnetwork::xvnode_address_t &peer_address, const std::vector<xchain_state_info_t> &info_list);
-    bool get_newest_peer(const vnetwork::xvnode_address_t &self_address, const std::string &address, uint64_t &start_height, uint64_t &end_height, vnetwork::xvnode_address_t &peer_addr);
+    bool get_newest_peer(const vnetwork::xvnode_address_t &self_address, const std::string &address, uint64_t &start_height, uint64_t &end_height, vnetwork::xvnode_address_t &peer_addr, bool random_check = false);
     bool get_group_size(const vnetwork::xvnode_address_t &self_address, uint32_t &count);
     uint32_t get_frozen_limit();
     bool get_archive_group(vnetwork::xvnode_address_t &self_addr, std::vector<vnetwork::xvnode_address_t> &neighbors);
