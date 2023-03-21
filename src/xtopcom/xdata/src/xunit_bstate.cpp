@@ -28,8 +28,13 @@
 namespace top {
 namespace data {
 
-xunit_bstate_t::xunit_bstate_t(base::xvbstate_t* bstate, bool readonly)
-: xbstate_ctx_t(bstate, readonly), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_unit_bstate) {
+xunit_bstate_t::xunit_bstate_t(base::xvbstate_t* bstate)
+: xbstate_ctx_t(bstate), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_unit_bstate) {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_unit_state, 1);
+}
+
+xunit_bstate_t::xunit_bstate_t(base::xvbstate_t* bstate, base::xvbstate_t* org_bstate)
+: xbstate_ctx_t(bstate, org_bstate), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_unit_bstate) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_unit_state, 1);
 }
 

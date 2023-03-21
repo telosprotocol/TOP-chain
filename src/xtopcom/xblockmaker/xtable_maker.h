@@ -69,7 +69,6 @@ private:
     
     std::vector<xcons_transaction_ptr_t> plugin_make_txs_after_execution(statectx::xstatectx_ptr_t const& statectx_ptr, const data::xblock_consensus_para_t & cs_para, 
                                                                          std::vector<txexecutor::xatomictx_output_t> const& pack_outputs, std::error_code & ec);
-                                                                         
     xblock_resource_plugin_face_ptr_t           m_resource_plugin{nullptr};
     uint32_t                                    m_full_table_interval_num;
     xblock_builder_face_ptr_t                   m_fulltable_builder;
@@ -91,13 +90,19 @@ using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;
 // TODO(jimmy) the whold table state do commit
 class xtable_mpt_container : public base::xvblock_excontainer_base {
 public:
-   xtable_mpt_container(statectx::xstatectx_face_ptr_t const& _ctx) : m_statectx(_ctx) {}
-   virtual void commit(base::xvblock_t* current_block) override {
-       m_statectx->do_commit(current_block);
-   }
+    xtable_mpt_container(statectx::xstatectx_face_ptr_t const& _ctx) : m_statectx(_ctx) {}
+    virtual void commit(base::xvblock_t* current_block) override {
+        m_statectx->do_commit(current_block);
+    }
+    virtual void extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) const override {
+        auto const& unitctxs = m_statectx->get_modified_unit_ctx();
+        for (auto & v : unitctxs) {
+            sub_blocks.push_back(v.second->get_unit());
+        }
+    }
 
 private:
-   statectx::xstatectx_face_ptr_t m_statectx;
+    statectx::xstatectx_face_ptr_t m_statectx;
 };
 
 NS_END2

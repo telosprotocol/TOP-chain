@@ -40,6 +40,18 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_unit_bstate(ba
     return proposal_bstate;    
 }
 
+data::xaccountstate_ptr_t xstatectx_base_t::create_proposal_account_state(base::xaccount_index_t const& account_index, data::xunitstate_ptr_t const& unitstate) {
+    assert(!account_index.get_latest_unit_hash().empty());
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(account_index.get_latest_unit_hash(), *unitstate->get_bstate().get());
+    if (nullptr == bstate) {
+        xerror("xstatectx_base_t::create_proposal_account_state fail.addr=%s,index=%s", unitstate->get_bstate()->get_account().c_str(),account_index.dump().c_str());
+        return nullptr;
+    }
+    assert(bstate->get_last_block_hash() == account_index.get_latest_unit_hash());
+    data::xunitstate_ptr_t unitstate_proposal = std::make_shared<data::xunit_bstate_t>(bstate.get(), unitstate->get_bstate().get());  // modify-state        
+    return std::make_shared<data::xaccount_state_t>(unitstate_proposal, account_index);
+}
+
 void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_t end_height) const {
     base::xaccount_index_t commit_accountindex;
     auto ret = get_account_index(m_commit_table_state, _vaddr.get_account(), commit_accountindex);

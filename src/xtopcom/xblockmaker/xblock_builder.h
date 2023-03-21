@@ -26,11 +26,19 @@ class xunitbuildber_txkeys_mgr_t {
     std::map<std::string, base::xvtxkey_vec_t>  m_account_txkeys;
 };
 
+struct xunit_build_result_t {
+    base::xvblock_ptr_t     unitblock;
+    data::xunitstate_ptr_t  unitstate;
+    std::string             unitstate_bin;
+    base::xaccount_index_t  accountindex;
+};
+using xunit_build_result_ptr_t = std::shared_ptr<xunit_build_result_t>;
+
 class xunitbuilder_t {
  public:
     static bool    can_make_full_unit_v2(uint64_t proposal_height);
     static base::xvblock_ptr_t  create_unit(std::string const& account, uint64_t height, std::string const& last_block_hash, const data::xunit_block_para_t & bodypara, const data::xblock_consensus_para_t & cs_para);
-    static base::xvblock_ptr_t  make_block_v2(const data::xunitstate_ptr_t & unitstate, const data::xblock_consensus_para_t & cs_para);
+    static void     make_unitblock_and_unitstate(data::xaccountstate_ptr_t const& accountstate, const data::xblock_consensus_para_t & cs_para, xunit_build_result_t & result);
 };
 
 

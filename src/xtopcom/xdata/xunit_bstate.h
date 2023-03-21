@@ -28,7 +28,8 @@ using xallowance_update_op_t = xtop_allowance_update_op;
 
 class xunit_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_face_t {
  public:
-    xunit_bstate_t(base::xvbstate_t* bstate, bool readonly = true);
+    xunit_bstate_t(base::xvbstate_t* bstate);
+    xunit_bstate_t(base::xvbstate_t* bstate, base::xvbstate_t* org_bstate);
     
     ~xunit_bstate_t();
  private:
@@ -122,6 +123,7 @@ public:
     xunitstate_ptr_t const&     get_unitstate() const {return m_unitstate;}
     uint64_t                    get_tx_nonce() const {return m_accountindex.get_latest_tx_nonce();}
     std::string const&          get_unit_hash() const {return m_accountindex.get_latest_unit_hash();}
+    base::xaccount_index_t const&   get_accountindex() const {return m_accountindex;}
 public:  // set in consensus
     void                increase_tx_nonce();
     void                set_tx_nonce(uint64_t txnonce);
@@ -135,5 +137,11 @@ private:
     uint64_t                    m_nonce_snapshot{0};    
 };
 using xaccountstate_ptr_t = std::shared_ptr<xaccount_state_t>;
+
+struct xunitstate_store_para_t {
+    data::xunitstate_ptr_t      m_unitstate;
+    std::string                 m_unit_hash;
+    std::string                 m_unitstate_bin;
+};
 
 NS_END2

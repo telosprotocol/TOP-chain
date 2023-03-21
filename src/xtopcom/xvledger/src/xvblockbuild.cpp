@@ -561,6 +561,15 @@ namespace top
             m_full_state_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
             return true;
         }
+        bool xvblockmaker_t::set_output_full_state_without_hash(const std::string & value) {
+            if (value.empty() || get_header()->get_block_class() == enum_xvblock_class_nil) {
+                xassert(false);
+                return false;
+            }
+            m_full_state = value;
+            // m_full_state_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
+            return true;
+        }        
         bool xvblockmaker_t::set_output_binlog(const std::string & value) {
             if (value.empty() || get_header()->get_block_class() != enum_xvblock_class_light) {
                 // if (get_header()->get_block_class() != enum_xvblock_class_full) {

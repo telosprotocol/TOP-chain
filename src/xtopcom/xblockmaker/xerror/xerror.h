@@ -24,6 +24,7 @@ enum class xenum_errc {
     blockmaker_relayblock_unconnect,
     blockmaker_load_unitstate,
     blockmaker_property_invalid,
+    blockmaker_no_valid_txs,
 };
 using xerrc_t = xenum_errc;
 

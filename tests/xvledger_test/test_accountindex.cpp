@@ -16,9 +16,9 @@ protected:
 
 TEST_F(test_accountindex, write_and_read_2)
 {
-    base::xaccount_index_t index1{1, std::to_string(1), std::to_string(1), 1};
-    base::xaccount_index_t index2{2, std::to_string(2), std::to_string(2), 2};
-    base::xaccount_index_t index3{3, std::to_string(3), std::to_string(3), 3};
+    base::xaccount_index_t index1{base::enum_xaccountindex_version_state_hash, 1, std::to_string(1), std::to_string(1), 1};
+    base::xaccount_index_t index2{base::enum_xaccountindex_version_state_hash, 2, std::to_string(2), std::to_string(2), 2};
+    base::xaccount_index_t index3{base::enum_xaccountindex_version_state_hash, 3, std::to_string(3), std::to_string(3), 3};
 
     base::xaccount_indexs_t  indexs;
     indexs.add_account_index("aaa", index1);
@@ -58,7 +58,7 @@ TEST_F(test_accountindex, old_and_new_version)
     ASSERT_EQ(index_old_tmp.get_latest_unit_hash(), index_old_tmp.get_latest_unit_hash());
     ASSERT_EQ(index_old_tmp.get_latest_state_hash(), index_old_tmp.get_latest_state_hash());
 
-    base::xaccount_index_t index_new{1, std::to_string(1), std::to_string(1), 1};
+    base::xaccount_index_t index_new{base::enum_xaccountindex_version_state_hash, 1, std::to_string(1), std::to_string(1), 1};
     std::string new_version_str;
     index_new.serialize_to(new_version_str);
     std::cout << "new_version_str size:" << new_version_str.size() << std::endl;
