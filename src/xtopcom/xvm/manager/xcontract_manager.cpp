@@ -248,6 +248,7 @@ void xtop_contract_manager::clear() {
     }
     m_map.clear();
 
+    // m_contract_inst_map don't own the life of contract
     m_contract_inst_map.clear();
 }
 

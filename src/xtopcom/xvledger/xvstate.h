@@ -206,7 +206,8 @@ namespace top
 
             virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vbstate;}
 
-            void        update_final_block_info(xvblock_t* for_block);
+            // void        update_final_block_info(xvblock_t* for_block);
+            void        update_final_block_info(xvheader_t* _header, uint64_t viewid);
 
         protected:
             //subclass extend behavior and load more information instead of a raw one

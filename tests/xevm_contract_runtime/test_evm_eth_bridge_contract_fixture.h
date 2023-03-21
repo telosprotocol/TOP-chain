@@ -46,10 +46,13 @@ public:
     bool is_state_dirty() const override {
         return true;
     }
-
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const override {
+        return m_changed_ctxs;
+    }
     data::xtablestate_ptr_t table_state{nullptr};
     data::xunitstate_ptr_t ustate{nullptr};
     std::string table_address{common::eth_table_base_address.to_string()};
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> m_changed_ctxs;
 };
 
 class xcontract_fixture_t : public testing::Test {
@@ -68,7 +71,7 @@ public:
         bstate->new_string_var(data::system_contract::XPROPERTY_LAST_HASH, canvas.get());
         auto bytes = (evm_common::h256(0)).asBytes();
         bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
-        contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
+        contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), bstate.get());
         statectx = top::make_unique<xmock_statectx_t>(contract_state);
         statectx_observer = make_observer<statectx::xstatectx_face_t>(statectx.get());
         context.address = common::xtop_eth_address::build_from("ff00000000000000000000000000000000000002");

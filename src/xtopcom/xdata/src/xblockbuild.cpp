@@ -376,7 +376,7 @@ base::xauto_ptr<base::xvblock_t> xfullunit_build_t::create_new_block() {
     return new xfullunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
-xunit_build2_t::xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
+xunit_build2_t::xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xblock_consensus_para_t & para) {
     xassert(para.get_parent_height() > 0);
     if (false == chain_fork::xutility_t::is_forked(fork_points::v11200_block_fork_point, para.get_clock())) {
         base::enum_xvblock_class _class = is_full_unit ? base::enum_xvblock_class_full : base::enum_xvblock_class_light;
@@ -387,7 +387,6 @@ xunit_build2_t::xunit_build2_t(std::string const& account, uint64_t height, std:
                                         para.get_drand_height(), para.get_parent_height(), std::string());
         
         init_header_qcert(build_para);
-        build_block_body(bodypara);
     } else {
         // unit is nil block but with binlog
         base::enum_xvblock_class _class = base::enum_xvblock_class_nil;
@@ -397,8 +396,7 @@ xunit_build2_t::xunit_build2_t(std::string const& account, uint64_t height, std:
         // qcert only has clock,viewid,parent height
         build_para.set_simple_cert_para(para.get_clock(), para.get_viewid(), para.get_parent_height());        
         init_header_qcert(build_para);  
-        set_block_character(base::enum_xvblock_character_simple_unit);// TODO(jimmy) use character ?
-        build_block_body_for_simple_unit(bodypara);  
+        set_block_character(base::enum_xvblock_character_simple_unit);
     }    
 }
 
@@ -416,6 +414,14 @@ xunit_build2_t::xunit_build2_t(base::xvheader_t* header, base::xvblock_t* parent
         build_para.set_simple_cert_para(parentblock->get_clock(), parentblock->get_viewid(), parentblock->get_height());
         set_header(header);
         init_qcert(build_para);
+    }
+}
+
+void xunit_build2_t::create_block_body(const xunit_block_para_t & bodypara) {
+    if (false == chain_fork::xutility_t::is_forked(fork_points::v11200_block_fork_point, get_qcert()->get_clock())) {
+        build_block_body(bodypara);
+    } else {
+        build_block_body_for_simple_unit(bodypara);  
     }
 }
 
@@ -446,7 +452,8 @@ bool xunit_build2_t::build_block_body_for_simple_unit(const xunit_block_para_t &
     base::xunit_header_extra_t _header_extra;
     // always set binlog only for fullunit offchain state
     _header_extra.set_binlog(para.get_property_binlog());
-    std::string _state_hash = get_qcert()->hash(para.get_fullstate_bin());
+    std::string _state_hash = para.get_fullstate_bin_hash();
+    assert(!_state_hash.empty());
     _header_extra.set_state_hash(_state_hash);
     std::string header_extra_bin;
     _header_extra.serialize_to_string(header_extra_bin);

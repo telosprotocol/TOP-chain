@@ -439,7 +439,7 @@ TEST_F(test_block_executed, latest_executed_state_1) {
     {
         mock::xvchain_creator creator;
         mock::xdatamock_table mocktable(1, 4);
-        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
+        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xtable_address_t::build_from(mocktable.get_account()));
         EXPECT_TRUE(tablestate != nullptr);
         EXPECT_EQ(tablestate->height(), 0);
     }
@@ -455,7 +455,7 @@ TEST_F(test_block_executed, latest_executed_state_1) {
             ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
             statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(block.get());
         }
-        auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
+        auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xtable_address_t::build_from(mocktable.get_account()));
         EXPECT_EQ(tablestate2->height(), max_count-2);         
     }
 }

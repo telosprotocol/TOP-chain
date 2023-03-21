@@ -37,9 +37,12 @@ public:
     bool is_state_dirty() const override {
         return true;
     }
-
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const override {
+        return m_changed_ctxs;
+    }
     data::xtablestate_ptr_t m_table_state{nullptr};
     data::xunitstate_ptr_t m_unit_state{nullptr};
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> m_changed_ctxs;
 };
 
 }  // namespace tests

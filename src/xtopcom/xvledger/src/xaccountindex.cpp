@@ -22,6 +22,7 @@ xaccount_index_t::~xaccount_index_t() {
 }
 
 xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) : xstatistic::xstatistic_obj_face_t(left){
+    m_version            = left.m_version;
     m_latest_tx_nonce    = left.m_latest_tx_nonce;
     m_latest_unit_height = left.m_latest_unit_height;
     m_latest_unit_viewid = left.m_latest_unit_viewid;
@@ -59,14 +60,15 @@ xaccount_index_t::xaccount_index_t(uint64_t height,
 }
 
 // new version
-xaccount_index_t::xaccount_index_t(uint64_t height, std::string const & unithash, std::string const & statehash, uint64_t nonce)
+xaccount_index_t::xaccount_index_t(enum_xaccountindex_version_t version, uint64_t height, std::string const & unithash, std::string const & statehash, uint64_t nonce)
   : xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_account_index) {
+    assert(version == enum_xaccountindex_version_snapshot_hash || version == enum_xaccountindex_version_state_hash);
+    assert(!unithash.empty() && !statehash.empty());
+    m_version = (uint8_t)version;
     m_latest_tx_nonce    = nonce;
     m_latest_unit_height = height;
     m_latest_unit_viewid = 0;
     m_unit_hash = unithash;
-    xdbg("xaccount_index_t::xaccount_index_t unithash:%s", base::xstring_utl::to_hex(unithash).c_str());
-    xassert(!unithash.empty());
     m_state_hash = statehash;
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
 }
@@ -77,7 +79,8 @@ bool xaccount_index_t::operator == (const xaccount_index_t &other) const {
         && m_account_flag       == other.m_account_flag
         && m_latest_tx_nonce    == other.m_latest_tx_nonce
         && m_unit_hash          == other.m_unit_hash
-        && m_state_hash         == other.m_state_hash) {
+        && m_state_hash         == other.m_state_hash
+        && m_version            == other.m_version) {
         return true;
     }
     return false;
@@ -161,10 +164,10 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
 int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
     stream.read_compact_var(m_version);
-    xassert(m_version == 0);
-    if (m_version != 0){
-        return 0;
-    }
+    // xassert(m_version == 0);
+    // if (m_version != 0){
+    //     return 0;
+    // }
     stream.read_compact_var(m_latest_unit_height);
     stream.read_compact_var(m_latest_tx_nonce);
     stream.read_compact_var(m_unit_hash);
@@ -213,8 +216,8 @@ bool xaccount_index_t::is_match_unit(base::xvblock_t* unit) const {
 
 std::string xaccount_index_t::dump() const {
     char local_param_buf[128];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x,nonce=%" PRIu64 ",hash:%s,state:%s}",
-        m_latest_unit_height, m_latest_unit_viewid, m_account_flag, m_latest_tx_nonce, base::xstring_utl::to_hex(m_unit_hash).c_str(), base::xstring_utl::to_hex(m_state_hash).c_str());
+    xprintf(local_param_buf,sizeof(local_param_buf),"{ver=%d,height=%" PRIu64 ",nonce=%" PRIu64 ",unit=%s,state=%s}",
+        m_version, m_latest_unit_height, m_latest_tx_nonce, base::xstring_utl::to_hex(m_unit_hash).c_str(), base::xstring_utl::to_hex(m_state_hash).c_str());
     return std::string(local_param_buf);
 }
 

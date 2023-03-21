@@ -630,7 +630,8 @@ namespace top
 
         class xvblock_excontainer_base {
         public:
-            virtual void commit(base::xvblock_t* current_block){}
+            virtual void commit(base::xvblock_t* current_block) = 0;
+            virtual void extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) const = 0;
         };
 
         class xvsubblock_index_t {

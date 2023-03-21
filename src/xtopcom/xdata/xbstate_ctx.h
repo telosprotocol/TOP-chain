@@ -16,7 +16,8 @@ NS_BEG2(top, data)
 // bstate with canvas
 class xbstate_ctx_t {
 protected:
-    xbstate_ctx_t(base::xvbstate_t* bstate, bool readonly);
+    xbstate_ctx_t(base::xvbstate_t* bstate);
+    xbstate_ctx_t(base::xvbstate_t* bstate, base::xvbstate_t* org_bstate);
     virtual ~xbstate_ctx_t();
 
  private:

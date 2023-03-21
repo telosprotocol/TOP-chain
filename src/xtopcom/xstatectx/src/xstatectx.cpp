@@ -23,8 +23,8 @@ NS_BEG2(top, statectx)
 xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablestate_ext_ptr_t & prev_table_state, base::xvblock_t* commit_block, const statestore::xtablestate_ext_ptr_t & commit_table_state, const xstatectx_para_t & para)
 : m_table_address(common::xtable_address_t::build_from(prev_block->get_account())), m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
     // create proposal table state for context
-    xobject_ptr_t<base::xvbstate_t> proposal_bstate = xstatectx_base_t::create_proposal_bstate(prev_block, prev_table_state->get_table_state()->get_bstate().get(), para.m_clock);
-    data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);  // change to modified state
+    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(prev_block->get_block_hash(), *prev_table_state->get_table_state()->get_bstate().get());
+    data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), prev_table_state->get_table_state()->get_bstate().get());  // change to modified state
     m_table_ctx = std::make_shared<xtablestate_ctx_t>(proposal_table_state, prev_table_state->get_state_mpt());
 
     std::error_code ec;
@@ -99,15 +99,11 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(common::xaccount_address_t const
             xerror("xstatectx_t::load_unit_ctx fail-load unitstate.addr=%s,index=%s", address.to_string().c_str(),account_index.dump().c_str());
             return nullptr;
         }
-
-        bstate = xstatectx_base_t::create_proposal_unit_bstate(unitstate->get_bstate().get(), account_index.get_latest_unit_hash());
-        if (nullptr == bstate) {
-            xerror("xstatectx_t::load_unit_ctx fail-change proposal state.addr=%s,index=%s", address.to_string().c_str(),account_index.dump().c_str());
+        data::xaccountstate_ptr_t accountstate = xstatectx_base_t::create_proposal_account_state(account_index, unitstate);
+        if (nullptr == accountstate) {
+            xerror("xstatectx_t::load_unit_ctx fail-create proposal state.addr=%s,index=%s", address.to_string().c_str(),account_index.dump().c_str());
             return nullptr;
         }
-        xassert(bstate->get_last_block_hash() == account_index.get_latest_unit_hash());
-        data::xunitstate_ptr_t unitstate_proposal = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state        
-        data::xaccountstate_ptr_t accountstate(std::make_shared<data::xaccount_state_t>(unitstate_proposal, account_index));
         unit_ctx = std::make_shared<xunitstate_ctx_t>(accountstate);
         xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), address.to_string().c_str(), account_index.dump().c_str());
     } else { // different table unit state is readonly        
@@ -192,14 +188,32 @@ size_t xstatectx_t::do_snapshot() {
     return snapshot_size;
 }
 
+void xstatectx_t::finish_execution() {
+    assert(!m_finish_execution);
+    for (auto iter = m_unit_ctxs.begin(); iter != m_unit_ctxs.end(); ) {
+        if (false == iter->second->get_unitstate()->is_state_changed()) {
+            iter = m_unit_ctxs.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+    m_finish_execution = true;
+}
+
 void xstatectx_t::do_commit(base::xvblock_t* current_block) {
     XMETRICS_TIME_RECORD("cons_statectx_commit_cost");
     auto const & state_root_hash = data::xblockextract_t::get_state_root_from_block(current_block);
-
-    std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
-    std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = get_modified_unit_ctx();
-    for (auto & unitctx : unitctxs) {
-        unitstate_units.push_back(std::make_pair(unitctx->get_unitstate(), unitctx->get_unit_hash()));
+    
+    auto const& unitctxs = get_modified_unit_ctx();
+    std::vector<data::xunitstate_store_para_t> _unitstate_paras(unitctxs.size());
+    int i = 0;
+    for (auto & v : unitctxs) {
+        auto & unitctx = v.second;
+        data::xunitstate_store_para_t _para;
+        _para.m_unitstate = unitctx->get_unitstate();
+        _para.m_unit_hash = unitctx->get_unit_hash();
+        _para.m_unitstate_bin = unitctx->get_unitstate_bin();
+        _unitstate_paras[i++] = std::move(_para);
     }
 
     // XTODO create store table bstate by final block
@@ -207,13 +221,13 @@ void xstatectx_t::do_commit(base::xvblock_t* current_block) {
     data::xtablestate_ptr_t table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
 
     std::error_code ec;
-    statestore::xtablestate_store_ptr_t tablestate_store = std::make_shared<statestore::xtablestate_store_t>(table_bstate, m_prev_tablestate_ext->get_state_mpt(), state_root_hash, unitstate_units);
+    statestore::xtablestate_store_ptr_t tablestate_store = std::make_shared<statestore::xtablestate_store_t>(table_bstate, m_prev_tablestate_ext->get_state_mpt(), state_root_hash, std::move(_unitstate_paras));
     statestore::xstatestore_hub_t::instance()->do_commit_table_all_states(current_block, tablestate_store, ec);
     if (ec) {
         xerror("xstatectx_t::do_commit fail. block:%s", current_block->dump().c_str());
         return;
     }
-    xdbg("xstatectx_t::do_commit succ. block:%s", current_block->dump().c_str());
+    xdbg_info("xstatectx_t::do_commit succ. block:%s", current_block->dump().c_str());
 }
 
 bool xstatectx_t::is_state_dirty() const {
@@ -230,14 +244,9 @@ bool xstatectx_t::is_state_dirty() const {
     return false;
 }
 
-std::vector<xunitstate_ctx_ptr_t> xstatectx_t::get_modified_unit_ctx() const {
-    std::vector<xunitstate_ctx_ptr_t> unitctxs;
-    for (auto & unitctx : m_unit_ctxs) {
-        if (unitctx.second->get_unitstate()->is_state_changed()) {
-            unitctxs.push_back(unitctx.second);
-        }
-    }
-    return unitctxs;
+std::map<std::string, xunitstate_ctx_ptr_t> const& xstatectx_t::get_modified_unit_ctx() const {
+    assert(m_finish_execution);
+    return m_unit_ctxs;
 }
 
 xstatectx_ptr_t xstatectx_factory_t::create_latest_cert_statectx(base::xvblock_t* prev_block, base::xvblock_t* commit_block, const xstatectx_para_t & para) {
