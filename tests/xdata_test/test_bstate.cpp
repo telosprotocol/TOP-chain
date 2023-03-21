@@ -37,9 +37,15 @@ TEST_F(test_bstate, snapshot_rollback_1) {
         ASSERT_EQ(4, bstatectx.get_canvas_records_size());
         ASSERT_EQ("v1", bstatectx.string_get("@1"));
         ASSERT_EQ("v2", bstatectx.string_get("@2"));
+        ASSERT_EQ(false, bstate->find_property("@1"));
+        ASSERT_EQ(false, bstate->find_property("@2"));
 
         ASSERT_EQ(true, bstatectx.do_rollback());
         ASSERT_EQ("", bstatectx.string_get("@1"));
+        ASSERT_EQ(true, clone_bstate->find_property("@1"));  // TODO(jimmy) already created
+        ASSERT_EQ(true, clone_bstate->find_property("@2"));
+        ASSERT_EQ(false, bstate->find_property("@1"));
+        ASSERT_EQ(false, bstate->find_property("@2")); 
         ASSERT_EQ(0, bstatectx.get_canvas_records_size());
     }
 
@@ -50,6 +56,8 @@ TEST_F(test_bstate, snapshot_rollback_1) {
         ASSERT_EQ(0, bstatectx.string_set("@2", "v2"));
 
         ASSERT_EQ(4, bstatectx.do_snapshot());
+        ASSERT_EQ(false, bstate->find_property("@1"));
+        ASSERT_EQ(false, bstate->find_property("@2")); 
         ASSERT_EQ("v1", bstatectx.string_get("@1"));
         ASSERT_EQ(true, bstatectx.do_rollback());
         ASSERT_EQ("v1", bstatectx.string_get("@1"));
@@ -63,6 +71,10 @@ TEST_F(test_bstate, snapshot_rollback_1) {
 
         ASSERT_EQ(true, bstatectx.do_rollback());
         ASSERT_EQ("v1", bstatectx.string_get("@1"));
+        auto string_var = clone_bstate->load_string_var("@1");
+        ASSERT_EQ("v1", string_var->query());
+        ASSERT_EQ(false, bstate->find_property("@1"));
+        ASSERT_EQ(false, bstate->find_property("@2"));           
         ASSERT_EQ(4, bstatectx.get_canvas_records_size());
     }
     

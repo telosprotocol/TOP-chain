@@ -84,7 +84,7 @@ bool xbstate_ctx_t::do_rollback() {
             return ret;
         }
         m_bstate = _new_bstate;
-        xwarn("xbstate_ctx_t::do_rollback rollback addr %s", _new_bstate->get_account().c_str());
+        xwarn("xbstate_ctx_t::do_rollback rollback addr %s,m_snapshot_canvas_height=%ld", _new_bstate->get_account().c_str(),m_snapshot_canvas_height);
     }
     return true;
 }
