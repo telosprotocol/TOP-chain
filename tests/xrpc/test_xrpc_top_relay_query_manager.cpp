@@ -19,7 +19,7 @@ class test_xrpc_top_relay_query_manager : public testing::Test {
     void SetUp() override {
         m_store = creator.get_xstore();
         m_block_store = creator.get_blockstore();
-        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_block_store), nullptr, nullptr);
+        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_block_store));
         contract::xcontract_manager_t::instance().init(nullptr);
     }
 

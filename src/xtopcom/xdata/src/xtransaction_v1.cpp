@@ -21,6 +21,7 @@
 #include "xmetrics/xmetrics.h"
 #include "xbasic/xversion.h"
 #include "xdata/xdata_defines.h"
+#include "xdata/xverifier/xverifier_errors.h"
 #include "xvledger/xvaccount.h"
 
 #include <cinttypes>

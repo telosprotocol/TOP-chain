@@ -77,7 +77,7 @@ struct convert<top::data::election::v2::xstandby_node_info_t> final {
 
         case xv2_standby_node_info_public_key_index: {
             node_info.consensus_public_key = o.via.array.ptr[xv2_standby_node_info_public_key_index].as<top::xpublic_key_t>();
-            XATTRIBUTE_FALLTHROUGH;
+            break;
         }
         }
 

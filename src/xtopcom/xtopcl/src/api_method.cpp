@@ -1375,12 +1375,30 @@ std::string ApiMethod::input_hiding() {
     /// add `< /dev/tty` to work around to support handle password from stdin
     /// or it will error: `stty: standard input: Inappropriate ioctl for device`
     /// more infomation reference https://unix.stackexchange.com/questions/157852/echo-test-stty-echo-stty-standard-input-inappropriate-ioctl-for-device
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunused-result"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wunused-result"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
     std::system("stty -echo < /dev/tty");
     std::string str;
     std::getline(std::cin, str, '\n');
     cin.clear();
     std::system("stty echo < /dev/tty");
     return str;
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 }
 
 std::string ApiMethod::input_hiding_no_empty(std::string const & empty_msg) {

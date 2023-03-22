@@ -328,34 +328,34 @@ public:
         return encode(xbytes_t(string.begin(), string.end()));
     }
 
-    static xbytes_t encode(uint8_t number) noexcept {
-        return encode(uint64_t(number));
+    static xbytes_t encode(uint8_t const number) noexcept {
+        return encode(static_cast<uint64_t>(number));
     }
 
-    static xbytes_t encode(uint16_t number) noexcept {
-        return encode(uint64_t(number));
+    static xbytes_t encode(uint16_t const number) noexcept {
+        return encode(static_cast<uint64_t>(number));
     }
 
-    static xbytes_t encode(int32_t number) noexcept {
+    static xbytes_t encode(int32_t const number) noexcept {
         if (number < 0) {
             return {};  // RLP cannot encode negative numbers
         }
         return encode(static_cast<uint32_t>(number));
     }
 
-    static xbytes_t encode(uint32_t number) noexcept {
-        return encode(uint64_t(number));
+    static xbytes_t encode(uint32_t const number) noexcept {
+        return encode(static_cast<uint64_t>(number));
     }
 
-    static xbytes_t encode(int64_t number) noexcept {
+    static xbytes_t encode(int64_t const number) noexcept {
         if (number < 0) {
             return {};  // RLP cannot encode negative numbers
         }
         return encode(static_cast<uint64_t>(number));
     }
-    static xbytes_t encode(uint64_t number) noexcept {
-        auto data = top::evm_common::toCompactBigEndian(number);
-        u256 udata = top::evm_common::fromBigEndian<u256>(data);
+    static xbytes_t encode(uint64_t const number) noexcept {
+        auto const data = top::evm_common::toCompactBigEndian(number);
+        u256 const udata = top::evm_common::fromBigEndian<u256>(data);
         return encode(udata);
     }
 
@@ -385,17 +385,17 @@ public:
     /// Encodes a list of elements.
     template <typename T>
     static xbytes_t encodeList(T elements) noexcept {
-        auto encodedData = xbytes_t();
+        xbytes_t encoded_data{};
         for (const auto & el : elements) {
             auto encoded = encode(el);
             if (encoded.empty()) {
                 return {};
             }
-            encodedData.insert(encodedData.end(), encoded.begin(), encoded.end());
+            encoded_data.insert(encoded_data.end(), encoded.begin(), encoded.end());
         }
 
-        auto encoded = encodeHeader(encodedData.size(), 0xc0, 0xf7);
-        encoded.insert(encoded.end(), encodedData.begin(), encodedData.end());
+        auto encoded = encodeHeader(encoded_data.size(), 0xc0, 0xf7);
+        encoded.insert(encoded.end(), encoded_data.begin(), encoded_data.end());
         return encoded;
     }
 
@@ -449,7 +449,7 @@ private:
 
     /// The list-indexing cache.
     // Index of the last item accessed with operator[]
-    mutable size_t m_lastIndex = (size_t)-1;
+    mutable size_t m_lastIndex = static_cast<size_t>(-1);
     // Offset of the next byte after last byte of m_lastItem
     mutable size_t m_lastEnd = 0;
     // Data of the last item accessed with operator[]
@@ -486,12 +486,12 @@ class RLPStream
 {
 public:
     /// Initializes empty RLPStream.
-    RLPStream() {}
+    RLPStream() = default;
 
     /// Initializes the RLPStream as a list of @a _listItems items.
     explicit RLPStream(size_t _listItems) { appendList(_listItems); }
 
-    ~RLPStream() {}
+    ~RLPStream() = default;
 
     /// Append given datum to the byte stream.
     RLPStream& append(unsigned _s) { return append(bigint(_s)); }

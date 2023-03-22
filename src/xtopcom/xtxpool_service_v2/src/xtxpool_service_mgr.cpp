@@ -17,6 +17,7 @@
 #include "xtxpool_service_v2/xtxpool_service.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xchain_fork/xutility.h"
+#include "xdata/xverifier/xverifier_utl.h"
 
 #include <cinttypes>
 

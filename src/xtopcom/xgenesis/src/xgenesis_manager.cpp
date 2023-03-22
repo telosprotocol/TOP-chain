@@ -426,5 +426,10 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_relay_a
     xassert(nullptr != genesis_block);
     return genesis_block;
 }
+
+std::set<common::xaccount_address_t> const & xtop_genesis_manager::get_all_genesis_accounts() {
+    return m_all_genesis_accounts;
+}
+
 }  // namespace genesis
 }  // namespace top

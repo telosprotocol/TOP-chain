@@ -12,9 +12,6 @@
 #include "ethash/src/ethash/ethash-internal.hpp"
 #endif
 
-#include "xdepends/include/ethash/keccak.hpp"
-#include "xdepends/include/ethash/src/ethash/endianness.hpp"
-#include "xdepends/include/ethash/src/ethash/ethash-internal.hpp"
 #include "xcommon/rlp.h"
 #include "xevm_common/src/xethash_data.cpp"
 #include "xevm_common/xcrosschain/xeth_config.h"

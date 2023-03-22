@@ -8,8 +8,8 @@
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xchain_param.h"
-#include "xdata/xgenesis_data.h"
 #include "xdata/xtx_factory.h"
 #include "xhttp/xhttp_client_base.h"
 #include "xmbus/xevent_store.h"
@@ -20,7 +20,6 @@
 #include "xrpc/xuint_format.h"
 #include "xsafebox/safebox_proxy.h"
 
-#include <cinttypes>
 
 using namespace top::data;
 
