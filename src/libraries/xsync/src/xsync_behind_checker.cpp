@@ -89,7 +89,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
 
     vnetwork::xvnode_address_t peer_addr;
 
-    if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
+    if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr, true)) {
        // xsync_dbg("xsync_behind_checker_t::check_one, sync_policy %d, %s,%llu,%llu,%llu,%llu,%s", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, peer_addr.to_string().c_str());
         if ((m_counter % 120) == 0) {
             std::string sync_mode;
@@ -133,15 +133,6 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
             return;
 
         if (latest_end_block_height >= peer_end_height) {
-            // if (sync_policy == enum_chain_sync_policy_fast) {
-            //     auto latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
-            //     data::xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
-            //     if (block->is_full_state_block()) {
-            //         return;
-            //     }
-            // } else {
-            //     return;
-            // }
             return;
         }
         
