@@ -88,7 +88,7 @@ class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
     void                    set_account_index_flag(enum_xaccount_index_flag _flag);
     void                    set_latest_unit_consensus_type(enum_xblock_consensus_type _type);
 
-    virtual int32_t         get_object_size_real() const override;
+    size_t get_object_size_real() const override;
 
  private:
     uint8_t         m_version{0};

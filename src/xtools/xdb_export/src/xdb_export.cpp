@@ -1305,7 +1305,7 @@ bool xdb_export_tools_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enu
 void xdb_export_tools_t::get_txinfo_from_txaction(const data::xlightunit_action_t & txaction, const data::xblock_t * block, const data::xtransaction_ptr_t & tx_ptr, std::vector<tx_ext_t> & batch_tx_exts) {
     base::xtable_shortid_t tableid;
     if (tx_ptr != nullptr) {
-        base::xvaccount_t _vaddr(tx_ptr->get_source_addr());
+        base::xvaccount_t _vaddr(tx_ptr->source_address().to_string());
         tableid = _vaddr.get_short_table_id();
     } else {
         tableid = txaction.get_rawtx_source_tableid();

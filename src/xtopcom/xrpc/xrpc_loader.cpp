@@ -118,7 +118,7 @@ Json::Value xrpc_loader_t::parse_send_tx(const xtxindex_detail_ptr_t & sendindex
     Json::Value jv;
     parse_common_info(sendindex, jv);
     jv["used_deposit"] = static_cast<Json::UInt64>(sendindex->get_txaction().get_used_deposit());
-    auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(sendindex->get_raw_tx()->get_source_addr(), sendindex->get_raw_tx()->get_target_addr());
+    auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(sendindex->get_raw_tx()->source_address().to_string(), sendindex->get_raw_tx()->target_address().to_string());
     jv["tx_fee"] = static_cast<Json::UInt64>(beacon_tx_fee);
     if (sendindex->get_txaction().is_self_tx()) {  // XTODO sendtx not need set exec_status, only confirmtx and selftx need set exec_status
         jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(sendindex->get_txaction().get_tx_exec_status());

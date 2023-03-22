@@ -122,7 +122,7 @@ namespace top
         private:
             void               init(); //init object
             bool               reset_next_block(xvbindex_t * _new_next_ptr);//return false if hash or height not match
-            virtual int32_t    get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         private://not serialized to db
             xvbindex_t*     m_prev_index;

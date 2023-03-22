@@ -29,7 +29,7 @@ using namespace top::contract_vm;
 using namespace top::data;
 using namespace top::mock;
 
-static const std::string user_address{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"};
+static const common::xaccount_address_t user_address{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"};
 static const std::string public_key{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
 static const std::string sign_key{"NzjQLs3K3stpskP8j1VG5DKwZF2vvBJNLDaHAvxsFQA="};
 
@@ -248,7 +248,7 @@ TEST_F(test_contract_vm, test_send_tx_balance_not_enough) {
     param_stream << std::string{"test_send_tx_str"};
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     tx->make_tx_run_contract("test_set_string_property", param);
-    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_different_source_target_address(user_address.to_string(), sys_contract_rec_standby_pool_addr);
     tx->set_fire_and_expire_time(600);
     tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
     tx->set_digest();
@@ -263,7 +263,7 @@ TEST_F(test_contract_vm, test_send_tx_balance_not_enough) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
+    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address.to_string(), 1, 0, "", "", 0, 0, 0);
 
     xaccount_vm_t vm(make_observer(m_manager));
     auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
@@ -290,7 +290,7 @@ TEST_F(test_contract_vm, test_send_tx_deposit_not_enough) {
     param_stream << std::string{"test_send_tx_str"};
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     tx->make_tx_run_contract("test_set_string_property", param);
-    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_different_source_target_address(user_address.to_string(), sys_contract_rec_standby_pool_addr);
     tx->set_fire_and_expire_time(600);
     tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
     tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
@@ -306,7 +306,7 @@ TEST_F(test_contract_vm, test_send_tx_deposit_not_enough) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
+    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address.to_string(), 1, 0, "", "", 0, 0, 0);
     xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
     if (bstate->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
         bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
@@ -339,7 +339,7 @@ TEST_F(test_contract_vm, test_recv_tx) {
     param_stream << property_string;
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     tx->make_tx_run_contract("test_set_string_property", param);
-    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_different_source_target_address(user_address.to_string(), sys_contract_rec_standby_pool_addr);
     tx->set_fire_and_expire_time(600);
     tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
     tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
@@ -473,7 +473,7 @@ TEST_F(test_contract_vm, test_sync_call) {
     param_stream << property_string;
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     tx->make_tx_run_contract("test_sync_call", param);
-    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_different_source_target_address(user_address.to_string(), sys_contract_rec_standby_pool_addr);
     tx->set_fire_and_expire_time(600);
     tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
     tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
@@ -686,7 +686,7 @@ TEST_F(test_contract_vm, test_async_call) {
     param_stream << contract_common::xfollowup_transaction_schedule_type_t::immediately;
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     tx->make_tx_run_contract("test_async_call", param);
-    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_different_source_target_address(user_address.to_string(), sys_contract_rec_standby_pool_addr);
     tx->set_fire_and_expire_time(600);
     tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
     tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
@@ -758,8 +758,8 @@ TEST_F(test_contract_vm, test_async_call) {
         str = std::string{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())};
     }
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_action_para(), str);
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_source_addr(), sys_contract_rec_standby_pool_addr);
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_addr(), sys_contract_rec_registration_addr);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->source_address().to_string(), rec_standby_pool_contract_address.to_string());
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->target_address().to_string(), rec_registration_contract_address.to_string());
     // tx 0 is recev tx
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_last_nonce(), last_nonce);
     EXPECT_EQ(result.failed_tx_assemble.size(), 0);
@@ -857,7 +857,7 @@ TEST_F(test_contract_vm, test_followup_transfer) {
     param_stream << contract_common::xfollowup_transaction_schedule_type_t::immediately;
     std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
     tx->make_tx_run_contract("test_followup_transfer_to_user", param);
-    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+    tx->set_different_source_target_address(user_address.to_string(), sys_contract_rec_standby_pool_addr);
     tx->set_fire_and_expire_time(600);
     tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
     tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
@@ -906,8 +906,8 @@ TEST_F(test_contract_vm, test_followup_transfer) {
     EXPECT_EQ(result.success_tx_assemble[0]->get_transaction(), tx.get());
     EXPECT_EQ(result.success_tx_assemble[0]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
     EXPECT_EQ(result.success_tx_assemble[1]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_source_addr(), std::string{sys_contract_rec_standby_pool_addr});
-    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_target_addr(), user_address);
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->source_address().to_string(), rec_standby_pool_contract_address.to_string());
+    EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->target_address().to_string(), user_address.to_string());
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_tx_type(), enum_xtransaction_type::xtransaction_type_transfer);
     EXPECT_EQ(result.success_tx_assemble[1]->get_transaction()->get_amount(), 100000000);
 }

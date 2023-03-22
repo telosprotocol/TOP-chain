@@ -520,8 +520,8 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool
 #if !defined(XENABLE_MOCK_ZEC_STAKE)
     // 2.0 special check for standby pool contract call.
     do {
-        if (raw_tx->get_target_addr() == rec_standby_pool_contract_address.to_string()) {
-            common::xaccount_address_t const src_address{raw_tx->get_source_addr()};
+        if (raw_tx->target_address() == rec_standby_pool_contract_address) {
+            common::xaccount_address_t const & src_address = raw_tx->source_address();
             if (src_address == rec_standby_pool_contract_address) {
                 if (raw_tx->get_target_action_name() != "on_timer") {
                     xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
@@ -582,8 +582,8 @@ void xtxpool_table_t::filter_txs_by_black_white_list(std::vector<xcons_transacti
             iter++;
             continue;
         }
-        auto & source_addr = (*iter)->get_source_addr();
-        auto & target_addr = (*iter)->get_target_addr();
+        auto const & source_addr = (*iter)->get_source_addr();
+        auto const & target_addr = (*iter)->get_target_addr();
         if (!write_addrs.empty() && std::find(write_addrs.begin(), write_addrs.end(), source_addr) == std::end(write_addrs)) {
             xwarn("xtxpool_table_t::filter_txs_by_black_white_list fail-whitelist limit address,tx:%s", (*iter)->dump().c_str());
             iter = txs.erase(iter);

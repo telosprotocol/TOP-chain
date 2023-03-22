@@ -19,8 +19,8 @@ xvm_context::xvm_context(xvm_service& vm_service, const xtransaction_ptr_t& trx,
 :m_vm_service(vm_service)
 , m_action_name(trx->get_target_action_name())
 , m_action_para(trx->get_target_action_para())
-, m_contract_account(common::xaccount_address_t{ trx->get_target_addr() })
-, m_exec_account(trx->get_source_addr())
+, m_contract_account(trx->target_address())
+, m_exec_account(trx->source_address())
 , m_contract_helper(std::make_shared<xcontract_helper>(account_context, m_contract_account, m_exec_account))
 , m_trace_ptr(trace_ptr) {
     m_contract_helper->set_transaction(trx);

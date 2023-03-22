@@ -56,7 +56,7 @@ namespace top
 
             virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vcanvas;}
         private:
-            virtual int32_t get_object_size_real() const override;
+            virtual size_t get_object_size_real() const override;
             
         public://debug purpose only
             void              log();

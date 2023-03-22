@@ -56,9 +56,9 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     base::xtable_shortid_t          get_self_tableid() const;
     base::xtable_shortid_t          get_peer_tableid() const;
 
-    const std::string &     get_source_addr()const {return m_tx->get_source_addr();}
+    std::string     get_source_addr()const {return m_tx->source_address().to_string();}
     std::string             get_account_addr() const;
-    const std::string &     get_target_addr()const {return m_tx->get_target_addr();}
+    std::string     get_target_addr()const {return m_tx->target_address().to_string();}
     uint64_t                get_tx_nonce()const {return m_tx->get_tx_nonce();}
     uint64_t                get_tx_last_nonce()const {return m_tx->get_last_nonce();}
 

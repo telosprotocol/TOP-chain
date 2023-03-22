@@ -80,8 +80,8 @@ void xtable_block_t::parse_to_json_v1(Json::Value & root) {
             uint64_t last_tx_nonce = 0;
             if (_rawtx != nullptr) {
                 last_tx_nonce = _rawtx->get_last_nonce();
-                juj["sender"] = _rawtx->get_source_addr();
-                juj["receiver"] = _rawtx->get_target_addr();
+                juj["sender"] = _rawtx->source_address().to_string();
+                juj["receiver"] = _rawtx->target_address().to_string();
                 juj["action_name"] = _rawtx->get_target_action_name();
                 juj["action_param"] = to_hex_str(_rawtx->get_target_action_para());
             }

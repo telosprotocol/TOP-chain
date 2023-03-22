@@ -47,7 +47,7 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[0], para);
     int32_t ret = txmgr_table.push_send_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    auto tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_tx_hash());
+    auto tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->source_address().to_string(), txs[0]->get_tx_hash());
     ASSERT_NE(tx_tmp.get(), nullptr);
 
     // duplicate push
@@ -57,13 +57,13 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     // pop out
     auto tx_ent_tmp = txmgr_table.pop_tx(txs[0]->get_tx_hash(), txs[0]->get_tx_subtype(), false);
     ASSERT_NE(tx_ent_tmp.get(), nullptr);
-    tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_tx_hash());
+    tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->source_address().to_string(), txs[0]->get_tx_hash());
     ASSERT_EQ(tx_tmp.get(), nullptr);
 
     // push again
     ret = txmgr_table.push_send_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_tx_hash());
+    tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->source_address().to_string(), txs[0]->get_tx_hash());
     ASSERT_NE(tx_tmp.get(), nullptr);
 
     table_para.send_tx_inc(1025);
@@ -351,7 +351,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     }
 
     for (uint32_t i = 2; i < 5; i++) {
-        auto tx_tmp = txmgr_table.query_tx(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_tx_hash());
+        auto tx_tmp = txmgr_table.query_tx(txs[i]->get_transaction()->source_address().to_string(), txs[i]->get_tx_hash());
         ASSERT_NE(tx_tmp.get(), nullptr);
     }
 

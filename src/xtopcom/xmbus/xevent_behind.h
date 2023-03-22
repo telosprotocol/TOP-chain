@@ -36,7 +36,7 @@ public:
     
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_event_behind;}
 private:
-    virtual int32_t get_object_size_real() const override {
+    virtual size_t get_object_size_real() const override {
         return sizeof(*this) + get_size(get_result_data());
     }
 };

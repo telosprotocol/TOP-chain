@@ -185,15 +185,15 @@ bool api_method_imp::transfer(const user_info & uinfo,
 
     if (info->trans_action->get_tx_version() == xtransaction_version_2) {
         info->trans_action->set_amount(amount);
-        info->trans_action->set_source_addr(from);
-        info->trans_action->set_target_addr(to);
+        info->trans_action->source_address(top::common::xaccount_address_t::build_from(from));
+        info->trans_action->target_address(top::common::xaccount_address_t::build_from(to));
     } else {
         info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
         info->trans_action->set_source_action_type(xaction_type_asset_out);
-        info->trans_action->set_source_addr(from);
+        info->trans_action->source_address(top::common::xaccount_address_t::build_from(from));
         info->trans_action->set_source_action_para(param);
         info->trans_action->set_target_action_type(xaction_type_asset_in);
-        info->trans_action->set_target_addr(to);
+        info->trans_action->target_address(top::common::xaccount_address_t::build_from(to));
         info->trans_action->set_target_action_para(param);
     }
     
@@ -232,15 +232,15 @@ bool api_method_imp::estimategas(const user_info & uinfo,
 
     if (info->trans_action->get_tx_version() == xtransaction_version_2) {
         info->trans_action->set_amount(amount);
-        info->trans_action->set_source_addr(from);
-        info->trans_action->set_target_addr(to);
+        info->trans_action->source_address(top::common::xaccount_address_t::build_from(from));
+        info->trans_action->target_address(top::common::xaccount_address_t::build_from(to));
     } else {
         info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
         info->trans_action->set_source_action_type(xaction_type_asset_out);
-        info->trans_action->set_source_addr(from);
+        info->trans_action->source_address(top::common::xaccount_address_t::build_from(from));
         info->trans_action->set_source_action_para(param);
         info->trans_action->set_target_action_type(xaction_type_asset_in);
-        info->trans_action->set_target_addr(to);
+        info->trans_action->target_address(top::common::xaccount_address_t::build_from(to));
         info->trans_action->set_target_action_para(param);
     }
 

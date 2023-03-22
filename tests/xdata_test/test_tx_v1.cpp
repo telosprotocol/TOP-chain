@@ -43,8 +43,8 @@ TEST_F(test_tx_v1, serialize_by_base) {
     xtransaction_ptr_t tx_r;
     auto ret = xtransaction_t::set_tx_by_serialized_data(tx_r, data);
     EXPECT_EQ(tx_r->get_digest_hex_str(), tx_hash);
-    EXPECT_EQ(tx_r->get_source_addr(), source_addr);
-    EXPECT_EQ(tx_r->get_target_addr(), sys_contract_rec_standby_pool_addr);
+    EXPECT_EQ(tx_r->source_address().to_string(), source_addr);
+    EXPECT_EQ(tx_r->target_address().to_string(), rec_standby_pool_contract_address.to_string());
     EXPECT_EQ(tx_r->get_deposit(), min_tx_deposit);
     EXPECT_EQ(tx_r->get_authorization(), authorization);
 }
@@ -76,8 +76,8 @@ TEST_F(test_tx_v1, serialize_by_base_transfer) {
     xtransaction_ptr_t tx_r;
     auto ret = xtransaction_t::set_tx_by_serialized_data(tx_r, data);
     EXPECT_EQ(tx_r->get_digest_hex_str(), tx_hash);
-    EXPECT_EQ(tx_r->get_source_addr(), source_addr);
-    EXPECT_EQ(tx_r->get_target_addr(), target_addr);
+    EXPECT_EQ(tx_r->source_address().to_string(), source_addr);
+    EXPECT_EQ(tx_r->target_address().to_string(), target_addr);
     EXPECT_EQ(tx_r->get_deposit(), min_tx_deposit);
     EXPECT_EQ(tx_r->get_authorization(), authorization);
 }

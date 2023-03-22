@@ -250,7 +250,7 @@ namespace top
             inline void                 set_input_hash(const std::string& input_hash)   {m_input_hash = input_hash;}
             inline void                 set_output_hash(const std::string& output_hash) {m_output_hash = output_hash;}
             
-            virtual int32_t     get_object_size_real() const override;
+            size_t get_object_size_real() const override;
         private:
             //information about this block
             uint16_t            m_types;        //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
@@ -453,7 +453,7 @@ namespace top
 
             virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vqcert;}
         private:
-            virtual int32_t     get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         private: //m_modified_count not serialized into binary,put here make alignment of this class better
             uint32_t            m_modified_count;   //count how many times modified since last save,it is 0 if nothing changed
@@ -534,7 +534,7 @@ namespace top
 
             virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vinput;}
         private:
-            virtual int32_t             get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
@@ -577,7 +577,7 @@ namespace top
 
             virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_voutput;}
         private:
-            virtual int32_t             get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
 
         protected:
@@ -847,7 +847,7 @@ namespace top
             void                        set_not_serialize_input_output(bool value);
             virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vblock;}
         private:
-            virtual int32_t             get_object_size_real() const override;
+            size_t get_object_size_real() const override;
         private:
             std::string                 m_cert_hash;        //hash(vqcert_bin)
 

@@ -729,8 +729,8 @@ int32_t xunit_bstate_t::lock_balance(uint64_t new_lock_balance) {
     return set_token_balance(XPROPERTY_BALANCE_LOCK, static_cast<base::vtoken_t>(new_lock_balance));
 }
 
-int32_t xunit_bstate_t::get_object_size_real() const {
-    xdbg("------cache size------ xunit_bstate_t xunit_bstate_t total_size:%d this:%d", sizeof(*this), sizeof(*this));
+size_t xunit_bstate_t::get_object_size_real() const {
+    xdbg("------cache size------ xunit_bstate_t xunit_bstate_t total_size:%zu this:%zu", sizeof(*this), sizeof(*this));
     return sizeof(*this);
 }
 

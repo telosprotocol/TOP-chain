@@ -25,7 +25,7 @@ std::string test_xtxpool_util_t::get_account(uint32_t account_idx) {
                                    {67,140,104,117,163,223,201,6,151,33,211,97,53,151,30,18,119,244,191,175,62,222,85,188,249,68,17,75,86,76,75,63},
                                    {219,79,108,49,38,203,159,34,218,86,203,107,191,126,132,121,100,100,65,100,178,64,144,148,205,69,2,8,236,166,0,72}};
 
-    return top::utl::xcrypto_util::make_address_by_assigned_key(private_keys[account_idx], '0', 0) + "@0";
+    return common::xaccount_address_t::build_from(top::utl::xcrypto_util::make_address_by_assigned_key(private_keys[account_idx], '0', 0)).to_string();// +"@0";
 }
 xcons_transaction_ptr_t test_xtxpool_util_t::create_cons_transfer_tx(uint32_t            sender_idx,
                                                                      uint32_t            receiver_idx,
@@ -41,8 +41,9 @@ xcons_transaction_ptr_t test_xtxpool_util_t::create_cons_transfer_tx(uint32_t   
     xtransaction_ptr_t    tx = make_object_ptr<xtransaction_v2_t>();
     data::xproperty_asset asset(amount);
     tx->make_tx_transfer(asset);
-    std::string from = top::utl::xcrypto_util::make_address_by_assigned_key(private_keys[sender_idx], '0', 0) + "@0";
-    std::string to = top::utl::xcrypto_util::make_address_by_assigned_key(private_keys[receiver_idx], '0', 0) + "@0";
+    std::string from = common::xaccount_address_t::build_from(top::utl::xcrypto_util::make_address_by_assigned_key(private_keys[sender_idx], '0', 0)).to_string();// + "0"
+    std::string to = common::xaccount_address_t::build_from(top::utl::xcrypto_util::make_address_by_assigned_key(private_keys[receiver_idx], '0', 0)).to_string();// + "0"
+
     tx->set_different_source_target_address(from, to);
     tx->set_last_trans_hash_and_nonce(last_hash, nonce);
     tx->set_fire_timestamp(timestamp);

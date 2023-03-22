@@ -279,7 +279,7 @@ void xtop_contract_manager::process_event(const xevent_ptr_t & e) {
         break;
     case xevent_major_type_vnode: {
         auto event = dynamic_xobject_ptr_cast<xevent_vnode_t>(e);
-        if (event->destory) {
+        if (event->destory_) {
             do_destory_vnode(event);
         } else {
             do_new_vnode(event);
@@ -297,7 +297,7 @@ void xtop_contract_manager::do_destory_vnode(const xevent_vnode_ptr_t & e) {
     xrole_map_t * rm{};
     for (auto it = m_map.begin(), last = m_map.end(); it != last;) {
         rm = it->second;
-        auto it1 = rm->find(e->driver.get());
+        auto it1 = rm->find(e->driver_.get());
         if (it1 != rm->end()) {
             delete it1->second;
             rm->erase(it1);
@@ -370,7 +370,7 @@ bool xtop_contract_manager::is_need_process_commit_event(const xevent_store_bloc
 }
 
 void xtop_contract_manager::do_new_vnode(const xevent_vnode_ptr_t & e) {
-    common::xnode_type_t type = e->driver->type();
+    common::xnode_type_t type = e->driver_->type();
     xdbg("[xtop_contract_manager::do_new_vnode] node type : %s", common::to_string(type).c_str());
     add_role_contexts_by_type(e, type, false);
 
@@ -403,8 +403,8 @@ void xtop_contract_manager::add_role_contexts_by_type(const xevent_vnode_ptr_t &
             if (disable_broadcasts) {
                 cloned_contract_info_ptr->broadcast_types = common::xnode_type_t::invalid;  // disable broadcasts
             }
-            auto prc = new xrole_context_t(m_syncstore, e->unit_service, e->driver, cloned_contract_info_ptr);
-            add_to_map(*m, prc, e->driver.get());
+            auto prc = new xrole_context_t(m_syncstore, e->txpool_proxy_, e->driver_, cloned_contract_info_ptr);
+            add_to_map(*m, prc, e->driver_.get());
         }
     }
 }

@@ -520,12 +520,12 @@ uint64_t xrpc_query_manager::get_timer_clock() const {
 }
 
 void xrpc_query_manager::parse_run_contract(Json::Value & j, const xaction_t & action, data::xtransaction_t const * tx) const {
-    std::error_code ec;
-    auto const & action_address = common::xaccount_address_t::build_from(action.get_account_addr(), ec);
-    if (ec) {
-        xwarn("invalid action address %s", action.get_account_addr().c_str());
-        return;
-    }
+    //std::error_code ec;
+    auto const & action_address = action.account_address();
+    //if (ec) {
+    //    xwarn("invalid action address %s", action.account_address().to_string().c_str());
+    //    return;
+    //}
 
     if (is_t2_address(action_address)) {
         if (action_address.base_address() == sharding_vote_contract_base_address && (action.get_action_name() == "voteNode" || action.get_action_name() == "unvoteNode")) {
@@ -641,9 +641,9 @@ Json::Value xrpc_query_manager::parse_tx(xtransaction_t * tx_ptr, const std::str
         ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
         ori_tx_info.removeMember("receiver_action");
         // for sys shard addr, the account must return with table id suffix
-        ori_tx_info["tx_action"]["receiver_action"]["tx_receiver_account_addr"] = tx_ptr->get_target_addr();
+        ori_tx_info["tx_action"]["receiver_action"]["tx_receiver_account_addr"] = tx_ptr->target_address().to_string();
     } else {
-        ori_tx_info["receiver_account"] = tx_ptr->get_target_addr();
+        ori_tx_info["receiver_account"] = tx_ptr->target_address().to_string();
     }
     return ori_tx_info;
 }
@@ -669,7 +669,7 @@ int xrpc_query_manager::parse_tx(const std::string & tx_hash_str, xtransaction_t
 
         const xtx_exec_json_key jk(rpc_version);
         Json::Value sendjson = xrpc_loader_t::parse_send_tx(sendindex);
-        bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->get_target_addr() == black_hole_addr;
+        bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->target_address() == black_hole_system_address;
         if (is_self_tx) {
             cons[jk.m_confirm] = sendjson;  // XTODO set to confirm block info
             xrpc_loader_t::parse_logs(sendindex,cons[jk.m_confirm]);
@@ -854,12 +854,12 @@ void xrpc_query_manager::getTransaction(Json::Value & js_req, Json::Value & js_r
             if (map_jv.find(base::enum_transaction_subtype_recv) != map_jv.end()) {
                 jv[jk.m_recv] = map_jv[base::enum_transaction_subtype_recv];
                 if (version == RPC_VERSION_V2)
-                    jv[jk.m_recv]["account"] = tx_ptr->get_target_addr();
+                    jv[jk.m_recv]["account"] = tx_ptr->target_address().to_string();
             }
             if (map_jv.find(base::enum_transaction_subtype_confirm) != map_jv.end()) {
                 jv[jk.m_confirm] = map_jv[base::enum_transaction_subtype_confirm];
                 if (version == RPC_VERSION_V2)
-                    jv[jk.m_confirm]["account"] = tx_ptr->get_source_addr();
+                    jv[jk.m_confirm]["account"] = tx_ptr->source_address().to_string();
             }
             result_json["tx_consensus_state"] = jv;
             update_tx_state(result_json, jv, version);
@@ -902,13 +902,13 @@ int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
                 auto tx = sendindex->get_raw_tx();
 
                 data::xaction_t action;
-                action.set_account_addr(tx->get_source_addr());
+                action.account_address(tx->source_address());
                 action.set_action_type(tx->get_source_action_type());
                 action.set_action_name(tx->get_source_action_name());
                 action.set_action_param(tx->get_source_action_para());
                 auto jsa = parse_action(action, tx.get());
 
-                action.set_account_addr(tx->get_origin_target_addr());
+                action.account_address(tx->target_address_unadjusted());
                 action.set_action_type(tx->get_target_action_type());
                 action.set_action_name(tx->get_target_action_name());
                 action.set_action_param(tx->get_target_action_para());

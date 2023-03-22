@@ -29,9 +29,9 @@ static data::system_contract::xreg_node_info get_reg_info(common::xaccount_addre
 }
 
 int32_t verify_standby_transaction(data::xtransaction_t const * trx) {
-    assert(trx->get_target_addr() == rec_standby_pool_contract_address.to_string());
+    assert(trx->target_address() == rec_standby_pool_contract_address);
 
-    auto const & pub_key = get_reg_info(common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
+    auto const & pub_key = get_reg_info(trx->source_address()).consensus_public_key;
     xdbg("verify_standby_transaction: tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
     if (!pub_key.empty() && trx->pub_key_sign_check(pub_key)) {

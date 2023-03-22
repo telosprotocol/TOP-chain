@@ -103,7 +103,7 @@ private:
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_controller(std::error_code & ec) const;
     xbytes_t raw_controller(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
 
-    virtual int32_t get_object_size_real() const override;
+    virtual size_t get_object_size_real() const override;
 
 private:  // TODO(jimmy) this apis will be droped in future
     uint32_t            get_unconfirm_sendtx_num() const;

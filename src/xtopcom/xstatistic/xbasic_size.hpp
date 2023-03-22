@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <string>
 #include "xbase/xns_macro.h"
+
+#include <string>
 
 NS_BEG1(top)
 

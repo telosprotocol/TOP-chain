@@ -88,7 +88,7 @@ public:
 
     virtual int32_t get_class_type() const override {return xstatistic::message_id_to_class_type((uint32_t)m_id_or_type);}
 private:
-    virtual int32_t get_object_size_real() const override {
+    virtual size_t get_object_size_real() const override {
         return sizeof(*this);
     }
 };

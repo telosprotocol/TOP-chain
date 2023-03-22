@@ -21,11 +21,11 @@ std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate
 }
 
 std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate(xobject_ptr_t<data::xcons_transaction_t> const & tx, std::error_code & ec) {
-    common::xaccount_address_t const target_address{ tx->get_transaction()->get_target_addr() };
+    common::xaccount_address_t const & target_address = tx->get_transaction()->target_address();
     
     // eth deploy code
     if (target_address.empty()) {
-        common::xaccount_address_t const source_address{ tx->get_transaction()->get_source_addr() };
+        common::xaccount_address_t const & source_address = tx->get_transaction()->source_address();
         if (source_address.type() != base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
             ec = data::error::xenum_errc::action_address_type_error;
             assert(false);

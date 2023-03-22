@@ -51,7 +51,7 @@ namespace top
             virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_receipt;}
 
         private:
-            virtual int32_t                 get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         private:
             base::xvaction_t                m_tx_action;

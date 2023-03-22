@@ -72,15 +72,19 @@ public:
     ~xtop_node_id()                                = default;
 
     explicit xtop_node_id(std::string const & value);
+
+private:
     explicit xtop_node_id(xaccount_base_address_t base_address);
     explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t table_id_value);
     explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);
 
+public:
     static xtop_node_id build_from(std::string const & account_string, std::error_code & ec);
     static xtop_node_id build_from(std::string const & account_string);
     static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type, std::error_code & ec);
     static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type);
     static xtop_node_id build_from(xaccount_base_address_t const & account_base_address);
+    static xtop_node_id build_from(xaccount_base_address_t const & account_base_address, xtable_id_t table_id);
 
     bool empty() const noexcept;
     bool has_value() const noexcept;
@@ -90,7 +94,7 @@ public:
     std::string to_string() const;
     void clear();
 
-    explicit operator bool() const noexcept;
+    // explicit operator bool() const noexcept;
 
     void
     swap(xtop_node_id & other) noexcept;
@@ -102,17 +106,11 @@ public:
     bool operator>=(xtop_node_id const & other) const noexcept;
     bool operator<=(xtop_node_id const & other) const noexcept;
 
-    //void
-    //random();
-
     std::size_t
     length() const noexcept;
 
     std::size_t
     size() const noexcept;
-
-    //char const *
-    //c_str() const noexcept;
 
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
     base::enum_vaccount_addr_type type() const;

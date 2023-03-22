@@ -79,8 +79,8 @@ bool is_block_contract_address(common::xaccount_address_t const & addr) {
 
 common::xaccount_address_t make_address_by_prefix_and_subaddr(const std::string & prefix, uint16_t const subaddr) {
     if (std::string::npos == prefix.find('@')) {
-        std::string final_account_address = prefix + "@" + base::xstring_utl::tostring(subaddr);
-        return common::xaccount_address_t{std::move(final_account_address)};
+        std::string const final_account_address = prefix + "@" + base::xstring_utl::tostring(subaddr);
+        return common::xaccount_address_t{final_account_address};
     }
     return common::xaccount_address_t{prefix};
 }
