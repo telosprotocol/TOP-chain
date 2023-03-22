@@ -527,6 +527,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         RETURN_METRICS_NAME(statestore_get_unit_state_succ);
         RETURN_METRICS_NAME(statestore_get_unit_state_from_cache);
+        RETURN_METRICS_NAME(statestore_get_unit_state_by_latest_unitstate);
         RETURN_METRICS_NAME(statestore_get_unit_state_from_db);
         RETURN_METRICS_NAME(statestore_get_unit_state_with_unit_count);
         RETURN_METRICS_NAME(statestore_get_table_state_succ);

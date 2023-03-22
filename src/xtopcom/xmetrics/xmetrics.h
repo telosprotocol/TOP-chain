@@ -577,6 +577,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     statestore_get_unit_state_succ,
     statestore_get_unit_state_from_cache,
+    statestore_get_unit_state_by_latest_unitstate,
     statestore_get_unit_state_from_db,
     statestore_get_unit_state_with_unit_count,
     statestore_get_table_state_succ,

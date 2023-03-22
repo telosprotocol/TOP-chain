@@ -519,6 +519,7 @@ namespace top
                 _event_obj->set_route_path(base::enum_xevent_route_path_up);
                 get_parent_node()->push_event_up(*_event_obj, this, get_current_thread_id(), get_time_now());
 
+                // update view after proposal finish, to make sure msg of next view can be process after view change.
                 base::xauto_ptr<xupdate_view>_event_obj_1(new xupdate_view(target_proposal));
                 _event_obj_1->set_latest_commit(latest_commit_block);
                 _event_obj_1->set_latest_lock(latest_lock_block);

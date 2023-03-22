@@ -41,6 +41,7 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
                                       observer_ptr<router::xrouter_face_t> const & router,
                                       observer_ptr<state_sync::xstate_downloader_t> const & downloader) {
     auto work_pool = make_object_ptr<base::xworkerpool_t_impl<5>>(top::base::xcontext_t::instance());
+    // not set work pool to bft, so that bft always directly call in one thread.
     // auto xbft_work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
 
     auto face = std::make_shared<xunit_service::xelection_cache_imp>();

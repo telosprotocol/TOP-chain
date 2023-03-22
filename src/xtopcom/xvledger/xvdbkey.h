@@ -87,6 +87,7 @@ namespace top
            static const std::string  create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height,const std::string & block_hash);
            // now unit state key, different from block
            static const std::string  create_prunable_unit_state_key(const xvaccount_t & account, uint64_t target_height,std::string const& block_hash);
+           static const std::string  create_latest_unit_state_key(const xvaccount_t & account);
            //all keys under of same height state
            static const std::string  create_prunable_unit_state_height_key(const xvaccount_t & account,const uint64_t target_height);
 

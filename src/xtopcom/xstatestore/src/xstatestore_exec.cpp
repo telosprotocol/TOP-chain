@@ -414,12 +414,11 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     bool need_store_unitstate = base::xvchain_t::instance().need_store_unitstate(m_table_vaddr.get_zone_index());
     std::map<std::string, std::string> batch_kvs;
     for (auto & v : tablestate_store->get_unitstates()) {
-        if (need_store_unitstate || v.first->get_bstate()->get_block_type() == base::enum_xvblock_type_fullunit) {   
-            m_state_accessor.unit_bstate_to_kv(v.first, v.second, batch_kvs, ec);
-            if (ec) {
-                xerror("xstatestore_executor_t::write_table_all_states fail-write unitstate,block:%s", current_block->dump().c_str());
-                return nullptr;
-            }
+        bool store_pruneable_kv = (need_store_unitstate || v.first->get_bstate()->get_block_type() == base::enum_xvblock_type_fullunit);
+        m_state_accessor.unit_bstate_to_kv(v.first, v.second, batch_kvs, store_pruneable_kv, ec);
+        if (ec) {
+            xerror("xstatestore_executor_t::write_table_all_states fail-write unitstate,block:%s", current_block->dump().c_str());
+            return nullptr;
         }
         m_state_accessor.write_unitstate_to_cache(v.first, v.second);
         xdbg("xstatestore_executor_t::write_table_all_states unitstate=%s.block=%s", v.first->get_bstate()->dump().c_str(), current_block->dump().c_str());        

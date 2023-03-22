@@ -674,7 +674,7 @@ namespace top
  
                     xdbgassert(_local_proposal->get_block()->is_body_and_offdata_ready(true));
                     
-                    //collect data from propoal first
+                    //send commit msg before call proposal finish, so that all consensus nodes can do saving db parallelly.
                     std::string msg_stream;
                     std::string   _commit_block_cert; //ship by packet' header instead of xcommit_msg_t for optimization
                     xcommit_msg_t _commit_msg(enum_xconsensus_code_successful);

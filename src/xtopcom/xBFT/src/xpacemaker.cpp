@@ -282,6 +282,7 @@ namespace top
                 std::function<void(void*)> _aysn_update_view = [this,new_view_id,clock_height_from_latest_clock](void*)->void{
                     fire_view(get_account(), new_view_id, clock_height_from_latest_clock, get_thread_id(), get_time_now());
                 };
+                // directly call update view, to make sure msg of next view can be process after view change.
                 // send_call(_aysn_update_view,(void*)NULL);
                 dispatch_call(_aysn_update_view,(void*)NULL);
                 return true;

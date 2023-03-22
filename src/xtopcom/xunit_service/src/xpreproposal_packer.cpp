@@ -162,8 +162,8 @@ int32_t xpreproposal_msg_t::do_write(base::xstream_t & stream) const {
     const int32_t begin_size = stream.size();
 
     stream.write_compact_var(m_version);
-    stream << m_last_block_hash;
-    stream << m_justify_cert_hash;
+    stream.write_compact_var(m_last_block_hash);
+    stream.write_compact_var(m_justify_cert_hash);
     stream.write_compact_var(m_gmtime);
     stream.write_compact_var(m_drand_height);
     stream.write_compact_var(m_total_lock_tgas_token_height);
@@ -201,8 +201,8 @@ int32_t xpreproposal_msg_t::do_read(base::xstream_t & stream, const std::string 
         xwarn("xpreproposal_msg_t::do_read version not match:%d,", m_version);
         return -1;
     }
-    stream >> m_last_block_hash;
-    stream >> m_justify_cert_hash;
+    stream.read_compact_var(m_last_block_hash);
+    stream.read_compact_var(m_justify_cert_hash);
     stream.read_compact_var(m_gmtime);
     stream.read_compact_var(m_drand_height);
     stream.read_compact_var(m_total_lock_tgas_token_height);
