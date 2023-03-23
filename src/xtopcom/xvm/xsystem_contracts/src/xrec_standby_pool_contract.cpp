@@ -146,7 +146,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     bool const edge = data::system_contract::could_be<common::xnode_type_t::edge>(miner_type);
     bool const archive = data::system_contract::could_be<common::xnode_type_t::storage_archive>(miner_type);
     bool const exchange = data::system_contract::could_be<common::xnode_type_t::storage_exchange>(miner_type);
-    bool const fullnode = data::system_contract::could_be<common::xnode_type_t::fullnode>(miner_type);
+    bool const fullnode = false; // data::system_contract::could_be<common::xnode_type_t::fullnode>(miner_type);
     bool const evm_auditor = data::system_contract::could_be<common::xnode_type_t::evm_auditor>(miner_type);
     bool const evm_validator = data::system_contract::could_be<common::xnode_type_t::evm_validator>(miner_type);
     bool const relay = data::system_contract::could_be<common::xnode_type_t::relay>(miner_type);
@@ -262,10 +262,10 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
     auto const relay_enabled = true;
 
     std::set<common::xnetwork_id_t> network_ids = node.m_network_ids;
-
     auto consensus_public_key = node.consensus_public_key;
     uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0}, evm_auditor_stake{0},
         evm_validator_stake{0}, relay_stake{0};
+    bool fullnode_forked = chain_fork::xutility_t::is_forked(fork_points::v11200_fullnode_elect, TIME());
     bool const rec{node.can_be_rec()},                                     // NOLINT
         zec{node.can_be_zec()},                                            // NOLINT
         auditor{node.can_be_auditor()},                                    // NOLINT
@@ -273,7 +273,7 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
         edge{node.can_be_edge()},                                          // NOLINT
         archive{node.can_be_archive()},                                    // NOLINT
         exchange{node.can_be_exchange()},                                  // NOLINT
-        fullnode{node.can_be_fullnode()},                                  // NOLINT
+        fullnode{fullnode_forked ? node.can_be_fullnode() : node.can_be_fullnode_legacy()},     // NOLINT
         evm_auditor{evm_enabled ? node.can_be_evm_auditor() : false},      // NOLINT
         evm_validator{evm_enabled ? node.can_be_evm_validator() : false},  // NOLINT
         relay{relay_enabled ? node.can_be_relay() : false};
@@ -408,9 +408,17 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (reg_node.can_be_zec()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::zec, reg_node.zec_stake() });
     }
-    if (reg_node.can_be_fullnode()) {
-        new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
+    bool fullnode_forked = chain_fork::xutility_t::is_forked(fork_points::v11200_fullnode_elect, TIME());
+    if(fullnode_forked) {
+        if (reg_node.can_be_fullnode()) {
+            new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
+        }
+    } else {
+        if (reg_node.can_be_fullnode_legacy()) {
+            new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
+        }
     }
+
     if (reg_node.can_be_archive() || reg_node.genesis()) {
         new_node_info.stake_container.insert({common::xnode_type_t::storage_archive, reg_node.archive_stake()});
     }

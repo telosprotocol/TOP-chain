@@ -46,4 +46,5 @@ extern top::optional<xfork_point_t> v10902_enable_voting;
 extern top::optional<xfork_point_t> v11100_event;
 extern top::optional<xfork_point_t> v11200_block_fork_point;
 extern top::optional<xfork_point_t> v11200_sync_big_packet;
+extern top::optional<xfork_point_t> v11200_fullnode_elect;
 NS_END2

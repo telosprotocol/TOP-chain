@@ -157,19 +157,6 @@ void xsync_peer_keeper_t::walk_role(const common::xnode_address_t &self_addr, co
 
         xchain_state_info_t info;
         info.address = address;
-        // if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
-        //     base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-        //     if (latest_start_block == nullptr || !latest_start_block->is_full_state_block()) {
-        //         info.start_height = 0;
-        //         info.end_height = 0;
-        //     } else {
-        //         info.start_height = latest_start_block->get_height();
-        //         info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
-        //     }
-        // } else {
-        //     info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
-        //     info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);
-        // }
         info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
         info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);        
         info_list.push_back(info);

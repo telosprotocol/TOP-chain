@@ -6,8 +6,17 @@
 #include <gtest/gtest.h>
 
 #include "tests/xsystem_contract/xrec_standby_algorithm/xtest_rec_standby_contract_fixture.h"
+#include "xvm/manager/xcontract_manager.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xnative_contract_address.h"
+#include "xvm/xcontract_helper.h"
+
+using namespace top;
+using namespace top::contract;
+using namespace top::xvm;
 
 NS_BEG3(top, tests, rec_standby)
+
 
 class xtest_rec_standby_contract_algorithm
   : public xtop_test_rec_standby_contract_fixture
@@ -21,6 +30,20 @@ protected:
     void SetUp() override {
         m_registration_data.clear();
         standby_result_store.m_results.clear();
+        init();
+
+    }
+
+
+    void init() {
+        auto exe_addr = std::string{sys_contract_rec_standby_pool_addr};
+        auto contract_addr = common::xnode_id_t{sys_contract_rec_standby_pool_addr};
+        auto vbstate = make_object_ptr<xvbstate_t>(sys_contract_rec_standby_pool_addr, 1, 1, std::string{}, std::string{}, 0, 0, 0);
+        auto unitstate = std::make_shared<data::xunit_bstate_t>(vbstate.get());
+        auto account_context = std::make_shared<xaccount_context_t>(unitstate);
+        auto contract_helper = std::make_shared<xcontract_helper>(account_context.get(), contract_addr, exe_addr);
+        rec_standby_contract.set_contract_helper(contract_helper);
+        rec_standby_contract.setup();
     }
 
     void TearDown() override {

@@ -270,7 +270,7 @@ bool xtop_rec_consortium_standby_pool_contract::nodeJoinNetworkImpl(std::string 
     uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0}, evm_auditor_stake{0},
         evm_validator_stake{0}, relay_stake{0};
     bool  node_whitelist_enable = XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist);
-
+    bool fullnode_forked = chain_fork::xutility_t::is_forked(fork_points::v11200_fullnode_elect, TIME());
     bool const rec{node.can_be_rec()},                                     // NOLINT
         zec{node.can_be_zec()},                                            // NOLINT
         auditor{ node_whitelist_enable ? node.could_be_auditor() : node.can_be_auditor() }, // NOLINT  
@@ -278,7 +278,7 @@ bool xtop_rec_consortium_standby_pool_contract::nodeJoinNetworkImpl(std::string 
         edge{node.can_be_edge()},                                          // NOLINT
         archive{node.can_be_archive()},                                    // NOLINT
         exchange{node.can_be_exchange()},                                  // NOLINT
-        fullnode{node.can_be_fullnode()},                                  // NOLINT
+        fullnode{fullnode_forked ? node.can_be_fullnode() : node.can_be_fullnode_legacy()},                                  // NOLINT
         evm_auditor{node_whitelist_enable ? node.could_be_evm_auditor() : node.can_be_evm_auditor()}, // NOLINT
         evm_validator{node_whitelist_enable ? node.can_be_evm_validator() : false},  // NOLINT
         relay{node_whitelist_enable ? node.could_be_relay() : node.can_be_relay()};  // NOLINT
@@ -412,8 +412,15 @@ bool xtop_rec_consortium_standby_pool_contract::update_standby_node(data::system
     if (reg_node.can_be_zec()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::zec, reg_node.zec_stake() });
     }
-    if (reg_node.can_be_fullnode()) {
-        new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
+    bool fullnode_forked = chain_fork::xutility_t::is_forked(fork_points::v11200_fullnode_elect, TIME());
+    if(fullnode_forked) {
+        if (reg_node.can_be_fullnode()) {
+            new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
+        }
+    } else {
+        if (reg_node.can_be_fullnode_legacy()) {
+            new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
+        }
     }
     if (reg_node.can_be_archive() || reg_node.genesis()) {
         new_node_info.stake_container.insert({common::xnode_type_t::storage_archive, reg_node.archive_stake()});
