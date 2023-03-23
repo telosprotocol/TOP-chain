@@ -56,7 +56,7 @@ bool xaccount_timer_t::on_timer_fire(const int32_t thread_id,const int64_t timer
             }
             
             if (!m_chains[index]->on_timer(now)) {
-                continue;
+                break;
             }
         }
 
