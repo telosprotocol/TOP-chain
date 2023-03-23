@@ -111,7 +111,7 @@ NS_BEG3(top, evm_common, trie)
 //}
 
 xbytes_t hex_to_compact(xspan_t<xbyte_t const> hex) {
-    auto terminator = xbyte_t{0};
+    xbyte_t terminator{0};
     if (has_terminator(hex)) {
         terminator = 1;
         hex = hex.first(hex.size() - 1);
@@ -221,7 +221,7 @@ std::size_t prefix_len(xspan_t<xbyte_t const> const a, xspan_t<xbyte_t const> co
 }
 
 bool has_terminator(xspan_t<xbyte_t const> const bytes) {
-    return (!bytes.empty()) && (bytes.back() == 16);
+    return !bytes.empty() && bytes.back() == 16;
 }
 
 NS_END3

@@ -38,10 +38,10 @@ xbytes_t xtop_secure_trie::try_get(xbytes_t const & key, std::error_code & ec) c
 }
 
 
-std::pair<xbytes_t, std::size_t> xtop_secure_trie::try_get_node(xbytes_t const & path, std::error_code & ec){
-    assert(m_trie != nullptr);
-    return m_trie->try_get_node(path, ec);
-}
+//std::pair<xbytes_t, std::size_t> xtop_secure_trie::try_get_node(xbytes_t const & path, std::error_code & ec) const {
+//    assert(m_trie != nullptr);
+//    return m_trie->try_get_node(path, ec);
+//}
 
 void xtop_secure_trie::update(xbytes_t const & key, xbytes_t const & value) {
     std::error_code ec;

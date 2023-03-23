@@ -222,6 +222,8 @@ const evm_common::xh256_t & xtop_state_mpt::get_original_root_hash() const {
 }
 
 evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
+    assert(!ec);
+
     get_root_hash(ec);
     if (ec) {
         xwarn("xtop_state_mpt::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());

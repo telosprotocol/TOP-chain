@@ -40,6 +40,7 @@ private:
     basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_;
     std::map<xh256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xh256_t> pruned_hashes_;
+    std::unordered_map<xh256_t, std::vector<xh256_t>> pruned_hashes2_;
 
     // xh256_t oldest_;
     // xh256_t newest_;

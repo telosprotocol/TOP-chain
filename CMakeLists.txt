@@ -28,9 +28,9 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-
 project(XTOPCHAIN CXX C)
+
+SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 if (NOT CMAKE_CXX_COMPILER)
     message(FATAL_ERROR "C++ Compiler not found")

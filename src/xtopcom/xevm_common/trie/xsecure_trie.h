@@ -56,7 +56,7 @@ public:
 
     // TryGetNode attempts to retrieve a trie node by compact-encoded path. It is not
     // possible to use keybyte-encoding as the path might contain odd nibbles.
-    std::pair<xbytes_t, std::size_t> try_get_node(xbytes_t const & path, std::error_code & ec);
+    // std::pair<xbytes_t, std::size_t> try_get_node(xbytes_t const & path, std::error_code & ec) const;
 
     // Update associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value

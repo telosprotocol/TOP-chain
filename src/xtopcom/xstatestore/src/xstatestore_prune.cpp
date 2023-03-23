@@ -259,11 +259,11 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
         return from_height - 1;
     }
 
-    std::shared_ptr<state_mpt::xtop_state_mpt> lowest_keep_mpt = nullptr;
+    std::shared_ptr<state_mpt::xstate_mpt_t> lowest_keep_mpt = nullptr;
     auto lowest_keep_root = m_statestore_base.get_state_root_from_block(lowest_keep_block.get());
     if (!lowest_keep_root.empty()) {
         std::error_code ec;
-        lowest_keep_mpt = state_mpt::xtop_state_mpt::create(get_account(), lowest_keep_root, base::xvchain_t::instance().get_xdbstore(), ec);
+        lowest_keep_mpt = state_mpt::xstate_mpt_t::create(get_account(), lowest_keep_root, base::xvchain_t::instance().get_xdbstore(), ec);
         if (lowest_keep_mpt == nullptr || ec) {
             xinfo("xstatestore_prune_t::prune_exec_cons create mpt fail.block:%s,root:%s", lowest_keep_block->dump().c_str(), lowest_keep_root.hex().c_str());
             XMETRICS_GAUGE(metrics::state_delete_create_mpt_fail, 1);
@@ -293,7 +293,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             auto last_full_block_root = m_statestore_base.get_state_root_from_block(latest_full_block.get());
             if (!last_full_block_root.empty()) {
                 ec.clear();
-                lowest_keep_mpt = state_mpt::xtop_state_mpt::create(get_account(), last_full_block_root, base::xvchain_t::instance().get_xdbstore(), ec);
+                lowest_keep_mpt = state_mpt::xstate_mpt_t::create(get_account(), last_full_block_root, base::xvchain_t::instance().get_xdbstore(), ec);
                 if (lowest_keep_mpt == nullptr || ec) {
                     xwarn("xstatestore_prune_t::prune_exec_cons create last full block mpt fail.block:%s,root:%s",
                           latest_full_block->dump().c_str(),
@@ -325,7 +325,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             xdbg("xstatestore_prune_t::prune_exec_cons load block fail.table:%s height:%llu", m_table_addr.to_string().c_str(), height);
             continue;
         }
-        for (auto block : blocks.get_vector()) {
+        for (auto * const block : blocks.get_vector()) {
             prune_info.insert_from_tableblock(block);
             if (lowest_keep_mpt != nullptr) {
                 auto root = m_statestore_base.get_state_root_from_block(block);

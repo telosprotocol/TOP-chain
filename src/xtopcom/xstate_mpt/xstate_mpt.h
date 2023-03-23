@@ -28,9 +28,18 @@ public:
 };
 
 class xtop_state_mpt {
-public:
-    xtop_state_mpt() = default;
-    ~xtop_state_mpt() = default;
+private:
+    common::xtable_address_t m_table_address;
+
+    std::shared_ptr<evm_common::trie::xtrie_face_t> m_trie{nullptr};
+    observer_ptr<evm_common::trie::xtrie_db_t> m_trie_db{nullptr};
+    evm_common::xh256_t m_original_root;
+
+    mutable std::mutex m_state_objects_lock;
+    mutable std::mutex m_trie_lock;
+
+    std::map<common::xaccount_address_t, std::shared_ptr<xstate_object_t>> m_state_objects;
+    std::set<common::xaccount_address_t> m_state_objects_pending;
 
 public:
     /// @brief Create an state MPT with specific root hash.
@@ -41,7 +50,6 @@ public:
     /// @return MPT with given root hash. Error occurred if cannot find root in db.
     static std::shared_ptr<xtop_state_mpt> create(common::xtable_address_t const & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
 
-public:
     /// @brief Get index of specific account.
     /// @param account Account string.
     /// @param ec Log the error code.
@@ -123,18 +131,6 @@ private:
     void set_state_object(std::shared_ptr<xstate_object_t> obj);
 
     std::shared_ptr<xstate_object_t> query_state_object(common::xaccount_address_t const& account) const;
-
-    common::xtable_address_t m_table_address;
-
-    std::shared_ptr<evm_common::trie::xtrie_face_t> m_trie{nullptr};
-    observer_ptr<evm_common::trie::xtrie_db_t> m_trie_db{nullptr};
-    evm_common::xh256_t m_original_root;
-
-    mutable std::mutex m_state_objects_lock;
-    mutable std::mutex m_trie_lock;
-
-    std::map<common::xaccount_address_t, std::shared_ptr<xstate_object_t>> m_state_objects;
-    std::set<common::xaccount_address_t> m_state_objects_pending;
 };
 using xstate_mpt_t = xtop_state_mpt;
 
