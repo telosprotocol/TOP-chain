@@ -63,10 +63,12 @@ TEST_F(xtest_trie_fixture, prune_none) {
 
     auto const result2 = trie2->commit(ec);
     ASSERT_TRUE(!ec);
+    //ASSERT_TRUE(ec.value() == static_cast<int>(error::xerrc_t::trie_prune_data_duplicated));
+    //ASSERT_TRUE(ec.category() == error::evm_common_category());
     ASSERT_EQ(result.first, result2.first);
+    //ec.clear();
 
     test_trie_db_ptr->Commit(result2.first, nullptr, ec);
-    
     ASSERT_TRUE(!ec);
 
     trie2->prune(result.first, ec);
@@ -134,7 +136,10 @@ TEST_F(xtest_trie_fixture, prune_none2) {
 
     auto const result2 = trie2->commit(ec);
     ASSERT_TRUE(!ec);
+    //ASSERT_TRUE(ec.value() == static_cast<int>(error::xerrc_t::trie_prune_data_duplicated));
+    //ASSERT_TRUE(ec.category() == error::evm_common_category());
     ASSERT_EQ(result.first, result2.first);
+    //ec.clear();
 
     test_trie_db_ptr->Commit(result2.first, nullptr, ec);
 
@@ -524,6 +529,77 @@ TEST_F(xtest_trie_fixture, prune_empty2) {
     ASSERT_TRUE(!ec);
 
     ASSERT_EQ(size2, std::dynamic_pointer_cast<xmock_disk_db>(test_trie_db_ptr->DiskDB())->size());
+}
+
+TEST_F(xtest_trie_fixture, prune_none_) {
+    std::error_code ec;
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
+
+    ASSERT_TRUE(!ec);
+
+    UpdateString(trie, "doe", "reindeer");
+    UpdateString(trie, "dog", "puppy");
+    UpdateString(trie, "dogglesworth", "cat");
+
+    UpdateString(trie, "do", "verb");
+    UpdateString(trie, "ether", "wookiedoo");
+    UpdateString(trie, "horse", "stallion");
+    UpdateString(trie, "shaman", "horse");
+    UpdateString(trie, "doge", "coin");
+    UpdateString(trie, "dog", "puppy");
+    UpdateString(trie, "daog1", "pup12dpy1");
+    UpdateString(trie, "dsog2", "pup12epy1");
+    UpdateString(trie, "ado3", "pue21ppy1");
+    UpdateString(trie, "dsog4", "puppqy1");
+    UpdateString(trie, "dog12", "pupd1py1");
+    UpdateString(trie, "dog1242", "pup12epy1");
+    UpdateString(trie, "somethingveryoddindeedthis is", "myothernodedata");
+    UpdateString(trie, "somethisadngveryoddindeedthis is", "myothernodedata");
+
+    auto result = trie->commit(ec);
+    ASSERT_TRUE(!ec);
+
+    test_trie_db_ptr->Commit(result.first, nullptr, ec);
+    ASSERT_TRUE(!ec);
+
+    auto const size1 = std::dynamic_pointer_cast<xmock_disk_db>(test_trie_db_ptr->DiskDB())->size();
+
+    auto trie2 = xtrie_t::build_from({}, test_trie_db_ptr, ec);
+    ASSERT_TRUE(!ec);
+
+    UpdateString(trie2, "doe", "reindeer");
+    UpdateString(trie2, "dog", "puppy");
+    UpdateString(trie2, "dogglesworth", "cat");
+
+    UpdateString(trie2, "do", "verb");
+    UpdateString(trie2, "ether", "wookiedoo");
+    UpdateString(trie2, "horse", "stallion");
+    UpdateString(trie2, "shaman", "horse");
+    UpdateString(trie2, "doge", "coin");
+    UpdateString(trie2, "dog", "puppy");
+    UpdateString(trie2, "daog1", "pup12dpy1");
+    UpdateString(trie2, "dsog2", "pup12epy1");
+    UpdateString(trie2, "ado3", "pue21ppy1");
+    UpdateString(trie2, "dsog4", "puppqy1");
+    UpdateString(trie2, "dog12", "pupd1py1");
+    UpdateString(trie2, "dog1242", "pup12epy1");
+    UpdateString(trie2, "somethingveryoddindeedthis is", "myothernodedata");
+    UpdateString(trie2, "somethisadngveryoddindeedthis is", "myothernodedata");
+
+//    auto const result2 = trie2->commit(ec);
+//    ASSERT_TRUE(ec);
+//    ASSERT_TRUE(ec.value() == static_cast<int>(error::xerrc_t::trie_prune_data_duplicated));
+//    ASSERT_TRUE(ec.category() == error::evm_common_category());
+//    ASSERT_EQ(result.first, result2.first);
+//
+//    test_trie_db_ptr->Commit(result2.first, nullptr, ec);
+//
+//    ASSERT_TRUE(!ec);
+//
+//    trie2->commit_pruned(trie->hash(), ec);
+//    ASSERT_TRUE(!ec);
+//
+//    ASSERT_EQ(size1, std::dynamic_pointer_cast<xmock_disk_db>(test_trie_db_ptr->DiskDB())->size());
 }
 
 NS_END4

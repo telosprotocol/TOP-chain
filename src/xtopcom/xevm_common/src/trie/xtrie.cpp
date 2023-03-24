@@ -20,7 +20,7 @@ xh256_t const empty_root{empty_root_bytes};
 
 xtop_trie::~xtop_trie() = default;
 
-xtop_trie::xtop_trie(observer_ptr<xtrie_db_t> const db) : trie_db_{db} {
+xtop_trie::xtop_trie(observer_ptr<xtrie_db_t> const db, xh256_t const & root_hash) : trie_db_{db}, original_root_hash_{root_hash} {
 }
 
 observer_ptr<xtrie_db_t> xtop_trie::trie_db() const noexcept {
@@ -35,7 +35,7 @@ std::shared_ptr<xtop_trie> xtop_trie::build_from(xh256_t const & hash, observer_
         return nullptr;
     }
 
-    auto trie = std::shared_ptr<xtop_trie>{new xtop_trie{db}};
+    auto trie = std::shared_ptr<xtop_trie>{new xtop_trie{db, hash}};
     if (hash != empty_root && !hash.empty()) {
         // resolve Hash
         auto const root_hash = std::make_shared<xtrie_hash_node_t>(hash);
@@ -563,12 +563,24 @@ xtop_trie::update_result xtop_trie::insert(xtrie_node_face_ptr_t const & node, x
         assert(hash_node != nullptr);
         auto real_node = resolve_hash(hash_node, ec);
         if (ec) {
+            assert(real_node == nullptr);
             return {false, real_node};
         }
         auto result = insert(real_node, prefix, key, value, ec);
         if (!result.dirty || ec) {
+            if (ec) {
+                xwarn("xtrie_t::insert() failed. code %d msg %s prefix %s key %s",
+                      ec.value(),
+                      ec.message().c_str(),
+                      std::string{std::begin(prefix), std::end(prefix)}.c_str(),
+                      std::string{std::begin(key), std::end(key)}.c_str());
+                assert(result.node == nullptr);
+            }
             return {false, real_node};
         }
+
+        pending_to_be_pruned_.emplace_back(hash_node->data());
+
         return {true, std::move(result.node)};
     }
     default: {
@@ -830,6 +842,32 @@ void xtop_trie::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes,
 
     pruner_.reset();
 }
+
+void xtop_trie::prune(std::error_code & ec) {
+    assert(!ec);
+
+    if (pending_to_be_pruned_.empty() || pending_to_be_pruned_.back() != original_root_hash_) {
+        pending_to_be_pruned_.emplace_back(original_root_hash_);
+    }
+    assert(pending_to_be_pruned_.back() == original_root_hash_);
+
+    trie_db_->add_pending_pruned_keys(hash(), std::move(pending_to_be_pruned_), ec);
+    if (ec) {
+        xwarn("xtrie_t::commit adding pending pruned keys failed. errc %d msg %s", ec.value(), ec.message().c_str());
+    }
+    assert(pending_to_be_pruned_.empty());
+}
+
+void xtop_trie::commit_pruned(xh256_t const & root_hash, std::error_code & ec) {
+    assert(!ec);
+    assert(trie_db_);
+
+    trie_db_->commit_pruned(root_hash, ec);
+    if (ec) {
+        xwarn("xtrie_t::commit_pruned failed on pruning root %s", root_hash.hex().c_str());
+    }
+}
+
 
 std::string xtop_trie::to_string() const {
     if (trie_root_ != nullptr) {

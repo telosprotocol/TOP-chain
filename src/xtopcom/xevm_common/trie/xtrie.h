@@ -28,6 +28,8 @@ private:
     observer_ptr<xtrie_db_t> trie_db_;
     xtrie_node_face_ptr_t trie_root_;
     std::unique_ptr<xtrie_pruner_t> pruner_;
+    xh256_t original_root_hash_;
+    std::vector<xh256_t> pending_to_be_pruned_; // root hash is put at last.
 
     std::size_t unhashed_{0};
 
@@ -39,7 +41,7 @@ public:
     ~xtop_trie();
 
 protected:
-    explicit xtop_trie(observer_ptr<xtrie_db_t> db);
+    explicit xtop_trie(observer_ptr<xtrie_db_t> db, xh256_t const & root_hash);
 
 public:
     observer_ptr<xtrie_db_t> trie_db() const noexcept;
@@ -107,9 +109,11 @@ public:
 
     void prune(xh256_t const & old_trie_root_hash, std::error_code & ec);
     void prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
+    void prune(std::error_code & ec);
 
     void commit_pruned(std::error_code & ec);
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
+    void commit_pruned(xh256_t const & root_hash, std::error_code & ec);
 
     std::string to_string() const;
 

@@ -14,22 +14,21 @@
 namespace top {
 namespace state_mpt {
 
-std::string xaccount_info_t::encode() {
+std::string xaccount_info_t::encode() const {
     base::xautostream_t<1024> stream(base::xcontext_t::instance());
     std::string data;
     m_index.serialize_to(data);
     stream << m_account;
     stream << data;
-    return std::string{(const char *)stream.data(), (size_t)stream.size()};
+    return std::string{reinterpret_cast<const char *>(stream.data()), static_cast<size_t>(stream.size())};
 }
 
 void xaccount_info_t::decode(const std::string & str) {
-    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)str.data(), (int32_t)str.size());
+    base::xstream_t stream(base::xcontext_t::instance(), const_cast<uint8_t *>(reinterpret_cast<uint8_t const *>(str.data())), static_cast<int32_t>(str.size()));
     std::string index_str;
     stream >> m_account;
     stream >> index_str;
     m_index.serialize_from(index_str);
-    return;
 }
 
 static xstate_mpt_caching_db_t & get_caching_db(base::xvdbstore_t * db) {
@@ -63,7 +62,6 @@ void xtop_state_mpt::init(common::xtable_address_t const & table, const evm_comm
         return;
     }
     m_original_root = root;
-    return;
 }
 
 base::xaccount_index_t xtop_state_mpt::get_account_index(common::xaccount_address_t const & account, std::error_code & ec) {

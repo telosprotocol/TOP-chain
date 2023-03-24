@@ -6,7 +6,6 @@
 
 #include "xbase/xns_macro.h"
 
-#include <cstdint>
 #include <system_error>
 
 NS_BEG3(top, evm_common, error)
@@ -33,11 +32,13 @@ enum class xenum_errc {
     trie_node_unexpected,
     trie_sync_not_requested,
     trie_sync_already_processed,
+    trie_prune_data_duplicated,
+    trie_prune_data_not_found,
 };
 using xerrc_t = xenum_errc;
 
-std::error_code make_error_code(xerrc_t const errc) noexcept;
-std::error_condition make_error_condition(xerrc_t const errc) noexcept;
+std::error_code make_error_code(xerrc_t errc) noexcept;
+std::error_condition make_error_condition(xerrc_t errc) noexcept;
 
 std::error_category const & evm_common_category();
 

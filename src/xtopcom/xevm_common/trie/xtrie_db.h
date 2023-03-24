@@ -111,7 +111,11 @@ public:
 
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
-    // void clear_cleans();
+    void add_pending_pruned_keys(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec);
+
+    void commit_pruned(xh256_t const & root_hash, std::error_code & ec);
+
+    void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
 
 private:
     // commit is the private locked version of Commit.

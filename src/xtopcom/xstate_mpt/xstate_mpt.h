@@ -20,7 +20,7 @@ public:
     xaccount_info_t() = default;
     ~xaccount_info_t() = default;
 
-    std::string encode();
+    std::string encode() const;
     void decode(const std::string & str);
 
     common::xaccount_address_t m_account;
