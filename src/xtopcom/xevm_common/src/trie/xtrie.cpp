@@ -38,8 +38,8 @@ std::shared_ptr<xtop_trie> xtop_trie::build_from(xh256_t const & hash, observer_
     auto trie = std::shared_ptr<xtop_trie>{new xtop_trie{db, hash}};
     if (hash != empty_root && !hash.empty()) {
         // resolve Hash
-        auto const root_hash = std::make_shared<xtrie_hash_node_t>(hash);
-        auto root = trie->resolve_hash(root_hash, ec);
+        // auto const root_hash = std::make_shared<xtrie_hash_node_t>(hash);
+        auto root = trie->resolve_hash(hash, ec);
         if (ec) {
             xwarn("xtrie_t::build_from failed due to error %d msg %s", ec.value(), ec.message().c_str());
             return nullptr;
@@ -48,6 +48,7 @@ std::shared_ptr<xtop_trie> xtop_trie::build_from(xh256_t const & hash, observer_
         trie->trie_root_ = std::move(root);
     }
 
+    xdbg("trie original root hash %s", hash.hex().c_str());
     return trie;
 }
 
@@ -580,6 +581,7 @@ xtop_trie::update_result xtop_trie::insert(xtrie_node_face_ptr_t const & node, x
         }
 
         pending_to_be_pruned_.emplace_back(hash_node->data());
+        xdbg("insert: prunne hash %s", hash_node->data().hex().c_str());
 
         return {true, std::move(result.node)};
     }
@@ -848,12 +850,14 @@ void xtop_trie::prune(std::error_code & ec) {
 
     if (pending_to_be_pruned_.empty() || pending_to_be_pruned_.back() != original_root_hash_) {
         pending_to_be_pruned_.emplace_back(original_root_hash_);
+        xdbg("prune original root hash %s", original_root_hash_.hex().c_str());
     }
     assert(pending_to_be_pruned_.back() == original_root_hash_);
 
-    trie_db_->add_pending_pruned_keys(hash(), std::move(pending_to_be_pruned_), ec);
+    trie_db_->prune(hash(), std::move(pending_to_be_pruned_), ec);
     if (ec) {
-        xwarn("xtrie_t::commit adding pending pruned keys failed. errc %d msg %s", ec.value(), ec.message().c_str());
+        xwarn("xtrie_t::prune move pending keys into trie db failed. errc %d msg %s", ec.value(), ec.message().c_str());
+        return;
     }
     assert(pending_to_be_pruned_.empty());
 }
@@ -879,6 +883,10 @@ std::string xtop_trie::to_string() const {
 
 std::shared_ptr<xtrie_node_face_t> xtop_trie::root() const noexcept {
     return trie_root_;
+}
+
+std::size_t xtop_trie::pending_pruned_size() const noexcept {
+    return pending_to_be_pruned_.size();
 }
 
 NS_END3

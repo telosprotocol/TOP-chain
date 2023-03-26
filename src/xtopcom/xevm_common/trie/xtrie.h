@@ -120,6 +120,8 @@ public:
     std::shared_ptr<xtrie_node_face_t> root() const noexcept;
     xtrie_node_face_ptr_t resolve_hash(xh256_t const & hash, std::error_code & ec) const;
 
+    std::size_t pending_pruned_size() const noexcept;
+
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t pos, std::error_code & ec) const;
 
