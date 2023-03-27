@@ -20,10 +20,11 @@ protected:
     enum
     {
         enum_max_table_state_lru_cache_max     = 4, //max table state lru cache count
-        enum_max_unit_state_lru_cache_max      = 30000, //max unit state lru cache count
+        enum_max_unit_state_lru_cache_evm_max    = 10000,
+        enum_max_unit_state_lru_cache_normal_max = 500,
     };
 public:
-    xstatestore_cache_t();
+    xstatestore_cache_t(base::enum_xchain_zone_index zone_idx);
 public:
     data::xunitstate_ptr_t  get_unitstate(std::string const& block_hash) const;
     xtablestate_ext_ptr_t const&    get_latest_connectted_tablestate() const;
@@ -56,7 +57,6 @@ class xstatestore_dbaccess_t {
  private:
     xstatestore_base_t          m_statestore_base;
 };
-
 
 // access state from cache or db
 class xstatestore_accessor_t {

@@ -9,8 +9,8 @@
 
 NS_BEG2(top, statestore)
 
-xstatestore_cache_t::xstatestore_cache_t() : m_unitstate_cache(enum_max_unit_state_lru_cache_max) {
-
+xstatestore_cache_t::xstatestore_cache_t(base::enum_xchain_zone_index zone_idx)
+  : m_unitstate_cache(zone_idx == base::enum_chain_zone_evm_index ? enum_max_unit_state_lru_cache_evm_max : enum_max_unit_state_lru_cache_normal_max) {
 }
 
 xtablestate_ext_ptr_t const& xstatestore_cache_t::get_latest_connectted_tablestate() const {
@@ -254,7 +254,7 @@ data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount
 
 
 //============================xstatestore_accessor_t============================
-xstatestore_accessor_t::xstatestore_accessor_t(common::xtable_address_t const& address) {
+xstatestore_accessor_t::xstatestore_accessor_t(common::xtable_address_t const& address) : m_state_cache(common::zone_index(address)) {
     base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.vaccount().get_xvid());
     m_statehub = std::make_shared<xvstatehub_t>(target_table);
 }
