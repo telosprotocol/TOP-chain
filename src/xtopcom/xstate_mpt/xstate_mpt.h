@@ -77,8 +77,6 @@ public:
     /// @return New root hash.
     evm_common::xh256_t commit(std::error_code & ec);
 
-    void load_into(std::unique_ptr<xstate_mpt_store_t> const & state_mpt_store, std::error_code & ec);
-
     void prune(evm_common::xh256_t const & old_trie_root_hash, std::unordered_set<evm_common::xh256_t> & pruned_hashes, std::error_code & ec) const;
     void commit_pruned(std::unordered_set<evm_common::xh256_t> const & pruned_hashes, std::error_code & ec) const;
 

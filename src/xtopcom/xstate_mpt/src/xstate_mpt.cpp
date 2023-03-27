@@ -259,9 +259,6 @@ evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
     return res.first;
 }
 
-void xtop_state_mpt::load_into(std::unique_ptr<xstate_mpt_store_t> const & state_mpt_store, std::error_code & ec) {
-}
-
 void xtop_state_mpt::prune(evm_common::xh256_t const & old_trie_root_hash, std::unordered_set<evm_common::xh256_t> & pruned_hashes, std::error_code & ec) const {
     assert(!ec);
 
