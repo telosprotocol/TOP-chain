@@ -145,10 +145,4 @@ void xtop_secure_trie::commit_pruned(xh256_t const & pending_pruned_trie_root_ha
     m_trie->commit_pruned(pending_pruned_trie_root_hash, ec);
 }
 
-void xtop_secure_trie::clear_pending_prune_data(std::error_code & ec) {
-    assert(!ec);
-    assert(m_trie != nullptr);
-    m_trie->clear_pending_prune_data(ec);
-}
-
 NS_END3

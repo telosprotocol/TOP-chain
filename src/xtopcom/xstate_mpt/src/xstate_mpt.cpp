@@ -284,11 +284,4 @@ void xtop_state_mpt::commit_pruned(evm_common::xh256_t const & pruned_key, std::
     m_trie->commit_pruned(pruned_key, ec);
 }
 
-void xtop_state_mpt::clear_pending_prune_data(std::error_code & ec) {
-    assert(!ec);
-    std::lock_guard<std::mutex> lock{m_trie_lock};
-    assert(m_trie != nullptr);
-    m_trie->clear_pending_prune_data(ec);
-}
-
 NS_END3

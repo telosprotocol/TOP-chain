@@ -119,7 +119,6 @@ public:
 
     void prune(std::error_code & ec) override;
     void commit_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) override;
-    void clear_pending_prune_data(std::error_code & ec) override;
 
 private:
     // hashKey returns the hash of key as an ephemeral buffer.

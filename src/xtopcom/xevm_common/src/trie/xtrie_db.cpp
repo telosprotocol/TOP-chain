@@ -90,7 +90,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
         return nullptr;
     }
     // put into clean cache
-    cleans_put(hash, enc);
+    cleans_put_lock_hold_outside(hash, enc);
     return xtrie_node_rlp::must_decode_node(hash, enc);
 }
 
@@ -120,7 +120,7 @@ xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
         return xbytes_t{};
     }
     // put into clean cache
-    cleans_put(hash, enc);
+    cleans_put_lock_hold_outside(hash, enc);
     return enc;
 }
 
@@ -211,7 +211,7 @@ void xtop_trie_db::commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & da
     dirties_.erase(hash);
 
     // and move it to cleans:
-    cleans_put(hash, enc);
+    cleans_put_lock_hold_outside(hash, enc);
     // todo mark size everywhere with cleans/dirties' insert/erase/...
 }
 
@@ -224,7 +224,7 @@ void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
             return;
         }
 
-        cleans_erase(hash);
+        cleans_erase_lock_hold_outside(hash);
 
         assert(dirties_.find(hash) == dirties_.end());
 
@@ -283,7 +283,7 @@ void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hash
     std::vector<xspan_t<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes.size());
     for (auto const & hash : pruned_hashes) {
-        cleans_erase(hash);
+        cleans_erase_lock_hold_outside(hash);
         assert(dirties_.find(hash) == dirties_.end());
         pruned_keys.emplace_back(hash);
     }
@@ -334,7 +334,7 @@ void xtop_trie_db::commit_pruned(xh256_t const & root_hash, std::error_code & ec
     std::vector<xspan_t<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes.size());
     for (auto const & hash : pruned_hashes) {
-        cleans_erase(hash);
+        cleans_erase_lock_hold_outside(hash);
         assert(dirties_.find(hash) == dirties_.end());
         pruned_keys.emplace_back(hash);
     }
@@ -342,19 +342,6 @@ void xtop_trie_db::commit_pruned(xh256_t const & root_hash, std::error_code & ec
     diskdb_->DeleteBatch(pruned_keys, ec);
     if (ec) {
         xwarn("pruning MPT nodes failed. errc %d msg %s", ec.value(), ec.message().c_str());
-        return;
-    }
-
-    pruned_hashes2_.erase(it);
-}
-
-void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
-
-    auto const it = pruned_hashes2_.find(root_hash);
-    if (it == std::end(pruned_hashes2_)) {
-        ec = error::xerrc_t::trie_prune_data_not_found;
-        xwarn("xtrie_db_t::clear_pruned fail to find pending root hash %s to be pruned", root_hash.hex().c_str());
         return;
     }
 
@@ -381,7 +368,7 @@ xbytes_t xtop_trie_db::preimage_key(xh256_t const & hash_key) const {
     return res;
 }
 
-void xtop_trie_db::cleans_put(xh256_t const & hash, xbytes_t const & data) {
+void xtop_trie_db::cleans_put_lock_hold_outside(xh256_t const & hash, xbytes_t const & data) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
     auto erased_vec = cleans_.put(hash, data);
     int32_t inc_num = 1 - (int32_t)erased_vec.size();
@@ -405,7 +392,7 @@ void xtop_trie_db::cleans_put(xh256_t const & hash, xbytes_t const & data) {
 #endif
 }
 
-void xtop_trie_db::cleans_erase(xh256_t const & hash) {
+void xtop_trie_db::cleans_erase_lock_hold_outside(xh256_t const & hash) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
     auto erased_vec = cleans_.erase(hash);
     if (erased_vec.empty()) {

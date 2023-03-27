@@ -476,15 +476,13 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
             xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().hex().c_str(), current_block->dump().c_str());
 
             if (!base::xvchain_t::instance().need_store_units(m_table_vaddr.get_zone_index())) {
+                // only state aware node need to push pending pruned data into trie db (memory db)
                 mpt->prune(ec);
                 if (ec) {
                     xwarn("mpt->prune(ec) failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
                     // !!! no need to return error !!! it only affects DB size.
                     ec.clear();
                 }
-            } else {
-                mpt->clear_pending_prune_data(ec);
-                assert(!ec);
             }
         }
     }

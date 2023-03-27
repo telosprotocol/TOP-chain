@@ -48,7 +48,6 @@ public:
 
     virtual void prune(std::error_code & ec) = 0;
     virtual void commit_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) = 0;
-    virtual void clear_pending_prune_data(std::error_code & ec) = 0;
 };
 using xtrie_face_t = xtop_trie_face;
 using xtrie_face_ptr_t = std::shared_ptr<xtrie_face_t>;
