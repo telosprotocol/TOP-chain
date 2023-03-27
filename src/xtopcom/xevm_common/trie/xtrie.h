@@ -112,6 +112,7 @@ public:
 
     void prune(std::error_code & ec);
     void commit_pruned(xh256_t const & root_hash, std::error_code & ec);
+    void clear_pending_prune_data(std::error_code & ec);
 
     std::string to_string() const;
 

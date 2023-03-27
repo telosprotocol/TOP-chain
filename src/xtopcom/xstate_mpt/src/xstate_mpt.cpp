@@ -249,13 +249,6 @@ evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
         return {};
     }
 
-    prune(ec);
-    if (ec) {
-        xwarn("xstate_mpt_t::commit pruning old trie data failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
-        // !!!no return here!!! since prune failed only affects DB size
-        ec.clear();
-    }
-
     return res.first;
 }
 
@@ -291,5 +284,11 @@ void xtop_state_mpt::commit_pruned(evm_common::xh256_t const & pruned_key, std::
     m_trie->commit_pruned(pruned_key, ec);
 }
 
+void xtop_state_mpt::clear_pending_prune_data(std::error_code & ec) {
+    assert(!ec);
+    std::lock_guard<std::mutex> lock{m_trie_lock};
+    assert(m_trie != nullptr);
+    m_trie->clear_pending_prune_data(ec);
+}
 
 NS_END3

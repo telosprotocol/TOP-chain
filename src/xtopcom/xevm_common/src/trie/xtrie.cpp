@@ -848,6 +848,9 @@ void xtop_trie::commit_pruned(xh256_t const & root_hash, std::error_code & ec) {
     }
 }
 
+void xtop_trie::clear_pending_prune_data(std::error_code &) {
+    pending_to_be_pruned_.clear();
+}
 
 std::string xtop_trie::to_string() const {
     if (trie_root_ != nullptr) {

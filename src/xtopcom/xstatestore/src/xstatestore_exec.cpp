@@ -467,12 +467,25 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
 
     if (current_block->get_block_class() != base::enum_xvblock_class_nil) {
         if (!tablestate_store->get_state_root().empty()) {
-            tablestate_store->get_state_mpt()->commit(ec);
+            auto const mpt = tablestate_store->get_state_mpt();
+            mpt->commit(ec);
             if (ec) {
                 xerror("xstatestore_executor_t::write_table_all_states fail-write mpt,block:%s.ec=%s", current_block->dump().c_str(),ec.message().c_str());
                 return nullptr;
             }
             xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().hex().c_str(), current_block->dump().c_str());
+
+            if (!base::xvchain_t::instance().need_store_units(m_table_vaddr.get_zone_index())) {
+                mpt->prune(ec);
+                if (ec) {
+                    xwarn("mpt->prune(ec) failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
+                    // !!! no need to return error !!! it only affects DB size.
+                    ec.clear();
+                }
+            } else {
+                mpt->clear_pending_prune_data(ec);
+                assert(!ec);
+            }
         }
     }
     xinfo("xstatestore_executor_t::write_table_all_states tps_key after commit,block:%s",current_block->dump().c_str());
