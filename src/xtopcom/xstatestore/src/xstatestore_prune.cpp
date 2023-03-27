@@ -333,18 +333,20 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
                     continue;
                 }
 
+                auto const committed_block = block->check_block_flag(base::enum_xvblock_flag_committed);
                 xdbg("xstatestore_prune_t::prune_exec_cons prune mpt before.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.hex().c_str());
                 // mpt prune.
                 {
                     std::error_code ec;
-                    XMETRICS_TIME_RECORD("state_mpt_prune");
-                    lowest_keep_mpt->commit_pruned(root, ec);
+                    do {
+                        committed_block ? lowest_keep_mpt->commit_pruned(root, ec) : lowest_keep_mpt->clear_pruned(root, ec);
+                        if (committed_block && !ec) {
+                            break;  // break only commit_pruned executes successfully.
+                        }
 
-                    if (ec) {
-                        xwarn("xstatestore_prune_t::prune_exec_cons prune mpt fail.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.hex().c_str());
+                        // if the block is not committed block (fork block) or commit_pruned fails
                         ec.clear();
                         lowest_keep_mpt->prune(root, pruned_hashes, ec);
-
                         if (ec) {
                             xwarn("xstatestore_prune_t::prune_exec_cons prune mpt fail again.table:%s,height:%llu,root:%s",
                                   m_table_addr.to_string().c_str(),
@@ -353,10 +355,10 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
                         } else {
                             delete_mpt_num_old_style++;
                         }
-                    }
+                    } while (false);
                 }
                 xdbg("xstatestore_prune_t::prune_exec_cons prune mpt after.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.hex().c_str());
-                if (block->check_block_flag(base::enum_xvblock_flag_committed)) {
+                if (committed_block) {
                     accounts_prune_info.insert_from_tableblock(block);
                 }
             }

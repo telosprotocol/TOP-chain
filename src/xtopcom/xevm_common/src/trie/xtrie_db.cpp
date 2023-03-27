@@ -319,6 +319,8 @@ void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pr
 }
 
 void xtop_trie_db::commit_pruned(xh256_t const & root_hash, std::error_code & ec) {
+    assert(!ec);
+
     std::lock_guard<std::mutex> lck(mutex);
 
     auto const it = pruned_hashes2_.find(root_hash);
@@ -342,6 +344,21 @@ void xtop_trie_db::commit_pruned(xh256_t const & root_hash, std::error_code & ec
     diskdb_->DeleteBatch(pruned_keys, ec);
     if (ec) {
         xwarn("pruning MPT nodes failed. errc %d msg %s", ec.value(), ec.message().c_str());
+        return;
+    }
+
+    pruned_hashes2_.erase(it);
+}
+
+void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {
+    assert(!ec);
+
+    std::lock_guard<std::mutex> lck(mutex);
+
+    auto const it = pruned_hashes2_.find(root_hash);
+    if (it == std::end(pruned_hashes2_)) {
+        ec = error::xerrc_t::trie_prune_data_not_found;
+        xwarn("xtrie_db_t::clear_pruned fail to find pending root hash %s to be reverted", root_hash.hex().c_str());
         return;
     }
 

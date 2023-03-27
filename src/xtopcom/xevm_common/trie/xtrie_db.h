@@ -104,16 +104,14 @@ public:
     void Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec);
 
     void prune(xh256_t const & hash, std::error_code & ec);
-
     void prune(xh256_t const & hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
-
     void commit_pruned(std::error_code & ec);
-
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
     void prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec);
-
     void commit_pruned(xh256_t const & root_hash, std::error_code & ec);
+    void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
+
 
     size_t pending_pruned_size(xh256_t const & root_hash) const noexcept;
 

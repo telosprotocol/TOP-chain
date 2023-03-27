@@ -848,6 +848,16 @@ void xtop_trie::commit_pruned(xh256_t const & root_hash, std::error_code & ec) {
     }
 }
 
+void xtop_trie::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {
+    assert(!ec);
+    assert(trie_db_);
+
+    trie_db_->clear_pruned(root_hash, ec);
+    if (ec) {
+        xwarn("xtrie_t::commit_pruned failed on pruning root %s", root_hash.hex().c_str());
+    }
+}
+
 std::string xtop_trie::to_string() const {
     if (trie_root_ != nullptr) {
         return trie_root_->fstring("");
