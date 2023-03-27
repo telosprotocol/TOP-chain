@@ -201,6 +201,16 @@ void xstatestore_executor_t::execute_and_get_accountindex(base::xvblock_t* block
     }
 }
 
+bool xstatestore_executor_t::accountindex_cache_unbroken(base::xvblock_t * table_block) const {
+    return m_account_index_cache.cache_unbroken(table_block);
+}
+
+bool xstatestore_executor_t::get_accountindex_by_recent_blocks_cache(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index) const {
+    auto ret = m_account_index_cache.get_account_index(block, unit_addr.to_string(), account_index);
+    XMETRICS_GAUGE(metrics::statestore_get_account_index_from_cache, ret ? 1 : 0);
+    return ret;
+}
+
 void xstatestore_executor_t::execute_and_get_tablestate(base::xvblock_t* block, data::xtablestate_ptr_t &tablestate, std::error_code & ec) const {
     xtablestate_ext_ptr_t tablestate_ext = execute_and_get_tablestate_ext(block, true, ec);
     if (nullptr != tablestate_ext) {
@@ -432,6 +442,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         }
     }
 
+    xinfo("xstatestore_executor_t::write_table_all_states tps_key store unitstate ok,block:%s",current_block->dump().c_str());
     m_state_accessor.write_table_bstate_to_db(m_table_addr, current_block->get_block_hash(), tablestate_store->get_table_state(), ec);
     if (ec) {
         xerror("xstatestore_executor_t::write_table_all_states fail-write tablestate,block:%s", current_block->dump().c_str());
@@ -455,6 +466,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         xerror("xstatestore_executor_t::write_table_all_states fail-create mpt.block:%s", current_block->dump().c_str());
         return nullptr;
     }
+    xinfo("xstatestore_executor_t::write_table_all_states tps_key create cur mpt ok,block:%s",current_block->dump().c_str());
     xtablestate_ext_ptr_t tablestate = std::make_shared<xtablestate_ext_t>(tablestate_store->get_table_state(), cur_mpt);
     m_state_accessor.write_table_bstate_to_cache(m_table_addr, current_block->get_height(), current_block->get_block_hash(), tablestate, current_block->check_block_flag(base::enum_xvblock_flag_committed));
 

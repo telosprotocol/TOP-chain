@@ -68,6 +68,14 @@ bool xstatestore_table_t::get_accountindex_from_table_block(common::xaccount_add
     return true;
 }
 
+bool xstatestore_table_t::accountindex_cache_unbroken(base::xvblock_t * table_block) const {
+    return m_table_executor.accountindex_cache_unbroken(table_block);
+}
+
+bool xstatestore_table_t::get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
+    return m_table_executor.get_accountindex_by_recent_blocks_cache(table_block, account_address, account_index);
+}
+
 data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block) const {
     base::xaccount_index_t account_index;
     if (false == get_accountindex_from_table_block(account_address, table_block, account_index)) {

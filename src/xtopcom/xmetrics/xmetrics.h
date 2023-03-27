@@ -588,6 +588,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_execute_block_recursive_succ,
     statestore_execute_unit_recursive_succ,
     statestore_get_account_index_from_cache,
+    statestore_account_index_cache_unbroken,
 
     statestore_sync_succ,
 

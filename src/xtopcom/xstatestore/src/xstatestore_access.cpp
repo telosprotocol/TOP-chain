@@ -91,7 +91,7 @@ void xstatestore_dbaccess_t::write_table_bstate(common::xtable_address_t const& 
         return;
     }
 
-    xinfo("xstatestore_dbaccess_t::write_table_bstate succ.state=%s",tablestate->get_bstate()->dump().c_str());
+    xinfo("xstatestore_dbaccess_t::write_table_bstate tps_key succ.state=%s",tablestate->get_bstate()->dump().c_str());
 }
 
 data::xtablestate_ptr_t xstatestore_dbaccess_t::read_table_bstate(common::xtable_address_t const& address, uint64_t height, const std::string & block_hash) const {

@@ -255,6 +255,23 @@ bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_addr
     return false;
 }
 
+bool xstatestore_impl_t::accountindex_cache_unbroken(base::xvblock_t * table_block) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_block->get_account());
+    if (tablestore != nullptr) {
+        return tablestore->accountindex_cache_unbroken(table_block);
+    }
+    return false;
+}
+
+bool xstatestore_impl_t::get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_block->get_account());
+    if (tablestore != nullptr) {
+        return tablestore->get_accountindex_by_recent_blocks_cache(account_address, table_block, account_index);
+    }
+    xwarn("xstatestore_impl_t::get_accountindex_by_recent_blocks_cache fail.block=%s", table_block->dump().c_str());
+    return false;
+}
+
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const {
     auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount());
     if (nullptr == _block) {

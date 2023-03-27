@@ -85,6 +85,27 @@ bool xaccount_index_cache_t::get_account_index(base::xvblock_t * block, const st
     return false;
 }
 
+bool xaccount_index_cache_t::cache_unbroken(base::xvblock_t* block) {
+    std::lock_guard<std::mutex> l(m_mutex);
+    if (m_cache.size() < 2) {
+        XMETRICS_GAUGE(metrics::statestore_account_index_cache_unbroken, 0);
+        return false;
+    }
+
+    if (block->get_height() != m_cache.rbegin()->first || block->get_block_hash() != m_cache.rbegin()->second.get_block_hash()) {
+        XMETRICS_GAUGE(metrics::statestore_account_index_cache_unbroken, 0);
+        return false;
+    }
+
+    auto it = m_cache.find(block->get_height() - 1);
+    if (it == m_cache.end()) {
+        XMETRICS_GAUGE(metrics::statestore_account_index_cache_unbroken, 0);
+        return false;
+    }
+    XMETRICS_GAUGE(metrics::statestore_account_index_cache_unbroken, 1);
+    return true;
+}
+
 xblock_account_indexes_t::xblock_account_indexes_t(const std::string & block_hash, const std::map<std::string, base::xaccount_index_t> & account_index_map)
   : m_block_hash(block_hash), m_account_index_map(account_index_map) {
 }

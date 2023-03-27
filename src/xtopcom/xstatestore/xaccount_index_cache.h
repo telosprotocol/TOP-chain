@@ -24,6 +24,7 @@ class xaccount_index_cache_t {
 public:
     void update_new_cert_block(base::xvblock_t* cert_block, const std::map<std::string, base::xaccount_index_t> & account_index_map);
     bool get_account_index(base::xvblock_t* block, const std::string & account, base::xaccount_index_t & account_index);
+    bool cache_unbroken(base::xvblock_t* block);
 private:
     std::map<uint64_t, xblock_account_indexes_t> m_cache;
     mutable std::mutex m_mutex;

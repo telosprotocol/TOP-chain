@@ -538,6 +538,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_execute_block_recursive_succ);
         RETURN_METRICS_NAME(statestore_execute_unit_recursive_succ);
         RETURN_METRICS_NAME(statestore_get_account_index_from_cache);
+        RETURN_METRICS_NAME(statestore_account_index_cache_unbroken);
 
         RETURN_METRICS_NAME(statestore_sync_succ);
 
