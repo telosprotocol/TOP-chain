@@ -417,7 +417,7 @@ std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstat
         for (auto & leaf : leafs) {
             state_mpt::xaccount_info_t info;
             info.decode({leaf.begin(), leaf.end()});
-            accounts_index.emplace_back(info.m_account, info.m_index);
+            accounts_index.emplace_back(info.account, info.index);
         }
         return accounts_index;
     }

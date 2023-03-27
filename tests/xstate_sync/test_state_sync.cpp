@@ -70,8 +70,8 @@ void test_state_sync_fixture::generate_state_mpt() {
         std::string unit_block_hash_str((char *)unit_block_hash.data(), unit_block_hash.size());
         base::xaccount_index_t index{base::enum_xaccountindex_version_snapshot_hash, i + 1, unit_block_hash_str, unit_state_hash_str, i + 1};
         state_mpt::xaccount_info_t info;
-        info.m_account = common::xaccount_address_t(units_str[i]);
-        info.m_index = index;
+        info.account = common::xaccount_address_t(units_str[i]);
+        info.index = index;
         auto info_str = info.encode();
         trie->update(to_bytes(units_str[i]), to_bytes(info_str));
         printf("unit, account: %s, value: %s, block_hash: %s, state_hash: %s, state: %s\n",
@@ -719,7 +719,7 @@ TEST_F(test_state_sync_fixture, test_sync_trie_success) {
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);
@@ -763,7 +763,7 @@ TEST_F(test_state_sync_fixture, test_run_success) {
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);

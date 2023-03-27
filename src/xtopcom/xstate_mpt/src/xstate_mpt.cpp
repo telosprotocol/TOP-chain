@@ -11,14 +11,13 @@
 #include "xstate_mpt/xstate_mpt_database.h"
 #include "xstate_mpt/xstate_mpt_store.h"
 
-namespace top {
-namespace state_mpt {
+NS_BEG3(top, state_mpt, details)
 
 std::string xaccount_info_t::encode() const {
     base::xautostream_t<1024> stream(base::xcontext_t::instance());
     std::string data;
-    m_index.serialize_to(data);
-    stream << m_account;
+    index.serialize_to(data);
+    stream << account;
     stream << data;
     return std::string{reinterpret_cast<const char *>(stream.data()), static_cast<size_t>(stream.size())};
 }
@@ -26,9 +25,9 @@ std::string xaccount_info_t::encode() const {
 void xaccount_info_t::decode(const std::string & str) {
     base::xstream_t stream(base::xcontext_t::instance(), const_cast<uint8_t *>(reinterpret_cast<uint8_t const *>(str.data())), static_cast<int32_t>(str.size()));
     std::string index_str;
-    stream >> m_account;
+    stream >> account;
     stream >> index_str;
-    m_index.serialize_from(index_str);
+    index.serialize_from(index_str);
 }
 
 static xstate_mpt_caching_db_t & get_caching_db(base::xvdbstore_t * db) {
@@ -122,7 +121,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
     }
     xaccount_info_t info;
     info.decode({index_bytes.begin(), index_bytes.end()});
-    auto obj = xstate_object_t::new_object(account, info.m_index);
+    auto obj = xstate_object_t::new_object(account, info.index);
     set_state_object(obj);
     return obj;
 }
@@ -185,8 +184,8 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     }
     xaccount_info_t info;
     info.decode({index_bytes.begin(), index_bytes.end()});
-    auto hash = info.m_index.get_latest_unit_hash();
-    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.to_string()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+    auto hash = info.index.get_latest_unit_hash();
+    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.to_string()}, info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
     m_trie_db->DiskDB()->DeleteDirect({key.begin(), key.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
@@ -200,8 +199,8 @@ evm_common::xh256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     for (auto & acc : m_state_objects_pending) {
         auto obj = query_state_object(acc);
         xaccount_info_t info;
-        info.m_account = acc;
-        info.m_index = obj->index;
+        info.account = acc;
+        info.index = obj->index;
         auto data = info.encode();
         m_trie->try_update(to_bytes(acc), {data.begin(), data.end()}, ec);
         if (ec) {
@@ -287,6 +286,4 @@ void xtop_state_mpt::commit_pruned(std::unordered_set<evm_common::xh256_t> const
     m_trie->commit_pruned(pruned_hashes, ec);
 }
 
-
-}  // namespace state_mpt
-}  // namespace top
+NS_END3

@@ -12,19 +12,18 @@
 #include "xstate_mpt/xstate_object.h"
 #include "xvledger/xvdbstore.h"
 
-namespace top {
-namespace state_mpt {
+#include <memory>
+#include <mutex>
+#include <string>
 
-struct xaccount_info_t {
-public:
-    xaccount_info_t() = default;
-    ~xaccount_info_t() = default;
+NS_BEG3(top, state_mpt, details)
 
+struct xtop_account_info {
     std::string encode() const;
     void decode(const std::string & str);
 
-    common::xaccount_address_t m_account;
-    base::xaccount_index_t m_index;
+    common::xaccount_address_t account;
+    base::xaccount_index_t index;
 };
 
 class xtop_state_mpt {
@@ -132,7 +131,11 @@ private:
 
     std::shared_ptr<xstate_object_t> query_state_object(common::xaccount_address_t const& account) const;
 };
-using xstate_mpt_t = xtop_state_mpt;
 
-}  // namespace state_mpt
-}  // namespace top
+
+NS_END3
+
+NS_BEG2(top, state_mpt)
+using xstate_mpt_t = details::xtop_state_mpt;
+using xaccount_info_t = details::xtop_account_info;
+NS_END2
