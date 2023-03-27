@@ -182,7 +182,7 @@ void xtop_trie::Delete(xbytes_t const & key) {
 // TryDelete removes any existing value for key from the trie.
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
 void xtop_trie::try_delete(xbytes_t const & key, std::error_code & ec) {
-    xassert(!ec); 
+    xassert(!ec);
     unhashed_++;
     auto const k = key_bytes_to_hex(key);
     auto result = erase(trie_root_, {}, k, ec);
@@ -795,30 +795,6 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie::hash_root() {
 
 xnode_flag_t xtop_trie::node_dirty() {
     return xnode_flag_t{true};
-}
-
-void xtop_trie::prune(xh256_t const & old_trie_root_hash, std::error_code & ec) {
-    assert(!ec);
-
-    if (pruner_ == nullptr) {
-        pruner_ = top::make_unique<xtrie_pruner_t>();
-        pruner_->init(trie_root_, trie_db_, ec);
-    }
-
-    pruner_->prune(old_trie_root_hash, trie_db_, ec);
-}
-
-void xtop_trie::commit_pruned(std::error_code & ec) {
-    assert(!ec);
-    assert(pruner_);
-
-    trie_db_->commit_pruned(ec);
-    if (ec) {
-        xwarn("commit prune failed");
-        return;
-    }
-
-    pruner_.reset();
 }
 
 void xtop_trie::prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {

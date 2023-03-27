@@ -38,7 +38,7 @@ xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablest
 }
 
 bool xstatectx_t::is_same_table(common::xaccount_address_t const& address) const {
-    if (address.ledger_id().zone_id() == common::zone_id(m_table_address) && address.table_id() == m_table_address.table_id()) {
+    if (address.zone_id() == common::zone_id(m_table_address) && address.table_id() == common::table_id(m_table_address)) {
         return true;
     }
     return false;

@@ -260,7 +260,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
     }
 
     std::shared_ptr<state_mpt::xstate_mpt_t> lowest_keep_mpt = nullptr;
-    auto lowest_keep_root = m_statestore_base.get_state_root_from_block(lowest_keep_block.get());
+    auto const & lowest_keep_root = m_statestore_base.get_state_root_from_block(lowest_keep_block.get());
     if (!lowest_keep_root.empty()) {
         std::error_code ec;
         lowest_keep_mpt = state_mpt::xstate_mpt_t::create(get_account(), lowest_keep_root, base::xvchain_t::instance().get_xdbstore(), ec);
@@ -316,7 +316,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
     // bool need_prune_unitstates = !base::xvchain_t::instance().need_store_units(m_table_vaddr.get_zone_index());
     xtablestate_and_offdata_prune_info_t prune_info;
     xaccounts_prune_info_t accounts_prune_info;
-    uint32_t delete_mpt_num = 0;
+    uint32_t delete_mpt_num_old_style = 0;
     std::unordered_set<evm_common::xh256_t> pruned_hashes;
     for (uint64_t height = from_height; height <= to_height; height++) {
         // prune include fork blocks.
@@ -336,14 +336,23 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
                 xdbg("xstatestore_prune_t::prune_exec_cons prune mpt before.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.hex().c_str());
                 // mpt prune.
                 {
-                    std::error_code ec1;
+                    std::error_code ec;
                     XMETRICS_TIME_RECORD("state_mpt_prune");
-                    lowest_keep_mpt->prune(root, pruned_hashes, ec1);
+                    lowest_keep_mpt->commit_pruned(root, ec);
 
-                    if (ec1) {
+                    if (ec) {
                         xwarn("xstatestore_prune_t::prune_exec_cons prune mpt fail.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.hex().c_str());
-                    } else {
-                        delete_mpt_num++;
+                        ec.clear();
+                        lowest_keep_mpt->prune(root, pruned_hashes, ec);
+
+                        if (ec) {
+                            xwarn("xstatestore_prune_t::prune_exec_cons prune mpt fail again.table:%s,height:%llu,root:%s",
+                                  m_table_addr.to_string().c_str(),
+                                  height,
+                                  root.hex().c_str());
+                        } else {
+                            delete_mpt_num_old_style++;
+                        }
                     }
                 }
                 xdbg("xstatestore_prune_t::prune_exec_cons prune mpt after.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.hex().c_str());
@@ -354,7 +363,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
         }
     }
 
-    if (delete_mpt_num > 0) {
+    if (delete_mpt_num_old_style > 0) {
         {
             std::error_code ec;
             XMETRICS_TIME_RECORD("state_mpt_commit_pruned");
@@ -363,7 +372,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
                 xwarn("xstatestore_prune_t::prune_exec_cons mpt commit prune fail table %s from %llu to %llu", m_table_addr.to_string().c_str(), from_height, to_height);
             }
         }
-        XMETRICS_GAUGE(metrics::state_delete_mpt, delete_mpt_num);
+        XMETRICS_GAUGE(metrics::state_delete_mpt, delete_mpt_num_old_style);
     }
 
     base::xvchain_t::instance().get_xdbstore()->delete_values(prune_info.get_tablestate_prune_keys());

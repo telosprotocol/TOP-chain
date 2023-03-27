@@ -118,20 +118,6 @@ xbytes_t xtop_secure_trie::hash_key(xbytes_t const & key) const {
     return hashbuf;
 }
 
-void xtop_secure_trie::prune(xh256_t const & old_trie_root_hash, std::error_code & ec) {
-    assert(!ec);
-    assert(m_trie != nullptr);
-
-    m_trie->prune(old_trie_root_hash, ec);
-}
-
-void xtop_secure_trie::commit_pruned(std::error_code & ec) {
-    assert(!ec);
-    assert(m_trie != nullptr);
-
-    m_trie->commit_pruned(ec);
-}
-
 void xtop_secure_trie::prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
     assert(!ec);
     assert(m_trie != nullptr);
@@ -144,6 +130,19 @@ void xtop_secure_trie::commit_pruned(std::unordered_set<xh256_t> const & pruned_
     assert(m_trie != nullptr);
 
     m_trie->commit_pruned(pruned_hashes, ec);
+}
+
+void xtop_secure_trie::prune(std::error_code & ec) {
+    assert(!ec);
+    assert(m_trie != nullptr);
+
+    m_trie->prune(ec);
+}
+
+void xtop_secure_trie::commit_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) {
+    assert(!ec);
+    assert(m_trie != nullptr);
+    m_trie->commit_pruned(pending_pruned_trie_root_hash, ec);
 }
 
 NS_END3

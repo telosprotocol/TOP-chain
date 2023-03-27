@@ -107,12 +107,10 @@ public:
     // with the node that proves the absence of the key.
     bool prove(xbytes_t const & key, uint32_t from_level, xkv_db_face_ptr_t const & proof_db, std::error_code & ec) const;
 
-    void prune(xh256_t const & old_trie_root_hash, std::error_code & ec);
     void prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
-    void prune(std::error_code & ec);
-
-    void commit_pruned(std::error_code & ec);
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
+
+    void prune(std::error_code & ec);
     void commit_pruned(xh256_t const & root_hash, std::error_code & ec);
 
     std::string to_string() const;

@@ -55,8 +55,8 @@ public:
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
     base::enum_vaccount_addr_type type() const;
 
-    xledger_id_t const & ledger_id() const noexcept;
-    xtable_id_t const & default_table_id() const noexcept;
+    xledger_id_t ledger_id() const noexcept;
+    xtable_id_t default_table_id() const noexcept;
 
     bool operator==(xtop_account_base_address const & other) const noexcept;
     bool operator<(xtop_account_base_address const & other) const noexcept;

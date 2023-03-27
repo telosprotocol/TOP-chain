@@ -218,12 +218,12 @@ const evm_common::xh256_t & xtop_state_mpt::get_original_root_hash() const {
     return m_original_root;
 }
 
-evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
+evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
     assert(!ec);
 
     get_root_hash(ec);
     if (ec) {
-        xwarn("xtop_state_mpt::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("xstate_mpt_t::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
 
@@ -239,35 +239,27 @@ evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
         res = m_trie->commit(ec);
     }
     if (ec) {
-        xwarn("xtop_state_mpt::commit trie commit error, %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("xstate_mpt_t::commit trie commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
     // TODO: should call outside with roles of node
     m_trie_db->Commit(res.first, nullptr, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::commit db commit error, %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("xstate_mpt_t::commit db commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
+
+    prune(ec);
+    if (ec) {
+        xwarn("xstate_mpt_t::commit pruning old trie data failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
+        // !!!no return here!!! since prune failed only affects DB size
+        ec.clear();
+    }
+
     return res.first;
 }
 
 void xtop_state_mpt::load_into(std::unique_ptr<xstate_mpt_store_t> const & state_mpt_store, std::error_code & ec) {
-}
-
-void xtop_state_mpt::prune(evm_common::xh256_t const & old_trie_root_hash, std::error_code & ec) const {
-    assert(!ec);
-
-    std::lock_guard<std::mutex> lock(m_trie_lock);
-    assert(m_trie != nullptr);
-    m_trie->prune(old_trie_root_hash, ec);
-}
-
-void xtop_state_mpt::commit_pruned(std::error_code & ec) const {
-    assert(!ec);
-
-    std::lock_guard<std::mutex> lock{m_trie_lock};
-    assert(m_trie != nullptr);
-    m_trie->commit_pruned(ec);
 }
 
 void xtop_state_mpt::prune(evm_common::xh256_t const & old_trie_root_hash, std::unordered_set<evm_common::xh256_t> & pruned_hashes, std::error_code & ec) const {
@@ -285,5 +277,22 @@ void xtop_state_mpt::commit_pruned(std::unordered_set<evm_common::xh256_t> const
     assert(m_trie != nullptr);
     m_trie->commit_pruned(pruned_hashes, ec);
 }
+
+void xtop_state_mpt::prune(std::error_code & ec) {
+    assert(!ec);
+
+    m_trie->prune(ec);
+    if (ec) {
+        xwarn("xstate_mpt_t::commit pruning old trie data failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
+    }
+}
+
+void xtop_state_mpt::commit_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const {
+    assert(!ec);
+    std::lock_guard<std::mutex> lock{m_trie_lock};
+    assert(m_trie != nullptr);
+    m_trie->commit_pruned(pruned_key, ec);
+}
+
 
 NS_END3
