@@ -63,7 +63,7 @@ namespace top
             {
                 if(lastest_lock_block->get_viewid() < get_lock_block()->get_viewid())
                 {
-                    xerror("xBFTdriver_t::start_consensus,fail-lock block is out of date,need to be update,lock->dump(%s) at node=0x%llx",lastest_lock_block->dump().c_str(),get_xip2_addr().low_addr);
+                    xwarn("xBFTdriver_t::start_consensus,fail-lock block is out of date,need to be update,lock->dump(%s) at node=0x%llx",lastest_lock_block->dump().c_str(),get_xip2_addr().low_addr);
                 }
             }
             //now safe to keep commit
