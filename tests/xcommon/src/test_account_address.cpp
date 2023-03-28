@@ -187,6 +187,15 @@ TEST(account_address, value_address_must_not_changed) {
 }
 
 TEST(account_address, size) {
+#if defined(XCXX20)
+    EXPECT_TRUE(sizeof(top::common::xaccount_address_t) <= 56);
+    EXPECT_TRUE(sizeof(top::common::xaccount_base_address_t) <= 40);
+    EXPECT_TRUE(sizeof(top::base::xvaccount_t) <= 128);
+
+    EXPECT_EQ(56, sizeof(top::common::xaccount_address_t));
+    EXPECT_EQ(40, sizeof(top::common::xaccount_base_address_t));
+    EXPECT_EQ(128, sizeof(top::base::xvaccount_t));
+#else
     EXPECT_TRUE(sizeof(top::common::xaccount_address_t) <= 32);
     EXPECT_TRUE(sizeof(top::common::xaccount_base_address_t) <= 16);
     EXPECT_TRUE(sizeof(top::base::xvaccount_t) <= 56);
@@ -194,6 +203,7 @@ TEST(account_address, size) {
     EXPECT_EQ(32, sizeof(top::common::xaccount_address_t));
     EXPECT_EQ(16, sizeof(top::common::xaccount_base_address_t));
     EXPECT_EQ(56, sizeof(top::base::xvaccount_t));
+#endif
 }
 
 TEST(account_address, table_id) {
