@@ -1,10 +1,6 @@
 include_directories(.)
 include_directories(./src)
 
-if (DISABLE_REAL_STAKE)
-    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
-endif()
-
 aux_source_directory(./src src_dir)
 add_library(xtxpool_v2 STATIC ${src_dir})
 

@@ -202,8 +202,8 @@ bool xbatch_packer::connect_to_checkpoint() {
     xdbg("connect_to_checkpoint node type:%s", common::to_string(node_type).c_str());
 
     if (common::has<common::xnode_type_t::rec>(node_type)
-     || common::has<common::xnode_type_t::zec>(node_type)
-     || common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
+     || common::has<common::xnode_type_t::zec>(node_type)) {
+     //|| common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
         auto latest_cp_connect_height = m_para->get_resources()->get_vblockstore()->update_get_latest_cp_connected_block_height(get_account());
         auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
         if (latest_cp_connect_height != latest_connect_height) {
