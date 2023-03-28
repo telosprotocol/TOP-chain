@@ -7,10 +7,10 @@ using namespace top::mbus;
 using namespace top::data;
 
 // 1shard(5node)
-static xJson::Value build_validators()
+static Json::Value build_validators()
 {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = Json::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
