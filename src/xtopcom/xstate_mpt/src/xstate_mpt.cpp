@@ -277,11 +277,11 @@ void xtop_state_mpt::prune(std::error_code & ec) {
     }
 }
 
-void xtop_state_mpt::commit_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const {
+void xtop_state_mpt::commit_pruned(std::vector<evm_common::xh256_t> const & pruned_keys, std::error_code & ec) const {
     assert(!ec);
     std::lock_guard<std::mutex> lock{m_trie_lock};
     assert(m_trie != nullptr);
-    m_trie->commit_pruned(pruned_key, ec);
+    m_trie->commit_pruned(pruned_keys, ec);
 }
 
 void xtop_state_mpt::clear_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const {

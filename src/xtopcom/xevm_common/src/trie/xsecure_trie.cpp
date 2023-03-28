@@ -139,10 +139,10 @@ void xtop_secure_trie::prune(std::error_code & ec) {
     m_trie->prune(ec);
 }
 
-void xtop_secure_trie::commit_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) {
+void xtop_secure_trie::commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec) {
     assert(!ec);
     assert(m_trie != nullptr);
-    m_trie->commit_pruned(pending_pruned_trie_root_hash, ec);
+    m_trie->commit_pruned(pruned_root_hashes, ec);
 }
 
 void xtop_secure_trie::clear_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) {

@@ -838,13 +838,13 @@ void xtop_trie::prune(std::error_code & ec) {
     assert(pending_to_be_pruned_.empty());
 }
 
-void xtop_trie::commit_pruned(xh256_t const & root_hash, std::error_code & ec) {
+void xtop_trie::commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec) {
     assert(!ec);
     assert(trie_db_);
 
-    trie_db_->commit_pruned(root_hash, ec);
+    trie_db_->commit_pruned(pruned_root_hashes, ec);
     if (ec) {
-        xwarn("xtrie_t::commit_pruned failed on pruning root %s", root_hash.hex().c_str());
+        xwarn("xtrie_t::commit_pruned failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
     }
 }
 

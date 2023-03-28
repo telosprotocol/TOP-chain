@@ -561,10 +561,8 @@ TEST_F(xtest_trie_fixture, prune_none_) {
     trie->prune(ec);
     ASSERT_TRUE(!ec);
 
-    trie->commit_pruned(xh256_t{}, ec);
-    ASSERT_TRUE(ec);
-    ASSERT_TRUE(ec.category() == error::evm_common_category());
-    ASSERT_TRUE(ec.value() == static_cast<int>(error::xerrc_t::trie_prune_data_not_found));
+    trie->commit_pruned(std::vector<xh256_t>{xh256_t{}}, ec);
+    ASSERT_TRUE(!ec);
 }
 
 TEST_F(xtest_trie_fixture, prune_none2_) {
@@ -636,10 +634,8 @@ TEST_F(xtest_trie_fixture, prune_none2_) {
     trie2->prune(ec);
     ASSERT_TRUE(!ec);
 
-    trie2->commit_pruned(xh256_t{}, ec);
-    ASSERT_TRUE(ec);
-    ASSERT_TRUE(ec.category() == error::evm_common_category());
-    ASSERT_TRUE(ec.value() == static_cast<int>(error::xerrc_t::trie_prune_data_not_found));
+    trie2->commit_pruned(std::vector<xh256_t>{xh256_t{}}, ec);
+    ASSERT_TRUE(!ec);
 }
 
 TEST_F(xtest_trie_fixture, prune_all_) {
@@ -681,11 +677,9 @@ TEST_F(xtest_trie_fixture, prune_all_) {
     test_trie_db_ptr->Commit(result2.first, nullptr, ec);
     ASSERT_TRUE(!ec);
 
-    auto const pending_pruned_size = trie2->pending_pruned_size();
-
     trie2->prune(ec);
     ASSERT_TRUE(!ec);
-    trie2->commit_pruned(trie2->hash(), ec);
+    trie2->commit_pruned(std::vector<xh256_t>{trie2->hash()}, ec);
     ASSERT_TRUE(!ec);
 
     auto const trie1_ = xtrie_t::build_from(trie1_root_hash, test_trie_db_ptr, ec);
@@ -764,7 +758,7 @@ TEST_F(xtest_trie_fixture, prune_old_root_) {
     auto const db_pending_pruned_size = test_trie_db_ptr->pending_pruned_size(trie2->hash());
     ASSERT_EQ(pending_pruned_size + 1, db_pending_pruned_size);
 
-    trie2->commit_pruned(trie2->hash(), ec);
+    trie2->commit_pruned(std::vector<xh256_t>{trie2->hash()}, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(0, test_trie_db_ptr->pending_pruned_size(trie2->hash()));
 }
@@ -834,7 +828,7 @@ TEST_F(xtest_trie_fixture, prune_empty_) {
     ASSERT_EQ(pending_pruned_size + 1, test_trie_db_ptr->pending_pruned_size(trie2->hash()));
 
     ASSERT_TRUE(!ec);
-    trie2->commit_pruned(trie2->hash(), ec);
+    trie2->commit_pruned(std::vector<xh256_t>{trie2->hash()}, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(0, test_trie_db_ptr->pending_pruned_size(trie2->hash()));
 }

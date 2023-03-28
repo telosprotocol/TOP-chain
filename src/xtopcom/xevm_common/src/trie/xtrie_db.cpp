@@ -318,36 +318,40 @@ void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pr
     ec = error::xerrc_t::trie_prune_data_duplicated;
 }
 
-void xtop_trie_db::commit_pruned(xh256_t const & root_hash, std::error_code & ec) {
+void xtop_trie_db::commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec) {
     assert(!ec);
 
     std::lock_guard<std::mutex> lck(mutex);
 
-    auto const it = pruned_hashes2_.find(root_hash);
-    if (it == std::end(pruned_hashes2_)) {
-        ec = error::xerrc_t::trie_prune_data_not_found;
-        xwarn("xtrie_db_t::commit_pruned fail to find pending root hash %s to be pruned", root_hash.hex().c_str());
-        return;
-    }
-
-    auto const & pruned_data = *it;
-    auto const & pruned_hashes = top::get<std::vector<xh256_t>>(pruned_data);
-
     std::vector<xspan_t<xbyte_t const>> pruned_keys;
-    pruned_keys.reserve(pruned_hashes.size());
-    for (auto const & hash : pruned_hashes) {
-        cleans_erase_lock_hold_outside(hash);
-        assert(dirties_.find(hash) == dirties_.end());
-        pruned_keys.emplace_back(hash);
+    pruned_keys.reserve(pruned_root_hashes.size() * 50);
+
+    for (auto const & root_hash : pruned_root_hashes) {
+        auto const it = pruned_hashes2_.find(root_hash);
+        if (it == std::end(pruned_hashes2_)) {
+            // ec = error::xerrc_t::trie_prune_data_not_found;
+            xwarn("xtrie_db_t::commit_pruned fail to find pending root hash %s to be pruned", root_hash.hex().c_str());
+            continue;
+        }
+
+        auto const & pruned_hashes = top::get<std::vector<xh256_t>>(*it);
+        for (auto const & hash : pruned_hashes) {
+            cleans_erase_lock_hold_outside(hash);
+            assert(dirties_.find(hash) == dirties_.end());
+            pruned_keys.emplace_back(hash);
+        }
     }
 
-    diskdb_->DeleteBatch(pruned_keys, ec);
-    if (ec) {
-        xwarn("pruning MPT nodes failed. errc %d msg %s", ec.value(), ec.message().c_str());
-        return;
+    if (!pruned_keys.empty()) {
+        diskdb_->DeleteBatch(pruned_keys, ec);
+        if (ec) {
+            xwarn("pruning MPT nodes failed. errc %d msg %s", ec.value(), ec.message().c_str());
+        }
     }
 
-    pruned_hashes2_.erase(it);
+    for (auto const & root_hash : pruned_root_hashes) {
+        pruned_hashes2_.erase(root_hash);
+    }
 }
 
 void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {

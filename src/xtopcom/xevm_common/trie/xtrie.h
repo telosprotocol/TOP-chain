@@ -111,7 +111,7 @@ public:
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
     void prune(std::error_code & ec);
-    void commit_pruned(xh256_t const & root_hash, std::error_code & ec);
+    void commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec);
     void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
 
     std::string to_string() const;

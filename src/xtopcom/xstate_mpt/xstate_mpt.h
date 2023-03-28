@@ -81,7 +81,7 @@ public:
     void commit_pruned(std::unordered_set<evm_common::xh256_t> const & pruned_hashes, std::error_code & ec) const;
 
     void prune(std::error_code & ec);
-    void commit_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const;
+    void commit_pruned(std::vector<evm_common::xh256_t> const & pruned_keys, std::error_code & ec) const;
     void clear_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const;
 
     /// @brief Update modifies to trie and calculate root hash.
