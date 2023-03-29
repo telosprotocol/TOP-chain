@@ -550,6 +550,7 @@ namespace top
         bool    xkeccak256_t::get_hash(uint256_t & hash) //raw hash as 256bit
         {
             c_keccak_final(_context, hash.raw_uint8);
+            XMETRICS_GAUGE(metrics::cpu_hash_256_keccak_calc, 1);
             return true;
         }
 

@@ -148,7 +148,9 @@ std::string xeth_transaction_t::serialize_to_string() const {
 
     return top::to_string(_bs);
 }
+
 void xeth_transaction_t::serialize_from_string(const std::string & bin_data, eth_error & ec) {
+    m_transaction_hash = utl::xkeccak256_t::digest(bin_data);
     xbytes_t _bs = top::to_bytes(bin_data);
     decodeBytes(_bs, ec);
 }

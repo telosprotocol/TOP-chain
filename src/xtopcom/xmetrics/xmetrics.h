@@ -577,6 +577,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     statestore_get_unit_state_succ,
     statestore_get_unit_state_from_cache,
+    statestore_get_unit_state_by_latest_unitstate,
     statestore_get_unit_state_from_db,
     statestore_get_unit_state_with_unit_count,
     statestore_get_table_state_succ,
@@ -586,6 +587,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_load_table_block_succ,
     statestore_execute_block_recursive_succ,
     statestore_execute_unit_recursive_succ,
+    statestore_get_account_index_from_cache,
+    statestore_account_index_cache_unbroken,
 
     statestore_sync_succ,
 
@@ -603,6 +606,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     state_delete_mpt,
     state_delete_by_full_table,
     state_delete_create_mpt_fail,
+    statestore_repeat_write_states,
 
     // data structure
     data_table_unpack_units,
@@ -680,6 +684,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     //cpu
     cpu_hash_256_calc,
+    cpu_hash_256_keccak_calc,
     cpu_hash_64_calc,
     cpu_ca_merge_sign_xbft,
     cpu_ca_merge_sign_tc,

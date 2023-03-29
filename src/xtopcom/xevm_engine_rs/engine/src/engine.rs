@@ -294,13 +294,13 @@ impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>
             contract_bridge.executor_return(executor_ptr as u64);
         }
 
-        sdk::log(
-            format!(
-                "call contract at: {:?} from {:?} with input {:?}, value: {:?}, gas: {:?}",
-                contract, origin, input, value, gas_limit
-            )
-            .as_str(),
-        );
+        // sdk::log(
+        //     format!(
+        //         "call contract at: {:?} from {:?} with input {:?}, value: {:?}, gas: {:?}",
+        //         contract, origin, input, value, gas_limit
+        //     )
+        //     .as_str(),
+        // );
         let (exit_reason, result) = executor.transact_call(
             origin.raw(),
             contract.raw(),
@@ -720,14 +720,14 @@ impl<'env, 'bridge, J: IO + Copy, E: Env, CBridge: ContractBridge> ApplyBackend
                         if value == H256::default() {
                             remove_storage(&mut self.io, &address, &index, next_generation)
                         } else {
-                            sdk::log(
-                                format!(
-                                    "set_storage: {:?}, {:?}",
-                                    hex::encode(index.as_bytes()),
-                                    hex::encode(value.as_bytes())
-                                )
-                                .as_str(),
-                            );
+                            // sdk::log(
+                            //     format!(
+                            //         "set_storage: {:?}, {:?}",
+                            //         hex::encode(index.as_bytes()),
+                            //         hex::encode(value.as_bytes())
+                            //     )
+                            //     .as_str(),
+                            // );
                             set_storage(&mut self.io, &address, &index, &value, next_generation)
                         }
                         writes_counter += 1;

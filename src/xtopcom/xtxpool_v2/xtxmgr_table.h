@@ -29,7 +29,7 @@ public:
     data::xcons_transaction_ptr_t pop_tx(const std::string & tx_hash, base::enum_transaction_subtype subtype, bool clear_follower);
     void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid);
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para, const xunconfirm_id_height & unconfirm_id_height);
-    data::xcons_transaction_ptr_t query_tx(const std::string & account_addr, const std::string & hash_str) const;
+    data::xcons_transaction_ptr_t query_tx(const std::string & hash_str) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     bool is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(const std::set<base::xtable_shortid_t> & all_table_sids, uint32_t & total_num) const;

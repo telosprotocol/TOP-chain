@@ -194,7 +194,7 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
                 xerror("xvtxstore_t::store_txs_index,fail to store tx for block(%s)", block_ptr->dump().c_str());
                 has_error = false;  // mark it but let do rest work
             } else {
-                xinfo("xvtxstore_t::store_txs_index,store tx to DB for block=%s,tx=%s",
+                xdbg("xvtxstore_t::store_txs_index,store tx to DB for block=%s,tx=%s",
                       block_ptr->dump().c_str(),
                       base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
             }
