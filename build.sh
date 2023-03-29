@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 command_line_option_include_item() {
     local list="$1"

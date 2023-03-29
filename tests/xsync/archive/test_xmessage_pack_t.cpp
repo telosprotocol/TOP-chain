@@ -212,7 +212,7 @@ TEST(test_xmessage_pack_t, test_xsync_message_by_string_compress_BENCH)
     }
 }
 
-bool send_message_mock(const xobject_ptr_t<basic::xserialize_face_t> serializer,
+void send_message_mock(const xobject_ptr_t<basic::xserialize_face_t> serializer,
     const common::xmessage_id_t msgid,
     vnetwork::xmessage_t& msg, bool require_compress, bool without_dataunit_serialize = false)
 {
