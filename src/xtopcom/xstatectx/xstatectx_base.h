@@ -28,11 +28,10 @@ class xstatectx_base_t {
     data::xunitstate_ptr_t          load_inner_table_commit_unit_state(const common::xaccount_address_t & addr) const;
     data::xunitstate_ptr_t          load_different_table_unit_state(const base::xvaccount_t & addr) const;
     xobject_ptr_t<base::xvbstate_t> change_to_proposal_block_state(base::xaccount_index_t const& account_index, base::xvbstate_t* prev_bstate) const;
-    xobject_ptr_t<base::xvblock_t>  load_block_object(const base::xvaccount_t & addr, base::xaccount_index_t const& account_index) const;
     bool                            load_account_index(common::xaccount_address_t const& address, base::xaccount_index_t & account_index) const;
     void                            sync_unit_block(const base::xvaccount_t & _vaddr, uint64_t end_height) const;
 
- private:
+ public:
     base::xvblockstore_t*       get_blockstore() const;
     bool                        get_account_index(const statestore::xtablestate_ext_ptr_t & table_state, const std::string & account, base::xaccount_index_t & account_index) const;
  private:

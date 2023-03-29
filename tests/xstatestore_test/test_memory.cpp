@@ -292,106 +292,43 @@ TEST_F(test_memory, unitstate_cache) {
     xassert(tableblocks.size() == max_count + 1);
     const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
 
-    mocktable.store_genesis_units(blockstore);
-    for (auto & block : tableblocks) {
-        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    xunitstate_cache_t _cache(100);
+    {
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[0].get_history_units()[0].get());
+        auto bstate = unitstate->get_bstate();
+        uint64_t height = bstate->get_block_height();
+
+        _cache.set_unitstate("111", bstate);
+        _cache.set_unitstate("222", bstate);
+        _cache.set_unitstate("333", bstate);
+        ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), height, "111"), nullptr);
+        ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), height, "222"), nullptr);
+        ASSERT_NE(_cache.get_unitstate(mockunits[0].get_account(), height, "333"), nullptr);
+        std::cout << "unitstate refcount " << unitstate.use_count() << std::endl;
     }
 
-    auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_table(common::xaccount_address_t{mockunits[0].get_account()}, "latest");
+    {
+        auto unitstate1 = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[1].get_history_units()[0].get());    
+        auto bstate = unitstate1->get_bstate();
+        uint64_t height = bstate->get_block_height();
+        _cache.set_unitstate("111", bstate);
+        _cache.set_unitstate("222", bstate);
+        _cache.set_unitstate("333", bstate);
+        _cache.set_unitstate("444", bstate);
+        _cache.set_unitstate("555", bstate);
+        _cache.set_unitstate("666", bstate);
+        _cache.set_unitstate("777", bstate);
+        _cache.set_unitstate("888", bstate);
+        std::cout << "bstate refcount " << bstate->get_refcount() << std::endl;
+        ASSERT_EQ(bstate->get_refcount(), 4);
+    }
 
-    xstatestore_cache_t _cache;
-    common::xaccount_address_t account_address{mockunits[0].get_account()};
-    std::vector<base::xaccount_index_t> history_index;    
-    for (auto & block : tableblocks) {
-        if (block->get_height() == 0) {
-            continue;
-        }
-        base::xaccount_index_t accountindex;
-        ASSERT_TRUE(statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(account_address, block.get(), accountindex));
-        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, accountindex);
-        _cache.set_unitstate(accountindex.get_latest_unit_hash(), unitstate);
-
-        for(auto & v : history_index) {
-            ASSERT_EQ(_cache.get_unitstate(account_address.to_string(), v.get_latest_unit_hash()), nullptr);
-        }
-
-        history_index.push_back(accountindex);
+    {
+        ASSERT_EQ(_cache.size(), 2);
+        _cache.clear();
+        ASSERT_EQ(_cache.size(), 0);
     }
 }
-
-TEST_F(test_memory, unitstate_cache_2) {
-    mock::xvchain_creator creator;
-    base::xvblockstore_t* blockstore = creator.get_blockstore();
-    uint64_t max_count = 10;
-    mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(max_count, blockstore);
-    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
-    xassert(tableblocks.size() == max_count + 1);
-    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
-
-    xstatestore_cache_t _cache;
-    auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[0].get_history_units()[0].get());
-
-    _cache.set_unitstate("111", unitstate);
-    _cache.set_unitstate("222", unitstate);
-    _cache.set_unitstate("333", unitstate);
-    ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), "111"), nullptr);
-    ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), "222"), nullptr);
-    ASSERT_NE(_cache.get_unitstate(mockunits[0].get_account(), "333"), nullptr);
-    ASSERT_EQ(_cache.get_unitstate_cache_size(), 1);
-    std::cout << "unitstate refcount " << unitstate.use_count() << std::endl;
-
-    auto unitstate1 = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[1].get_history_units()[0].get());    
-    _cache.set_unitstate("111", unitstate1);
-    _cache.set_unitstate("222", unitstate1);
-    _cache.set_unitstate("333", unitstate1);
-    _cache.set_unitstate("444", unitstate1);
-    _cache.set_unitstate("555", unitstate1);
-    std::cout << "unitstate1 refcount " << unitstate1.use_count() << std::endl;
-    ASSERT_EQ(unitstate1.use_count(), unitstate.use_count());
-    ASSERT_EQ(_cache.get_unitstate_cache_size(), 2);
-}
-
-TEST_F(test_memory, unitstate_cache_3) {
-    mock::xvchain_creator creator;
-    base::xvblockstore_t* blockstore = creator.get_blockstore();
-    uint64_t max_count = 10;
-    mock::xdatamock_table mocktable(1, 4);
-    mocktable.genrate_table_chain(max_count, blockstore);
-    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
-    xassert(tableblocks.size() == max_count + 1);
-    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
-
-    xstatestore_cache_t _cache;
-    {
-    auto _unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[0].get_history_units()[0].get());
-    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(_unitstate->get_bstate().get(), _unitstate->get_bstate().get());
-    unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));
-    std::string binlog = unitstate->take_binlog();
-    xassert(!binlog.empty());
-    _cache.set_unitstate("111", unitstate);
-    ASSERT_EQ(_cache.get_unitstate_cache_size(), 1);
-    }
-    {
-    auto _unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[0].get_history_units()[0].get());
-    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(_unitstate->get_bstate().get(), _unitstate->get_bstate().get());
-    unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));
-    std::string binlog = unitstate->take_binlog();
-    xassert(!binlog.empty());
-    _cache.set_unitstate("222", unitstate);
-    ASSERT_EQ(_cache.get_unitstate_cache_size(), 1);
-    }
-    {
-    auto _unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[0].get_history_units()[0].get());
-    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(_unitstate->get_bstate().get(), _unitstate->get_bstate().get());
-    unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));
-    std::string binlog = unitstate->take_binlog();
-    xassert(!binlog.empty());
-    _cache.set_unitstate("333", unitstate);
-    ASSERT_EQ(_cache.get_unitstate_cache_size(), 1);
-    }
-}
-
 
 
 // TEST_F(test_memory, new_delete_test) {

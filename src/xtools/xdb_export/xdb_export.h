@@ -59,7 +59,6 @@ public:
     void read_external_tx_firestamp();
     void query_tx_info(std::vector<std::string> const & tables, const uint32_t thread_num, const uint32_t start_timestamp, const uint32_t end_timestamp);
     // query if a specific block is exist(include num)
-    void query_block_exist(std::string const & address, const uint64_t height);
     // query block detailed info(use grpc interface)
     void query_block_info(std::string const & account, std::string const & param);
     // query block basic info

@@ -26,7 +26,7 @@
 #include "xdata/xverifier/xtx_verifier.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstate_reset/xstate_reseter.h"
-#include "xgenesis/xgenesis_manager.h"
+#include "xgenesis/xgenesis_accounts.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -157,8 +157,10 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
 
     // init genesis accounts for not in mpt
     if (!m_mpt_genesis_accounts_init) {
-        for (auto & account : genesis::xgenesis_manager_t::get_all_genesis_accounts()) {
+        auto not_in_mpt_accounts = genesis::xgenesis_accounts_mpt_t::instance().get_not_in_mpt_accounts();
+        for (auto & account : not_in_mpt_accounts) {
             if (!base::xvaccount_t::is_unit_address_type(account.type())) {
+                xassert(false);
                 continue;
             }
             // check if account same table
@@ -177,6 +179,7 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
                     statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(account, cs_para.get_latest_committed_block().get(), commit_aindex);
                     if (commit_aindex.is_valid_mpt_index()) {
                         // committed account index filtered
+                        genesis::xgenesis_accounts_mpt_t::instance().delete_in_mpt_accounts(account);
                         xinfo("xtable_maker_t::make_genesis_account_index finish genesis already commit.is_leader=%d,%s,account=%s,index=%s", is_leader, cs_para.dump().c_str(), account.to_string().c_str(),commit_aindex.dump().c_str());
                         continue;
                     }
@@ -204,7 +207,8 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
                 statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(account, cs_para.get_latest_committed_block().get(), commit_aindex);
                 if (commit_aindex.is_valid_mpt_index()) {
                     // m_mpt_genesis_accounts.clear();
-                    // m_mpt_genesis_accounts_init = true;                    
+                    // m_mpt_genesis_accounts_init = true;          
+                    genesis::xgenesis_accounts_mpt_t::instance().delete_in_mpt_accounts(account);
                     xinfo("xtable_maker_t::make_genesis_account_index finish genesis.is_leader=%d,%s,account=%s,index=%s", is_leader, cs_para.dump().c_str(), account.to_string().c_str(),commit_aindex.dump().c_str());
                     iter = m_mpt_genesis_accounts.erase(iter);
                     continue;
@@ -214,7 +218,7 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
             iter++;
             continue;
         }
-        base::xvblock_ptr_t _genesis_unit = get_blockstore()->load_block_object(account.vaccount(), 0, base::enum_xvblock_flag_committed, false);
+        base::xvblock_ptr_t _genesis_unit = get_blockstore()->load_unit(account.vaccount(), 0);
         if (nullptr == _genesis_unit) {
             ec = blockmaker::error::xerrc_t::blockmaker_make_unit_fail;
             xerror("xtable_maker_t::make_genesis_account_index fail-check genesis.load genesis unit.is_leader=%d,%s,account=%s", is_leader, cs_para.dump().c_str(), account.to_string().c_str());
@@ -448,7 +452,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         return nullptr;
     }
 
-    xinfo("xtable_maker_t::make_light_table_v2 tps_key make unit and index finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+    xinfo("xtable_maker_t::make_light_table_v2 tps_key make unit and index finish is_leader=%d,%s,size=%zu", is_leader, cs_para.dump().c_str(),lighttable_para.get_accountindexs().get_account_indexs().size());
 
     // TODO(jimmy) update confirm ids in table state
     update_receiptid_state(table_para, statectx_ptr);
@@ -708,9 +712,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
     bool bret = false;
     if (proposal_block->get_block_class() != base::enum_xvblock_class_nil) {
         std::error_code ec;
-        std::string vinput_bin;
         base::xvinput_t* _input_object = local_block->load_input(ec);
-        std::string voutput_bin;
         base::xvoutput_t* _output_object = local_block->load_output(ec);
         bret = proposal_block->set_input_output(_input_object, _output_object);
         if (!bret) {

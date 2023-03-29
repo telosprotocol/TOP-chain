@@ -13,6 +13,7 @@ namespace top
         xvblockplugin_t::xvblockplugin_t(base::xvaccountobj_t & parent_obj,const uint64_t idle_timeout_ms)
         :xvactplugin_t(parent_obj,idle_timeout_ms,base::enum_xvaccount_plugin_blockmgr)
         {
+            xassert(false == parent_obj.is_unit_address());
             m_layer2_cache_meta = NULL;
         }
         

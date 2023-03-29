@@ -1425,9 +1425,14 @@ void xrpc_query_manager::getBlockByHeight(Json::Value & js_req, Json::Value & js
         }
 
         js_rsp["value"] = value;
-    } else {
-        auto vblock =
-            m_block_store->load_block_object(base::xvaccount_t(owner), height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_by_height);
+    } else {        
+        base::xvaccount_t account(owner);
+        xobject_ptr_t<base::xvblock_t> vblock = nullptr;
+        if (account.is_unit_address()) {
+            vblock = m_block_store->load_unit(account, height);
+        } else {
+            m_block_store->load_block_object(account, height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_by_height);
+        }            
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         auto value = get_block_json(bp);
         js_rsp["value"] = value;
@@ -1454,23 +1459,39 @@ void xrpc_query_manager::getBlocksByHeight(Json::Value & js_req, Json::Value & j
     }
     Json::Value value;
     base::xvaccount_t _owner_vaddress(owner);
-    if (type == "last" || strHeight == "latest") {
-        uint64_t lastHeight = m_block_store->get_latest_cert_block_height(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_by_height);
-        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, lastHeight, metrics::blockstore_access_from_rpc_get_block_by_height);
-        auto vblocks = vblock_vector.get_vector();
-        for (base::xvblock_t * vblock : vblocks) {
-            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+    if (_owner_vaddress.is_unit_address()) {
+        xblock_number_t unit_number = height;
+        if (type == "last" || strHeight == "latest") {
+            unit_number = LatestConnectBlock;
+        } else {
+            if (!strHeight.empty()) {
+                unit_number = std::stoull(strHeight);
+            }
+        }
+        auto unitblock = statestore::xstatestore_hub_t::instance()->get_unit_block(unit_number, common::xaccount_address_t{owner});
+        if (unitblock != nullptr) {
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(unitblock.get());
             value.append(get_blocks_json(bp, version));
         }
     } else {
-        if (!strHeight.empty()) {
-            height = std::stoull(strHeight);
-        }
-        auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, height, metrics::blockstore_access_from_rpc_get_block_by_height);
-        auto vblocks = vblock_vector.get_vector();
-        for (base::xvblock_t * vblock : vblocks) {
-            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
-            value.append(get_blocks_json(bp, version));
+        if (type == "last" || strHeight == "latest") {
+            uint64_t lastHeight = m_block_store->get_latest_cert_block_height(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_by_height);
+            auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, lastHeight, metrics::blockstore_access_from_rpc_get_block_by_height);
+            auto vblocks = vblock_vector.get_vector();
+            for (base::xvblock_t * vblock : vblocks) {
+                data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+                value.append(get_blocks_json(bp, version));
+            }
+        } else {
+            if (!strHeight.empty()) {
+                height = std::stoull(strHeight);
+            }
+            auto vblock_vector = m_block_store->load_block_object(_owner_vaddress, height, metrics::blockstore_access_from_rpc_get_block_by_height);
+            auto vblocks = vblock_vector.get_vector();
+            for (base::xvblock_t * vblock : vblocks) {
+                data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock);
+                value.append(get_blocks_json(bp, version));
+            }
         }
     }
     js_rsp["value"] = value;
@@ -1494,10 +1515,29 @@ void xrpc_query_manager::getBlock(Json::Value & js_req, Json::Value & js_rsp, st
     }
     base::xvaccount_t _owner_vaddress(owner);
 
+    xdbg("JIMMY 111 xrpc_query_manager::getBlock %s height=%ld,strHeight=%s", owner.c_str(),height,strHeight.c_str());
+
     Json::Value value;
-    if (type == "height") {
-        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_load_object);
-        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+    if (_owner_vaddress.is_unit_address()) {
+        xblock_number_t unit_number = height;
+        if (type == "height") {
+        } else {
+            if (type == "last" || strHeight == "latest") {
+                unit_number = LatestConnectBlock;
+            } else {
+                if (!strHeight.empty()) {
+                    unit_number = std::stoull(strHeight);
+                }
+            }
+        }
+        base::xvblock_ptr_t unitblock = statestore::xstatestore_hub_t::instance()->get_unit_block(unit_number, common::xaccount_address_t{owner});
+        if (unitblock == nullptr && (unit_number == 0 || unit_number == LatestConnectBlock)) {
+            std::error_code ec;
+            xdbg("JIMMY 222 xrpc_query_manager::getBlock %s height=%ld,strHeight=%s", owner.c_str(),unit_number,strHeight.c_str());
+            unitblock = m_block_store->create_genesis_block(_owner_vaddress, ec);
+        }
+        xdbg("JIMMY 333 xrpc_query_manager::getBlock %s height=%ld,strHeight=%s, %d", owner.c_str(),height,strHeight.c_str(),unitblock!=nullptr);
+        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(unitblock.get());
         value = get_block_json(bp, version);
 
         if (owner == sys_contract_zec_slash_info_addr) {
@@ -1512,20 +1552,25 @@ void xrpc_query_manager::getBlock(Json::Value & js_req, Json::Value & js_rsp, st
                 top::common::xaccount_address_t{owner}, height, top::contract::xjson_format_t::detail, statistic_prop, ec);
             value["statistic_info"] = statistic_prop;
         }
-    } else if (type == "last" || strHeight == "latest") {
-        auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_block);
-        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-        value = get_block_json(bp, version);
     } else {
-        if (js_req["height"].isString()) {
-            height = std::stoull(strHeight);
+        if (type == "height") {
+            auto vblock = m_block_store->load_block_object(_owner_vaddress, height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block_load_object);
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+            value = get_block_json(bp, version);
+        } else if (type == "last" || strHeight == "latest") {
+            auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_block);
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+            value = get_block_json(bp, version);
+        } else {
+            if (js_req["height"].isString()) {
+                height = std::stoull(strHeight);
+            }
+            xdbg("height: %llu", height);
+            auto vb = m_block_store->load_block_object(_owner_vaddress, height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block);
+            xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
+            value = get_block_json(bp);
         }
-        xdbg("height: %llu", height);
-        auto vb = m_block_store->load_block_object(_owner_vaddress, height, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_rpc_get_block);
-        xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
-        value = get_block_json(bp);
     }
-
     js_rsp["value"] = value;
 }
 
@@ -1539,7 +1584,9 @@ void xrpc_query_manager::getProperty(Json::Value & js_req, Json::Value & js_rsp,
     Json::Value value;
     uint64_t height = 0;
     if (type == "last") {
-        height = m_block_store->get_latest_committed_block_height(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_height);
+        base::xaccount_index_t accountindex;
+        statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, common::xaccount_address_t(owner), accountindex);
+        height = accountindex.get_latest_unit_height();
     } else if (type == "height") {
         height = js_req["height"].asUInt64();
     }
@@ -1855,10 +1902,10 @@ Json::Value xrpc_query_manager::get_block_json(xblock_t * bp, const std::string 
         return root;
     }
 
-    if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
-        // genesis empty non-stored block, should not return
-        return root;
-    }
+    // if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
+    //     // genesis empty non-stored block, should not return
+    //     return root;
+    // }
 
     // load input for raw tx get
     if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp, metrics::blockstore_access_from_rpc_get_block_json)) {
@@ -1891,10 +1938,10 @@ Json::Value xrpc_query_manager::get_blocks_json(xblock_t * bp, const std::string
         return root;
     }
 
-    if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
-        // genesis empty non-stored block, should not return
-        return root;
-    }
+    // if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
+    //     // genesis empty non-stored block, should not return
+    //     return root;
+    // }
 
     // load input for raw tx get
     if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp, metrics::blockstore_access_from_rpc_get_block_json)) {

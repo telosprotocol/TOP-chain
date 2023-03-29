@@ -50,7 +50,7 @@ void usage() {
     std::cout << "        - check_state_data <account>" << std::endl;
     std::cout << "        - check_off_data" << std::endl;
     std::cout << "        - check_mpt" << std::endl;
-    std::cout << "        - check_block_exist <account> <height>" << std::endl;
+    std::cout << "        - db_read_unit <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
     std::cout << "        - check_tx_info [starttime] [endtime] [threads]" << std::endl;
     std::cout << "        - check_tx_file [tx_file] [threads]" << std::endl;
@@ -299,13 +299,7 @@ int main(int argc, char ** argv) {
         auto const account_vec = xdb_export_tools_t::get_table_accounts();
         tools.read_external_tx_firestamp();
         tools.query_tx_info(account_vec, thread_num, start_timestamp, end_timestamp);
-    } else if (function_name == "check_block_exist") {
-        if (argc < 5) {
-            usage();
-            return -1;
-        }
-        tools.query_block_exist(argv[3], std::stoi(argv[4]));
-    }else if (function_name == "check_block_info") {
+    } if (function_name == "check_block_info") {
         if (argc < 5) {
             usage();
             return -1;

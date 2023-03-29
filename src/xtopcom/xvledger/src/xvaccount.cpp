@@ -368,9 +368,12 @@ namespace top
     
         bool  xvaccount_t::is_unit_address() const
         {
+            return is_unit_address_type(get_addr_type());
+        }
+        bool  xvaccount_t::is_user_address() const
+        {
             return is_user_address_type(get_addr_type());
         }
-
         bool xvaccount_t::is_eth_address() const
         {
             return is_eth_address_type(get_addr_type());

@@ -84,16 +84,23 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(common::xaccount_address_t const
             return nullptr;
         }
 
-        // TODO(jimmy) account_index not include genesis unit
+        data::xunitstate_ptr_t unitstate = nullptr;
         if (account_index.get_latest_unit_hash().empty()) {
             xassert(account_index.get_latest_unit_height() == 0);
-            // XTODO before fork, need unit block
-            auto _unit = m_statectx_base.load_block_object(address.vaccount(), account_index);
-            xassert(_unit != nullptr);
+            xobject_ptr_t<base::xvblock_t> _unit = m_statectx_base.get_blockstore()->load_unit(address.vaccount(), account_index.get_latest_unit_height());
+            if (nullptr == _unit) {
+                std::error_code ec;
+                _unit = base::xvchain_t::instance().get_xblockstore()->create_genesis_block(address.vaccount(), ec);
+                if (nullptr == _unit) {
+                    xerror("xstatectx_t::load_unit_ctx fail-create genesis unit.addr=%s", address.to_string().c_str());
+                    return nullptr;
+                }
+            }
             account_index.reset_unit_hash(_unit->get_block_hash());
+            unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_unit.get());
+        } else {
+            unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(address, account_index);
         }
-
-        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(address, account_index);
         if (nullptr == unitstate) {
             m_statectx_base.sync_unit_block(address.vaccount(), account_index.get_latest_unit_height());
             xerror("xstatectx_t::load_unit_ctx fail-load unitstate.addr=%s,index=%s", address.to_string().c_str(),account_index.dump().c_str());
@@ -151,6 +158,19 @@ data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(common::xaccount_addr
 data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(common::xaccount_address_t const& address, uint64_t height) {
     data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_committed_state(address, height);
     return unitstate;
+}
+
+uint64_t xstatectx_t::load_account_height(common::xaccount_address_t const& address) {
+    assert(address.vaccount().is_unit_address());
+    base::xaccount_index_t account_index;
+    bool is_same = is_same_table(address);
+    if (is_same) {
+        std::error_code ec;
+        m_prev_tablestate_ext->get_accountindex(address.to_string(), account_index, ec);
+    } else {
+        statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, address, account_index);
+    }
+    return account_index.get_latest_unit_height();
 }
 
 const data::xtablestate_ptr_t &  xstatectx_t::get_table_state() const {

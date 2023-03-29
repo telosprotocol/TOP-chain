@@ -2005,22 +2005,6 @@ namespace top
                         base::xstring_utl::to_hex(vheader_input_output_hash).c_str(), base::xstring_utl::to_hex(get_header_hash()).c_str());
                     return false;
                 }
-                if (nullptr == m_vinput_ptr) {
-                    _input_object->add_ref();
-                    xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,_input_object);
-                    if(old_ptr != NULL){
-                        xcontext_t::instance().delay_release_object(old_ptr);
-                        XMETRICS_GAUGE(metrics::data_relay_release_input, 1);
-                    }                    
-                }
-                if (nullptr == m_voutput_ptr) {
-                    _output_object->add_ref();
-                    xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,_output_object);
-                    if(old_ptr != NULL){
-                        xcontext_t::instance().delay_release_object(old_ptr);
-                        XMETRICS_GAUGE(metrics::data_relay_release_output, 1);
-                    }
-                }
                 input_data = _input_object->get_resources_data();
                 output_data = _output_object->get_resources_data();                
             }
@@ -2043,6 +2027,25 @@ namespace top
 
             m_vinput_data = input_data;
             m_voutput_data = output_data;
+
+            // save input and output object for storing txindexs
+            if (nullptr == m_vinput_ptr) {
+                _input_object->add_ref();
+                xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,_input_object);
+                if(old_ptr != NULL){
+                    xcontext_t::instance().delay_release_object(old_ptr);
+                    XMETRICS_GAUGE(metrics::data_relay_release_input, 1);
+                }                    
+            }
+            if (nullptr == m_voutput_ptr) {
+                _output_object->add_ref();
+                xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,_output_object);
+                if(old_ptr != NULL){
+                    xcontext_t::instance().delay_release_object(old_ptr);
+                    XMETRICS_GAUGE(metrics::data_relay_release_output, 1);
+                }
+            }
+
             return true;
         }
 

@@ -433,7 +433,7 @@ void xtop_contract_manager::init(xobject_ptr_t<store::xsyncvstore_t> const& sync
 void xtop_contract_manager::setup_chain(common::xaccount_address_t const & contract_cluster_address, xvblockstore_t * blockstore) {
     assert(contract_cluster_address.has_value());
 
-    if (blockstore->exist_genesis_block(contract_cluster_address.to_string())) {
+    if (blockstore->exist_unit(contract_cluster_address.vaccount())) {
         xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block exist", contract_cluster_address.to_string().c_str());
         return;
     }

@@ -24,16 +24,12 @@ bool xsync_store_t::store_block(base::xvblock_t* block) {
     base::xvaccount_t _vaddress(block->get_account());
     if (block->get_block_level() == base::enum_xvblock_level_unit) {
         XMETRICS_GAUGE(metrics::xsync_store_block_units, 1);
-        return m_blockstore->store_committed_unit_block(_vaddress, block);
+        xassert(false); // TODO(jimmy) not support unit sync now
+        return false;
     } else if (block->get_block_level() == base::enum_xvblock_level_table) {
         XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
     }
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
-}
-
-bool xsync_store_t::store_block_committed_flag(base::xvblock_t* block) {
-    base::xvaccount_t _vaddress(block->get_account());
-    return m_blockstore->store_committed_unit_block(_vaddress, block); // XTODO also can be used for table-block
 }
 
 bool xsync_store_t::store_blocks(std::vector<base::xvblock_t*> &blocks) {
@@ -76,6 +72,9 @@ uint64_t xsync_store_t::get_genesis_block_height(const std::string & account) {
 
 uint64_t xsync_store_t::get_latest_committed_block_height(const std::string & account) {
     base::xvaccount_t _vaddress(account);
+    if (_vaddress.is_unit_address()) {
+        xerror("xsync_store_t::get_latest_committed_block_height %s",account.c_str());
+    }
     return m_blockstore->get_latest_committed_block_height(_vaddress);
 }
 

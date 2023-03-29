@@ -59,7 +59,13 @@ TEST_F(test_state_prune, accounts_prune_info) {
 }
 
 TEST_F(test_state_prune, prune_exec_storage) {
-    mock::xvchain_creator creator(true);
+    char buffer[200];
+    getcwd(buffer, 200);
+    std::string dir = buffer;
+    std::string cmd = "rm -rf " + dir + "/test_db_prune_exec_storage";
+    system(cmd.data());
+    std::cout << cmd << std::endl;
+    mock::xvchain_creator creator(true, "test_db_prune_exec_storage");
     base::xvblockstore_t * blockstore = creator.get_blockstore();
     auto xdb = creator.get_xdb();
 
@@ -177,7 +183,7 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(0, account_obj->get_lowest_executed_block_height());// not prune unitstate for archive node
+        EXPECT_NE(0, account_obj->get_lowest_executed_block_height());// TODO(jimmy) prune unitstate for archive node
     }
 
     pruner.prune_imp(80);
@@ -199,17 +205,15 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(0, account_obj->get_lowest_executed_block_height()); // not prune unitstate for archive node
+        EXPECT_NE(0, account_obj->get_lowest_executed_block_height()); // not prune unitstate for archive node
     }
 
     statestore::xstatestore_dbaccess_t _dbaccess;
     for (auto & mockunit : mock_units) {
         for (auto & unit : mockunit.get_history_units()) {
-            auto unitstate = _dbaccess.read_unit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
+            auto unitstate = _dbaccess.read_fullunit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
             if (unit->is_fullunit()) {
                 xassert(unitstate != nullptr);
-            } else {
-                xassert(unitstate == nullptr);
             }
         }    
     }
@@ -397,7 +401,7 @@ TEST_F(test_state_prune, prune_exec_cons_rec) {
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(0, account_obj->get_lowest_executed_block_height());
+        EXPECT_NE(0, account_obj->get_lowest_executed_block_height());
     }
 
     statestore::xstatestore_dbaccess_t _dbaccess;
@@ -409,11 +413,9 @@ TEST_F(test_state_prune, prune_exec_cons_rec) {
             if (unit->get_height() == 0) {
                 continue;
             }
-            auto unitstate = _dbaccess.read_unit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
+            auto unitstate = _dbaccess.read_fullunit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
             if (unit->get_height() % max_limit_lightunit_count == 0) {
                 xassert(unitstate != nullptr);
-            } else {
-                xassert(unitstate == nullptr);
             }
         }
     }

@@ -156,13 +156,13 @@ bool xconfig_register_t::load() {
 }
 
 void xconfig_register_t::dump() {
-    std::cout << "=======config dump start======" << std::endl;
-    m_param_lock.lock_read();
-    for (const auto& entry : m_params_map) {
-        std::cout << entry.first << " : " << entry.second << std::endl;
-    }
-    m_param_lock.release_read();
-    std::cout << "=======config dump end======" << std::endl;
+    // std::cout << "=======config dump start======" << std::endl;
+    // m_param_lock.lock_read();
+    // for (const auto& entry : m_params_map) {
+    //     std::cout << entry.first << " : " << entry.second << std::endl;
+    // }
+    // m_param_lock.release_read();
+    // std::cout << "=======config dump end======" << std::endl;
 }
 
  void xconfig_register_t::log_dump() const {

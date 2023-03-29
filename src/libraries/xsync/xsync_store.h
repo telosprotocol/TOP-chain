@@ -21,7 +21,6 @@ class xsync_store_face_t {
 public:
     virtual bool store_block(base::xvblock_t* block) = 0;
     virtual bool store_blocks(std::vector<base::xvblock_t*> &blocks) = 0;
-    virtual bool store_block_committed_flag(base::xvblock_t* block) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) = 0;
 
     virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid = 0) = 0;
@@ -98,7 +97,6 @@ public:
     xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow);
     bool store_block(base::xvblock_t* block) override;
     bool store_blocks(std::vector<base::xvblock_t*> &blocks) override;
-    bool store_block_committed_flag(base::xvblock_t* block) override;
     base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) override;
 
     base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid = 0) override;

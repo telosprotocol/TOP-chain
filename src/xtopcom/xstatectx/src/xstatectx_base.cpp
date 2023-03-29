@@ -67,20 +67,6 @@ void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_
     xinfo("xstatectx_base_t::sync_unit_block account=%s,end_h=%ld,connect_h=%ld", _vaddr.get_account().c_str(), end_height, latest_connect_height);
 }
 
-xobject_ptr_t<base::xvblock_t> xstatectx_base_t::load_block_object(const base::xvaccount_t & addr, base::xaccount_index_t const& account_index) const {
-    auto & unit_hash = account_index.get_latest_unit_hash();
-    xobject_ptr_t<base::xvblock_t> unit_block = nullptr;
-    // TODO(jimmy) fork
-    if (!unit_hash.empty()) {
-        unit_block = get_blockstore()->load_block_object(
-            addr, account_index.get_latest_unit_height(), unit_hash, false);
-    } else {
-        unit_block = get_blockstore()->load_block_object(
-            addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
-    }
-    return unit_block;
-}
-
 data::xunitstate_ptr_t xstatectx_base_t::load_different_table_unit_state(const base::xvaccount_t & addr) const {
     // should use latest committed block for different table
     auto prev_block = get_blockstore()->get_latest_committed_block(addr);

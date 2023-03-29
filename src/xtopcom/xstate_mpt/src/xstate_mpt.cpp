@@ -263,12 +263,13 @@ const evm_common::xh256_t & xtop_state_mpt::get_original_root_hash() const {
 }
 
 evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
+    xinfo("xtop_state_mpt::commit 1");
     get_root_hash(ec);
     if (ec) {
         xwarn("xtop_state_mpt::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
-
+    xinfo("xtop_state_mpt::commit 2");
     for (auto & acc : m_state_objects_dirty) {
         auto obj = query_state_object(acc);
         if (obj == nullptr) {
@@ -293,7 +294,7 @@ evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
         std::lock_guard<std::mutex> l(m_state_objects_lock);
         m_state_objects.clear();
     }
-
+    xinfo("xtop_state_mpt::commit 3");
     std::lock_guard<std::mutex> lock(m_trie_lock);
     std::pair<evm_common::xh256_t, int32_t> res;
     {
@@ -304,12 +305,14 @@ evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
         xwarn("xtop_state_mpt::commit trie commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
+    xinfo("xtop_state_mpt::commit 4");
     // TODO: should call outside with roles of node
     m_trie_db->Commit(res.first, nullptr, ec);
     if (ec) {
         xwarn("xtop_state_mpt::commit db commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
+    xinfo("xtop_state_mpt::commit 5");
     return res.first;
 }
 

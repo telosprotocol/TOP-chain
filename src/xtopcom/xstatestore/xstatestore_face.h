@@ -67,6 +67,8 @@ class xstatestore_face_t {
     virtual data::xaccountstate_ptr_t   get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
     virtual std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const = 0;
 
+    virtual base::xvblock_ptr_t     get_unit_block(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
+
     // query unitstate
     virtual data::xunitstate_ptr_t      get_unitstate(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
     virtual data::xunitstate_ptr_t  get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const = 0;

@@ -185,13 +185,12 @@ namespace top
             const std::string key_path = "s/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + block_hash + "/u";
             return key_path;
         }
-
-        const std::string xvdbkey_t::create_latest_unit_state_key(const xvaccount_t & account)
+        const std::string xvdbkey_t::create_prunable_fullunit_state_key(const xvaccount_t & account, uint64_t target_height,std::string const& block_hash)
         {
-            const std::string key_path = "u/" + account.get_storage_key() + "/s";
+            // fullunit state key same with unitblock, prune with unitblock
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + block_hash + "/f";  // f for fullunit state
             return key_path;
-        }
-
+        }        
         const std::string  xvdbkey_t::create_prunable_unit_state_height_key(const xvaccount_t & account,const uint64_t target_height)
         {
             const std::string key_path = "s/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/";

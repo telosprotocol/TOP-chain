@@ -42,6 +42,7 @@ public:
     bool process_function(std::string const & func_name, int argc, char ** argv);
 
 protected:
+    void db_read_unit(std::string const & address, const uint64_t height);
     void db_read_block(std::string const & address, const uint64_t height);
     base::xauto_ptr<base::xvactmeta_t> db_read_meta(std::string const & address);    
     void db_data_parse();

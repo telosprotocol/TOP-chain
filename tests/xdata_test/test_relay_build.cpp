@@ -74,11 +74,11 @@ TEST_F(test_relay_build, same_table_test) {
 
 
     ASSERT_TRUE(_relaytable.is_table_address());
-    ASSERT_FALSE(_relaytable.is_unit_address());
+    ASSERT_FALSE(_relaytable.is_user_address());
     ASSERT_FALSE(_relaytable.is_relay_address());
 
     ASSERT_FALSE(_relaychain.is_table_address());
-    ASSERT_FALSE(_relaychain.is_unit_address());
+    ASSERT_FALSE(_relaychain.is_user_address());
     ASSERT_TRUE(_relaychain.is_relay_address());
     // ASSERT_EQ(_relaytable.get_xvid(), _relaychain.get_xvid());
 }
