@@ -135,22 +135,24 @@ void xtop_unit_state_sync::process_unit(state_req & req, std::error_code & ec) {
         xwarn("xtop_state_sync::process_unit empty, %s", symbol().c_str());
         return;
     }
-    auto & data = req.units_response.at(0);
-    xinfo("xtop_state_sync::process_unit value size: %zu, {%s}", data.size(), symbol().c_str());
-    {
-        // check state
-        auto bstate = base::xvblock_t::create_state_object({data.begin(), data.end()});
-        auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate);
-        auto const snapshot = table_state->take_snapshot();
-        auto const hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-        if (hash != m_index.get_latest_state_hash()) {
-            xwarn("xtop_unit_state_sync::process_unit state hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(m_index.get_latest_state_hash()).c_str());
-            return;
-        }
-    }
-    auto const key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.to_string(), m_index.get_latest_unit_height(), {data.begin(), data.end()});
-    m_db->set_value(key, {data.begin(), data.end()});
-    m_sync_unit_finish = true;
+    // auto & data = req.units_response.at(0);
+    // xinfo("xtop_state_sync::process_unit value size: %zu, {%s}", data.size(), symbol().c_str());
+    // {
+    //     // check state
+    //     auto bstate = base::xvblock_t::create_state_object({data.begin(), data.end()});
+    //     auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate);
+    //     auto const snapshot = table_state->take_snapshot();
+    //     auto const hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+    //     if (hash != m_index.get_latest_state_hash()) {
+    //         xwarn("xtop_unit_state_sync::process_unit state hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(m_index.get_latest_state_hash()).c_str());
+    //         return;
+    //     }
+    // }
+    // auto const key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.to_string(), m_index.get_latest_unit_height(), {data.begin(), data.end()});
+    // m_db->set_value(key, {data.begin(), data.end()});
+    // m_sync_unit_finish = true;
+    xassert(false);  // TODO(jimmy) error
+    return;
 }
 
 void xtop_unit_state_sync::loop(std::function<bool()> condition,

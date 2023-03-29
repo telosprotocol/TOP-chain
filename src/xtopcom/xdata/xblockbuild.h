@@ -129,9 +129,10 @@ class xfullunit_build_t : public base::xvblockmaker_t {
 
 class xunit_build2_t : public base::xvblockmaker_t {
  public:
-    xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
+    xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xblock_consensus_para_t & para);
     xunit_build2_t(base::xvheader_t* header, base::xvblock_t* parentblock, const xunit_block_para_t & bodypara);
 
+    void    create_block_body(const xunit_block_para_t & bodypara);
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
  private:
     bool build_block_body(const xunit_block_para_t & para);

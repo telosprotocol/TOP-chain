@@ -31,11 +31,12 @@ class xstatectx_t : public xstatectx_face_t {
     data::xunitstate_ptr_t              load_commit_unit_state(common::xaccount_address_t const& address, uint64_t height) override;
     bool                                do_rollback() override;
     size_t                              do_snapshot() override;
+    void                                finish_execution() override;
     void                                do_commit(base::xvblock_t* current_blockc) override;
     std::string                         get_table_address() const override {return m_table_ctx->get_table_address();}
     bool                                is_state_dirty() const override;
     base::xtable_shortid_t              get_tableid() const {return m_table_ctx->get_tableid();}
-    std::vector<xunitstate_ctx_ptr_t>   get_modified_unit_ctx() const;
+    std::map<std::string, xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const override;
     statestore::xtablestate_ext_ptr_t const&   get_prev_tablestate_ext() const {return m_prev_tablestate_ext;}
 
  private:
@@ -45,7 +46,8 @@ class xstatectx_t : public xstatectx_face_t {
     bool                    is_same_table(common::xaccount_address_t const& address) const;
     const xstatectx_para_t & get_ctx_para() const {return m_statectx_para;}
  private:
-    common::xtable_address_t          m_table_address;
+    bool                                m_finish_execution{false};
+    common::xtable_address_t            m_table_address;
     statestore::xtablestate_ext_ptr_t   m_prev_tablestate_ext{nullptr};
     xstatectx_base_t        m_statectx_base;
     xstatectx_para_t        m_statectx_para;

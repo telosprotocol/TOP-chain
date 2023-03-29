@@ -578,7 +578,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 
         std::string unithash = addr + "1";
         std::string statehash = addr + "a";
-        base::xaccount_index_t index(1, unithash, statehash, 1);
+        base::xaccount_index_t index(base::enum_xaccountindex_version_state_hash, 1, unithash, statehash, 1);
         base_mpt->set_account_index(common::xaccount_address_t{addr}, index, ec);
     }
     // std::cout << "mpt before commit:0" << std::endl;
@@ -597,7 +597,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
             auto & addr = user_addrs[pos];
             std::string unithash = addr + std::to_string(j);
             std::string statehash = addr + "a" + "j";
-            base::xaccount_index_t index(j, unithash, statehash, j);
+            base::xaccount_index_t index(base::enum_xaccountindex_version_state_hash, j, unithash, statehash, j);
             base_mpt->set_account_index(common::xaccount_address_t{addr}, index, ec);
         }
         // std::cout << "mpt before commit:" << j+1 << std::endl;

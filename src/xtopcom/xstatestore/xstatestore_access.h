@@ -29,6 +29,7 @@ public:
     data::xunitstate_ptr_t  get_unitstate(std::string const& block_hash) const;
     xtablestate_ext_ptr_t const&    get_latest_connectted_tablestate() const;
     xtablestate_ext_ptr_t   get_tablestate(uint64_t height, std::string const& block_hash) const;
+    size_t                  get_unitstate_cache_size() const;
 
 public:
     void    set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& unitstate);    
