@@ -10,8 +10,14 @@
 
 NS_BEG2(top, data)
 
-xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, bool readonly)
-: xbstate_ctx_t(bstate, readonly), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_table_bstate) {
+xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate)
+: xbstate_ctx_t(bstate), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_table_bstate) {
+    cache_receiptid(bstate); // TODO(jimmy) delete future
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, 1);
+}
+
+xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, base::xvbstate_t* org_bstate)
+: xbstate_ctx_t(bstate, org_bstate), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_table_bstate) {
     cache_receiptid(bstate); // TODO(jimmy) delete future
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, 1);
 }

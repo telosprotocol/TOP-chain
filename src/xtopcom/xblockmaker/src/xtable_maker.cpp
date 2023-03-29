@@ -151,7 +151,7 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
         return;
     }
     
-    std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
+    auto const& unitctxs = statectx_ptr->get_modified_unit_ctx();
 
     auto mpt = statectx_ptr->get_prev_tablestate_ext()->get_state_mpt();
 
@@ -221,14 +221,7 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
             return;                     
         }
 
-        bool find_in_unitctxs = false;
-        for (auto & unitctx : unitctxs) {
-            if (unitctx->get_unitstate()->account_address() == account) {
-                find_in_unitctxs = true;
-                break;
-            }
-        }
-        if (find_in_unitctxs) {
+        if (unitctxs.find(account.to_string()) != unitctxs.end()) {
             xinfo("xtable_maker_t::make_genesis_account_index already in statectx.is_leader=%d,%s,account=%s", is_leader, cs_para.dump().c_str(), account.to_string().c_str());
             iter++;
             continue;
@@ -240,9 +233,12 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
             xerror("xtable_maker_t::make_genesis_account_index fail-check genesis.load genesis unistate.is_leader=%d,%s,account=%s,index=%s", is_leader, cs_para.dump().c_str(), account.to_string().c_str(),aindex.dump().c_str());
             return;                     
         }
-        std::string snapshot = unitstate->take_snapshot();   
-        std::string _state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-        data::xaccount_index_t aindex_new = data::xaccount_index_t(0, _genesis_unit->get_block_hash(),_state_hash,0);
+        // std::string snapshot = unitstate->take_snapshot();   
+        // std::string _state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+        std::string state_bin;
+        unitstate->get_bstate()->serialize_to_string(state_bin);
+        std::string _state_hash = base::xcontext_t::instance().hash(state_bin, enum_xhash_type_sha2_256);
+        data::xaccount_index_t aindex_new = data::xaccount_index_t(base::enum_xaccountindex_version_state_hash, 0, _genesis_unit->get_block_hash(),_state_hash,0);
         xinfo("xtable_maker_t::make_genesis_account_index make genenis account index.is_leader=%d,%s,unit=%s,index=%s",
             is_leader, cs_para.dump().c_str(), _genesis_unit->dump().c_str(),aindex_new.dump().c_str());
 
@@ -256,31 +252,23 @@ void xtable_maker_t::make_account_unit_and_index(bool is_leader, const data::xbl
     XMETRICS_TIME_RECORD("cons_make_units_cost");
 
     // create units
-    std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
+    auto const& unitctxs = statectx_ptr->get_modified_unit_ctx();
     if (unitctxs.empty()) {
         // XTODO the confirm tx may not modify state.
         xinfo("xtable_maker_t::make_account_unit_and_index no unitstates changed.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
     }
 
-    for (auto & unitctx : unitctxs) {
-        base::xvblock_ptr_t unitblock = xunitbuilder_t::make_block_v2(unitctx->get_unitstate(), cs_para);
-        if (nullptr == unitblock || unitblock->get_block_hash().empty() || unitblock->get_fullstate_hash().empty()) {
-            ec = blockmaker::error::xerrc_t::blockmaker_make_unit_fail;
-            xerror("xtable_maker_t::make_account_unit_and_index fail-make unit.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
-            return;
-        }
+    for (auto & v : unitctxs) {
+        auto & unitctx = v.second;
+        xunit_build_result_t unit_result;
+        xunitbuilder_t::make_unitblock_and_unitstate(unitctx->get_accoutstate(), cs_para, unit_result);
+        unitctx->set_unit(unit_result.unitblock);
+        unitctx->set_unitstate_bin(unit_result.unitstate_bin);
 
-        data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(),
-                                                               unitblock->get_block_hash(),
-                                                               unitblock->get_fullstate_hash(),
-                                                               unitctx->get_accoutstate()->get_tx_nonce());
-        unitctx->get_accoutstate()->update_account_index(aindex); // TODO(jimmy) update to state ctx for save unitstate
-        unitctx->get_accoutstate()->get_unitstate()->get_bstate()->update_final_block_info(unitblock.get());
-
-        lighttable_para.set_unit(unitblock);
-        lighttable_para.set_accountindex(unitblock->get_account(), aindex);
+        lighttable_para.set_unit(unit_result.unitblock);
+        lighttable_para.set_accountindex(unit_result.unitblock->get_account(), unit_result.accountindex);
         xinfo("xtable_maker_t::make_account_unit_and_index succ-make unit.is_leader=%d,%s,unit=%s,index=%s",
-            is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),aindex.dump().c_str());
+            is_leader, cs_para.dump().c_str(), unit_result.unitblock->dump().c_str(),unit_result.accountindex.dump().c_str());
     }
 
     make_genesis_account_index(is_leader, cs_para, statectx_ptr, lighttable_para, ec);
@@ -449,6 +437,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
             execute_output.pack_outputs.push_back(txout);
         }
     }
+    statectx_ptr->finish_execution();
 
     xinfo("xtable_maker_t::make_light_table_v2 tps_key execute txs finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
 

@@ -1285,7 +1285,7 @@ TEST_F(test_tablemaker, unit_content_check) {
     }
 }
 
-
+#if 0
 bool convert_func_all_true(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index) {
     uint64_t i = old_account_index.get_latest_unit_height() - 10;
     std::string unit_hash = std::to_string(i + 100);
@@ -1303,7 +1303,7 @@ bool convert_func_random_true(const base::xvaccount_t & account, const base::xac
     }
     return convert_func_all_true(account, old_account_index, new_account_index);
 }
-#if 0
+
 TEST_F(test_tablemaker, account_index_upgrade) {
     uint32_t account_num = 1000;
     uint64_t height = 10000;

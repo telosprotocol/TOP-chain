@@ -20,13 +20,20 @@ class xunitstate_ctx_t {
     : m_accountstate(accountstate) {}    
 
  public:
+    void    set_unit(base::xvblock_ptr_t const& unit) {m_unit = unit;}
+    void    set_unitstate_bin(std::string const& bin) {m_bstate_bin = bin;}
+ public:
     // common::xaccount_address_t const&   get_address() const {return m_cur_unitstate->account_address();}
     const data::xunitstate_ptr_t &      get_unitstate() const {return m_accountstate->get_unitstate();}
     std::string const&                  get_unit_hash() const{return m_accountstate->get_unit_hash();}
     data::xaccountstate_ptr_t const&    get_accoutstate() const {return m_accountstate;}
+    base::xvblock_ptr_t const&          get_unit() const{return m_unit;}
+    std::string const&                  get_unitstate_bin() const{return m_bstate_bin;}
 
  private: 
     data::xaccountstate_ptr_t           m_accountstate{nullptr};
+    base::xvblock_ptr_t                 m_unit{nullptr};
+    std::string                         m_bstate_bin;
 };
 using xunitstate_ctx_ptr_t = std::shared_ptr<xunitstate_ctx_t>;
 

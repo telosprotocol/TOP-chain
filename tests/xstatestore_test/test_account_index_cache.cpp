@@ -40,7 +40,7 @@ TEST_F(test_account_index_cache, basic) {
     auto accounts = mocktable.get_unit_accounts();
 
     auto & account0 = accounts[0];
-    base::xaccount_index_t account0_index_1 = base::xaccount_index_t(1, "11", "111", 1);
+    base::xaccount_index_t account0_index_1 = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, 1, "11", "111", 1);
     account_index_map[account0] = account0_index_1;
 
     account_index_cache.update_new_cert_block(tableblocks[1].get(), account_index_map);

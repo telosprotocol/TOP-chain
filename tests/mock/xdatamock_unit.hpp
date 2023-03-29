@@ -11,6 +11,7 @@
 // #include "xstore/xaccount_context.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_address.hpp"
+#include "xblockmaker/xblock_builder.h"
 
 namespace top {
 namespace mock {
@@ -47,14 +48,15 @@ class xdatamock_unit {
     xblock_ptr_t            get_cert_block() const {return m_history_units.back();}
     xblock_ptr_t            get_lock_block() const { return m_history_units.size() == 1 ? m_history_units[0] : m_history_units[m_history_units.size() - 2];}
     const std::vector<xblock_ptr_t> &   get_history_units() const {return m_history_units;}
-    data::xunitstate_ptr_t          get_account_state() const {return m_unit_bstate;}
-    data::xunitstate_ptr_t  build_proposal_state() {
+    data::xunitstate_ptr_t          get_account_state() const {return m_account_state->get_unitstate();}
+    data::xaccountstate_ptr_t  build_proposal_account_state() {
         // create proposal header, clock use to set block version
         base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(get_cert_block().get(), get_cert_block()->get_clock()+1);
         // always clone new state
         xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *(get_account_state()->get_bstate()));
 
-        return std::make_shared<data::xunit_bstate_t>(proposal_bstate.get(), false);
+        auto unitstate = std::make_shared<data::xunit_bstate_t>(proposal_bstate.get(), get_account_state()->get_bstate().get());
+        return std::make_shared<data::xaccount_state_t>(unitstate, m_account_state->get_accountindex());
     }
 
  public:
@@ -100,7 +102,7 @@ class xdatamock_unit {
         uint64_t amount = enum_default_transfer_amount;
         uint32_t deposit = enum_default_tx_deposit;
 
-        uint64_t last_tx_nonce = m_last_tx_nonce;
+        uint64_t last_tx_nonce = m_account_state->get_tx_nonce();
 
         std::vector<xcons_transaction_ptr_t> txs;
         for (uint32_t i = 0; i < count; i++) {
@@ -126,6 +128,45 @@ class xdatamock_unit {
         execute_block(block);
     }
 
+    static data::xaccountstate_ptr_t create_accountstate(base::xvblock_t* _unit) {
+        std::string binlog = _unit->is_fullunit() ? _unit->get_full_state() : _unit->get_binlog();
+        if (binlog.empty() && _unit->is_fullunit()) {
+            binlog = _unit->get_binlog();
+        }
+        xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*_unit);
+        if (!binlog.empty()) {
+            current_state->apply_changes_of_binlog(binlog);
+        }
+        data::xunitstate_ptr_t unit_bstate = std::make_shared<data::xunit_bstate_t>(current_state.get());    
+        std::string state_bin;
+        unit_bstate->get_bstate()->serialize_to_string(state_bin);
+        std::string state_hash = _unit->get_cert()->hash(state_bin);         
+        base::xaccount_index_t accoutindex = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, 0, _unit->get_block_hash(), state_hash, 0);
+        data::xaccountstate_ptr_t account_state = std::make_shared<data::xaccount_state_t>(unit_bstate, accoutindex);
+        return account_state;
+    }
+
+    static data::xaccountstate_ptr_t create_accountstate(data::xaccountstate_ptr_t const& prev_state, base::xvblock_t* _unit) {
+        xobject_ptr_t<base::xvbstate_t> base_state = prev_state->get_unitstate()->get_bstate();
+        xassert(_unit->get_height() == base_state->get_block_height() + 1);
+        xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*_unit, *base_state.get());
+
+        std::string binlog = _unit->is_fullunit() ? _unit->get_full_state() : _unit->get_binlog();
+        if (binlog.empty() && _unit->is_fullunit()) {
+            binlog = _unit->get_binlog();
+        }
+        if (!binlog.empty()) {
+            current_state->apply_changes_of_binlog(binlog);
+        }
+        data::xunitstate_ptr_t unit_bstate = std::make_shared<data::xunit_bstate_t>(current_state.get());
+        std::string state_bin;
+        unit_bstate->get_bstate()->serialize_to_string(state_bin);
+        std::string state_hash = _unit->get_cert()->hash(state_bin);            
+        base::xaccount_index_t accoutindex = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, _unit->get_height(), _unit->get_block_hash(), state_hash, prev_state->get_tx_nonce());
+        data::xaccountstate_ptr_t account_state = std::make_shared<data::xaccount_state_t>(unit_bstate, accoutindex);
+        return account_state;
+    }
+
  private:
     xblock_ptr_t    build_genesis_block(uint64_t init_balance) {
         base::xvblock_t* genesis_unit;
@@ -141,42 +182,11 @@ class xdatamock_unit {
     }
 
     bool  execute_block(const xblock_ptr_t & _block) {
-        xobject_ptr_t<base::xvbstate_t> current_state = nullptr;
         if (_block->get_height() == 0) {
-            current_state = make_object_ptr<base::xvbstate_t>(*_block.get());
+            m_account_state = create_accountstate(_block.get());
         } else {
-            xassert(m_unit_bstate != nullptr);
-            xobject_ptr_t<base::xvbstate_t> base_state = m_unit_bstate->get_bstate();
-            xassert(_block->get_height() == base_state->get_block_height() + 1);
-            current_state = make_object_ptr<xvbstate_t>(*_block.get(), *base_state.get());
+            m_account_state = create_accountstate(m_account_state, _block.get());
         }
-
-        if (false == _block->is_emptyunit()) {
-            std::string binlog = _block->is_fullunit() ? _block->get_full_state() : _block->get_binlog();
-            if (binlog.empty() && _block->is_fullunit()) {
-                binlog = _block->get_binlog();
-            }
-            xassert(!binlog.empty());
-            if(false == current_state->apply_changes_of_binlog(binlog)) {
-                xerror("execute_block,invalid binlog and abort it for block(%s)",_block->dump().c_str());
-                return false;
-            }
-            std::string snapshot_bin;
-            current_state->take_snapshot(snapshot_bin);
-            auto full_state_hash = _block->get_fullstate_hash();
-            if (!full_state_hash.empty()) {                
-                std::string _state_hash = base::xcontext_t::instance().hash(snapshot_bin, enum_xhash_type_sha2_256);
-                if (_state_hash != full_state_hash) {
-                    xerror("execute_block,snapshot hash unmatch for block(%s)",_block->dump().c_str());
-                    return false;
-                }                
-            }
-            xdbg("JIMMY_TEST execute_block account=%s,height=%ld,binlog=%ld,snapshot=%ld",
-                _block->get_account().c_str(),_block->get_height(),base::xhash64_t::digest(binlog),
-                base::xhash64_t::digest(snapshot_bin));
-        }
-
-        m_unit_bstate = std::make_shared<xunit_bstate_t>(current_state.get(), false);
         return true;
     }
  private:
@@ -184,8 +194,7 @@ class xdatamock_unit {
     uint8_t                                 m_private_key[32];
     std::string                             m_account;
     std::vector<xblock_ptr_t>               m_history_units;
-    data::xunitstate_ptr_t                  m_unit_bstate{nullptr};
-    uint64_t                                m_last_tx_nonce{0};
+    data::xaccountstate_ptr_t               m_account_state{nullptr};
 };
 
 

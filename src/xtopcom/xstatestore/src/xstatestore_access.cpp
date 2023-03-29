@@ -127,8 +127,8 @@ data::xtablestate_ptr_t xstatestore_dbaccess_t::read_table_bstate(common::xtable
 
 void xstatestore_dbaccess_t::write_unit_bstate(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const {
     XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
-    // if (unitstate->height() > 0)
-    //     xassert(unitstate->get_block_viewid() != 0);
+    if (unitstate->height() > 0)
+        xassert(unitstate->get_block_viewid() != 0);
     std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(unitstate->account_address().vaccount(), unitstate->height(), block_hash);
     std::string state_db_bin;
     int32_t ret = unitstate->get_bstate()->serialize_to_string(state_db_bin);

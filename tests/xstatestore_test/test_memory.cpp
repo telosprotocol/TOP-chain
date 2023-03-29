@@ -19,6 +19,7 @@
 #include "xblockstore/src/xvblockhub.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstatestore/xstatestore_exec.h"
+#include "xstatestore/xstatestore_access.h"
 #include "test_common.hpp"
 #include "xmetrics/xmetrics.h"
 
@@ -280,6 +281,9 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
 
     base::xtime_utl::sleep_ms(60000);
 }
+
+
+
 
 
 // TEST_F(test_memory, new_delete_test) {

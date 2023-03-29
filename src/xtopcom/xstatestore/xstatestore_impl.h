@@ -25,11 +25,11 @@ class xstatestore_impl_t : public xstatestore_face_t {
  public:
     virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread, const xobject_ptr_t<base::xiothread_t> & iothread_for_prune) override;
     // query accountindex
-    virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & index) const override;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const override;
     virtual bool                    accountindex_cache_unbroken(base::xvblock_t * table_block) const;
     virtual bool                    get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const override;
     virtual bool                    get_accountindex(const std::string& table_height, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const override;
+    virtual bool                        get_accountindex(xblock_number_t number, common::xtable_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const override;
     virtual bool                        get_accountindex(xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const override;
     virtual data::xaccountstate_ptr_t   get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const override;
     virtual std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const override;
@@ -43,7 +43,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
     virtual data::xunitstate_ptr_t  get_unit_state_by_accountindex(common::xaccount_address_t const & account_address, base::xaccount_index_t const& index) const override;  // TODO(jimmy)
     virtual data::xunitstate_ptr_t  get_unit_state_by_unit_block(base::xvblock_t * target_block) const override;
     virtual data::xunitstate_ptr_t  get_unit_state_by_table(common::xaccount_address_t const & account_address, const std::string& table_height) const override;
-    virtual uint64_t                get_blockchain_height(common::xaccount_address_t const & account_address) const override;
+    // virtual uint64_t                get_blockchain_height(common::xaccount_address_t const & account_address) const override;
     virtual int32_t                 map_get(common::xaccount_address_t const & account_address, const std::string &key, const std::string &field, std::string &value) const override;
     virtual int32_t                 string_get(common::xaccount_address_t const & account_address, const std::string& key, std::string& value) const override;
     virtual int32_t                 map_copy_get(common::xaccount_address_t const & account_address, const std::string &key, std::map<std::string, std::string> &map) const override;
@@ -53,7 +53,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
     // query tablestate
     virtual xtablestate_ext_ptr_t       get_tablestate_ext_from_block(base::xvblock_t * target_block) const override;
     virtual data::xtablestate_ptr_t     get_table_state_by_block(base::xvblock_t * target_block) const override;
-    virtual data::xtablestate_ptr_t     get_table_connectted_state(common::xaccount_address_t const & table_address) const override;
+    virtual data::xtablestate_ptr_t     get_table_connectted_state(common::xtable_address_t const & table_address) const override;
     virtual bool get_receiptid_state_and_prove(common::xaccount_address_t const & table_address,
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,

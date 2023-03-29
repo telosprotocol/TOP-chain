@@ -247,11 +247,11 @@ public:
 
     void build_default() {
         make_default();
-        auto _sender = std::make_shared<data::xunit_bstate_t>(default_bstate.get(), false);
+        auto _sender = std::make_shared<data::xunit_bstate_t>(default_bstate.get(), default_bstate.get());
         base::xaccount_index_t accountindex;
         sender = std::make_shared<data::xaccount_state_t>(_sender, accountindex);
         recver_bstate = make_object_ptr<base::xvbstate_t>(default_recver, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-        auto _recver = std::make_shared<data::xunit_bstate_t>(recver_bstate.get(), false);
+        auto _recver = std::make_shared<data::xunit_bstate_t>(recver_bstate.get(), recver_bstate.get());
         recver = std::make_shared<data::xaccount_state_t>(_recver, accountindex);
     }
 
@@ -287,6 +287,11 @@ public:
         return true;
     }
 
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const override {
+        return m_changed_ctxs;
+    }
+
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> m_changed_ctxs;
     data::xtablestate_ptr_t table_state{nullptr};
     data::xaccountstate_ptr_t sender{nullptr};
     data::xaccountstate_ptr_t recver{nullptr};

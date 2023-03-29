@@ -45,6 +45,8 @@ static char const * errc_to_message(int const errc) noexcept {
 
     case xerrc_t::blockmaker_property_invalid:
         return "blockmaker_property_invalid";
+    case xerrc_t::blockmaker_no_valid_txs:
+        return "blockmaker_no_valid_txs";    
 
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";

@@ -23,6 +23,7 @@ class xstatectx_base_t {
  public:
     static xobject_ptr_t<base::xvbstate_t> create_proposal_bstate(base::xvblock_t* prev_block, base::xvbstate_t* prev_bstate, uint64_t clock);
     static xobject_ptr_t<base::xvbstate_t> create_proposal_unit_bstate(base::xvbstate_t* prev_bstate, std::string const& last_block_hash);
+    static data::xaccountstate_ptr_t create_proposal_account_state(base::xaccount_index_t const& account_index, data::xunitstate_ptr_t const& unitstate);
  public:
     data::xunitstate_ptr_t          load_inner_table_commit_unit_state(const common::xaccount_address_t & addr) const;
     data::xunitstate_ptr_t          load_different_table_unit_state(const base::xvaccount_t & addr) const;

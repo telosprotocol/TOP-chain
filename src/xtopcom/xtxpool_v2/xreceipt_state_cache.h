@@ -9,6 +9,7 @@
 #include "xtxpool_v2/xtxpool_resources_face.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvaccount.h"
+#include "xcommon/xtable_address.h"
 
 #include <string>
 
@@ -19,7 +20,7 @@ NS_BEG2(top, xtxpool_v2)
 
 class xtable_state_cache_t {
 public:
-    xtable_state_cache_t(xtxpool_resources_face * para, const std::string & table_addr) : m_para(para), m_table_address(table_addr) {
+    xtable_state_cache_t(xtxpool_resources_face * para, const std::string & table_addr) : m_para(para), m_table_address(common::xtable_address_t::build_from(table_addr)) {
     }
     uint64_t get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const;
     uint64_t get_confirmid_max(base::xtable_shortid_t peer_table_sid) const;
@@ -31,7 +32,7 @@ public:
 
 private:
     xtxpool_resources_face * m_para;
-    common::xaccount_address_t m_table_address;
+    common::xtable_address_t m_table_address;
 };
 
 NS_END2
