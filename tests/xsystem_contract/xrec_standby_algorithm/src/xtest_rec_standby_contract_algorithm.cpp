@@ -6,8 +6,17 @@
 #include <gtest/gtest.h>
 
 #include "tests/xsystem_contract/xrec_standby_algorithm/xtest_rec_standby_contract_fixture.h"
+#include "xvm/manager/xcontract_manager.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xnative_contract_address.h"
+#include "xvm/xcontract_helper.h"
+
+using namespace top;
+using namespace top::contract;
+using namespace top::xvm;
 
 NS_BEG3(top, tests, rec_standby)
+
 
 class xtest_rec_standby_contract_algorithm
   : public xtop_test_rec_standby_contract_fixture
@@ -21,6 +30,18 @@ protected:
     void SetUp() override {
         m_registration_data.clear();
         standby_result_store.m_results.clear();
+        init();
+
+    }
+
+    void init() {
+        auto contract_addr = common::xnode_id_t{sys_contract_rec_standby_pool_addr};
+        auto vbstate = make_object_ptr<xvbstate_t>(sys_contract_rec_standby_pool_addr, 1, 1, std::string{}, std::string{}, 0, 0, 0);
+        auto unitstate = std::make_shared<data::xunit_bstate_t>(vbstate.get());
+        auto account_context = std::make_shared<xaccount_context_t>(unitstate);
+        auto contract_helper = std::make_shared<xcontract_helper>(account_context.get(), contract_addr, rec_standby_pool_contract_address);
+        rec_standby_contract.set_contract_helper(contract_helper);
+        rec_standby_contract.setup();
     }
 
     void TearDown() override {
@@ -212,6 +233,68 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
 #undef rec_standby_on_timer_update
 #undef EXPECT_HAS
 #undef EXPECT_HAS_NOT
+}
+
+TEST_F(xtest_rec_standby_contract_algorithm, test_genesis_adv_to_fullnode) {
+    std::string node_id{"T00000LeEMLtDCHkwrBrK8Gdqfik66Kjokewp23q"};
+    common::xnode_id_t xnode_id{node_id};
+    std::string program_version_1{"verison_1"};
+    top::xpublic_key_t pub_key_1{"BPZmAPKWLhhVDkJvWbSPAp3uoBqfTZG0j2QLyOaT5s3JqOxjIvTQFnmBXNUiMV3xwJ/bp9Sq7vD47fvAiGnC4DA="};
+
+    data::system_contract::xreg_node_info node_info;
+    node_info.consensus_public_key = pub_key_1;
+    node_info.m_account_mortgage = 1000000000000;
+    node_info.miner_type(common::xminer_type_t::advance);
+    node_info.m_account = xnode_id;
+    node_info.genesis(true);
+    node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
+    add_reg_info(node_info);
+
+    auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
+    EXPECT_TRUE(standby_node_info.program_version.empty());
+    EXPECT_TRUE(standby_node_info.consensus_public_key.empty());
+    EXPECT_TRUE(standby_node_info.genesis == false);
+
+    std::string program_version_2{"version_2"};
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));
+    EXPECT_TRUE(standby_node_info.program_version == program_version_2);
+    EXPECT_FALSE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));  // rejoin shouldn't changed the result.
+
+    auto & node_info_result = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
+    EXPECT_TRUE(node_info_result.genesis == true);
+    EXPECT_TRUE(node_info_result.stake(common::xnode_type_t::fullnode) == 0);
+}
+
+TEST_F(xtest_rec_standby_contract_algorithm, test_no_genesis_adv_to_fullnode) {
+    std::string node_id{"T00000LLyxLtWoTxRt1U5fS3K3asnywoHwENzNTi"};
+    common::xnode_id_t xnode_id{node_id};
+    std::string program_version_1{"verison_1"};
+    top::xpublic_key_t pub_key_1{"test_pub_key_1"};
+
+    data::system_contract::xreg_node_info node_info;
+    node_info.consensus_public_key = pub_key_1;
+    node_info.m_account_mortgage = 1000000000000;
+    node_info.miner_type(common::xminer_type_t::advance);
+    node_info.m_account = xnode_id;
+    node_info.genesis(false);
+    node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
+    add_reg_info(node_info);
+
+    auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
+    EXPECT_TRUE(standby_node_info.program_version.empty());
+    EXPECT_TRUE(standby_node_info.consensus_public_key.empty());
+    EXPECT_TRUE(standby_node_info.genesis == false);
+
+    std::string program_version_2{"version_2"};
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));
+    EXPECT_TRUE(standby_node_info.program_version == program_version_2);
+    EXPECT_FALSE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));  // rejoin shouldn't changed the result.
+
+    auto & node_info_result = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
+    EXPECT_TRUE(node_info_result.genesis == false);
+    //no found fullnode type
+    auto it = node_info_result.stake_container.find(common::xnode_type_t::fullnode);
+    EXPECT_TRUE(it == node_info_result.stake_container.end());
 }
 
 NS_END3

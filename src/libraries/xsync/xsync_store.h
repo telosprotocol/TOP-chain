@@ -56,9 +56,9 @@ public:
     virtual bool delete_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual const std::string get_block_span(const base::xvaccount_t &account, const uint64_t height) = 0;
     virtual xsync_store_shadow_t* get_shadow() =  0;
-    virtual bool remove_empty_unit_forked() = 0;
-    virtual bool is_sync_protocal_forked() = 0;
+
     virtual bool is_support_big_pack_forked() = 0;
+    virtual bool is_fullnode_elect_forked() = 0;
     virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
@@ -134,9 +134,8 @@ public:
     virtual xsync_store_shadow_t* get_shadow() override;
     uint32_t add_listener(int major_type, mbus::xevent_queue_cb_t cb) override;
     void remove_listener(int major_type, uint32_t id) override;
-    bool remove_empty_unit_forked() override;
-    bool is_sync_protocal_forked() override;
     bool is_support_big_pack_forked()override;
+    bool is_fullnode_elect_forked() override;
     base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 private:
     void set_fork_point();
@@ -144,9 +143,8 @@ private:
     std::string m_vnode_id;
     observer_ptr<base::xvblockstore_t> m_blockstore{};
     xsync_store_shadow_t *m_shadow;
-    bool m_remove_empty_unit_forked{true};
-    bool m_sync_forked{true};
     bool m_sync_big_pack{false};
+    bool m_sync_fullnode_elect_forked{false};
 };
 
 NS_END2

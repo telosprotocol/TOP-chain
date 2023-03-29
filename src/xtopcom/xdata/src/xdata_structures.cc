@@ -354,7 +354,11 @@ bool xreg_node_info::could_be_exchange() const noexcept {
 }
 
 bool xreg_node_info::could_be_fullnode() const noexcept {
-    return could_be<common::xnode_type_t::fullnode>(m_registered_miner_type);
+    return (could_be<common::xnode_type_t::fullnode>(m_registered_miner_type) && genesis());
+}
+
+bool xreg_node_info::could_be_fullnode_legacy() const noexcept {
+    return (could_be<common::xnode_type_t::fullnode>(m_registered_miner_type));
 }
 
 bool xreg_node_info::could_be_evm_auditor() const noexcept {
@@ -398,6 +402,10 @@ bool xreg_node_info::can_be_exchange() const noexcept {
 }
 
 bool xreg_node_info::can_be_fullnode() const noexcept {
+    return could_be_fullnode();
+}
+
+bool xreg_node_info::can_be_fullnode_legacy() const noexcept  {
     return could_be_auditor();
 }
 
