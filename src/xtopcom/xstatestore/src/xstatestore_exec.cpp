@@ -109,15 +109,17 @@ bool xstatestore_executor_t::on_table_block_committed_by_height(uint64_t height,
     std::error_code ec;
     uint64_t old_execute_height = get_commit_executed_height_inner();
     if (height <= old_execute_height) {
-        xdbg("xstatestore_executor_t::on_table_block_committed_by_height finish-already done.execute_height old=%ld,new=%ld,block hash:%s", old_execute_height, height, block_hash.c_str());
+        xdbg("xstatestore_executor_t::on_table_block_committed_by_height finish-already done.execute_height old=%ld,new=%ld", old_execute_height, height);
         return true;
     }
 
     if (get_cert_executed_height_inner() >= height) {
         xtablestate_ext_ptr_t tablestate_ext = m_state_accessor.read_table_bstate_from_cache(m_table_addr, height, block_hash);
         if (nullptr != tablestate_ext) {
+            // update latest connected tablestate
+            m_state_accessor.write_table_bstate_to_cache(m_table_addr, height, block_hash, tablestate_ext, true);
             set_latest_executed_info(true, height); // increase commit execute height
-            xdbg("xstatestore_executor_t::on_table_block_committed finish-update execute height.execute_height old=%ld,new=%ld,block hash:%s", old_execute_height, height, block_hash.c_str());
+            xdbg("xstatestore_executor_t::on_table_block_committed finish-update execute height.execute_height old=%ld,new=%ld", old_execute_height, height);
             return true;
         }
     }

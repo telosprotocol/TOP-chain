@@ -25,16 +25,12 @@ public:
     static std::shared_ptr<xtop_state_object> new_object(common::xaccount_address_t const & account, const base::xaccount_index_t & new_index);
 
     base::xaccount_index_t get_account_index();
-    xbytes_t get_unit(evm_common::trie::xkv_db_face_ptr_t db);
     void set_account_index(const base::xaccount_index_t & new_index);
-    void set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit);
 
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_mpt_state_object;}
 
     common::xaccount_address_t account;
     base::xaccount_index_t index;
-    xbytes_t unit_bytes;
-    bool dirty_unit{false};
 
 private:
     virtual size_t get_object_size_real() const override;

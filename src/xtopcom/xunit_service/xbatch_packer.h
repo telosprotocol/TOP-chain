@@ -79,6 +79,7 @@ protected:
     xresources_face * get_resources();
     std::shared_ptr<xproposal_maker_face> get_proposal_maker() const;
     bool    connect_to_checkpoint();
+    bool    leader_xip_changed(const data::xblock_consensus_para_t & cs_para) const;
 
 private:
     bool    start_proposal(uint32_t min_tx_num);
@@ -94,7 +95,7 @@ private:
     bool    check_state_sync(base::xvblock_t * latest_committed_block);
     bool    do_state_sync(uint64_t sync_height);
 
-    void send_preproposal(const data::xblock_consensus_para_t & cs_para,
+    bool send_preproposal(const data::xblock_consensus_para_t & cs_para,
                           const std::vector<data::xcons_transaction_ptr_t> & txs,
                           const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_proves);
     virtual xunit_service::xpreproposal_send_cb get_preproposal_send_cb();

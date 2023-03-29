@@ -78,18 +78,6 @@ base::xaccount_index_t xtop_state_mpt::get_account_index(common::xaccount_addres
     return {};
 }
 
-xbytes_t xtop_state_mpt::get_unit(common::xaccount_address_t const & account, std::error_code & ec) {
-    auto obj = get_state_object(account, ec);
-    if (ec) {
-        xwarn("xtop_state_mpt::get_unit %s error: %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
-        return {};
-    }
-    if (obj != nullptr) {
-        return obj->get_unit(m_trie_db->DiskDB());
-    }
-    return {};
-}
-
 void xtop_state_mpt::set_account_index(common::xaccount_address_t const & account, const std::string & index_str, std::error_code & ec) {
     base::xaccount_index_t index;
     index.serialize_from(index_str);
@@ -102,37 +90,8 @@ void xtop_state_mpt::set_account_index(common::xaccount_address_t const & accoun
         xwarn("xtop_state_mpt::set_account_index %s %s", ec.category().name(), ec.message().c_str());
         return;
     }
-    if (obj->dirty_unit) {
-        ec = error::xerrc_t::state_mpt_unit_hash_mismatch;
-        xwarn("xtop_state_mpt::set_account_index %s unit already dirty", account.to_string().c_str());
-        return;
-    }
     obj->set_account_index(index);
     m_state_objects_pending.insert(account);
-    m_state_objects_dirty.insert(account);
-}
-
-void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t const & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec) {
-    base::xaccount_index_t index;
-    index.serialize_from(index_str);
-    return set_account_index_with_unit(account, index, unit, ec);
-}
-
-void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t const & account, const base::xaccount_index_t & index, const xbytes_t & unit, std::error_code & ec) {
-    auto obj = get_or_new_state_object(account, ec);
-    if (ec) {
-        xwarn("xtop_state_mpt::set_account_index_with_unit %s %s", ec.category().name(), ec.message().c_str());
-        return;
-    }
-    // auto hash = base::xcontext_t::instance().hash({unit.begin(), unit.end()}, enum_xhash_type_sha2_256);
-    // if (hash != index.get_latest_state_hash()) {
-    //     ec = error::xerrc_t::state_mpt_unit_hash_mismatch;
-    //     xwarn("xtop_state_mpt::set_account_index_with_unit hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(index.get_latest_state_hash()).c_str());
-    //     return;
-    // }
-    obj->set_account_index_with_unit(index, unit);
-    m_state_objects_pending.insert(account);
-    m_state_objects_dirty.insert(account);
 }
 
 std::shared_ptr<xstate_object_t> xtop_state_mpt::get_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
@@ -269,26 +228,6 @@ evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
         return {};
     }
 
-    for (auto & acc : m_state_objects_dirty) {
-        auto obj = query_state_object(acc);
-        if (obj == nullptr) {
-            continue;
-        }
-        std::map<xbytes_t, xbytes_t> batch;
-        if (!obj->unit_bytes.empty() && obj->dirty_unit) {
-            auto unit_key = base::xvdbkey_t::create_prunable_unit_state_key(
-                base::xvaccount_t{obj->account.to_string()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
-            batch.emplace(std::make_pair(xbytes_t{unit_key.begin(), unit_key.end()}, obj->unit_bytes));
-            if (batch.size() >= 1024) {
-                WriteUnitBatch(m_trie_db->DiskDB(), batch);
-                batch.clear();
-            }
-            obj->dirty_unit = false;
-        }
-    }
-    if (!m_state_objects_dirty.empty()) {
-        m_state_objects_dirty.clear();
-    }
     {
         std::lock_guard<std::mutex> l(m_state_objects_lock);
         m_state_objects.clear();

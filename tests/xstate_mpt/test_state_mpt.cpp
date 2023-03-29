@@ -220,16 +220,13 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     for (auto i = 2; i < 5; i++) {
         ec.clear();
         std::string state_str{"state_str" + std::to_string(i)};
-        s->set_account_index_with_unit(data[i].first, data[i].second, {state_str.begin(), state_str.end()}, ec);
+        s->set_account_index(data[i].first, data[i].second, ec);
         EXPECT_FALSE(ec);
     }
     EXPECT_EQ(s->m_state_objects.size(), 5);
     for (auto i = 0; i < 5; i++) {
         // write in cache
         EXPECT_TRUE(s->m_state_objects.count(data[i].first));
-        if (i >= 2) {
-            EXPECT_TRUE(s->m_state_objects[data[i].first]->dirty_unit);
-        }
         // not commit in trie
         auto index_bytes = s->m_trie->try_get(top::to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
@@ -289,7 +286,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_EQ(s->m_state_objects[data[1].first]->index, index1);
     // error set
     s->set_account_index(data[2].first, new_index0, ec);
-    EXPECT_EQ(ec, state_mpt::error::make_error_code(state_mpt::error::xerrc_t::state_mpt_unit_hash_mismatch));
+    EXPECT_FALSE(ec);
     ec.clear();
     // EXPECT_EQ(s->m_cache_indexes.size(), 10);
     // commit
@@ -297,9 +294,6 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_FALSE(ec);
     // cache is lost
     EXPECT_EQ(s->m_state_objects.size(), 0);
-    for (auto obj : s->m_state_objects) {
-        EXPECT_FALSE(obj.second->dirty_unit);
-    }
 }
 
 TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
@@ -678,7 +672,7 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_BENCH) {
 
     auto t1 = base::xtime_utl::time_now_ms();
     for (auto & d : data) {
-        s->set_account_index_with_unit(d.first, d.second.first, d.second.second, ec);
+        s->set_account_index(d.first, d.second.first, ec);
     }
     auto t2 = base::xtime_utl::time_now_ms();
     s->commit(ec);
@@ -695,7 +689,7 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_not_commit_memory_leak_BENCH
         EXPECT_FALSE(ec);
 
         for (auto const & d : data) {
-            s->set_account_index_with_unit(d.first, d.second.first, to_bytes(d.second.second), ec);
+            s->set_account_index(d.first, d.second.first, ec);
         }
     }
     m_db->close();
@@ -709,7 +703,7 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_commit_memory_leak_BENCH) {
         EXPECT_FALSE(ec);
 
         for (auto const & d : data) {
-            s->set_account_index_with_unit(d.first, d.second.first, to_bytes(d.second.second), ec);
+            s->set_account_index(d.first, d.second.first, ec);
         }
         s->commit(ec);
         EXPECT_FALSE(ec);
@@ -728,7 +722,7 @@ TEST_F(test_state_mpt_fixture, test_state_mpt_cache_optimize_BENCH) {
     auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
     EXPECT_FALSE(ec);
     for (auto & d : data) {
-        s->set_account_index_with_unit(d.first, d.second.first, d.second.second, ec);
+        s->set_account_index(d.first, d.second.first, ec);
         EXPECT_FALSE(ec);
         accs.emplace_back(d.first);
     }
@@ -776,7 +770,7 @@ void multi_helper(std::map<common::xaccount_address_t, std::pair<base::xaccount_
     EXPECT_FALSE(ec);
     for (auto i = n * 1000; i < (n+1) * 1000; i++) {
         auto acc = accs[i]; 
-        s->set_account_index_with_unit(acc, data.at(acc).first, data.at(acc).second, ec);
+        s->set_account_index(acc, data.at(acc).first, ec);
         EXPECT_FALSE(ec);
     }
     auto hash = s->commit(ec);

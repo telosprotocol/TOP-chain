@@ -28,25 +28,8 @@ base::xaccount_index_t xtop_state_object::get_account_index() {
     return index;
 }
 
-xbytes_t xtop_state_object::get_unit(evm_common::trie::xkv_db_face_ptr_t db) {
-    if (!unit_bytes.empty()) {
-        return unit_bytes;
-    }
-    auto hash = index.get_latest_state_hash();
-    auto key = base::xvdbkey_t::create_prunable_unit_state_key(account.vaccount(), index.get_latest_unit_height(), index.get_latest_unit_hash());
-    auto unit = ReadUnitWithPrefix(db, {key.begin(), key.end()});
-    unit_bytes = unit;
-    return unit_bytes;
-}
-
 void xtop_state_object::set_account_index(const base::xaccount_index_t & new_index) {
     index = new_index;
-}
-
-void xtop_state_object::set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit) {
-    index = new_index;
-    unit_bytes = unit;
-    dirty_unit = true;
 }
 
 size_t xtop_state_object::get_object_size_real() const {
@@ -55,8 +38,8 @@ size_t xtop_state_object::get_object_size_real() const {
     // xbytes_t unit_bytes;
     // bool dirty_unit{false};
     size_t total_size = sizeof(*this);
-    total_size += get_size(account.to_string()) + unit_bytes.capacity()*sizeof(xbyte_t);
-    xdbg("------cache size------ xtop_state_object total_size:%zu account:%d,unit_bytes:%d", total_size, get_size(account.to_string()), unit_bytes.capacity()*sizeof(xbyte_t));
+    total_size += get_size(account.to_string());
+    xdbg("------cache size------ xtop_state_object total_size:%zu account:%d", total_size, get_size(account.to_string()));
     return total_size;
 }
 

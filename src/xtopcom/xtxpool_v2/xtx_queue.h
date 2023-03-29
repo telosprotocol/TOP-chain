@@ -96,7 +96,7 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void update_latest_nonce(uint64_t latest_nonce);
-    const std::vector<xcons_transaction_ptr_t> get_continuous_txs(uint32_t max_num, uint64_t upper_nonce, uint64_t lower_nonce) const;
+    const std::vector<xcons_transaction_ptr_t> get_continuous_txs(uint32_t max_num, uint64_t upper_nonce, uint64_t lower_nonce, uint64_t now) const;
     void erase(uint64_t nonce, bool clear_follower);
     bool empty() const {
         return m_txs.empty();

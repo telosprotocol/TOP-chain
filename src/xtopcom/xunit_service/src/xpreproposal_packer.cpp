@@ -81,9 +81,13 @@ void xpreproposal_packer::clear_for_new_view() {
     m_preproposal_block = nullptr;
 }
 
-void xpreproposal_packer::send_preproposal(const data::xblock_consensus_para_t & cs_para,
+bool xpreproposal_packer::send_preproposal(const data::xblock_consensus_para_t & cs_para,
                                            const std::vector<data::xcons_transaction_ptr_t> & txs,
                                            const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_proves) {
+    if (leader_xip_changed(cs_para)) {
+        xwarn("xpreproposal_packer::send_preproposal leader xip changed cancel preproposal.cs_para=%s", cs_para.dump().c_str());
+        return false;
+    }
     xvip2_t local_xip = get_xip2_addr();
     auto to_xip = local_xip;
     set_node_id_to_xip2(to_xip, common::xbroadcast_slot_id_value);
@@ -104,6 +108,7 @@ void xpreproposal_packer::send_preproposal(const data::xblock_consensus_para_t &
     packet.reset_message(xconsensus::enum_consensus_msg_type_preproposal, get_default_msg_ttl(), msg_content, 0, local_xip.low_addr, to_xip.low_addr);
 
     send_out(local_xip, to_xip, packet, 0, 0);
+    return true;
 }
 
 xunit_service::xpreproposal_send_cb xpreproposal_packer::get_preproposal_send_cb() {

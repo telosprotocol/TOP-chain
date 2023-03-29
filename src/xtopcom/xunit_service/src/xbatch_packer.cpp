@@ -144,6 +144,9 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
         xdbg("xbatch_packer::start_proposal table %s cache size not enough cache_size:%d min_tx_num:%d", get_account().c_str(), cache_size, min_tx_num);
         return false;
     }
+    
+    set_xip(*m_leader_cs_para, get_xip2_addr());  // set leader xip
+    set_election_round(true, *m_leader_cs_para);
 
     data::xblock_consensus_para_t & proposal_para = *m_leader_cs_para;
     proposal_para.set_clock(m_para->get_resources()->get_chain_timer()->logic_time());
@@ -153,6 +156,11 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
     data::xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num, get_preproposal_send_cb());
     if (proposal_block == nullptr) {
         xunit_dbg("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
+        return false;
+    }
+
+    if (leader_xip_changed(proposal_para)) {
+        xwarn("xbatch_packer::start_proposal fail-leader xip changed.%s", proposal_para.dump().c_str());
         return false;
     }
 
@@ -349,8 +357,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
-    set_xip(*m_leader_cs_para, local_xip);  // set leader xip
-    set_election_round(true, *m_leader_cs_para);
 
     m_is_leader = true;
     m_leader_packed = start_proposal(calculate_min_tx_num(true, timenow_ms));
@@ -522,7 +528,7 @@ bool xbatch_packer::verify_proposal_viewid(const xvip2_t & from_addr, const xvip
     bool valid = false;
     // step 1: verify viewid =》 [ local_viewid <= proposal_viewid < (local_viewid + 8)]
     auto proposal_view_id = viewid;
-    if (proposal_view_id >= m_last_view_id &&  proposal_view_id < (m_last_view_id + 8)) {
+    if (m_last_view_id == 0 || (proposal_view_id >= m_last_view_id &&  proposal_view_id < (m_last_view_id + 8))) {
         // step 2: verify leader
         auto leader_election = m_para->get_resources()->get_election();
         auto accessor = m_para->get_resources()->get_data_accessor();
@@ -644,23 +650,17 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
 }
 
 bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
-    // reset_leader_info();  // fade xip should not be leader
-
-    // for simple, keep leadership. because in most cases,leadership not change when round changed.
-    if (m_is_leader) {
-        xinfo("xbatch_packer::reset_xip_addr round changed,keep leadership,account:%s,old xip:%s,new xip:%s",
-              get_account().c_str(),
-              xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
-              xcons_utl::xip_to_hex(new_addr).c_str());
-        XMETRICS_GAUGE(metrics::cons_round_changed_keep_leadership, 1);
-        set_xip(*m_leader_cs_para, new_addr);  // set leader xip
-        set_election_round(true, *m_leader_cs_para);
-    }
-
     if (!is_xip2_empty(get_xip2_addr())) {
         m_last_xip2 = get_xip2_addr();
     }
-    xinfo("xbatch_packer::reset_xip_addr %s %s,last xip:%s node:%s this:%p", get_account().c_str(), xcons_utl::xip_to_hex(new_addr).c_str(), xcons_utl::xip_to_hex(m_last_xip2).c_str(), m_para->get_resources()->get_account().c_str(), this);
+    xinfo("xbatch_packer::reset_xip_addr %s %s,last xip:%s node:%s is_leader=%d viewid=%llu this:%p",
+          get_account().c_str(),
+          xcons_utl::xip_to_hex(new_addr).c_str(),
+          xcons_utl::xip_to_hex(m_last_xip2).c_str(),
+          m_para->get_resources()->get_account().c_str(),
+          m_is_leader,
+          m_last_view_id,
+          this);
     return xcsaccount_t::reset_xip_addr(new_addr);
 }
 
@@ -835,10 +835,11 @@ bool xbatch_packer::set_election_round(bool is_leader, data::xblock_consensus_pa
     return true;
 }
 
-void xbatch_packer::send_preproposal(const data::xblock_consensus_para_t & cs_para,
+bool xbatch_packer::send_preproposal(const data::xblock_consensus_para_t & cs_para,
                                      const std::vector<data::xcons_transaction_ptr_t> & txs,
                                      const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_proves) {
     // do nothing for normal tables.
+    return true;
 }
 
 xunit_service::xpreproposal_send_cb xbatch_packer::get_preproposal_send_cb() {
@@ -860,6 +861,15 @@ bool xbatch_packer::process_msg(const xvip2_t & from_addr, const xvip2_t & to_ad
 
 int xbatch_packer::veriry_proposal_by_preproposal_block(base::xvblock_t * proposal_block) {
     return blockmaker::xblockmaker_error_proposal_no_preproposal;
+}
+
+bool xbatch_packer::leader_xip_changed(const data::xblock_consensus_para_t & cs_para) const {
+    xvip2_t local_xip = get_xip2_addr();
+    if (cs_para.get_auditor().high_addr != local_xip.high_addr && cs_para.get_auditor().low_addr != local_xip.low_addr && cs_para.get_validator().high_addr != local_xip.high_addr &&
+        cs_para.get_validator().low_addr != local_xip.low_addr) {
+        return true;
+    }
+    return false;
 }
 
 void xpack_strategy_t::clear() {

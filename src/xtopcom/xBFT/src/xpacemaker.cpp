@@ -265,7 +265,10 @@ namespace top
             {
                 new_view_id = m_latest_vblock_cert->get_viewid() + 1;
             }
-            if(new_view_id > m_latest_view_id)
+            // If clock_height_from_latest_clock < clock_height_from_latest_commit will cause xbatch_packer::check_latest_cert_block fail,
+            // It's terrible that new_view_id will not make new block if this node is leader for new_view_id.
+            // Therefore we should not update view id until clock_height_from_latest_clock >= clock_height_from_latest_commit.
+            if(new_view_id > m_latest_view_id && clock_height_from_latest_clock >= clock_height_from_latest_commit)
             {
                 xkinfo("xclockcert_view::update_view,tps_key at node=0x%llx, account %s old viewid=%llu --> new_view_id=%llu =  cert'view=%llu + 1 + {clock:%llu - %llu}",
                        get_xip2_addr().low_addr,
