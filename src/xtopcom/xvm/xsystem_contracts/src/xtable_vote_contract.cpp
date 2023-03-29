@@ -873,31 +873,34 @@ void xtable_vote_contract::add_all_time_ineffective_votes(uint64_t const timesta
 
 void xtable_vote_contract::del_all_time_ineffective_votes(vote_info_map_t & vote_info, std::map<std::uint64_t, vote_info_map_t> & all_time_ineffective_votes) {
     for (auto it_old = all_time_ineffective_votes.rbegin(); it_old != all_time_ineffective_votes.rend();) {
-        auto & old_vote_infos = it_old->second;
+        auto & old_vote_infos = top::get<vote_info_map_t>(*it_old);
+
         for (auto it_new = vote_info.begin(); it_new != vote_info.end();) {
-            auto const & acc = it_new->first;
-            auto & votes = it_new->second;
+            auto const & acc = top::get<std::string const>(*it_new);
+            auto & votes = top::get<uint64_t>(*it_new);
+
             if (old_vote_infos.count(acc)) {
                 if (old_vote_infos.at(acc) > votes) {
                     old_vote_infos.at(acc) -= votes;
-                    vote_info.erase(it_new++);
+                    it_new = vote_info.erase(it_new);
                 } else if (old_vote_infos.at(acc) == votes) {
                     old_vote_infos.erase(acc);
-                    vote_info.erase(it_new++);
+                    it_new = vote_info.erase(it_new);
                 } else {
                     votes -= old_vote_infos.at(acc);
                     old_vote_infos.erase(acc);
-                    it_new++;
+                    ++it_new;
                 }
             } else {
-                it_new++;
+                ++it_new;
             }
         }
         if (old_vote_infos.empty()) {
-            all_time_ineffective_votes.erase((++it_old).base());
+            it_old = decltype(it_old){all_time_ineffective_votes.erase((++it_old).base())};
         } else {
-            it_old++;
+            ++it_old;
         }
+
         if (all_time_ineffective_votes.empty() || vote_info.empty()) {
             break;
         }
