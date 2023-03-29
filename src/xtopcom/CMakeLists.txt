@@ -85,3 +85,5 @@ if (XBUILD_CONSORTIUM)
 endif()
 
 add_subdirectory(xstatistic)
+add_subdirectory(xtvm_engine_rs)
+add_subdirectory(xtvm_runtime)

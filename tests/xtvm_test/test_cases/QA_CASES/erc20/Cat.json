@@ -1,0 +1,133 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "code_file_path": "Cat.bin",
+            "gas_limit": 1257983,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 1093898,
+                "logs": [{
+                    "address": "contract_one", 
+                    "topics": [
+                        "0x2e90d1cd7a5e9a5b99747c36130d866c8687bff313d44cdd245df73bcda43621"
+                    ],
+                    "data": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc40000000000000000000000000000000000000000204fce5e3e25026110000000"
+                }]
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "__comments":"转账token",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0xa9059cbb000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf049940000000000000000000000000000000000000000000000000000000000000064",
+            "gas_limit": 60624,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 52716,
+                "logs": [{
+                    "address": "contract_one", 
+                    "topics": [
+                        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", 
+                        "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4", 
+                        "0x000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf04994"
+                    ],
+                    "data": "0x0000000000000000000000000000000000000000000000000000000000000064"
+                }]
+            }
+        },
+        {
+            "__comments":"转账token大于余额",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0xa9059cbb000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf049940000000000000000000000000000000000000001431e0fae6d7217caa0000000",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 24930,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"未授权调用transferFrom，调用失败",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0xa9059cbb000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf049940000000000000000000000000000000000000001431e0fae6d7217caa0000000",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 24930,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"授权调用approve",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x095ea7b30000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4000000000000000000000000000000000000000000000000000000003b9aca00",
+            "gas_limit": 53699,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 46694,
+                "logs": [{
+                    "address": "contract_one", 
+                    "topics": [
+                        "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925", 
+                        "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4", 
+                        "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4"
+                    ],
+                    "data": "0x000000000000000000000000000000000000000000000000000000003b9aca00"
+                }]
+            }
+        },
+        {
+            "__comments":"授权调用transferFrom",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x23b872dd0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf04994000000000000000000000000000000000000000000000000000000000000000a",
+            "gas_limit": 48487,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 42162,
+                "logs": [{
+                    "address": "contract_one", 
+                    "topics": [
+                        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", 
+                        "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4", 
+                        "0x000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf04994"
+                    ],
+                    "data": "0x000000000000000000000000000000000000000000000000000000000000000a"
+                }]
+            }
+        },
+        {
+            "__comments":"授权额度不足调用transferFrom，调用失败",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x23b872dd0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf0499400000000000000000000000000000000000000000000003635c9adc5dea00000",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 27751,
+                "logs": []
+            }
+        }
+    ]
+}

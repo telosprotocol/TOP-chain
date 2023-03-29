@@ -1,0 +1,48 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600040fe636046a92ae04c0df0364120e0223bb319446",
+                                  
+            "code_file_path": "Recursion_sol_Recursion.bin",
+            "gas_limit": 96213,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 96213,
+                "logs": []
+            }
+        }        
+    ],
+    "test_cases": [
+        {
+            "__comments":"n=1 ,返回1",
+            "src_address": "T600047767d8d47a370ec7c49b153f2731360fb08239e8",
+            "target_address": "contract_one",
+            "data": "0x4d99ebc90000000000000000000000000000000000000000000000000000000000000001",
+            "gas_limit": 21519,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 21519,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"n > 1 死循环，消耗完gas退出",
+            "src_address": "T600047767d8d47a370ec7c49b153f2731360fb08239e8",
+            "target_address": "contract_one",
+            "data": "0x4d99ebc90000000000000000000000000000000000000000000000000000000000000003",
+            "gas_limit": 21519,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "",
+                "gas_used": 21519,
+                "logs": []
+            }
+        }
+    ]
+}
