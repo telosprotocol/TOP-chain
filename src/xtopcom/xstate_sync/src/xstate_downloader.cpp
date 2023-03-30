@@ -216,8 +216,8 @@ void xtop_state_downloader::handle_message(const vnetwork::xvnode_address_t & se
 }
 
 void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_t & sender,
-                                            std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
-                                            const vnetwork::xmessage_t & message) const {
+                                                 std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
+                                                 const vnetwork::xmessage_t & message) const {
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(message.payload().data()), (uint32_t)message.payload().size());
     std::string table;
     uint32_t id;
