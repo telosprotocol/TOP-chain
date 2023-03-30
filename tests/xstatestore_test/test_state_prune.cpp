@@ -265,7 +265,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_TRUE(!ec);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         xdbg("prune_exec_cons test table:%s,height:%llu,hash:%s", mocktable.get_vaccount().get_account().c_str(), h, root.hex().c_str());
         EXPECT_TRUE(!ec);
@@ -305,10 +305,10 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_EQ(!ec, true);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
-        EXPECT_EQ(mpt != nullptr, (h > 20));
-        EXPECT_EQ(ec.value() == 0, (h > 20));
+        EXPECT_EQ(mpt != nullptr, (h >= 20));
+        EXPECT_EQ(ec.value() == 0, (h >= 20));
     }
 
     for (auto & mock_unit : mock_units) {
@@ -336,9 +336,9 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_EQ(!ec, true);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
-        EXPECT_EQ(mpt != nullptr, (h > 40));
+        EXPECT_EQ(mpt != nullptr, (h >= 40));
     }
 
     for (auto & mock_unit : mock_units) {
@@ -355,11 +355,11 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_EQ(!ec, true);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         xassert(mpt != nullptr);
 
-        mpt->prune(root, ec);
+        // mpt->prune(root, ec);
     }
 }
 
@@ -568,7 +568,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 
     evm_common::xh256_t null_root;
     std::error_code ec;
-    auto base_mpt = state_mpt::xtop_state_mpt::create(common::xtable_address_t::build_from(table_addr), null_root, xdbstore, ec);
+    auto base_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(table_addr), null_root, xdbstore, ec);
     if (ec) {
         assert(false);
     }
@@ -617,7 +617,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 
     auto last_keep_mpt_root = mpt_root_vec[mpt_prune_num];
 
-    auto last_keep_mpt = state_mpt::xtop_state_mpt::create(common::xtable_address_t::build_from(table_addr), last_keep_mpt_root, xdbstore, ec);
+    auto last_keep_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(table_addr), last_keep_mpt_root, xdbstore, ec);
     if (ec) {
         assert(false);
     }

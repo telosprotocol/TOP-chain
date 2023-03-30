@@ -8,6 +8,6 @@
 
 NS_BEG3(top, common, trie)
 
-XINLINE_CONSTEXPR size_t full_node_child_count{16};
+XINLINE_CONSTEXPR size_t full_node_child_count{17};
 
 NS_END3

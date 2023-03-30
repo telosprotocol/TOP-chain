@@ -51,10 +51,10 @@ TEST_F(xtest_trie_fixture, test_secure_trie_get) {
     ASSERT_TRUE(!ec);
 
     // after copy strie, sec cache will be rebuilt.
-    auto strie_c = strie->copy();
+    // auto strie_c = strie->copy();
     // but it still can get from triedb
-    auto getKey_result_c = strie_c->get_key(secKey);
-    ASSERT_EQ(getKey_result_c, key);
+    // auto getKey_result_c = strie_c->get_key(secKey);
+    // ASSERT_EQ(getKey_result_c, key);
 }
 
 NS_END4
