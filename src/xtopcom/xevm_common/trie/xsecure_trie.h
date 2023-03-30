@@ -20,16 +20,22 @@ NS_BEG3(top, evm_common, trie)
 // the preimage of each key.
 //
 // SecureTrie is not safe for concurrent use.
-class xtop_secure_trie : public xtrie_face_t {
+class xtop_secure_trie final : public xtrie_face_t {
+public:
+    xtop_secure_trie(xtop_secure_trie const &) = delete;
+    xtop_secure_trie & operator=(xtop_secure_trie const &) = delete;
+    xtop_secure_trie(xtop_secure_trie &&) = default;
+    xtop_secure_trie & operator=(xtop_secure_trie &&) = default;
+    ~xtop_secure_trie() override = default;
+
 private:
-    std::shared_ptr<xtrie_t> m_trie;
-    xbytes_t hashKeyBuf;
-    std::shared_ptr<std::map<std::string, xbytes_t>> secKeyCache;
-    xtop_secure_trie * secKeyCacheOwner{nullptr};  // Pointer to self, replace the key cache on mismatch
+    std::unique_ptr<xtrie_t> trie_;
+    // xbytes_t hashKeyBuf;
+    // std::shared_ptr<std::map<std::string, xbytes_t>> secKeyCache;
+    // xtop_secure_trie * secKeyCacheOwner{nullptr};  // Pointer to self, replace the key cache on mismatch
 
 protected:
-    xtop_secure_trie(std::shared_ptr<xtrie_t> trie) : m_trie{std::move(trie)} {
-    }
+    explicit xtop_secure_trie(std::unique_ptr<xtrie_t> trie);
 
 public:
     // NewSecure creates a trie with an existing root node from a backing database
@@ -43,7 +49,7 @@ public:
     // Loaded nodes are kept around until their 'cache generation' expires.
     // A new cache generation is created by each call to Commit.
     // cachelimit sets the number of past cache generations to keep.
-    static std::shared_ptr<xtop_secure_trie> build_from(xh256_t const & root, observer_ptr<xtrie_db_t> db, std::error_code & ec);
+    static std::unique_ptr<xtop_secure_trie> build_from(xh256_t const & root, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // Get returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
@@ -85,7 +91,7 @@ public:
 
     // GetKey returns the sha3 preimage of a hashed key that was
     // previously used to store a value.
-    xbytes_t get_key(xbytes_t const & shaKey);
+    // xbytes_t get_key(xbytes_t const & shaKey);
 
     // Commit writes all nodes and the secure hash pre-images to the trie's database.
     // Nodes are stored with their sha3 hash as the key.
@@ -98,9 +104,9 @@ public:
     // database and can be used even if the trie doesn't have one.
     xh256_t hash() override;
 
-    std::shared_ptr<xtop_secure_trie> copy() {
-        return std::make_shared<xtop_secure_trie>(*this);
-    }
+    //std::shared_ptr<xtop_secure_trie> copy() {
+    //    return std::make_shared<xtop_secure_trie>(*this);
+    //}
 
     // Prove constructs a merkle proof for key. The result contains all encoded nodes
     // on the path to the value at key. The value itself is also included in the last
@@ -110,16 +116,18 @@ public:
     // nodes of the longest existing prefix of the key (at least the root node), ending
     // with the node that proves the absence of the key.
     bool prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) override {
-        assert(m_trie != nullptr);
-        return m_trie->prove(key, fromLevel, proofDB, ec);
+        assert(trie_ != nullptr);
+        return trie_->prove(key, fromLevel, proofDB, ec);
     }
 
     void prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) override;
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) override;
 
     void prune(std::error_code & ec) override;
-    void commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec) override;
+    void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec) override;
     void clear_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) override;
+
+    xh256_t const & original_root_hash() const noexcept override;
 
 private:
     // hashKey returns the hash of key as an ephemeral buffer.
@@ -130,18 +138,18 @@ private:
     // getSecKeyCache returns the current secure key cache, creating a new one if
     // ownership changed (i.e. the current secure trie is a copy of another owning
     // the actual cache).
-    std::shared_ptr<std::map<std::string, xbytes_t>> get_sec_key_cache() {
-        if (secKeyCacheOwner == nullptr || this != secKeyCacheOwner) {
-            xdbg("getSecKeyCache new, old is %p", secKeyCacheOwner);
-            secKeyCacheOwner = this;
-            secKeyCache = std::make_shared<std::map<std::string, xbytes_t>>();
-            assert(secKeyCacheOwner == this);
-        }
-        xdbg("getSecKeyCache at %p", secKeyCacheOwner);
-        return secKeyCache;
-    }
+    //std::shared_ptr<std::map<std::string, xbytes_t>> get_sec_key_cache() {
+    //    if (secKeyCacheOwner == nullptr || this != secKeyCacheOwner) {
+    //        xdbg("getSecKeyCache new, old is %p", secKeyCacheOwner);
+    //        secKeyCacheOwner = this;
+    //        secKeyCache = std::make_shared<std::map<std::string, xbytes_t>>();
+    //        assert(secKeyCacheOwner == this);
+    //    }
+    //    xdbg("getSecKeyCache at %p", secKeyCacheOwner);
+    //    return secKeyCache;
+    //}
 };
 using xsecure_trie_t = xtop_secure_trie;
-using xsecure_trie_ptr_t = std::shared_ptr<xsecure_trie_t>;
+// using xsecure_trie_ptr_t = std::shared_ptr<xsecure_trie_t>;
 
 NS_END3

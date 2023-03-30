@@ -11,6 +11,13 @@ NS_BEG3(top, evm_common, trie)
 
 class xtop_trie_face {
 public:
+    xtop_trie_face() = default;
+    xtop_trie_face(xtop_trie_face const &) = delete;
+    xtop_trie_face & operator=(xtop_trie_face const &) = delete;
+    xtop_trie_face(xtop_trie_face &&) = default;
+    xtop_trie_face & operator=(xtop_trie_face &&) = default;
+    virtual ~xtop_trie_face() = default;
+
     // Hash returns the root hash of the trie. It does not write to the database and
     // can be used even if the trie doesn't have one.
     virtual xh256_t hash() = 0;
@@ -47,8 +54,10 @@ public:
     virtual void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) = 0;
 
     virtual void prune(std::error_code & ec) = 0;
-    virtual void commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec) = 0;
+    virtual void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec) = 0;
     virtual void clear_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) = 0;
+
+    virtual xh256_t const & original_root_hash() const noexcept = 0;
 };
 using xtrie_face_t = xtop_trie_face;
 using xtrie_face_ptr_t = std::shared_ptr<xtrie_face_t>;

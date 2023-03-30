@@ -46,7 +46,7 @@ protected:
 public:
     observer_ptr<xtrie_db_t> trie_db() const noexcept;
 
-    static std::shared_ptr<xtop_trie> build_from(xh256_t const & hash, observer_ptr<xtrie_db_t> db, std::error_code & ec);
+    static std::unique_ptr<xtop_trie> build_from(xh256_t const & hash, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // Reset drops the referenced root node and cleans all internal state.
     void reset();
@@ -111,7 +111,7 @@ public:
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
     void prune(std::error_code & ec);
-    void commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec);
+    void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec);
     void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
 
     std::string to_string() const;
@@ -120,6 +120,8 @@ public:
     xtrie_node_face_ptr_t resolve_hash(xh256_t const & hash, std::error_code & ec) const;
 
     std::size_t pending_pruned_size() const noexcept;
+
+    xh256_t const & original_root_hash() const noexcept;
 
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t pos, std::error_code & ec) const;

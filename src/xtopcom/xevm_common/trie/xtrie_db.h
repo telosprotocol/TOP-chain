@@ -47,7 +47,7 @@ private:
 
     std::map<xh256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
 
-    mutable std::mutex mutex;
+    mutable std::mutex mutex_;
 
 public:
     explicit xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t cache_size) : diskdb_(std::move(diskdb)), cleans_(cache_size) {
@@ -109,7 +109,7 @@ public:
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
     void prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec);
-    void commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec);
+    void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec);
     void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
 
     size_t pending_pruned_size(xh256_t const & root_hash) const noexcept;

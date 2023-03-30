@@ -30,9 +30,9 @@ class xtop_state_mpt {
 private:
     common::xtable_address_t m_table_address;
 
-    std::shared_ptr<evm_common::trie::xtrie_face_t> m_trie{nullptr};
+    std::unique_ptr<evm_common::trie::xtrie_face_t> m_trie{nullptr};
     observer_ptr<evm_common::trie::xtrie_db_t> m_trie_db{nullptr};
-    evm_common::xh256_t m_original_root;
+    // evm_common::xh256_t m_original_root;
 
     mutable std::mutex m_state_objects_lock;
     mutable std::mutex m_trie_lock;
@@ -81,7 +81,7 @@ public:
     void commit_pruned(std::unordered_set<evm_common::xh256_t> const & pruned_hashes, std::error_code & ec) const;
 
     void prune(std::error_code & ec);
-    void commit_pruned(std::vector<evm_common::xh256_t> const & pruned_keys, std::error_code & ec) const;
+    void commit_pruned(std::vector<evm_common::xh256_t> pruned_keys, std::error_code & ec) const;
     void clear_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const;
 
     /// @brief Update modifies to trie and calculate root hash.
@@ -91,7 +91,7 @@ public:
 
     /// @brief Get original root hash.
     /// @return Original root hash.
-    const evm_common::xh256_t & get_original_root_hash() const;
+    evm_common::xh256_t const & original_root_hash() const noexcept;
 
 private:
     /// @brief Internal interface to init an empty state MPT.

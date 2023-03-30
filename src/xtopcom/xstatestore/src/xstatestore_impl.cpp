@@ -401,7 +401,7 @@ std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstat
         return {};
     }
 
-    auto state_root = tablestate_ext->get_state_mpt()->get_original_root_hash();
+    auto const & state_root = tablestate_ext->get_state_mpt()->original_root_hash();
     if (state_root.empty()) {
         if (tablestate_ext->get_table_state() == nullptr) {
             ec = error::xerrc_t::statestore_load_tablestate_err;

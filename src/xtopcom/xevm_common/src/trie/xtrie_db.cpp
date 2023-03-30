@@ -36,7 +36,7 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
 }
 
 void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     // If the node's already cached, skip
     if (dirties_.find(hash) != dirties_.end()) {
         return;
@@ -64,13 +64,13 @@ void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_f
 }
 
 void xtop_trie_db::insertPreimage(xh256_t const & hash, xbytes_t const & preimage) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     preimages_.insert({hash, preimage});
     // todo cal preimage size metrics.
 }
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     XMETRICS_GAUGE(metrics::mpt_trie_cache_visit, 1);
     // todo:
     xbytes_t value;
@@ -95,7 +95,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
 }
 
 xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     // It doesn't make sense to retrieve the metaroot
     if (hash.empty()) {
         ec = error::xerrc_t::trie_db_not_found;
@@ -125,7 +125,7 @@ xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
 }
 
 xbytes_t xtop_trie_db::preimage(xh256_t const & hash) const {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     if (preimages_.find(hash) != preimages_.end()) {
         return preimages_.at(hash);
     }
@@ -141,7 +141,7 @@ xbytes_t xtop_trie_db::preimage(xh256_t const & hash) const {
 void xtop_trie_db::Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec) {
     assert(!ec);
 
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
 
     // what we can optimize here:
     // 1. use batch writer to sum all <k,v> into db with once writeDB operation
@@ -216,7 +216,7 @@ void xtop_trie_db::commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & da
 }
 
 void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     {
         XMETRICS_TIME_RECORD("mpt_prune_time");
         XMETRICS_CPU_TIME_RECORD("mpt_prune_time_cpu");
@@ -248,7 +248,7 @@ void xtop_trie_db::prune(xh256_t const & hash, std::unordered_set<xh256_t> & pru
 }
 
 void xtop_trie_db::commit_pruned(std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
 
     XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
     XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
@@ -274,7 +274,7 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
 }
 
 void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
 
     XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
     XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
@@ -304,10 +304,7 @@ void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hash
 
 void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec) {
     assert(!ec);
-    std::lock_guard<std::mutex> lck(mutex);
-
-    XMETRICS_TIME_RECORD("mpt_prune2_time");
-    XMETRICS_CPU_TIME_RECORD("mpt_prune2_time_cpu");
+    std::lock_guard<std::mutex> lck(mutex_);
 
     auto const it = pruned_hashes2_.find(root_key);
     if (it == std::end(pruned_hashes2_)) {
@@ -318,24 +315,23 @@ void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pr
     ec = error::xerrc_t::trie_prune_data_duplicated;
 }
 
-void xtop_trie_db::commit_pruned(std::vector<xh256_t> const & pruned_root_hashes, std::error_code & ec) {
+void xtop_trie_db::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec) {
     assert(!ec);
 
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
+
+    pruned_root_hashes.erase(std::remove_if(std::begin(pruned_root_hashes),
+                                            std::end(pruned_root_hashes),
+                                            [this](xh256_t const & root_hash) { return pruned_hashes2_.find(root_hash) == std::end(pruned_hashes2_); }),
+                             std::end(pruned_root_hashes));
 
     std::vector<xspan_t<xbyte_t const>> pruned_keys;
-    pruned_keys.reserve(pruned_root_hashes.size() * 50);
+    size_t const pruned_keys_count = std::accumulate(
+        std::begin(pruned_root_hashes), std::end(pruned_root_hashes), 0u, [this](size_t const cnt, xh256_t const & root_hash) { return cnt + pruned_hashes2_[root_hash].size(); });
+    pruned_keys.reserve(pruned_keys_count);
 
     for (auto const & root_hash : pruned_root_hashes) {
-        auto const it = pruned_hashes2_.find(root_hash);
-        if (it == std::end(pruned_hashes2_)) {
-            // ec = error::xerrc_t::trie_prune_data_not_found;
-            xwarn("xtrie_db_t::commit_pruned fail to find pending root hash %s to be pruned", root_hash.hex().c_str());
-            continue;
-        }
-
-        auto const & pruned_hashes = top::get<std::vector<xh256_t>>(*it);
-        for (auto const & hash : pruned_hashes) {
+        for (auto const & hash : pruned_hashes2_[root_hash]) {
             cleans_erase_lock_hold_outside(hash);
             assert(dirties_.find(hash) == dirties_.end());
             pruned_keys.emplace_back(hash);
@@ -343,6 +339,8 @@ void xtop_trie_db::commit_pruned(std::vector<xh256_t> const & pruned_root_hashes
     }
 
     if (!pruned_keys.empty()) {
+        XMETRICS_COUNTER_SET("trie_commit_pruned", pruned_keys_count);
+
         diskdb_->DeleteBatch(pruned_keys, ec);
         if (ec) {
             xwarn("pruning MPT nodes failed. errc %d msg %s", ec.value(), ec.message().c_str());
@@ -357,7 +355,7 @@ void xtop_trie_db::commit_pruned(std::vector<xh256_t> const & pruned_root_hashes
 void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {
     assert(!ec);
 
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
 
     auto const it = pruned_hashes2_.find(root_hash);
     if (it == std::end(pruned_hashes2_)) {
@@ -370,7 +368,7 @@ void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec)
 }
 
 size_t xtop_trie_db::pending_pruned_size(xh256_t const & root_hash) const noexcept {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
 
     auto const it = pruned_hashes2_.find(root_hash);
     if (it == std::end(pruned_hashes2_)) {

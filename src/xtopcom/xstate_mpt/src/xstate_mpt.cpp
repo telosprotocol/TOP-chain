@@ -60,7 +60,6 @@ void xtop_state_mpt::init(common::xtable_address_t const & table, const evm_comm
         xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.to_string().c_str(), root.hex().c_str());
         return;
     }
-    m_original_root = root;
 }
 
 base::xaccount_index_t xtop_state_mpt::get_account_index(common::xaccount_address_t const & account, std::error_code & ec) {
@@ -214,8 +213,8 @@ evm_common::xh256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     return m_trie->hash();
 }
 
-const evm_common::xh256_t & xtop_state_mpt::get_original_root_hash() const {
-    return m_original_root;
+evm_common::xh256_t const & xtop_state_mpt::original_root_hash() const noexcept {
+    return m_trie->original_root_hash();
 }
 
 evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
@@ -277,11 +276,11 @@ void xtop_state_mpt::prune(std::error_code & ec) {
     }
 }
 
-void xtop_state_mpt::commit_pruned(std::vector<evm_common::xh256_t> const & pruned_keys, std::error_code & ec) const {
+void xtop_state_mpt::commit_pruned(std::vector<evm_common::xh256_t> pruned_keys, std::error_code & ec) const {
     assert(!ec);
     std::lock_guard<std::mutex> lock{m_trie_lock};
     assert(m_trie != nullptr);
-    m_trie->commit_pruned(pruned_keys, ec);
+    m_trie->commit_pruned(std::move(pruned_keys), ec);
 }
 
 void xtop_state_mpt::clear_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const {

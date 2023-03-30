@@ -492,14 +492,14 @@ evm_common::xh256_t xtop_state_sync::process_unit_data(const xbytes_t & blob, ui
             xerror("xtop_state_sync::process_unit_data hash: %s, data size: %zu, error %s", res.Hash.hex().c_str(), res.Data.size(), ec.message().c_str());
             return {};
         }
-        auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
-        auto snapshot = unit_state->take_snapshot();
-        auto state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>((xbyte_t const*)state_hash.data(), state_hash.size())};
+        auto const unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
+        auto const snapshot = unit_state->take_snapshot();
+        auto const state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
         res.Data = blob;
     } else {
-        auto state_hash = base::xcontext_t::instance().hash({blob.begin(), blob.end()}, enum_xhash_type_sha2_256);
-        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>((xbyte_t const*)state_hash.data(), state_hash.size())};
+        auto const state_hash = base::xcontext_t::instance().hash({blob.begin(), blob.end()}, enum_xhash_type_sha2_256);
+        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
         res.Data = blob;
     }
 
