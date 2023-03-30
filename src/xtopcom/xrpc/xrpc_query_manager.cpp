@@ -669,7 +669,7 @@ int xrpc_query_manager::parse_tx(const std::string & tx_hash_str, xtransaction_t
 
         const xtx_exec_json_key jk(rpc_version);
         Json::Value sendjson = xrpc_loader_t::parse_send_tx(sendindex);
-        bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->target_address() == black_hole_system_address;
+        bool is_self_tx = sendindex->get_txindex()->is_self_tx() || sendindex->get_raw_tx()->target_address() == common::black_hole_system_address;
         if (is_self_tx) {
             cons[jk.m_confirm] = sendjson;  // XTODO set to confirm block info
             xrpc_loader_t::parse_logs(sendindex,cons[jk.m_confirm]);

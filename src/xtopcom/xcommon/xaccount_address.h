@@ -10,6 +10,8 @@
 
 NS_BEG2(top, common)
 
+extern common::xaccount_address_t const black_hole_system_address;
+
 bool is_t0_address(xaccount_address_t const & account_address);
 bool is_t2_address(xaccount_address_t const & account_address);
 bool is_t6_address(xaccount_address_t const & account_address);

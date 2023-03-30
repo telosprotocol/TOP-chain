@@ -12,6 +12,8 @@
 
 NS_BEG2(top, common)
 
+xaccount_address_t const black_hole_system_address{black_hole_addr};
+
 bool is_t0_address(xaccount_address_t const & account_address) {
     return account_address.type() == base::enum_vaccount_addr_type_secp256k1_user_account;
 }
@@ -58,7 +60,7 @@ xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id
     return {};
 }
 
-common::xaccount_address_t append_table_id(common::xaccount_address_t const & address, common::xtable_id_t const table_id) {
+xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id_t const table_id) {
     std::error_code ec;
     auto r = append_table_id(address, table_id, ec);
     top::error::throw_error(ec);

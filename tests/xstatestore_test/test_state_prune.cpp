@@ -555,10 +555,10 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     mock::xvchain_creator creator(true, db_path);
     auto xdbstore = base::xvchain_t::instance().get_xdbstore();
 
-    uint32_t user_count = 10000;
-    uint32_t user_change_num_once = 50;
-    uint32_t mpt_all_num = 512;
-    uint32_t mpt_prune_num = 256;
+    uint32_t const user_count = 50000;
+    uint32_t const user_change_num_once = 250;
+    uint32_t const mpt_all_num = 512;
+    uint32_t const mpt_prune_num = 256;
 
     uint16_t tableid = 0;
     auto table_addr = xblocktool_t::make_address_shard_table_account(tableid);
@@ -578,8 +578,8 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         auto & addr = addr_pair.m_address;
         user_addrs.push_back(addr);
 
-        std::string unithash = addr + "1";
-        std::string statehash = addr + "a";
+        std::string unithash = addr + static_cast<char>(rand());
+        std::string statehash = addr + static_cast<char>(rand());
         base::xaccount_index_t index(base::enum_xaccountindex_version_state_hash, 1, unithash, statehash, 1);
         base_mpt->set_account_index(common::xaccount_address_t{addr}, index, ec);
     }
@@ -594,12 +594,14 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     // std::cout << "mpt get root:0" << std::endl;
 
     for (uint32_t j = 0; j < mpt_all_num; j++) {
+        base_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(table_addr), mpt_root_vec.back(), xdbstore, ec);
         for (uint32_t k = 0; k < user_change_num_once; k++) {
             uint32_t pos = rand() % user_count;
             auto & addr = user_addrs[pos];
             std::string unithash = addr + std::to_string(j);
             std::string statehash = addr + "a" + "j";
             base::xaccount_index_t index(base::enum_xaccountindex_version_state_hash, j, unithash, statehash, j);
+
             base_mpt->set_account_index(common::xaccount_address_t{addr}, index, ec);
         }
         // std::cout << "mpt before commit:" << j+1 << std::endl;
@@ -607,6 +609,14 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         if (ec) {
             assert(false);
         }
+
+        base_mpt->prune(ec);
+        if (ec) {
+            assert(false);
+        }
+
+        assert(base_mpt->original_root_hash() == mpt_root_vec.back());
+
         // std::cout << "mpt commit:" << j+1 << std::endl;
         mpt_root_vec.push_back(base_mpt->get_root_hash(ec));
         // std::cout << "mpt get root:" << j+1 << std::endl;
@@ -622,8 +632,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         assert(false);
     }
 
-    auto t1 = base::xtime_utl::time_now_ms();
-    auto t_tmp = t1;
+
 #ifdef ENABLE_METRICS
     uint32_t db_read_before_prune = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
     uint32_t db_read_last = db_read_before_prune;
@@ -633,16 +642,19 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     uint32_t db_delete_last = db_delete_before_prune;
     uint32_t db_delete_range_before_prune = XMETRICS_GAUGE_GET_VALUE(metrics::db_delete_range);
     uint32_t db_delete_range_last = db_delete_range_before_prune;
+
+    auto t1 = base::xtime_utl::time_now_ms();
     std::cout << "before prune. db_read " << db_read_last << ", db_write " << db_write_last << ", db_delete " << db_delete_last << ", db_delete_range " << db_delete_range_last
             << "time:" << t1 << std::endl;
 #else
+    auto t1 = base::xtime_utl::time_now_ms();
     std::cout << "before prune.time:" << t1 << std::endl;
 #endif
 
-    std::unordered_set<evm_common::xh256_t> pruned_hashes;
-    for (uint32_t l = 0; l < mpt_prune_num; l++) {
+    //std::unordered_set<evm_common::xh256_t> pruned_hashes;
+    //for (uint32_t l = 0; l < mpt_prune_num; l++) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
-        last_keep_mpt->prune(mpt_root_vec[l], pruned_hashes, ec);
+        last_keep_mpt->commit_pruned(mpt_root_vec, ec);
         // auto t_now = base::xtime_utl::time_now_ms();
         // uint32_t db_read_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
         // uint32_t db_write_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_write);
@@ -653,13 +665,13 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
         // t_tmp = t_now;
         // db_read_last = db_read_now;
-        if (ec) {
-            assert(false);
-        }
-        if (l%50 == 0) {
-            std::cout << "mpt prune:" << l << "/" << mpt_prune_num << std::endl;
-        }
-    }
+        //if (ec) {
+            //assert(false);
+        //}
+        //if (l%50 == 0) {
+            //std::cout << "mpt prune:" << l << "/" << mpt_prune_num << std::endl;
+        //}
+    //}
     auto t2 = base::xtime_utl::time_now_ms();
 #ifdef ENABLE_METRICS
     uint32_t db_read_after_prune = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
@@ -677,10 +689,10 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 #endif
 
     t2 = base::xtime_utl::time_now_ms();
-    last_keep_mpt->commit_pruned(pruned_hashes, ec);
-    if (ec) {
-        assert(false);
-    }
+    //last_keep_mpt->commit_pruned(pruned_hashes, ec);
+    //if (ec) {
+        //assert(false);
+    //}
     auto t3 = base::xtime_utl::time_now_ms();
 #ifdef ENABLE_METRICS
     uint32_t db_read_after_commit = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
