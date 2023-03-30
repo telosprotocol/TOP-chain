@@ -44,6 +44,9 @@ namespace top
         bool xunitstore_t::store_units(base::xvblock_t* table_block) {
             xassert(table_block->check_block_flag(base::enum_xvblock_flag_committed));
             std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;  
+            if (table_block->get_block_class() != base::enum_xvblock_class_light) {
+                return true;
+            }
             if (false == table_block->extract_sub_blocks(sub_blocks)) {
                 xerror("xunitstore_t::store_units,fail-extract_sub_blocks for table block(%s)", table_block->dump().c_str());
                 return false;                   

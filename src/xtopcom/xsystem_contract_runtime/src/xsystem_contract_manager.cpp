@@ -255,7 +255,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     xassert(block);
 
     base::xvaccount_t _vaddr(block->get_account());
-    auto ret = blockstore->store_block(_vaddr, block.get());
+    auto ret = blockstore->store_unit(_vaddr, block.get());
     if (!ret) {
         xerror("xtop_system_contract_manager::init_contract_chain %s genesis block fail", contract_address.to_string().c_str());
         return;

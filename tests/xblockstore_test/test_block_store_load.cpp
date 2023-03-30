@@ -327,6 +327,10 @@ TEST_F(test_block_store_load, load_units_BENCH) {
         for (auto & block : tableblocks) {
             ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
         }
+
+        for (uint64_t i = 1; i < max_block_height-2; i++) {
+            blockstore->store_units(tableblocks[i].get());
+        }
         auto end_time = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
         std::cout << " store all blocks milliseconds " << duration.count() << std::endl;
@@ -336,11 +340,10 @@ TEST_F(test_block_store_load, load_units_BENCH) {
         auto start_time = std::chrono::system_clock::now();
         for (auto & mockunit : mockunits) {
             uint64_t unit_height = mockunit.get_cert_block()->get_height();
-            for (uint64_t height = 1; height <= unit_height; height++) {
+            for (uint64_t height = 1; height <= unit_height-2; height++) {
                 base::xvaccount_t _vaddr(mockunit.get_account());
-                auto _block = blockstore->load_block_object(_vaddr, height, 0, false);
-                blockstore->load_block_input(_vaddr, _block.get());
-                blockstore->load_block_output(_vaddr, _block.get());
+                auto _block = blockstore->load_unit(_vaddr, height);
+                ASSERT_TRUE(_block != nullptr);
             }
         }
         auto end_time = std::chrono::system_clock::now();
