@@ -29,6 +29,7 @@ class xstatectx_t : public xstatectx_face_t {
     data::xunitstate_ptr_t              load_unit_state(common::xaccount_address_t const& address) override;
     data::xunitstate_ptr_t              load_commit_unit_state(common::xaccount_address_t const& address) override;
     data::xunitstate_ptr_t              load_commit_unit_state(common::xaccount_address_t const& address, uint64_t height) override;
+    uint64_t                            load_account_height(common::xaccount_address_t const& address) override;
     bool                                do_rollback() override;
     size_t                              do_snapshot() override;
     void                                finish_execution() override;

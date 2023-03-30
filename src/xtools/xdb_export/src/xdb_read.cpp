@@ -7,6 +7,7 @@
 #include "xbasic/xhex.h"
 #include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_store_shadow.h"
+#include "xblockstore/src/xunitstore.h"
 
 NS_BEG2(top, db_export)
 
@@ -33,6 +34,7 @@ xdb_read_tools_t::~xdb_read_tools_t() {
 
 bool xdb_read_tools_t::is_match_function_name(std::string const & func_name) {
     static std::vector<std::string> names = {
+        "db_read_unit",
         "db_read_block",
         "db_read_txindex",
         "db_read_meta",
@@ -58,6 +60,9 @@ bool xdb_read_tools_t::process_function(std::string const & func_name, int argc,
     } else if (func_name == "db_data_parse") {
         if (argc != 3) return false;
         db_data_parse();
+    } else if (func_name == "db_read_unit") {
+        if (argc != 5) return false;
+        db_read_unit(argv[3], std::stoi(argv[4]));
     } else if (func_name == "db_read_block") {
         if (argc != 5) return false;
         db_read_block(argv[3], std::stoi(argv[4]));
@@ -112,6 +117,17 @@ void xdb_read_tools_t::db_read_span_account(std::string const& account, const ui
         }
     } else {
         std::cout << " span not exist" << std::endl;
+    }
+}
+
+void xdb_read_tools_t::db_read_unit(std::string const & address, const uint64_t height) {
+    base::xvaccount_t _vaddr(address);
+    store::xunitstore_t unitstore(m_xvblockdb_ptr);
+    auto unit = unitstore.load_unit(_vaddr, height);
+    if (unit != nullptr) {
+        std::cout << unit->dump() << std::endl;
+    } else {
+        std::cout << "not exist" << std::endl;
     }
 }
 

@@ -1336,13 +1336,12 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
 
 data::xblock_t*
 xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t height) const {
-    // TODO(jimmy)
     base::xvaccount_t _vaddr(owner);
+    assert(_vaddr.is_unit_address());
     XMETRICS_GAUGE(metrics::blockstore_access_from_account_context, 1);
-    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, false);
+    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_unit(_vaddr, height);
     if (_block != nullptr) {
         // system contract only need input for full-table
-        base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddr, _block.get());
         _block->add_ref();
         return dynamic_cast<data::xblock_t*>(_block.get());
     }
@@ -1376,8 +1375,7 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     } else if (owner == m_current_table_addr) {
         height = m_current_table_commit_height;
     } else {
-        base::xvaccount_t _vaddr(owner);
-        height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(_vaddr);
+        height = m_statectx->load_account_height(common::xaccount_address_t{owner});
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;

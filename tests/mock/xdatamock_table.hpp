@@ -88,7 +88,7 @@ class xdatamock_table : public base::xvaccount_t {
     void                                store_genesis_units(base::xvblockstore_t* blockstore) {
         for (auto & mockunit : m_mock_units) {
             auto gene_block = mockunit.get_history_units()[0];
-            blockstore->store_block(base::xvaccount_t(mockunit.get_account()), gene_block.get());
+            blockstore->store_unit(base::xvaccount_t(mockunit.get_account()), gene_block.get());
         }
     }
 

@@ -120,8 +120,8 @@ TEST_F(test_block_store_load, load_unexsit_block_1) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     std::string _test_addr = xdatamock_address::make_user_address_random(1);
-    auto _block = blockstore->load_block_object(base::xvaccount_t(_test_addr), 0, 0, false);
-    ASSERT_NE(_block, nullptr);  // TODO(jimmy) blockstore always will return genesis block
+    auto _block = blockstore->load_unit(base::xvaccount_t(_test_addr), 0);
+    ASSERT_EQ(_block, nullptr);
 }
 TEST_F(test_block_store_load, load_unexsit_block_2) {
     mock::xvchain_creator creator(true);
@@ -141,8 +141,8 @@ TEST_F(test_block_store_load, load_unexsit_block_2) {
     {
         auto _block = blockstore->load_block_object(mocktable, 1, 0, false);
         ASSERT_NE(_block, nullptr);
-        ASSERT_FALSE(_block->is_output_ready(true));
-        ASSERT_FALSE(_block->is_input_ready(true));
+        ASSERT_TRUE(_block->is_output_ready(true));
+        ASSERT_TRUE(_block->is_input_ready(true));
     }
     {
         auto _block = blockstore->load_block_object(mocktable, 1, 0, true);
@@ -151,38 +151,71 @@ TEST_F(test_block_store_load, load_unexsit_block_2) {
         ASSERT_EQ(_block->is_input_ready(true), true);
     }    
 }
-TEST_F(test_block_store_load, load_unexsit_block_3) {
+TEST_F(test_block_store_load, store_genesis_unit) {
     mock::xvchain_creator creator(true);
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
     mock::xdatamock_table mocktable;
     mocktable.genrate_table_chain(20, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
-    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();    
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units(); 
+    base::xvaccount_t _vaccount(mockunits[0].get_account());
     {
-        auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, false);
-        ASSERT_EQ(_block, nullptr);
+        for (auto & mockunit : mockunits) {
+            base::xvaccount_t _vaccount(mockunit.get_account());
+            auto _block = blockstore->load_unit(_vaccount, 0);
+            ASSERT_NE(_block, nullptr);
+        }
     }
     {
         const std::vector<xblock_ptr_t> & unitblocks = mockunits[0].get_history_units();
-        bool ret = blockstore->store_block(base::xvaccount_t(mockunits[0].get_account()), unitblocks[1].get());
+        bool ret = blockstore->store_unit(_vaccount, unitblocks[0].get());
         ASSERT_EQ(ret, true);        
     }
     {
-        auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, false);
+        auto _block = blockstore->load_unit(_vaccount, 0);
         ASSERT_NE(_block, nullptr);
-        xassert(_block->get_block_version() == base::xvblock_fork_t::get_block_fork_new_version());
+        xassert(_block->get_block_version() == base::xvblock_fork_t::get_block_init_version());
         xassert(_block->get_block_level() == base::enum_xvblock_level_unit);
-        xassert(_block->get_block_class() == base::enum_xvblock_class_nil);
+        xassert(_block->get_block_class() != base::enum_xvblock_class_nil);
         ASSERT_EQ(_block->is_output_ready(true), true);
         ASSERT_EQ(_block->is_input_ready(true), true);
     }
+}
+
+TEST_F(test_block_store_load, store_batch_units) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable;
+    mocktable.genrate_table_chain(20, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units(); 
     {
-        auto _block = blockstore->load_block_object(base::xvaccount_t(mockunits[0].get_account()), 1, 0, true);
-        ASSERT_NE(_block, nullptr);
-        ASSERT_EQ(_block->is_output_ready(true), true);
-        ASSERT_EQ(_block->is_input_ready(true), true);
-    }    
+        for (auto & mockunit : mockunits) {
+            base::xvaccount_t _vaccount(mockunit.get_account());
+            auto _block = blockstore->load_unit(_vaccount, 1);
+            ASSERT_EQ(_block, nullptr);
+        }
+    }
+    {
+        const std::vector<xblock_ptr_t> & unitblocks = mockunits[0].get_history_units();
+        tableblocks[1]->set_block_flag(base::enum_xvblock_flag_committed);
+        bool ret = blockstore->store_units(tableblocks[1].get());
+        ASSERT_EQ(ret, true);        
+    }
+    {
+        for (auto & mockunit : mockunits) {
+            base::xvaccount_t _vaccount(mockunit.get_account());
+            auto _block = blockstore->load_unit(_vaccount, 1);
+            ASSERT_NE(_block, nullptr);
+            xassert(_block->get_block_version() == base::xvblock_fork_t::get_block_fork_new_version());
+            xassert(_block->get_block_level() == base::enum_xvblock_level_unit);
+            xassert(_block->get_block_class() == base::enum_xvblock_class_nil);
+            ASSERT_EQ(_block->is_output_ready(true), true);
+            ASSERT_EQ(_block->is_input_ready(true), true);
+        }
+    }
 }
 
 TEST_F(test_block_store_load, simple_unit_check) {

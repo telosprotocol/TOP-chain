@@ -282,9 +282,46 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
     base::xtime_utl::sleep_ms(60000);
 }
 
+TEST_F(test_memory, unitstate_cache) {
+    mock::xdatamock_table mocktable(1, 4);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+    xunitstate_cache_t _cache(100);
+    {
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[0].get_history_units()[0].get());
+        auto bstate = unitstate->get_bstate();
+        uint64_t height = bstate->get_block_height();
 
+        _cache.set_unitstate("111", bstate);
+        _cache.set_unitstate("222", bstate);
+        _cache.set_unitstate("333", bstate);
+        ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), height, "111"), nullptr);
+        ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), height, "222"), nullptr);
+        ASSERT_NE(_cache.get_unitstate(mockunits[0].get_account(), height, "333"), nullptr);
+        std::cout << "unitstate refcount " << unitstate.use_count() << std::endl;
+    }
 
+    {
+        auto unitstate1 = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[1].get_history_units()[0].get());    
+        auto bstate = unitstate1->get_bstate();
+        uint64_t height = bstate->get_block_height();
+        _cache.set_unitstate("111", bstate);
+        _cache.set_unitstate("222", bstate);
+        _cache.set_unitstate("333", bstate);
+        _cache.set_unitstate("444", bstate);
+        _cache.set_unitstate("555", bstate);
+        _cache.set_unitstate("666", bstate);
+        _cache.set_unitstate("777", bstate);
+        _cache.set_unitstate("888", bstate);
+        std::cout << "bstate refcount " << bstate->get_refcount() << std::endl;
+        ASSERT_EQ(bstate->get_refcount(), 4);
+    }
 
+    {
+        ASSERT_EQ(_cache.size(), 2);
+        _cache.clear();
+        ASSERT_EQ(_cache.size(), 0);
+    }
+}
 
 // TEST_F(test_memory, new_delete_test) {
 

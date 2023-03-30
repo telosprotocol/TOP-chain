@@ -14,4 +14,8 @@ static const xblock_number_t LatestConnectBlock = (xblock_number_t)-3;
 static const xblock_number_t LatestBlock = (xblock_number_t)-2;
 static const xblock_number_t PendingBlock = (xblock_number_t)-1;
 
+constexpr const char* BlockHeightLatest = "latest";
+constexpr const char* BlockHeightEarliest = "earliest";
+constexpr const char* BlockHeightPending = "pending";
+
 NS_END1

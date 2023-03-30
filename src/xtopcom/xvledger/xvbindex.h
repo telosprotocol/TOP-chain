@@ -24,7 +24,7 @@ namespace top
             enum_index_store_flag_output_entity   = 0x04, //output entity has been stored
             enum_index_store_flag_input_resource  = 0x08, //input  resource has bedn stored
             enum_index_store_flag_output_resource = 0x10, //output resource has bedn stored
-            enum_index_store_flag_non_index       = 0x20, //mark it when not save xvbindex self
+            enum_index_store_flag_unit_in_index   = 0x20, //mark it when save xvbindex with unitblock together
             enum_index_store_flag_transactions    = 0x40, //mark txs of this block has been decode and stored seperately
             enum_index_store_flag_full_block      = 0x7F, //mark when every piece of block been on DB
             enum_index_store_flag_main_entry      = 0x80, //indicate that is main entry of mutiple blocks
@@ -101,6 +101,11 @@ namespace top
 
             void                        reset_next_viewid_offset(const int32_t next_viewid_offset);
         public:
+            void               set_unitblock_on_index(base::xvblock_t* _unit);
+            base::xauto_ptr<base::xvblock_t> create_unitblock_on_index();
+            void               set_unitblock_bin(std::string const& bin) {m_reserved = bin;}
+            std::string const& get_unitblock_bin() const {return m_reserved;}
+
             inline bool        check_modified_flag() const { return (m_modified != 0);}
             void               set_modified_flag();
             void               reset_modify_flag();

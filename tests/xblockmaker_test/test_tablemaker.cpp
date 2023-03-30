@@ -11,6 +11,7 @@
 #include "tests/mock/xdatamock_address.hpp"
 #include "xdata/xnative_contract_address.h"
 #include "xblockmaker/xproposal_maker.h"
+#include "xgenesis/xgenesis_accounts.h"
 
 using namespace top;
 using namespace top::base;
@@ -1146,6 +1147,17 @@ TEST_F(test_tablemaker, genesis_accounts_in_mpt) {
     EXPECT_EQ(send_txs.size(), tx_cnt);
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
+    genesis::xgenesis_accounts_mpt_t::instance().clear();
+    std::set<common::xaccount_address_t> test_genesis_accounts;
+    for (uint32_t i = 0; i < 5; i++) {
+        std::string addr = mock::xdatamock_address::make_unit_address((base::enum_xchain_zone_index)mocktable.get_zone_index(), (uint16_t)mocktable.get_ledger_subaddr());
+        common::xaccount_address_t account_address(addr);
+        base::xauto_ptr<base::xvblock_t> genesis_unit = data::xblocktool_t::create_genesis_empty_unit(addr);
+        resources->get_blockstore()->store_unit(account_address.vaccount(), genesis_unit.get());
+        genesis::xgenesis_accounts_mpt_t::instance().add_account(account_address);
+        test_genesis_accounts.insert(account_address);
+    }
+
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
@@ -1192,22 +1204,15 @@ TEST_F(test_tablemaker, genesis_accounts_in_mpt) {
         }
         xassert(match_unit_count == 2);
 
-        auto & genesis_accounts = genesis::xgenesis_manager_t::get_all_genesis_accounts();
+        auto & genesis_accounts = test_genesis_accounts;
         for (auto & _address : genesis_accounts) {
-            if (!base::xvaccount_t::is_unit_address_type(_address.type())) {
-                continue;
-            }
-            // check if account same table
-            if (_address.table_address().to_string() != table_addr) {
-                continue;
-            }
-
             base::xaccount_index_t _accountindex;
             ASSERT_TRUE(statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(_address, proposal_block.get(), _accountindex));
             ASSERT_TRUE(_accountindex.get_latest_unit_height() == 0);    
             ASSERT_TRUE(_accountindex.get_latest_unit_viewid() == 0);
             ASSERT_TRUE(_accountindex.get_latest_tx_nonce() == 0);
             ASSERT_FALSE(_accountindex.get_latest_unit_hash().empty());
+            ASSERT_FALSE(_accountindex.get_latest_state_hash().empty());
             ASSERT_TRUE(_accountindex.is_valid_mpt_index());
         }
 
@@ -1222,6 +1227,63 @@ TEST_F(test_tablemaker, genesis_accounts_in_mpt) {
         }
         // 
     }
+
+    {
+        const uint32_t tx_cnt = 1;
+        std::vector<xcons_transaction_ptr_t> txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 2);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+    {
+        const uint32_t tx_cnt = 1;
+        std::vector<xcons_transaction_ptr_t> txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 3);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }    
+    {
+        const uint32_t tx_cnt = 1;
+        std::vector<xcons_transaction_ptr_t> txs = mocktable.create_send_txs(to_addr, from_addr, tx_cnt);
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 4);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }    
+    {
+        auto accouts = genesis::xgenesis_accounts_mpt_t::instance().get_not_in_mpt_accounts();
+        ASSERT_EQ(accouts.size(), 0);
+    }
+    genesis::xgenesis_accounts_mpt_t::instance().clear();
 }
 
 TEST_F(test_tablemaker, fullunit) {

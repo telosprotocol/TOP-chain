@@ -34,6 +34,8 @@ class xstatestore_impl_t : public xstatestore_face_t {
     virtual data::xaccountstate_ptr_t   get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const override;
     virtual std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const override;
 
+    virtual base::xvblock_ptr_t     get_unit_block(xblock_number_t number, common::xaccount_address_t const & account_address) const override;
+
     // query unitstate
     virtual data::xunitstate_ptr_t      get_unitstate(xblock_number_t number, common::xaccount_address_t const & account_address) const override;
     virtual data::xunitstate_ptr_t  get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const override;

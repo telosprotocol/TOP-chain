@@ -48,14 +48,14 @@ namespace top
         {
             enum_max_active_acconts         = 2048,  //max active accounts number
             enum_units_group_count          = 256,   //same with max subaddr
-            enum_max_expire_check_count     = 4096,  //not clean too much at each loop
-
-            enum_timer_check_interval       = 10000,  //check every 10 seconds            
+            enum_max_expire_check_count     = 4096,  //not clean too much at each loop            
 #ifdef DEBUG
+            enum_timer_check_interval           = 1000,  //check every 1 seconds            
             enum_account_idle_timeout_ms        = 10*60*1000, //account change to idle status if not access
             enum_block_plugin_idle_timeout_ms   = 10*60*1000,  //idle duration for plugin
             enum_state_plugin_idle_timeout_ms   = 10*60*1000,  //idle duration for plugin
 #else
+            enum_timer_check_interval           = 10000,  //check every 10 seconds    
             enum_account_idle_timeout_ms        = 60*60*1000, //account change to idle status if not access within 60 minutes
             enum_block_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes
             enum_state_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes

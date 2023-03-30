@@ -68,7 +68,6 @@ namespace mock {
             //better performance for batch operations
             virtual bool                  store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks,const int atag = 0) {xassert(false);return false;}
 
-            virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) {xassert(false);return false;}
             virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {xassert(false);return nullptr;}
 
         public://note:load_index may work with both persist db and cache layer
@@ -99,9 +98,6 @@ namespace mock {
             virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height)  {xassert(false);return false;}
             virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) {xassert(false);return {};}
 
-        public:
-            // read/write corresponding table prove for latest commit unit block
-            virtual bool    store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block)  {xassert(false);return false;}
         private:
             // < account: <height,block*> > sort from lower height to higher,and the first one block is genesis block
             std::map< std::string,std::map<uint64_t,base::xvblock_t*> > m_blocks;
