@@ -468,12 +468,14 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
         if (account_prefix == common::rec_table_base_address.to_string()) {
             // ignore
         } else if (account_prefix == common::zec_table_base_address.to_string()) {
-            if (!check_behind(end_height, sys_contract_rec_elect_zec_addr)) {
+            // if (!check_behind(end_height, sys_contract_rec_elect_zec_addr)) {
+            if (!check_behind(end_height, rec_elect_zec_table_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
             }
         } else if (account_prefix == common::con_table_base_address.to_string()) {
-            if (!check_behind(end_height, sys_contract_zec_elect_consensus_addr)) {
+            // if (!check_behind(end_height, sys_contract_zec_elect_consensus_addr)) {
+            if (!check_behind(end_height, zec_elect_shard_table_addr)) {
                 xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
                 return abort;
             }

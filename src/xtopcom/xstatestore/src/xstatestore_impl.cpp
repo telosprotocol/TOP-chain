@@ -198,6 +198,23 @@ xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_table_addr
     return nullptr;
 }
 
+base::xvblock_ptr_t xstatestore_impl_t::get_unit_block(xblock_number_t number, common::xaccount_address_t const & account_address) const {
+    base::xvblock_ptr_t unitblock = nullptr;
+    if (number == LatestConnectBlock || number == LatestBlock || number == PendingBlock) {
+        // XTODO always get by LatestConnectBlock
+        base::xaccount_index_t accountindex;        
+        get_accountindex(LatestConnectBlock, account_address, accountindex);        
+        if (accountindex.get_latest_unit_hash().empty()) {
+            unitblock = get_blockstore()->load_unit(account_address.vaccount(), accountindex.get_latest_unit_height(), accountindex.get_latest_unit_viewid());
+        } else {
+            unitblock = get_blockstore()->load_unit(account_address.vaccount(), accountindex.get_latest_unit_height(), accountindex.get_latest_unit_hash());
+        }
+    } else {
+        unitblock = get_blockstore()->load_unit(account_address.vaccount(), number);
+    }
+    return unitblock;
+}
+
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_unit_addr(account_address);
     auto unitstate = tablestore->get_unit_state_from_block(account_address, target_block);
@@ -309,7 +326,7 @@ data::xunitstate_ptr_t  xstatestore_impl_t::get_unit_committed_changed_state(com
 }
 
 data::xunitstate_ptr_t  xstatestore_impl_t::get_unit_committed_state(common::xaccount_address_t const & account_address, uint64_t height) const {
-    auto _block = get_blockstore()->load_block_object(account_address.vaccount(), height, base::enum_xvblock_flag_committed, false);
+    auto _block = get_blockstore()->load_unit(account_address.vaccount(), height);
     if (nullptr == _block) {
         xwarn("xstatestore_impl_t::get_unit_committed_state fail-get block.%s,height=%ld", account_address.to_string().c_str(), height);
         return nullptr;
@@ -423,11 +440,11 @@ data::xaccountstate_ptr_t xstatestore_impl_t::get_accountstate(xblock_number_t n
 
 bool xstatestore_impl_t::get_accountindex(const std::string& table_height, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const {
     xblock_number_t number;
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         number = LatestBlock;
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         number = 0;
-    else if (table_height == "pending")
+    else if (table_height == BlockHeightPending)
         number = PendingBlock;
     else {
         number = std::strtoul(table_height.c_str(), NULL, 16);
@@ -513,9 +530,9 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
     }
     xobject_ptr_t<base::xvblock_t> vblock = nullptr;
     if (!account_index.get_latest_unit_hash().empty()) {
-        vblock = blockstore->load_block_object(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash(), false);
+        vblock = blockstore->load_unit(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash());
     } else {
-        vblock = blockstore->load_block_object(account, account_index.get_latest_unit_height(), base::enum_xvblock_flag_committed, false);
+        vblock = blockstore->load_unit(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid());
     }
     if (vblock == nullptr) {
         xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load object addr.%s %s",account_address.to_string().c_str(), account_index.dump().c_str());
@@ -529,7 +546,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
     uint64_t current_height = vblock->get_height();
     auto block_hash = vblock->get_last_block_hash();
     while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, block_hash, false);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_unit(account, current_height - 1, block_hash);
         if (prev_vblock == nullptr) {
             xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
@@ -548,16 +565,17 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
 base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account, uint64_t max_height) {
     // there is mostly two empty units
     XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(account, max_height, base::enum_xvblock_flag_committed, false);
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_unit(account, max_height);
     xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
     if (vblock->is_state_changed_unit()) {
         return vblock;
     }
 
     uint64_t current_height = vblock->get_height();
+    auto block_hash = vblock->get_last_block_hash();
     while (current_height > 0) {
         XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_unit(account, current_height - 1, block_hash);
         if (prev_vblock == nullptr) {
             xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
@@ -568,6 +586,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
         }
 
         current_height = prev_vblock->get_height();
+        block_hash = prev_vblock->get_last_block_hash();
     }
     return nullptr;
 }

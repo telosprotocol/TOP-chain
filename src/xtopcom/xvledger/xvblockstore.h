@@ -204,8 +204,6 @@ namespace top
             //better performance for batch operations
             virtual bool                  store_blocks(const xvaccount_t & account,std::vector<xvblock_t*> & batch_store_blocks,const int atag = 0) = 0;
 
-            virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) = 0;
-            virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, const std::string & hash, bool update_pre_block) = 0;
             virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
 
         public://note:load_index may work with both persist db and cache layer
@@ -236,9 +234,15 @@ namespace top
             virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
             virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
 
-        public:
-            // read/write corresponding table prove for latest commit unit block
-            virtual bool    store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block) = 0;
+        public: // unit related apis
+            virtual bool    store_units(base::xvblock_t* table_block, std::vector<base::xvblock_ptr_t> const& units) {return false;}
+            virtual bool    store_units(base::xvblock_t* table_block) {return false;}
+            virtual bool    store_unit(const base::xvaccount_t & account,base::xvblock_t* unit) {return false;}
+            virtual base::xauto_ptr<base::xvblock_t>  load_unit(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid) {return nullptr;}
+            virtual base::xauto_ptr<base::xvblock_t>  load_unit(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash) {return nullptr;}
+            virtual base::xauto_ptr<base::xvblock_t>  load_unit(const base::xvaccount_t & account,const uint64_t height) {return nullptr;}            
+            virtual bool    exist_unit(const base::xvaccount_t & account) const {return false;}     
+            virtual bool    delete_unit(const xvaccount_t & account,xvblock_t* block) {return false;}
 
         protected:
             //only allow remove flag within xvblockstore_t

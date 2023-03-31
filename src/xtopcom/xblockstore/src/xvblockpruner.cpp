@@ -75,7 +75,7 @@ namespace top
     
         bool  xvblockprune_impl::recycle(const base::xvaccount_t & account_obj,base::xblockmeta_t & account_meta)//recylce any qualified blocks under account
         {           
-            if(account_obj.is_unit_address()) {
+            if(account_obj.is_user_address()) {
                 auto zone_id = account_obj.get_zone_index();
                 // if consensus zone
                 if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {

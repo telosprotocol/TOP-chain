@@ -63,7 +63,7 @@ namespace top
             bool                store_value_by_path(const std::string & full_path_as_key,const std::string & value);
             bool                delete_value_by_path(const std::string & full_path_as_key);
             
-        protected:
+        public:
             bool                write_index_to_db(base::xvbindex_t* index_obj);
             base::xvbindex_t*   read_index_from_db(const std::string & index_db_key_path);
             //return map sorted by viewid from lower to high,caller respond to release ptr later

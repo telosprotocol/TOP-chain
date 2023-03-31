@@ -202,7 +202,7 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
     }
     for (auto const & account : accounts_set) {
         base::xvaccount_t _vaddr(account);
-        auto _block = m_blockstore->load_block_object(_vaddr, 0, 0, false);
+        auto _block = m_blockstore->load_unit(_vaddr, 0);
         if (_block == nullptr) {
             std::cout << account << " height " << 0 << " block null!" << std::endl;
             continue;
@@ -339,7 +339,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
         std::string const property_key = _pair.second;
 
         base::xvaccount_t _vaddr(addr);
-        auto _block = m_blockstore->load_block_object(_vaddr, 0, 0, false);
+        auto _block = m_blockstore->load_unit(_vaddr, 0);
         if (_block == nullptr) {
             std::cout << addr << " height " << 0 << " block null!" << std::endl;
             continue;

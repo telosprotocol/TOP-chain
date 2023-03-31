@@ -33,7 +33,7 @@ namespace top
             m_idle_start_time_ms  = get_time_now();
             m_idle_timeout_ms     = enum_account_idle_timeout_ms;
             
-            if(is_unit_address() == false) //keep contract/table account forever at memory
+            if(is_user_address() == false) //keep contract/table account forever at memory
                 m_is_keep_forever  = 1;
             
             xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu),m_is_keep_forever(%d),m_is_idle(%d)",get_address().c_str(),get_xvid(),m_is_keep_forever,m_is_idle);

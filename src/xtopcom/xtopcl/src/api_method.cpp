@@ -38,7 +38,7 @@ bool check_pri_key(const std::string & str_pri) {
 bool check_account_address(const std::string& account)
 {
     top::base::xvaccount_t _vaccount(account);
-    return _vaccount.is_unit_address();
+    return _vaccount.is_user_address();
 }
 
 string ApiMethod::get_account_from_daemon() {

@@ -250,16 +250,20 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
     for (auto const & hash : units_hashes) {
         state_mpt::xaccount_info_t info;
         info.decode({hash.begin(), hash.end()});
+
+        std::string unit_state_str;
         // auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, evm_common::xh256_t(hash));
         auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(info.m_account, info.m_index);
         if (unitstate == nullptr) {
+            units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()}); // push empty result for compare
             xwarn("xtop_state_downloader::process_trie_request unit request not found, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
             continue;
         }
-        std::string unit_state_str;
+        
         unitstate->get_bstate()->serialize_to_string(unit_state_str);
         if (unit_state_str.empty()) {
-            xwarn("xtop_state_downloader::process_trie_request empty unit state, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
+            units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()}); // push empty result for compare
+            xerror("xtop_state_downloader::process_trie_request empty unit state, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
             continue;
         }
         xinfo("xtop_state_downloader::process_trie_request unit request, table: %s, id: %u, hash: %s, data size: %zu", table.c_str(), id, to_hex(hash).c_str(), unit_state_str.size());

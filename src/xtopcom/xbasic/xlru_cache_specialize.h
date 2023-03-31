@@ -302,6 +302,10 @@ public:
         item_map_.clear();
         item_list_.clear();
     }
+    size_t size() {
+        std::lock_guard<MutexT> lock{mutex_};
+        return item_map_.size();
+    }
 
 private:
     void clean_with_lock_hold() {

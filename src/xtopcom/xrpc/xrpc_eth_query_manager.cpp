@@ -127,11 +127,11 @@ xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_block_by_height(con
     auto const table_addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).vaccount();
 
     xobject_ptr_t<base::xvblock_t> block;
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_addr);
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table_addr);
-    else if (table_height == "pending")
+    else if (table_height == BlockHeightPending)
         block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_addr);
     else {
         uint64_t const height = std::strtoul(table_height.c_str(), nullptr, 16);
@@ -145,11 +145,11 @@ uint64_t xrpc_eth_query_manager::get_block_height(const std::string& table_heigh
     base::xvaccount_t _vaddress(addr);
     uint64_t max_height = m_block_store->get_latest_cert_block_height(_vaddress);
 
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         height = max_height;
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         height = 0;
-    else if (table_height == "pending") {
+    else if (table_height == BlockHeightPending) {
         height = max_height;
     } else {
         height = std::strtoul(table_height.c_str(), nullptr, 16);
@@ -602,7 +602,7 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
 }
 
 void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    std::string block_number = "latest";
+    std::string block_number = BlockHeightLatest;
     if (js_req.size() >= 2)
         block_number = js_req[1].asString();
     if (!eth::EthErrorCode::check_hex(block_number, js_rsp, 1, eth::enum_rpc_type_block))
@@ -1107,11 +1107,11 @@ xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_relay_block_by_heig
     base::xvaccount_t _table_addr(sys_contract_relay_block_addr);
 
     xobject_ptr_t<base::xvblock_t> _block;
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(_table_addr);
-    else if (table_height == "pending")
+    else if (table_height == BlockHeightPending)
         _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
     else {
         uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);
