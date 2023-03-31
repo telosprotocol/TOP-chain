@@ -566,6 +566,10 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
     // there is mostly two empty units
     XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
     base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_unit(account, max_height);
+    if (nullptr == vblock) {
+        xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), max_height);
+        return nullptr;
+    }
     xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
     if (vblock->is_state_changed_unit()) {
         return vblock;
@@ -577,7 +581,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
         XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
         base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_unit(account, current_height - 1, block_hash);
         if (prev_vblock == nullptr) {
-            xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
+            xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load prev unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
         }
 

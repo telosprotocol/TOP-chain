@@ -19,7 +19,7 @@ namespace top
         bool xunitstore_t::store_units(base::xvblock_t* table_block, std::vector<base::xvblock_ptr_t> const& units) {
             assert(table_block->check_block_flag(base::enum_xvblock_flag_committed));
             // TODO(jimmy)  bindex serialize size optimize
-            xinfo("xunitstore_t::store_units tps_key enter.%s,units_kvs=%zu", table_block->dump().c_str(), units.size());
+            // xinfo("xunitstore_t::store_units tps_key enter.%s,units_kvs=%zu", table_block->dump().c_str(), units.size());
             std::map<std::string, std::string> units_kvs;            
             for (auto & unit : units) {
                 base::xauto_ptr<base::xvbindex_t > new_idx = new base::xvbindex_t(*unit.get());
@@ -36,7 +36,7 @@ namespace top
                 units_kvs[key_path] = index_bin;
                 xdbg_info("xunitstore_t::store_units store_block,done unit=%s,size=%zu",unit->dump().c_str(),index_bin.size());
             }
-            xinfo("xunitstore_t::store_units tps_key finish kvs %s,units_kvs=%zu", table_block->dump().c_str(), units_kvs.size());
+            // xinfo("xunitstore_t::store_units tps_key finish kvs %s,units_kvs=%zu", table_block->dump().c_str(), units_kvs.size());
             bool ret = m_blockdb_ptr->get_xdbstore()->set_values(units_kvs);
             xinfo("xunitstore_t::store_units tps_key finish store %s,units_kvs=%zu", table_block->dump().c_str(), units_kvs.size());
             return ret;
