@@ -139,7 +139,7 @@ enum e_cons_type {
     e_table,
 };
 
-using xpreproposal_send_cb = std::function<void(const data::xblock_consensus_para_t &,
+using xpreproposal_send_cb = std::function<bool(const data::xblock_consensus_para_t &,
                                                 const std::vector<data::xcons_transaction_ptr_t> &,
                                                 const std::vector<base::xvproperty_prove_ptr_t> &)>;
 

@@ -457,7 +457,7 @@ TEST_F(test_txmgr_table, expired_tx) {
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, table_genesis_block.get(), 40, 35, 30, peer_sids_for_confirm_id);
     xunconfirm_id_height id_height_map(1);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
-    ASSERT_EQ(1, ready_txs.size());
+    ASSERT_EQ(0, ready_txs.size());
 }
 
 TEST_F(test_txmgr_table, repeat_receipt) {

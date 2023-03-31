@@ -96,18 +96,6 @@ std::vector<xcons_transaction_ptr_t> xtable_maker_t::check_input_txs(bool is_lea
             }
         }
 
-        // TODO(jimmy) leader add sendtx expire check, should do this in txpool future
-        if (is_leader) {
-            if (tx->is_send_or_self_tx()) {
-                if (xsuccess != xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, false)) {
-                    xtxpool_v2::tx_info_t txinfo(tx->get_source_addr(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-                    get_txpool()->pop_tx(txinfo);
-                    xwarn("xtable_maker_t::check_input_txs fail-tx filtered expired.is_leader=%d,%s tx=%s", is_leader, cs_para.dump().c_str(), tx->dump().c_str());
-                    continue;
-                }
-            }
-        }
-
         // update tx flag before execute
         input_txs.push_back(tx);
     }

@@ -248,20 +248,21 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
         ASSERT_EQ(ret, xsuccess);
     }
 
-    auto get_txs = send_tx_account.get_continuous_txs(3, 3, 0);
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    auto get_txs = send_tx_account.get_continuous_txs(3, 3, 0, now);
     ASSERT_EQ(get_txs.size(), 1);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 1, 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 1, 0, now);
     ASSERT_EQ(get_txs.size(), 1);
 
     std::shared_ptr<xtx_entry> tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 3, 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 3, 0, now);
     ASSERT_EQ(get_txs.size(), 3);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 4, 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 4, 0, now);
     ASSERT_EQ(get_txs.size(), 3);
 
     for (uint32_t i = 7; i < 15; i++) {
@@ -272,34 +273,37 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
 
     send_tx_account.update_latest_nonce(txs[4]->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 0);
 
     tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[6], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 0);
 
     tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[5], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 3);
 
     send_tx_account.erase(8, false);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 2);
-    get_txs = send_tx_account.get_continuous_txs(3, 7, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 7, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 2);
 
     send_tx_account.update_latest_nonce(txs[7]->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_account.get_continuous_txs(3, 11, txs[7]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 11, txs[7]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 3);
+
+    get_txs = send_tx_account.get_continuous_txs(3, 11, txs[7]->get_transaction()->get_tx_nonce(), now + 500);
+    ASSERT_EQ(get_txs.size(), 0);
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {

@@ -90,7 +90,7 @@ private:
     virtual void clear_for_new_view() override;
     virtual xunit_service::xpreproposal_send_cb get_preproposal_send_cb() override;
     virtual bool process_msg(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) override;
-    void send_preproposal(const data::xblock_consensus_para_t & cs_para,
+    bool send_preproposal(const data::xblock_consensus_para_t & cs_para,
                           const std::vector<data::xcons_transaction_ptr_t> & txs,
                           const std::vector<base::xvproperty_prove_ptr_t> & receiptid_state_proves);
 

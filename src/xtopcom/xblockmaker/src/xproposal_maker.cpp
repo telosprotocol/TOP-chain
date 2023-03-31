@@ -239,9 +239,10 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     // because we don't know if a proposal can be made after, sending preproposal when no tx will cause too many invalid preproposal.that will increase ineffective workload.
     // it's not a good choice to send preproposal when there is only one tx, because of fork_info_addr.
     if (table_para.get_origin_txs().size() > 1) {
-        cb(proposal_para,
-           table_para.get_origin_txs(),
-           proposal_input->get_receiptid_state_proves());
+        auto ret = cb(proposal_para, table_para.get_origin_txs(), proposal_input->get_receiptid_state_proves());
+        if (!ret) {
+            return nullptr;
+        }
     }
 
     xtablemaker_result_t table_result;

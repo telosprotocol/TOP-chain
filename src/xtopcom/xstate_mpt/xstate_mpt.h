@@ -48,12 +48,6 @@ public:
     /// @return Account index of given account. Return empty index if not find in db.
     base::xaccount_index_t get_account_index(common::xaccount_address_t const & account, std::error_code & ec);
 
-    /// @brief Get unit data of specific account.
-    /// @param account Account string.
-    /// @param ec Log the error code.
-    /// @return Unit data of given account. Return empty data if not find in db.
-    xbytes_t get_unit(common::xaccount_address_t const & account, std::error_code & ec);
-
     /// @brief Set index of specific account.
     /// @param account Account string.
     /// @param index Index of account.
@@ -65,20 +59,6 @@ public:
     /// @param index_str Index string of account.
     /// @param ec Log the error code.
     void set_account_index(common::xaccount_address_t const & account, const std::string & index_str, std::error_code & ec);
-
-    /// @brief Set index and unit data of specific account.
-    /// @param account Account string.
-    /// @param index Index of account.
-    /// @param unit unit data of account.
-    /// @param ec Log the error code.
-    void set_account_index_with_unit(common::xaccount_address_t const & account, const base::xaccount_index_t & index, const xbytes_t & unit, std::error_code & ec);
-
-    /// @brief Set index and unit data of specific account.
-    /// @param account Account string.
-    /// @param index_str Index string of account.
-    /// @param unit unit data of account.
-    /// @param ec Log the error code.
-    void set_account_index_with_unit(common::xaccount_address_t const & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec);
 
     /// @brief Prune unit data in db.
     /// @param account Account string.
@@ -155,7 +135,6 @@ private:
 
     std::map<common::xaccount_address_t, std::shared_ptr<xstate_object_t>> m_state_objects;
     std::set<common::xaccount_address_t> m_state_objects_pending;
-    std::set<common::xaccount_address_t> m_state_objects_dirty;
 };
 using xstate_mpt_t = xtop_state_mpt;
 
