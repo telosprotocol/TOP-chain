@@ -214,6 +214,7 @@ TEST_F(test_block_store_load, store_batch_units) {
             xassert(_block->get_block_class() == base::enum_xvblock_class_nil);
             ASSERT_EQ(_block->is_output_ready(true), true);
             ASSERT_EQ(_block->is_input_ready(true), true);
+            ASSERT_TRUE(_block->check_block_flag(base::enum_xvblock_flag_committed));
         }
     }
 }

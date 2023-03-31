@@ -667,6 +667,8 @@ namespace top
                 new_block_ptr->set_input_data(input_data, false);
                 new_block_ptr->set_output_data(output_data, false);
             }
+            if (check_block_flag(base::enum_xvblock_flag_committed))
+                new_block_ptr->set_block_flag(base::enum_xvblock_flag_committed);
             return new_block_ptr;
         }
 
