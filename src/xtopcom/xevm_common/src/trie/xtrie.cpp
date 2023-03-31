@@ -199,6 +199,7 @@ void xtop_trie::try_delete(xbytes_t const & key, std::error_code & ec) {
 // and external (for account tries) references.
 std::pair<xh256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
     assert(!ec);
+    xinfo("xtrie_t::commit %p", this);
     // todo leaf_callback
     if (trie_db_ == nullptr) {
         xerror("commit called on trie without database");
@@ -824,6 +825,8 @@ void xtop_trie::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes,
 void xtop_trie::prune(std::error_code & ec) {
     assert(!ec);
 
+    xinfo("xtrie_t::prune %p", this);
+
     if (pending_to_be_pruned_.empty() || pending_to_be_pruned_.back() != original_root_hash_) {
         pending_to_be_pruned_.emplace_back(original_root_hash_);
         xdbg("prune original root hash %s", original_root_hash_.hex().c_str());
@@ -831,6 +834,13 @@ void xtop_trie::prune(std::error_code & ec) {
     assert(pending_to_be_pruned_.back() == original_root_hash_);
 
     XMETRICS_COUNTER_SET("trie_prune_to_trie_db", pending_to_be_pruned_.size());
+    xinfo("trie_prune_to_trie_db: %zu", pending_to_be_pruned_.size());
+    if (pending_to_be_pruned_.size() > 10000) {
+        xwarn("trie_prune_to_trie_db: %zu", pending_to_be_pruned_.size());
+        int * p = nullptr;
+        *p = 1;
+        xinfo("cored %d", *p);
+    }
 
     trie_db_->prune(hash(), std::move(pending_to_be_pruned_), ec);
     if (ec) {
@@ -844,10 +854,13 @@ void xtop_trie::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::erro
     assert(!ec);
     assert(trie_db_);
 
+    xinfo("xtrie_t::commit_pruned %p", this);
+
     trie_db_->commit_pruned(std::move(pruned_root_hashes), ec);
     if (ec) {
         xwarn("xtrie_t::commit_pruned failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
     }
+    assert(pruned_root_hashes.empty());
 }
 
 void xtop_trie::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {

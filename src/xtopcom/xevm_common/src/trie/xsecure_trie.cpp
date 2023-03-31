@@ -103,6 +103,7 @@ std::pair<xh256_t, int32_t> xtop_secure_trie::commit(std::error_code & ec) {
     //     }
     //    sc->clear();
     //}
+    xinfo("xsecure_trie_t::commit %p", this);
     return trie_->commit(ec);
 }
 
@@ -139,12 +140,15 @@ void xtop_secure_trie::prune(std::error_code & ec) {
     assert(!ec);
     assert(trie_ != nullptr);
 
+    xinfo("xsecure_trie_t::prune %p", this);
+
     trie_->prune(ec);
 }
 
 void xtop_secure_trie::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec) {
     assert(!ec);
     assert(trie_ != nullptr);
+    xinfo("xsecure_trie_t::commit_pruned %p", this);
     trie_->commit_pruned(std::move(pruned_root_hashes), ec);
 }
 

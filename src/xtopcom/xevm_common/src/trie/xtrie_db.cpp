@@ -304,11 +304,13 @@ void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hash
 
 void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec) {
     assert(!ec);
+    xinfo("xtrie_db_t::prune %p", this);
     std::lock_guard<std::mutex> lck(mutex_);
 
     auto const it = pruned_hashes2_.find(root_key);
     if (it == std::end(pruned_hashes2_)) {
         pruned_hashes2_.emplace(root_key, std::move(to_be_pruned_keys));
+        assert(to_be_pruned_keys.empty());
         return;
     }
 
@@ -317,6 +319,8 @@ void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pr
 
 void xtop_trie_db::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec) {
     assert(!ec);
+
+    xinfo("xtrie_db_t::commit_pruned %p", this);
 
     std::lock_guard<std::mutex> lck(mutex_);
 
@@ -339,7 +343,8 @@ void xtop_trie_db::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::e
     }
 
     if (!pruned_keys.empty()) {
-        XMETRICS_COUNTER_SET("trie_commit_pruned", pruned_keys_count);
+        XMETRICS_COUNTER_SET("trie_commit_pruned", pruned_keys.size());
+        xinfo("trie_commit_pruned %zu", pruned_keys.size());
 
         diskdb_->DeleteBatch(pruned_keys, ec);
         if (ec) {

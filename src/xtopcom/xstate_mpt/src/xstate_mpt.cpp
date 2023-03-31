@@ -220,6 +220,8 @@ evm_common::xh256_t const & xtop_state_mpt::original_root_hash() const noexcept 
 evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
     assert(!ec);
 
+    xinfo("xstate_mpt_t::commit %p", this);
+
     get_root_hash(ec);
     if (ec) {
         xwarn("xstate_mpt_t::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());
@@ -270,6 +272,8 @@ void xtop_state_mpt::commit_pruned(std::unordered_set<evm_common::xh256_t> const
 void xtop_state_mpt::prune(std::error_code & ec) {
     assert(!ec);
 
+    xinfo("xstate_mpt_t::prune %p", this);
+
     m_trie->prune(ec);
     if (ec) {
         xwarn("xstate_mpt_t::commit pruning old trie data failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
@@ -278,6 +282,7 @@ void xtop_state_mpt::prune(std::error_code & ec) {
 
 void xtop_state_mpt::commit_pruned(std::vector<evm_common::xh256_t> pruned_keys, std::error_code & ec) const {
     assert(!ec);
+    xinfo("xstate_mpt_t::commit_pruned %p", this);
     std::lock_guard<std::mutex> lock{m_trie_lock};
     assert(m_trie != nullptr);
     m_trie->commit_pruned(std::move(pruned_keys), ec);
