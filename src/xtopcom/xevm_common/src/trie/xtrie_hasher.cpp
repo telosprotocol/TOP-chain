@@ -5,6 +5,7 @@
 #include "xevm_common/trie/xtrie_hasher.h"
 
 #include "xbasic/xhex.h"
+#include "xcommon/xtrie_constants.h"
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xutility/xhash.h"
 
@@ -53,7 +54,7 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
     }
 
     case xtrie_node_type_t::valuenode:
-        XATTRIBUTE_FALLTHROUGH;
+        XFALLTHROUGH;
     case xtrie_node_type_t::hashnode: {
         return {node, node};
     }
@@ -128,7 +129,7 @@ std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> xtop_trie_hasher::hashFu
     // if h.parallel{}
     // ...
     // else{
-    for (std::size_t index = 0; index < 16; ++index) {
+    for (std::size_t index = 0; index < common::trie::full_node_child_count - 1; ++index) {
         auto child = node->children[index];
         if (child != nullptr) {
             auto res = hash(child, false);

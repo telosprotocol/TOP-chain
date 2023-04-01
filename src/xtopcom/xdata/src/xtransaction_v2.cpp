@@ -32,7 +32,7 @@ xtop_target_address::xtop_target_address(common::xaccount_address_t original) no
         assert(!original_.has_assigned_table_id());
     } else {
         // Note: block hole address is not eoa account, since its private key should be unknown.
-        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id() || original_ == black_hole_system_address);
+        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id() || original_ == common::black_hole_system_address);
     }
 #endif
 }
@@ -70,7 +70,7 @@ common::xaccount_address_t const & xtop_target_address::address() const noexcept
         assert(adjusted_.empty());
         assert(!original_.has_assigned_table_id());
     } else {
-        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id() || original_ == black_hole_system_address);
+        assert(adjusted_.has_assigned_table_id() || original_.has_assigned_table_id() || original_ == common::black_hole_system_address);
     }
 #endif
     return !adjusted_.empty() ? adjusted_ : original_;

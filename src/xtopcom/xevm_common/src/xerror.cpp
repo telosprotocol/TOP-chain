@@ -4,11 +4,12 @@
 
 #include "xevm_common/xerror/xerror.h"
 
+#include <cassert>
 #include <string>
 
 NS_BEG3(top, evm_common, error)
 
-static char const * const errc_to_string(int code) {
+static char const * errc_to_string(int code) {
     auto const ec = static_cast<xerrc_t>(code);
 
     switch (ec) {
@@ -75,25 +76,40 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::trie_sync_already_processed:
         return "trie sync already processed";
 
-    default:
+    case xerrc_t::trie_prune_data_duplicated:
+        return "trie purne data key duplicated";
+
+    case xerrc_t::trie_prune_data_not_found:
+        return "trie prune data not found";
+
+    default:  // NOLINT(clang-diagnostic-covered-switch-default)
+        assert(false);
         return "unknown evm common error";
     }
 }
 
 std::error_code make_error_code(xerrc_t const errc) noexcept {
-    return std::error_code(static_cast<int>(errc), evm_common_category());
+    return std::error_code{static_cast<int>(errc), evm_common_category()};
 }
 
 std::error_condition make_error_condition(xerrc_t const errc) noexcept {
-    return std::error_condition(static_cast<int>(errc), evm_common_category());
+    return std::error_condition{static_cast<int>(errc), evm_common_category()};
 }
 
 class xtop_evm_common_category final : public std::error_category {
+public:
+    xtop_evm_common_category() = default;
+    xtop_evm_common_category(xtop_evm_common_category const &) = delete;
+    xtop_evm_common_category & operator=(xtop_evm_common_category const &) = delete;
+    xtop_evm_common_category(xtop_evm_common_category &&) = delete;
+    xtop_evm_common_category & operator=(xtop_evm_common_category &&) = delete;
+    ~xtop_evm_common_category() override = default;
+
     char const * name() const noexcept override {
         return "evm_common";
     }
 
-    std::string message(int errc) const override {
+    std::string message(int const errc) const override {
         return errc_to_string(errc);
     }
 };

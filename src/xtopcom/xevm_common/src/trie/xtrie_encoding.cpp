@@ -4,6 +4,8 @@
 
 #include "xevm_common/trie/xtrie_encoding.h"
 
+#include <cassert>
+
 NS_BEG3(top, evm_common, trie)
 
 //xbytes_t hexToCompact(xbytes_t hex) {
@@ -111,7 +113,7 @@ NS_BEG3(top, evm_common, trie)
 //}
 
 xbytes_t hex_to_compact(xspan_t<xbyte_t const> hex) {
-    auto terminator = xbyte_t{0};
+    xbyte_t terminator{0};
     if (has_terminator(hex)) {
         terminator = 1;
         hex = hex.first(hex.size() - 1);
@@ -203,9 +205,14 @@ xbytes_t hex_to_key_bytes(xspan_t<xbyte_t const> hex) {
     return key;
 }
 
-void decode_nibbles(xspan_t<xbyte_t const> const nibbles, xspan_t<xbyte_t> out) {
+void decode_nibbles(xspan_t<xbyte_t const> const nibbles, xspan_t<xbyte_t> const out) {
+    assert(out.size() >= nibbles.size() / 2);
+
     for (std::size_t bi = 0, ni = 0; ni < nibbles.size(); bi += 1, ni += 2) {
-        out[bi] = nibbles[ni] << 4 | nibbles[ni + 1];
+        assert(nibbles[ni] <= static_cast<xbyte_t>(0x0f));
+        assert(nibbles[ni + 1] <= static_cast<xbyte_t>(0x0f));
+
+        out[bi] = static_cast<xbyte_t>(nibbles[ni] << 4 | nibbles[ni + 1]);
     }
 }
 
@@ -221,7 +228,7 @@ std::size_t prefix_len(xspan_t<xbyte_t const> const a, xspan_t<xbyte_t const> co
 }
 
 bool has_terminator(xspan_t<xbyte_t const> const bytes) {
-    return (!bytes.empty()) && (bytes.back() == 16);
+    return !bytes.empty() && bytes.back() == 16;
 }
 
 NS_END3

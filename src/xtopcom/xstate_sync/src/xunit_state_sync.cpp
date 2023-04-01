@@ -110,8 +110,8 @@ void xtop_unit_state_sync::sync_unit(std::error_code & ec) {
 void xtop_unit_state_sync::assign_unit_tasks(const sync_peers & peers) {
     base::xautostream_t<1024> stream(base::xcontext_t::instance());
     state_mpt::xaccount_info_t info;
-    info.m_account = m_account;
-    info.m_index = m_index;
+    info.account = m_account;
+    info.index = m_index;
     stream << info.encode();
     stream << rand();  // defend from filter
     xbytes_t data{stream.data(), stream.data() + stream.size()};

@@ -17,7 +17,7 @@ void xtop_trie_pruner::init(std::shared_ptr<xtrie_node_face_t> const & trie_root
     load_trie_node(trie_root, trie_db, ec);
 }
 
-std::shared_ptr<xtrie_node_face_t> xtop_trie_pruner::load_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, observer_ptr<xtrie_db_t> trie_db,
+std::shared_ptr<xtrie_node_face_t> xtop_trie_pruner::load_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, observer_ptr<xtrie_db_t> const trie_db,
                                                                     std::error_code & ec) {
     assert(!ec);
 
@@ -62,7 +62,7 @@ std::shared_ptr<xtrie_node_face_t> xtop_trie_pruner::load_trie_node(std::shared_
 }
 
 std::shared_ptr<xtrie_short_node_t> xtop_trie_pruner::load_short_node(std::shared_ptr<xtrie_short_node_t> const & short_node,
-                                                                      observer_ptr<xtrie_db_t> trie_db,
+                                                                      observer_ptr<xtrie_db_t> const trie_db,
                                                                       std::error_code & ec) {
     assert(!ec);
 
@@ -135,13 +135,6 @@ void xtop_trie_pruner::load_full_node_children(std::shared_ptr<xtrie_full_node_t
             child = load_trie_node(child, trie_db, ec);
         }
     }
-}
-
-void xtop_trie_pruner::prune(xh256_t const & old_trie_root_hash, observer_ptr<xtrie_db_t> const trie_db, std::error_code & ec) {
-    assert(!ec);
-
-    auto const trie_root = std::make_shared<xtrie_hash_node_t>(old_trie_root_hash);
-    try_prune_hash_node(trie_root, trie_db, ec);
 }
 
 void xtop_trie_pruner::try_prune_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, observer_ptr<xtrie_db_t> const trie_db, std::error_code & ec) {

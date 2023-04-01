@@ -255,12 +255,16 @@ base::enum_xchain_zone_index zone_index(xtable_address_t const table_address) {
     return table_address.base_address().zone_index();
 }
 
-xzone_id_t zone_id(xtable_address_t table_address, std::error_code & ec) {
+xzone_id_t zone_id(xtable_address_t const table_address, std::error_code & ec) {
     return table_address.base_address().zone_id(ec);
 }
 
 xzone_id_t zone_id(xtable_address_t const table_address) {
     return table_address.base_address().zone_id();
+}
+
+xtable_id_t table_id(xtable_address_t const table_address) {
+    return table_address.table_id();
 }
 
 NS_END2

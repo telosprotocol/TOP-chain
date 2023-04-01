@@ -117,8 +117,9 @@ public:
 
     xaccount_id_t const & account_id() const noexcept;
 
-    xledger_id_t const & ledger_id() const noexcept;
-    xtable_id_t const & table_id() const noexcept;
+    xledger_id_t ledger_id() const noexcept;
+    xzone_id_t zone_id() const noexcept;
+    xtable_id_t table_id() const noexcept;
     bool has_assigned_table_id() const noexcept;
 
     base::xvaccount_t vaccount() const;

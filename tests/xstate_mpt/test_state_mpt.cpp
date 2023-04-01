@@ -257,8 +257,8 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         auto index_bytes = s->m_trie->try_get(to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         state_mpt::xaccount_info_t info;
-        info.m_account = data[i].first;
-        info.m_index = data[i].second;
+        info.account = data[i].first;
+        info.index = data[i].second;
         auto str = info.encode();
         xbytes_t str_bytes{str.begin(), str.end()};
         EXPECT_EQ(str_bytes, index_bytes);
@@ -460,8 +460,8 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
         std::string unit_block_hash_str((char *)unit_block_hash.data(), unit_block_hash.size());
         base::xaccount_index_t index{base::enum_xaccountindex_version_snapshot_hash, i + 1, unit_block_hash_str, unit_state_hash_str, i + 1};
         state_mpt::xaccount_info_t info;
-        info.m_account = common::xaccount_address_t(accounts[i]);
-        info.m_index = index;
+        info.account = common::xaccount_address_t(accounts[i]);
+        info.index = index;
         auto info_str = info.encode();
         trie->update(to_bytes(accounts[i]), to_bytes(info_str));
         printf("unit, account: %s, value: %s, block_hash: %s, state_hash: %s, state: %s\n",
@@ -517,11 +517,11 @@ std::map<evm_common::xh256_t, xbytes_t> create_node_hash_data(size_t count) {
         auto public_key = private_key.get_public_key();
         std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
         state_mpt::xaccount_info_t info;
-        info.m_account = common::xaccount_address_t{account_address};
+        info.account = common::xaccount_address_t{account_address};
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
         base::xaccount_index_t index{base::enum_xaccountindex_version_state_hash, rand(), hash, hash, rand()};
-        info.m_index = index;
+        info.index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
         evm_common::xh256_t key{to_bytes(hashvalue)};
@@ -542,11 +542,11 @@ std::map<evm_common::xh256_t, xbytes_t> create_node_bytes_data(size_t count) {
         auto public_key = private_key.get_public_key();
         std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
         state_mpt::xaccount_info_t info;
-        info.m_account = common::xaccount_address_t{account_address};
+        info.account = common::xaccount_address_t{account_address};
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
         base::xaccount_index_t index{base::enum_xaccountindex_version_state_hash, rand(), hash, hash, rand()};
-        info.m_index = index;
+        info.index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
         // xhash256_t key{to_bytes(hashvalue)};

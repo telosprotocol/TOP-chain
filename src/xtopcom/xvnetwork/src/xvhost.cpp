@@ -549,10 +549,12 @@ void xtop_vhost::do_handle_network_data() {
                     }
 
                     if (callbacks.empty()) {
-                        xinfo("[vnetwork] no callback found for message hash: %" PRIx64 " , sender is %s , receiver is %s",
+                        xinfo("[vnetwork] no callback found for message hash: %" PRIx64 " , sender is %s , receiver is %s msg id %" PRIx32 " msg category %" PRIx16,
                               vnetwork_message.hash(),
                               sender.to_string().c_str(),
-                              receiver.to_string().c_str());
+                              receiver.to_string().c_str(),
+                              static_cast<uint32_t>(message.id()),
+                              static_cast<uint16_t>(common::get_message_category(message.id())));
                         continue;
                     }
 

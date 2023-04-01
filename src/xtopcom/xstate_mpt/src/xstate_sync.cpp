@@ -24,10 +24,10 @@ std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xtable_addr
         if (sync_unit) {
             xaccount_info_t info;
             info.decode({value.begin(), value.end()});
-            auto const & state_hash_str = info.m_index.get_latest_state_hash();
-            xassert(!info.m_index.get_latest_unit_hash().empty());
+            auto const & state_hash_str = info.index.get_latest_state_hash();
+            xassert(!info.index.get_latest_unit_hash().empty());
             auto const hash = evm_common::xh256_t(xbytes_t{state_hash_str.begin(), state_hash_str.end()});
-            auto const state_key = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+            auto const state_key = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
             auto const syncer = weak_syncer.lock();
             if (syncer == nullptr) {
                 return;
@@ -39,7 +39,7 @@ std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xtable_addr
                   to_hex(value).c_str(),
                   hash.hex().c_str(),
                   to_hex(state_key).c_str(),
-                  info.m_index.dump().c_str());
+                  info.index.dump().c_str());
         }
     };
     syncer->Init(root, callback);

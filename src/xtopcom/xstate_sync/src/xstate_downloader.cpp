@@ -216,8 +216,8 @@ void xtop_state_downloader::handle_message(const vnetwork::xvnode_address_t & se
 }
 
 void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_t & sender,
-                                            std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
-                                            const vnetwork::xmessage_t & message) const {
+                                                 std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
+                                                 const vnetwork::xmessage_t & message) const {
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(message.payload().data()), (uint32_t)message.payload().size());
     std::string table;
     uint32_t id;
@@ -253,7 +253,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
 
         std::string unit_state_str;
         // auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, evm_common::xh256_t(hash));
-        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(info.m_account, info.m_index);
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(info.account, info.index);
         if (unitstate == nullptr) {
             units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()}); // push empty result for compare
             xwarn("xtop_state_downloader::process_trie_request unit request not found, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
@@ -379,17 +379,17 @@ void xtop_state_downloader::process_unit_request(const vnetwork::xvnode_address_
     info.decode({info_str.begin(), info_str.end()});
     stream >> id;
     std::string state_str;
-    auto const unitstate = m_store->get_unit_state_by_accountindex(info.m_account, info.m_index);
+    auto const unitstate = m_store->get_unit_state_by_accountindex(info.account, info.index);
     if (unitstate == nullptr) {
-        xwarn("xtop_state_downloader::process_unit_request unit request not found, unit: %s, index: %s", info.m_account.to_string().c_str(), info.m_index.dump().c_str());
+        xwarn("xtop_state_downloader::process_unit_request unit request not found, unit: %s, index: %s", info.account.to_string().c_str(), info.index.dump().c_str());
     } else {
         unitstate->get_bstate()->serialize_to_string(state_str);
         if (state_str.empty()) {
-            xwarn("xtop_state_downloader::process_request unit empty, unit: %s, index: %s", info.m_account.to_string().c_str(), info.m_index.dump().c_str());
+            xwarn("xtop_state_downloader::process_request unit empty, unit: %s, index: %s", info.account.to_string().c_str(), info.index.dump().c_str());
         }
     }
     base::xstream_t stream_back{top::base::xcontext_t::instance()};
-    stream_back << info.m_account.to_string();
+    stream_back << info.account.to_string();
     stream_back << id;
     stream_back << state_str;
     vnetwork::xmessage_t const _msg = vnetwork::xmessage_t({stream_back.data(), stream_back.data() + stream_back.size()}, xmessage_id_sync_unit_response);
@@ -399,15 +399,15 @@ void xtop_state_downloader::process_unit_request(const vnetwork::xvnode_address_
         xwarn("xtop_state_downloader::process_request network error %s %s, unit: %s, index: %s, %s->%s",
               ec.category().name(),
               ec.message().c_str(),
-              info.m_account.to_string().c_str(),
-              info.m_index.dump().c_str(),
+              info.account.to_string().c_str(),
+              info.index.dump().c_str(),
               network->address().to_string().c_str(),
               sender.to_string().c_str());
         return;
     }
     xinfo("xtop_state_downloader::process_request unit request, unit: %s, index: %s, data size: %zu",
-          info.m_account.to_string().c_str(),
-          info.m_index.dump().c_str(),
+          info.account.to_string().c_str(),
+          info.index.dump().c_str(),
           state_str.size());
 }
 

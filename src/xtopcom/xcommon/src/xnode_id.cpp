@@ -198,11 +198,15 @@ xaccount_id_t const & xtop_node_id::account_id() const noexcept {
     return m_account_id;
 }
 
-xledger_id_t const & xtop_node_id::ledger_id() const noexcept {
+xledger_id_t xtop_node_id::ledger_id() const noexcept {
     return m_account_base_address.ledger_id();
 }
 
-xtable_id_t const & xtop_node_id::table_id() const noexcept {
+xzone_id_t xtop_node_id::zone_id() const noexcept {
+    return ledger_id().zone_id();
+}
+
+xtable_id_t xtop_node_id::table_id() const noexcept {
     if (!m_assigned_table_id.empty()) {
         return m_assigned_table_id;
     }

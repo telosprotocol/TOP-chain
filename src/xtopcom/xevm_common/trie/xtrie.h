@@ -28,6 +28,8 @@ private:
     observer_ptr<xtrie_db_t> trie_db_;
     xtrie_node_face_ptr_t trie_root_;
     std::unique_ptr<xtrie_pruner_t> pruner_;
+    xh256_t original_root_hash_;
+    std::vector<xh256_t> pending_to_be_pruned_; // root hash is put at last.
 
     std::size_t unhashed_{0};
 
@@ -39,12 +41,12 @@ public:
     ~xtop_trie();
 
 protected:
-    explicit xtop_trie(observer_ptr<xtrie_db_t> db);
+    explicit xtop_trie(observer_ptr<xtrie_db_t> db, xh256_t const & root_hash);
 
 public:
     observer_ptr<xtrie_db_t> trie_db() const noexcept;
 
-    static std::shared_ptr<xtop_trie> build_from(xh256_t const & hash, observer_ptr<xtrie_db_t> db, std::error_code & ec);
+    static std::unique_ptr<xtop_trie> build_from(xh256_t const & hash, observer_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // Reset drops the referenced root node and cleans all internal state.
     void reset();
@@ -64,7 +66,8 @@ public:
 
     // TryGetNode attempts to retrieve a trie node by compact-encoded path. It is not
     // possible to use keybyte-encoding as the path might contain odd nibbles.
-    std::pair<xbytes_t, std::size_t> try_get_node(xbytes_t const & path, std::error_code & ec);
+    // disable this API for now
+    // std::pair<xbytes_t, std::size_t> try_get_node(xbytes_t const & path, std::error_code & ec);
 
     // Update associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
@@ -104,16 +107,21 @@ public:
     // with the node that proves the absence of the key.
     bool prove(xbytes_t const & key, uint32_t from_level, xkv_db_face_ptr_t const & proof_db, std::error_code & ec) const;
 
-    void prune(xh256_t const & old_trie_root_hash, std::error_code & ec);
     void prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
-
-    void commit_pruned(std::error_code & ec);
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
+
+    void prune(std::error_code & ec);
+    void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec);
+    void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
 
     std::string to_string() const;
 
     std::shared_ptr<xtrie_node_face_t> root() const noexcept;
     xtrie_node_face_ptr_t resolve_hash(xh256_t const & hash, std::error_code & ec) const;
+
+    std::size_t pending_pruned_size() const noexcept;
+
+    xh256_t const & original_root_hash() const noexcept;
 
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t pos, std::error_code & ec) const;
@@ -121,7 +129,7 @@ private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> try_get_node(xtrie_node_face_ptr_t const & orig_node, xbytes_t const & path, std::size_t pos, std::error_code & ec) const;
 
     struct update_result {  // NOLINT(clang-diagnostic-padded)
-        std::shared_ptr<xtrie_node_face_t> new_node{nullptr};
+        std::shared_ptr<xtrie_node_face_t> node{nullptr};
         bool dirty{false};
 
         update_result() = default;

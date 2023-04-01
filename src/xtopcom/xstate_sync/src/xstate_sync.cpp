@@ -420,40 +420,39 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
     //     req.unit_tasks.erase(hash);
     // }
 
-    size_t i = 0;
-    
-    if (req.units_response.size() > 0) {
+    if (!req.units_response.empty()) {
         if (req.unit_tasks.size() != req.units_response.size()) { // it may happen for old version node
             xwarn("xtop_state_sync::process_trie unit size unequal id:%u, unit_tasks size %zu units_response %zu", req.id, req.unit_tasks.size(), req.units_response.size());
         } else {
+            size_t i = 0;
             for (auto iter = req.unit_tasks.begin(); iter != req.unit_tasks.end();) {
                 auto const & blob = req.units_response[i];
                 i++;
                 if (blob.empty()) {
                     xwarn("xtop_state_sync::process_trie unit state empty");
-                    iter++;
-                    continue;                    
+                    ++iter;
+                    continue;
                 }
 
                 state_mpt::xaccount_info_t info;
                 info.decode({iter->second.begin(), iter->second.end()});
-                xinfo("xtop_state_sync::process_trie unit id: %u, blob size: %zu,version:%d {%s}", req.id, blob.size(), info.m_index.get_version(), symbol().c_str());
-                auto hash = process_unit_data(blob, (uint8_t)info.m_index.get_version(), ec_internal);
+                xinfo("xtop_state_sync::process_trie unit id: %u, blob size: %zu,version:%d {%s}", req.id, blob.size(), info.index.get_version(), symbol().c_str());
+                auto hash = process_unit_data(blob, (uint8_t)info.index.get_version(), ec_internal);
                 if (ec_internal) {
                     if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
                         ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
                         xwarn("xtop_state_sync::process_trie unit invalid state node: %s, %s %s", to_hex(hash).c_str(), ec.category().name(), ec.message().c_str());
                         ec = ec_internal;
                         return;
-                    } else {
-                        xwarn("xtop_state_sync::process_trie process_unit_data abnormal: %s, %s %s", to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
                     }
+                    xwarn(
+                        "xtop_state_sync::process_trie process_unit_data abnormal: %s, %s %s", to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
                 }
                 
-                xassert(iter->first == evm_common::xh256_t(xbytes_t{info.m_index.get_latest_state_hash().begin(), info.m_index.get_latest_state_hash().end()}));
+                xassert(iter->first == evm_common::xh256_t(xbytes_t{info.index.get_latest_state_hash().begin(), info.index.get_latest_state_hash().end()}));
                 if (hash.empty() || hash != iter->first) {//only happen when response data invalid
-                    xwarn("xtop_state_sync::process_trie unit state hash mismatch abnormal: account=%s,index=%s, %s, %s", info.m_account.to_string().c_str(), info.m_index.dump().c_str(), to_hex(hash).c_str(), to_hex(iter->first).c_str());
-                    iter++;
+                    xwarn("xtop_state_sync::process_trie unit state hash mismatch abnormal: account=%s,index=%s, %s, %s", info.account.to_string().c_str(), info.index.dump().c_str(), to_hex(hash).c_str(), to_hex(iter->first).c_str());
+                    ++iter;
                     continue;
                 }
 
@@ -464,10 +463,10 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
     }
 
     // retry queue
-    for (auto pair : req.trie_tasks) {
+    for (auto & pair : req.trie_tasks) {
         m_trie_tasks.insert(pair);
     }
-    for (auto pair : req.unit_tasks) {
+    for (auto & pair : req.unit_tasks) {
         m_unit_tasks.insert(pair);
     }
     return;
@@ -492,14 +491,14 @@ evm_common::xh256_t xtop_state_sync::process_unit_data(const xbytes_t & blob, ui
             xerror("xtop_state_sync::process_unit_data hash: %s, data size: %zu, error %s", res.Hash.hex().c_str(), res.Data.size(), ec.message().c_str());
             return {};
         }
-        auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
-        auto snapshot = unit_state->take_snapshot();
-        auto state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>((xbyte_t const*)state_hash.data(), state_hash.size())};
+        auto const unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
+        auto const snapshot = unit_state->take_snapshot();
+        auto const state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
         res.Data = blob;
     } else {
-        auto state_hash = base::xcontext_t::instance().hash({blob.begin(), blob.end()}, enum_xhash_type_sha2_256);
-        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>((xbyte_t const*)state_hash.data(), state_hash.size())};
+        auto const state_hash = base::xcontext_t::instance().hash({blob.begin(), blob.end()}, enum_xhash_type_sha2_256);
+        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
         res.Data = blob;
     }
 

@@ -40,13 +40,14 @@ private:
     basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_;
     std::map<xh256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xh256_t> pruned_hashes_;
+    std::unordered_map<xh256_t, std::vector<xh256_t>> pruned_hashes2_;
 
     // xh256_t oldest_;
     // xh256_t newest_;
 
     std::map<xh256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
 
-    mutable std::mutex mutex;
+    mutable std::mutex mutex_;
 
 public:
     explicit xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t cache_size) : diskdb_(std::move(diskdb)), cleans_(cache_size) {
@@ -103,14 +104,15 @@ public:
     void Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec);
 
     void prune(xh256_t const & hash, std::error_code & ec);
-
     void prune(xh256_t const & hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
-
     void commit_pruned(std::error_code & ec);
-
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
-    // void clear_cleans();
+    void prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec);
+    void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec);
+    void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
+
+    size_t pending_pruned_size(xh256_t const & root_hash) const noexcept;
 
 private:
     // commit is the private locked version of Commit.
@@ -118,9 +120,9 @@ private:
 
     xbytes_t preimage_key(xh256_t const & hash_key) const;
 
-    void cleans_put(xh256_t const & hash, xbytes_t const & data);
+    void cleans_put_lock_hold_outside(xh256_t const & hash, xbytes_t const & data);
 
-    void cleans_erase(xh256_t const & hash);
+    void cleans_erase_lock_hold_outside(xh256_t const & hash);
 };
 using xtrie_db_t = xtop_trie_db;
 using xtrie_db_ptr_t = std::shared_ptr<xtrie_db_t>;

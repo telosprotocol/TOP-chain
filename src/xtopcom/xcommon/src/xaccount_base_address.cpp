@@ -137,7 +137,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         auto const account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
         m_default_table_id = xtable_id_t{static_cast<uint16_t>(account_index % static_cast<uint16_t>(enum_vbucket_has_tables_count))};
     } else if (m_account_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        m_default_table_id = xtable_id_t(uint16_t(0));
+        m_default_table_id = xtable_id_t(static_cast<uint16_t>(0));
     }
 }
 
@@ -201,11 +201,11 @@ base::enum_vaccount_addr_type xtop_account_base_address::type() const {
     return r;
 }
 
-xledger_id_t const & xtop_account_base_address::ledger_id() const noexcept {
+xledger_id_t xtop_account_base_address::ledger_id() const noexcept {
     return m_ledger_id;
 }
 
-xtable_id_t const & xtop_account_base_address::default_table_id() const noexcept {
+xtable_id_t xtop_account_base_address::default_table_id() const noexcept {
     return m_default_table_id;
 }
 

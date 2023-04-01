@@ -467,12 +467,23 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
 
     if (current_block->get_block_class() != base::enum_xvblock_class_nil) {
         if (!tablestate_store->get_state_root().empty()) {
-            tablestate_store->get_state_mpt()->commit(ec);
+            auto const mpt = tablestate_store->get_state_mpt();
+            mpt->commit(ec);
             if (ec) {
                 xerror("xstatestore_executor_t::write_table_all_states fail-write mpt,block:%s.ec=%s", current_block->dump().c_str(),ec.message().c_str());
                 return nullptr;
             }
             xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().hex().c_str(), current_block->dump().c_str());
+
+            if (!base::xvchain_t::instance().need_store_units(m_table_vaddr.get_zone_index())) {
+                // only state aware node need to push pending pruned data into trie db (memory db)
+                mpt->prune(ec);
+                if (ec) {
+                    xwarn("mpt->prune(ec) failed. category %s errc %d msg %s", ec.category().name(), ec.value(), ec.message().c_str());
+                    // !!! no need to return error !!! it only affects DB size.
+                    ec.clear();
+                }
+            }
         }
     }
     xinfo("xstatestore_executor_t::write_table_all_states tps_key after commit,block:%s",current_block->dump().c_str());
@@ -536,12 +547,12 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
 
     // should clone a new state for execute
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *prev_state->get_table_state()->get_bstate());
-    std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(m_table_addr, prev_state->get_state_mpt()->get_original_root_hash(), m_statestore_base.get_dbstore(), ec);
+    std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(m_table_addr, prev_state->get_state_mpt()->original_root_hash(), m_statestore_base.get_dbstore(), ec);
     auto const & block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     base::xaccount_indexs_t account_indexs;
     bool is_first_mpt = false;
     if (current_block->get_height() > 1
-        && current_prev_mpt->get_original_root_hash().empty()
+        && current_prev_mpt->original_root_hash().empty()
         && !block_state_root.empty()) {
         is_first_mpt = true;
     }

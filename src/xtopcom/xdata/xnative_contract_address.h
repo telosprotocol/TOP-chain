@@ -57,7 +57,6 @@ XINLINE_CONSTEXPR char const * sys_contract_relay_block_addr{"Tb0005@0"};
 XINLINE_CONSTEXPR char const * rec_elect_zec_table_addr{"Ta0001@0"};  // TODO(Jimmy)
 XINLINE_CONSTEXPR char const * zec_elect_shard_table_addr{"Ta0002@2"};  // TODO(Jimmy)
 
-extern common::xaccount_address_t const black_hole_system_address;
 extern common::xaccount_address_t const genesis_root_system_address;
 extern common::xaccount_address_t const timer_system_address;
 extern common::xaccount_address_t const drand_system_address;

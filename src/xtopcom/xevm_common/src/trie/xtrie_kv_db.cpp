@@ -40,7 +40,7 @@ void xtop_kv_db::PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_
     std::lock_guard<std::mutex> lock(m_mutex);
     std::map<std::string, std::string> convert_batch;
     for (auto const & b : batch) {
-        convert_batch.emplace(std::make_pair(convert_key(b.first), std::string{b.second.begin(), b.second.end()}));
+        convert_batch.emplace(convert_key(b.first), std::string{b.second.begin(), b.second.end()});
     }
     if (m_db->set_values(convert_batch) == false) {
         xwarn("xtop_kv_db::PutBatch error");

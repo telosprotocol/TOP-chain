@@ -650,8 +650,8 @@ XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 20);
 #else
 XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 1000);
 XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
-XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
-XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 256);
+XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 384);
+XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 128);
 #endif
 
 

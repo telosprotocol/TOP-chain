@@ -29,7 +29,7 @@ xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablest
 
     std::error_code ec;
     std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(m_table_address,
-                                                                                                prev_table_state->get_state_mpt()->get_original_root_hash(),
+                                                                                                prev_table_state->get_state_mpt()->original_root_hash(),
                                                                                                 base::xvchain_t::instance().get_xdbstore(),
                                                                                                 ec);
     xassert(nullptr != current_prev_mpt);
@@ -38,7 +38,7 @@ xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablest
 }
 
 bool xstatectx_t::is_same_table(common::xaccount_address_t const& address) const {
-    if (address.ledger_id().zone_id() == common::zone_id(m_table_address) && address.table_id() == m_table_address.table_id()) {
+    if (address.zone_id() == common::zone_id(m_table_address) && address.table_id() == common::table_id(m_table_address)) {
         return true;
     }
     return false;

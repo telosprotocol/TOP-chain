@@ -2,7 +2,6 @@
 
 NS_BEG1(top)
 
-common::xaccount_address_t const black_hole_system_address{black_hole_addr};
 common::xaccount_address_t const genesis_root_system_address{genesis_root_addr_main_chain};
 common::xaccount_address_t const timer_system_address{sys_contract_beacon_timer_addr};
 common::xaccount_address_t const drand_system_address{sys_drand_addr};

@@ -120,6 +120,7 @@ base::enum_xchain_zone_index zone_index(xtable_address_t table_address);
 
 xzone_id_t zone_id(xtable_address_t table_address, std::error_code & ec);
 xzone_id_t zone_id(xtable_address_t table_address);
+xtable_id_t table_id(xtable_address_t table_address);
 
 NS_END2
 
