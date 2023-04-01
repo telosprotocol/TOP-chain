@@ -77,7 +77,7 @@ bool xstatestore_prune_t::need_prune(uint64_t exec_height) {
     return true;
 }
 
-bool xstatestore_prune_t::get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height) {
+bool xstatestore_prune_t::get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height, uint64_t & lowest_keep_height) {
     uint64_t keep_table_states_max_num = XGET_CONFIG(keep_table_states_max_num);
     uint64_t prune_table_state_diff = XGET_CONFIG(prune_table_state_diff);
     uint64_t prune_table_state_max = XGET_CONFIG(prune_table_state_max);
@@ -88,6 +88,7 @@ bool xstatestore_prune_t::get_prune_section(uint64_t exec_height, uint64_t & fro
     from_height = m_pruned_height + 1;
     uint64_t to_height_max = exec_height - keep_table_states_max_num;
     to_height = to_height_max < (m_pruned_height + prune_table_state_max) ? to_height_max : (m_pruned_height + prune_table_state_max);
+    lowest_keep_height = exec_height - keep_table_states_max_num + 1;
     return true;
 }
 
@@ -102,7 +103,8 @@ void xstatestore_prune_t::set_pruned_height(uint64_t pruned_height) {
 void xstatestore_prune_t::prune_imp(uint64_t exec_height) {
     uint64_t from_height;
     uint64_t to_height;
-    auto ret = get_prune_section(exec_height, from_height, to_height);
+    uint64_t lowest_keep_height;
+    auto ret = get_prune_section(exec_height, from_height, to_height, lowest_keep_height);
     if (!ret) {
         return;
     }
@@ -117,7 +119,7 @@ void xstatestore_prune_t::prune_imp(uint64_t exec_height) {
         pruned_height = prune_exec_storage_and_cons(from_height, to_height);
     } else if (!is_storage_node) {
         // include consensus nodes and edge nodes.
-        pruned_height = prune_exec_cons(from_height, to_height, exec_height);
+        pruned_height = prune_exec_cons(from_height, to_height, exec_height, lowest_keep_height);
     } else {
         xwarn("xstatestore_prune_t::prune_imp not storage node nor cons node. can not prune.table:%s", m_table_addr.to_string().c_str());
         return;
@@ -250,8 +252,7 @@ uint64_t xstatestore_prune_t::prune_exec_storage_and_cons(uint64_t from_height, 
     return height - 1;
 }
 
-uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_height, uint64_t exec_height) {
-    uint64_t lowest_keep_height = to_height + 1;
+uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_height, uint64_t exec_height, uint64_t lowest_keep_height) {
     xobject_ptr_t<base::xvblock_t> lowest_keep_block =
         base::xvchain_t::instance().get_xblockstore()->load_block_object(m_table_vaddr, lowest_keep_height, base::enum_xvblock_flag_committed, false);
     if (lowest_keep_block == nullptr) {
