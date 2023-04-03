@@ -4,30 +4,28 @@
 
 #pragma once
 
-#include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-#include "xcommon/xnode_id.h"
-#include "xevm_common/trie/xsecure_trie.h"
+#include "xcommon/xtable_address.h"
 #include "xevm_common/trie/xtrie_db.h"
 #include "xvledger/xvdbstore.h"
 
-namespace top {
-namespace state_mpt {
+NS_BEG2(top, state_mpt)
 
 class xtop_state_mpt_caching_db {
 public:
-    explicit xtop_state_mpt_caching_db(base::xvdbstore_t * db);
+    xtop_state_mpt_caching_db(xtop_state_mpt_caching_db const &) = delete;
+    xtop_state_mpt_caching_db & operator=(xtop_state_mpt_caching_db const &) = delete;
+    xtop_state_mpt_caching_db(xtop_state_mpt_caching_db &&) = default;
+    xtop_state_mpt_caching_db & operator=(xtop_state_mpt_caching_db &&) = default;
     ~xtop_state_mpt_caching_db() = default;
 
-    std::shared_ptr<evm_common::trie::xtrie_face_t> open_trie(common::xtable_address_t const & table, evm_common::xh256_t const & hash, std::error_code & ec);
-    observer_ptr<evm_common::trie::xtrie_db_t> trie_db(common::xtable_address_t const & table);
+    explicit xtop_state_mpt_caching_db(base::xvdbstore_t * db);
+
+    observer_ptr<evm_common::trie::xtrie_db_t> trie_db(common::xtable_address_t const & table) const;
 
 private:
-    std::map<common::xtable_address_t, std::shared_ptr<evm_common::trie::xtrie_db_t>> m_table_caches;
-    // base::xvdbstore_t * m_db{nullptr};
-    // mutable std::mutex m_mutex;
+    std::map<common::xtable_address_t, std::shared_ptr<evm_common::trie::xtrie_db_t>> table_caches_;
 };
 using xstate_mpt_caching_db_t = xtop_state_mpt_caching_db;
 
-}  // namespace state_mpt
-}  // namespace top
+NS_END2
