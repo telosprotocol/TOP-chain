@@ -80,7 +80,7 @@ data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_table_block(comm
     base::xaccount_index_t account_index;
     if (false == get_accountindex_from_table_block(account_address, table_block, account_index)) {
         xwarn("xstatestore_table_t::get_unit_state_from_table_block fail-get accountindex.%s,block=%s", account_address.to_string().c_str(), table_block->dump().c_str());
-        return nullptr;        
+        return nullptr;
     }
     return get_unit_state_from_accountindex(account_address, account_index);
 }

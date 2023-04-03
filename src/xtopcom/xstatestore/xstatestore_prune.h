@@ -57,7 +57,6 @@ private:
     uint64_t prune_exec_storage_and_cons(uint64_t from_height, uint64_t to_height);
     uint64_t prune_exec_cons(uint64_t from_height, uint64_t to_height, uint64_t exec_height, uint64_t lowest_keep_height);
 
-private:
     mutable std::mutex m_prune_lock;
     common::xtable_address_t m_table_addr;
     base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
