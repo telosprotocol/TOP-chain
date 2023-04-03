@@ -367,6 +367,12 @@ void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec)
     pruned_hashes2_.erase(it);
 }
 
+void xtop_trie_db::clear_pruned(std::error_code &) {
+    assert(!ec);
+    std::lock_guard<std::mutex> lck(mutex_);
+    pruned_hashes2_.clear();
+}
+
 size_t xtop_trie_db::pending_pruned_size(xh256_t const & root_hash) const noexcept {
     std::lock_guard<std::mutex> lck(mutex_);
 

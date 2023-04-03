@@ -290,5 +290,11 @@ void xtop_state_mpt::clear_pruned(evm_common::xh256_t const & pruned_key, std::e
     m_trie->clear_pruned(pruned_key, ec);
 }
 
+void xtop_state_mpt::clear_pruned(std::error_code & ec) const {
+    assert(!ec);
+    std::lock_guard<std::mutex> lock{m_trie_lock};
+    assert(m_trie != nullptr);
+    m_trie->clear_pruned(ec);
+}
 
 NS_END3

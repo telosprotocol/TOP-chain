@@ -111,6 +111,7 @@ public:
     void prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec);
     void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec);
     void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
+    void clear_pruned(std::error_code & ec);
 
     size_t pending_pruned_size(xh256_t const & root_hash) const noexcept;
 
