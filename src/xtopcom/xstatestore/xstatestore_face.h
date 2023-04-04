@@ -101,6 +101,9 @@ class xstatestore_face_t {
     virtual uint64_t get_latest_executed_block_height(common::xtable_address_t const & table_address) const = 0;
     virtual uint64_t get_need_sync_state_block_height(common::xtable_address_t const & table_address) const = 0;
     virtual xtablestate_ext_ptr_t do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const = 0;
+
+    // cache apis
+    virtual void clear_cache(common::xtable_address_t const & table_address) = 0;
 };
 
 class xstatestore_hub_t {

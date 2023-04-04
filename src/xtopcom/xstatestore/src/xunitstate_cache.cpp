@@ -101,7 +101,7 @@ xobject_ptr_t<base::xvbstate_t> xunitstate_cache_t::get_unitstate(std::string co
         }
     }
     XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, 0);
-    xwarn("xunitstate_cache_t::get_unitstate fail.%s,height=%ld,hash=%s",address.c_str(), height, base::xstring_utl::to_hex(unit_hash).c_str());
+    xdbg_info("xunitstate_cache_t::get_unitstate fail.%s,height=%ld,hash=%s",address.c_str(), height, base::xstring_utl::to_hex(unit_hash).c_str());
     return nullptr;
 }
 

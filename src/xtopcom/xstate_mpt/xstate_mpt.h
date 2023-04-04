@@ -83,6 +83,7 @@ public:
     void prune(std::error_code & ec);
     void commit_pruned(std::vector<evm_common::xh256_t> pruned_keys, std::error_code & ec) const;
     void clear_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const;
+    void clear_pruned(std::error_code & ec) const;
 
     /// @brief Update modifies to trie and calculate root hash.
     /// @param ec Log the error code.

@@ -857,7 +857,17 @@ void xtop_trie::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {
 
     trie_db_->clear_pruned(root_hash, ec);
     if (ec) {
-        xwarn("xtrie_t::commit_pruned failed on pruning root %s", root_hash.hex().c_str());
+        xwarn("xtrie_t::clear_pruned failed on pruning root %s. category %s errc %d msg %s", root_hash.hex().c_str(), ec.category().name(), ec.value(), ec.message().c_str());
+    }
+}
+
+void xtop_trie::clear_pruned(std::error_code & ec) {
+    assert(!ec);
+    assert(trie_db_);
+    assert(pending_to_be_pruned_.empty());
+    trie_db_->clear_pruned(ec);
+    if (ec) {
+        xwarn("xtrie_t::clear_pruned all failed");
     }
 }
 

@@ -33,7 +33,7 @@ enum {
 class xpdu_reactor_face {
 public:
     virtual void on_pdu(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet) = 0;
-    virtual bool is_running() = 0;
+    virtual bool is_running() const = 0;
 };
 
 using xpdu_reactor_ptr = std::shared_ptr<xpdu_reactor_face>;
@@ -200,7 +200,7 @@ using xcons_service_para_ptr = std::shared_ptr<xcons_service_para_face>;
 // consensus engine face
 class xcons_service_face {
 public:
-    virtual common::xmessage_category_t get_msg_category() = 0;
+    virtual common::xmessage_category_t get_msg_category() const = 0;
     virtual bool                        start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
     virtual bool                        fade(const xvip2_t & xip) = 0;
     virtual bool                        unreg(const xvip2_t & xip) = 0;

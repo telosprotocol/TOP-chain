@@ -191,7 +191,9 @@ bool xworkpool_dispatcher::destroy(const xvip2_t & xip) {
     m_para->get_resources()->get_chain_timer()->unwatch(m_watcher_name);
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto & packer : m_packers) {
+        common::xtable_address_t table_address = common::xtable_address_t::build_from(packer.second->get_account());
         packer.second->close();
+        statestore::xstatestore_hub_t::instance()->clear_cache(table_address);
     }
     m_packers.clear();
     return true;

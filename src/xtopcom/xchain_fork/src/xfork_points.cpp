@@ -47,6 +47,7 @@ std::string dump_fork_points() {
     info += "v11100_event=" + std::to_string(v11100_event.value().point);
     info += ",v11200_block_fork_point=" + std::to_string(v11200_block_fork_point.value().point);
     info += ",v11200_sync_big_packet=" + std::to_string(v11200_sync_big_packet.value().point);
+    info += ",v11200_fullnode_elect=" + std::to_string(v11200_fullnode_elect.value().point);
     return info;
 }
 

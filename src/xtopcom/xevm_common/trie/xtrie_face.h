@@ -56,6 +56,7 @@ public:
     virtual void prune(std::error_code & ec) = 0;
     virtual void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec) = 0;
     virtual void clear_pruned(xh256_t const & pending_pruned_trie_root_hash, std::error_code & ec) = 0;
+    virtual void clear_pruned(std::error_code & ec) = 0;
 
     virtual xh256_t const & original_root_hash() const noexcept = 0;
 };

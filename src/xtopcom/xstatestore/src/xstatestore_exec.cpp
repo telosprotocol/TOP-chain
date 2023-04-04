@@ -1036,5 +1036,9 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
     return unitstate;
 }
 
+void xstatestore_executor_t::clear_cache() {
+    xinfo("xstatestore_executor_t::clear_cache %s", m_table_addr.to_string().c_str());
+    m_state_accessor.clear_cache();
+}
 
 NS_END2

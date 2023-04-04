@@ -80,7 +80,7 @@ data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_table_block(comm
     base::xaccount_index_t account_index;
     if (false == get_accountindex_from_table_block(account_address, table_block, account_index)) {
         xwarn("xstatestore_table_t::get_unit_state_from_table_block fail-get accountindex.%s,block=%s", account_address.to_string().c_str(), table_block->dump().c_str());
-        return nullptr;        
+        return nullptr;
     }
     return get_unit_state_from_accountindex(account_address, account_index);
 }
@@ -94,6 +94,10 @@ uint64_t xstatestore_table_t::get_need_sync_state_block_height() const {
 
 void xstatestore_table_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
     return m_table_executor.raise_execute_height(sync_info);
+}
+
+void xstatestore_table_t::clear_cache() {
+    return m_table_executor.clear_cache();
 }
 
 // void xstatestore_table_t::state_prune() {

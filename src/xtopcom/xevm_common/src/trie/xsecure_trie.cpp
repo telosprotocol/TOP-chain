@@ -154,6 +154,13 @@ void xtop_secure_trie::clear_pruned(xh256_t const & pending_pruned_trie_root_has
     trie_->clear_pruned(pending_pruned_trie_root_hash, ec);
 }
 
+void xtop_secure_trie::clear_pruned(std::error_code & ec) {
+    assert(!ec);
+    assert(trie_ != nullptr);
+    trie_->clear_pruned(ec);
+}
+
+
 xh256_t const & xtop_secure_trie::original_root_hash() const noexcept {
     return trie_->original_root_hash();
 }

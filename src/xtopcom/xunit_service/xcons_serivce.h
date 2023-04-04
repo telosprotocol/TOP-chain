@@ -6,6 +6,8 @@
 
 #include "xunit_service/xcons_face.h"
 
+#include <atomic>
+
 NS_BEG2(top, xunit_service)
 
 // default block service entry
@@ -17,20 +19,20 @@ public:
     virtual ~xcons_service_t();
 
 public:
-    common::xmessage_category_t get_msg_category() override;
+    common::xmessage_category_t get_msg_category() const override;
     bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) override;
     bool fade(const xvip2_t & xip) override;
     bool unreg(const xvip2_t & xip) override;
     bool destroy(const xvip2_t & xip) override;
 public:
-    bool is_running() override;
+    bool is_running() const override;
     void on_pdu(const xvip2_t &xip_from,
             const xvip2_t &xip_to, const base::xcspdu_t &packet) override;
 protected:
     std::shared_ptr<xcons_service_para_face> m_para{};
     std::shared_ptr<xcons_dispatcher>        m_dispatcher{};
     common::xmessage_category_t              m_category{};
-    volatile bool                            m_running{false};
+    std::atomic_bool running_{false};
 };
 
 NS_END2

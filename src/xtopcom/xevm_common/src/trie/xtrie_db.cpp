@@ -350,6 +350,15 @@ void xtop_trie_db::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::e
     for (auto const & root_hash : pruned_root_hashes) {
         pruned_hashes2_.erase(root_hash);
     }
+
+#if defined(ENABLE_METRICS_DATAOBJECT)
+    size_t total_remaining_count{0};
+    for (auto const & pruned_hash_info : pruned_hashes2_) {
+        auto const & prune_ready = top::get<std::vector<xh256_t>>(pruned_hash_info);
+        total_remaining_count += prune_ready.size();
+    }
+    XMETRICS_COUNTER_SET("trie_pending_pruned_count", total_remaining_count);
+#endif
 }
 
 void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {
@@ -365,6 +374,12 @@ void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec)
     }
 
     pruned_hashes2_.erase(it);
+}
+
+void xtop_trie_db::clear_pruned(XMAYBE_UNUSED std::error_code & ec) {
+    assert(!ec);
+    std::lock_guard<std::mutex> lck(mutex_);
+    pruned_hashes2_.clear();
 }
 
 size_t xtop_trie_db::pending_pruned_size(xh256_t const & root_hash) const noexcept {
