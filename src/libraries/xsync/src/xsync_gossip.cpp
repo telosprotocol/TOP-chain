@@ -251,8 +251,7 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
             info_rsp->owner = info->owner;
             info_rsp->max_height = local_height;
             info_list_rsp.push_back(info_rsp);
-        } else {
-        }
+        } 
     }
 
     if (!info_list_rsp.empty()) {

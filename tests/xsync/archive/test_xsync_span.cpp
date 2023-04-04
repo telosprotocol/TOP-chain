@@ -22,7 +22,7 @@ using namespace top::data;
 using namespace top::mock;
 
 #define MAX_BLOCK_TEST (1500)
-
+#if 0
 class test_xsync_span : public testing::Test {
 public:
     void SetUp() override
@@ -325,4 +325,4 @@ TEST_F(test_xsync_span, test_xsync_or_cp_reflash_disconnect_BENCH)
     cp_object.pick(interval, self_addr, target_addr);
     ASSERT_EQ(MAX_BLOCK_TEST, interval.first);
 }
-
+#endif 

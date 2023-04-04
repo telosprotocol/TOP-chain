@@ -17,6 +17,7 @@
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_sender.h"
+#include "xmbus/xevent_behind.h"
 
 NS_BEG2(top, sync)
 
@@ -56,6 +57,9 @@ public:
     void update(const vnetwork::xvnode_address_t &self_address, const vnetwork::xvnode_address_t &peer_address, const std::vector<xchain_state_info_t> &info_list);
     bool get_newest_peer(const vnetwork::xvnode_address_t &self_address, const std::string &address, uint64_t &start_height, uint64_t &end_height, vnetwork::xvnode_address_t &peer_addr, bool random_check = false);
     bool get_group_size(const vnetwork::xvnode_address_t &self_address, uint32_t &count);
+    bool get_peer_height_info_map(const vnetwork::xvnode_address_t &self_address, const std::string &address, 
+                                  const uint64_t local_start_height, const uint64_t local_end_height, 
+                                  std::multimap<uint64_t, mbus::chain_behind_event_address> &chain_behind_address_map);
     uint32_t get_frozen_limit();
     bool get_archive_group(vnetwork::xvnode_address_t &self_addr, std::vector<vnetwork::xvnode_address_t> &neighbors);
     bool get_group_nodes(const vnetwork::xvnode_address_t &self_addr, std::vector<vnetwork::xvnode_address_t> &neighbors);

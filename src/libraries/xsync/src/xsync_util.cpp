@@ -31,21 +31,28 @@ bool is_beacon_table(const std::string &address) {
     return true;
 }
 
-bool check_auth(const observer_ptr<base::xvcertauth_t> &certauth, data::xblock_ptr_t &block) {
+enum_result_code check_auth(const observer_ptr<base::xvcertauth_t> &certauth, data::xblock_ptr_t &block) {
     XMETRICS_TIME_RECORD("xsync_store_check_auth");
-    
-    //No.1 safe rule: clean all flags first when sync/replicated one block
+
+    // No.1 safe rule: clean all flags first when sync/replicated one block
     block->reset_block_flags();
 
     XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_sync, 1);
-    base::enum_vcert_auth_result result = certauth->verify_muti_sign(block.get());
-    if (result != base::enum_vcert_auth_result::enum_successful) {
-        return false;
+    base::enum_vcert_auth_result  result = certauth->verify_muti_sign(block.get());
+    if (result != base::enum_vcert_auth_result ::enum_successful) {
+        if (result == base::enum_vcert_auth_result ::enum_verify_fail || result == base::enum_vcert_auth_result ::enum_bad_cert 
+         || result == base::enum_vcert_auth_result ::enum_bad_block || result == base::enum_vcert_auth_result ::enum_bad_address 
+         || result == base::enum_vcert_auth_result ::enum_bad_signature || result == base::enum_vcert_auth_result ::enum_bad_scheme 
+         || result == base::enum_vcert_auth_result ::enum_bad_consensus) {
+            return enum_result_code::auth_failed;
+        } else {
+            return enum_result_code::wait_auth_data;
+        }
     }
 
     block->set_block_flag(base::enum_xvblock_flag_authenticated);
     xdbg("xsync check_auth ok, %s", block->get_account().c_str());
-    return true;
+    return success;
 }
 
 uint32_t vrf_value(const std::string& hash) {

@@ -44,37 +44,66 @@ private:
 using xevent_behind_ptr_t = xobject_ptr_t<xevent_behind_t>;
 
 // table
+// class xevent_behind_download_t : public xevent_behind_t {
+// public:
+
+//     xevent_behind_download_t(
+//             const std::string &_address,
+//             uint64_t _start_height,
+//             uint64_t _end_height,
+//             sync::enum_chain_sync_policy _sync_policy,
+//             vnetwork::xvnode_address_t _self_addr,
+//             vnetwork::xvnode_address_t _from_addr,
+//             const std::string &_reason,
+//             direction_type dir = to_listener,
+//             bool _sync = true):
+//     xevent_behind_t(type_download, dir, _sync),
+//     address(_address),
+//     start_height(_start_height),
+//     end_height(_end_height),
+//     sync_policy(_sync_policy),
+//     self_addr(_self_addr),
+//     from_addr(_from_addr),
+//     reason(_reason) {
+//         XMETRICS_GAUGE(metrics::xsync_behind_download, 1);
+//     }
+
+//     std::string address;
+//     uint64_t start_height;
+//     uint64_t end_height;
+//     sync::enum_chain_sync_policy sync_policy;
+//     vnetwork::xvnode_address_t self_addr{};
+//     vnetwork::xvnode_address_t from_addr{};
+//     std::string reason;
+// };
+
+struct chain_behind_event_address {
+    uint64_t                   start_height{0}; //fast: always > 0;cp : cp_data or cp_connect ; full: always 0 
+    vnetwork::xvnode_address_t self_addr{};
+    vnetwork::xvnode_address_t from_addr{};
+};
+
 class xevent_behind_download_t : public xevent_behind_t {
 public:
-
     xevent_behind_download_t(
-            const std::string &_address,
-            uint64_t _start_height,
-            uint64_t _end_height,
+            const std::string &_address,    //table address
             sync::enum_chain_sync_policy _sync_policy,
-            vnetwork::xvnode_address_t _self_addr,
-            vnetwork::xvnode_address_t _from_addr,
+            std::multimap<uint64_t, chain_behind_event_address> chain_behind_address,
             const std::string &_reason,
             direction_type dir = to_listener,
             bool _sync = true):
     xevent_behind_t(type_download, dir, _sync),
     address(_address),
-    start_height(_start_height),
-    end_height(_end_height),
     sync_policy(_sync_policy),
-    self_addr(_self_addr),
-    from_addr(_from_addr),
-    reason(_reason) {
+    reason(_reason),
+    chain_behind_address_map(std::move(chain_behind_address)) {
         XMETRICS_GAUGE(metrics::xsync_behind_download, 1);
     }
 
     std::string address;
-    uint64_t start_height;
-    uint64_t end_height;
     sync::enum_chain_sync_policy sync_policy;
-    vnetwork::xvnode_address_t self_addr{};
-    vnetwork::xvnode_address_t from_addr{};
     std::string reason;
+    std::multimap<uint64_t, chain_behind_event_address> chain_behind_address_map;
 };
 
 //using xevent_behind_download_ptr_t = xobject_ptr_t<xevent_behind_download_t>;

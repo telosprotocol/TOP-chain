@@ -88,7 +88,7 @@ void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t & block, const vnetw
         return;
     }
 
-    if (!check_auth(m_certauth, block)) {
+    if (enum_result_code::success != check_auth(m_certauth, block)) {
         xsync_warn("xsync_handler_t::on_newblock fail-auth failed %s", block->dump().c_str());
         XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
@@ -181,7 +181,7 @@ void xchain_block_fetcher_t::on_response_blocks(xblock_ptr_t &block, const vnetw
         xsync_block_announce_ptr_t ptr = it->second;
         forget_hash(hash);
 
-        if (!check_auth(m_certauth, block)) {
+        if (enum_result_code::success != check_auth(m_certauth, block)) {
             xsync_info("chain_fetcher on_response_event(auth failed) : %s %s", block->dump().c_str(), from_address.to_string().c_str());
             return;
         }

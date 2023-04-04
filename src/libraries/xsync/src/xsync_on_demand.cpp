@@ -341,7 +341,7 @@ void xsync_on_demand_t::handle_blocks_response_with_params(const std::vector<dat
 
     auto & account = blocks[0]->get_account();
     xblock_ptr_t last_block = blocks[blocks.size() -1];
-    if (!check_auth(m_certauth, last_block)) {
+    if (enum_result_code::success != check_auth(m_certauth, last_block)) {
         xsync_error("xsync_on_demand_t::handle_blocks_response_with_params auth_failed %s,height=%lu,viewid=%lu,",
             account.c_str(), last_block->get_height(), last_block->get_viewid());
         return;

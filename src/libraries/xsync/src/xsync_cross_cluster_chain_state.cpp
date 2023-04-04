@@ -105,8 +105,13 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
             xsync_dbg("cross_cluster_chain_state notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu)", 
                         address.c_str(), m_sync_store->get_latest_start_block_height(address, sync_policy), latest_end_block_height, peer_start_height, peer_end_height);
 
-            mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 
-                    peer_start_height, peer_end_height, sync_policy, network_self, from_address, reason);
+            std::multimap<uint64_t, mbus::chain_behind_event_address> chain_behind_address_map{};
+            mbus::chain_behind_event_address chain_behind_address_info;
+            chain_behind_address_info.self_addr = network_self;
+            chain_behind_address_info.from_addr = from_address;
+            chain_behind_address_info.start_height = peer_start_height;
+            chain_behind_address_map.insert(std::make_pair(peer_end_height, chain_behind_address_info));
+            mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, sync_policy, chain_behind_address_map, reason);
             m_downloader->push_event(ev);
         }
     }
