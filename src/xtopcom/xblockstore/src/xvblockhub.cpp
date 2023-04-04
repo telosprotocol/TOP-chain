@@ -1226,11 +1226,11 @@ namespace top
                 }
 
                 // TODO(jimmy) may keep latest blocks in cache better
-                // final_cached_index->reset_this_block(NULL);
-                xassert(final_cached_index->get_this_block() == new_raw_block);
-                if (new_raw_block->get_excontainer() != nullptr) {
-                    xdbg("jimmy xblockacct_t::store_block a new consensus block %s", new_raw_block->dump().c_str());
-                }
+                final_cached_index->reset_this_block(NULL);
+                // xassert(final_cached_index->get_this_block() == new_raw_block);
+                // if (new_raw_block->get_excontainer() != nullptr) {
+                //     xdbg("jimmy xblockacct_t::store_block a new consensus block %s", new_raw_block->dump().c_str());
+                // }
 
                 return true;
             }

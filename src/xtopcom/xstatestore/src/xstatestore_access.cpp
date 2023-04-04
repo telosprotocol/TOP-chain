@@ -340,4 +340,16 @@ void xstatestore_accessor_t::batch_write_unit_bstate(const std::map<std::string,
     m_dbaccess.batch_write_unit_bstate(batch_kvs, ec);
 }
 
+void xstatestore_accessor_t::clear_cache() {
+    std::error_code ec;
+    m_unitstate_cache->clear();
+    xtablestate_ext_ptr_t const&  tablestate_ext = m_state_cache.get_latest_connectted_tablestate();
+    if (nullptr != tablestate_ext) {
+        auto state_mpt = tablestate_ext->get_state_mpt();
+        if (nullptr != state_mpt) {
+            state_mpt->clear_pruned(ec);
+        }
+    }
+}
+
 NS_END2

@@ -52,6 +52,8 @@ public:
     uint64_t get_latest_executed_block_height() const;
     uint64_t get_need_sync_state_block_height() const;
 
+    void    clear_cache();
+
 protected:
     uint64_t update_execute_from_execute_height(bool force_update) const;
     void    set_latest_executed_info(bool is_commit_block, uint64_t height) const;

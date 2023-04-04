@@ -77,6 +77,8 @@ public:
     void    write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec);
     void    write_unitstate_to_cache(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash);
     void    batch_write_unit_bstate(const std::map<std::string, std::string> & batch_kvs, std::error_code & ec) const;
+
+    void    clear_cache();
 private:
     xtablestate_ext_ptr_t read_table_bstate_from_db_inner(common::xtable_address_t const& address, base::xvblock_t* block, bool bstate_must) const;
 private:

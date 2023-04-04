@@ -690,6 +690,13 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
     return true;
 }
 
+void xstatestore_impl_t::clear_cache(common::xtable_address_t const & table_address) {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
+    if (nullptr != tablestore) {
+        tablestore->clear_cache();
+    }
+}
+
 base::xvblockstore_t*  xstatestore_impl_t::get_blockstore() const {
     return base::xvchain_t::instance().get_xblockstore();
 }

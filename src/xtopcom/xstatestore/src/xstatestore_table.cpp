@@ -96,6 +96,10 @@ void xstatestore_table_t::raise_execute_height(const xstate_sync_info_t & sync_i
     return m_table_executor.raise_execute_height(sync_info);
 }
 
+void xstatestore_table_t::clear_cache() {
+    return m_table_executor.clear_cache();
+}
+
 // void xstatestore_table_t::state_prune() {
 //     m_prune.prune(get_latest_executed_block_height());
 // }

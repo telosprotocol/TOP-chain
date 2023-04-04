@@ -52,7 +52,7 @@ class xunitstate_cache_t {
 public:
     enum
     {
-        enum_max_unit_state_lru_cache_shard    = 256,  // TODO(jimmy) should release table lru cache when table is elected out for long time
+        enum_max_unit_state_lru_cache_shard    = 256,  //  TODO(jimmy)
         enum_max_unit_state_lru_cache_evm      = 40000,
     };
 public:

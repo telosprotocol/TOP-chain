@@ -723,6 +723,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
 
         if (vblock->get_excontainer() != nullptr) {
             vblock->get_excontainer()->commit(vblock);
+            vblock->set_excontainer(nullptr);
         }
         
         xunit_info("xbatch_packer::on_proposal_finish tps_key after commit leader:%d,proposal=%s", is_leader, _evt_obj->get_target_proposal()->dump().c_str());

@@ -43,7 +43,9 @@ public:
     uint64_t                get_latest_executed_block_height() const;
     uint64_t                get_need_sync_state_block_height() const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
-    virtual void            on_executed(uint64_t height);
+    virtual void            on_executed(uint64_t height);    
+    void                    clear_cache();
+private:
 
 private:
     common::xtable_address_t  m_table_addr;
