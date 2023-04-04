@@ -2595,13 +2595,46 @@ namespace top
                 }
             }
 
+            if (deep_test && get_height() != 0) {
+                // XTODO already check body hash with header, not need check hash again, only check exist
+                if (false == is_body_and_offdata_ready(false)) {
+                    xwarn("xvblock_t::is_valid,fail-body not ready,%s", dump().c_str());
+                    return false;
+                }
+
+                bool is_character_cert_header_only = get_header()->get_block_characters() & enum_xvblock_character_certify_header_only;
+                // calc and check header hash
+                std::string vheader_bin;
+                get_header()->serialize_to_string(vheader_bin);
+                std::string calc_header_hash;
+                if (is_character_cert_header_only) {
+                    calc_header_hash = get_cert()->hash(vheader_bin);
+                } else {
+                    std::string vinput_bin = get_input_data();
+                    std::string voutput_bin = get_output_data();
+                    const std::string vheader_input_output = vheader_bin + vinput_bin + voutput_bin;
+                    calc_header_hash = get_cert()->hash(vheader_input_output);
+                }
+                if (calc_header_hash != get_cert()->get_header_hash()) {
+                    xwarn("xvblock_t::is_valid,fail-header hash unmatch,%s", dump().c_str());
+                    return false;
+                }
+            }
+
             return true;
         }
         
         bool    xvblock_t::is_deliver(bool deep_test) const //test everytiing
         {
-            if(is_valid(deep_test) && check_block_flag(enum_xvblock_flag_authenticated) )
-            {
+            if (false == check_block_flag(enum_xvblock_flag_authenticated)) {
+                xwarn("xvblock_t::is_deliver fail-not authenticated.%s", dump().c_str());
+                return false;
+            }
+            if (false == is_valid(deep_test)) {
+                xwarn("xvblock_t::is_deliver fail-not valid.%s", dump().c_str());
+                return false;
+            }
+
                 if(m_cert_hash.empty()) //cert_hash must has been generated already
                 {
                     xerror("xvblock_t::is_deliver,hash of cert is empty,but block mark as enum_xvblock_flag_authenticated");
@@ -2617,12 +2650,13 @@ namespace top
                 }
                 
                 //genesis block dont need verify certification
-                if(get_cert()->is_deliver())
+            if(false == get_cert()->is_deliver())
                 {
-                    return true;
-                }
-            }
+                xwarn("xvblock_t::is_deliver fail-not deliver.%s", dump().c_str());
             return false;
+            }
+            xdbg("xvblock_t::is_deliver ok.%s", dump().c_str());
+            return true;
         }
         
         bool   xvblock_t::is_equal(const xvblock_t & other)  const//compare everyting except certification

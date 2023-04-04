@@ -7,11 +7,13 @@ NS_BEG2(top, sync)
 class xchain_downloader_t;
 
 enum xsync_command_execute_result {
-    abort,
-    finish,
-    abort_overflow,
-    wait_response,
-    ignore,
+    abort,           // some warn, wait next loop
+    finish,          // task finish, clear behind info
+    abort_overflow,  // rate limit, wait next loop 
+    wait_response,   // send finish, wait response
+    ignore,          // check response , but check error, wait next loop
+    wait_data,       // no data to auth block, clear behind info and increase wait time
+    invalid_node,    // send error or auth response failed, so delete current node info, read next behind info
 };
 
 template<class T>

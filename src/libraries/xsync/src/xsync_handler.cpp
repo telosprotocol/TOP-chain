@@ -173,10 +173,16 @@ void xsync_handler_t::gossip(uint32_t msg_size, const vnetwork::xvnode_address_t
     for (auto &it: behind_chain_set) {
         const std::string &address = it.first;
         const xgossip_behind_info_t &info = it.second;
-        if (info.local_height == info.peer_height)
+        if (info.local_height <= info.peer_height)
             continue;
 
-        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 0u, info.peer_height, enum_chain_sync_policy_full, network_self, from_address, reason);
+        std::multimap<uint64_t, mbus::chain_behind_event_address> chain_behind_address_map{};
+        mbus::chain_behind_event_address chain_behind_address_info;
+        chain_behind_address_info.self_addr = network_self;
+        chain_behind_address_info.from_addr = from_address;
+        chain_behind_address_info.start_height = 0;
+        chain_behind_address_map.insert(std::make_pair(info.peer_height, chain_behind_address_info));
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, enum_chain_sync_policy_full, chain_behind_address_map, reason);
         m_downloader->push_event(ev);
     }
 }
@@ -539,7 +545,6 @@ void xsync_handler_t::recv_query_archive_height(uint32_t msg_size,
     XMETRICS_GAUGE(metrics::xsync_recv_query_archive_height, 1);
     xsync_dbg("recv_query_archive_height.");
 
-    // auto ptr = make_object_ptr<xsync_query_height_t>();
     auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
     ptr->serialize_from(stream);
 

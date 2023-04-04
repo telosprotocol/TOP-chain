@@ -28,17 +28,23 @@ static Json::Value build_validators()
 
     return v;
 }
+#define CREATE_ADDR_COUNT  (200)
 
-TEST(xsync_peerset_test, test_random_max)
-{
-
+std::vector<vnetwork::xvnode_address_t> create_addr_list(const uint32_t count = CREATE_ADDR_COUNT) {
     std::vector<vnetwork::xvnode_address_t> addr_list;
 
-    for (uint32_t i = 0; i < 200; i++) {
+    for (uint32_t i = 0; i < count; i++) {
         common::xnetwork_id_t nid { i };
         common::xnode_address_t addr(common::build_frozen_sharding_address(nid));
         addr_list.push_back(addr);
     }
+    return addr_list;
+}
+
+
+TEST(xsync_peerset_test, test_random_max)
+{
+    std::vector<vnetwork::xvnode_address_t> addr_list = create_addr_list();
 
     xsync_peerset_t peerset("");
     uint32_t limit = peerset.get_frozen_limit();
@@ -93,14 +99,7 @@ TEST(xsync_peerset_test, test_random_max)
 
 TEST(xsync_peerset_test, test_random_same_height)
 {
-
-    std::vector<vnetwork::xvnode_address_t> addr_list;
-
-    for (uint32_t i = 0; i < 200; i++) {
-        common::xnetwork_id_t nid { i };
-        common::xnode_address_t addr(common::build_frozen_sharding_address(nid));
-        addr_list.push_back(addr);
-    }
+    std::vector<vnetwork::xvnode_address_t> addr_list = create_addr_list();
 
     xsync_peerset_t peerset("");
     uint32_t limit = peerset.get_frozen_limit();
@@ -151,3 +150,47 @@ TEST(xsync_peerset_test, test_random_same_height)
             ASSERT_EQ(count, i);
     }
 }
+
+TEST(xsync_peerset_test, test_behind_info_different_height_map) {
+    std::vector<vnetwork::xvnode_address_t> addr_list = create_addr_list();
+
+    xsync_peerset_t peerset("");
+    uint32_t limit = peerset.get_frozen_limit();
+    ASSERT_TRUE((addr_list.size() - 1) > limit);
+
+    bool ret = false;
+    uint32_t count = 0;
+
+    vnetwork::xvnode_address_t& self_address = addr_list[0];
+
+    peerset.add_group(self_address);
+    ret = peerset.get_group_size(self_address, count);
+    ASSERT_TRUE(ret);
+    ASSERT_EQ(count, 0);
+    std::string table_address = "Ta0001@0";
+    // update and check
+    for (uint32_t i = 0; i < limit; i++) {
+        vnetwork::xvnode_address_t& peer_address = addr_list[i+1];
+
+        xchain_state_info_t info;
+        info.address = table_address;
+        info.start_height = i;
+        info.end_height = i + 400;
+
+        std::vector<xchain_state_info_t> info_list;
+        info_list.push_back(info);
+        peerset.update(self_address, peer_address, info_list);
+        ret = peerset.get_group_size(self_address, count);
+    }
+
+    for (uint32_t i = 0; i < limit; i++) {
+        uint64_t latest_start_block_height = 0;
+        uint64_t latest_end_block_height = i + 399;
+        std::multimap<uint64_t, mbus::chain_behind_event_address> chain_behind_address_map{};
+        auto ret = peerset.get_peer_height_info_map(self_address, table_address, latest_start_block_height,
+                                                   latest_end_block_height, chain_behind_address_map);
+        ASSERT_EQ(ret, true);
+        ASSERT_EQ(chain_behind_address_map.size(), (limit-i)); 
+    }
+}
+

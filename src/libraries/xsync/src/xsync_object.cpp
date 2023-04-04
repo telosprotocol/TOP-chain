@@ -28,7 +28,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
     m_role_chains_mgr(top::make_unique<sync::xrole_chains_mgr_t>(m_instance)),
     m_role_xips_mgr(top::make_unique<sync::xrole_xips_manager_t>(m_instance)),
     m_sync_sender(top::make_unique<sync::xsync_sender_t>(m_instance, vhost, m_role_xips_mgr.get(), m_sync_store.get(), m_session_mgr.get())),
-    m_sync_ratelimit(top::make_unique<sync::xsync_ratelimit_t>(sync_thread, (uint32_t)100)),
+    m_sync_ratelimit(top::make_unique<sync::xsync_ratelimit_t>(sync_thread, (uint32_t)200)),
     m_peerset(top::make_unique<sync::xsync_peerset_t>(m_instance)),
     m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get(), m_role_chains_mgr.get(), m_sync_store.get())),
     m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), make_observer(cert_ptr), m_role_xips_mgr.get(), m_role_chains_mgr.get(),
@@ -81,6 +81,7 @@ class xsync_progress_t {
 public:
     uint64_t cur_height;
     uint64_t max_height;
+    uint64_t peer_max_height;
     float rate;
 };
 
@@ -91,7 +92,7 @@ static void dump_chains(std::string &result, const std::map<uint32_t, xsync_prog
         result += "\t\t";
         result += std::to_string(it.second.cur_height);
         result += "\t\t";
-        result += std::to_string(it.second.max_height);
+        result += std::to_string(it.second.peer_max_height);
         result += "\t\t";
 
         char tmp[100] = {0};
@@ -207,16 +208,20 @@ std::string xtop_sync_object::status() const {
                 xsync_progress_t info;
                 info.cur_height = m_sync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)i);
                 info.max_height = latest_block->get_height();
+                info.peer_max_height = info.max_height;
+                uint64_t peer_start_height = 0;
+                common::xnode_address_t peer_addr;
+                m_peerset->get_newest_peer(self_addr, address, peer_start_height, info.peer_max_height, peer_addr);
 
-                if (info.max_height == 0) {
+                if (info.peer_max_height == 0) {
                     info.rate = 100;
                 } else {
-                    info.rate = (double)info.cur_height*100/(double)info.max_height;
+                    info.rate = (double)info.cur_height*100/(double)info.peer_max_height;
                 }
 
                 tables_progress[get_table_type(_account.table_address())].insert(std::make_pair(table_id, info));
                 table_display[get_table_type(_account.table_address())].total_cur_height += info.cur_height;
-                table_display[get_table_type(_account.table_address())].total_max_height += info.max_height;
+                table_display[get_table_type(_account.table_address())].total_max_height += info.peer_max_height;
             }
         }
         for (auto it : table_display) {
@@ -259,7 +264,7 @@ std::string xtop_sync_object::status() const {
             if (it.second.empty())
                 continue;
 
-            result += get_title(it.first) + " chains\t\t\t\t\t\t\t";
+            result += get_title(it.first) + " chains\t\t\t\t\t\t";
 
             if (table_display[it.first].total_max_height == 0) {
                 result += "100.00%";

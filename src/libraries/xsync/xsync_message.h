@@ -157,33 +157,7 @@ public:
         return CALC_LEN();
     }
 };
-class xsync_query_height_t : public top::basic::xserialize_face_t {
-public:
-    std::string address;
 
-    xsync_query_height_t() {
-    }
-
-    xsync_query_height_t(const xsync_query_height_t &other) {
-        address = other.address;
-    }
-
-    virtual ~xsync_query_height_t() {
-
-    }
-
-    virtual int32_t do_write(base::xstream_t & stream) {
-        KEEP_SIZE();
-        SERIALIZE_FIELD_BT(address);
-        return CALC_LEN();
-    }
-
-    virtual int32_t do_read(base::xstream_t & stream) {
-        KEEP_SIZE();
-        DESERIALIZE_FIELD_BT(address);
-        return CALC_LEN();
-    }
-};
 struct xsync_message_chain_state_info_t : public top::basic::xserialize_face_t {
 protected:
     virtual ~xsync_message_chain_state_info_t() {}
@@ -272,52 +246,6 @@ public:
     }
 };
 
-struct xsync_message_get_blocks_by_hashes_t : public top::basic::xserialize_face_t {
-protected:
-    virtual ~xsync_message_get_blocks_by_hashes_t() {}
-public:
-    xsync_message_get_blocks_by_hashes_t() {}
-
-    xsync_message_get_blocks_by_hashes_t(
-            const std::vector<xblock_hash_t> &_info_list):
-    info_list(_info_list) {
-    }
-
-protected:
-    int32_t do_write(base::xstream_t & stream) override {
-        KEEP_SIZE();
-
-        SERIALIZE_CONTAINER(info_list) {
-            item.serialize_to(stream);
-        }
-
-        return CALC_LEN();
-    }
-
-    int32_t do_read(base::xstream_t & stream) override {
-
-        try {
-
-            KEEP_SIZE();
-
-            DESERIALIZE_CONTAINER(info_list) {
-
-                xblock_hash_t info;
-                info.serialize_from(stream);
-                info_list.push_back(info);
-            }
-
-            return CALC_LEN();
-        } catch (...) {
-            info_list.clear();
-        }
-
-        return 0;
-    }
-
-public:
-    std::vector<xblock_hash_t> info_list;
-};
 
 class xsync_msg_t : public top::basic::xserialize_face_t {
 public:

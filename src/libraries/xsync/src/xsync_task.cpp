@@ -56,8 +56,9 @@ xsync_command_execute_result xsync_task_t::execute(xsync_command_t<xchain_downlo
     return result;
 }
 
-void xsync_task_t::stop(){
+void xsync_task_t::stop() {
     m_finished = true;
+    m_downloader->destroy();
     return;
 }
 

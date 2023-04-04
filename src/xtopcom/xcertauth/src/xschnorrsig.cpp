@@ -194,7 +194,7 @@ namespace top
                 xnodebitset  & nodebits = aggregated_sig_obj.get_nodebitset();
                 if(aggregated_sig_obj.get_mutisig_token() != auth_mutisign_token)
                 {
-                    xerror("xschnorrsig_t::verify_muti_sign,fail-token(%" PRIx64 ") != auth-token(%" PRIx64 ") ",aggregated_sig_obj.get_mutisig_token(),auth_mutisign_token);
+                    xwarn("xschnorrsig_t::verify_muti_sign,fail-token(%" PRIx64 ") != auth-token(%" PRIx64 ") ",aggregated_sig_obj.get_mutisig_token(),auth_mutisign_token);
                     return false;
                 }
                 if(nodebits.get_alloc_bits() != (int) group.get_size()) //must be same
