@@ -691,6 +691,9 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
 }
 
 void xstatestore_impl_t::clear_cache(common::xtable_address_t const & table_address) {
+    if (table_address.vaccount().get_zone_index() == base::enum_chain_zone_evm_index) {
+        return; // TODO(jimmy) not clear evm cache for performance
+    }
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
     if (nullptr != tablestore) {
         tablestore->clear_cache();
