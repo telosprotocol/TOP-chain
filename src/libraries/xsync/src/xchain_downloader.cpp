@@ -201,6 +201,8 @@ void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blo
 void xchain_downloader_t::on_behind(enum_chain_sync_policy sync_policy, std::multimap<uint64_t, mbus::chain_behind_event_address> &chain_behind_info_map, const std::string &reason) {
 
     if(!m_chain_objects[sync_policy].chain_behind_info_empty()) {
+        xsync_dbg("chain_downloader on_behind expect sync policy %d, chain is %s, reason:%s empty() %d",
+                sync_policy, m_address.c_str(), reason.c_str(), m_chain_objects[sync_policy].chain_behind_info_empty());
         return ;
     }
     //check wait rec/zec data
@@ -287,12 +289,13 @@ xsync_command_execute_result xchain_downloader_t::send_request(int64_t now) {
     XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
     m_request->send_time = now;
     int64_t queue_cost = m_request->send_time - m_request->create_time;
-    xsync_info("chain_downloader send sync request(block). %s,range[%lu,%lu] get_token_cost(%ldms) %s",
+    xsync_info("chain_downloader send sync request(block). %s,range[%lu,%lu] get_token_cost(%ldms) %s sync_type %d",
             m_request->owner.c_str(),
             m_request->start_height,
             m_request->start_height + m_request->count - 1,
             queue_cost,
-            m_request->target_addr.to_string().c_str());
+            m_request->target_addr.to_string().c_str(),
+            m_current_object_index);
     if(m_sync_sender->send_get_blocks(m_request->owner, m_request->start_height, m_request->count, m_request->self_addr, m_request->target_addr)){
         return wait_response;
     } 
@@ -557,8 +560,11 @@ void xchain_downloader_t::execute_result_process(xsync_command_execute_result re
     }
 
     if (m_continuous_times >= CONTINUOUS_TIMEOUT_COUNT) {
-         m_chain_objects[m_current_object_index].delete_invalid_behind_address();
+        m_chain_objects[m_current_object_index].delete_invalid_behind_address();
         m_continuous_times = 0;
+        if (m_chain_objects[m_current_object_index].chain_behind_info_empty()) {
+            m_task.stop();
+        }
     }
 }
 
@@ -631,7 +637,6 @@ uint64_t xchain_object_t::picked_height() {
 }
 
 void xchain_object_t::clear() {
-    m_start_height = 0;
     m_end_height = 0;
     m_chain_behind_info_map.clear();
 }
@@ -658,7 +663,9 @@ bool xchain_object_t::check_and_fix_behind_height(int64_t now, xsync_store_face_
         if ((m_regular_time == 0) || ((now - m_regular_time) > INCREASE_WAIT_DATA_TIMEOUT)) {
             m_regular_time = now;
             m_connect_height = xsync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)sync_type); // m_connect_height is commit + 2
-
+            xdbg("check_and_fix_behind_height fix height account is %s, current %llu reset  to new height %llu, sync_type %d",
+             address.c_str(), m_current_height, m_connect_height, sync_type);
+          
             // check lost block
             if (m_connect_height < 2) { // 0, 1
                 m_current_height = m_connect_height + 1;

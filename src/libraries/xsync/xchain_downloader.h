@@ -98,7 +98,6 @@ class xchain_object_t {
     private:
         uint64_t m_picked_height{0};
         uint64_t m_current_height{1};
-        uint64_t m_start_height{0};
         uint64_t m_end_height{0};
         uint64_t m_connect_height{1};
         int64_t  m_regular_time{0};

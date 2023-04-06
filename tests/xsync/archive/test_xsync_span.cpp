@@ -22,7 +22,7 @@ using namespace top::data;
 using namespace top::mock;
 
 #define MAX_BLOCK_TEST (1500)
-#if 0
+
 class test_xsync_span : public testing::Test {
 public:
     void SetUp() override
@@ -280,12 +280,20 @@ TEST_F(test_xsync_span, test_xsync_cp_reflash_lost_BENCH)
 
     for (auto height : m_height_set) {
         chain_spans_new->set(height);
-        cp_object.set_object_t(height, height + 1, self_addr, target_addr);
         cp_object.set_height(height);
     }
+
     uint64_t cp_lost_height = sync_store.get_latest_end_block_height(address, (enum_chain_sync_policy)2);
     ASSERT_EQ(8, cp_lost_height);
- 
+    
+    std::multimap<uint64_t, mbus::chain_behind_event_address> chain_behind_address_map{};
+    mbus::chain_behind_event_address chain_behind_address_info;
+    chain_behind_address_info.self_addr = self_addr;
+    chain_behind_address_info.from_addr = target_addr;
+    chain_behind_address_info.start_height = 0;
+    chain_behind_address_map.insert(std::make_pair( MAX_BLOCK_TEST + 10, chain_behind_address_info));
+    cp_object.set_object_t(chain_behind_address_map);
+
     // first record
     int64_t now = 200000;
     cp_object.check_and_fix_behind_height(now, &sync_store, 2, address);
@@ -312,9 +320,16 @@ TEST_F(test_xsync_span, test_xsync_or_cp_reflash_disconnect_BENCH)
 
     for (auto height : m_height_set) {
         chain_spans_new->set(height);
-        cp_object.set_object_t(height, height + 1, self_addr, target_addr);
         cp_object.set_height(height);
     }
+
+    std::multimap<uint64_t, mbus::chain_behind_event_address> chain_behind_address_map{};
+    mbus::chain_behind_event_address chain_behind_address_info;
+    chain_behind_address_info.self_addr = self_addr;
+    chain_behind_address_info.from_addr = target_addr;
+    chain_behind_address_info.start_height = 0;
+    chain_behind_address_map.insert(std::make_pair(MAX_BLOCK_TEST + 10, chain_behind_address_info));
+    cp_object.set_object_t(chain_behind_address_map);
 
     uint64_t cp_disconnect_height = sync_store.get_latest_end_block_height(address, (enum_chain_sync_policy)2);
     ASSERT_EQ(MAX_BLOCK_TEST + 1, cp_disconnect_height);
@@ -325,4 +340,4 @@ TEST_F(test_xsync_span, test_xsync_or_cp_reflash_disconnect_BENCH)
     cp_object.pick(interval, self_addr, target_addr);
     ASSERT_EQ(MAX_BLOCK_TEST, interval.first);
 }
-#endif 
+
