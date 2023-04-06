@@ -2942,7 +2942,18 @@ namespace top
         const std::string & xvblock_t::get_vote_extend_data() const {
             return m_vote_extend_data;
         }
-        
+
+        void xvblock_t::set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer) {
+            xauto_lock<xspinlock_t> locker(m_spin_lock);
+            m_excontainer = excontainer;
+        }
+        std::shared_ptr<xvblock_excontainer_base> xvblock_t::get_excontainer() const {
+            std::shared_ptr<xvblock_excontainer_base> out_ptr;
+            xauto_lock<xspinlock_t> locker(m_spin_lock);
+            out_ptr = m_excontainer;
+            return out_ptr;
+        }
+
         void xvblock_t::register_object(xcontext_t & _context)
         {
             static int32_t static_registered_block_flag = 0;
