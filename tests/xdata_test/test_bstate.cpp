@@ -265,15 +265,15 @@ TEST_F(test_bstate, bstate_size_BENCH) {
     xobject_ptr_t<base::xvbstate_t> bstate1 = make_object_ptr<base::xvbstate_t>(*unit1);
     data::xunitstate_ptr_t unitstate1 = std::make_shared<data::xunit_bstate_t>(bstate1.get(), bstate1.get());
 
-    std::string prop_name = "@1111";
+    std::string prop_name = "@11";
     unitstate1->map_create(prop_name);
-    uint32_t count = 100000; // TODO(jimmy) 10000000
+    uint32_t count = 10000000; // TODO(jimmy) 10000000
     for (uint32_t i = 0; i < count; i++) {
         utl::xecprikey_t prikey;
         utl::xecpubkey_t pubkey = prikey.get_public_key();
         std::string addr = base::xstring_utl::to_hex(pubkey.to_raw_eth_address());
-        std::string value = std::to_string(i);
-        unitstate1->map_set(prop_name, addr, value);
+        std::string value = addr;
+        unitstate1->map_set(prop_name, addr, addr);
         // std::cout << "map_set:" << addr << std::endl;
 
         if (i % 100000 == 0) {
@@ -284,9 +284,31 @@ TEST_F(test_bstate, bstate_size_BENCH) {
                 std::cout << "fail test count:" << count << ",state_bin:" << state_bin.size() << std::endl;
                 xassert(false);
                 break;
-            } else {
-                std::cout << "succ test count:" << count << ",state_bin:" << state_bin.size() << std::endl;
             }
+            
+            std::string state_bin2;
+            state_ptr->serialize_to_string(state_bin2);
+            if (state_bin != state_bin2) {
+                std::cout << "fail test count:" << count << ",state_bin:" << state_bin.size() << ",state_bin2:" << state_bin2.size() << std::endl;
+                xassert(false);
+                break;
+            }
+            
+            std::cout << "succ test count:" << count << ",state_bin:" << state_bin.size() << std::endl;
         }
+    }
+}
+
+TEST_F(test_bstate, bstate_create_BENCH) {
+    std::string file_content;
+    base::xfile_utl::read_file("/home/xu/test/dump", file_content);
+
+    std::cout << "file_content " << file_content.size() << std::endl;
+    base::xauto_ptr<base::xvbstate_t> state_ptr = base::xvblock_t::create_state_object(file_content);
+    if (nullptr == state_ptr) {
+        std::cout << "fail" << std::endl;
+        xassert(false);
+    } else {
+        std::cout << "succ" << std::endl;
     }
 }

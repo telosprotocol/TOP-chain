@@ -283,13 +283,14 @@ void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
         }
         stream << nodes_bytes;
         stream << units_bytes;
-        stream << rand();
-        xinfo("xtop_state_sync::assign_trie_tasks total %zu, %zu, {%s}", nodes_bytes.size(), units_bytes.size(), symbol().c_str());
+        stream << rand();        
         req.peer = send_message(peers, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_trie_request);
         req.start = base::xtime_utl::time_now_ms();
         req.id = m_req_sequence_id++;
         req.type = state_req_type::enum_state_req_trie;
         m_track_func(req);
+        xinfo("xtop_state_sync::assign_trie_tasks %s,id=%u, total %zu, %zu", symbol().c_str(), req.id, nodes_bytes.size(), units_bytes.size());
+
         m_req_nums++;
         if (m_req_nums >= m_max_req_nums) {
             return;
@@ -390,7 +391,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
     m_req_nums--;
     std::error_code ec_internal;
     for (auto const & blob : req.nodes_response) {
-        xinfo("xtop_state_sync::process_trie node id: %u, blob: %s, {%s}", req.id, to_hex(blob).c_str(), symbol().c_str());
+        xdbg_info("xtop_state_sync::process_trie node id: %u, blob: %s, {%s}", req.id, to_hex(blob).c_str(), symbol().c_str());
         auto hash = process_node_data(blob, ec_internal);
         if (ec_internal) {
             if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
@@ -437,7 +438,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
 
                 state_mpt::xaccount_info_t info;
                 info.decode({iter->second.begin(), iter->second.end()});
-                xinfo("xtop_state_sync::process_trie unit %s id: %u, blob size: %zu,version:%d {%s}", symbol().c_str(), req.id, blob.size(), info.index.get_version());
+                xdbg_info("xtop_state_sync::process_trie unit %s id: %u, blob size: %zu,version:%d", symbol().c_str(), req.id, blob.size(), info.index.get_version());
                 auto hash = process_unit_data(blob, (uint8_t)info.index.get_version(), ec_internal);
                 if (ec_internal) {
                     if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
@@ -463,7 +464,8 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
         }
     }
 
-    xinfo("xtop_state_sync::process_trie finish %s,req.trie_tasks=%zu,req.unit_tasks=%zu,m_trie_tasks=%zu,m_unit_tasks=%zu", symbol().c_str(),req.trie_tasks.size(),req.unit_tasks.size(),m_trie_tasks.size(),m_unit_tasks.size());
+    xinfo("xtop_state_sync::process_trie finish %s,id=%u,nodes_response=%zu,units_response=%zu,trie_tasks=%zu,unit_tasks=%zu,m_trie_tasks=%zu,m_unit_tasks=%zu", 
+        symbol().c_str(),req.id,req.nodes_response.size(),req.units_response.size(),req.trie_tasks.size(),req.unit_tasks.size(),m_trie_tasks.size(),m_unit_tasks.size());
     // retry queue
     for (auto & pair : req.trie_tasks) {
         m_trie_tasks.insert(pair);
