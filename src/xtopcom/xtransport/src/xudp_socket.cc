@@ -436,14 +436,14 @@ int XudpSocket::SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_
     if (iter == xudp_client_map.end()) {
         if ((ret = CheckRatelimitMap(to_addr)) != enum_xcode_successful) {
             TOP_ERROR("reach xudp connection rate limit, drop this packet:%s,ret:%d", to_addr.c_str(), ret);
-            return kTransportSuccess;
+            return kTransportFailed;
         }
         TOP_DEBUG("not find:%s, size:%d", to_addr.c_str(), packet.get_body().size());
         //        peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(enum_socket_type_xudp);
         std::string node_sign;
         if (GetSign(node_sign) != enum_xcode_successful) {
             TOP_ERROR("get sign failed.");
-            return kTransportSuccess;
+            return kTransportFailed;
         }
         TOP_DEBUG("xudp first connect %s:%u", packet.get_to_ip_addr().c_str(), packet.get_to_ip_port());
         peer_xudp_socket = (xp2pudp_t *)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION, enum_socket_type_xudp);
@@ -472,12 +472,12 @@ int XudpSocket::SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_
 
             if ((ret = CheckRatelimitMap(to_addr)) != enum_xcode_successful) {
                 TOP_ERROR("reach xudp connection rate limit2, drop this packet:%s, ret:%d", to_addr.c_str(), ret);
-                return kTransportSuccess;
+                return kTransportFailed;
             }
             std::string node_sign;
             if (GetSign(node_sign) != enum_xcode_successful) {
                 TOP_ERROR("get sign failed.");
-                return kTransportSuccess;
+                return kTransportFailed;
             }
             TOP_DEBUG("xudp reconnect %s:%u", packet.get_to_ip_addr().c_str(), packet.get_to_ip_port());
             peer_xudp_socket = (xp2pudp_t *)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION, enum_socket_type_xudp);
