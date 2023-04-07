@@ -81,6 +81,7 @@ class xsync_progress_t {
 public:
     uint64_t cur_height;
     uint64_t max_height;
+    uint64_t peer_max_height;
     float rate;
 };
 
@@ -92,6 +93,8 @@ static void dump_chains(std::string &result, const std::map<uint32_t, xsync_prog
         result += std::to_string(it.second.cur_height);
         result += "\t\t";
         result += std::to_string(it.second.max_height);
+        result += "\t\t";
+        result += std::to_string(it.second.peer_max_height);
         result += "\t\t";
 
         char tmp[100] = {0};
@@ -207,7 +210,11 @@ std::string xtop_sync_object::status() const {
                 xsync_progress_t info;
                 info.cur_height = m_sync_store->get_latest_end_block_height(address, (enum_chain_sync_policy)i);
                 info.max_height = latest_block->get_height();
-
+                info.peer_max_height = info.max_height;
+                uint64_t peer_start_height = 0;
+                common::xnode_address_t peer_addr;
+                m_peerset->get_newest_peer(self_addr, address, peer_start_height, info.peer_max_height, peer_addr);
+  
                 if (info.max_height == 0) {
                     info.rate = 100;
                 } else {
@@ -253,13 +260,14 @@ std::string xtop_sync_object::status() const {
         result += "\t\t\t";
         result += "index\t\t";
         result += "cur_height\t";
-        result += "max_height\n";
+        result += "max_height\t";
+        result += "peer_max_height\n";
 
         for (auto const &it:tables_progress) {
             if (it.second.empty())
                 continue;
 
-            result += get_title(it.first) + " chains\t\t\t\t\t\t\t";
+            result += get_title(it.first) + " chains\t\t\t\t\t\t\t\t";
 
             if (table_display[it.first].total_max_height == 0) {
                 result += "100.00%";
