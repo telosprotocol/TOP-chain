@@ -114,7 +114,7 @@ private:
 
 class xsend_tx_queue_t {
 public:
-    xsend_tx_queue_t(xtxpool_table_info_t * xtable_info) : m_send_tx_queue_internal(xtable_info) {
+    xsend_tx_queue_t(xtxpool_table_info_t * xtable_info, xtxpool_resources_face * para) : m_send_tx_queue_internal(xtable_info), m_para(para) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t max_num, base::xvblock_t * cert_block, uint32_t & expired_num, uint32_t & unconituous_num) const;
@@ -130,6 +130,7 @@ public:
 private:
     xsend_tx_queue_internal_t m_send_tx_queue_internal;
     std::map<std::string, std::shared_ptr<xsend_tx_account_t>> m_send_tx_accounts;
+    xtxpool_resources_face * m_para;
 };
 
 }  // namespace xtxpool_v2

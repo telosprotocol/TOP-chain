@@ -17,8 +17,6 @@
 namespace top {
 namespace xtxpool_v2 {
 
-#define xtxpool_zone_type_max (6)
-
 struct xtable {
     xtable() {}
     xtable(const xtable & table) {
