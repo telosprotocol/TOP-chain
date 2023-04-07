@@ -245,8 +245,8 @@ bool xsync_peerset_t::get_peer_height_info_map(const vnetwork::xvnode_address_t&
 #ifdef DEBUG
         int32_t index = 0;
         for(auto chain_behind_info: chain_behind_address_map) {
-            xsync_dbg("index %dchain_behind_address_map end_height %llu start_height %llu self_address %s peer_address %s", 
-            index,chain_behind_info.first, chain_behind_info.second.start_height, 
+            xsync_dbg("index %d address %s chain_behind_address_map end_height %llu start_height %llu self_address %s peer_address %s", 
+            index, address.c_str(), chain_behind_info.first, chain_behind_info.second.start_height, 
             chain_behind_info.second.self_addr.to_string().c_str(), chain_behind_info.second.from_addr.to_string().c_str());
             index++;
         }

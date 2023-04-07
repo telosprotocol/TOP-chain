@@ -552,9 +552,11 @@ void xchain_downloader_t::execute_result_process(xsync_command_execute_result re
         for (uint32_t i = 0; i < enum_chain_sync_policy_max; i++) {
             m_chain_objects[i].clear();
         }
+        xsync_info("execute_result_process: address %s wait data, clear map", m_address.c_str());
     } else if (invalid_node == result) {
         m_chain_objects[m_current_object_index].delete_invalid_behind_address();
         m_continuous_times = 0;
+        xsync_warn("execute_result_process: address %s invalid_node, dele node info", m_address.c_str());
     } else {
         m_continuous_times++;
     }

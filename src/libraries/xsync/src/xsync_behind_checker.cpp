@@ -89,9 +89,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
     std::multimap<uint64_t, mbus::chain_behind_event_address> chain_behind_address_map{};
 
     if (m_peerset->get_peer_height_info_map(self_addr, address, latest_start_block_height, latest_end_block_height, chain_behind_address_map)) {
-        xsync_dbg("xsync_behind_checker_t::check_one, sync_policy %d,%llu,%llu, map_size:%u", sync_policy, latest_start_block_height, 
-                latest_end_block_height, chain_behind_address_map.size());
-       
+        
        if ((m_counter % 120) == 0) {
             std::string sync_mode;
             std::string gap_metric_tag_name;
@@ -125,9 +123,9 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
         }
         
         xsync_info("behind_checker notify %s, local(start_height=%lu,end_height=%lu) peer(start_height=%lu, " \
-                  "end_height=%lu) sync_policy(%d) reason=%s ", 
+                  "end_height=%lu) sync_policy(%d) node_map_size %u reason=%s ", 
                   address.c_str(), latest_start_block_height, latest_end_block_height, chain_behind_address_map.crbegin()->second.start_height, 
-                  chain_behind_address_map.crbegin()->first, (int32_t)sync_policy, reason.c_str());
+                  chain_behind_address_map.crbegin()->first, chain_behind_address_map.size(), (int32_t)sync_policy, reason.c_str());
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, sync_policy, chain_behind_address_map, reason);
         m_downloader->push_event(ev);
         return;
