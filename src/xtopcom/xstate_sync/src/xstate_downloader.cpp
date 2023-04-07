@@ -225,10 +225,13 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
     std::vector<xbytes_t> nodes_values;
     std::vector<xbytes_t> units_hashes;
     std::vector<xbytes_t> units_values;
+    uint64_t height;
     stream >> table;
+    stream >> height;
     stream >> id;
     stream >> nodes_hashes;
     stream >> units_hashes;
+    std::string symbol = "statesync,table:" + table + ",height:" + std::to_string(height);
     auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, common::xtable_address_t::build_from(xstring_view_t{table.data(), table.size()}));
     auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db, 10000);
     for (auto const & hash : nodes_hashes) {
@@ -238,13 +241,13 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
             xwarn("xtop_state_downloader::process_trie_request node request error: %s %s, table: %s, id: %u, hash %s, data: %s",
                   ec.category().name(),
                   ec.message().c_str(),
-                  table.c_str(),
+                  symbol.c_str(),
                   id,
                   to_hex(hash).c_str(),
                   to_hex(v).c_str());
             continue;
         }
-        xinfo("xtop_state_downloader::process_trie_request node request, table: %s, id: %u, hash: %s, data: %s", table.c_str(), id, to_hex(hash).c_str(), to_hex(v).c_str());
+        xinfo("xtop_state_downloader::process_trie_request node request, table: %s, id: %u, hash: %s, data: %s", symbol.c_str(), id, to_hex(hash).c_str(), to_hex(v).c_str());
         nodes_values.push_back(v);
     }
     for (auto const & hash : units_hashes) {
@@ -256,17 +259,17 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
         auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(info.account, info.index);
         if (unitstate == nullptr) {
             units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()}); // push empty result for compare
-            xwarn("xtop_state_downloader::process_trie_request unit request not found, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
+            xwarn("xtop_state_downloader::process_trie_request unit request not found, table: %s, id: %u, hash: %s", symbol.c_str(), id, to_hex(hash).c_str());
             continue;
         }
         
         unitstate->get_bstate()->serialize_to_string(unit_state_str);
         if (unit_state_str.empty()) {
             units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()}); // push empty result for compare
-            xerror("xtop_state_downloader::process_trie_request empty unit state, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
+            xerror("xtop_state_downloader::process_trie_request empty unit state, table: %s, id: %u, hash: %s", symbol.c_str(), id, to_hex(hash).c_str());
             continue;
         }
-        xinfo("xtop_state_downloader::process_trie_request unit request, table: %s, id: %u, hash: %s, data size: %zu", table.c_str(), id, to_hex(hash).c_str(), unit_state_str.size());
+        xinfo("xtop_state_downloader::process_trie_request unit request, table: %s, id: %u, hash: %s, data size: %zu", symbol.c_str(), id, to_hex(hash).c_str(), unit_state_str.size());
         units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()});
     }
     base::xstream_t stream_back{top::base::xcontext_t::instance()};
@@ -281,13 +284,13 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
         xwarn("xtop_state_downloader::process_trie_request network error %s %s, table: %s, id: %u, %s->%s",
               ec.category().name(),
               ec.message().c_str(),
-              table.c_str(),
+              symbol.c_str(),
               id,
               network->address().to_string().c_str(),
               sender.to_string().c_str());
         return;
     }
-    xinfo("xtop_state_downloader::process_trie_request success table: %s, id: %u, size: %zu, %zu", table.c_str(), id, nodes_values.size(), units_values.size());
+    xinfo("xtop_state_downloader::process_trie_request success table: %s, id: %u, size: %zu, %zu", symbol.c_str(), id, nodes_values.size(), units_values.size());
 }
 
 void xtop_state_downloader::process_trie_response(const vnetwork::xmessage_t & message) const {

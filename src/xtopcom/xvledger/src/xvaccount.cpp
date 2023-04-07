@@ -650,11 +650,11 @@ namespace top
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _highest_saved_block_height = 0;
-            #ifdef DEBUG
+            // #ifdef DEBUG
             m_account_address = _account.get_address();
-            #else
-            m_account_address = _account.get_xvid_str();
-            #endif
+            // #else
+            // m_account_address = _account.get_xvid_str();
+            // #endif
 
             //XTODO,remove below assert when related xbase checked in main-branch
             xassert(__XBASE_MAIN_VERSION_CODE__ >= 1);

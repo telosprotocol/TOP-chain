@@ -9,6 +9,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xbase/xmem.h"
 #include "xbasic/xhex.h"
+#include "xcrypto/xckey.h"
 
 using namespace top;
 using namespace top::base;
@@ -255,4 +256,37 @@ TEST_F(test_bstate, state_reset_4) {
     ASSERT_EQ(unitstate1_clone2->balance(), 10000);
     ASSERT_EQ("", unitstate1_clone2->string_get("@1"));
     ASSERT_EQ("aaa", unitstate1_clone->string_get("@1"));
+}
+
+TEST_F(test_bstate, bstate_size_BENCH) {
+    std::string account = "T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30";    
+    base::xauto_ptr<base::xvblock_t> unit1 = data::xblocktool_t::create_genesis_lightunit(account, 10000);
+
+    xobject_ptr_t<base::xvbstate_t> bstate1 = make_object_ptr<base::xvbstate_t>(*unit1);
+    data::xunitstate_ptr_t unitstate1 = std::make_shared<data::xunit_bstate_t>(bstate1.get(), bstate1.get());
+
+    std::string prop_name = "@1111";
+    unitstate1->map_create(prop_name);
+    uint32_t count = 100000; // TODO(jimmy) 10000000
+    for (uint32_t i = 0; i < count; i++) {
+        utl::xecprikey_t prikey;
+        utl::xecpubkey_t pubkey = prikey.get_public_key();
+        std::string addr = base::xstring_utl::to_hex(pubkey.to_raw_eth_address());
+        std::string value = std::to_string(i);
+        unitstate1->map_set(prop_name, addr, value);
+        // std::cout << "map_set:" << addr << std::endl;
+
+        if (i % 100000 == 0) {
+            std::string state_bin;
+            unitstate1->get_bstate()->serialize_to_string(state_bin);
+            base::xauto_ptr<base::xvbstate_t> state_ptr = base::xvblock_t::create_state_object(state_bin);
+            if (nullptr == state_ptr) {
+                std::cout << "fail test count:" << count << ",state_bin:" << state_bin.size() << std::endl;
+                xassert(false);
+                break;
+            } else {
+                std::cout << "succ test count:" << count << ",state_bin:" << state_bin.size() << std::endl;
+            }
+        }
+    }
 }
