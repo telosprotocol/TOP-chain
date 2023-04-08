@@ -49,7 +49,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_table_block_hash = block_hash;
     sync->m_table_state_hash = state_hash;
     sync->m_root = root_hash;
-    sync->m_symbol = "statesync,table:" + table.to_string() + ",height:" + std::to_string(height);// TODO(jimmy) + ",root:" + root_hash.hex();
+    sync->m_symbol = "statesync:" + table.to_string() + ",height:" + std::to_string(height);// TODO(jimmy) + ",root:" + root_hash.hex();
     sync->m_peers_func = peers;
     sync->m_track_func = track_req;
     sync->m_db = db;
@@ -161,7 +161,7 @@ void xtop_state_sync::sync_trie(std::error_code & ec) {
         return;
     }
 
-    xinfo("xtop_state_sync::sync_trie {%s}", symbol().c_str());
+    xinfo("xtop_state_sync::sync_trie enter {%s}", symbol().c_str());
     auto condition = [this]() -> bool { return (m_sched->Pending() > 0); };
     auto add_task = [this](sync_peers const & peers) { return assign_trie_tasks(peers); };
     auto process_task = [this](state_req & req, std::error_code & ec) { return process_trie(req, ec); };
@@ -170,8 +170,9 @@ void xtop_state_sync::sync_trie(std::error_code & ec) {
         xwarn("xtop_state_sync::sync_trie loop error: %s %s, exit, {%s}", ec.category().name(), ec.message().c_str(), symbol().c_str());
         return;
     }
-
+    xinfo("xtop_state_sync::sync_trie after loop {%s}", symbol().c_str());
     m_sched->Commit(m_kv_db);
+    xinfo("xtop_state_sync::sync_trie after commit {%s}", symbol().c_str());
     return;
 }
 
@@ -289,7 +290,7 @@ void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
         req.id = m_req_sequence_id++;
         req.type = state_req_type::enum_state_req_trie;
         m_track_func(req);
-        xinfo("xtop_state_sync::assign_trie_tasks %s,id=%u, total %zu, %zu", symbol().c_str(), req.id, nodes_bytes.size(), units_bytes.size());
+        xinfo("xtop_state_sync::assign_trie_tasks %s,id:%u, total %zu, %zu", symbol().c_str(), req.id, nodes_bytes.size(), units_bytes.size());
 
         m_req_nums++;
         if (m_req_nums >= m_max_req_nums) {
@@ -390,17 +391,21 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
     }
     m_req_nums--;
     std::error_code ec_internal;
+
+    xinfo("xtop_state_sync::process_trie enter %s,id:%u,nodes_response=%zu,units_response=%zu,trie_tasks=%zu,unit_tasks=%zu,m_trie_tasks=%zu,m_unit_tasks=%zu", 
+            symbol().c_str(),req.id,req.nodes_response.size(),req.units_response.size(),req.trie_tasks.size(),req.unit_tasks.size(),m_trie_tasks.size(),m_unit_tasks.size());
+
     for (auto const & blob : req.nodes_response) {
-        xdbg_info("xtop_state_sync::process_trie node id: %u, blob: %s, {%s}", req.id, to_hex(blob).c_str(), symbol().c_str());
+        xdbg_info("xtop_state_sync::process_trie node %s,id:%u,", symbol().c_str(), req.id);//to_hex(blob).c_str()
         auto hash = process_node_data(blob, ec_internal);
         if (ec_internal) {
             if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
                 ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
-                xwarn("xtop_state_sync::process_trie invalid state node: %s %s, %s %s", symbol().c_str(), hash.hex().c_str(), ec.category().name(), ec.message().c_str());
+                xwarn("xtop_state_sync::process_trie invalid state node: %s,id:%u, %s, %s %s", symbol().c_str(), req.id, hash.hex().c_str(), ec.category().name(), ec.message().c_str());
                 ec = ec_internal;
                 return;
             } else {
-                xwarn("xtop_state_sync::process_trie process_node_data abnormal: %s %s, %s %s", symbol().c_str(), hash.hex().c_str(), ec_internal.category().name(), ec_internal.message().c_str());
+                xwarn("xtop_state_sync::process_trie process_node_data abnormal: %s,id:%u, %s, %s %s", symbol().c_str(), req.id, hash.hex().c_str(), ec_internal.category().name(), ec_internal.message().c_str());
             }
         }
         req.trie_tasks.erase(hash);
@@ -424,36 +429,36 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
 
     if (!req.units_response.empty()) {
         if (req.unit_tasks.size() != req.units_response.size()) { // it may happen for old version node
-            xwarn("xtop_state_sync::process_trie unit size unequal %s id:%u, unit_tasks size %zu units_response %zu", symbol().c_str(), req.id, req.unit_tasks.size(), req.units_response.size());
+            xwarn("xtop_state_sync::process_trie unit size unequal %s,id:%u,unit_tasks size %zu units_response %zu", symbol().c_str(), req.id, req.unit_tasks.size(), req.units_response.size());
         } else {
             size_t i = 0;
             for (auto iter = req.unit_tasks.begin(); iter != req.unit_tasks.end();) {
                 auto const & blob = req.units_response[i];
                 i++;
                 if (blob.empty()) {
-                    xwarn("xtop_state_sync::process_trie unit state empty, %s", symbol().c_str());
+                    xwarn("xtop_state_sync::process_trie unit state empty, %s,id:%u,", symbol().c_str(),req.id);
                     ++iter;
                     continue;
                 }
 
                 state_mpt::xaccount_info_t info;
                 info.decode({iter->second.begin(), iter->second.end()});
-                xdbg_info("xtop_state_sync::process_trie unit %s id: %u, blob size: %zu,version:%d", symbol().c_str(), req.id, blob.size(), info.index.get_version());
+                xdbg_info("xtop_state_sync::process_trie unit %s,id:%u, blob size: %zu,version:%d", symbol().c_str(), req.id, blob.size(), info.index.get_version());
                 auto hash = process_unit_data(blob, (uint8_t)info.index.get_version(), ec_internal);
                 if (ec_internal) {
                     if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
                         ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
-                        xwarn("xtop_state_sync::process_trie unit invalid state node: %s %s, %s %s", symbol().c_str(), to_hex(hash).c_str(), ec.category().name(), ec.message().c_str());
+                        xwarn("xtop_state_sync::process_trie unit invalid state node: %s,id:%u,%s, %s %s", symbol().c_str(), req.id, to_hex(hash).c_str(), ec.category().name(), ec.message().c_str());
                         ec = ec_internal;
                         return;
                     }
                     xwarn(
-                        "xtop_state_sync::process_trie process_unit_data abnormal: %s %s, %s %s", symbol().c_str(), to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
+                        "xtop_state_sync::process_trie process_unit_data abnormal: %s,id:%u, %s, %s %s", symbol().c_str(), req.id, to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
                 }
                 
                 xassert(iter->first == evm_common::xh256_t(xbytes_t{info.index.get_latest_state_hash().begin(), info.index.get_latest_state_hash().end()}));
                 if (hash.empty() || hash != iter->first) {//only happen when response data invalid
-                    xwarn("xtop_state_sync::process_trie unit state hash mismatch abnormal: %s account=%s,index=%s, %s, %s", symbol().c_str(), info.account.to_string().c_str(), info.index.dump().c_str(), to_hex(hash).c_str(), to_hex(iter->first).c_str());
+                    xwarn("xtop_state_sync::process_trie unit state hash mismatch abnormal: %s,id:%u, account=%s,index=%s, %s, %s", symbol().c_str(), req.id, info.account.to_string().c_str(), info.index.dump().c_str(), to_hex(hash).c_str(), to_hex(iter->first).c_str());
                     ++iter;
                     continue;
                 }
@@ -464,7 +469,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
         }
     }
 
-    xinfo("xtop_state_sync::process_trie finish %s,id=%u,nodes_response=%zu,units_response=%zu,trie_tasks=%zu,unit_tasks=%zu,m_trie_tasks=%zu,m_unit_tasks=%zu", 
+    xinfo("xtop_state_sync::process_trie finish %s,id:%u,nodes_response=%zu,units_response=%zu,trie_tasks=%zu,unit_tasks=%zu,m_trie_tasks=%zu,m_unit_tasks=%zu", 
         symbol().c_str(),req.id,req.nodes_response.size(),req.units_response.size(),req.trie_tasks.size(),req.unit_tasks.size(),m_trie_tasks.size(),m_unit_tasks.size());
     // retry queue
     for (auto & pair : req.trie_tasks) {

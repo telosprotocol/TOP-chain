@@ -644,11 +644,17 @@ XDECLARE_CONFIGURATION(node_p2p_port, std::uint16_t, 9000);
 
 #if defined(XBUILD_CI) || defined(XBUILD_DEV)
 XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 30);
+#elif defined(XBUILD_GALILEO)
+XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 300);
+#else
+XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 1000);
+#endif
+
+#if defined(XBUILD_CI) || defined(XBUILD_DEV)
 XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 40);
 XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 60);
 XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 20);
 #else
-XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 1000);
 XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
 XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 384);
 XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 128);

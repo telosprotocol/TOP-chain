@@ -443,7 +443,7 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
         return false;
     }
 
-    uint64_t _sync_table_state_height_gap = 1;// TODO(jimmy) XGET_CONFIG(sync_table_state_height_gap);
+    uint64_t _sync_table_state_height_gap = XGET_CONFIG(sync_table_state_height_gap);
     if (latest_executed_height + _sync_table_state_height_gap < latest_full_height) {
         xwarn("xbatch_packer::check_state_sync try sync state for need state sync.block=%s,execute=%ld,need=%ld,full=%ld",cert_block->dump().c_str(), latest_executed_height, need_state_sync_height,latest_full_height);
         do_state_sync(latest_full_height);
