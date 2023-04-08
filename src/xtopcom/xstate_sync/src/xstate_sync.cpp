@@ -23,7 +23,7 @@ namespace state_sync {
 constexpr uint32_t ideal_batch_size = 100 * 1024;
 constexpr uint32_t total_fetch_num = 64;
 constexpr uint32_t unit_fetch_num = 4;
-constexpr uint32_t max_req_num = 8;
+constexpr uint32_t max_req_num = 20;
 
 xtop_state_sync::xtop_state_sync() {
     XMETRICS_COUNTER_INCREMENT("statesync_syncers", 1);
@@ -257,7 +257,7 @@ void xtop_state_sync::assign_table_tasks(const sync_peers & peers) {
 }
 
 void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
-    for (auto i = 0; i < 2; ++i) {
+    for (uint32_t i = 0; i < m_max_req_nums; ++i) {
         state_req req;
         std::vector<evm_common::xh256_t> nodes;
         std::vector<xbytes_t> units;

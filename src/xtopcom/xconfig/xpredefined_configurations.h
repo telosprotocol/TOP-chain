@@ -645,7 +645,7 @@ XDECLARE_CONFIGURATION(node_p2p_port, std::uint16_t, 9000);
 #if defined(XBUILD_CI) || defined(XBUILD_DEV)
 XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 30);
 #elif defined(XBUILD_GALILEO)
-XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 300);
+XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 100);
 #else
 XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 1000);
 #endif
