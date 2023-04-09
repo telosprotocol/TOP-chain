@@ -1226,16 +1226,15 @@ namespace top
                 }
 
                 // TODO(jimmy) may keep latest blocks in cache better
-                final_cached_index->reset_this_block(NULL);
-                // xassert(final_cached_index->get_this_block() == new_raw_block);
-                // if (new_raw_block->get_excontainer() != nullptr) {
-                //     xdbg("jimmy xblockacct_t::store_block a new consensus block %s", new_raw_block->dump().c_str());
-                // }
-
+                if (get_account_obj()->is_table_address() && get_account_obj()->get_zone_index() == base::enum_chain_zone_evm_index) {
+                    assert(final_cached_index->get_this_block() == new_raw_block);
+                } else {
+                    final_cached_index->reset_this_block(NULL);
+                }
                 return true;
             }
 
-            xinfo("xblockacct_t::store_block,cache index fail.block=%s", new_raw_block->dump().c_str());
+            xwarn("xblockacct_t::store_block,cache index fail.block=%s", new_raw_block->dump().c_str());
             return false;
         }
 

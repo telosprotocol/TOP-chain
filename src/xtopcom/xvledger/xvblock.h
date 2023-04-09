@@ -796,11 +796,9 @@ namespace top
 
             void  set_vote_extend_data(const std::string & vote_data);
             const std::string &  get_vote_extend_data() const;
-            void  set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
-            const std::vector<xobject_ptr_t<xvblock_t>> & get_subblocks() const;
 
-            void  set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer) {m_excontainer = excontainer;}
-            const std::shared_ptr<xvblock_excontainer_base> & get_excontainer() const {return m_excontainer;}
+            void  set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer);
+            std::shared_ptr<xvblock_excontainer_base> get_excontainer() const;
 
         public: // input&output public apis
             xvinput_t*                  load_input(std::error_code & ec)  const;//load input on-demand
@@ -879,6 +877,7 @@ namespace top
             std::shared_ptr<xvblock_excontainer_base> m_excontainer{nullptr};
             std::string                 m_proposal;    //raw proposal
             bool                        m_not_serialize_input_output{false};
+            mutable xspinlock_t         m_spin_lock;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

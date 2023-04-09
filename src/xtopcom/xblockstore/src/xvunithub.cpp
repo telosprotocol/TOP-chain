@@ -1052,12 +1052,12 @@ namespace top
             if (!ret) {
                 xassert(false);
                 return ret;
-            }            
+            }
             ret = store_txs_to_db(target_account, index_ptr);
-            // if (nullptr != index_ptr->get_this_block()) {
-            //     // release excontainer memory after storing untis and txs
-            //     index_ptr->get_this_block()->set_excontainer(nullptr);
-            // }
+            if (nullptr != index_ptr->get_this_block()) {
+                // release excontainer memory after storing units and txs
+                index_ptr->get_this_block()->set_excontainer(nullptr);
+            }
             return ret;
         }
 
