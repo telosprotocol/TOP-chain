@@ -1004,6 +1004,15 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
     // 2.try load prev-unit for history state
     data::xunitstate_ptr_t prev_unitstate = nullptr;
     xobject_ptr_t<base::xvblock_t> prev_block = m_statestore_base.get_blockstore()->load_unit(unit_addr.vaccount(), block->get_height()-1, block->get_last_block_hash());
+    if (nullptr == prev_block && (block->get_height()-1) == 0) {
+        // XTODO create empty genesis unit for normal users
+        prev_block = m_statestore_base.get_blockstore()->create_genesis_block(unit_addr.vaccount(), ec);
+        if (nullptr == prev_block) {
+            ec = error::xerrc_t::statestore_load_unitblock_err;
+            xwarn("xstatestore_executor_t::execute_unit_recursive fail-create genesis unit.limit=%d,cur_block=%s", limit,block->dump().c_str());
+            return nullptr;            
+        }
+    }
     if (nullptr == prev_block) {
         // for history states, try load unit firstly, then try to load unitstate
         prev_unitstate = m_state_accessor.read_unit_bstate(unit_addr, block->get_height() - 1, block->get_last_block_hash());

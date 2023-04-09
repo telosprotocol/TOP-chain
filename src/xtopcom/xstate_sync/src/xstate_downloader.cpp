@@ -244,7 +244,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
                   to_hex(v).c_str());
             continue;
         }
-        xinfo("xtop_state_downloader::process_trie_request node request, table: %s, id: %u, hash: %s, data: %s", table.c_str(), id, to_hex(hash).c_str(), to_hex(v).c_str());
+        xdbg_info("xtop_state_downloader::process_trie_request node request, table: %s, id: %u, hash: %s, data: %s", table.c_str(), id, to_hex(hash).c_str(), to_hex(v).c_str());
         nodes_values.push_back(v);
     }
     for (auto const & hash : units_hashes) {
@@ -266,7 +266,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
             xerror("xtop_state_downloader::process_trie_request empty unit state, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
             continue;
         }
-        xinfo("xtop_state_downloader::process_trie_request unit request, table: %s, id: %u, hash: %s, data size: %zu", table.c_str(), id, to_hex(hash).c_str(), unit_state_str.size());
+        xdbg_info("xtop_state_downloader::process_trie_request unit request, table: %s, id: %u, hash: %s, data size: %zu", table.c_str(), id, to_hex(hash).c_str(), unit_state_str.size());
         units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()});
     }
     base::xstream_t stream_back{top::base::xcontext_t::instance()};

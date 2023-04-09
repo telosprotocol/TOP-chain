@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cinttypes>
+#include <sstream>
 #include "../xvaccount.h"
 #include "../xvledger.h"
 #include "xbase/xcontext.h"
@@ -649,11 +650,11 @@ namespace top
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _highest_saved_block_height = 0;
-            #ifdef DEBUG
+            // #ifdef DEBUG
             m_account_address = _account.get_address();
-            #else
-            m_account_address = _account.get_xvid_str();
-            #endif
+            // #else
+            // m_account_address = _account.get_xvid_str();
+            // #endif
 
             //XTODO,remove below assert when related xbase checked in main-branch
             xassert(__XBASE_MAIN_VERSION_CODE__ >= 1);
@@ -685,7 +686,21 @@ namespace top
     
         std::string  xvactmeta_t::dump() const
         {
-            return m_account_address + xblockmeta_t::ddump();
+            std::stringstream ss;
+            ss << m_account_address;
+            ss << ",cert=" << xblockmeta_t::_highest_cert_block_height;
+            ss << ",lock=" << xblockmeta_t::_highest_lock_block_height;
+            ss << ",commit=" << xblockmeta_t::_highest_commit_block_height;
+            ss << ",connect=" << xblockmeta_t::_highest_connect_block_height;
+            ss << ",cp_connect=" << xblockmeta_t::_highest_cp_connect_block_height;
+            ss << ",full=" << xblockmeta_t::_highest_full_block_height;
+            ss << ",delete=" << xblockmeta_t::_highest_deleted_block_height;
+            ss << ",vkey2=" << xblockmeta_t::_lowest_vkey2_block_height;
+            ss << ",h_exec=" << xstatemeta_t::_highest_execute_block_height;
+            ss << ",l_exec=" << xstatemeta_t::_lowest_execute_block_height;
+            return ss.str();
+
+            // return m_account_address + xblockmeta_t::ddump();
         }
  
         xvactmeta_t& xvactmeta_t::operator = (const xvactmeta_t & obj)

@@ -131,10 +131,10 @@ void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, st
                     active.erase(it++);
                 }
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             if (m_overtime > 0) {
                 cnt++;
-                if (cnt > m_overtime * 10) {
+                if (cnt > m_overtime * 100) {
                     xwarn("xtop_download_executer::loop overtime: %s", syncer->symbol().c_str());
                     ec = error::xerrc_t::state_sync_overtime;
                     break;
