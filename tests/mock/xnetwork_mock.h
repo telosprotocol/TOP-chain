@@ -172,24 +172,6 @@ public:
         return groups;
     }
 
-    virtual std::map<top::common::xnode_address_t, common::xnode_info_t>
-    neighbors_info() const {
-        std::map<top::common::xnode_address_t, common::xnode_info_t> map;
-        return map;
-    }
-
-    virtual std::map<top::common::xnode_address_t, common::xnode_info_t>
-    parents_info() const {
-        std::map<top::common::xnode_address_t, common::xnode_info_t> parent;
-        return parent;
-    }
-
-    virtual std::map<top::common::xnode_address_t, common::xnode_info_t>
-    children_info(common::xgroup_id_t const &gid, common::xelection_round_t const &version) const {
-        std::map<top::common::xnode_address_t, common::xnode_info_t> child;
-        return child;
-    }
-
     virtual std::map<common::xslot_id_t, data::xnode_info_t>
     neighbors_info2() const {
         std::map<common::xslot_id_t, data::xnode_info_t> slot_map;

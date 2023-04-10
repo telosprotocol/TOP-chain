@@ -14,7 +14,6 @@
 #include "xcommon/xaddress.h"
 #include "xcommon/xip.h"
 #include "xcommon/xmessage_category.h"
-#include "xcommon/xnode_info.h"
 #include "xdata/xnode_info.h"
 #include "xcommon/xnode_type.h"
 #include "xvnetwork/xmessage_ready_callback.h"

@@ -3,20 +3,22 @@
 #include <sstream>
 #define private public
 
-#include "nlohmann/json.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 #include "xapplication/xerror/xerror.h"
 #include "xblockstore/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xrootblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xgenesis/xgenesis_manager.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xstatestore/xstatestore_face.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
-#include "xstatestore/xstatestore_face.h"
+
+#include <nlohmann/json.hpp>
 
 using namespace top::genesis;
 using json = nlohmann::json;
