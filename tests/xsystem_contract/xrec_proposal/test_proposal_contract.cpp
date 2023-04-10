@@ -19,10 +19,12 @@
 #include "xchain_fork/xutility.h"
 #include "xdbstore/xstore_face.h"
 #define private public
+#include "xdata/xelect_transaction.hpp"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xrootblock.h"
 #include "xvm/manager/xcontract_manager.h"
 
 

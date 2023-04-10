@@ -11,10 +11,6 @@
 
 #include "xbasic/xrunnable.h"
 #include "xcommon/xlogic_time.h"
-#include "xcommon/xmessage_category.h"
-#include "xcommon/xnode_info.h"
-#include "xdata/xelect_transaction.hpp"
-#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xnode_info.h"
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xmessage.h"
@@ -22,7 +18,6 @@
 #include "xvnetwork/xvhost_face_fwd.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
-#include <memory>
 #include <vector>
 
 NS_BEG2(top, vnetwork)
@@ -54,9 +49,9 @@ public:
     xtop_vhost_face() = default;
     xtop_vhost_face(xtop_vhost_face const &) = delete;
     xtop_vhost_face & operator=(xtop_vhost_face const &) = delete;
-    xtop_vhost_face(xtop_vhost_face &&) = default;
-    xtop_vhost_face & operator=(xtop_vhost_face &&) = default;
-    virtual ~xtop_vhost_face() = default;
+    xtop_vhost_face(xtop_vhost_face &&) = delete;
+    xtop_vhost_face & operator=(xtop_vhost_face &&) = delete;
+    ~xtop_vhost_face() override = default;
 
     /**
      * @brief Register the message for a specified virtual address node.
