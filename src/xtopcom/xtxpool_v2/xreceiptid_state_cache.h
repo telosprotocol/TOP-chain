@@ -12,9 +12,31 @@
 
 NS_BEG2(top, xtxpool_v2)
 
+#define xtxpool_zone_type_max (6)
+
+class xtable_receiptid_info_t {
+public:
+    void update_table_receiptid_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state);
+    const base::xvproperty_prove_ptr_t & get_property_prove() const;
+    const base::xreceiptid_state_ptr_t & get_receiptid_state() const;
+    
+private:
+    base::xvproperty_prove_ptr_t m_property_prove_ptr{nullptr};
+    base::xreceiptid_state_ptr_t m_receiptid_state{nullptr};
+};
+
+class xunconfirm_tx_nums_t {
+public:
+    xunconfirm_tx_nums_t();
+    void add_unconfirm_tx_num(uint32_t zoneid, uint32_t subaddr, int32_t num);
+    int32_t get_unconfirm_tx_num(uint32_t zoneid, uint32_t subaddr) const;
+private:
+    std::vector<int32_t> m_unconfirm_nums[xtxpool_zone_type_max];
+};
+
 class xreceiptid_state_cache_t {
 public:
-    // xreceiptid_state_cache_t();
+    xreceiptid_state_cache_t();
     void update_table_receiptid_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state);
     uint64_t get_confirmid_max(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id) const;
     uint64_t get_recvid_max(base::xtable_shortid_t table_id, base::xtable_shortid_t peer_table_id) const;
@@ -32,10 +54,12 @@ public:
                                                                    base::xtable_shortid_t peer_table_id,
                                                                    uint64_t min_not_need_confirm_receiptid,
                                                                    uint64_t max_not_need_confirm_receiptid) const;
+    xunconfirm_tx_nums_t get_unconfirm_tx_nums() const;
 
 private:
     mutable std::mutex m_mutex;
-    std::map<base::xtable_shortid_t, xreceiptid_state_and_prove> m_receiptid_state_map;
+    std::vector<xtable_receiptid_info_t> m_receiptid_infos[xtxpool_zone_type_max];
+    xunconfirm_tx_nums_t m_unconfirm_tx_nums;
     mutable bool m_all_cached{false};
 };
 
