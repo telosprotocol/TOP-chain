@@ -7,6 +7,7 @@
 #include "xdata/xlightunit.h"
 #include "xdata/xtx_factory.h"
 #include "xtxpool_v2/xtx_queue.h"
+#include "xtxpool_v2/xtxpool_para.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xdata/xverifier/xtx_verifier.h"
 #include "xdata/xverifier/xverifier_utl.h"
@@ -318,7 +319,8 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xsend_tx_queue_t send_tx_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xsend_tx_queue_t send_tx_queue(&table_para, &resource);
 
     xcons_transaction_ptr_t tx = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 0, now, last_tx_hash);
     tx->set_push_pool_timestamp(now);
@@ -377,7 +379,8 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xsend_tx_queue_t send_tx_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xsend_tx_queue_t send_tx_queue(&table_para, &resource);
 
     uint32_t txs_num = 10;
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num);
@@ -431,7 +434,8 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xsend_tx_queue_t send_tx_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xsend_tx_queue_t send_tx_queue(&table_para, &resource);
 
     uint32_t txs_num = 10;
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num);
@@ -490,7 +494,8 @@ TEST_F(test_send_tx_queue, 2_nonce_duplicate_send_tx) {
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xsend_tx_queue_t send_tx_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xsend_tx_queue_t send_tx_queue(&table_para, &resource);
 
     uint256_t last_tx_hash1 = {};
     uint256_t last_tx_hash2 = {};
@@ -540,7 +545,8 @@ TEST_F(test_send_tx_queue, update_latest_nonce_hash_not_match) {
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xsend_tx_queue_t send_tx_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xsend_tx_queue_t send_tx_queue(&table_para, &resource);
 
     uint32_t txs_num = 10;
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num);
@@ -580,7 +586,8 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xsend_tx_queue_t send_tx_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xsend_tx_queue_t send_tx_queue(&table_para, &resource);
 
     uint32_t txs_num = 10;
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num);
@@ -632,7 +639,8 @@ TEST_F(test_send_tx_queue, send_tx_queue_too_many_uncontinuous_send_txs) {
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xsend_tx_queue_t send_tx_queue(&table_para);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xsend_tx_queue_t send_tx_queue(&table_para, &resource);
 
     uint32_t txs_num_0_1 = 11;
     std::vector<xcons_transaction_ptr_t> txs_0_1 = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num_0_1);
