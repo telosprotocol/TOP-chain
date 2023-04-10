@@ -9,7 +9,6 @@
 #include "xvactplugin.h"
 #include "xvdbstore.h"
 #include "xvblockstore.h"
-#include "xvstatestore.h"
 #include "xvcontractstore.h"
 #include "xvtxstore.h"
 #include "xveventbus.h"

@@ -8,7 +8,6 @@
 #include <map>
 #include <vector>
 #include "xvledger/xvstate.h"
-#include "xvledger/xvstatestore.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvcertauth.h"
 #include "xdata/xblock.h"

@@ -9,7 +9,6 @@
 #include "xstatistic/xbasic_size.hpp"
 #include "../xvblock.h"
 #include "../xvstate.h"
-#include "../xvstatestore.h"
 #include "../xvledger.h"
 #include "xmetrics/xmetrics.h"
 

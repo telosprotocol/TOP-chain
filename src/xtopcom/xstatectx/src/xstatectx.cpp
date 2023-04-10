@@ -7,7 +7,6 @@
 #include "xvledger/xvstate.h"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvstatestore.h"
 #include "xvledger/xvledger.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
