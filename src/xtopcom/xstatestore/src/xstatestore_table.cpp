@@ -6,7 +6,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xchain_fork/xutility.h"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvstatestore.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"

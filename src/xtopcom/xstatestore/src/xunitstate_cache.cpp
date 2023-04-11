@@ -69,14 +69,17 @@ void xcontract_state_cache_t::set_bstate(std::string const& unit_hash, xobject_p
             return;
         }
         xdbg("xcontract_state_cache_t::set_bstate erase %s,height=%ld,hash=%s",iter->second.second->get_account().c_str(),iter->second.second->get_block_height(),base::xstring_utl::to_hex(iter->second.first).c_str());
+        iter->second.second->close();
         m_states.erase(iter);
     }
     xdbg("xcontract_state_cache_t::set_bstate new %s,height=%ld,hash=%s",bstate->get_account().c_str(),bstate->get_block_height(),base::xstring_utl::to_hex(unit_hash).c_str());
     m_states[bstate->get_block_height()] = std::make_pair(unit_hash, bstate);
 
     if (m_states.size() > enum_max_state_count) {
-        xdbg("xcontract_state_cache_t::set_bstate erase %s,height=%ld,hash=%s",m_states.begin()->second.second->get_account().c_str(),m_states.begin()->second.second->get_block_height(),base::xstring_utl::to_hex(m_states.begin()->second.first).c_str());
-        m_states.erase(m_states.begin());
+        auto iter = m_states.begin();
+        xdbg("xcontract_state_cache_t::set_bstate erase %s,height=%ld,hash=%s",iter->second.second->get_account().c_str(),iter->second.second->get_block_height(),base::xstring_utl::to_hex(iter->second.first).c_str());
+        iter->second.second->close();
+        m_states.erase(iter);
         assert(m_states.size() == enum_max_state_count);
     }
 }

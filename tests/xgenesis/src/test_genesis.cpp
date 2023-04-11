@@ -14,7 +14,6 @@
 #include "xgenesis/xgenesis_manager.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvstatestore.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 
