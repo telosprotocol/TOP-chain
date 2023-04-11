@@ -19,20 +19,15 @@ constexpr uint32_t IdealBatchSize = 1024;
 
 constexpr auto PreimagePrefix = ConstBytes<11>("secure-key-");
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb, size_t cache_size) {
-    return NewDatabaseWithConfig(std::move(diskdb), nullptr, cache_size);
+xtop_trie_db::xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t const cache_size) : diskdb_{std::move(diskdb)}, cleans_{cache_size} {
 }
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t /*config*/, size_t cache_size) {
-    //if (config != nullptr && config->Cache_size > 0) {
-    //    if (config->Journal.empty()) {
-    //        // todo
-    //    } else {
-    //        // todo
-    //    }
-    //}
-
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb, size_t cache_size) {
     return std::make_shared<xtop_trie_db>(std::move(diskdb), cache_size);
+}
+
+xkv_db_face_ptr_t const & xtop_trie_db::DiskDB() const noexcept {
+    return diskdb_;
 }
 
 void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
@@ -218,8 +213,6 @@ void xtop_trie_db::commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & da
 void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
     std::lock_guard<std::mutex> lck(mutex_);
     {
-        XMETRICS_TIME_RECORD("mpt_prune_time");
-        XMETRICS_CPU_TIME_RECORD("mpt_prune_time_cpu");
         if (pruned_hashes_.find(hash) != std::end(pruned_hashes_)) {
             return;
         }
@@ -230,33 +223,15 @@ void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
 
         pruned_hashes_.insert(hash);
     }
-    // xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
-}
-
-void xtop_trie_db::prune(xh256_t const & hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
-    {
-        XMETRICS_TIME_RECORD("mpt_prune_time");
-        XMETRICS_CPU_TIME_RECORD("mpt_prune_time_cpu");
-        if (pruned_hashes.find(hash) != std::end(pruned_hashes)) {
-            return;
-        }
-
-        pruned_hashes.insert(hash);
-    }
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
 }
 
 void xtop_trie_db::commit_pruned(std::error_code & ec) {
+    assert(!ec);
+    std::vector<xspan_t<xbyte_t const>> pruned_keys;
+
     std::lock_guard<std::mutex> lck(mutex_);
 
-    XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
-    XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
-    assert(!ec);
-
-    std::vector<xspan_t<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes_.size());
-    // std::transform(std::begin(pruned_hashes_), std::end(pruned_hashes_), std::back_inserter(pruned_keys), [](xh256_t const & hash) { return hash; });
     for (auto const & pruned_hash : pruned_hashes_) {
         pruned_keys.emplace_back(pruned_hash);
     }
@@ -267,27 +242,22 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
     }
 
     xkinfo("%zu keys pruned from disk", pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_total_pruned_trie_node_cnt, pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, -static_cast<int32_t>(pruned_hashes_.size()));
 
     pruned_hashes_.clear();
 }
 
 void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex_);
-
-    XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
-    XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
     assert(!ec);
-
     std::vector<xspan_t<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes.size());
+
+    std::lock_guard<std::mutex> lck(mutex_);
     for (auto const & hash : pruned_hashes) {
         cleans_erase_lock_hold_outside(hash);
         assert(dirties_.find(hash) == dirties_.end());
         pruned_keys.emplace_back(hash);
     }
-    // std::transform(std::begin(pruned_hashes), std::end(pruned_hashes), std::back_inserter(pruned_keys), [](xh256_t const & hash) { return hash; });
+
     diskdb_->DeleteBatch(pruned_keys, ec);
     if (ec) {
         xwarn("pruning MPT nodes failed. %s", ec.message().c_str());
@@ -295,10 +265,7 @@ void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hash
     }
 
     xkinfo("%zu keys pruned from disk", pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_total_pruned_trie_node_cnt, pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, -static_cast<int32_t>(pruned_hashes_.size()));
 
-    // cleans_.clear();
     pruned_hashes_.clear();
 }
 
@@ -308,6 +275,10 @@ void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pr
 
     auto const it = pruned_hashes2_.find(root_key);
     if (it == std::end(pruned_hashes2_)) {
+#if defined(ENABLE_METRICS)
+        std::string const metrics_key = "triedb_prune_count_" + top::to_string(diskdb_->table_address());
+        XMETRICS_COUNTER_SET(metrics_key, to_be_pruned_keys.size());
+#endif
         pruned_hashes2_.emplace(root_key, std::move(to_be_pruned_keys));
         return;
     }
@@ -339,7 +310,10 @@ void xtop_trie_db::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::e
     }
 
     if (!pruned_keys.empty()) {
-        XMETRICS_COUNTER_SET("trie_commit_pruned", pruned_keys_count);
+#if defined(ENABLE_METRICS)
+        std::string const metrics_key = "triedb_commit_prune_count_" + top::to_string(diskdb_->table_address());
+        XMETRICS_COUNTER_SET(metrics_key, pruned_keys.size());
+#endif
 
         diskdb_->DeleteBatch(pruned_keys, ec);
         if (ec) {
@@ -351,13 +325,15 @@ void xtop_trie_db::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::e
         pruned_hashes2_.erase(root_hash);
     }
 
-#if defined(ENABLE_METRICS_DATAOBJECT)
+#if defined(ENABLE_METRICS)
     size_t total_remaining_count{0};
     for (auto const & pruned_hash_info : pruned_hashes2_) {
         auto const & prune_ready = top::get<std::vector<xh256_t>>(pruned_hash_info);
         total_remaining_count += prune_ready.size();
     }
-    XMETRICS_COUNTER_SET("trie_pending_pruned_count", total_remaining_count);
+
+    std::string const metrics_key = "triedb_pending_prune_count_" + top::to_string(diskdb_->table_address());
+    XMETRICS_COUNTER_SET(metrics_key, total_remaining_count);
 #endif
 }
 

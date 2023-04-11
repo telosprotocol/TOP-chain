@@ -13,9 +13,22 @@ namespace evm_common {
 namespace trie {
 
 class xtop_kv_db : public xkv_db_face_t {
+private:
+    base::xvdbstore_t * m_db{nullptr};
+    mutable std::mutex m_mutex;
+    common::xtable_address_t m_table;  // store key with table address
+    std::string m_node_key_prefix;
+
+    std::string convert_key(xspan_t<xbyte_t const> key) const;
+
 public:
+    xtop_kv_db(xtop_kv_db const &) = delete;
+    xtop_kv_db & operator=(xtop_kv_db const &) = delete;
+    xtop_kv_db(xtop_kv_db &&) = delete;
+    xtop_kv_db & operator=(xtop_kv_db &&) = delete;
+    ~xtop_kv_db() override = default;
+
     xtop_kv_db(base::xvdbstore_t * db, common::xtable_address_t table);
-    ~xtop_kv_db() = default;
 
     xbytes_t get(xspan_t<xbyte_t const>  key, std::error_code & ec) const override;
     xbytes_t GetDirect(xbytes_t const & key, std::error_code & ec) const override;
@@ -33,13 +46,7 @@ public:
     void DeleteDirect(xbytes_t const & key, std::error_code & ec) override;
     void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override;
 
-private:
-    std::string convert_key(xspan_t<xbyte_t const> key) const;
-
-    base::xvdbstore_t * m_db{nullptr};
-    mutable std::mutex m_mutex;
-    common::xtable_address_t m_table;  // store key with table address
-    std::string m_node_key_prefix;
+    common::xtable_address_t table_address() const override;
 };
 using xkv_db_t = xtop_kv_db;
 

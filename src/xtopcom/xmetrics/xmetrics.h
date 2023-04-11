@@ -620,8 +620,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     //statectx
     statectx_load_block_succ,
 
-    mpt_total_pruned_trie_node_cnt,
-    mpt_cached_pruned_trie_node_cnt,
+    // mpt_total_pruned_trie_node_cnt,
+    // mpt_cached_pruned_trie_node_cnt,
     mpt_trie_cache_visit,
     mpt_trie_cache_miss,
 

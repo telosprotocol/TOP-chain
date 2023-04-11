@@ -162,6 +162,10 @@ xbytes_t xtop_kv_db::GetDirect(xbytes_t const & key, std::error_code & ec) const
     return {value.begin(), value.end()};
 }
 
+common::xtable_address_t xtop_kv_db::table_address() const {
+    return m_table;
+}
+
 }  // namespace trie
 }  // namespace evm_common
 }  // namespace top

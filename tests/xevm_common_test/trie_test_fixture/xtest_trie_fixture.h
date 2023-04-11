@@ -83,6 +83,10 @@ public:
     size_t size() const noexcept {
         return m.size();
     }
+
+    common::xtable_address_t table_address() const override {
+        return common::xtable_address_t::build_from(xstring_view_t{"Ta0000@0"});
+    }
 };
 using xmock_disk_db_ptr = std::shared_ptr<xmock_disk_db>;
 
@@ -134,6 +138,10 @@ public:
         for (auto const & key : batch) {
             m.erase(xbytes_t{std::begin(key), std::end(key)});
         }
+    }
+
+    common::xtable_address_t table_address() const override {
+        return common::xtable_address_t::build_from(xstring_view_t{"Ta0000@0"});
     }
 
     std::map<xbytes_t, xbytes_t> m;
