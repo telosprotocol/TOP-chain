@@ -59,7 +59,7 @@ public:
     sync_peers latest_peers(const common::xtable_id_t & id) const;
 
 private:
-    void process_trie_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) const;
+    void process_trie_request(const vnetwork::xvnode_address_t & sender, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network, const vnetwork::xmessage_t & message) const;
     void process_trie_response(const vnetwork::xmessage_t & message) const;
     void process_table_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) const;
     void process_table_response(const vnetwork::xmessage_t & message) const;

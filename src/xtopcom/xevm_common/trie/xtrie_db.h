@@ -6,27 +6,16 @@
 
 #include "xbasic/xlru_cache_specialize.h"
 #include "xbasic/xthreading/xdummy_mutex.h"
+#include "xcommon/xfixed_hash.h"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
-#include "xcommon/xfixed_hash.h"
 
 #include <functional>
 #include <map>
 #include <unordered_set>
 
 NS_BEG3(top, evm_common, trie)
-
-class xtop_trie_db_config {
-public:
-    xtop_trie_db_config() = default;
-
-    uint64_t Cache_size{0};   // Memory allowance (MB) to use for caching trie nodes in memory
-    // std::string Journal{""};  // Journal of clean cache to survive node restarts
-    bool Preimages{true};     // Flag whether the preimage of trie key is recorded
-};
-using xtrie_db_config_t = xtop_trie_db_config;
-using xtrie_db_config_ptr_t = std::shared_ptr<xtrie_db_config_t>;
 
 // fwd:
 class xtop_trie_cache_node;
@@ -50,10 +39,14 @@ private:
     mutable std::mutex mutex_;
 
 public:
-    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t cache_size) : diskdb_(std::move(diskdb)), cleans_(cache_size) {
-    }
+    xtop_trie_db(xtop_trie_db const &) = delete;
+    xtop_trie_db & operator=(xtop_trie_db const &) = delete;
+    xtop_trie_db(xtop_trie_db &&) = delete;
+    xtop_trie_db & operator=(xtop_trie_db &&) = delete;
+    ~xtop_trie_db() = default;
 
-public:
+    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t cache_size);
+
     // NewDatabase creates a new trie database to store ephemeral trie content before
     // its written out to disk or garbage collected. No read cache is created, so all
     // data retrievals will hit the underlying disk database.
@@ -62,14 +55,10 @@ public:
     // NewDatabaseWithConfig creates a new trie database to store ephemeral trie content
     // before its written out to disk or garbage collected. It also acts as a read cache
     // for nodes loaded from disk.
-    static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config, size_t cache_size);
+    // static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config, size_t cache_size);
 
-public:
-    xkv_db_face_ptr_t DiskDB() const {
-        return diskdb_;
-    }
+    xkv_db_face_ptr_t const & DiskDB() const noexcept;
 
-public:
     // insert inserts a collapsed trie node into the memory database.
     // The blob size must be specified to allow proper size tracking.
     // All nodes inserted by this function will be reference tracked
@@ -104,7 +93,6 @@ public:
     void Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec);
 
     void prune(xh256_t const & hash, std::error_code & ec);
-    void prune(xh256_t const & hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
     void commit_pruned(std::error_code & ec);
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 

@@ -568,8 +568,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         //statectx
         RETURN_METRICS_NAME(statectx_load_block_succ);
 
-        RETURN_METRICS_NAME(mpt_total_pruned_trie_node_cnt);
-        RETURN_METRICS_NAME(mpt_cached_pruned_trie_node_cnt);
+        // RETURN_METRICS_NAME(mpt_total_pruned_trie_node_cnt);
+        // RETURN_METRICS_NAME(mpt_cached_pruned_trie_node_cnt);
         RETURN_METRICS_NAME(mpt_trie_cache_visit);
         RETURN_METRICS_NAME(mpt_trie_cache_miss);
 
