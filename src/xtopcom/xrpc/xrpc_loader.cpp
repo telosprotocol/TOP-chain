@@ -214,7 +214,7 @@ xtxindex_detail_ptr_t xrpc_loader_t::load_ethtx_indx_detail(const std::string & 
         }
     }
     if (transaction_index >= (uint32_t)eth_txactions.size()) {
-        xerror("xrpc_loader_t::load_ethtx_indx_detail,fail to find txaction hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
+        xwarn("xrpc_loader_t::load_ethtx_indx_detail,fail to find txaction hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
         return nullptr;
     }
     xtxindex_detail_ptr_t index_detail = std::make_shared<xtxindex_detail_t>(txindex, _block->get_block_hash(), *txaction_ptr, transaction_index);

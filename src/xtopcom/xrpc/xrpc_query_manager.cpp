@@ -30,6 +30,7 @@
 #include "xdata/xtransaction_cache.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
+#include "xrpc/xrpc_eth_parser.h"
 #include "xrpc/xrpc_loader.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
@@ -840,14 +841,14 @@ void xrpc_query_manager::getTransaction(Json::Value & js_req, Json::Value & js_r
         ADDRESS_CHECK_VALID(account)
     }
 
+    Json::Value result_json;
+
     std::shared_ptr<xtransaction_cache_data_t> cache_data_ptr = std::make_shared<xtransaction_cache_data_t>();
     if (m_txstore != nullptr && m_txstore->tx_cache_get(tx_hash_str, cache_data_ptr)) {
         const xrpc::xtx_exec_json_key jk(version);
         std::map<int, Json::Value> map_jv = cache_data_ptr->jv;
         if (map_jv.find(base::enum_transaction_subtype_send) == map_jv.end()) {
             xdbg("not find tx:%s", tx_hash_str.c_str());
-
-            Json::Value result_json;
             Json::Value jv;
 
             data::xtransaction_ptr_t tx_ptr = cache_data_ptr->tran;
@@ -866,14 +867,35 @@ void xrpc_query_manager::getTransaction(Json::Value & js_req, Json::Value & js_r
 
             auto ori_tx_info = parse_tx(tx_ptr.get(), version);
             result_json["original_tx_info"] = ori_tx_info;
-            js_rsp = result_json;
-            return;
         }
     }
 
-    Json::Value result_json;
-    if (get_transaction_on_demand(account, version, hash, result_json, strResult, nErrorCode) == 0)
+    if (result_json.empty()) {
+        get_transaction_on_demand(account, version, hash, result_json, strResult, nErrorCode);
+    }
+
+    if (!result_json.empty()) {
+        // for eth transaction
+        if (result_json["original_tx_info"]["tx_structure_version"] == xtransaction_version_3) {
+            std::string tx_hash = js_req["tx_hash"].asString();
+            xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_ethtx_indx_detail(tx_hash_str);
+            if (sendindex != nullptr) {
+                Json::Value js_result;
+                std::error_code ec;
+                xrpc_eth_parser_t::receipt_to_json(tx_hash, sendindex, js_result, ec);
+                if (!ec) {
+                    result_json["receipt"] = js_result;
+                    js_rsp = result_json;
+                    return;
+                }
+            }
+            // if receipt not ok, query fail.
+            xerror("xarc_query_manager::getTransaction get evm receipt fail account: %s, tx hash: %s, version: %s", account.c_str(), tx_hash.c_str(), version.c_str());
+            nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
+            return;
+        }
         js_rsp = result_json;
+    }
 }
 
 int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
@@ -882,6 +904,7 @@ int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
                                                   Json::Value & result_json,
                                                   std::string & strResult,
                                                   uint32_t & nErrorCode) {
+    xdbg("xrpc_query_manager::get_transaction_on_demand");
     std::string strHash((char *)tx_hash.data(), tx_hash.size());
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(strHash, base::enum_transaction_subtype_send);
     xcons_transaction_ptr_t cons_tx_ptr = nullptr;
