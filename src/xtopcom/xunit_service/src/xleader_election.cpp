@@ -50,7 +50,7 @@ int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<base::x
                 auto tables_v = iter->second.tables;
                 for(auto iter = tables_v.begin(); iter != tables_v.end(); iter++) {
                     tables->push_back({base::enum_chain_zone_consensus_index, (uint8_t)*iter});
-                } 
+                }
                 return tables->size();
             }
         }
