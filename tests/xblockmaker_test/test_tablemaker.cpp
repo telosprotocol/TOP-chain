@@ -116,6 +116,96 @@ TEST_F(test_tablemaker, make_proposal_1) {
     }    
 }
 
+TEST_F(test_tablemaker, make_proposal_2) {
+    mock::xvchain_creator creator;
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = mock::xdatamock_address::make_unit_address(base::enum_chain_zone_consensus_index, 1);
+
+    mocktable.store_genesis_units(resources->get_blockstore());
+
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 1);
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(send_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para2.set_origin_txs(send_txs);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 2);
+
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 3);
+
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+
+    {
+        auto commit_block = resources->get_blockstore()->load_block_object(mocktable, 1, base::enum_xvblock_flag_committed, true);
+        resources->get_blockstore()->store_units(commit_block.get());
+        auto unit = resources->get_blockstore()->load_unit(base::xvaccount_t(to_addr), 1);
+        ASSERT_NE(unit, nullptr);
+        ASSERT_EQ(resources->get_blockstore()->load_unit(base::xvaccount_t(to_addr), 0), nullptr);        
+        base::xaccount_index_t index = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, unit->get_height(), unit->get_block_hash(), "1", 1);
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(common::xaccount_address_t(to_addr), index);
+        ASSERT_NE(nullptr, unitstate);
+    }
+}
+
+
 TEST_F(test_tablemaker, select_peer_sids_for_confirm_id) {
     std::vector<base::xtable_shortid_t> all_sid_vec;
     for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {

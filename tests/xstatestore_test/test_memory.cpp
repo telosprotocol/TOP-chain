@@ -323,17 +323,38 @@ TEST_F(test_memory, unitstate_cache) {
     }
 }
 
-// TEST_F(test_memory, new_delete_test) {
-
-// class test_data {
-// public:
-
-//     std::string data1;
-//     std::string data2;
-//     std::string data3;
-//     std::string data4;
-//     std::string data5;
-// };
+TEST_F(test_memory, unitstate_cache_2) {    
+    {
+        // normal users
+        xunitstate_cache_t _cache(5);
+        for (uint32_t i = 0; i < 10; i++) {
+            std::string addr = mock::xdatamock_address::make_user_address_random();
+            common::xaccount_address_t account_address(addr);
+            xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(addr,1,1,std::string(),std::string(),0,0,0);
+            std::string unit_hash = "11";
+            _cache.set_unitstate(unit_hash, bstate);
+        }
+        ASSERT_EQ(_cache.size(), 5);
+        _cache.clear();
+        ASSERT_EQ(_cache.size(), 0);
+    }
+    {
+        // contract users
+        xunitstate_cache_t _cache(5);
+        for (uint32_t i = 0; i < 10; i++) {
+            std::string addr = mock::xdatamock_address::make_contract_address_random(1);
+            common::xaccount_address_t account_address(addr);
+            for (uint64_t h = 1; h < 10; h++) {
+                xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(addr,h,h,std::string(),std::string(),0,0,0);
+                std::string unit_hash = std::to_string(h);
+                _cache.set_unitstate(unit_hash, bstate);
+            }
+        }
+        ASSERT_EQ(_cache.size(), 5);
+        _cache.clear();
+        ASSERT_EQ(_cache.size(), 0);        
+    }
+}
 
 
 

@@ -34,7 +34,12 @@ class xdatamock_address {
         std::string addr = utl::xcrypto_util::make_address_by_random_key(addr_type, ledger_id) + "@" + base::xstring_utl::tostring(subaddr);
         return addr;
     }
-
+    static std::string     make_contract_address_random(uint16_t subaddr) {
+        uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
+        uint8_t addr_type = base::enum_vaccount_addr_type_native_contract;
+        std::string addr = utl::xcrypto_util::make_address_by_random_key(addr_type, ledger_id) + "@" + base::xstring_utl::tostring(subaddr);
+        return addr;
+    }
     static std::string     make_consensus_table_address(uint16_t subaddr) {
         base::enum_xchain_zone_index zone = base::enum_chain_zone_consensus_index;
         return base::xvaccount_t::make_table_account_address(zone, subaddr);
