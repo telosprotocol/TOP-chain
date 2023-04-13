@@ -814,3 +814,32 @@ TEST_F(test_block_executed, xstatestore_execute_BENCH_2) {
 
 }
 
+base::xvblock_ptr_t create_unit_for_test(base::xvblock_t* prev_unit, std::string const& binlog, const data::xblock_consensus_para_t & cs_para) {
+    uint64_t height = prev_unit->get_height() + 1;
+    bool is_full_unit = false;
+
+    data::xunit_block_para_t bodypara;
+    bodypara.set_binlog(binlog);
+    bodypara.set_fullstate_bin_hash("1111");
+
+    std::shared_ptr<data::xunit_build2_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
+        prev_unit->get_account(), height, prev_unit->get_last_block_hash(), is_full_unit, cs_para);
+    vblockmaker->create_block_body(bodypara);
+    base::xvblock_ptr_t proposal_block = vblockmaker->build_new_block();
+    assert(false == proposal_block->get_cert()->is_consensus_flag_has_extend_cert());
+    proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);    
+    assert(!proposal_block->get_block_hash().empty());
+    return proposal_block;
+}
+
+TEST_F(test_block_executed, get_unitstate_by_units) {
+    mock::xvchain_creator creator;
+    std::string addr = mock::xdatamock_address::make_user_address_random();
+    common::xaccount_address_t account_address(addr);
+    {
+        base::xauto_ptr<base::xvblock_t> genesis_unit = data::xblocktool_t::create_genesis_empty_unit(addr);
+        base::xaccount_index_t index = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, genesis_unit->get_height(), genesis_unit->get_block_hash(), "1", 1);
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, index);
+        ASSERT_NE(nullptr, unitstate);
+    }
+}
