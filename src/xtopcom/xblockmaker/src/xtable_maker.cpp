@@ -680,7 +680,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
         auto local_state_root = data::xblockextract_t::get_state_root_from_block(local_block);
         auto proposal_state_root = data::xblockextract_t::get_state_root_from_block(proposal_block);
         if (local_state_root != proposal_state_root) {
-            xerror("xtable_maker_t::verify_proposal_with_local fail-state root not match.%s proposal:%s local:%s",proposal_block->dump().c_str(),local_state_root.hex().c_str(),proposal_state_root.hex().c_str());
+            xwarn("xtable_maker_t::verify_proposal_with_local fail-state root not match.%s proposal:%s local:%s",proposal_block->dump().c_str(),local_state_root.hex().c_str(),proposal_state_root.hex().c_str());
             return false;
         }
 
@@ -691,7 +691,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
         return false;
     }
     if(!local_block->get_cert()->is_equal(*proposal_block->get_cert())){
-        xerror("xtable_maker_t::verify_proposal_with_local fail-cert hash not match. proposal:%s local:%s",
+        xwarn("xtable_maker_t::verify_proposal_with_local fail-cert hash not match. proposal:%s local:%s",
             proposal_block->get_cert()->dump().c_str(),
             local_block->get_cert()->dump().c_str());
         return false;
