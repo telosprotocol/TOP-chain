@@ -32,7 +32,7 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) override;
 
     bool                        update_txpool_txs(const xblock_consensus_para_t & cs_para, xtablemaker_para_t & table_para);
-    static std::set<base::xtable_shortid_t> select_peer_sids_for_confirm_id(const std::vector<base::xtable_shortid_t> & all_sid_vec, uint64_t height);
+    static std::set<base::xtable_shortid_t> select_peer_sids_for_confirm_id(const std::vector<base::xtable_shortid_t> & all_sid_vec, uint64_t height, bool cert_empty, bool lock_empty);
  protected:
     const std::string &         get_account() const {return m_table_maker->get_account();}
     base::xvblockstore_t*       get_blockstore() const {return m_table_maker->get_blockstore();}
