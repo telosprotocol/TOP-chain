@@ -910,7 +910,7 @@ data::xunitstate_ptr_t xstatestore_executor_t::make_state_from_current_unit(comm
         data::xunitstate_ptr_t unitstate2 = m_state_accessor.read_fullunit_bstate(unit_addr, current_block->get_height(), current_block->get_block_hash());
         if (nullptr == unitstate2) {
             // it may happen for fullunit without off sate, try to read prev lightunit
-            xerror("xstatestore_executor_t::make_state_from_current_unit,fail read fullunit off state for block(%s)",current_block->dump().c_str());
+            xwarn("xstatestore_executor_t::make_state_from_current_unit,fail read fullunit off state for block(%s)",current_block->dump().c_str());
             return nullptr;                
         }
         return unitstate2;
