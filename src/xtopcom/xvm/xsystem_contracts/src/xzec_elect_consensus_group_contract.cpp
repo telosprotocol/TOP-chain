@@ -274,8 +274,6 @@ void xtop_zec_elect_consensus_group_contract::setup() {
 }
 
 void xtop_zec_elect_consensus_group_contract::on_timer(common::xlogic_time_t const current_time) {
-    XMETRICS_TIME_RECORD(XCONSENSUS_ELECT "on_timer_all_time");
-    XMETRICS_CPU_TIME_RECORD(XCONSENSUS_ELECT "on_timer_cpu_time");
 #ifdef STATIC_CONSENSUS
     if (xstatic_election_center::instance().if_allow_elect()) {
         if (!executed_consensus) {

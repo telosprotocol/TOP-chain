@@ -47,7 +47,6 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
 }
 
 int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
-    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_table_push_receipt");
     auto tx_inside = query_tx(tx->get_tx()->get_tx_hash());
     if (tx_inside != nullptr) {
         if (tx_inside->get_tx_subtype() < tx->get_tx()->get_tx_subtype()) {
@@ -126,10 +125,6 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     auto send_txs = m_send_tx_queue.get_txs(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_cert_block(), expired_num, unconituous_num);
     uint32_t send_tx_num = send_txs.size();
     ready_txs.insert(ready_txs.end(), send_txs.begin(), send_txs.end());
-
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_sendtx_count, send_tx_num);
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_recvtx_count, recv_tx_num);
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_confirmtx_count, confirm_tx_num);
 
     xtxpool_info("xtxmgr_table_t::get_ready_txs tps_key table:%s,height=%llu,ready_txs size:%u,send:%u,recv:%u,confirm:%u,sendq:%u,recvq:%u,confirmq:%u,expired_num:%u,unconituous_num:%u",
                  m_xtable_info->get_table_addr().c_str(),

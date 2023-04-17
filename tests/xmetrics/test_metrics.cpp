@@ -276,12 +276,6 @@ TEST_F(metrics_test, gauge) {
             EXPECT_EQ(value, 5);
         }
     }
-
-    {
-        XMETRICS_TIMER(top::metrics::db_delete_tick);
-        SLEEP_MILLSECOND(20);
-    }
-    EXPECT_GT(XMETRICS_GAUGE_GET_VALUE(top::metrics::db_delete_tick), 20);
 }
 
 // #endif

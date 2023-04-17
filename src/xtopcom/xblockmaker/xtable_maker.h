@@ -51,7 +51,6 @@ class xtable_maker_t : public xblock_maker_t {
 
     bool                    load_table_blocks_from_last_full(const xblock_ptr_t & prev_block, std::vector<xblock_ptr_t> & blocks);
     xblock_ptr_t            make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
-    void                    set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const;
     bool                    can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const;
 
 private:

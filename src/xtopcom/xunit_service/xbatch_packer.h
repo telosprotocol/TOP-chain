@@ -122,6 +122,10 @@ private:
     xvip2_t                                  m_last_xip2{};
     common::xtable_address_t                 m_table_addr;
     xpack_strategy_t                         m_pack_strategy;
+#ifdef ENABLE_METRICS
+    std::string                              m_cons_fail_metrics_tag;
+    std::string                              m_cons_succ_height_metrics_tag;
+#endif
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;

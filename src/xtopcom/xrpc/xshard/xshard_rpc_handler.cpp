@@ -32,7 +32,6 @@ xshard_rpc_handler::xshard_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> 
 }
 
 void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessage_t const & message, std::uint64_t const timer_height) {
-    XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_shard_rpc_handler");
 #if defined(DEBUG)
     auto msg_id = message.id();
     xdbg_rpc("xshard_rpc_handler on_message,id(%x,%s), timer_height %lld", msg_id, edge_sender.to_string().c_str(), timer_height);
@@ -100,11 +99,9 @@ void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg) {
         std::string tx_hash = data::uint_to_str(tx_ptr->digest().data(), tx_ptr->digest().size());
         // xkinfo("[global_trace][shard_rpc][push unit_service]%s,%s", tx_hash.c_str(), tx_ptr->get_source_addr().c_str());
         uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
-        // uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
         if (now < tx_ptr->get_fire_timestamp()) {
-            XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
+            XMETRICS_GAUGE(metrics::rpc_txdelay_client_timestamp_unmatch, 1);
         }
-        XMETRICS_GAUGE(metrics::txdelay_from_client_to_validator, tx_ptr->get_delay_from_fire_timestamp(now));
 
         if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
             // throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx hash or sign error"};

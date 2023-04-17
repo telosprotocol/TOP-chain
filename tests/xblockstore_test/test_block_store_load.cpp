@@ -428,8 +428,6 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     std::cout << "store_block_input_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_input_unit_write) << std::endl;
     std::cout << "store_block_output_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_output_table_write) << std::endl;
     std::cout << "store_block_output_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_block_output_unit_write) << std::endl;
-    std::cout << "store_state_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_state_table_write) << std::endl;
-    std::cout << "store_state_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_state_unit_write) << std::endl;
     std::cout << "store_tx_index_self=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_tx_index_self) << std::endl;
     std::cout << "store_tx_index_send=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_tx_index_send) << std::endl;
     std::cout << "store_tx_index_recv=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_tx_index_recv) << std::endl;
@@ -450,7 +448,6 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     // db delete count statistics       
     std::cout << "=============db delete count statistics=============" << std::endl; 
     std::cout << "db_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_delete) << std::endl;
-    std::cout << "store_state_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::store_state_delete) << std::endl;
 
     // db size statistics
     std::cout << "=============db size statistics=============" << std::endl; 

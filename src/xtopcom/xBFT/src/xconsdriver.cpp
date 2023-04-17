@@ -1367,7 +1367,7 @@ namespace top
                             }
                             else
                             {
-                                XMETRICS_GAUGE(metrics::bft_verify_vote_msg_fail, 1);
+                                XMETRICS_GAUGE(metrics::cons_bft_verify_vote_msg_fail, 1);
                             }
                         }
                         else

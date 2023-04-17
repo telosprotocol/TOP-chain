@@ -304,15 +304,7 @@ bool xtimer_picker_t::on_proposal_finish(const base::xvevent_t & event, xcsobjec
     if (_evt_obj->get_error_code() == xconsensus::enum_xconsensus_code_successful) {
         auto high_qc = _evt_obj->get_target_proposal();
 
-#ifdef ENABLE_METRICS
-        if (is_leader) {
-            XMETRICS_GAUGE(metrics::cons_drand_leader_succ, 1);
-        } else {
-            XMETRICS_GAUGE(metrics::cons_drand_backup_succ, 1);
-        }
-        XMETRICS_COUNTER_SET("cons_drand_highqc_height", high_qc->get_height());
-        XMETRICS_COUNTER_SET("cons_drand_highqc_viewid", high_qc->get_viewid());
-#endif
+        XMETRICS_GAUGE_SET_VALUE(metrics::cons_drand_highqc_height, high_qc->get_height());
 
         xunit_info("xtimer_picker_t::on_proposal_finish succ. leader:%d,proposal=%s", is_leader, high_qc->dump().c_str());
         if (is_leader) {
@@ -325,13 +317,6 @@ bool xtimer_picker_t::on_proposal_finish(const base::xvevent_t & event, xcsobjec
             }
         }
     } else {
-#ifdef ENABLE_METRICS
-        if (is_leader) {
-            XMETRICS_GAUGE(metrics::cons_drand_leader_succ, 0);
-        } else {
-            XMETRICS_GAUGE(metrics::cons_drand_backup_succ, 0);
-        }
-#endif
         xunit_warn("xtimer_picker_t::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s",
             is_leader,
             _evt_obj->get_error_code(),

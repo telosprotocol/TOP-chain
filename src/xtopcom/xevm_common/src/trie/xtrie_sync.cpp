@@ -35,11 +35,9 @@ Sync::Sync(xh256_t const & root, xkv_db_face_ptr_t _database, leaf_callback call
 }
 
 Sync::Sync(xkv_db_face_ptr_t _database) : database{_database} {
-    XMETRICS_COUNTER_INCREMENT("trie_sync", 1);
 }
 
 Sync::~Sync() {
-    XMETRICS_COUNTER_DECREMENT("trie_sync", 1);
 }
 
 std::shared_ptr<Sync> Sync::NewSync(xh256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback) {

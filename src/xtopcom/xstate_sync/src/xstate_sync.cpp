@@ -26,11 +26,9 @@ constexpr uint32_t unit_fetch_num = 4;
 constexpr uint32_t max_req_num = 20;
 
 xtop_state_sync::xtop_state_sync() {
-    XMETRICS_COUNTER_INCREMENT("statesync_syncers", 1);
 }
 
 xtop_state_sync::~xtop_state_sync() {
-    XMETRICS_COUNTER_DECREMENT("statesync_syncers", 1);
 }
 
 std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::xaccount_address_t & table,

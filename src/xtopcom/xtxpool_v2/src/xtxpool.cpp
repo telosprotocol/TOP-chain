@@ -62,7 +62,6 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 }
 
 int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) {
-    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt");
     auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
@@ -122,7 +121,6 @@ const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
 }
 
 xpack_resource xtxpool_t::get_pack_resource(const xtxs_pack_para_t & pack_para) {
-    XMETRICS_TIME_RECORD("txpool_get_pack_resource_cost");
     auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
     if (table == nullptr) {
         return {};
@@ -295,7 +293,6 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 
 void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
     xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->account_address().to_string().c_str(), table_state->height());
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_state->account_address().to_string());
     if (table == nullptr) {
         return;

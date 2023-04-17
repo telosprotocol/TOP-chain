@@ -229,7 +229,6 @@ void xnetwork_proxy::on_message(top::vnetwork::xvnode_address_t const & sender, 
     auto to = xcons_utl::to_xip2(receiver);
     auto from = xcons_utl::to_xip2(sender);
     auto category = get_message_category(message.id());
-    XMETRICS_TIME_RECORD("xcons_network_message_dispatch");
     xpdu_reactor_ptr cb{nullptr};
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -322,13 +321,7 @@ void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
         }
     }
 
-    if (net_driver != nullptr) {
-        XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send, recv_tx_num);
-        XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send, receipts.size() - recv_tx_num);
-    } else {
-        XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send_fail, recv_tx_num);
-        XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send_fail, receipts.size() - recv_tx_num);
-    }
+    XMETRICS_GAUGE(metrics::txpool_receipt_first_send_succ, (net_driver != nullptr) ? 1 : 0);
 }
 
 bool xnetwork_proxy::get_election_round(const xvip2_t & xip, uint64_t & election_round) {

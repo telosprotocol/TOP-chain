@@ -305,8 +305,6 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
     }
     (void)sender;
 
-    XMETRICS_TIME_RECORD("txpool_network_message_dispatch");
-
     xtxpool_info("xtxpool_service::on_message_receipt msg id:%x,hash:%x", message.id(), message.hash());
 
     if (message.id() == xtxpool_msg_send_receipt || message.id() == xtxpool_msg_recv_receipt || (message.id() == xtxpool_msg_push_receipt)) {
@@ -376,7 +374,6 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
 void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
     (void)sender;
-    XMETRICS_TIME_RECORD("txpool_message_unit_receipt");
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     data::xcons_transaction_ptr_t receipt = make_object_ptr<data::xcons_transaction_t>();
     int32_t ret = receipt->serialize_from(stream);
@@ -389,7 +386,6 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
 
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
-    XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
     ret = m_para->get_txpool()->push_receipt(tx_ent, false, false);
     XMETRICS_GAUGE(metrics::txpool_receipt_tx, (ret == xsuccess) ? 1 : 0);
 }
@@ -609,7 +605,6 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
         xerror("xtxpool_service::on_message_pull_receipt_received receipts in one request");
         return;
     }
-    XMETRICS_TIME_RECORD("txpool_on_message_pull_receipt_received");
     auto & table_addr = is_pull_recv ? pulled_receipt.m_tx_from_account : pulled_receipt.m_tx_to_account;
     auto cluster_addr =
         m_router->sharding_address_from_account(common::xaccount_address_t{table_addr}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
@@ -651,7 +646,6 @@ void xtxpool_service::on_message_pull_receipt_received(vnetwork::xvnode_address_
 void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
     xinfo("xtxpool_service::on_message_receipt_id_state_received at_node:%s,msg id:%x,hash:%" PRIx64 "", m_vnetwork_str.c_str(), message.id(), message.hash());
 
-    XMETRICS_TIME_RECORD("txpool_on_message_receipt_id_state_received");
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     base::xdataunit_t * _dataunit = base::xdataunit_t::read_from(stream);
     xassert(_dataunit != nullptr);
@@ -666,7 +660,6 @@ void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_addr
 }
 
 void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
-    XMETRICS_TIME_RECORD("txpool_send_table_receipt_id_state");
     std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)m_zone_index, table_id);
     base::xvaccount_t vaccount(table_addr);
     base::xvproperty_prove_ptr_t property_prove = nullptr;

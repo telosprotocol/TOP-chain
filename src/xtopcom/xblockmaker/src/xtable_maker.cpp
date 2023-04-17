@@ -65,19 +65,6 @@ bool xtable_maker_t::can_make_next_full_block(const data::xblock_consensus_para_
     return false;
 }
 
-void xtable_maker_t::set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const {
-    #ifdef ENABLE_METRICS
-    XMETRICS_GAUGE(metrics::cons_packtx_succ, bsucc ? 1 : 0);
-    if (tx->is_self_tx() || tx->is_send_tx()) {
-        XMETRICS_GAUGE(metrics::cons_packtx_sendtx_succ, bsucc ? 1 : 0);
-    } else if (tx->is_recv_tx()) {
-        XMETRICS_GAUGE(metrics::cons_packtx_recvtx_succ, bsucc ? 1 : 0);
-    } else if (tx->is_confirm_tx()) {
-        XMETRICS_GAUGE(metrics::cons_packtx_confirmtx_succ, bsucc ? 1 : 0);
-    }
-    #endif
-}
-
 std::vector<xcons_transaction_ptr_t> xtable_maker_t::check_input_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, const std::vector<xcons_transaction_ptr_t> & input_table_txs, uint64_t now) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     for (auto & tx : input_table_txs) {
@@ -241,7 +228,8 @@ void xtable_maker_t::make_genesis_account_index(bool is_leader, const data::xblo
 }
 
 void xtable_maker_t::make_account_unit_and_index(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, data::xtable_block_para_t & lighttable_para, std::error_code & ec) {
-    XMETRICS_TIME_RECORD("cons_make_units_cost");
+    // XMETRICS_TIME_RECORD("cons_make_units_cost");
+    // XMETRICS_CPU_TIME_RECORD("cons_make_units_cost_cpu");
 
     // create units
     auto const& unitctxs = statectx_ptr->get_modified_unit_ctx();
@@ -492,20 +480,18 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
 }
 
 xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
-    // XMETRICS_TIMER(metrics::cons_make_lighttable_tick);
-    XMETRICS_TIME_RECORD("cons_make_lighttable_cost");
+    // XMETRICS_TIME_RECORD("cons_make_lighttable_cost");
+    // XMETRICS_CPU_TIME_RECORD("cons_make_lighttable_cost_cpu");
     return make_light_table_v2(true, table_para, cs_para, table_result);
 }
 
 xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
-    // XMETRICS_TIMER(metrics::cons_verify_lighttable_tick);
-    XMETRICS_TIME_RECORD("cons_verify_lighttable_cost");
+    // XMETRICS_TIME_RECORD("cons_verify_lighttable_cost");
+    // XMETRICS_CPU_TIME_RECORD("cons_verify_lighttable_cost_cpu");
     return make_light_table_v2(false, table_para, cs_para, table_result);
 }
 
 xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, bool is_leader, int32_t & error_code) {
-    // XMETRICS_TIMER(metrics::cons_make_fulltable_tick);
-    XMETRICS_TIME_RECORD("cons_make_fulltable_cost");
     std::vector<xblock_ptr_t> blocks_from_last_full;
     if (false == load_table_blocks_from_last_full(cs_para.get_latest_cert_block(), blocks_from_last_full)) {
         xerror("xtable_maker_t::make_full_table fail-load blocks. %s", cs_para.dump().c_str());
@@ -537,9 +523,6 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
 }
 
 xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, bool is_leader, int32_t & error_code) {
-    // TODO(jimmy)
-    XMETRICS_TIME_RECORD("cons_make_emptytable_cost");
-
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
     // const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
@@ -595,8 +578,8 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
 xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
                                            const data::xblock_consensus_para_t & cs_para,
                                            xtablemaker_result_t & tablemaker_result) {
-    // XMETRICS_TIMER(metrics::cons_tablemaker_make_proposal_tick);
-    XMETRICS_TIME_RECORD("cons_tablemaker_make_proposal_cost");
+    // XMETRICS_TIME_RECORD("cons_tablemaker_make_proposal_cost");
+    // XMETRICS_CPU_TIME_RECORD("cons_tablemaker_make_proposal_cost_cpu");
     std::lock_guard<std::mutex> l(m_lock);
     // check table maker state
     const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
@@ -638,8 +621,8 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
 }
 
 xblock_ptr_t xtable_maker_t::make_proposal_backup(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, bool empty_block) {
-    // XMETRICS_TIMER(metrics::cons_tablemaker_verify_proposal_tick);
-    XMETRICS_TIME_RECORD("cons_tablemaker_verify_proposal_cost");
+    // XMETRICS_TIME_RECORD("cons_tablemaker_verify_proposal_cost");
+    // XMETRICS_CPU_TIME_RECORD("cons_tablemaker_verify_proposal_cost_cpu");
     std::lock_guard<std::mutex> l(m_lock);
 
     xblock_ptr_t local_block = nullptr;
@@ -752,7 +735,8 @@ bool xtable_maker_t::is_evm_table_chain() const {
 std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const data::xblock_consensus_para_t & cs_para,
                                                                           const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                           const base::xaccount_indexs_t & accountindexs) {
-    XMETRICS_TIME_RECORD("cons_create_new_mpt_cost");
+    // XMETRICS_TIME_RECORD("cons_create_new_mpt_cost");
+    // XMETRICS_CPU_TIME_RECORD("cons_create_new_mpt_cost_cpu");
     std::error_code ec;
     auto mpt = table_state_ctx->get_prev_tablestate_ext()->get_state_mpt();
     xassert(nullptr != mpt);

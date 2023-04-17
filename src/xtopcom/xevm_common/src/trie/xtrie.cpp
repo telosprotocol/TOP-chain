@@ -830,7 +830,7 @@ void xtop_trie::prune(std::error_code & ec) {
     }
     assert(pending_to_be_pruned_.back() == original_root_hash_);
 
-    XMETRICS_COUNTER_SET("trie_prune_to_trie_db", pending_to_be_pruned_.size());
+    XMETRICS_GAUGE_SET_VALUE(metrics::mpt_trie_prune_to_trie_db, pending_to_be_pruned_.size());
 
     trie_db_->prune(hash(), std::move(pending_to_be_pruned_), ec);
     if (ec) {

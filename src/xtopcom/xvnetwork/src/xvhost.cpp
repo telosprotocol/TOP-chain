@@ -396,9 +396,7 @@ void xtop_vhost::do_handle_network_data() {
         try {
             auto all_byte_messages = m_message_queue.wait_and_pop_all();
 
-            XMETRICS_FLOW_COUNT("vhost_handle_data_ready_called", all_byte_messages.size());
-
-            XMETRICS_TIME_RECORD("vhost_handle_data_ready_called_time");
+            // XMETRICS_FLOW_COUNT("vhost_handle_data_ready_called", all_byte_messages.size());
 
 #if defined(XENABLE_VHOST_BENCHMARK)
             auto xxbegin = std::chrono::high_resolution_clock::now();
@@ -568,7 +566,7 @@ void xtop_vhost::do_handle_network_data() {
                                      message.hash(),
                                      &callback,
                                      top::get<common::xnode_address_t const>(callback_info).to_string().c_str());
-#ifdef ENABLE_METRICS
+#ifdef VHOST_METRICS
                                 char msg_info[30] = {0};
                                 snprintf(msg_info, 29, "%x|%" PRIx64, static_cast<uint32_t>(vnetwork_message.message().id()), message.hash());
                                 XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_callback", msg_info, uint32_t(100000));

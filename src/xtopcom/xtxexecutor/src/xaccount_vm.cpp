@@ -38,16 +38,6 @@ int32_t xaccount_vm_t::exec_one_tx(store::xaccount_context_t * account_context, 
 }
 
 int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx, std::vector<xcons_transaction_ptr_t> & contract_create_txs) {
-    // uint64_t now = cs_para.get_gettimeofday_s();
-    // uint64_t delay_time_s = tx->get_transaction()->get_delay_from_fire_timestamp(now);
-    // if (tx->is_self_tx() || tx->is_send_tx()) {
-    //     XMETRICS_GAUGE(metrics::txdelay_from_client_to_sendtx_exec, delay_time_s);
-    // } else if (tx->is_recv_tx()) {
-    //     XMETRICS_GAUGE(metrics::txdelay_from_client_to_recvtx_exec, delay_time_s);
-    // } else if (tx->is_confirm_tx()) {
-    //     XMETRICS_GAUGE(metrics::txdelay_from_client_to_confirmtx_exec, delay_time_s);
-    // }
-
     int32_t ret = exec_one_tx(account_context, tx);
     if (ret != xsuccess) {
         xwarn("xaccount_vm_t::exec_tx input tx fail. %s error:%s",

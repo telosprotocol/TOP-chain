@@ -16,11 +16,9 @@ namespace state_sync {
 #define TIMEOUT_MSEC 5000U
 
 xtop_download_executer::xtop_download_executer(observer_ptr<base::xiothread_t> thread, uint32_t overtime) : m_syncer_thread{thread}, m_overtime(overtime) {
-    XMETRICS_COUNTER_INCREMENT("statesync_downloader_executers", 1);
 }
 
 xtop_download_executer::~xtop_download_executer() {
-    XMETRICS_COUNTER_DECREMENT("statesync_downloader_executers", 1);
 }
 
 void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback) {

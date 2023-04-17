@@ -530,7 +530,6 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         bool         m_auto_lock;
     };
 
-    XMETRICS_TIME_RECORD("statestore_execute_from_prev_cost");
     if (current_block->get_height() != prev_state->get_table_state()->height() + 1) {
         ec = error::xerrc_t::statestore_block_unmatch_prev_err;
         xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-block and state unmatch.block=%s,state=%s",current_block->dump().c_str(),prev_state->get_table_state()->get_bstate()->dump().c_str());

@@ -62,9 +62,6 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
                                         const std::string & value,
                                         proposal_type type,
                                         uint64_t effective_timer_height) {
-    XMETRICS_TIME_RECORD("sysContract_recTccProposal_submit_proposal");
-    XMETRICS_CPU_TIME_RECORD("sysContract_recTccProposal_submit_proposal_cpu");
-
     // XCONTRACT_ENSURE(modification_description.size() <= MODIFICATION_DESCRIPTION_SIZE, "[xrec_proposal_contract::submitProposal] description size too big!");
     XCONTRACT_ENSURE(is_valid_proposal_type(type) == true, "[xrec_proposal_contract::submitProposal] input invalid proposal type!");
 
@@ -193,8 +190,6 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
 }
 
 void xrec_proposal_contract::withdrawProposal(const std::string & proposal_id) {
-    XMETRICS_TIME_RECORD("sysContract_recTccProposal_withdraw_proposal");
-    XMETRICS_CPU_TIME_RECORD("sysContract_recTccProposal_withdraw_proposal_cpu");
     auto src_account = SOURCE_ADDRESS();
     xdbg("[xrec_proposal_contract::withdrawProposal] proposal_id: %s, account: %s", proposal_id.c_str(), src_account.c_str());
 
@@ -224,8 +219,6 @@ void xrec_proposal_contract::withdrawProposal(const std::string & proposal_id) {
 }
 
 void xrec_proposal_contract::tccVote(std::string & proposal_id, bool option) {
-    XMETRICS_TIME_RECORD("sysContract_recTccProposal_tcc_vote");
-    XMETRICS_CPU_TIME_RECORD("sysContract_recTccProposal_tcc_vote_cpu");
     auto const src_account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xdbg("[xrec_proposal_contract::tccVote] tccVote start, proposal_id: %s, account: %s vote: %d", proposal_id.c_str(), src_account.to_string().c_str(), option);
 

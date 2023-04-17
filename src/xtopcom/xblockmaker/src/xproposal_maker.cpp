@@ -200,8 +200,6 @@ data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num, xunit_service::xpreproposal_send_cb cb) {
-    // XMETRICS_TIMER(metrics::cons_make_proposal_tick);
-    XMETRICS_TIME_RECORD("cons_make_proposal_cost");
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
     data::xtablestate_ptr_t tablestate = proposal_para.get_cert_table_state();
@@ -218,7 +216,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
               proposal_para.dump().c_str());
         return nullptr;
     }
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xproposal_maker_t::make_proposal fail-leader_set_consensus_para.%s",
@@ -270,10 +267,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
 
-    // add metrics of tx counts / table counts ratio
-    XMETRICS_GAUGE(metrics::cons_table_leader_make_unit_count, table_result.m_succ_unit_num);
-    XMETRICS_GAUGE(metrics::cons_table_leader_make_tx_count, proposal_input->get_input_txs().size());    
-
     std::string block_object_bin;
     proposal_block->serialize_to_string(block_object_bin);
     xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
@@ -285,8 +278,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 }
 
 data::xblock_ptr_t xproposal_maker_t::make_proposal_backup(base::xvblock_t * proposal_block, data::xblock_consensus_para_t & cs_para) {
-    // XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
-    XMETRICS_TIME_RECORD("cons_verify_proposal_cost");
     xdbg("xproposal_maker_t::make_proposal_backup enter. proposal=%s", proposal_block->dump().c_str());
     
     int ret = backup_verify_and_set_consensus_para_basic(cs_para, proposal_block->get_last_block_hash(), proposal_block->get_justify_cert_hash());
@@ -301,6 +292,7 @@ data::xblock_ptr_t xproposal_maker_t::make_proposal_backup(base::xvblock_t * pro
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::make_proposal_backup fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
         XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return nullptr;
     }

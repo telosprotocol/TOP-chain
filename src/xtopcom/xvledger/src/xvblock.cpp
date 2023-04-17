@@ -2034,7 +2034,6 @@ namespace top
                 xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,_input_object);
                 if(old_ptr != NULL){
                     xcontext_t::instance().delay_release_object(old_ptr);
-                    XMETRICS_GAUGE(metrics::data_relay_release_input, 1);
                 }                    
             }
             if (nullptr == m_voutput_ptr) {
@@ -2042,7 +2041,6 @@ namespace top
                 xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,_output_object);
                 if(old_ptr != NULL){
                     xcontext_t::instance().delay_release_object(old_ptr);
-                    XMETRICS_GAUGE(metrics::data_relay_release_output, 1);
                 }
             }
 
@@ -2071,7 +2069,6 @@ namespace top
             xvinput_t * old_ptr = xatomic_t::xexchange(m_vinput_ptr,input_ptr);
             if(old_ptr != NULL){
                 xcontext_t::instance().delay_release_object(old_ptr);
-                XMETRICS_GAUGE(metrics::data_relay_release_input, 1);
             }
             return m_vinput_ptr;      
             // if (get_block_class() == base::enum_xvblock_class_nil) {
@@ -2151,7 +2148,6 @@ namespace top
             xvoutput_t * old_ptr = xatomic_t::xexchange(m_voutput_ptr,output_ptr);
             if(old_ptr != NULL){
                 xcontext_t::instance().delay_release_object(old_ptr);
-                XMETRICS_GAUGE(metrics::data_relay_release_output, 1);
             }
             return m_voutput_ptr;
             // if (get_block_class() == base::enum_xvblock_class_nil) {

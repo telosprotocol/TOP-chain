@@ -189,7 +189,6 @@ void     xtablebuilder_t::make_table_block_para(const data::xtablestate_ptr_t & 
 }
 
 data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
-    XMETRICS_TIME_RECORD("cons_build_light_table_cost");
     std::shared_ptr<base::xvblockmaker_t> vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);
     auto _new_block = vbmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());

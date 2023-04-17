@@ -219,7 +219,6 @@ void xstatectx_t::finish_execution() {
 }
 
 void xstatectx_t::do_commit(base::xvblock_t* current_block) {
-    XMETRICS_TIME_RECORD("cons_statectx_commit_cost");
     auto const & state_root_hash = data::xblockextract_t::get_state_root_from_block(current_block);
     
     auto const& unitctxs = get_modified_unit_ctx();

@@ -41,7 +41,6 @@ void xzec_slash_info_contract::setup() {
 
 
 void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_info) {
-    XMETRICS_TIME_RECORD("sysContract_zecSlash_summarize_slash_info");
     XMETRICS_GAUGE(metrics::xmetrics_tag_t::contract_zec_slash_summarize_fullblock, 1);
 
 #if defined(DEBUG)
@@ -61,7 +60,6 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
     // get current summarized info string
     std::string summarize_info_str;
     try {
-        XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_unqualified_node_key");
         if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE"))
             summarize_info_str = MAP_GET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
     } catch (std::runtime_error const & e) {
@@ -71,7 +69,6 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
 
     std::string summarize_tableblock_count_str;
     try {
-        XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_tableblock_num_key");
         if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, "TABLEBLOCK_NUM")) {
             summarize_tableblock_count_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, "TABLEBLOCK_NUM");
         }
@@ -93,21 +90,18 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
         summarize_info.serialize_to(stream);
 
         {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_unqualified_node_key");
             MAP_SET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE", std::string((char *)stream.data(), stream.size()));
         }
 
         stream.reset();
         stream << summarize_tableblock_count;
         {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_tableblock_num_key");
             MAP_SET(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, "TABLEBLOCK_NUM", std::string((char *)stream.data(), stream.size()));
         }
 
         stream.reset();
         stream << cur_statistic_height;
         {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_tableblock_height_key");
             MAP_SET(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, base::xstring_utl::tostring(table_id), std::string((char *)stream.data(), stream.size()));
         }
 
@@ -165,8 +159,6 @@ bool xzec_slash_info_contract::summarize_slash_info_internal(std::string const &
 
 
 void xzec_slash_info_contract::do_unqualified_node_slash(common::xlogic_time_t const timestamp) {
-    XMETRICS_TIME_RECORD("sysContract_zecSlash_do_unqualified_node_slash");
-    XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_do_unqualified_node_slash_cpu");
     auto const & account = SELF_ADDRESS();
     auto const & source_addr = SOURCE_ADDRESS();
 
@@ -202,7 +194,6 @@ void xzec_slash_info_contract::do_unqualified_node_slash(common::xlogic_time_t c
     // get check params
     std::string last_slash_time_str;
     try {
-        XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_extended_function_key");
         if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, LAST_SLASH_TIME)) {
             last_slash_time_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, LAST_SLASH_TIME);
         }
@@ -234,7 +225,6 @@ void xzec_slash_info_contract::do_unqualified_node_slash(common::xlogic_time_t c
                                            award_persent_threshold,
                                            node_to_action)) {
         {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_extended_function_key");
             MAP_SET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, SLASH_DELETE_PROPERTY, "true");
             MAP_SET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, LAST_SLASH_TIME, std::to_string(timestamp));
         }
@@ -288,8 +278,6 @@ void xzec_slash_info_contract::pre_condition_process(data::system_contract::xunq
 
     std::string delete_property = "false";
     try {
-        XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_extend_key");
-        XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_get_property_contract_extend_key_cpu");
         delete_property = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, SLASH_DELETE_PROPERTY);
     } catch (std::runtime_error const & e) {
         xwarn("[xzec_slash_info_contract][[do_unqualified_node_slash] read extend key error:%s", e.what());
@@ -299,26 +287,18 @@ void xzec_slash_info_contract::pre_condition_process(data::system_contract::xunq
 
     if (delete_property == "true") {
         {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_remove_property_contract_unqualified_node_key");
-            XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_remove_property_contract_unqualified_node_key_cpu");
             MAP_REMOVE(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
         }
         {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_remove_property_contract_tableblock_num_key");
-            XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_remove_property_contract_tableblock_num_key_cpu");
             MAP_REMOVE(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, "TABLEBLOCK_NUM");
         }
 
         {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_extend_key");
-            XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_set_property_contract_extend_key_cpu");
             MAP_SET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, SLASH_DELETE_PROPERTY, "false");
         }
 
     } else {
         try {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_tableblock_num_key");
-            XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_get_property_contract_tableblock_num_key_cpu");
             if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, "TABLEBLOCK_NUM")) {
                 value_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, "TABLEBLOCK_NUM");
             }
@@ -335,8 +315,6 @@ void xzec_slash_info_contract::pre_condition_process(data::system_contract::xunq
 
         value_str.clear();
         try {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_unqualified_node_key");
-            XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_get_property_contract_unqualified_node_key_cpu");
             if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE")) {
                 value_str = MAP_GET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE");
             }
@@ -468,8 +446,6 @@ void xzec_slash_info_contract::print_table_height_info() {
         std::string height_key = std::to_string(i);
         std::string value_str;
         try {
-            XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_fulltableblock_height_key");
-            XMETRICS_CPU_TIME_RECORD("sysContract_zecSlash_get_property_contract_fulltableblock_height_key_cpu");
             if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, height_key)) {
                 value_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, height_key);
             }
@@ -527,7 +503,6 @@ bool xzec_slash_info_contract::slash_condition_check(std::string const& last_sla
         xinfo("[xzec_slash_info_contract][do_unqualified_node_slash] statisfy punish interval condition, time round: %" PRIu64 ", last slash time: %s",
             timestamp,
             last_slash_time_str.c_str());
-        XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_extend_key");
     }
 
     return true;
@@ -539,7 +514,6 @@ bool xzec_slash_info_contract::slash_condition_check(std::string const& last_sla
     uint64_t read_height = 0;
     std::string value_str;
     try {
-        XMETRICS_TIME_RECORD("sysContract_zecSlash_get_property_contract_fulltableblock_height_key");
         if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, height_key)) {
             value_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY, height_key);
         }

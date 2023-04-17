@@ -80,7 +80,6 @@ xtablestate_ext_ptr_t xstatestore_cache_t::get_prev_tablestate(uint64_t height, 
 void xstatestore_dbaccess_t::write_table_bstate(common::xtable_address_t const& address, data::xtablestate_ptr_t const& tablestate, const std::string & block_hash, std::error_code & ec) const {
     if (tablestate->height() > 0)
         xassert(tablestate->get_block_viewid() != 0);
-    XMETRICS_GAUGE(metrics::store_state_table_write, 1);
     // 1.write table bstate to db
     std::string state_db_key = base::xvdbkey_t::create_prunable_state_key(address.vaccount(), tablestate->height(), block_hash);
     std::string state_db_bin;
@@ -126,7 +125,6 @@ data::xtablestate_ptr_t xstatestore_dbaccess_t::read_table_bstate(common::xtable
 }
 
 void xstatestore_dbaccess_t::write_unit_bstate(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const {
-    XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
     if (unitstate->height() > 0)
         xassert(unitstate->get_block_viewid() != 0);
     std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(unitstate->account_address().vaccount(), unitstate->height(), block_hash);

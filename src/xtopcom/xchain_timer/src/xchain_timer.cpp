@@ -88,9 +88,11 @@ void xchain_timer_t::update_time(common::xlogic_time_t new_time, xlogic_timer_up
 
     // for debug purpose
     bool const not_continuous = current_time + 1 < new_time;
+#ifdef ENABLE_METRICS
     if (not_continuous) {
-        XMETRICS_COUNTER_INCREMENT("chaintimer_clock_discontinuity", 1);
+        XMETRICS_GAUGE(metrics::chaintimer_clock_discontinuity, 1);
     }
+#endif
 
     std::chrono::steady_clock::time_point curr_time_update_time_point;
     {

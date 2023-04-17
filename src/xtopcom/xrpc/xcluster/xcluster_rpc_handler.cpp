@@ -38,7 +38,6 @@ xcluster_rpc_handler::xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face
 }
 
 void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
-    XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_cluster_rpc_handler");
 #if defined(DEBUG)
     auto msg_id = message.id();
     xdbg_rpc("xcluster_rpc_handler on_message,id(%x,%s)", msg_id, edge_sender.to_string().c_str());  // address to_string
@@ -106,11 +105,9 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
         is_evm_tx = base::xvaccount_t::get_addrtype_from_account(account.to_string()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account;
 
         uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
-        // uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
         if (now < tx_ptr->get_fire_timestamp()) {
-            XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
+            XMETRICS_GAUGE(metrics::rpc_txdelay_client_timestamp_unmatch, 1);
         }
-        XMETRICS_GAUGE(metrics::txdelay_from_client_to_auditor, tx_ptr->get_delay_from_fire_timestamp(now));
 
         // todo: check return value. if signature is invalid, not forward to validators.
         m_txpool_service->request_transaction_consensus(tx_ptr, false);

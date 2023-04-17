@@ -608,7 +608,6 @@ void xtxpool_table_t::filter_txs_by_black_white_list(std::vector<xcons_transacti
 }
 
 int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) const {
-    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_verify_receipt_tx");
     if (tx->is_confirm_tx()) {
         if (tx->get_last_not_need_confirm()) {
             xtxpool_info("xtxpool_table_t::verify_receipt_tx not need confirm.tx=%s", tx->dump(true).c_str());

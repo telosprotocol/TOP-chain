@@ -44,7 +44,6 @@ xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
   m_role_xips_mgr(role_xips_mgr),
   m_role_chains_mgr(role_chains_mgr) {
     xsync_info("chain_downloader create_chain %s", m_address.c_str());
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", 1);
     m_is_elect_chain = is_elect_chain();
 }
 
@@ -57,7 +56,6 @@ uint64_t xchain_downloader_t::get_chain_last_end_height(enum_chain_sync_policy s
 xchain_downloader_t::~xchain_downloader_t() {
 
     xsync_info("chain_downloader destroy %s", m_address.c_str());
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", -1);
 }
 
 const std::string& xchain_downloader_t::get_address() const {
@@ -310,14 +308,14 @@ bool xchain_downloader_t::check_behind(uint64_t height, const char *elect_addres
 bool xchain_downloader_t::send_request(int64_t now) {
     if (!m_ratelimit->get_token(now)) {
         xsync_dbg("chain_downloader get token failed. %s", m_address.c_str());
-        XMETRICS_COUNTER_INCREMENT("xsync_downloader_overflow", 1);
+        XMETRICS_GAUGE(metrics::xsync_downloader_overflow, 1);
         return false;
     }
     
     vnetwork::xvnode_address_t self_addr = m_request->self_addr;
     common::xnode_type_t node_type = self_addr.type();
     if (!common::has<common::xnode_type_t::fullnode>(node_type)) { // not fullnode
-        XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
+        XMETRICS_GAUGE(metrics::xsync_downloader_request, 1);
         m_request->send_time = now;
         int64_t queue_cost = m_request->send_time - m_request->create_time;
         xsync_info("chain_downloader send sync request(block). %s,range[%lu,%lu] get_token_cost(%ldms) %s",
@@ -334,7 +332,7 @@ bool xchain_downloader_t::send_request(int64_t now) {
         xsync_info("xchain_downloader_t::send_request, not find archive.");
         return false;
     }
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
+    XMETRICS_GAUGE(metrics::xsync_downloader_request, 1);
     m_request->send_time = now;
     int64_t queue_cost = m_request->send_time - m_request->create_time;
     vnetwork::xvnode_address_t &target_addr = addresses[0];
@@ -502,7 +500,7 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
             target_addr.to_string().c_str(),
             sync_policy);
 
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_block_behind", 1);
+    XMETRICS_GAUGE(metrics::xsync_downloader_block_behind, 1);
 
     uint64_t height = start_height;
 
@@ -540,7 +538,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         m_address.c_str(), count, total_cost, from_addr.to_string().c_str());
 
     m_ratelimit->feedback(total_cost, now);
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_response_cost", total_cost);
+    XMETRICS_GAUGE(metrics::xsync_downloader_response_cost, total_cost);
 
     if (false == sync_blocks_continue_check(blocks, "", false)) {
         xsync_warn("execute_next_download  blocks(address error) (%s)", blocks[0]->get_account().c_str());

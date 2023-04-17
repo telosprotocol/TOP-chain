@@ -233,7 +233,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         uint64_t now = xverifier::xtx_utl::get_gmttime_s();
         int32_t ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx.get(), now, true);
         if (ret) {
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_expiration", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "duration expiration check failed"};
         }
 
@@ -329,10 +328,8 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
         if (nullptr != json_proc.m_tx_ptr) {
             uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
             if (now < json_proc.m_tx_ptr->get_fire_timestamp()) {
-                XMETRICS_GAUGE(metrics::txdelay_client_timestamp_unmatch, 1);
+                XMETRICS_GAUGE(metrics::rpc_txdelay_client_timestamp_unmatch, 1);
             }
-            // uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
-            XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now));
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->source_address().to_string(), rpc_msg_eth_request);
         } else {
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_eth_query_request);
@@ -340,10 +337,10 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
         if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
             json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
             json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
-            XMETRICS_COUNTER_INCREMENT("rpc_edge_tx_response", 1);
+            XMETRICS_GAUGE(metrics::rpc_edge_tx_response, 1);
             write_response(response, json_proc.get_response());
         } else {
-            XMETRICS_COUNTER_INCREMENT("rpc_edge_query_response", 1);
+            XMETRICS_GAUGE(metrics::rpc_edge_query_response, 1);
             // auditor return query result directly, so clear shard addr set
             shard_addr_set.clear();
             m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response, rpc_msg_eth_query_request);

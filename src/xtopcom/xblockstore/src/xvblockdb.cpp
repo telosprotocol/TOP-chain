@@ -33,43 +33,18 @@ namespace top
             {
                 if (_level == base::enum_xvblock_level_table) {
                     XMETRICS_GAUGE(metrics::store_block_table_write, 1);
-                    if (_class == base::enum_xvblock_class_full) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
-                    } else if (_class == base::enum_xvblock_class_light) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
-                    } else {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_empty, bin_size);
-                    }
                 } else if (_level == base::enum_xvblock_level_unit) {
                     XMETRICS_GAUGE(metrics::store_block_unit_write, 1);
-                    if (_class == base::enum_xvblock_class_full) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_full, bin_size);
-                    } else if (_class == base::enum_xvblock_class_light) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_light, bin_size);
-                    } else {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_empty, bin_size);
-                    }
                 } else {
                     XMETRICS_GAUGE(metrics::store_block_other_write, 1);
-                    XMETRICS_GAUGE(metrics::store_dbsize_block_other, bin_size);
                 }
             }
             else if (metrics_type == enum_blockstore_metrics_type_block_input_res)
             {
                 if (_level == base::enum_xvblock_level_table) {
                     XMETRICS_GAUGE(metrics::store_block_input_table_write, 1);
-                    if (_class == base::enum_xvblock_class_full) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
-                    } else if (_class == base::enum_xvblock_class_light) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
-                    }
                 } else if (_level == base::enum_xvblock_level_unit) {
                     XMETRICS_GAUGE(metrics::store_block_input_unit_write, 1);
-                    if (_class == base::enum_xvblock_class_full) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_full, bin_size);
-                    } else if (_class == base::enum_xvblock_class_light) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_light, bin_size);
-                    }
                 } else {
                 }
             }
@@ -77,18 +52,8 @@ namespace top
             {
                 if (_level == base::enum_xvblock_level_table) {
                     XMETRICS_GAUGE(metrics::store_block_output_table_write, 1);
-                    if (_class == base::enum_xvblock_class_full) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
-                    } else if (_class == base::enum_xvblock_class_light) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
-                    }
                 } else if (_level == base::enum_xvblock_level_unit) {
                     XMETRICS_GAUGE(metrics::store_block_output_unit_write, 1);
-                    if (_class == base::enum_xvblock_class_full) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_full, bin_size);
-                    } else if (_class == base::enum_xvblock_class_light) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_light, bin_size);
-                    }
                 } else {
                 }
             }
@@ -96,11 +61,6 @@ namespace top
             {
                 if (_level == base::enum_xvblock_level_table) {
                     XMETRICS_GAUGE(metrics::store_block_output_table_write, 1);
-                    if (_class == base::enum_xvblock_class_full) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
-                    } else if (_class == base::enum_xvblock_class_light) {
-                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
-                    }
                 }
             }
         #endif

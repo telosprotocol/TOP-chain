@@ -577,7 +577,6 @@ namespace top
                 if(old_ptr != NULL)
                 {
                     xcontext_t::instance().delay_release_object(old_ptr);
-                    XMETRICS_GAUGE(metrics::data_relay_release_resource, 1);
                 }
             }
             return true;
