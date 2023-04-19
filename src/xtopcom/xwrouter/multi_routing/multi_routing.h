@@ -58,10 +58,10 @@ public:
     void HandleAddLastRoundElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
     // RoutingTableInfoMgr
-    void add_routing_table_info(common::xip2_t const & group_xip, std::pair<uint64_t, uint64_t> const & routing_table_info);
+    void add_routing_table_info(common::xip2_t const & group_xip, uint64_t routing_table_blk_height);
     void delete_routing_table_info(common::xip2_t const & group_xip, uint64_t version_or_blk_height);
-    base::ServiceType transform_service_type(base::ServiceType const & service_type);
-    std::vector<kadmlia::NodeInfoPtr> transform_node_vec(base::ServiceType const & service_type, std::vector<kadmlia::NodeInfoPtr> const & node_vec);
+    // base::ServiceType transform_service_type(base::ServiceType const & service_type);
+    // std::vector<kadmlia::NodeInfoPtr> transform_node_vec(base::ServiceType const & service_type, std::vector<kadmlia::NodeInfoPtr> const & node_vec);
 
     // Update RRS N
     bool UpdateNodeSizeCallback(std::function<void(uint64_t & node_size, std::error_code & ec)> cb);

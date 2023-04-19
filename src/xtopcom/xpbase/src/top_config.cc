@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/check_cast.h"
@@ -207,7 +208,7 @@ bool Config::Set(const std::string& field, const std::string& key, std::string v
         iter = config_map_.find(field);
     }
 
-    iter->second[key] = value;
+    iter->second[key] = std::move(value);
     return true;
 }
 

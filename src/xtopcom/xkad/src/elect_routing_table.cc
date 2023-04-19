@@ -268,18 +268,18 @@ void ElectRoutingTable::SetElectionNodesExpected(std::map<std::string, base::Kad
         std::unique_lock<std::mutex> lock(m_nodes_mutex);
         m_expected_kad_keys = elect_root_kad_keys_map;
         m_all_nodes_root_kay_keys = elect_root_kad_keys_map;
-        for (auto _p : elect_root_kad_keys_map) {
+        for (auto const & p : elect_root_kad_keys_map) {
             NodeInfoPtr node_ptr;
-            node_ptr.reset(new NodeInfo(_p.first));
-            if (_p.second->Get() == base::GetRootKadmliaKey(global_node_id)->Get()) {
+            node_ptr.reset(new NodeInfo(p.first));
+            if (p.second->Get() == base::GetRootKadmliaKey(global_node_id)->Get()) {
                 m_self_index = index;
                 xdbg("[ElectRoutingTable::SetElectionNodesExpected] Set self index %zu.", m_self_index);
-                m_expected_kad_keys.erase(_p.first);
+                m_expected_kad_keys.erase(p.first);
             }
-            m_nodes.insert(std::make_pair(_p.first, node_ptr));
-            m_xip2_for_shuffle.push_back(_p.first);
-            m_index_map.insert(std::make_pair(_p.first, index++));
-            xdbg("[ElectRoutingTable::SetElectionNodesExpected] get node %s %s", _p.first.c_str(), _p.second->Get().c_str());
+            m_nodes.insert(std::make_pair(p.first, node_ptr));
+            m_xip2_for_shuffle.push_back(p.first);
+            m_index_map.insert(std::make_pair(p.first, index++));
+            xdbg("[ElectRoutingTable::SetElectionNodesExpected] get node %s %s", p.first.c_str(), p.second->Get().c_str());
         }
     }
     std::unique_lock<std::mutex> lock_nodes(m_broadcast_nodes_mutex);
@@ -300,8 +300,8 @@ void ElectRoutingTable::SetElectionNodesExpected(std::map<std::string, base::Kad
 }
 
 void ElectRoutingTable::EraseElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys) {
-    for (auto _kad_key : kad_keys) {
-        auto node_id = _kad_key->Get();
+    for (auto const & kad_key : kad_keys) {
+        auto node_id = kad_key->Get();
         DoEraseElectionNodesExpected(node_id);
     }
 }
@@ -324,10 +324,10 @@ void ElectRoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, ka
         xinfo("[ElectRoutingTable::HandleElectionNodesInfoFromRoot] node size:%zu local_service_type:%lld", nodes.size(), get_local_node_info()->service_type().value());
         std::vector<base::KadmliaKeyPtr> erase_keys;
         std::unique_lock<std::mutex> lock(m_nodes_mutex);
-        for (auto _p : nodes) {
-            NodeInfoPtr node_ptr = m_nodes[_p.first];
+        for (auto const & p : nodes) {
+            NodeInfoPtr node_ptr = m_nodes[p.first];
             // node_ptr.reset(new NodeInfo(_p.first));
-            auto & root_node_info = _p.second;
+            auto & root_node_info = p.second;
             node_ptr->public_ip = root_node_info->public_ip;
             node_ptr->public_port = root_node_info->public_port;
             node_ptr->service_type = get_local_node_info()->service_type();
@@ -364,9 +364,9 @@ void ElectRoutingTable::OnFindNodesFromRootRouting(std::string const & election_
 void ElectRoutingTable::UpdateBroadcastNodeInfo() {
     std::unique_lock<std::mutex> nodes_lock(m_nodes_mutex);
     std::unique_lock<std::mutex> broadcast_nodes_lock(m_broadcast_nodes_mutex);
-    for (auto const & _p : m_nodes) {
-        auto const & xip = _p.first;
-        auto const & node_info_ptr = _p.second;
+    for (auto const & p : m_nodes) {
+        auto const & xip = p.first;
+        auto const & node_info_ptr = p.second;
         assert(m_broadcast_nodes.find(xip) != m_broadcast_nodes.end());
         m_broadcast_nodes[xip] = node_info_ptr;
     }

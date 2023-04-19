@@ -20,12 +20,25 @@ enum service_type_ver {
     service_type_height_use_blk_height = 1,
 };
 
-static const service_type_ver now_service_type_ver = service_type_ver::service_type_height_use_blk_height;
+static constexpr service_type_ver now_service_type_ver = service_type_ver::service_type_height_use_blk_height;
 
 class ServiceType {
 public:
-    ServiceType() {}
-    explicit ServiceType(uint64_t type);
+    ServiceType() = default;
+    ServiceType(ServiceType const &) = default;
+    ServiceType &operator=(ServiceType const &) = default;
+    ServiceType(ServiceType &&) = default;
+    ServiceType &operator=(ServiceType &&) = default;
+    ~ServiceType() = default;
+
+private:
+    explicit ServiceType(common::xip2_t xip2);
+    explicit ServiceType(common::xip2_t xip2, uint64_t height);
+
+public:
+    static ServiceType build_from(common::xip2_t xip2);
+    static ServiceType build_from(common::xip2_t xip2, uint64_t height);
+    static ServiceType build_from(uint64_t type);
 
     bool operator==(ServiceType const &other) const;
     bool operator!=(ServiceType const &other) const;
@@ -39,26 +52,25 @@ public:
     bool IsBroadcastService() const;
 
     uint64_t value() const;
-    std::string info() const;
+    std::string const & info() const noexcept;
 
     bool is_root_service() const;
     common::xip2_t group_xip2() const;
 
     service_type_ver ver() const;
-    
     common::xnetwork_id_t network_id() const;
     common::xzone_id_t zone_id() const;
     common::xcluster_id_t cluster_id() const;
     common::xgroup_id_t group_id() const;
     uint64_t height() const;
 
-    void set_ver(uint64_t new_ver); 
+    // void set_ver(uint64_t new_ver); 
     void set_height(uint64_t new_height); 
 private:
     void update_info();
 
 private:
-    uint64_t m_type{0};
+    uint64_t m_type{0x8000000000000000};
     std::string m_info{"uninitialized"};
 };
 
@@ -90,7 +102,7 @@ public:
 
     inline uint8_t group_id() const { return xip_.group_id().value(); }
 
-    inline uint8_t slot_id() const { return xip_.slot_id().value(); }
+    inline uint16_t slot_id() const { return xip_.slot_id().value(); }
 
     // blk_height or version
     inline uint64_t version() const { return xip_.height(); }
