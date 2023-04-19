@@ -4,20 +4,17 @@
 
 #pragma once
 
-#include "xpbase/base/kad_key/kadmlia_key.h"
+#include "xcommon/xip.h"
 
-#include <chrono>
 #include <string>
-#include <vector>
 
 namespace top {
-
 namespace wrouter {
 
-typedef struct WrouterTableNodes {
+typedef struct {
     common::xip2_t m_xip2;
     std::string node_id;
-} WrouterTableNodes;
+} WrouterTableNode;
 
 }  // namespace wrouter
 

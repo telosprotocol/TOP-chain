@@ -422,7 +422,7 @@ int XudpSocket::SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_
             TOP_ERROR("Message ParseFromString from string failed!");
             return kTransportFailed;
         }
-        TOP_INFO("SendData error:%d,%s,%d", pro_message.type(), pro_message.des_node_id().c_str(), pro_message.id());
+        TOP_INFO("SendData error:%d,%s,%d,%s", pro_message.type(), pro_message.des_node_id().c_str(), pro_message.id(),packet.get_to_ip_addr().c_str());
         return kTransportFailed;
     }
 

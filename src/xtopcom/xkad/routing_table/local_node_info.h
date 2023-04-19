@@ -93,7 +93,7 @@ private:
     std::string public_ip_;
     uint16_t public_port_{0};
     // int32_t nat_type_{kNatTypeUnknown};
-    base::ServiceType service_type_{0};
+    base::ServiceType service_type_{};
 
     std::mutex kadkey_mutex_;
     base::KadmliaKeyPtr kadmlia_key_{nullptr};

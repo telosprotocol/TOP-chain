@@ -128,7 +128,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
                 cluster_address.cluster_id(),
                 cluster_address.group_id(),
                 outdated_group->group_size(),
-                base::now_service_type_ver == base::service_type_height_use_version ? outdated_group->election_round().value() : outdated_group->associated_blk_height()};
+                outdated_group->associated_blk_height()};
             purely_outdated_xips.push_back(std::move(xip));
         }
 

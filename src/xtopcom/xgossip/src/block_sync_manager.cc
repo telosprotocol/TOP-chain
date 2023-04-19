@@ -84,7 +84,7 @@ void BlockSyncManager::NewBroadcastMessage(transport::protobuf::RoutingMessage &
     // todo charles since this module only servers for root broadcast .make this service_type defaultly.
     assert(message.has_is_root() && message.is_root());
 
-    des_service_type = base::ServiceType(kRoot);
+    des_service_type = base::ServiceType::build_from(kRoot);
 
     AddHeaderHashToQueue(message.gossip().header_hash(), des_service_type);
 }

@@ -62,7 +62,7 @@ void UdpTransport::SetOptBuffer() {
 }
 
 bool UdpTransport::Init(std::string const & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) {
-    xinfo("UdpTransport::Init(%s:%d - %d) ...", local_ip.c_str(), local_port);
+    xinfo("UdpTransport::Init(%s:%d) ...", local_ip.c_str(), local_port);
     io_thread_ = top::base::xiothread_t::create_thread(top::base::xcontext_t::instance(), 0, -1);
     if (io_thread_ == NULL) {
         TOP_ERROR("create xio thread failed!");

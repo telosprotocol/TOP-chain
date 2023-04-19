@@ -64,7 +64,7 @@ bool NodeInfo::operator < (const NodeInfo& other) const {
     return node_id < other.node_id;
 }
 
-bool NodeInfo::IsPublicNode() {
+bool NodeInfo::IsPublicNode() const {
     return public_ip == local_ip && public_port == local_port;
 }
 

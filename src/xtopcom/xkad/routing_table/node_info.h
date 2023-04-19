@@ -25,7 +25,7 @@ public:
     ~NodeInfo();
     NodeInfo& operator=(const NodeInfo& other);
     bool operator < (const NodeInfo& other) const;
-    bool IsPublicNode();
+    bool IsPublicNode() const;
     std::string string();
 
 public:
@@ -38,7 +38,7 @@ public:
     int32_t connection_id{ 0 };
     int32_t detection_count{ 0 };
     int32_t detection_delay_count{ 0 };
-    base::ServiceType service_type{ 0 };
+    base::ServiceType service_type{};
     std::string xid;
     uint64_t hash64{ 0 };
 	transport::UdpPropertyPtr udp_property;
