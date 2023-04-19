@@ -14,8 +14,10 @@
 #include "xwrouter/multi_routing/service_node_cache.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 
-#include <stdlib.h>
-#include <time.h>
+#include <array>
+#include <cstdlib>
+#include <ctime>
+
 #include <unistd.h>
 
 namespace top {
@@ -203,7 +205,7 @@ void MultilayerNetwork::TryCombineP2PEndpoints() {
         }
     }
 
-    static std::string seed_delimiter = {",", ""};
+    static std::array<std::string, 2> seed_delimiter{",", ""};
     // combine url's endpoints together.
     for (const auto & item : url_seeds) {
         combined_p2p_endpoints += seed_delimiter[static_cast<size_t>(combined_p2p_endpoints.empty())];
