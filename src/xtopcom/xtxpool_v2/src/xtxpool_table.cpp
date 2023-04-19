@@ -82,7 +82,13 @@ int32_t xtxpool_table_t::check_send_tx_nonce(const std::shared_ptr<xtx_entry> & 
 int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     if (is_reach_limit(tx)) {
         return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
-    }    
+    }
+
+    auto tx_inside = query_tx(tx->get_tx()->get_tx_hash());
+    if (tx_inside != nullptr) {
+        return xtxpool_error_request_tx_repeat;
+    }
+
     int32_t ret;
     uint64_t latest_nonce = 0;
     ret = check_send_tx_nonce(tx, latest_nonce);
@@ -237,15 +243,15 @@ xpack_resource xtxpool_table_t::get_pack_resource(const xtxs_pack_para_t & pack_
     return xpack_resource(txs, receiptid_state_prove_map);
 }
 
-xcons_transaction_ptr_t xtxpool_table_t::query_tx(const std::string & account, const uint256_t & hash) {
+xcons_transaction_ptr_t xtxpool_table_t::query_tx(const uint256_t & hash) {
     std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    return query_tx(account, hash_str);
+    return query_tx(hash_str);
 }
 
-xcons_transaction_ptr_t xtxpool_table_t::query_tx(const std::string & account, const std::string & hash_str) {
+xcons_transaction_ptr_t xtxpool_table_t::query_tx(const std::string & hash_str) {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        auto tx = m_txmgr_table.query_tx(account, hash_str);
+        auto tx = m_txmgr_table.query_tx(hash_str);
         if (tx != nullptr) {
             return tx;
         }
@@ -347,9 +353,9 @@ bool xtxpool_table_t::on_block_confirmed(base::enum_xvblock_class blk_class, uin
     return true;
 }
 
-int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
+int32_t xtxpool_table_t::verify_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
     for (auto & tx : txs) {
-        auto tx_inside = query_tx(tx->get_account_addr(), tx->get_tx_hash());
+        auto tx_inside = query_tx(tx->get_tx_hash());
         if (tx_inside != nullptr) {
             if (tx_inside->get_tx_subtype() == tx->get_tx_subtype()) {
                 continue;
@@ -520,8 +526,8 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool
 #if !defined(XENABLE_MOCK_ZEC_STAKE)
     // 2.0 special check for standby pool contract call.
     do {
-        if (raw_tx->get_target_addr() == rec_standby_pool_contract_address.to_string()) {
-            common::xaccount_address_t const src_address{raw_tx->get_source_addr()};
+        if (raw_tx->target_address() == rec_standby_pool_contract_address) {
+            common::xaccount_address_t const & src_address = raw_tx->source_address();
             if (src_address == rec_standby_pool_contract_address) {
                 if (raw_tx->get_target_action_name() != "on_timer") {
                     xwarn("xtxpool_table_t::verify_send_tx caught illegal rec standby pool contract call from unsupport address %s", src_address.to_string().c_str());
@@ -582,8 +588,8 @@ void xtxpool_table_t::filter_txs_by_black_white_list(std::vector<xcons_transacti
             iter++;
             continue;
         }
-        auto & source_addr = (*iter)->get_source_addr();
-        auto & target_addr = (*iter)->get_target_addr();
+        auto const & source_addr = (*iter)->get_source_addr();
+        auto const & target_addr = (*iter)->get_target_addr();
         if (!write_addrs.empty() && std::find(write_addrs.begin(), write_addrs.end(), source_addr) == std::end(write_addrs)) {
             xwarn("xtxpool_table_t::filter_txs_by_black_white_list fail-whitelist limit address,tx:%s", (*iter)->dump().c_str());
             iter = txs.erase(iter);
@@ -824,6 +830,8 @@ void xtxpool_table_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::x
     std::vector<xcons_transaction_ptr_t> recovered_send_txs;
     std::vector<xcons_transaction_ptr_t> recovered_receipts;
 
+    xinfo("xtxpool_table_t::update_uncommit_txs tps_key table:%s,height=%llu in", m_xtable_info.get_account().c_str(), _cert_block->get_height() + 1);
+
     auto ret =
         m_uncommit_txs.pop_recovered_block_txs(_cert_block->get_height(), _cert_block->get_block_hash(), _lock_block->get_block_hash(), recovered_send_txs, recovered_receipts);
     if (ret == no_need_update) {
@@ -849,6 +857,7 @@ void xtxpool_table_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::x
         move_uncommit_txs(_lock_block);
     }
     move_uncommit_txs(_cert_block);
+    xinfo("xtxpool_table_t::update_uncommit_txs tps_key table:%s,height=%llu out", m_xtable_info.get_account().c_str(), _cert_block->get_height() + 1);
 }
 
 data::xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {

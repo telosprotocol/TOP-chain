@@ -47,7 +47,7 @@ class xreceiptid_pair_t : public xstatistic::xstatistic_obj_face_t {
 
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_receiptid_pair;}
 private:
-    virtual int32_t get_object_size_real() const override {return sizeof(*this);}
+    virtual size_t get_object_size_real() const override {return sizeof(*this);}
 
  private:
     uint64_t    m_send_id_max{0};

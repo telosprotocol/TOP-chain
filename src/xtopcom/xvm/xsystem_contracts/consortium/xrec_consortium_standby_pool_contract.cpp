@@ -149,7 +149,7 @@ void xtop_rec_consortium_standby_pool_contract::nodeJoinNetwork2(common::xaccoun
     bool const edge = data::system_contract::could_be<common::xnode_type_t::edge>(miner_type);
     bool const archive = data::system_contract::could_be<common::xnode_type_t::storage_archive>(miner_type);
     bool const exchange = data::system_contract::could_be<common::xnode_type_t::storage_exchange>(miner_type);
-    bool const fullnode = data::system_contract::could_be<common::xnode_type_t::fullnode>(miner_type);
+    bool const fullnode = false;
     bool const evm_auditor = data::system_contract::could_be<common::xnode_type_t::evm_auditor>(miner_type);
     bool const evm_validator = data::system_contract::could_be<common::xnode_type_t::evm_validator>(miner_type);
     bool const relay = data::system_contract::could_be<common::xnode_type_t::relay>(miner_type);

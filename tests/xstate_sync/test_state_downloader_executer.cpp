@@ -165,7 +165,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_success) {
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);
@@ -198,7 +198,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_in_bad_connec
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);
@@ -231,7 +231,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_wrong_da
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);
@@ -264,7 +264,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_empty_da
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);
@@ -300,7 +300,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_task_flooding
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);
@@ -392,7 +392,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_req_limit) {
     for (auto & k : unit_sync_map) {
         state_mpt::xaccount_info_t info;
         info.decode(to_string(from_hex(k.first)));
-        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+        auto dbkey = base::xvdbkey_t::create_prunable_unit_state_key(info.account.vaccount(), info.index.get_latest_unit_height(), info.index.get_latest_unit_hash());
         auto v = m_db->get_value(dbkey);
         EXPECT_EQ(to_bytes(v), from_hex(k.second));
         EXPECT_FALSE(ec);

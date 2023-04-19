@@ -38,6 +38,7 @@ enum enum_xtxpool_error_type {
     xtxpool_error_service_invalid_account_address,
     xtxpool_error_not_need_confirm,
     xtxpool_error_max,
+    xtxpool_error_account_tx_not_ready_yet,
 };
 
 #define XTXPOOL_TO_STR(val) #val
@@ -67,6 +68,7 @@ inline std::string xtxpool_error_to_string(int32_t code) {
         XTXPOOL_TO_STR(xtxpool_error_service_not_running),
         XTXPOOL_TO_STR(xtxpool_error_service_invalid_account_address),
         XTXPOOL_TO_STR(xtxpool_error_not_need_confirm),
+        XTXPOOL_TO_STR(xtxpool_error_account_tx_not_ready_yet),
     };
 
     return names[code - xtxpool_error_base - 1];

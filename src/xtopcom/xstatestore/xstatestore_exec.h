@@ -12,6 +12,7 @@
 #include "xstatestore/xstatestore_base.h"
 #include "xstatestore/xtablestate_ext.h"
 #include "xstatestore/xstatestore_access.h"
+#include "xstatestore/xaccount_index_cache.h"
 
 NS_BEG2(top, statestore)
 
@@ -34,12 +35,14 @@ public:
 public:
     xtablestate_ext_ptr_t   execute_and_get_tablestate_ext(base::xvblock_t* target_block, bool bstate_must, std::error_code & ec) const;
     xtablestate_ext_ptr_t   get_latest_executed_tablestate_ext() const;
-    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
+    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const;
     void                    on_table_block_committed(base::xvblock_t* block) const;
     bool                    on_table_block_committed_by_height(uint64_t height, const std::string & block_hash) const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
 
     void    execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const;
+    bool    accountindex_cache_unbroken(base::xvblock_t * table_block) const;
+    bool    get_accountindex_by_recent_blocks_cache(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index) const;
     void    execute_and_get_tablestate(base::xvblock_t* block, data::xtablestate_ptr_t &tablestate, std::error_code & ec) const;
 
     void    build_unitstate_by_accountindex(common::xaccount_address_t const& unit_addr, base::xaccount_index_t const& account_index, data::xunitstate_ptr_t &unitstate, std::error_code & ec) const;
@@ -48,6 +51,8 @@ public:
 
     uint64_t get_latest_executed_block_height() const;
     uint64_t get_need_sync_state_block_height() const;
+
+    void    clear_cache();
 
 protected:
     uint64_t update_execute_from_execute_height(bool force_update) const;
@@ -70,7 +75,7 @@ protected:
     xtablestate_ext_ptr_t execute_and_get_tablestate_ext_unlock(base::xvblock_t* block, bool bstate_must, std::error_code & ec) const;
 
     data::xunitstate_ptr_t execute_unitstate_from_prev_state(common::xaccount_address_t const& unit_addr, base::xaccount_index_t const& current_accountindex, 
-                                                            base::xauto_ptr<base::xvheader_t> const& current_header, std::string const& binlog, std::error_code & ec) const;
+                                                            base::xauto_ptr<base::xvheader_t> const& current_header, uint64_t viewid, std::string const& binlog, std::error_code & ec) const;
 
 protected:
     mutable std::mutex          m_execute_lock;  // protect the whole execution
@@ -83,6 +88,7 @@ protected:
     xstatestore_base_t          m_statestore_base;
     mutable xstatestore_accessor_t m_state_accessor;
     xexecute_listener_face_t *  m_execute_listener{nullptr};
+    mutable xaccount_index_cache_t m_account_index_cache;
 };
 
 NS_END2

@@ -19,7 +19,7 @@ class test_xrpc_top_relay_query_manager : public testing::Test {
     void SetUp() override {
         m_store = creator.get_xstore();
         m_block_store = creator.get_blockstore();
-        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_block_store), nullptr, nullptr);
+        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_block_store));
         contract::xcontract_manager_t::instance().init(nullptr);
     }
 
@@ -156,23 +156,27 @@ TEST_F(test_xrpc_top_relay_query_manager, topRelay_getTransactionReceipt) {
 }
 TEST_F(test_xrpc_top_relay_query_manager, set_relay_block_result) {
     base::xvaccount_t _table_addr("Tb0005@0");
+    std::cout << "0" << std::endl;
     xobject_ptr_t<base::xvblock_t> block = m_block_store->load_block_object(_table_addr, 0, base::enum_xvblock_flag_authenticated, false);
     if (block == nullptr) {
         std::cout << "xrpc_eth_query_manager, load_block_object fail" << std::endl;
         return;
     }
+    std::cout << "1" << std::endl;
     {
         Json::Value js_rsp;
         std::string blocklist_type;
         int ret = xrpc_eth_query_manager_ptr->set_relay_block_result(block, js_rsp, 0, blocklist_type);
         EXPECT_EQ(ret, 0);
     }
+    std::cout << "2" << std::endl;
     {
         Json::Value js_rsp;
         std::string blocklist_type;
         int ret = xrpc_eth_query_manager_ptr->set_relay_block_result(block, js_rsp, 1, blocklist_type);
         EXPECT_EQ(ret, 0);
     }
+    std::cout << "3" << std::endl;
     {
         Json::Value js_rsp;
         std::string blocklist_type;

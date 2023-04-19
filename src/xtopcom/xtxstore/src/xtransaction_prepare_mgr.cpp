@@ -113,7 +113,7 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
             m_transaction_cache->tx_erase(txaction->get_tx_hash());
             continue;
         } else if (_subtype == base::enum_transaction_subtype_send) {
-            auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
+            auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->source_address().to_string(), tx_ptr->target_address().to_string());
             jv["tx_fee"] = static_cast<Json::UInt64>(beacon_tx_fee);
             m_transaction_cache->tx_set_json(txaction->get_tx_hash(), base::enum_transaction_subtype_send, jv);
         } else if (_subtype == base::enum_transaction_subtype_recv) {

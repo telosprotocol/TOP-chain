@@ -6,6 +6,7 @@
 
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
+#include "xpreprocess/xpreprocess.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xtxpool_para.h"
@@ -17,7 +18,7 @@ namespace xtxpool_v2 {
 using data::xcons_transaction_ptr_t;
 
 xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_para(para) {
-    std::map<base::enum_xchain_zone_index, uint16_t> const& all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
+    std::map<base::enum_xchain_zone_index, uint16_t> const & all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
     for (auto & table_index : all_table_indexs) {
         for (uint16_t i = 0; i < table_index.second; i++) {
             base::xtable_index_t tableindex(table_index.first, i);
@@ -28,7 +29,7 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
 }
 
 bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
-    std::map<base::enum_xchain_zone_index, uint16_t> const& all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
+    std::map<base::enum_xchain_zone_index, uint16_t> const & all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
     auto iter = all_table_indexs.find((base::enum_xchain_zone_index)zone);
     if (iter != all_table_indexs.end()) {
         if (subaddr < iter->second) {
@@ -44,6 +45,18 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
+
+    if (nullptr == table->query_tx(tx->get_tx()->get_tx_hash())) {
+        auto f = [tx, table]() {
+            assert(tx != nullptr && table != nullptr);
+            return table->push_send_tx(tx) == xsuccess;
+        };
+        data::xmessage_t msg{common::xaccount_address_t{tx->get_tx()->get_account_addr()}, tx->get_tx(), f};
+        if (data::xpreprocess::instance().send(msg)) {
+            return xsuccess;
+        }
+    }
+
     auto ret = table->push_send_tx(tx);
     return ret;
 }
@@ -74,14 +87,18 @@ void xtxpool_t::print_statistic_values() const {
     uint32_t table_height_record_size = 0;
     uint32_t table_unconfirm_raw_txs_size = 0;
 
-    std::map<base::enum_xchain_zone_index, uint16_t> const& all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
+    std::map<base::enum_xchain_zone_index, uint16_t> const & all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
     for (auto & table_index : all_table_indexs) {
         for (uint16_t i = 0; i < table_index.second; i++) {
             auto table = get_txpool_table(table_index.first, i);
             if (table != nullptr) {
                 table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
-                xinfo(
-                    "xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u:%u", table->table_sid(), table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
+                xinfo("xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u:%u",
+                      table->table_sid(),
+                      table_sender_cache_size,
+                      table_receiver_cache_size,
+                      table_height_record_size,
+                      table_unconfirm_raw_txs_size);
                 sender_cache_size += table_sender_cache_size;
                 receiver_cache_size += table_receiver_cache_size;
                 height_record_size += table_height_record_size;
@@ -119,7 +136,16 @@ data::xcons_transaction_ptr_t xtxpool_t::query_tx(const std::string & account_ad
         xtxpool_warn("xtxpool_t::query_tx table not found, account:%s", account_addr.c_str());
         return nullptr;
     }
-    return table->query_tx(account_addr, hash);
+    return table->query_tx(hash);
+}
+
+data::xcons_transaction_ptr_t xtxpool_t::query_tx(const std::string & account_addr, const std::string & hash_hex) const {
+    auto table = get_txpool_table_by_addr(account_addr);
+    if (table == nullptr) {
+        xtxpool_warn("xtxpool_t::query_tx table not found, account:%s", account_addr.c_str());
+        return nullptr;
+    }
+    return table->query_tx(hash_hex);
 }
 
 void xtxpool_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
@@ -235,7 +261,22 @@ int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xco
         return xtxpool_error_account_not_in_charge;
     }
 
-    return table->verify_txs(account, txs);
+    for (auto const & tx : txs) {
+        if (nullptr == table->query_tx(tx->get_tx_hash())) {
+            xtxpool_v2::xtx_para_t para;
+            std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
+            auto f = [tx_ent, table]() {
+                assert(tx_ent != nullptr && table != nullptr);
+                return table->push_send_tx(tx_ent) == xsuccess;
+            };
+            data::xmessage_t msg{common::xaccount_address_t{tx_ent->get_tx()->get_account_addr()}, tx_ent->get_tx(), f};
+            if (data::xpreprocess::instance().send(msg)) {
+                return xtxpool_error_account_tx_not_ready_yet;
+            }
+        }
+    }
+
+    return table->verify_txs(txs);
 }
 
 void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
@@ -252,8 +293,7 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 //     }
 // }
 
-void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr,
-                                   const data::xtablestate_ptr_t & table_state) {
+void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
     xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->account_address().to_string().c_str(), table_state->height());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_state->account_address().to_string());
@@ -290,8 +330,8 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_co
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::string & address) const {
     base::xvaccount_t _vaddr(address);
-    //auto xid = base::xvaccount_t::get_xid_from_account(address);
-    //return get_txpool_table(get_vledger_zone_index(xid), get_vledger_subaddr(xid));
+    // auto xid = base::xvaccount_t::get_xid_from_account(address);
+    // return get_txpool_table(get_vledger_zone_index(xid), get_vledger_subaddr(xid));
     return get_txpool_table(_vaddr.get_zone_index(), _vaddr.get_ledger_subaddr());
 }
 
@@ -323,7 +363,7 @@ void xtxpool_t::update_peer_receipt_id_state(const base::xvproperty_prove_ptr_t 
 std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
     std::map<std::string, uint64_t> table_height_map;
 
-    std::map<base::enum_xchain_zone_index, uint16_t> const& all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
+    std::map<base::enum_xchain_zone_index, uint16_t> const & all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
     for (auto & table_index : all_table_indexs) {
         for (uint16_t i = 0; i < table_index.second; i++) {
             auto table = get_txpool_table(table_index.first, i);

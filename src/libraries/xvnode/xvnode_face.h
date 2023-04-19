@@ -43,7 +43,7 @@ public:
     virtual std::vector<common::xip2_t> associated_child_nodes_xip2(common::xip2_t const & child_group_xip2, std::error_code & ec) const = 0;
 
     virtual components::sniffing::xsniffer_config_t sniff_config() const = 0;
-    virtual xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const =0;
+    // virtual xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const =0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const = 0;
 
     virtual uint64_t raw_credit_score() const noexcept = 0;

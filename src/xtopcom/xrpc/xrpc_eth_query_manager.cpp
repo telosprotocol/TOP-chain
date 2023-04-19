@@ -1,72 +1,99 @@
 #include "xrpc_eth_query_manager.h"
-#include <algorithm>
-#include <cstdint>
-#if defined(XCXX20)
-#include <secp256k1.h>
-#include <secp256k1_recovery.h>
-#else
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
-#endif
 
 #include "xbase/xbase.h"
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
-#include "xbasic/xutility.h"
 #include "xbasic/xhex.h"
+#include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
-#include "xcommon/xip.h"
+#include "xcommon/common.h"
+#include "xcommon/common_data.h"
+#include "xcommon/fixed_hash.h"
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xblockbuild.h"
-#include "xdata/xtx_factory.h"
-#include "xdata/xgenesis_data.h"
-#include "xdata/xproposal_data.h"
-#include "xdata/xtable_bstate.h"
-#include "xdata/xtableblock.h"
-#include "xcommon/fixed_hash.h"
-#include "xcommon/common_data.h"
-#include "xcommon/common.h"
-#include "xcommon/rlp.h"
-#include "xevm_common/address.h"
-#include "xrouter/xrouter.h"
-#include "xrpc/xuint_format.h"
-#include "xrpc/xrpc_loader.h"
-#include "xrpc/xrpc_eth_parser.h"
-#include "xtxexecutor/xtransaction_fee.h"
-#include "xvledger/xvblock.h"
-#include "xvledger/xvledger.h"
-#include "xvm/manager/xcontract_address_map.h"
-#include "xvm/manager/xcontract_manager.h"
-#include "xmbus/xevent_behind.h"
+#include "xdata/xblock_cs_para.h"
 #include "xdata/xblocktool.h"
-#include "xpbase/base/top_utils.h"
-#include "xutility/xhash.h"
-
-#include "xtxexecutor/xvm_face.h"
-#include "xevm/xevm.h"
+#include "xdata/xproposal_data.h"
+#include "xdata/xrelay_block.h"
+#include "xdata/xrelay_block_store.h"
+#include "xdata/xtable_bstate.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
+#include "xdata/xtx_factory.h"
+#include "xdata/xverifier/xverifier_utl.h"
+#include "xevm/xevm.h"
+#include "xmbus/xevent_behind.h"
+#include "xpbase/base/top_utils.h"
+#include "xrpc/eth_rpc/eth_error_code.h"
+#include "xrpc/xrpc_eth_parser.h"
+#include "xrpc/xrpc_loader.h"
+#include "xrpc/xuint_format.h"
 #include "xstatectx/xstatectx.h"
-#include "xdata/xrelay_block.h"
-#include "xdata/xblock_cs_para.h"
-#include "xdata/xrelay_block_store.h"
-#include "xgasfee/xgasfee.h"
 #include "xstatestore/xstatestore_face.h"
+#include "xtxexecutor/xtransaction_fee.h"
+#include "xtxexecutor/xvm_face.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvledger.h"
+#include "xvm/manager/xcontract_manager.h"
+
+#include <algorithm>
+#include <cstdint>
+#if defined(XCXX20)
+#    include <secp256k1.h>
+#else
+#    include <secp256k1/secp256k1.h>
+#endif
 
 using namespace top::data;
+using namespace top::base;
+using namespace top::store;
+using namespace top::xrpc;
+
 // Error(message)
-static const uint32_t abi_error = 0x08c379a0;
+static constexpr uint32_t abi_error = 0x08c379a0;
+
 namespace top {
 namespace xrpc {
-// using namespace std;
-using namespace base;
-using namespace store;
-using namespace xrpc;
+
+#define ETH_ADDRESS_CHECK_VALID(x)                                                                                                                                                 \
+    if (xverifier::xtx_utl::address_is_valid(x) != xverifier::xverifier_error::xverifier_success) {                                                                                \
+        xwarn("xtx_verifier address_verify address invalid, account:%s", x.c_str());                                                                                               \
+        strResult = "account address is invalid";                                                                                                                                  \
+        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_param_error;                                                                                                        \
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_address, "invalid address");                                                                               \
+        return;                                                                                                                                                                    \
+    }
+
+#define REGISTER_ETH_QUERY_METHOD(func_name)                                                                                                                                       \
+    m_query_method_map.emplace(std::pair<std::string, top::xrpc::query_method_handler>{                                                                                            \
+        std::string{#func_name}, std::bind(&xrpc_eth_query_manager::func_name, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4)})
+
+xrpc_eth_query_manager::xrpc_eth_query_manager(observer_ptr<base::xvblockstore_t> block_store) : m_block_store(block_store) {
+    REGISTER_ETH_QUERY_METHOD(eth_getBalance);
+    REGISTER_ETH_QUERY_METHOD(eth_getTransactionByHash);
+    REGISTER_ETH_QUERY_METHOD(eth_getTransactionReceipt);
+    REGISTER_ETH_QUERY_METHOD(eth_getTransactionCount);
+    REGISTER_ETH_QUERY_METHOD(eth_blockNumber);
+    REGISTER_ETH_QUERY_METHOD(eth_getBlockByHash);
+    REGISTER_ETH_QUERY_METHOD(eth_getBlockByNumber);
+    REGISTER_ETH_QUERY_METHOD(eth_getCode);
+    REGISTER_ETH_QUERY_METHOD(eth_call);
+    REGISTER_ETH_QUERY_METHOD(eth_estimateGas);
+    REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
+    REGISTER_ETH_QUERY_METHOD(eth_getLogs);
+
+    REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByNumber);
+    REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByHash);
+    REGISTER_ETH_QUERY_METHOD(topRelay_blockNumber);
+    REGISTER_ETH_QUERY_METHOD(topRelay_getTransactionByHash);
+    REGISTER_ETH_QUERY_METHOD(topRelay_getTransactionReceipt);
+
+    REGISTER_ETH_QUERY_METHOD(top_getBalance);
+}
 
 void xrpc_eth_query_manager::call_method(std::string strMethod, Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
-    auto iter = m_query_method_map.find(strMethod);
+    auto const iter = m_query_method_map.find(strMethod);
     if (iter != m_query_method_map.end()) {
         (iter->second)(js_req, js_rsp, strResult, nErrorCode);
     }
@@ -74,7 +101,7 @@ void xrpc_eth_query_manager::call_method(std::string strMethod, Json::Value & js
 
 bool xrpc_eth_query_manager::handle(std::string & strReq, Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     std::string action = js_req["action"].asString();
-    auto iter = m_query_method_map.find(action);
+    auto const iter = m_query_method_map.find(action);
     if (iter != m_query_method_map.end()) {
         iter->second(js_req, js_rsp, strResult, nErrorCode);
     } else {
@@ -100,11 +127,11 @@ xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_block_by_height(con
     auto const table_addr = common::xtable_address_t::build_from(common::eth_table_base_address, common::xtable_id_t{0}).vaccount();
 
     xobject_ptr_t<base::xvblock_t> block;
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_addr);
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table_addr);
-    else if (table_height == "pending")
+    else if (table_height == BlockHeightPending)
         block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_addr);
     else {
         uint64_t const height = std::strtoul(table_height.c_str(), nullptr, 16);
@@ -118,14 +145,14 @@ uint64_t xrpc_eth_query_manager::get_block_height(const std::string& table_heigh
     base::xvaccount_t _vaddress(addr);
     uint64_t max_height = m_block_store->get_latest_cert_block_height(_vaddress);
 
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         height = max_height;
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         height = 0;
-    else if (table_height == "pending") {
+    else if (table_height == BlockHeightPending) {
         height = max_height;
     } else {
-        height = std::strtoul(table_height.c_str(), NULL, 16);
+        height = std::strtoul(table_height.c_str(), nullptr, 16);
         if (height > max_height)
             height = max_height;
     }
@@ -575,7 +602,7 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
 }
 
 void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    std::string block_number = "latest";
+    std::string block_number = BlockHeightLatest;
     if (js_req.size() >= 2)
         block_number = js_req[1].asString();
     if (!eth::EthErrorCode::check_hex(block_number, js_rsp, 1, eth::enum_rpc_type_block))
@@ -705,7 +732,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
         js_rsp["error"]["message"] = "execution reverted";
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["data"] = extra_msg;
-        if (false == extra_msg.empty() && extra_msg != "0x"){
+        if (!extra_msg.empty() && extra_msg != "0x"){
             auto t = evm_common::xabi_decoder_t::build_from_hex_string(extra_msg);
             auto selector = t.extract<evm_common::xfunction_selector_t>();
             if (selector.method_id == abi_error) {
@@ -1080,11 +1107,11 @@ xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_relay_block_by_heig
     base::xvaccount_t _table_addr(sys_contract_relay_block_addr);
 
     xobject_ptr_t<base::xvblock_t> _block;
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(_table_addr);
-    else if (table_height == "pending")
+    else if (table_height == BlockHeightPending)
         _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
     else {
         uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);

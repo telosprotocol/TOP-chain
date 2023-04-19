@@ -21,9 +21,11 @@
 #include "xmetrics/xmetrics.h"
 #include "xbasic/xversion.h"
 #include "xdata/xdata_defines.h"
+#include "xdata/xverifier/xverifier_errors.h"
 #include "xvledger/xvaccount.h"
 
 #include <cinttypes>
+
 namespace top { namespace data {
 
 int32_t xtransaction_v1_t::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
@@ -92,11 +94,11 @@ void xtransaction_v1_t::construct_tx(enum_xtransaction_type tx_type, const uint1
     set_from_ledger_id(0);
     set_to_ledger_id(0);
 
-    m_source_action.set_account_addr(info.m_source_addr);
+    m_source_action.account_address(common::xaccount_address_t::build_from(info.m_source_addr));
     m_source_action.set_action_name(info.m_source_action_name);
     m_source_action.set_action_param(info.m_source_action_para);
 
-    m_target_action.set_account_addr(info.m_target_addr);
+    m_target_action.account_address(common::xaccount_address_t(info.m_target_addr));
     m_target_action.set_action_name(info.m_target_action_name);
     m_target_action.set_action_param(info.m_target_action_para);
 
@@ -139,15 +141,15 @@ int32_t xtransaction_v1_t::do_read(base::xstream_t & stream) {
     stream >> m_edge_nodeid;
     stream >> m_target_addr;
 
-    std::error_code ec;
-    auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
-    if (ec) {
-        throw enum_xerror_code_bad_transaction;
-    }
-    auto const source_account_address = common::xaccount_address_t::build_from(get_source_addr(), ec);
-    if (ec) {
-        throw enum_xerror_code_bad_transaction;
-    }
+    //std::error_code ec;
+    //auto const & target_account_address = target_address();
+    //if (ec) {
+    //    throw enum_xerror_code_bad_transaction;
+    //}
+    //auto const source_account_address = source_address();
+    //if (ec) {
+    //    throw enum_xerror_code_bad_transaction;
+    //}
 
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
@@ -165,11 +167,14 @@ int32_t xtransaction_v1_t::release_ref() {
 }
 #endif
 
-void xtransaction_v1_t::adjust_target_address(uint32_t table_id) {
+void xtransaction_v1_t::adjust_target_address(common::xtable_id_t const table_id) {
     if (m_target_addr.empty()) {
-        m_target_addr = make_address_by_prefix_and_subaddr(m_target_action.get_account_addr(), table_id).to_string();
+        auto const & action_address = m_target_action.account_address();
+
+        m_target_addr = action_address.has_assigned_table_id() ? action_address : common::xaccount_address_t::build_from(action_address.base_address(), table_id);
+
         xdbg("xtransaction_v1_t::adjust_target_address hash=%s,origin_addr=%s,new_addr=%s",
-            get_digest_hex_str().c_str(), m_target_action.get_account_addr().c_str(), m_target_addr.c_str());        
+            get_digest_hex_str().c_str(), m_target_action.account_address().to_string().c_str(), m_target_addr.to_string().c_str());
     }
 }
 
@@ -263,15 +268,15 @@ bool xtransaction_v1_t::transaction_len_check() const {
     return true;
 }
 
-int32_t xtransaction_v1_t::make_tx_create_user_account(const std::string & addr) {
-    set_tx_type(xtransaction_type_create_user_account);
-    int32_t ret = xaction_source_null::serialze_to(m_source_action);
-    if (ret) { return ret; }
-    ret = xaction_create_user_account::serialze_to(m_target_action, addr);
-    if (ret) { return ret; }
-
-    return xsuccess;
-}
+//int32_t xtransaction_v1_t::make_tx_create_user_account(const std::string & addr) {
+//    set_tx_type(xtransaction_type_create_user_account);
+//    int32_t ret = xaction_source_null::serialze_to(m_source_action);
+//    if (ret) { return ret; }
+//    ret = xaction_create_user_account::serialze_to(m_target_action, addr);
+//    if (ret) { return ret; }
+//
+//    return xsuccess;
+//}
 
 int32_t xtransaction_v1_t::make_tx_transfer(const data::xproperty_asset & asset) {
     set_tx_type(xtransaction_type_transfer);
@@ -299,8 +304,8 @@ int32_t xtransaction_v1_t::make_tx_run_contract(std::string const & function_nam
 }
 
 int32_t xtransaction_v1_t::set_different_source_target_address(const std::string & src_addr, const std::string & dst_addr) {
-    m_source_action.set_account_addr(src_addr);
-    m_target_action.set_account_addr(dst_addr);
+    m_source_action.account_address(common::xaccount_address_t::build_from(src_addr));
+    m_target_action.account_address(common::xaccount_address_t::build_from(dst_addr));
     return xsuccess;
 }
 
@@ -342,15 +347,16 @@ void xtransaction_v1_t::set_fire_and_expire_time(uint16_t expire_duration) {
 }
 
 bool xtransaction_v1_t::sign_check() const {
-    std::string addr_prefix;
-    if (std::string::npos != get_source_addr().find_last_of('@')) {
-        uint16_t subaddr;
-        base::xvaccount_t::get_prefix_subaddr_from_account(get_source_addr(), addr_prefix, subaddr);
-    } else {
-        addr_prefix = get_source_addr();
-    }
+    //std::string addr_prefix;
+    //if (std::string::npos != get_source_addr().find_last_of('@')) {
+    //    uint16_t subaddr;
+    //    base::xvaccount_t::get_prefix_subaddr_from_account(get_source_addr(), addr_prefix, subaddr);
+    //} else {
+    //    addr_prefix = get_source_addr();
+    //}
+    auto const & address_base = source_address().base_address();
 
-    utl::xkeyaddress_t key_address(addr_prefix);
+    utl::xkeyaddress_t key_address(address_base.to_string());
     uint8_t     addr_type{255};
     uint16_t    network_id{65535};
     //get param from config
@@ -377,7 +383,7 @@ std::string xtransaction_v1_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,    sizeof(local_param_buf),
     "{transaction:hash=%s,type=%u,from=%s,to=%s,nonce=%" PRIu64 ",refcount=%d,this=%p}",
-    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), get_source_addr().c_str(), get_target_addr().c_str(),
+    get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), source_address().to_string().c_str(), target_address().to_string().c_str(),
     get_tx_nonce(), get_refcount(), this);
     return std::string(local_param_buf);
 }
@@ -410,10 +416,10 @@ void xtransaction_v1_t::parse_to_json(Json::Value& result_json, const std::strin
         result_json["amount"] = static_cast<Json::UInt64>(amount);
         result_json["token_name"] = token_name;
         
-        result_json["sender_account"] = m_source_action.get_account_addr();
+        result_json["sender_account"] = m_source_action.account_address().to_string();
         result_json["sender_action_name"] = m_source_action.get_action_name();
         result_json["sender_action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
-        result_json["receiver_account"] = m_target_action.get_account_addr();
+        result_json["receiver_account"] = m_target_action.account_address().to_string();
         result_json["receiver_action_name"] = m_target_action.get_action_name();
         result_json["receiver_action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
     } else {
@@ -427,7 +433,7 @@ void xtransaction_v1_t::parse_to_json(Json::Value& result_json, const std::strin
         s_action_json["action_hash"] = m_source_action.get_action_hash();
         s_action_json["action_type"] = m_source_action.get_action_type();
         s_action_json["action_size"] = m_source_action.get_action_size();
-        s_action_json["tx_sender_account_addr"] = m_source_action.get_account_addr();
+        s_action_json["tx_sender_account_addr"] = m_source_action.account_address().to_string();
         s_action_json["action_name"] = m_source_action.get_action_name();
         s_action_json["action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
         s_action_json["action_ext"] = data::uint_to_str(m_source_action.get_action_ext().data(), m_source_action.get_action_ext().size());
@@ -437,7 +443,7 @@ void xtransaction_v1_t::parse_to_json(Json::Value& result_json, const std::strin
         t_action_json["action_hash"] = m_target_action.get_action_hash();
         t_action_json["action_type"] = m_target_action.get_action_type();
         t_action_json["action_size"] = m_target_action.get_action_size();
-        t_action_json["tx_receiver_account_addr"] = m_target_action.get_account_addr();
+        t_action_json["tx_receiver_account_addr"] = m_target_action.account_address().to_string();
         t_action_json["action_name"] = m_target_action.get_action_name();
         t_action_json["action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
         t_action_json["action_ext"] = data::uint_to_str(m_target_action.get_action_ext().data(), m_target_action.get_action_ext().size());
@@ -467,7 +473,7 @@ void xtransaction_v1_t::construct_from_json(Json::Value& request) {
     m_source_action.set_action_hash(request["sender_action"]["action_hash"].asUInt());
     m_source_action.set_action_type(static_cast<enum_xaction_type>(request["sender_action"]["action_type"].asUInt()));
     m_source_action.set_action_size(static_cast<uint16_t>(request["sender_action"]["action_size"].asUInt()));
-    m_source_action.set_account_addr(from);
+    m_source_action.account_address(common::xaccount_address_t::build_from(from));
     m_source_action.set_action_name(request["sender_action"]["action_name"].asString());
     auto source_param_vec = hex_to_uint(request["sender_action"]["action_param"].asString());
     std::string source_param((char *)source_param_vec.data(), source_param_vec.size());
@@ -481,7 +487,7 @@ void xtransaction_v1_t::construct_from_json(Json::Value& request) {
     m_target_action.set_action_hash(request["receiver_action"]["action_hash"].asUInt());
     m_target_action.set_action_type(static_cast<enum_xaction_type>(request["receiver_action"]["action_type"].asUInt()));
     m_target_action.set_action_size(static_cast<uint16_t>(request["receiver_action"]["action_size"].asUInt()));
-    m_target_action.set_account_addr(to);
+    m_target_action.account_address(common::xaccount_address_t::build_from(to));
     m_target_action.set_action_name(request["receiver_action"]["action_name"].asString());
     auto target_param_vec = hex_to_uint(request["receiver_action"]["action_param"].asString());
     std::string target_param((char *)target_param_vec.data(), target_param_vec.size());
@@ -600,6 +606,29 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
 
     return 0;
 }
+
+// new APIs
+
+void xtransaction_v1_t::source_address(common::xaccount_address_t src_addr) {
+    m_source_action.account_address(std::move(src_addr));
+}
+
+common::xaccount_address_t const & xtransaction_v1_t::source_address() const noexcept {
+    return m_source_action.account_address();
+}
+
+void xtransaction_v1_t::target_address(common::xaccount_address_t dst_addr) {
+    m_target_action.account_address(std::move(dst_addr));
+}
+
+common::xaccount_address_t const & xtransaction_v1_t::target_address() const noexcept {
+    return m_target_addr.empty() ? m_target_action.account_address() : m_target_addr;
+}
+
+common::xaccount_address_t const & xtransaction_v1_t::target_address_unadjusted() const noexcept {
+    return m_target_action.account_address();
+}
+
 
 }  // namespace data
 }  // namespace top

@@ -2,7 +2,6 @@
 
 NS_BEG1(top)
 
-common::xaccount_address_t const black_hole_system_address{black_hole_addr};
 common::xaccount_address_t const genesis_root_system_address{genesis_root_addr_main_chain};
 common::xaccount_address_t const timer_system_address{sys_contract_beacon_timer_addr};
 common::xaccount_address_t const drand_system_address{sys_drand_addr};
@@ -28,15 +27,15 @@ common::xaccount_address_t const zec_group_assoc_contract_address{sys_contract_z
 common::xaccount_address_t const zec_elect_eth_contract_address{sys_contract_zec_elect_eth_addr};
 common::xaccount_address_t const zec_elect_relay_contract_address{sys_contract_zec_elect_relay_addr};
 
-common::xaccount_address_t const sharding_vote_contract_address{sys_contract_sharding_vote_addr};
-common::xaccount_address_t const sharding_reward_claiming_contract_address{sys_contract_sharding_reward_claiming_addr};
+common::xaccount_address_t const table_vote_contract_address{sys_contract_sharding_vote_addr};
+common::xaccount_address_t const table_reward_claiming_contract_address{sys_contract_sharding_reward_claiming_addr};
 common::xaccount_address_t const sharding_statistic_info_contract_address{sys_contract_sharding_statistic_info_addr};
 common::xaccount_address_t const sharding_fork_info_contract_address{sys_contract_sharding_fork_info_addr};
 common::xaccount_base_address_t const table_vote_contract_base_address{common::xaccount_base_address_t::build_from(sys_contract_sharding_vote_addr)};
 
 common::xaccount_base_address_t const sharding_vote_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_vote_addr);
 common::xaccount_base_address_t const sharding_reward_claiming_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_reward_claiming_addr);
-common::xaccount_base_address_t const sharding_statistic_info_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_statistic_info_addr);
+common::xaccount_base_address_t const table_statistic_info_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_statistic_info_addr);
 common::xaccount_base_address_t const sharding_fork_info_contract_base_address = common::xaccount_base_address_t::build_from(sys_contract_sharding_fork_info_addr);
 
 common::xaccount_address_t const eth_fork_info_contract_address{sys_contract_eth_fork_info_addr};

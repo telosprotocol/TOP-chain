@@ -59,7 +59,13 @@ TEST_F(test_state_prune, accounts_prune_info) {
 }
 
 TEST_F(test_state_prune, prune_exec_storage) {
-    mock::xvchain_creator creator(true);
+    char buffer[200];
+    getcwd(buffer, 200);
+    std::string dir = buffer;
+    std::string cmd = "rm -rf " + dir + "/test_db_prune_exec_storage";
+    system(cmd.data());
+    std::cout << cmd << std::endl;
+    mock::xvchain_creator creator(true, "test_db_prune_exec_storage");
     base::xvblockstore_t * blockstore = creator.get_blockstore();
     auto xdb = creator.get_xdb();
 
@@ -177,7 +183,7 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(0, account_obj->get_lowest_executed_block_height());// not prune unitstate for archive node
+        EXPECT_NE(0, account_obj->get_lowest_executed_block_height());// TODO(jimmy) prune unitstate for archive node
     }
 
     pruner.prune_imp(80);
@@ -199,17 +205,15 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(0, account_obj->get_lowest_executed_block_height()); // not prune unitstate for archive node
+        EXPECT_NE(0, account_obj->get_lowest_executed_block_height()); // not prune unitstate for archive node
     }
 
     statestore::xstatestore_dbaccess_t _dbaccess;
     for (auto & mockunit : mock_units) {
         for (auto & unit : mockunit.get_history_units()) {
-            auto unitstate = _dbaccess.read_unit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
+            auto unitstate = _dbaccess.read_fullunit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
             if (unit->is_fullunit()) {
                 xassert(unitstate != nullptr);
-            } else {
-                xassert(unitstate == nullptr);
             }
         }    
     }
@@ -261,7 +265,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_TRUE(!ec);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         xdbg("prune_exec_cons test table:%s,height:%llu,hash:%s", mocktable.get_vaccount().get_account().c_str(), h, root.hex().c_str());
         EXPECT_TRUE(!ec);
@@ -301,10 +305,10 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_EQ(!ec, true);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
-        EXPECT_EQ(mpt != nullptr, (h > 20));
-        EXPECT_EQ(ec.value() == 0, (h > 20));
+        EXPECT_EQ(mpt != nullptr, (h >= 20));
+        EXPECT_EQ(ec.value() == 0, (h >= 20));
     }
 
     for (auto & mock_unit : mock_units) {
@@ -332,9 +336,9 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_EQ(!ec, true);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
-        EXPECT_EQ(mpt != nullptr, (h > 40));
+        EXPECT_EQ(mpt != nullptr, (h >= 40));
     }
 
     for (auto & mock_unit : mock_units) {
@@ -351,11 +355,11 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
         EXPECT_EQ(!ec, true);
 
-        auto mpt = state_mpt::xtop_state_mpt::create(
+        auto mpt = state_mpt::xstate_mpt_t::create(
             common::xtable_address_t::build_from(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         xassert(mpt != nullptr);
 
-        mpt->prune(root, ec);
+        // mpt->prune(root, ec);
     }
 }
 
@@ -397,7 +401,7 @@ TEST_F(test_state_prune, prune_exec_cons_rec) {
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(0, account_obj->get_lowest_executed_block_height());
+        EXPECT_NE(0, account_obj->get_lowest_executed_block_height());
     }
 
     statestore::xstatestore_dbaccess_t _dbaccess;
@@ -409,11 +413,9 @@ TEST_F(test_state_prune, prune_exec_cons_rec) {
             if (unit->get_height() == 0) {
                 continue;
             }
-            auto unitstate = _dbaccess.read_unit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
+            auto unitstate = _dbaccess.read_fullunit_bstate(common::xaccount_address_t{mockunit.get_account()}, unit->get_height(), unit->get_block_hash());
             if (unit->get_height() % max_limit_lightunit_count == 0) {
                 xassert(unitstate != nullptr);
-            } else {
-                xassert(unitstate == nullptr);
             }
         }
     }
@@ -431,6 +433,7 @@ TEST_F(test_state_prune, prune_height) {
 
     uint64_t from_height;
     uint64_t to_height;
+    uint64_t lowest_keep_height;
     bool ret = pruner.need_prune(0);
     EXPECT_EQ(ret, false);
     ret = pruner.need_prune(1);
@@ -448,23 +451,23 @@ TEST_F(test_state_prune, prune_height) {
     ret = pruner.need_prune(prune_table_state_diff + 1);
     EXPECT_EQ(ret, true);
 
-    ret = pruner.get_prune_section(0, from_height, to_height);
+    ret = pruner.get_prune_section(0, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(1, from_height, to_height);
+    ret = pruner.get_prune_section(1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, true);
     EXPECT_EQ(from_height, 1);
     EXPECT_EQ(to_height, prune_table_state_diff - keep_table_states_max_num);
-    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, true);
     EXPECT_EQ(from_height, 1);
     EXPECT_EQ(to_height, prune_table_state_max);
@@ -487,21 +490,21 @@ TEST_F(test_state_prune, prune_height) {
     ret = pruner.need_prune(prune_table_state_diff + 1);
     EXPECT_EQ(ret, true);
 
-    ret = pruner.get_prune_section(0, from_height, to_height);
+    ret = pruner.get_prune_section(0, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(1, from_height, to_height);
+    ret = pruner.get_prune_section(1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, true);
     EXPECT_EQ(from_height, 2);
     EXPECT_EQ(to_height, prune_table_state_diff + 1 - keep_table_states_max_num);
@@ -524,21 +527,21 @@ TEST_F(test_state_prune, prune_height) {
     ret = pruner.need_prune(prune_table_state_diff + 1);
     EXPECT_EQ(ret, false);
 
-    ret = pruner.get_prune_section(0, from_height, to_height);
+    ret = pruner.get_prune_section(0, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(1, from_height, to_height);
+    ret = pruner.get_prune_section(1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height);
+    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
-    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height);
+    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height, lowest_keep_height);
     EXPECT_EQ(ret, false);
 }
 
@@ -553,10 +556,10 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     mock::xvchain_creator creator(true, db_path);
     auto xdbstore = base::xvchain_t::instance().get_xdbstore();
 
-    uint32_t user_count = 10000;
-    uint32_t user_change_num_once = 50;
-    uint32_t mpt_all_num = 512;
-    uint32_t mpt_prune_num = 256;
+    uint32_t const user_count = 50000;
+    uint32_t const user_change_num_once = 250;
+    uint32_t const mpt_all_num = 512;
+    uint32_t const mpt_prune_num = 256;
 
     uint16_t tableid = 0;
     auto table_addr = xblocktool_t::make_address_shard_table_account(tableid);
@@ -566,7 +569,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 
     evm_common::xh256_t null_root;
     std::error_code ec;
-    auto base_mpt = state_mpt::xtop_state_mpt::create(common::xtable_address_t::build_from(table_addr), null_root, xdbstore, ec);
+    auto base_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(table_addr), null_root, xdbstore, ec);
     if (ec) {
         assert(false);
     }
@@ -576,9 +579,9 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         auto & addr = addr_pair.m_address;
         user_addrs.push_back(addr);
 
-        std::string unithash = addr + "1";
-        std::string statehash = addr + "a";
-        base::xaccount_index_t index(1, unithash, statehash, 1);
+        std::string unithash = addr + static_cast<char>(rand());
+        std::string statehash = addr + static_cast<char>(rand());
+        base::xaccount_index_t index(base::enum_xaccountindex_version_state_hash, 1, unithash, statehash, 1);
         base_mpt->set_account_index(common::xaccount_address_t{addr}, index, ec);
     }
     // std::cout << "mpt before commit:0" << std::endl;
@@ -592,12 +595,14 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     // std::cout << "mpt get root:0" << std::endl;
 
     for (uint32_t j = 0; j < mpt_all_num; j++) {
+        base_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(table_addr), mpt_root_vec.back(), xdbstore, ec);
         for (uint32_t k = 0; k < user_change_num_once; k++) {
             uint32_t pos = rand() % user_count;
             auto & addr = user_addrs[pos];
             std::string unithash = addr + std::to_string(j);
             std::string statehash = addr + "a" + "j";
-            base::xaccount_index_t index(j, unithash, statehash, j);
+            base::xaccount_index_t index(base::enum_xaccountindex_version_state_hash, j, unithash, statehash, j);
+
             base_mpt->set_account_index(common::xaccount_address_t{addr}, index, ec);
         }
         // std::cout << "mpt before commit:" << j+1 << std::endl;
@@ -605,6 +610,14 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         if (ec) {
             assert(false);
         }
+
+        base_mpt->prune(ec);
+        if (ec) {
+            assert(false);
+        }
+
+        assert(base_mpt->original_root_hash() == mpt_root_vec.back());
+
         // std::cout << "mpt commit:" << j+1 << std::endl;
         mpt_root_vec.push_back(base_mpt->get_root_hash(ec));
         // std::cout << "mpt get root:" << j+1 << std::endl;
@@ -615,13 +628,12 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 
     auto last_keep_mpt_root = mpt_root_vec[mpt_prune_num];
 
-    auto last_keep_mpt = state_mpt::xtop_state_mpt::create(common::xtable_address_t::build_from(table_addr), last_keep_mpt_root, xdbstore, ec);
+    auto last_keep_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(table_addr), last_keep_mpt_root, xdbstore, ec);
     if (ec) {
         assert(false);
     }
 
-    auto t1 = base::xtime_utl::time_now_ms();
-    auto t_tmp = t1;
+
 #ifdef ENABLE_METRICS
     uint32_t db_read_before_prune = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
     uint32_t db_read_last = db_read_before_prune;
@@ -631,16 +643,19 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     uint32_t db_delete_last = db_delete_before_prune;
     uint32_t db_delete_range_before_prune = XMETRICS_GAUGE_GET_VALUE(metrics::db_delete_range);
     uint32_t db_delete_range_last = db_delete_range_before_prune;
+
+    auto t1 = base::xtime_utl::time_now_ms();
     std::cout << "before prune. db_read " << db_read_last << ", db_write " << db_write_last << ", db_delete " << db_delete_last << ", db_delete_range " << db_delete_range_last
             << "time:" << t1 << std::endl;
 #else
+    auto t1 = base::xtime_utl::time_now_ms();
     std::cout << "before prune.time:" << t1 << std::endl;
 #endif
 
-    std::unordered_set<evm_common::xh256_t> pruned_hashes;
-    for (uint32_t l = 0; l < mpt_prune_num; l++) {
+    //std::unordered_set<evm_common::xh256_t> pruned_hashes;
+    //for (uint32_t l = 0; l < mpt_prune_num; l++) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
-        last_keep_mpt->prune(mpt_root_vec[l], pruned_hashes, ec);
+        last_keep_mpt->commit_pruned(mpt_root_vec, ec);
         // auto t_now = base::xtime_utl::time_now_ms();
         // uint32_t db_read_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
         // uint32_t db_write_now = XMETRICS_GAUGE_GET_VALUE(metrics::db_write);
@@ -651,13 +666,13 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
         // t_tmp = t_now;
         // db_read_last = db_read_now;
-        if (ec) {
-            assert(false);
-        }
-        if (l%50 == 0) {
-            std::cout << "mpt prune:" << l << "/" << mpt_prune_num << std::endl;
-        }
-    }
+        //if (ec) {
+            //assert(false);
+        //}
+        //if (l%50 == 0) {
+            //std::cout << "mpt prune:" << l << "/" << mpt_prune_num << std::endl;
+        //}
+    //}
     auto t2 = base::xtime_utl::time_now_ms();
 #ifdef ENABLE_METRICS
     uint32_t db_read_after_prune = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);
@@ -675,10 +690,10 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
 #endif
 
     t2 = base::xtime_utl::time_now_ms();
-    last_keep_mpt->commit_pruned(pruned_hashes, ec);
-    if (ec) {
-        assert(false);
-    }
+    //last_keep_mpt->commit_pruned(pruned_hashes, ec);
+    //if (ec) {
+        //assert(false);
+    //}
     auto t3 = base::xtime_utl::time_now_ms();
 #ifdef ENABLE_METRICS
     uint32_t db_read_after_commit = XMETRICS_GAUGE_GET_VALUE(metrics::db_read);

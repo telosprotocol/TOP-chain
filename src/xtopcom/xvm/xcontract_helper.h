@@ -24,7 +24,7 @@ NS_BEG2(top, xvm)
 
 class xcontract_helper {
 public:
-    xcontract_helper(store::xaccount_context_t* account_context, common::xnode_id_t const & contract_account, const std::string& exec_account);
+    xcontract_helper(store::xaccount_context_t* account_context, common::xnode_id_t const & contract_account, common::xaccount_address_t const & exec_account);
     void set_transaction(const data::xtransaction_ptr_t& ptr);
     data::xtransaction_ptr_t get_transaction() const;
     std::string get_source_account() const;
@@ -96,8 +96,8 @@ public:
 
 private:
     store::xaccount_context_t*      m_account_context;
-    common::xnode_id_t const &      m_contract_account;
-    const std::string&              m_exec_account;
+    common::xaccount_address_t const & m_contract_account;
+    common::xaccount_address_t const & m_exec_account;
     data::xtransaction_ptr_t              m_transaction{};
 };
 

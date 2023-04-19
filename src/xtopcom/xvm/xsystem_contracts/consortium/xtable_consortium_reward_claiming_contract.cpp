@@ -14,7 +14,6 @@ xtop_table_consortium_reward_claiming_contract::xtop_table_consortium_reward_cla
 }
 
 void xtop_table_consortium_reward_claiming_contract::setup() {
-    const int old_tables_count = 256;
     uint32_t table_id = 0;
     if (!EXTRACT_TABLE_ID(SELF_ADDRESS(), table_id)) {
         xwarn("[xtop_table_consortium_reward_claiming_contract::setup] EXTRACT_TABLE_ID failed, node reward pid: %d, account: %s", getpid(), SELF_ADDRESS().to_string().c_str());

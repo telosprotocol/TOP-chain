@@ -4,16 +4,15 @@
 
 #pragma once
 
-#include <atomic>
 #include "xbase/xdata.h"
 #include "xbasic/xmemory.hpp"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction.h"
-
-#include "xtxpool_v2/xtxpool_resources_face.h"
 #include "xmbus/xmessage_bus.h"
+#include "xtxpool_v2/xtxpool_resources_face.h"
 
+#include <atomic>
 #include <string>
 
 NS_BEG2(top, xtxpool_v2)
@@ -23,6 +22,7 @@ public:
     xtxpool_resources(const observer_ptr<base::xvblockstore_t> & blockstore,
                       const observer_ptr<base::xvcertauth_t> & certauth,
                       const observer_ptr<mbus::xmessage_bus_face_t> & bus);
+
     virtual ~xtxpool_resources();
 
 public:

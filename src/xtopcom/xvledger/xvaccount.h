@@ -490,6 +490,7 @@ namespace top
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
             bool                        is_unit_address() const;
+            bool                        is_user_address() const;
             bool                        is_eth_address() const;
             bool                        is_table_address() const;
             bool                        is_contract_address() const;

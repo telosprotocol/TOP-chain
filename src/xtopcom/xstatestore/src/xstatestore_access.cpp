@@ -9,7 +9,7 @@
 
 NS_BEG2(top, statestore)
 
-xstatestore_cache_t::xstatestore_cache_t() {
+xstatestore_cache_t::xstatestore_cache_t() {//m_unitstate_cache(enum_max_unit_state_lru_cache_max)
 
 }
 
@@ -17,27 +17,21 @@ xtablestate_ext_ptr_t const& xstatestore_cache_t::get_latest_connectted_tablesta
     return m_latest_connectted_tablestate;
 }
 
-data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& account, std::string const& block_hash) const {
-    std::lock_guard<std::mutex> lock(m_unitstates_cache_mutex);
-    data::xunitstate_ptr_t state = nullptr;
-    auto iter = m_unitstates_cache.find(account);
-    if (iter != m_unitstates_cache.end()) {
-        if (iter->second.first == block_hash) {
-            XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, 1);
-            return iter->second.second;            
-        }
-    }
-    XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, 0);
-    xwarn("xstatestore_cache_t::get_unitstate fail account=%s,hash=%s", account.c_str(), base::xstring_utl::to_hex(block_hash).c_str());
-    return nullptr;
-}
+// data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& block_hash) const {
+//     xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
+//     m_unitstate_cache.get(block_hash, bstate);
+//     XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, bstate != nullptr ? 1 : 0);
+//     if (bstate == nullptr) {
+//         return nullptr;
+//     }
+//     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+//     return unitstate;
+// }
 
-void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) {
-    // TODO(jimmy) always update cache
-    std::lock_guard<std::mutex> lock(m_unitstates_cache_mutex);
-    m_unitstates_cache[state->get_bstate()->get_account()] = std::pair<std::string, data::xunitstate_ptr_t>(block_hash, state);
-    xdbg("xstatestore_cache_t::set_unitstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
-}
+// void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) {
+//     m_unitstate_cache.put(block_hash, state->get_bstate());
+//     xdbg("xstatestore_cache_t::set_unitstate hash=%s:%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), base::xstring_utl::to_hex(state->get_bstate()->get_last_block_hash()).c_str(), state->get_bstate()->dump().c_str());
+// }
 
 void xstatestore_cache_t::set_latest_connected_tablestate(uint64_t height, xtablestate_ext_ptr_t const& tablestate) {
     if (m_latest_connectted_tablestate == nullptr || height > m_latest_connectted_tablestate->get_table_state()->height()) {
@@ -97,7 +91,7 @@ void xstatestore_dbaccess_t::write_table_bstate(common::xtable_address_t const& 
         return;
     }
 
-    xinfo("xstatestore_dbaccess_t::write_table_bstate succ.state=%s",tablestate->get_bstate()->dump().c_str());
+    xinfo("xstatestore_dbaccess_t::write_table_bstate tps_key succ.state=%s",tablestate->get_bstate()->dump().c_str());
 }
 
 data::xtablestate_ptr_t xstatestore_dbaccess_t::read_table_bstate(common::xtable_address_t const& address, uint64_t height, const std::string & block_hash) const {
@@ -133,12 +127,14 @@ data::xtablestate_ptr_t xstatestore_dbaccess_t::read_table_bstate(common::xtable
 
 void xstatestore_dbaccess_t::write_unit_bstate(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const {
     XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
+    if (unitstate->height() > 0)
+        xassert(unitstate->get_block_viewid() != 0);
     std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(unitstate->account_address().vaccount(), unitstate->height(), block_hash);
     std::string state_db_bin;
     int32_t ret = unitstate->get_bstate()->serialize_to_string(state_db_bin);
     if(ret > 0) {
         if (m_statestore_base.get_dbstore()->set_value(state_db_key, state_db_bin)) {
-            xinfo("xstatestore_dbaccess_t::write_unit_bstate succ.state=%s,hash=%s",unitstate->get_bstate()->dump().c_str(),base::xstring_utl::to_hex(block_hash).c_str());
+            xinfo("xstatestore_dbaccess_t::write_unit_bstate succ.state=%s,hash=%s,size=%zu",unitstate->get_bstate()->dump().c_str(),base::xstring_utl::to_hex(block_hash).c_str(), state_db_bin.size());
             return;
         }
     }
@@ -146,12 +142,47 @@ void xstatestore_dbaccess_t::write_unit_bstate(data::xunitstate_ptr_t const& uni
     xerror("xstatestore_dbaccess_t::write_unit_bstate fail.state=%s",unitstate->get_bstate()->dump().c_str());
 }
 
+void xstatestore_dbaccess_t::batch_write_unit_bstate(const std::map<std::string, std::string> & batch_kvs, std::error_code & ec) const {
+    if (m_statestore_base.get_dbstore()->set_values(batch_kvs)) {
+        xinfo("xstatestore_dbaccess_t::batch_write_unit_bstate succ");
+        return;
+    }
+    ec = error::xerrc_t::statestore_db_write_err;
+}
+
 data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {
     std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(address.vaccount(), height, block_hash);
     const std::string state_db_bin = m_statestore_base.get_dbstore()->get_value(state_db_key);
+    if(!state_db_bin.empty()) {
+        base::xauto_ptr<base::xvbstate_t> state_ptr = base::xvblock_t::create_state_object(state_db_bin);
+        if(nullptr == state_ptr) {//remove the error data for invalid data
+            m_statestore_base.get_dbstore()->delete_value(state_db_key);
+            xerror(
+                "xstatestore_dbaccess_t::read_unit_bstate,fail invalid data at db for account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+            return nullptr;
+        }
+        if (state_ptr->get_address() != address.to_string()) {
+            m_statestore_base.get_dbstore()->delete_value(state_db_key);
+            xerror("xstatestore_dbaccess_t::read_unit_bstate,fail bad state(%s) vs ask(account:%s) ", state_ptr->dump().c_str(), address.to_string().c_str());
+            return nullptr;
+        }
+        data::xunitstate_ptr_t unitstate_latest = std::make_shared<data::xunit_bstate_t>(state_ptr.get());
+        XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 1);    
+        xdbg("xstatestore_dbaccess_t::read_unit_bstate by latest succ.account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+        return unitstate_latest;
+    }
+
+    XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 0);
+    xwarn("xstatestore_dbaccess_t::read_unit_bstate,fail account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+    return nullptr;
+}
+
+data::xunitstate_ptr_t xstatestore_dbaccess_t::read_fullunit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {
+    std::string state_db_key = base::xvdbkey_t::create_prunable_fullunit_state_key(address.vaccount(), height, block_hash);
+    const std::string state_db_bin = m_statestore_base.get_dbstore()->get_value(state_db_key);
     if(state_db_bin.empty()) {
         XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 0);
-        xwarn("xstatestore_dbaccess_t::read_unit_bstate,fail to read from db for account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+        xwarn("xstatestore_dbaccess_t::read_fullunit_bstate,fail to read from db for account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
 
@@ -159,23 +190,30 @@ data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount
     if(nullptr == state_ptr) {//remove the error data for invalid data
         m_statestore_base.get_dbstore()->delete_value(state_db_key);
         xerror(
-            "xstatestore_dbaccess_t::read_unit_bstate,fail invalid data at db for account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+            "xstatestore_dbaccess_t::read_fullunit_bstate,fail invalid data at db for account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
     if (state_ptr->get_address() != address.to_string()) {
-        xerror("xstatestore_dbaccess_t::read_unit_bstate,fail bad state(%s) vs ask(account:%s) ", state_ptr->dump().c_str(), address.to_string().c_str());
+        xerror("xstatestore_dbaccess_t::read_fullunit_bstate,fail bad state(%s) vs ask(account:%s) ", state_ptr->dump().c_str(), address.to_string().c_str());
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 1);
-    xdbg("xstatestore_dbaccess_t::read_unit_bstate succ.account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+    xinfo("xstatestore_dbaccess_t::read_fullunit_bstate succ.account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(state_ptr.get());
     return unitstate;
 }
 
 
-//============================xstatestore_accessor_t============================
-xstatestore_accessor_t::xstatestore_accessor_t() {
 
+//============================xstatestore_accessor_t============================
+xstatestore_accessor_t::xstatestore_accessor_t(common::xtable_address_t const& address) {
+    // base::xvtable_t * target_table = base::xvchain_t::instance().get_table(address.vaccount().get_xvid());
+    // m_statehub = std::make_shared<xvstatehub_t>(target_table);
+    if (address.base_address().zone_index() == base::enum_chain_zone_evm_index) {
+        m_unitstate_cache = std::make_shared<xunitstate_cache_t>(xunitstate_cache_t::enum_max_unit_state_lru_cache_evm);
+    } else {
+        m_unitstate_cache = std::make_shared<xunitstate_cache_t>(xunitstate_cache_t::enum_max_unit_state_lru_cache_shard);
+    }
 }
 
 xtablestate_ext_ptr_t xstatestore_accessor_t::get_latest_connectted_table_state() const {
@@ -229,11 +267,25 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_for_account_inde
 }
 
 data::xunitstate_ptr_t xstatestore_accessor_t::read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {
-    data::xunitstate_ptr_t unitstate = m_state_cache.get_unitstate(address.to_string(), block_hash);
-    if (nullptr != unitstate) {
+    // data::xunitstate_ptr_t unitstate = m_state_cache.get_unitstate(block_hash);
+    // if (unitstate != nullptr) {
+    //     return unitstate;
+    // }
+    // xobject_ptr_t<base::xvbstate_t> bstate = m_statehub->get_unitstate(address.to_string(), height, block_hash);    
+    // if (nullptr != bstate) {
+    //     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+    //     return unitstate;
+    // }
+    xobject_ptr_t<base::xvbstate_t> bstate = m_unitstate_cache->get_unitstate(address.to_string(), height, block_hash);    
+    if (nullptr != bstate) {
+        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
         return unitstate;
     }
     return m_dbaccess.read_unit_bstate(address, height, block_hash);
+}
+
+data::xunitstate_ptr_t xstatestore_accessor_t::read_fullunit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const {
+    return m_dbaccess.read_fullunit_bstate(address, height, block_hash);
 }
 
 void xstatestore_accessor_t::write_table_bstate_to_db(common::xtable_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& state, std::error_code & ec) {
@@ -279,8 +331,25 @@ void xstatestore_accessor_t::write_unitstate_to_db(data::xunitstate_ptr_t const&
 }
 
 void xstatestore_accessor_t::write_unitstate_to_cache(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash) {
-    m_state_cache.set_unitstate(block_hash, unitstate);
+    // m_state_cache.set_unitstate(block_hash, unitstate);
+    // m_statehub->set_unitstate(block_hash, unitstate->get_bstate());
+    m_unitstate_cache->set_unitstate(block_hash, unitstate->get_bstate());
 }
 
+void xstatestore_accessor_t::batch_write_unit_bstate(const std::map<std::string, std::string> & batch_kvs, std::error_code & ec) const {
+    m_dbaccess.batch_write_unit_bstate(batch_kvs, ec);
+}
+
+void xstatestore_accessor_t::clear_cache() {
+    std::error_code ec;
+    m_unitstate_cache->clear();
+    xtablestate_ext_ptr_t const&  tablestate_ext = m_state_cache.get_latest_connectted_tablestate();
+    if (nullptr != tablestate_ext) {
+        auto state_mpt = tablestate_ext->get_state_mpt();
+        if (nullptr != state_mpt) {
+            state_mpt->clear_pruned(ec);
+        }
+    }
+}
 
 NS_END2

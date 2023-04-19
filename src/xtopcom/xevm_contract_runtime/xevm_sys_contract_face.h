@@ -60,10 +60,10 @@ enum precompile_output_ExitSucceed : uint32_t {
     Suicided = 3,
 };
 
-enum precompile_error : uint32_t {
-    Error = 1,
-    Revert = 2,
-    Fatal = 3,
+enum class precompile_error : uint32_t {
+    error = 1,
+    revert = 2,
+    fatal = 3,
 };
 
 // ref: ~.cargo/git/checkouts/evm-31951a45719dc0d6/07ae445/core/src/error.rs:105

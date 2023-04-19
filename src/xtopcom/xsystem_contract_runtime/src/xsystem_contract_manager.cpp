@@ -217,7 +217,7 @@ std::unordered_map<common::xaccount_address_t, xcontract_deployment_data_t> cons
 }
 
 void xtop_system_contract_manager::init_system_contract(common::xaccount_address_t const & contract_address, observer_ptr<base::xvblockstore_t> const & blockstore) {
-    if (blockstore->exist_genesis_block(contract_address.to_string())) {
+    if (blockstore->exist_unit(contract_address.vaccount())) {
         xwarn("xtop_system_contract_manager::init_contract_chain contract account %s genesis block exist", contract_address.to_string().c_str());
         return;
     }
@@ -255,7 +255,7 @@ void xtop_system_contract_manager::init_system_contract(common::xaccount_address
     xassert(block);
 
     base::xvaccount_t _vaddr(block->get_account());
-    auto ret = blockstore->store_block(_vaddr, block.get());
+    auto ret = blockstore->store_unit(_vaddr, block.get());
     if (!ret) {
         xerror("xtop_system_contract_manager::init_contract_chain %s genesis block fail", contract_address.to_string().c_str());
         return;

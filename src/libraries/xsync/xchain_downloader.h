@@ -97,8 +97,7 @@ class xchain_object_t {
         uint64_t picked_height();
         void clear();
         void set_start_height(const uint64_t start_height);
-        uint64_t get_behind_height_real(const int64_t now, xsync_store_face_t* xsync_store, 
-                                             const uint32_t sync_type, const std::string& address);
+        bool check_and_fix_behind_height(int64_t now, xsync_store_face_t* xsync_store, const uint32_t sync_type, const std::string& address);
         uint64_t get_end_height() {
             return m_end_height;
         }
@@ -107,7 +106,7 @@ class xchain_object_t {
         uint64_t m_current_height{1};
         uint64_t m_start_height{0};
         uint64_t m_end_height{0};
-        uint64_t m_fix_height{0};
+        uint64_t m_connect_height{0};
         int64_t  m_regular_time{0};
         vnetwork::xvnode_address_t m_self_addr;
         vnetwork::xvnode_address_t m_target_addr;

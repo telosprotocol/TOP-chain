@@ -16,7 +16,6 @@ if (XUSE_JEMALLOC)
         message(STATUS "enable jeprof")
         SET(JEMALLOC_ENABLE_JEPROF "--enable-prof")
     endif()
-    
     execute_process(
         COMMAND bash "-c" "rm ${JEMALLOC_AUTOGEN_LOG} ${JEMALLOC_MAKE_LOG}"
         WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
@@ -32,7 +31,7 @@ if (XUSE_JEMALLOC)
 
     message(STATUS "executing autogen.sh")
     execute_process(
-        COMMAND bash "-c" "./autogen.sh  ${JEMALLOC_ENABLE_JEPROF}"
+        COMMAND bash "-c" "./autogen.sh ${JEMALLOC_ENABLE_JEPROF}"
         WORKING_DIRECTORY ${JEMALLOC_WORKING_DIRECTORY}
         ERROR_FILE ${JEMALLOC_AUTOGEN_LOG}
         OUTPUT_FILE ${JEMALLOC_AUTOGEN_LOG}

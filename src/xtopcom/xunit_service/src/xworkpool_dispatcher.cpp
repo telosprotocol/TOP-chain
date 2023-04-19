@@ -10,6 +10,7 @@
 #include "xunit_service/xcons_utl.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xunit_service/xrelay_packer2.h"
+#include "xunit_service/xpreproposal_packer.h"
 
 #include <cinttypes>
 
@@ -190,7 +191,9 @@ bool xworkpool_dispatcher::destroy(const xvip2_t & xip) {
     m_para->get_resources()->get_chain_timer()->unwatch(m_watcher_name);
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto & packer : m_packers) {
+        common::xtable_address_t table_address = common::xtable_address_t::build_from(packer.second->get_account());
         packer.second->close();
+        statestore::xstatestore_hub_t::instance()->clear_cache(table_address);
     }
     m_packers.clear();
     return true;
@@ -215,6 +218,8 @@ bool xworkpool_dispatcher::subscribe(const std::vector<base::xtable_index_t> & t
                 xbatch_packer_ptr_t packer_ptr;
                 if (table_id.get_zone_index() == base::enum_chain_zone_relay_index) {
                     packer_ptr = make_object_ptr<xrelay_packer2>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
+                } else if (table_id.get_zone_index() == base::enum_chain_zone_evm_index) {
+                    packer_ptr = make_object_ptr<xpreproposal_packer>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
                 } else {
                     packer_ptr = make_object_ptr<xbatch_packer>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
                 }

@@ -106,7 +106,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual bool        check_last_nonce(uint64_t account_nonce) = 0;
 
  public:  // set apis
-    virtual void        adjust_target_address(uint32_t table_id) = 0;
+    virtual void        adjust_target_address(common::xtable_id_t table_id) = 0;
     virtual void        set_digest() = 0;
     virtual void        set_digest(const uint256_t & digest) = 0;
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) = 0;
@@ -115,18 +115,18 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void        set_fire_and_expire_time(uint16_t const expire_duration) = 0;
 
     void set_action_type_by_tx_type(const enum_xtransaction_type tx_type);
-    virtual void        set_source_addr(const std::string & addr) = 0;
+    // virtual void        set_source_addr(const std::string & addr) = 0;
     virtual void        set_source_action_type(const enum_xaction_type type) = 0;
     virtual void        set_source_action_name(const std::string & name) = 0;
     virtual void        set_source_action_para(const std::string & para) = 0;
-    virtual void        set_target_addr(const std::string & addr) = 0;
+    // virtual void        set_target_addr(const std::string & addr) = 0;
     virtual void        set_target_action_type(const enum_xaction_type type) = 0;
     virtual void        set_target_action_name(const std::string & name) = 0;
     virtual void        set_target_action_para(const std::string & para) = 0;
     virtual void        set_authorization(const std::string & authorization) = 0;
     virtual void        set_len() = 0;
 
-    virtual int32_t     make_tx_create_user_account(const std::string & addr) = 0;
+    // virtual int32_t     make_tx_create_user_account(const std::string & addr) = 0;
     virtual int32_t     make_tx_transfer(const data::xproperty_asset & asset) = 0;
     virtual int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) = 0;
     virtual int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param) = 0;
@@ -136,9 +136,9 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual uint256_t           digest() const = 0;
     virtual std::string         get_digest_str()const = 0;
     virtual std::string         get_digest_hex_str() const = 0;
-    virtual const std::string & get_source_addr()const = 0;
-    virtual const std::string & get_target_addr()const = 0;
-    virtual const std::string & get_origin_target_addr()const = 0;
+    // virtual std::string get_source_addr()const = 0;
+    // virtual std::string get_target_addr()const = 0;
+    // virtual std::string get_origin_target_addr()const = 0;
     virtual uint64_t            get_tx_nonce() const = 0;
     virtual std::string         dump() const = 0;  // just for debug purpose
     virtual const std::string & get_source_action_name() const = 0;
@@ -190,7 +190,19 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual xbytes_t const& get_data() const { static xbytes_t strNull; return strNull; }
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
+    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return 0; }
+    virtual const top::evm_common::u256 get_signR() const { return  0; }
+    virtual const top::evm_common::u256 get_signV() const { return  0; }
+    virtual const top::evm_common::u256 get_signS() const { return  0; }
+
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const;
+
+    // new transaction APIs
+    virtual void source_address(common::xaccount_address_t src_addr) = 0;
+    virtual common::xaccount_address_t const & source_address() const noexcept = 0;
+    virtual void target_address(common::xaccount_address_t dst_addr) = 0;
+    virtual common::xaccount_address_t const & target_address() const noexcept = 0;
+    virtual common::xaccount_address_t const & target_address_unadjusted() const noexcept = 0;
 };
 
 }  // namespace data

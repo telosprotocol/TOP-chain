@@ -46,7 +46,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual bool        check_last_nonce(uint64_t account_nonce) override;
 
  public:  // set apis
-    virtual void        adjust_target_address(uint32_t table_id) override ;
+    virtual void        adjust_target_address(common::xtable_id_t table_id) override;
     virtual void        set_digest() override;
     virtual void        set_digest(const uint256_t & digest) override {};
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) override;
@@ -56,18 +56,18 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
 
     void                set_source(const std::string & addr, const std::string & action_name, const std::string & para);
     void                set_target(const std::string & addr, const std::string & action_name, const std::string & para);
-    virtual void        set_source_addr(const std::string & addr) override { m_source_addr = addr; }
+    // virtual void        set_source_addr(const std::string & addr) override { m_source_addr = common::xaccount_address_t::build_from(addr); }
     virtual void        set_source_action_type(const enum_xaction_type type) {}
     virtual void        set_source_action_name(const std::string & name) {}
     virtual void        set_source_action_para(const std::string & para) {}
-    virtual void        set_target_addr(const std::string & addr) override { m_target_addr = addr; }
+    // virtual void        set_target_addr(const std::string & addr) override { m_target_addr = common::xaccount_address_t::build_from(addr); }
     virtual void        set_target_action_type(const enum_xaction_type type) {}
     virtual void        set_target_action_name(const std::string & name) {}
     virtual void        set_target_action_para(const std::string & para) {}
     virtual void        set_authorization(const std::string & authorization) override { m_authorization = authorization; }
     virtual void        set_len() override;
 
-    virtual int32_t     make_tx_create_user_account(const std::string & addr) override;
+    //virtual int32_t     make_tx_create_user_account(const std::string & addr) override;
     virtual int32_t     make_tx_transfer(const data::xproperty_asset & asset) override;
     virtual int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para) override;
     virtual int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param) override;
@@ -78,9 +78,9 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
      virtual uint256_t digest() const override { return m_ethtx.get_tx_hash(); }
     virtual std::string         get_digest_str()const override;
     virtual std::string         get_digest_hex_str() const override;
-    virtual const std::string & get_source_addr()const override {return m_source_addr;}
-    virtual const std::string & get_target_addr()const override {return m_target_addr;}
-    virtual const std::string & get_origin_target_addr()const override {return m_target_addr;}
+    // virtual std::string get_source_addr()const override {return m_source_addr.to_string();}
+    // virtual std::string get_target_addr()const override {return m_target_addr.to_string();}
+    // virtual std::string get_origin_target_addr()const override {return m_target_addr.to_string();}
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
     virtual std::string         dump() const override;  // just for debug purpose
     void set_action_type();
@@ -135,21 +135,32 @@ public:
     virtual xbytes_t const& get_data() const override { return m_ethtx.get_data(); }
     virtual const top::evm_common::u256 get_gaslimit() const override {return m_ethtx.get_gas(); }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const override { return m_ethtx.get_max_fee_per_gas(); }
+    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const override { return m_ethtx.get_max_priority_fee_per_gas(); }
+    virtual const top::evm_common::u256 get_signR() const override { return m_ethtx.get_signR(); }
+    virtual const top::evm_common::u256 get_signV() const override { return m_ethtx.get_signV(); }
+    virtual const top::evm_common::u256 get_signS() const override { return m_ethtx.get_signS(); }
 
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const override {return m_ethtx;}
 
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_tx_v3;}
 
+    // new transaction APIs
+    void source_address(common::xaccount_address_t src_addr) override;
+    common::xaccount_address_t const & source_address() const noexcept override;
+    void target_address(common::xaccount_address_t dst_addr) override;
+    common::xaccount_address_t const & target_address() const noexcept override;
+    common::xaccount_address_t const & target_address_unadjusted() const noexcept override;
+
 private:
-    virtual int32_t get_object_size_real() const override;
+    virtual size_t get_object_size_real() const override;
     void    update_cache();
 private:
     uint8_t             m_version{0};
     xeth_transaction_t  m_ethtx;
 
  private:  // TODO(jimmy) refactor local caches 
-    std::string     m_source_addr;
-    std::string     m_target_addr;
+    common::xaccount_address_t     m_source_addr;
+    common::xaccount_address_t     m_target_addr;
     enum_xtransaction_type m_transaction_type; // one byte
     std::string     m_authorization;  // serialize with compat_var
     mutable uint32_t m_transaction_len{0};     // max 64KB

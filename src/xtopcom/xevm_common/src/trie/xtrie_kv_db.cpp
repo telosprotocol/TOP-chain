@@ -40,7 +40,7 @@ void xtop_kv_db::PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_
     std::lock_guard<std::mutex> lock(m_mutex);
     std::map<std::string, std::string> convert_batch;
     for (auto const & b : batch) {
-        convert_batch.emplace(std::make_pair(convert_key(b.first), std::string{b.second.begin(), b.second.end()}));
+        convert_batch.emplace(convert_key(b.first), std::string{b.second.begin(), b.second.end()});
     }
     if (m_db->set_values(convert_batch) == false) {
         xwarn("xtop_kv_db::PutBatch error");
@@ -160,6 +160,10 @@ xbytes_t xtop_kv_db::GetDirect(xbytes_t const & key, std::error_code & ec) const
     }
     xdbg("xtop_kv_db::GetDirect key: %s, value: %s", top::to_hex(key).c_str(), top::to_hex(value).c_str());
     return {value.begin(), value.end()};
+}
+
+common::xtable_address_t xtop_kv_db::table_address() const {
+    return m_table;
 }
 
 }  // namespace trie

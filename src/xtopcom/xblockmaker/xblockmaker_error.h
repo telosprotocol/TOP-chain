@@ -41,6 +41,7 @@ enum enum_xblockmaker_error_type {
     xblockmaker_error_proposal_cannot_connect_to_cp,
     xblockmaker_error_proposal_bad_header,
     xblockmaker_error_proposal_backup_make_block_fail,
+    xblockmaker_error_proposal_no_preproposal,
     xblockmaker_error_max,
 };
 
@@ -76,6 +77,7 @@ inline std::string xblockmaker_error_to_string(int32_t code) {
         XUNIT_TO_STR(xblockmaker_error_proposal_cannot_connect_to_cp),
         XUNIT_TO_STR(xblockmaker_error_proposal_bad_header),
         XUNIT_TO_STR(xblockmaker_error_proposal_backup_make_block_fail),
+        XUNIT_TO_STR(xblockmaker_error_proposal_no_preproposal),
     };
     return names[code - xblockmaker_error_base - 1];
 }

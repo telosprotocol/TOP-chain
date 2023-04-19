@@ -21,7 +21,8 @@ XINLINE_CONSTEXPR char const * XPROPERTY_TABLE_RECEIPTID            = "@T2";
 // xtable_bstate_t is a wrap of xvbstate_t for table state
 class xtable_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_face_t {
  public:
-    xtable_bstate_t(base::xvbstate_t* bstate, bool readonly = true);
+    xtable_bstate_t(base::xvbstate_t* bstate);
+    xtable_bstate_t(base::xvbstate_t* bstate, base::xvbstate_t* org_bstate);
     ~xtable_bstate_t();
 
  public:
@@ -46,7 +47,7 @@ class xtable_bstate_t : public xbstate_ctx_t, public xstatistic::xstatistic_obj_
     virtual int32_t        get_class_type() const override {return xstatistic::enum_statistic_table_bstate;}
 
 private:
-    virtual int32_t         get_object_size_real() const override;
+    size_t get_object_size_real() const override;
 
  protected:
     void                    cache_receiptid(base::xvbstate_t* bstate);

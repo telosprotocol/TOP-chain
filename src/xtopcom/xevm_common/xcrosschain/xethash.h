@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ethash/ethash.hpp"
-#include "xdepends/include/ethash/ethash.hpp"
 #include "xcommon/fixed_hash.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 

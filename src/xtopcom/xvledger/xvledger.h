@@ -9,7 +9,6 @@
 #include "xvactplugin.h"
 #include "xvdbstore.h"
 #include "xvblockstore.h"
-#include "xvstatestore.h"
 #include "xvcontractstore.h"
 #include "xvtxstore.h"
 #include "xveventbus.h"
@@ -48,14 +47,18 @@ namespace top
         {
             enum_max_active_acconts         = 2048,  //max active accounts number
             enum_units_group_count          = 256,   //same with max subaddr
-            enum_max_expire_check_count     = 4096,  //not clean too much at each loop
-            
-            enum_account_idle_check_interval= 50000,  //check every 50 seconds
-            enum_account_idle_timeout_ms    = 300000, //account change to idle status if not access within 300 seconds
-
-            enum_plugin_idle_check_interval = 10000,  //check every 10 seconds
-            enum_plugin_idle_timeout_ms     = 60000,  //idle duration for plugin
-            
+            enum_max_expire_check_count     = 4096,  //not clean too much at each loop            
+#ifdef DEBUG
+            enum_timer_check_interval           = 1000,  //check every 1 seconds            
+            enum_account_idle_timeout_ms        = 10*60*1000, //account change to idle status if not access
+            enum_block_plugin_idle_timeout_ms   = 10*60*1000,  //idle duration for plugin
+            enum_state_plugin_idle_timeout_ms   = 10*60*1000,  //idle duration for plugin
+#else
+            enum_timer_check_interval           = 10000,  //check every 10 seconds    
+            enum_account_idle_timeout_ms        = 60*60*1000, //account change to idle status if not access within 60 minutes
+            enum_block_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes
+            enum_state_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes
+#endif
             enum_account_save_meta_interval = 64, //force save meta every 64 modification
             enum_account_save_meta_offset   = 8,  //force save meta when height offset skip
         };
@@ -80,11 +83,12 @@ namespace top
             bool                    is_idle() const   {return (m_is_idle != 0);}
             bool                    is_closing()const {return (m_is_closing != 0);}
             //bool is_close() is already defined
-            
+            void                    update_idle_start_time_ms(uint64_t current_time_ms);
+
             xauto_ptr<xvactplugin_t>get_plugin(enum_xvaccount_plugin_type plugin_type);
            
-            xauto_ptr<xvactplugin_t>get_set_plugin(xvactplugin_t * new_plugin_obj);
-            xauto_ptr<xvactplugin_t>get_set_plugin(enum_xvaccount_plugin_type plugin_type,std::function<xvactplugin_t*(xvaccountobj_t&) > & lambda_to_create);
+            xauto_ptr<xvactplugin_t>get_set_plugin(xvactplugin_t * new_plugin_obj, bool monitor);
+            xauto_ptr<xvactplugin_t>get_set_plugin(enum_xvaccount_plugin_type plugin_type,std::function<xvactplugin_t*(xvaccountobj_t&) > & lambda_to_create, bool monitor);
             
         public: //multiple thread safe
             const xblockmeta_t      get_block_meta();
@@ -122,7 +126,7 @@ namespace top
             
             //the returned ptr is not reference safe,use careully
             xvactplugin_t*          get_plugin_unsafe(enum_xvaccount_plugin_type plugin_type);
-            bool                    set_plugin_unsafe(xvactplugin_t * plugin_obj,xvactplugin_t*& old_ptr);//caller need release old_ptr whent it is not nullptr
+            bool                    set_plugin_unsafe(xvactplugin_t * plugin_obj,xvactplugin_t*& old_ptr,bool monitor);//caller need release old_ptr whent it is not nullptr
  
             //note:try_close_plugin may try hold lock and check is_live agian ,and if so then close
             //return result whether closed
@@ -197,6 +201,7 @@ namespace top
             uint64_t               m_table_index;         //define uint64_t just for performance
             uint32_t               m_table_combine_addr; //[ledgerid:16bit][book:7bit][table:3bit]
             uint32_t               m_reserved_4byte;
+            uint64_t               m_current_time_ms{0};
             
             std::map<std::string,xvaccountobj_t*>   m_accounts;
             std::multimap<uint64_t,xvactplugin_t*>  m_monitor_plugins;//key:expired_time(UTC ms), value: xvactplugin_t*,sort from lower

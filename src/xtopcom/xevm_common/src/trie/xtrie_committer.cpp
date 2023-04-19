@@ -41,18 +41,18 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     // Commit children, then parent, and remove remove the dirty flag.
     switch (n->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::shortnode: {
-        auto cn = std::dynamic_pointer_cast<xtrie_short_node_t>(n);
-        assert(cn != nullptr);
+        auto const sn = std::dynamic_pointer_cast<xtrie_short_node_t>(n);
+        assert(sn != nullptr);
 
         // Commit child
-        auto collapsed = cn->clone();
+        auto collapsed = sn->clone();
         // If the child is fullNode, recursively commit,
         // otherwise it can only be hashNode or valueNode.
         int32_t childCommitted{0};
-        if (cn->val->type() == xtrie_node_type_t::fullnode) {
+        if (sn->val->type() == xtrie_node_type_t::fullnode) {
             xtrie_node_face_ptr_t childV;
             int32_t committed;
-            std::tie(childV, committed) = commit(cn->val, db, ec);
+            std::tie(childV, committed) = commit(sn->val, db, ec);
             if (ec) {
                 return std::make_pair(nullptr, 0);
             }
@@ -60,7 +60,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
             childCommitted = committed;
         }
         // The key needs to be copied, since we're delivering it to database
-        collapsed->key = hex_to_compact(cn->key);
+        collapsed->key = hex_to_compact(sn->key);
         auto const hashed_node = store(collapsed, db);
         assert(hashed_node != nullptr);
         if (hashed_node->type() == xtrie_node_type_t::hashnode) {
@@ -74,17 +74,17 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         return std::make_pair(collapsed, childCommitted);
     }
     case xtrie_node_type_t::fullnode: {
-        auto cn = std::dynamic_pointer_cast<xtrie_full_node_t>(n);
-        assert(cn != nullptr);
+        auto const fn = std::dynamic_pointer_cast<xtrie_full_node_t>(n);
+        assert(fn != nullptr);
 
         std::array<xtrie_node_face_ptr_t, 17> hashedKids;
         int32_t childCommitted{0};
-        std::tie(hashedKids, childCommitted) = commitChildren(cn, db, ec);
+        std::tie(hashedKids, childCommitted) = commitChildren(fn, db, ec);
         if (ec) {
             return std::make_pair(nullptr, 0);
         }
 
-        auto collapsed = cn->clone();
+        auto collapsed = fn->clone();
         collapsed->children = hashedKids;
 
         auto const hashed_node = store(collapsed, db);

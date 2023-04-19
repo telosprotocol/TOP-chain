@@ -66,9 +66,7 @@ xtop_zec_elect_consensus_group_contract::xtop_zec_elect_consensus_group_contract
 bool executed_consensus{false};
 
 void xtop_zec_elect_consensus_group_contract::swap_election_result(common::xlogic_time_t const current_time) {
-    auto auditor_group_count = XGET_CONFIG(auditor_group_count);
-    auto validator_group_count = XGET_CONFIG(validator_group_count);
-    assert(auditor_group_count == 2 && validator_group_count == 4);
+    assert(XGET_CONFIG(auditor_group_count) == 2 && XGET_CONFIG(validator_group_count) == 4);
     uint64_t latest_height = get_blockchain_height(sys_contract_zec_elect_consensus_addr);
     if (latest_height <= 0) {
         return;
@@ -81,7 +79,7 @@ void xtop_zec_elect_consensus_group_contract::swap_election_result(common::xlogi
         all_cluster_election_result_store.insert({common::xgroup_id_t{auditor_group_start_count++}, election_result_store});
     }
 
-    assert(all_cluster_election_result_store.size() == auditor_group_count);
+    assert(all_cluster_election_result_store.size() == XGET_CONFIG(auditor_group_count));
 
     // hard code swap node:
     auto & sharding_1_result_store = all_cluster_election_result_store.at(common::xgroup_id_t{1});
@@ -132,12 +130,12 @@ void xtop_zec_elect_consensus_group_contract::swap_election_result(common::xlogi
     std::swap((*con_64.begin()).second, (*con_66.begin()).second);
     std::swap((*con_65.begin()).second, (*con_67.begin()).second);
 
-    adv_1.begin()->second.election_info().joined_version = adv_1.group_version();
-    adv_2.begin()->second.election_info().joined_version = adv_2.group_version();
-    con_64.begin()->second.election_info().joined_version = con_64.group_version();
-    con_65.begin()->second.election_info().joined_version = con_65.group_version();
-    con_66.begin()->second.election_info().joined_version = con_66.group_version();
-    con_67.begin()->second.election_info().joined_version = con_67.group_version();
+    adv_1.begin()->second.election_info().joined_epoch(adv_1.group_version());
+    adv_2.begin()->second.election_info().joined_epoch(adv_2.group_version());
+    con_64.begin()->second.election_info().joined_epoch(con_64.group_version());
+    con_65.begin()->second.election_info().joined_epoch(con_65.group_version());
+    con_66.begin()->second.election_info().joined_epoch(con_66.group_version());
+    con_67.begin()->second.election_info().joined_epoch(con_67.group_version());
 
     auditor_group_start_count = common::xauditor_group_id_begin.value();
     for (auto const & property : property_names) {
@@ -159,9 +157,9 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
 
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
 
-    auto auditor_group_count = XGET_CONFIG(auditor_group_count);
-    auto validator_group_count = XGET_CONFIG(validator_group_count);
-    auto cluster_group_num = 1 + validator_group_count / auditor_group_count;
+    // auto auditor_group_count = XGET_CONFIG(auditor_group_count);
+    // auto validator_group_count = XGET_CONFIG(validator_group_count);
+    // auto cluster_group_num = 1 + validator_group_count / auditor_group_count;
     auto const pre_associate = XGET_CONFIG(validator_group_count) / XGET_CONFIG(auditor_group_count);
 
     uint8_t auditor_group_start_count = common::xauditor_group_id_begin.value();
@@ -192,14 +190,14 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
 
         // elect in:
         auto adv_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(adv_group_id.value());
-        for (auto node : adv_group_node_infos) {
+        for (auto const & node : adv_group_node_infos) {
             xelection_info_t new_election_info{};
-            new_election_info.joined_version = next_version;
-            new_election_info.stake = node.stake;
-            new_election_info.comprehensive_stake = node.stake;
-            new_election_info.consensus_public_key = node.pub_key;
-            new_election_info.genesis = false;
-            new_election_info.miner_type = common::xminer_type_t::advance;
+            new_election_info.joined_epoch(next_version);
+            new_election_info.stake(node.stake);
+            new_election_info.comprehensive_stake(node.stake);
+            new_election_info.public_key(node.pub_key);
+            new_election_info.genesis(false);
+            new_election_info.miner_type(common::xminer_type_t::advance);
 
             xelection_info_bundle_t election_info_bundle{};
             election_info_bundle.account_address(node.node_id);
@@ -225,14 +223,14 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
             val_election_group_result.start_time(current_time);
 
             auto val_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(val_group_id.value());
-            for (auto node : val_group_node_infos) {
+            for (auto const & node : val_group_node_infos) {
                 xelection_info_t new_election_info{};
-                new_election_info.joined_version = next_version;
-                new_election_info.stake = node.stake;
-                new_election_info.comprehensive_stake = node.stake;
-                new_election_info.consensus_public_key = node.pub_key;
-                new_election_info.genesis = false;
-                new_election_info.miner_type = common::xminer_type_t::validator;
+                new_election_info.joined_epoch(next_version);
+                new_election_info.stake(node.stake);
+                new_election_info.comprehensive_stake(node.stake);
+                new_election_info.public_key(node.pub_key);
+                new_election_info.genesis(false);
+                new_election_info.miner_type(common::xminer_type_t::validator);
 
                 xelection_info_bundle_t election_info_bundle{};
                 election_info_bundle.account_address(node.node_id);

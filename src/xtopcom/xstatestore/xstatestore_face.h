@@ -18,6 +18,7 @@
 #include "xstatestore/xtablestate_ext.h"
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xvpropertyprove.h"
+#include "xstatectx/xunitstate_ctx.h"
 
 NS_BEG2(top, statestore)
 
@@ -59,12 +60,16 @@ class xstatestore_face_t {
     virtual xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t * target_block) const = 0;
     
     // query accountindex
-    virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const = 0;
+    virtual bool                    accountindex_cache_unbroken(base::xvblock_t * table_block) const = 0;
+    virtual bool                    get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const = 0;
     virtual bool                    get_accountindex(const std::string& table_height, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
+    virtual bool                        get_accountindex(xblock_number_t number, common::xtable_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
     virtual bool                        get_accountindex(xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
     virtual data::xaccountstate_ptr_t   get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
     virtual std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const = 0;
+
+    virtual base::xvblock_ptr_t     get_unit_block(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
 
     // query unitstate
     virtual data::xunitstate_ptr_t      get_unitstate(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
@@ -75,7 +80,7 @@ class xstatestore_face_t {
     virtual data::xunitstate_ptr_t  get_unit_state_by_accountindex(common::xaccount_address_t const & account_address, base::xaccount_index_t const& index) const = 0;
     virtual data::xunitstate_ptr_t  get_unit_state_by_unit_block(base::xvblock_t * target_block) const = 0;
     virtual data::xunitstate_ptr_t  get_unit_state_by_table(common::xaccount_address_t const & account_address, const std::string& table_height) const = 0;
-    virtual uint64_t                get_blockchain_height(common::xaccount_address_t const & account_address) const = 0;
+    // virtual uint64_t                get_blockchain_height(common::xaccount_address_t const & account_address) const = 0;
     virtual int32_t                 map_get(common::xaccount_address_t const & account_address, const std::string &key, const std::string &field, std::string &value) const = 0;
     virtual int32_t                 string_get(common::xaccount_address_t const & account_address, const std::string& key, std::string& value) const = 0;
     virtual int32_t                 map_copy_get(common::xaccount_address_t const & account_address, const std::string &key, std::map<std::string, std::string> &map) const = 0;
@@ -84,7 +89,7 @@ class xstatestore_face_t {
 
     // query tablestate
     virtual data::xtablestate_ptr_t     get_table_state_by_block(base::xvblock_t * target_block) const = 0;
-    virtual data::xtablestate_ptr_t     get_table_connectted_state(common::xaccount_address_t const & table_address) const = 0;
+    virtual data::xtablestate_ptr_t     get_table_connectted_state(common::xtable_address_t const & table_address) const = 0;
     // TODO(jimmy)
     virtual bool get_receiptid_state_and_prove(common::xaccount_address_t const & table_address,
                                               base::xvblock_t * latest_commit_block,
@@ -95,7 +100,10 @@ class xstatestore_face_t {
     virtual void on_table_block_committed(base::xvblock_t* block) const = 0;
     virtual uint64_t get_latest_executed_block_height(common::xtable_address_t const & table_address) const = 0;
     virtual uint64_t get_need_sync_state_block_height(common::xtable_address_t const & table_address) const = 0;
-    virtual xtablestate_ext_ptr_t do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const = 0;
+    virtual xtablestate_ext_ptr_t do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const = 0;
+
+    // cache apis
+    virtual void clear_cache(common::xtable_address_t const & table_address) = 0;
 };
 
 class xstatestore_hub_t {

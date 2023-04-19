@@ -47,7 +47,7 @@ private:
     void unitstate_prune_batch(const xaccounts_prune_info_t & accounts_prune_info);
     common::xtable_address_t const & get_account() const {return m_table_addr;}
     bool need_prune(uint64_t exec_height);
-    bool get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height);
+    bool get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height, uint64_t & lowest_keep_height);
     void set_pruned_height(uint64_t pruned_height);
 
 private:
@@ -55,9 +55,8 @@ private:
     // virtual uint64_t prune_exec(uint64_t from_height, uint64_t to_height) = 0;
     uint64_t prune_exec_storage(uint64_t from_height, uint64_t to_height);
     uint64_t prune_exec_storage_and_cons(uint64_t from_height, uint64_t to_height);
-    uint64_t prune_exec_cons(uint64_t from_height, uint64_t to_height, uint64_t exec_height);
+    uint64_t prune_exec_cons(uint64_t from_height, uint64_t to_height, uint64_t exec_height, uint64_t lowest_keep_height);
 
-private:
     mutable std::mutex m_prune_lock;
     common::xtable_address_t m_table_addr;
     base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor

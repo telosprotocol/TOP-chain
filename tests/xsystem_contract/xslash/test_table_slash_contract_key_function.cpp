@@ -15,7 +15,7 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
-
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::xvm;
@@ -30,9 +30,10 @@ const uint16_t VALIDATOR_ACCOUNT_ADDR_NUM = 512;
 
 class test_table_slash_contract: public xtable_statistic_info_collection_contract, public testing::Test {
 public:
-    test_table_slash_contract() : xtable_statistic_info_collection_contract{common::xnetwork_id_t{0}}, node_serv{common::xaccount_address_t::build_from(sharding_statistic_info_contract_base_address), "null"} {};
+    test_table_slash_contract() : xtable_statistic_info_collection_contract{common::xnetwork_id_t{0}}, node_serv{common::xaccount_address_t::build_from(table_statistic_info_contract_base_address), "null"} {};
 
     void SetUp(){
+        mock::xvchain_creator _creator;// TOOD(Jimmy)
         create_account_addrs(AUDITOR_ACCOUNT_ADDR_NUM, VALIDATOR_ACCOUNT_ADDR_NUM);
 
         uint64_t elect_blk_height = 1;

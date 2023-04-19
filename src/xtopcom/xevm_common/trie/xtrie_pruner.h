@@ -27,9 +27,7 @@ public:
 
     void init(std::shared_ptr<xtrie_node_face_t> const & trie_root, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
 
-    void prune(xh256_t const & old_trie_root_hash, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);
     void prune(xh256_t const & old_trie_root_hash, observer_ptr<xtrie_db_t> trie_db, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
-    void commit_pruned(observer_ptr<xtrie_db_t> trie_db, std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
 private:
     std::shared_ptr<xtrie_node_face_t> load_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, observer_ptr<xtrie_db_t> trie_db, std::error_code & ec);

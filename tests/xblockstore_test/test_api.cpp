@@ -34,7 +34,7 @@ TEST_F(test_api, store_genesis_block_1) {
     xassert(genesis_block != nullptr);
     base::xvaccount_t _vaddr(address);
 
-    auto ret = blockstore->store_block(_vaddr, genesis_block.get());
+    auto ret = blockstore->store_unit(_vaddr, genesis_block.get());
     xassert(ret);
 }
 #if 0  // TODO(jimmy) fail need fix

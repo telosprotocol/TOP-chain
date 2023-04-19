@@ -1,5 +1,4 @@
 #!/bin/bash
-source /etc/profile
 
 NUM=$1
 echo "run number: "${NUM}
@@ -22,12 +21,12 @@ fi
 rm -f ${workdir}/xtopchain ${workdir}/topio 
 cp ${topio} ${workdir}/
 
-sh ${clear} -o clean
+bash ${clear} -o clean
 
 cd ${workdir}
 export TOPIO_HOME=${workdir}
 echo "====== deploy start ======"
-sh run.sh
+bash run.sh
 echo "====== wait genesis ======"
 echo "sleep 120s"
 sleep 120
@@ -35,7 +34,7 @@ echo "====== check genesis ======"
 ret=$(grep -a 'vnode mgr' /tmp/rec*/log/xtop*log|grep -a consensus|grep -a 'starts at'|wc -l)
 if [[ -z ${ret} ]];then
     echo "consensus start log not match"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    bash ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 echo "hit log, genesis success"
@@ -45,7 +44,7 @@ balance=$(echo "${accounts_info}"|grep T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC 
 if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
     echo "check god balance fail, see follow output:"
     echo "${accounts_info}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    bash ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 sleep 1
@@ -56,7 +55,7 @@ if [[ ${login_ret} -eq 1 ]];then
 else
     echo "set default account fail, see follow output:"
     echo "${login_info}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    bash ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 sleep 1
@@ -65,7 +64,7 @@ addr=$(echo "${create_info}" | grep -a "Account Address:"|awk -F ':' '{print $2}
 if [[ -z ${addr} ]];then
     echo "create account fail, see follow output:"
     echo "${create_info}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    bash ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 echo "new local addr: "${addr}
@@ -74,7 +73,7 @@ tx=$(echo "${tx_info}" | grep -a "Transaction hash"|awk -F ':' '{print $2}')
 if [[ -z ${tx} ]];then
     echo "tx fail, see follow output:"
     echo "${tx_info}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    bash ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 echo "tx: "${tx}
@@ -88,7 +87,7 @@ recv_ret=$(./topio chain queryaccount ${addr})
 recv_balance=$(echo "${recv_ret}" | grep -a '\"balance\"'|grep "123456000000"|wc -l)
 if [[ ${tx_stat} -eq 1 ]] && [[ ${send_balance} -eq 1 ]] && [[ ${recv_balance} -eq 1 ]];then
     echo "====== tx check success, end ======"
-    sh ${clear} -o clean
+    bash ${clear} -o clean
 else
     echo "tx check fail, see follow output:"
     echo "query_tx_ret:"
@@ -97,7 +96,7 @@ else
     echo "${send_ret}"
     echo "query_recv_ret:"
     echo "${recv_ret}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    bash ${clear} -o archive -i ${NUM} -d ${workdir}
     echo "====== tx fail, end ======"
     exit -1
 fi

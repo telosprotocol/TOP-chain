@@ -616,10 +616,10 @@ namespace top
             return result;
         }
 
-        int32_t xvbindex_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this) + get_size(m_block_hash) + get_size(m_last_block_hash) + get_size(m_last_fullblock_hash) + get_size(m_extend_cert) +
+        size_t xvbindex_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this) + get_size(m_block_hash) + get_size(m_last_block_hash) + get_size(m_last_fullblock_hash) + get_size(m_extend_cert) +
                                  get_size(m_extend_data) + get_size(m_reserved) + get_size(get_xvid_str()) + get_size(get_address()) + get_size(get_storage_key());
-            xdbg("-----cache size----- xvbindex_t total_size:%d this:%d,%d:%d:%d:%d:%d:%d:%d:%d:%d",
+            xdbg("-----cache size----- xvbindex_t total_size:%zu this:%d,%d:%d:%d:%d:%d:%d:%d:%d:%d",
                  total_size,
                  sizeof(*this),
                  get_size(m_block_hash),
@@ -632,6 +632,44 @@ namespace top
                  get_size(get_address()),
                  get_size(get_storage_key()));
             return total_size;
+        }
+
+        void  xvbindex_t::set_unitblock_on_index(base::xvblock_t* _unit)
+        {
+            set_store_flag(base::enum_index_store_flag_unit_in_index);
+
+            std::string block_object_bin;
+            _unit->serialize_to_string(block_object_bin);
+            base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+            _stream.write_compact_var(block_object_bin);
+            _stream.write_compact_var(_unit->get_input_data());
+            _stream.write_compact_var(_unit->get_output_data());
+            std::string unit_bin = std::string((const char*)_stream.data(), _stream.size());
+            set_unitblock_bin(unit_bin);
+            return;
+        }
+        base::xauto_ptr<base::xvblock_t> xvbindex_t::create_unitblock_on_index()
+        {
+            if (false == check_store_flag(base::enum_index_store_flag_unit_in_index)) {
+                xassert(false);
+                return nullptr;
+            }
+            std::string const& unitblock_bin = get_unitblock_bin();
+            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)unitblock_bin.data(),(uint32_t)unitblock_bin.size());
+            std::string block_object_bin;
+            std::string input_data;
+            std::string output_data;
+            _stream.read_compact_var(block_object_bin);
+            _stream.read_compact_var(input_data);
+            _stream.read_compact_var(output_data);
+            base::xauto_ptr<base::xvblock_t> new_block_ptr(base::xvblock_t::create_block_object(block_object_bin));
+            if (new_block_ptr != nullptr) {
+                new_block_ptr->set_input_data(input_data, false);
+                new_block_ptr->set_output_data(output_data, false);
+            }
+            if (check_block_flag(base::enum_xvblock_flag_committed))
+                new_block_ptr->set_block_flag(base::enum_xvblock_flag_committed);
+            return new_block_ptr;
         }
 
         xvbnode_t::xvbnode_t(xvbnode_t * parent_node,xvblock_t & raw_block)

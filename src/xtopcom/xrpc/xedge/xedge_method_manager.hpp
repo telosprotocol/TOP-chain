@@ -190,7 +190,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_digest", 1);
         throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction hash error"};
     }
-    if (!(tx->get_origin_target_addr() == sys_contract_rec_standby_pool_addr && tx->get_target_action_name() == "nodeJoinNetwork2")) {
+    if (!(tx->target_address_unadjusted() == rec_standby_pool_contract_address && tx->get_target_action_name() == "nodeJoinNetwork2")) {
         if (!tx->sign_check()) {
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction sign error"};
@@ -200,7 +200,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
 
     // filter out black list transaction
     if (xverifier::xtx_verifier::verify_send_tx_validation(tx.get())) {
-        xwarn_rpc("[sendTransaction_method] tx validation check fail. rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
+        xwarn_rpc("[sendTransaction_method] tx validation check fail. rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->target_address().to_string().c_str(), tx->source_address().to_string().c_str());
         XMETRICS_COUNTER_INCREMENT("xtransaction_validation_fail", 1);
         throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx validation check failed"};
     }
@@ -227,15 +227,15 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
                          "chain_id",
                          common::network_id().value(),
                          "from",
-                         tx->get_source_addr(),
+                         tx->source_address().to_string(),
                          "to",
-                         tx->get_target_addr(),
+                         tx->target_address().to_string(),
                          "timestamp",
                          tx->get_fire_timestamp(),
                          "from_ip",
                          ip);
-    const auto & from = tx->get_source_addr();
-    json_proc.m_account_set.emplace(from);
+    const auto & from = tx->source_address();
+    json_proc.m_account_set.emplace(from.to_string());
     json_proc.m_response_json["tx_hash"] = tx_hash;
     json_proc.m_response_json["tx_size"] = tx->get_tx_len();
 }
@@ -303,7 +303,7 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             }
             // uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
             XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now));
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr(), rpc_msg_request);
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->source_address().to_string(), rpc_msg_request);
         } else {
             m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_query_request);
         }

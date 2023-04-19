@@ -20,7 +20,7 @@ xcons_service_t::~xcons_service_t() {
     xunit_dbg("xcons_service_t::~xcons_service_t,destroy,this=%p", this);
 }
 
-common::xmessage_category_t xcons_service_t::get_msg_category() {
+common::xmessage_category_t xcons_service_t::get_msg_category() const {
     return m_category;
 }
 
@@ -34,8 +34,8 @@ bool xcons_service_t::start(const xvip2_t & xip, const common::xlogic_time_t& st
     // 3. register network proxy notification
     auto network_proxy = m_para->get_resources()->get_network();
     network_proxy->listen(xip, get_msg_category(), shared_from_this());
-    m_running = true;
-    return m_running;
+    running_ = true;
+    return true;
 }
 
 bool xcons_service_t::fade(const xvip2_t & xip) {
@@ -57,16 +57,16 @@ bool xcons_service_t::unreg(const xvip2_t & xip) {
 bool xcons_service_t::destroy(const xvip2_t & xip) {
     xunit_info("xcons_service_t::destroy %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_dispatcher->destroy(xip);
-    m_running = false;
-    return !m_running;
+    running_ = false;
+    return true;
 }
 
 void xcons_service_t::on_pdu(const xvip2_t & xip_from, const xvip2_t & xip_to, const base::xcspdu_t & packet) {
-    xunit_dbg("xcons_service_t::on_pdu consrv_status:%d,pdu=%s,at_node:%s", m_running, packet.dump().c_str(), xcons_utl::xip_to_hex(xip_to).c_str());
+    xunit_dbg("xcons_service_t::on_pdu consrv_status:%d,pdu=%s,at_node:%s", running_.load(), packet.dump().c_str(), xcons_utl::xip_to_hex(xip_to).c_str());
 
-    if (m_running) {
-        auto pdu = (base::xcspdu_t *)(&packet);
-        auto ret = m_dispatcher->dispatch(m_para->get_resources()->get_workpool(), pdu, xip_from, xip_to);
+    if (running_) {
+        auto * pdu = const_cast<base::xcspdu_t *>(&packet);
+        auto const ret = m_dispatcher->dispatch(m_para->get_resources()->get_workpool(), pdu, xip_from, xip_to);
         if (!ret) {
             xunit_warn("xcons_service_t::on_pdu fail-dispatch msg. consrv=%p,pdu=%s,at_node:%s",
                   this, packet.dump().c_str(), xcons_utl::xip_to_hex(xip_to).c_str());
@@ -77,8 +77,8 @@ void xcons_service_t::on_pdu(const xvip2_t & xip_from, const xvip2_t & xip_to, c
     }
 }
 
-bool xcons_service_t::is_running() {
-    return m_running;
+bool xcons_service_t::is_running() const {
+    return running_;
 }
 
 NS_END2

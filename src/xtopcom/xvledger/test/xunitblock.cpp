@@ -8,7 +8,6 @@
 #include "xbase/xhash.h"
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
-#include "xvledger/xvstatestore.h"
 #include "xvledger/xvcontractstore.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvaction.h"

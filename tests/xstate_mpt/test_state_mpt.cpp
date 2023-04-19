@@ -158,11 +158,11 @@ TEST_F(test_state_mpt_fixture, test_example) {
     common::xaccount_address_t k3("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoL");
     common::xaccount_address_t k4("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoM");
     common::xaccount_address_t k5("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoN");
-    base::xaccount_index_t index1{1, std::to_string(1), std::to_string(1), 1};
-    base::xaccount_index_t index2{2, std::to_string(2), std::to_string(2), 2};
-    base::xaccount_index_t index3{3, std::to_string(3), std::to_string(3), 3};
-    base::xaccount_index_t index4{4, std::to_string(4), std::to_string(4), 4};
-    base::xaccount_index_t index5{5, std::to_string(5), std::to_string(5), 5};
+    base::xaccount_index_t index1{base::enum_xaccountindex_version_state_hash, 1, std::to_string(1), std::to_string(1), 1};
+    base::xaccount_index_t index2{base::enum_xaccountindex_version_state_hash, 2, std::to_string(2), std::to_string(2), 2};
+    base::xaccount_index_t index3{base::enum_xaccountindex_version_state_hash, 3, std::to_string(3), std::to_string(3), 3};
+    base::xaccount_index_t index4{base::enum_xaccountindex_version_state_hash, 4, std::to_string(4), std::to_string(4), 4};
+    base::xaccount_index_t index5{base::enum_xaccountindex_version_state_hash, 5, std::to_string(5), std::to_string(5), 5};
 
     s->set_account_index(k1, index1, ec);
     EXPECT_FALSE(ec);
@@ -206,7 +206,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
             auto acc = common::xaccount_address_t{top::utl::xcrypto_util::make_address_by_random_key(base::enum_vaccount_addr_type_secp256k1_eth_user_account, 0)};
             std::string state_str{"state_str" + std::to_string(i)};
             auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-            base::xaccount_index_t index{rand(), hash, hash, rand()};
+            base::xaccount_index_t index{base::enum_xaccountindex_version_state_hash, rand(), hash, hash, rand()};
             data.emplace_back(std::make_pair(acc, index));
             acc_set.insert(acc);
         }
@@ -220,16 +220,13 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     for (auto i = 2; i < 5; i++) {
         ec.clear();
         std::string state_str{"state_str" + std::to_string(i)};
-        s->set_account_index_with_unit(data[i].first, data[i].second, {state_str.begin(), state_str.end()}, ec);
+        s->set_account_index(data[i].first, data[i].second, ec);
         EXPECT_FALSE(ec);
     }
     EXPECT_EQ(s->m_state_objects.size(), 5);
     for (auto i = 0; i < 5; i++) {
         // write in cache
         EXPECT_TRUE(s->m_state_objects.count(data[i].first));
-        if (i >= 2) {
-            EXPECT_TRUE(s->m_state_objects[data[i].first]->dirty_unit);
-        }
         // not commit in trie
         auto index_bytes = s->m_trie->try_get(top::to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
@@ -260,8 +257,8 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         auto index_bytes = s->m_trie->try_get(to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         state_mpt::xaccount_info_t info;
-        info.m_account = data[i].first;
-        info.m_index = data[i].second;
+        info.account = data[i].first;
+        info.index = data[i].second;
         auto str = info.encode();
         xbytes_t str_bytes{str.begin(), str.end()};
         EXPECT_EQ(str_bytes, index_bytes);
@@ -289,7 +286,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_EQ(s->m_state_objects[data[1].first]->index, index1);
     // error set
     s->set_account_index(data[2].first, new_index0, ec);
-    EXPECT_EQ(ec, state_mpt::error::make_error_code(state_mpt::error::xerrc_t::state_mpt_unit_hash_mismatch));
+    EXPECT_FALSE(ec);
     ec.clear();
     // EXPECT_EQ(s->m_cache_indexes.size(), 10);
     // commit
@@ -297,9 +294,6 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_FALSE(ec);
     // cache is lost
     EXPECT_EQ(s->m_state_objects.size(), 0);
-    for (auto obj : s->m_state_objects) {
-        EXPECT_FALSE(obj.second->dirty_unit);
-    }
 }
 
 TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
@@ -464,10 +458,10 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
         auto unit_state_hash_str = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
         auto unit_block_hash = utl::xkeccak256_t::digest(std::to_string(i));
         std::string unit_block_hash_str((char *)unit_block_hash.data(), unit_block_hash.size());
-        base::xaccount_index_t index{i + 1, unit_block_hash_str, unit_state_hash_str, i + 1};
+        base::xaccount_index_t index{base::enum_xaccountindex_version_snapshot_hash, i + 1, unit_block_hash_str, unit_state_hash_str, i + 1};
         state_mpt::xaccount_info_t info;
-        info.m_account = common::xaccount_address_t(accounts[i]);
-        info.m_index = index;
+        info.account = common::xaccount_address_t(accounts[i]);
+        info.index = index;
         auto info_str = info.encode();
         trie->update(to_bytes(accounts[i]), to_bytes(info_str));
         printf("unit, account: %s, value: %s, block_hash: %s, state_hash: %s, state: %s\n",
@@ -523,11 +517,11 @@ std::map<evm_common::xh256_t, xbytes_t> create_node_hash_data(size_t count) {
         auto public_key = private_key.get_public_key();
         std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
         state_mpt::xaccount_info_t info;
-        info.m_account = common::xaccount_address_t{account_address};
+        info.account = common::xaccount_address_t{account_address};
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-        base::xaccount_index_t index{rand(), hash, hash, rand()};
-        info.m_index = index;
+        base::xaccount_index_t index{base::enum_xaccountindex_version_state_hash, rand(), hash, hash, rand()};
+        info.index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
         evm_common::xh256_t key{to_bytes(hashvalue)};
@@ -548,11 +542,11 @@ std::map<evm_common::xh256_t, xbytes_t> create_node_bytes_data(size_t count) {
         auto public_key = private_key.get_public_key();
         std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
         state_mpt::xaccount_info_t info;
-        info.m_account = common::xaccount_address_t{account_address};
+        info.account = common::xaccount_address_t{account_address};
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-        base::xaccount_index_t index{rand(), hash, hash, rand()};
-        info.m_index = index;
+        base::xaccount_index_t index{base::enum_xaccountindex_version_state_hash, rand(), hash, hash, rand()};
+        info.index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
         // xhash256_t key{to_bytes(hashvalue)};
@@ -574,7 +568,7 @@ std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, std::stri
         std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-        base::xaccount_index_t index{rand(), hash, hash, rand()};
+        base::xaccount_index_t index{base::enum_xaccountindex_version_state_hash, rand(), hash, hash, rand()};
         auto bstate = make_object_ptr<base::xvbstate_t>(account_address, i + 1, i + 1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
         auto canvas = make_object_ptr<base::xvcanvas_t>();
         bstate->new_string_var(to_string(i), canvas.get());
@@ -678,7 +672,7 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_BENCH) {
 
     auto t1 = base::xtime_utl::time_now_ms();
     for (auto & d : data) {
-        s->set_account_index_with_unit(d.first, d.second.first, d.second.second, ec);
+        s->set_account_index(d.first, d.second.first, ec);
     }
     auto t2 = base::xtime_utl::time_now_ms();
     s->commit(ec);
@@ -695,7 +689,7 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_not_commit_memory_leak_BENCH
         EXPECT_FALSE(ec);
 
         for (auto const & d : data) {
-            s->set_account_index_with_unit(d.first, d.second.first, to_bytes(d.second.second), ec);
+            s->set_account_index(d.first, d.second.first, ec);
         }
     }
     m_db->close();
@@ -709,7 +703,7 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_commit_memory_leak_BENCH) {
         EXPECT_FALSE(ec);
 
         for (auto const & d : data) {
-            s->set_account_index_with_unit(d.first, d.second.first, to_bytes(d.second.second), ec);
+            s->set_account_index(d.first, d.second.first, ec);
         }
         s->commit(ec);
         EXPECT_FALSE(ec);
@@ -728,7 +722,7 @@ TEST_F(test_state_mpt_fixture, test_state_mpt_cache_optimize_BENCH) {
     auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
     EXPECT_FALSE(ec);
     for (auto & d : data) {
-        s->set_account_index_with_unit(d.first, d.second.first, d.second.second, ec);
+        s->set_account_index(d.first, d.second.first, ec);
         EXPECT_FALSE(ec);
         accs.emplace_back(d.first);
     }
@@ -776,7 +770,7 @@ void multi_helper(std::map<common::xaccount_address_t, std::pair<base::xaccount_
     EXPECT_FALSE(ec);
     for (auto i = n * 1000; i < (n+1) * 1000; i++) {
         auto acc = accs[i]; 
-        s->set_account_index_with_unit(acc, data.at(acc).first, data.at(acc).second, ec);
+        s->set_account_index(acc, data.at(acc).first, ec);
         EXPECT_FALSE(ec);
     }
     auto hash = s->commit(ec);

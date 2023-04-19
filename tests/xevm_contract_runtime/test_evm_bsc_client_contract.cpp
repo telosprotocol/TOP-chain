@@ -31,7 +31,7 @@ public:
         bstate->new_string_var(data::system_contract::XPROPERTY_LAST_HASH, canvas.get());
         auto bytes = (evm_common::h256(0)).asBytes();
         bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
-        contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
+        contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), bstate.get());
         statectx = top::make_unique<xmock_statectx_t>(contract_state);
         statectx_observer = make_observer<statectx::xstatectx_face_t>(statectx.get());
         context.address = common::xtop_eth_address::build_from("ff00000000000000000000000000000000000003");

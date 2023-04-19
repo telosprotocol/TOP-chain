@@ -10,8 +10,14 @@
 
 NS_BEG2(top, data)
 
-xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, bool readonly)
-: xbstate_ctx_t(bstate, readonly), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_table_bstate) {
+xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate)
+: xbstate_ctx_t(bstate), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_table_bstate) {
+    cache_receiptid(bstate); // TODO(jimmy) delete future
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, 1);
+}
+
+xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, base::xvbstate_t* org_bstate)
+: xbstate_ctx_t(bstate, org_bstate), xstatistic::xstatistic_obj_face_t(xstatistic::enum_statistic_table_bstate) {
     cache_receiptid(bstate); // TODO(jimmy) delete future
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, 1);
 }
@@ -158,8 +164,8 @@ bool xtable_bstate_t::set_receiptid_pair(base::xtable_shortid_t sid, const base:
     return ret == xsuccess;
 }
 
-int32_t xtable_bstate_t::get_object_size_real() const {
-    int32_t total_size = sizeof(*this);
+size_t xtable_bstate_t::get_object_size_real() const {
+    size_t total_size = sizeof(*this);
     int32_t cache_receiptid_size = 0;
     if (m_cache_receiptid != nullptr) {
         cache_receiptid_size = m_cache_receiptid->get_object_size_real();
@@ -167,7 +173,7 @@ int32_t xtable_bstate_t::get_object_size_real() const {
 
     total_size += cache_receiptid_size;
 
-    xdbg("------cache size------ xtable_bstate_t total_size:%d this:%d,cache_receiptid_size:%d", total_size, sizeof(*this), cache_receiptid_size);
+    xdbg("------cache size------ xtable_bstate_t total_size:%zu this:%d,cache_receiptid_size:%d", total_size, sizeof(*this), cache_receiptid_size);
     return total_size;
 }
 

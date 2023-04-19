@@ -6,27 +6,16 @@
 
 #include "xbasic/xlru_cache_specialize.h"
 #include "xbasic/xthreading/xdummy_mutex.h"
+#include "xcommon/xfixed_hash.h"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
-#include "xcommon/xfixed_hash.h"
 
 #include <functional>
 #include <map>
 #include <unordered_set>
 
 NS_BEG3(top, evm_common, trie)
-
-class xtop_trie_db_config {
-public:
-    xtop_trie_db_config() = default;
-
-    uint64_t Cache_size{0};   // Memory allowance (MB) to use for caching trie nodes in memory
-    // std::string Journal{""};  // Journal of clean cache to survive node restarts
-    bool Preimages{true};     // Flag whether the preimage of trie key is recorded
-};
-using xtrie_db_config_t = xtop_trie_db_config;
-using xtrie_db_config_ptr_t = std::shared_ptr<xtrie_db_config_t>;
 
 // fwd:
 class xtop_trie_cache_node;
@@ -37,38 +26,39 @@ private:
     friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
-    basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_{5000};
+    basic::xlru_cache_t<xh256_t, xbytes_t, threading::xdummy_mutex_t> cleans_;
     std::map<xh256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xh256_t> pruned_hashes_;
+    std::unordered_map<xh256_t, std::vector<xh256_t>> pruned_hashes2_;
 
     // xh256_t oldest_;
     // xh256_t newest_;
 
     std::map<xh256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
 
-    mutable std::mutex mutex;
+    mutable std::mutex mutex_;
 
 public:
-    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb) : diskdb_(std::move(diskdb)) {
-    }
+    xtop_trie_db(xtop_trie_db const &) = delete;
+    xtop_trie_db & operator=(xtop_trie_db const &) = delete;
+    xtop_trie_db(xtop_trie_db &&) = delete;
+    xtop_trie_db & operator=(xtop_trie_db &&) = delete;
+    ~xtop_trie_db() = default;
 
-public:
+    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t cache_size);
+
     // NewDatabase creates a new trie database to store ephemeral trie content before
     // its written out to disk or garbage collected. No read cache is created, so all
     // data retrievals will hit the underlying disk database.
-    static std::shared_ptr<xtop_trie_db> NewDatabase(xkv_db_face_ptr_t diskdb);
+    static std::shared_ptr<xtop_trie_db> NewDatabase(xkv_db_face_ptr_t diskdb, size_t cache_size = 5000);
 
     // NewDatabaseWithConfig creates a new trie database to store ephemeral trie content
     // before its written out to disk or garbage collected. It also acts as a read cache
     // for nodes loaded from disk.
-    static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config);
+    // static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config, size_t cache_size);
 
-public:
-    xkv_db_face_ptr_t DiskDB() const {
-        return diskdb_;
-    }
+    xkv_db_face_ptr_t const & DiskDB() const noexcept;
 
-public:
     // insert inserts a collapsed trie node into the memory database.
     // The blob size must be specified to allow proper size tracking.
     // All nodes inserted by this function will be reference tracked
@@ -103,14 +93,15 @@ public:
     void Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec);
 
     void prune(xh256_t const & hash, std::error_code & ec);
-
-    void prune(xh256_t const & hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec);
-
     void commit_pruned(std::error_code & ec);
-
     void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec);
 
-    // void clear_cleans();
+    void prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec);
+    void commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec);
+    void clear_pruned(xh256_t const & root_hash, std::error_code & ec);
+    void clear_pruned(std::error_code & ec);
+
+    size_t pending_pruned_size(xh256_t const & root_hash) const noexcept;
 
 private:
     // commit is the private locked version of Commit.
@@ -118,9 +109,9 @@ private:
 
     xbytes_t preimage_key(xh256_t const & hash_key) const;
 
-    void cleans_put(xh256_t const & hash, xbytes_t const & data);
+    void cleans_put_lock_hold_outside(xh256_t const & hash, xbytes_t const & data);
 
-    void cleans_erase(xh256_t const & hash);
+    void cleans_erase_lock_hold_outside(xh256_t const & hash);
 };
 using xtrie_db_t = xtop_trie_db;
 using xtrie_db_ptr_t = std::shared_ptr<xtrie_db_t>;

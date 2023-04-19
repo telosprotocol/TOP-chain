@@ -31,7 +31,7 @@ public:
 
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_event_blockfetcher;}
 private:
-    virtual int32_t get_object_size_real() const override {
+    virtual size_t get_object_size_real() const override {
         return sizeof(*this) + get_size(get_result_data()) + get_size(network_self.account_election_address().account_address().base_address().to_string()) + get_size(from_address.account_election_address().account_address().base_address().to_string());
     }
 };

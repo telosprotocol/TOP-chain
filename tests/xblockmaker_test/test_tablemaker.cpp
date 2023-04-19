@@ -11,6 +11,7 @@
 #include "tests/mock/xdatamock_address.hpp"
 #include "xdata/xnative_contract_address.h"
 #include "xblockmaker/xproposal_maker.h"
+#include "xgenesis/xgenesis_accounts.h"
 
 using namespace top;
 using namespace top::base;
@@ -56,8 +57,10 @@ TEST_F(test_tablemaker, make_proposal_1) {
 
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
@@ -74,8 +77,10 @@ TEST_F(test_tablemaker, make_proposal_1) {
 
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
@@ -92,8 +97,10 @@ TEST_F(test_tablemaker, make_proposal_1) {
 
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         mocktable.do_multi_sign(proposal_block);
         mocktable.on_table_finish(proposal_block);
@@ -108,6 +115,96 @@ TEST_F(test_tablemaker, make_proposal_1) {
         xassert(proposal_block == nullptr);        
     }    
 }
+
+TEST_F(test_tablemaker, make_proposal_2) {
+    mock::xvchain_creator creator;
+    xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = mock::xdatamock_address::make_unit_address(base::enum_chain_zone_consensus_index, 1);
+
+    mocktable.store_genesis_units(resources->get_blockstore());
+
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 1);
+    xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(send_txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 1);
+
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para2.set_origin_txs(send_txs);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 2);
+
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+    {
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 3);
+
+        xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para2.set_other_accounts(table_para.get_proposal()->get_other_accounts());
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, true);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
+
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+
+    {
+        auto commit_block = resources->get_blockstore()->load_block_object(mocktable, 1, base::enum_xvblock_flag_committed, true);
+        resources->get_blockstore()->store_units(commit_block.get());
+        auto unit = resources->get_blockstore()->load_unit(base::xvaccount_t(to_addr), 1);
+        ASSERT_NE(unit, nullptr);
+        ASSERT_EQ(resources->get_blockstore()->load_unit(base::xvaccount_t(to_addr), 0), nullptr);        
+        base::xaccount_index_t index = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, unit->get_height(), unit->get_block_hash(), "1", 1);
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(common::xaccount_address_t(to_addr), index);
+        ASSERT_NE(nullptr, unitstate);
+    }
+}
+
 
 TEST_F(test_tablemaker, select_peer_sids_for_confirm_id) {
     std::vector<base::xtable_shortid_t> all_sid_vec;
@@ -292,8 +389,10 @@ TEST_F(test_tablemaker, make_proposal_verify_build_hash_count) {
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(send_txs);
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
        /* std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
@@ -353,8 +452,10 @@ TEST_F(test_tablemaker, make_unpack_units_hash_8_4_count) {
       
         xtablemaker_para_t table_para2(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para2.set_origin_txs(all_txs);
-        int32_t ret = tablemaker->verify_proposal(proposal_block.get(), table_para2, proposal_para);
-        xassert(ret == 0);
+        xblock_ptr_t proposal_block2 = tablemaker->make_proposal_backup(table_para2, proposal_para, false);
+        xassert(proposal_block2 != nullptr);
+        bool ret = tablemaker->verify_proposal_with_local(proposal_block.get(), proposal_block2.get());
+        xassert(ret);
 
         int64_t verify_make_hash_count =  XMETRICS_GAUGE_GET_VALUE(metrics::cpu_hash_256_calc);
         /*std::cout << "after table verify_proposal verify_make_hash_count, " << verify_make_hash_count << " count " \
@@ -1136,6 +1237,17 @@ TEST_F(test_tablemaker, genesis_accounts_in_mpt) {
     EXPECT_EQ(send_txs.size(), tx_cnt);
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
 
+    genesis::xgenesis_accounts_mpt_t::instance().clear();
+    std::set<common::xaccount_address_t> test_genesis_accounts;
+    for (uint32_t i = 0; i < 5; i++) {
+        std::string addr = mock::xdatamock_address::make_unit_address((base::enum_xchain_zone_index)mocktable.get_zone_index(), (uint16_t)mocktable.get_ledger_subaddr());
+        common::xaccount_address_t account_address(addr);
+        base::xauto_ptr<base::xvblock_t> genesis_unit = data::xblocktool_t::create_genesis_empty_unit(addr);
+        resources->get_blockstore()->store_unit(account_address.vaccount(), genesis_unit.get());
+        genesis::xgenesis_accounts_mpt_t::instance().add_account(account_address);
+        test_genesis_accounts.insert(account_address);
+    }
+
     {
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
         table_para.set_origin_txs(send_txs);
@@ -1182,22 +1294,15 @@ TEST_F(test_tablemaker, genesis_accounts_in_mpt) {
         }
         xassert(match_unit_count == 2);
 
-        auto & genesis_accounts = genesis::xgenesis_manager_t::get_all_genesis_accounts();
+        auto & genesis_accounts = test_genesis_accounts;
         for (auto & _address : genesis_accounts) {
-            if (!base::xvaccount_t::is_unit_address_type(_address.type())) {
-                continue;
-            }
-            // check if account same table
-            if (_address.table_address().to_string() != table_addr) {
-                continue;
-            }
-
             base::xaccount_index_t _accountindex;
             ASSERT_TRUE(statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(_address, proposal_block.get(), _accountindex));
             ASSERT_TRUE(_accountindex.get_latest_unit_height() == 0);    
             ASSERT_TRUE(_accountindex.get_latest_unit_viewid() == 0);
             ASSERT_TRUE(_accountindex.get_latest_tx_nonce() == 0);
             ASSERT_FALSE(_accountindex.get_latest_unit_hash().empty());
+            ASSERT_FALSE(_accountindex.get_latest_state_hash().empty());
             ASSERT_TRUE(_accountindex.is_valid_mpt_index());
         }
 
@@ -1212,6 +1317,63 @@ TEST_F(test_tablemaker, genesis_accounts_in_mpt) {
         }
         // 
     }
+
+    {
+        const uint32_t tx_cnt = 1;
+        std::vector<xcons_transaction_ptr_t> txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 2);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }
+    {
+        const uint32_t tx_cnt = 1;
+        std::vector<xcons_transaction_ptr_t> txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 3);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }    
+    {
+        const uint32_t tx_cnt = 1;
+        std::vector<xcons_transaction_ptr_t> txs = mocktable.create_send_txs(to_addr, from_addr, tx_cnt);
+        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        table_para.set_origin_txs(txs);
+        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para(1000000000);
+
+        xtablemaker_result_t table_result;
+        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+
+        xassert(proposal_block != nullptr);
+        xassert(proposal_block->get_height() == 4);
+        mocktable.do_multi_sign(proposal_block);
+        mocktable.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+    }    
+    {
+        auto accouts = genesis::xgenesis_accounts_mpt_t::instance().get_not_in_mpt_accounts();
+        ASSERT_EQ(accouts.size(), 0);
+    }
+    genesis::xgenesis_accounts_mpt_t::instance().clear();
 }
 
 TEST_F(test_tablemaker, fullunit) {
@@ -1275,7 +1437,7 @@ TEST_F(test_tablemaker, unit_content_check) {
     }
 }
 
-
+#if 0
 bool convert_func_all_true(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index) {
     uint64_t i = old_account_index.get_latest_unit_height() - 10;
     std::string unit_hash = std::to_string(i + 100);
@@ -1293,7 +1455,7 @@ bool convert_func_random_true(const base::xvaccount_t & account, const base::xac
     }
     return convert_func_all_true(account, old_account_index, new_account_index);
 }
-#if 0
+
 TEST_F(test_tablemaker, account_index_upgrade) {
     uint32_t account_num = 1000;
     uint64_t height = 10000;

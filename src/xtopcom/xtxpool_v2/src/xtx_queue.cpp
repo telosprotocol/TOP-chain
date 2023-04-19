@@ -32,7 +32,7 @@ void xsend_tx_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_
     xsed_tx_set_iters_t iters(it, it_timeout_queue);
     m_tx_map[tx_ent->get_tx()->get_tx_hash()] = iters;
     m_xtable_info->send_tx_inc(1);
-    xtxpool_info("xsend_tx_queue_internal_t::insert_tx push tx to send queue,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+    xtxpool_dbg("xsend_tx_queue_internal_t::insert_tx push tx to send queue,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
 }
 
 void xsend_tx_queue_internal_t::erase_tx(const uint256_t & hash) {
@@ -135,7 +135,7 @@ void xsend_tx_account_t::update_latest_nonce(uint64_t latest_nonce) {
     m_latest_nonce = latest_nonce;
 }
 
-const std::vector<xcons_transaction_ptr_t> xsend_tx_account_t::get_continuous_txs(uint32_t max_num, uint64_t upper_nonce, uint64_t lower_nonce) const {
+const std::vector<xcons_transaction_ptr_t> xsend_tx_account_t::get_continuous_txs(uint32_t max_num, uint64_t upper_nonce, uint64_t lower_nonce, uint64_t now) const {
     uint64_t last_nonce = (lower_nonce == 0) ? m_latest_nonce : lower_nonce;
     std::vector<xcons_transaction_ptr_t> txs;
     for (auto & iter_tx : m_txs) {
@@ -147,6 +147,10 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_account_t::get_continuous_tx
         if (tx_nonce <= last_nonce) {
             continue;
         } else if (tx_nonce == last_nonce + 1) {
+            auto expired_check_ret = xverifier::xtx_verifier::verify_tx_fire_expiration(iter_tx.second->get_tx()->get_transaction(), now, false);
+            if (expired_check_ret != 0){
+                break;
+            }
             txs.push_back(iter_tx.second->get_tx());
             if (txs.size() >= max_num) {
                 break;
@@ -192,7 +196,7 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
     }
 
     std::shared_ptr<xsend_tx_account_t> send_tx_account;
-    auto & account_addr = tx_ent->get_tx()->get_source_addr();
+    auto const & account_addr = tx_ent->get_tx()->get_source_addr();
     auto it = m_send_tx_accounts.find(account_addr);
     if (it == m_send_tx_accounts.end()) {
         send_tx_account = std::make_shared<xsend_tx_account_t>(&m_send_tx_queue_internal, latest_nonce);
@@ -228,9 +232,16 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
     // uint64_t get_index_total_cost = 0;
     uint32_t nonce_expired_num = 0;
     uint32_t nonce_unconituous_num = 0;
+    bool accountindex_cache_unbroken = statestore::xstatestore_hub_t::instance()->accountindex_cache_unbroken(cert_block);
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
     for (auto it_send_tx = send_txs.begin(); (continuous_tx_num < max_num) && (it_send_tx != send_txs.end()); it_send_tx++) {
-        auto & account_addr = it_send_tx->get()->get_tx()->get_source_addr();
+        auto expired_check_ret = xverifier::xtx_verifier::verify_tx_fire_expiration(it_send_tx->get()->get_tx()->get_transaction(), now, false);
+        if (expired_check_ret != 0){
+            continue;
+        }
+
+        auto const & account_addr = it_send_tx->get()->get_tx()->get_source_addr();
         uint64_t nonce = it_send_tx->get()->get_tx()->get_transaction()->get_tx_nonce();
         xtxpool_dbg("xsend_tx_queue_t::get_txs tx:%s", it_send_tx->get()->get_tx()->dump().c_str());
 
@@ -242,7 +253,7 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
                 auto iter_send_tx_account = m_send_tx_accounts.find(account_addr);
                 xassert(iter_send_tx_account != m_send_tx_accounts.end());
                 if (iter_send_tx_account != m_send_tx_accounts.end()) {
-                    auto txs = iter_send_tx_account->second->get_continuous_txs(max_num - continuous_tx_num, nonce, lower_nonce);
+                    auto txs = iter_send_tx_account->second->get_continuous_txs(max_num - continuous_tx_num, nonce, lower_nonce, now);
                     if (!txs.empty()) {
                         account_txs.insert(account_txs.end(), txs.begin(), txs.end());
                         continuous_tx_num += (txs.size());
@@ -259,23 +270,34 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
         } else {
             base::xaccount_index_t account_index;
             // uint64_t now = base::xtime_utl::time_now_ms();
-            auto ret = statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(common::xaccount_address_t(account_addr), cert_block, account_index);
+            uint64_t lower_nonce = 0;
+            if (accountindex_cache_unbroken) {
+                auto ret = statestore::xstatestore_hub_t::instance()->get_accountindex_by_recent_blocks_cache(common::xaccount_address_t(account_addr), cert_block, account_index);
+                lower_nonce = ret ? account_index.get_latest_tx_nonce() : 0;
+            } else {
+                auto ret = statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(common::xaccount_address_t(account_addr), cert_block, account_index);
+                if (!ret) {
+                    continue;
+                }
+                lower_nonce = account_index.get_latest_tx_nonce();
+            }
+            
             // todo: test code! remove later.
             // uint64_t now_1 = base::xtime_utl::time_now_ms();
             // get_index_total_cost += (now_1 - now);
             // if (now_1 >= now + 5) {
             //     xtxpool_info("xsend_tx_queue_t::get_txs table:%s get_accountindex_from_table_block cost too much time:%llu", m_send_tx_queue_internal.get_table_addr().c_str(), now_1 - now);
             // }
-            if (!ret) {
-                // xwarn("xsend_tx_queue_t::get_txs mpt get account index fail account:%s", account_addr.c_str());
-                continue;
-            }
-            auto lower_nonce = account_index.get_latest_tx_nonce();
+            // if (!ret) {
+            //     // xwarn("xsend_tx_queue_t::get_txs mpt get account index fail account:%s", account_addr.c_str());
+            //     continue;
+            // }
+            
             if (nonce > lower_nonce) {
                 auto iter_send_tx_account = m_send_tx_accounts.find(account_addr);
                 xassert(iter_send_tx_account != m_send_tx_accounts.end());
                 if (iter_send_tx_account != m_send_tx_accounts.end()) {
-                    auto txs = iter_send_tx_account->second->get_continuous_txs(max_num - continuous_tx_num, nonce, lower_nonce);
+                    auto txs = iter_send_tx_account->second->get_continuous_txs(max_num - continuous_tx_num, nonce, lower_nonce, now);
                     if (!txs.empty()) {
                         account_txs_map[account_addr] = txs;
                         continuous_tx_num += txs.size();
@@ -332,7 +354,7 @@ const std::shared_ptr<xtx_entry> xsend_tx_queue_t::pop_tx(const std::string & tx
     return tx_ent;
 }
 
-const std::shared_ptr<xtx_entry> xsend_tx_queue_t::find(const std::string & account_addr, const std::string & hash_str) const {
+const std::shared_ptr<xtx_entry> xsend_tx_queue_t::find(const std::string & hash_str) const {
     return m_send_tx_queue_internal.find(hash_str);
 }
 

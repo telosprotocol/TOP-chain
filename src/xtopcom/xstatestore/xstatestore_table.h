@@ -28,9 +28,11 @@ public:
 
     xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t* target_block, bool bstate_must) const;
     bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const;
+    bool                    accountindex_cache_unbroken(base::xvblock_t * table_block) const;
+    bool                    get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const;
     void                    on_table_block_committed(base::xvblock_t* block) const;
     bool                    on_table_block_committed_by_height(uint64_t height, const std::string & block_hash) const;
-    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
+    xtablestate_ext_ptr_t   do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const;
 
     data::xunitstate_ptr_t  get_unit_state_from_accountindex(common::xaccount_address_t const & account_address, base::xaccount_index_t const& index) const;
     data::xunitstate_ptr_t  get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * unit_block) const;
@@ -42,7 +44,7 @@ public:
     uint64_t                get_need_sync_state_block_height() const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
     virtual void            on_executed(uint64_t height);    
-
+    void                    clear_cache();
 private:
 
 private:

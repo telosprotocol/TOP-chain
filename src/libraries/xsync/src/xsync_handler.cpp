@@ -354,7 +354,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         std::string new_role_string = m_role_chains_mgr->get_roles_string();
 
         int64_t tm2 = base::xtime_utl::gmttime_ms();
-        xsync_kinfo("xsync_handler add_role_phase1 %s cost:%dms, %s", addr.to_string().c_str(), tm2-tm1, to_string(miner_type).c_str());
+        xsync_kinfo("xsync_handler add_role_phase1 %s cost:%dms, miner_type %s genesis %d", addr.to_string().c_str(), tm2-tm1, to_string(miner_type).c_str(), genesis);
 
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
@@ -368,9 +368,9 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         } else {
             init_prune(chains, e);
             if (store::enable_block_recycler(true))
-                xinfo("enable_block_recycler ok.");
+                xinfo("enable_block_recycler ok.%s,%d", to_string(miner_type).c_str(), genesis);
             else
-                xerror("enable_block_recycler fail.");
+                xerror("enable_block_recycler false.%s,%d", to_string(miner_type).c_str(), genesis);
         }
         for (const auto & it : chains) {
             xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_add_role_t>(it.second.address);
@@ -411,7 +411,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
 
         int64_t tm2 = base::xtime_utl::gmttime_ms();
 
-        xsync_kinfo("xsync_handler remove_role_phase1 %s cost:%dms", addr.to_string().c_str(), tm2-tm1);
+        xsync_kinfo("xsync_handler remove_role_phase1 %s cost:%dms miner_type %s", addr.to_string().c_str(), tm2-tm1, to_string(miner_type).c_str());
 
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
@@ -454,21 +454,21 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_add_t>(e);
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
     common::xminer_type_t miner_type = bme->m_miner_type;
-    // bool genesis = bme->m_genesis;
+    bool fullnode_fork = m_sync_store->is_fullnode_elect_forked();
+    bool can_fullonde = fullnode_fork ? bme->m_genesis : true;
 
     for (const auto & it : chains) {
         if (common::has<common::xminer_type_t::advance>(miner_type) || common::has<common::xminer_type_t::validator>(miner_type)) {
             std::set<enum_height_type> types;
-            if (common::has<common::xminer_type_t::advance>(miner_type)) {
+            xsync_kinfo("xsync_handler add_role_phase1 add node_type: %s chain: %s can_fullonde:%d ",common::to_string(vnetwork_driver->type()).c_str(), it.second.address.c_str(), can_fullonde);
+            if (common::has<common::xminer_type_t::advance>(miner_type) && can_fullonde) {
                 types.insert(mutable_checkpoint_height);
                 base::xvaccount_t _vaddr(it.second.address);
                 if (!_vaddr.is_drand_address()) {
                     types.insert(latest_state_height);
                 }
-                xsync_kinfo("xsync_handler add_role_phase1 add fullnode %s", it.second.address.c_str());
             } else {
                 types.insert(confirm_height);
-                xsync_kinfo("xsync_handler add_role_phase1 add validator %s", it.second.address.c_str());
             }
             xsync_prune_sigleton_t::instance().add(it.second.address, types);
             base::xvaccount_t _vaddr(it.second.address);
@@ -644,6 +644,8 @@ void xsync_handler_t::on_block_response_process(uint32_t msg_size,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time)
 {
+    xsync_info("xsync_handler::on_block_response_process   %" PRIx64 " self(%s) from(%s) ",
+            msg_hash,  network_self.to_string().c_str(), from_address.to_string().c_str());
     auto response_ptr = make_object_ptr<xsync_msg_block_response_t>();
     response_ptr->serialize_from(stream);
     on_block_response_process_handler(msg_size, from_address, network_self, header, response_ptr, msg_hash, recv_time);
@@ -657,6 +659,9 @@ void xsync_handler_t::on_block_response_process_bigpack(uint32_t msg_size,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time)
 {
+    xsync_info("xsync_handler::on_block_response_process_bigpack   %" PRIx64 " self(%s) from(%s) ",
+            msg_hash,  network_self.to_string().c_str(), from_address.to_string().c_str());
+
     auto response_ptr = make_object_ptr<xsync_msg_block_response_t>();
     response_ptr->do_read_from(stream);
     on_block_response_process_handler(msg_size, from_address, network_self, header, response_ptr, msg_hash, recv_time);
@@ -795,10 +800,7 @@ void xsync_handler_t::handle_blocks_request_with_height(const xsync_msg_block_re
         return;
     }
 
-    // check prune height
-    uint64_t min_prune_height = 0;
-    xsync_prune_sigleton_t::instance().get_height(address, min_prune_height);
-
+    auto const min_prune_height = m_sync_store->get_latest_deleted_block_height(address);
     uint64_t end_height = start_height + count - 1;
     if (adjust_height) {
         base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
@@ -827,7 +829,7 @@ void xsync_handler_t::handle_blocks_request_with_height(const xsync_msg_block_re
               vector_blocks.front()->get_height(), vector_blocks.back()->get_height());
     }
 
-    xsync_info("xsync_handler_t::handle_blocks_request_with_height response: %s ", request_ptr->dump().c_str());
+    xsync_info("xsync_handler_t::handle_blocks_request_with_height block_size:(%d) min_prune_height:(%llu)  response: %s ",vector_blocks.size(), min_prune_height, request_ptr->dump().c_str());
     m_sync_sender->send_block_response(request_ptr, vector_blocks, 0, "", network_self, to_address);
 }
 
@@ -850,8 +852,7 @@ void xsync_handler_t::handle_blocks_demand_request_with_hash(const xsync_msg_blo
     xsync_info("xsync_handler_t::handle_blocks_demand_request_with_hash receive account %s, %s",
         address.c_str(), request_ptr->dump().c_str());
     // check prune height
-    uint64_t min_prune_height = 0;
-    xsync_prune_sigleton_t::instance().get_height(address, min_prune_height);
+    auto const min_prune_height = m_sync_store->get_latest_deleted_block_height(address);
     uint64_t end_height = start_height + (uint64_t)heights - 1;
     xblock_ptr_t start_unit_block = nullptr;
     if (adjust_height) {
@@ -888,7 +889,8 @@ void xsync_handler_t::handle_blocks_demand_request_with_hash(const xsync_msg_blo
         vector_blocks.insert(vector_blocks.begin(), start_unit_block);
     }
 
-    xsync_info("xsync_handler_t::handle_blocks_demand_request_with_hash response: %s ", request_ptr->dump().c_str());
+    xsync_info("xsync_handler_t::handle_blocks_demand_request_with_hash block_size:(%d) min_prune_height:(%llu)  response: %s ",vector_blocks.size(), 
+              min_prune_height, request_ptr->dump().c_str());
     m_sync_sender->send_block_response(request_ptr, vector_blocks, 0, "", network_self, to_address);
 }
 
@@ -1013,9 +1015,7 @@ void xsync_handler_t::handle_blocks_ontime_request_with_height_lists(const xsync
         uint32_t count = 3;
         uint32_t start_height = it.end_height + 1;
         std::vector<xblock_ptr_t> vector_blocks;
-        // check prune height
-        uint64_t min_prune_height = 0;
-        xsync_prune_sigleton_t::instance().get_height(address, min_prune_height);
+        auto const min_prune_height = m_sync_store->get_latest_deleted_block_height(address);
 
         for (uint32_t height = start_height; height < start_height + count; height++) {
             if(height <= min_prune_height) {
@@ -1033,7 +1033,7 @@ void xsync_handler_t::handle_blocks_ontime_request_with_height_lists(const xsync
                 xsync_info("xsync_handler_t::handle_blocks_ontime_request_with_height_lists succ2: %s,%d", address.c_str(), height);
             }
         }
-        xsync_info("xsync_handler_t::handle_blocks_ontime_request_with_height_lists, send blocks: %d", vector_blocks.size());
+        xsync_info("xsync_handler_t::handle_blocks_ontime_request_with_height_lists, send blocks:(%d) min_prune_height:(%llu) ", vector_blocks.size(), min_prune_height);
         XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
         // request one, but response much
         m_sync_sender->send_block_response(request, vector_blocks, 0, "", network_self, to_address);

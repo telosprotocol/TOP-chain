@@ -177,7 +177,7 @@ bool xtx_utl::load_bwlist_content(std::string const& config_file, std::map<std::
                         auto const& addr = json_root[member][i].asString();
                         if (addr.size() <= top::base::xvaccount_t::enum_vaccount_address_prefix_size) return false;
                         top::base::xvaccount_t _vaccount(addr);
-                        if (!_vaccount.is_unit_address()) {
+                        if (!_vaccount.is_user_address()) {
                             xwarn("xtx_utl::load_bwlist_content fail-address type invalid. addr=%s, config file %s failed", addr.c_str(), config_file.c_str());
                             return false;
                         }

@@ -29,6 +29,11 @@ enum enum_xblock_consensus_type {
     enum_xblock_consensus_flag_res            = 3,
 };
 
+enum enum_xaccountindex_version_t : uint8_t {
+    enum_xaccountindex_version_snapshot_hash = 0,
+    enum_xaccountindex_version_state_hash    = 1,
+};
+
 // account index info is the index info of account unit blockchain
 class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
  public:
@@ -41,7 +46,7 @@ class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
                      base::enum_xvblock_type _unittype,
                      bool has_unconfirm_tx,
                      bool is_account_destroy);
-    xaccount_index_t(uint64_t height, std::string const& unithash, std::string const& statehash, uint64_t nonce); // new construct function
+    xaccount_index_t(enum_xaccountindex_version_t version, uint64_t height, std::string const& unithash, std::string const& statehash, uint64_t nonce); // new construct function
 
     ~xaccount_index_t();
     xaccount_index_t(const xaccount_index_t& left);
@@ -63,7 +68,7 @@ class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
     uint64_t                get_latest_unit_height() const {return m_latest_unit_height;}
     uint64_t                get_latest_unit_viewid() const {return m_latest_unit_viewid;}
     const std::string &     get_latest_unit_hash() const {return m_unit_hash;}
-    const std::string &     get_latest_state_hash() const {return m_state_hash;}
+    const std::string &     get_latest_state_hash() const {return m_state_hash;}    
     bool                    is_match_unit(base::xvblock_t* unit) const;
     bool                    is_has_unconfirm_tx() const {return check_account_index_flag(enum_xaccount_index_flag_has_unconfirm_tx);}
     bool                    is_account_destroy() const {return check_account_index_flag(enum_xaccount_index_flag_account_destroy);}
@@ -74,6 +79,7 @@ class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
     enum_xaccount_index_flag    get_account_index_flag() const {return (enum_xaccount_index_flag)((m_account_flag >> 2) & 0x0F);}
     enum_xblock_consensus_type  get_latest_unit_consensus_type() const {return (enum_xblock_consensus_type)((m_account_flag) & 0x03);}
     bool                        check_account_index_flag(enum_xaccount_index_flag _flag) const;
+    enum_xaccountindex_version_t get_version() const {return (enum_xaccountindex_version_t)m_version;}
 
  public:  // for consensus
     void                    set_tx_nonce(uint64_t txnonce);
@@ -88,7 +94,7 @@ class xaccount_index_t : public xstatistic::xstatistic_obj_face_t {
     void                    set_account_index_flag(enum_xaccount_index_flag _flag);
     void                    set_latest_unit_consensus_type(enum_xblock_consensus_type _type);
 
-    virtual int32_t         get_object_size_real() const override;
+    size_t get_object_size_real() const override;
 
  private:
     uint8_t         m_version{0};

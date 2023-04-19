@@ -13,8 +13,8 @@
 #include "xdata/xelect_transaction.hpp"
 #include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
-#include "xverifier/xverifier_errors.h"
-#include "xverifier/xverifier_utl.h"
+#include "xdata/xverifier/xverifier_errors.h"
+#include "xdata/xverifier/xverifier_utl.h"
 #include "xvledger/xvaccount.h"
 
 #include <algorithm>
@@ -81,7 +81,7 @@ void xrec_consortium_proposal_contract::submitProposal(const std::string & targe
          type,
          effective_timer_height);
 
-    XCONTRACT_ENSURE(common::is_t0(src_account) || common::is_t8(src_account), "only T0 or T8 account is allowed to submit proposal");
+    XCONTRACT_ENSURE(common::is_t0_address(src_account) || common::is_t8_address(src_account), "only T0 or T8 account is allowed to submit proposal");
 
     proposal_info proposal;
     switch (type)
@@ -235,7 +235,7 @@ void xrec_consortium_proposal_contract::tccVote(std::string & proposal_id, bool 
     auto const src_account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xdbg("[xrec_consortium_proposal_contract::tccVote] tccVote start, proposal_id: %s, account: %s vote: %d", proposal_id.c_str(), src_account.to_string().c_str(), option);
 
-    XCONTRACT_ENSURE(common::is_t0(src_account) || common::is_t8(src_account), "only T0 or T8 account is allowed to vote for a proposal");
+    XCONTRACT_ENSURE(common::is_t0_address(src_account) || common::is_t8_address(src_account), "only T0 or T8 account is allowed to vote for a proposal");
 
     // check if the voting client address exists in initial comittee
     if (!voter_in_committee(src_account.to_string())) {
@@ -537,8 +537,6 @@ void xrec_consortium_proposal_contract::check_cross_chain_contract_tx_list_propo
         base::xstring_utl::split_string(str, ':', config_str_vec);
 
         XCONTRACT_ENSURE(config_str_vec.size() == 4, "[xrec_consortium_proposal_contract::check_cross_chain_contract_tx_list_proposal] item size != 4.");
-        std::string& addr = config_str_vec[0];
-        std::string& topic = config_str_vec[1];
         std::string& speed_type = config_str_vec[2];
         std::string& chain_bits = config_str_vec[3];
 
@@ -558,7 +556,6 @@ void xrec_consortium_proposal_contract::check_cross_chain_gasprice_list_proposal
         base::xstring_utl::split_string(str, ':', config_str_vec);
         XCONTRACT_ENSURE(config_str_vec.size() == 2, "[xrec_consortium_proposal_contract::check_cross_chain_gasprice_list_proposal] item size != 4.");
         std::string& chain_bits = config_str_vec[0];
-        std::string& priority_fee = config_str_vec[1];
         top::base::xstring_utl::tolower_string(chain_bits);
         XCONTRACT_ENSURE((chain_bits.compare(0, 2, "0x") == 0), "[xrec_consortium_proposal_contract::check_cross_chain_gasprice_list_proposal] chain_bits is error type.");
     }

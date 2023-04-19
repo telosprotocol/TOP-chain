@@ -80,7 +80,7 @@ void xtop_vnode_role_proxy::unreg(common::xnode_address_t const & address) {
 }
 
 void xtop_vnode_role_proxy::destroy(common::xnode_address_t const & address) {
-    common::xip2_t xip2 = address.xip2().group_xip2();
+    common::xip2_t const xip2 = address.xip2().group_xip2();
     m_cons_mgr->destroy(xip2);
 }
 

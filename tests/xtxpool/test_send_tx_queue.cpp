@@ -248,20 +248,21 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
         ASSERT_EQ(ret, xsuccess);
     }
 
-    auto get_txs = send_tx_account.get_continuous_txs(3, 3, 0);
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    auto get_txs = send_tx_account.get_continuous_txs(3, 3, 0, now);
     ASSERT_EQ(get_txs.size(), 1);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 1, 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 1, 0, now);
     ASSERT_EQ(get_txs.size(), 1);
 
     std::shared_ptr<xtx_entry> tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 3, 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 3, 0, now);
     ASSERT_EQ(get_txs.size(), 3);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 4, 0);
+    get_txs = send_tx_account.get_continuous_txs(3, 4, 0, now);
     ASSERT_EQ(get_txs.size(), 3);
 
     for (uint32_t i = 7; i < 15; i++) {
@@ -272,34 +273,37 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
 
     send_tx_account.update_latest_nonce(txs[4]->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 0);
 
     tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[6], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 0);
 
     tx_ent_tmp1 = std::make_shared<xtx_entry>(txs[5], para);
     ret = send_tx_account.push_tx(tx_ent_tmp1);
     ASSERT_EQ(ret, xsuccess);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 3);
 
     send_tx_account.erase(8, false);
 
-    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 8, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 2);
-    get_txs = send_tx_account.get_continuous_txs(3, 7, txs[4]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 7, txs[4]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 2);
 
     send_tx_account.update_latest_nonce(txs[7]->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_account.get_continuous_txs(3, 11, txs[7]->get_transaction()->get_tx_nonce());
+    get_txs = send_tx_account.get_continuous_txs(3, 11, txs[7]->get_transaction()->get_tx_nonce(), now);
     ASSERT_EQ(get_txs.size(), 3);
+
+    get_txs = send_tx_account.get_continuous_txs(3, 11, txs[7]->get_transaction()->get_tx_nonce(), now + 500);
+    ASSERT_EQ(get_txs.size(), 0);
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
@@ -324,7 +328,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     // push first time
     int32_t ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    auto tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
+    auto tx_tmp = send_tx_queue.find(tx->get_tx_hash());
     ASSERT_NE(tx_tmp.get(), nullptr);
 
     // duplicate push
@@ -334,13 +338,13 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     // pop out
     auto tx_ent_tmp = send_tx_queue.pop_tx(tx->get_tx_hash(), false);
     ASSERT_NE(tx_ent_tmp.get(), nullptr);
-    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
+    tx_tmp = send_tx_queue.find(tx->get_tx_hash());
     ASSERT_EQ(tx_tmp.get(), nullptr);
 
     // push again
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
-    tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_tx_hash());
+    tx_tmp = send_tx_queue.find(tx->get_tx_hash());
     ASSERT_NE(tx_tmp.get(), nullptr);
 
     base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
@@ -353,7 +357,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
 
     // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
 
-    send_tx_queue.updata_latest_nonce(tx->get_transaction()->get_source_addr(), tx->get_transaction()->get_tx_nonce());
+    send_tx_queue.updata_latest_nonce(tx->get_transaction()->source_address().to_string(), tx->get_transaction()->get_tx_nonce());
 
     get_txs = send_tx_queue.get_txs(100, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(get_txs.size(), 0);
@@ -410,7 +414,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     auto tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents2.size(), 3);
 
-    send_tx_queue.updata_latest_nonce(txs[3]->get_transaction()->get_source_addr(), txs[3]->get_transaction()->get_tx_nonce());
+    send_tx_queue.updata_latest_nonce(txs[3]->get_transaction()->source_address().to_string(), txs[3]->get_transaction()->get_tx_nonce());
     tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get(), expired_num, unconituous_num);
     ASSERT_EQ(tx_ents2.size(), txs_num - 4);
 }
@@ -453,7 +457,7 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     ASSERT_EQ(0, ret);
 
     for (uint32_t i = 2; i < 5; i++) {
-        auto tx_tmp = send_tx_queue.find(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_tx_hash());
+        auto tx_tmp = send_tx_queue.find(txs[i]->get_tx_hash());
         ASSERT_NE(tx_tmp.get(), nullptr);
     }
 
@@ -555,12 +559,12 @@ TEST_F(test_send_tx_queue, update_latest_nonce_hash_not_match) {
     send_tx_queue.updata_latest_nonce(sender, 3);
 
     for (uint32_t i = 0; i <= 5; i++) {
-        auto tx_ent = send_tx_queue.find(sender, txs[i]->get_transaction()->digest());
+        auto tx_ent = send_tx_queue.find(txs[i]->get_transaction()->digest());
         ASSERT_EQ(tx_ent, nullptr);
     }
 
     for (uint32_t i = 6; i < txs.size(); i++) {
-        auto tx_ent = send_tx_queue.find(sender, txs[i]->get_transaction()->digest());
+        auto tx_ent = send_tx_queue.find(txs[i]->get_transaction()->digest());
         ASSERT_NE(tx_ent, nullptr);
     }
 }
@@ -608,7 +612,7 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
     ret = send_tx_queue.push_tx(tx_ent1, 0);
     ASSERT_EQ(0, ret);
 
-    auto find_tx = send_tx_queue.find(txs[2]->get_account_addr(), txs[2]->get_tx_hash());
+    auto find_tx = send_tx_queue.find(txs[2]->get_tx_hash());
     ASSERT_EQ(find_tx.get(), nullptr);
 
     std::shared_ptr<xtx_entry> tx_ent3 = std::make_shared<xtx_entry>(txs[3], para);

@@ -203,14 +203,15 @@ void MultilayerNetwork::TryCombineP2PEndpoints() {
         }
     }
 
+    static std::string seed_delimiter = {",", ""};
     // combine url's endpoints together.
     for (const auto & item : url_seeds) {
+        combined_p2p_endpoints += seed_delimiter[static_cast<size_t>(combined_p2p_endpoints.empty())];
         combined_p2p_endpoints += item;
-        combined_p2p_endpoints += ",";
     }
-    if (!combined_p2p_endpoints.empty() && combined_p2p_endpoints.back() == ',') {
-        combined_p2p_endpoints.pop_back();
-    }
+    //if (!combined_p2p_endpoints.empty() && combined_p2p_endpoints.back() == ',') {
+    //    combined_p2p_endpoints.pop_back();
+    //}
     xinfo("config get combined_p2p_endpoints %s", combined_p2p_endpoints.c_str());
 
     XSET_CONFIG(p2p_endpoints, combined_p2p_endpoints);

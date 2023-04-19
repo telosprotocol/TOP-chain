@@ -23,8 +23,8 @@ public:
     static xtop_bloom9 build_from(xbytes_t const & _data, std::error_code & ec);
 
 public:
-    xtop_bloom9() {
-        m_data.resize(Bloom9ByteLength, xbyte_t{0});
+    xtop_bloom9()
+      : m_data(static_cast<size_t>(Bloom9ByteLength), static_cast<xbyte_t>(0)){
     }
     explicit xtop_bloom9(xbytes_t const& data) {
         m_data = data;

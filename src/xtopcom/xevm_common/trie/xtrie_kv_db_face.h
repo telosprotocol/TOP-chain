@@ -5,9 +5,9 @@
 #pragma once
 
 #include "xbasic/xspan.h"
-#include "xevm_common/trie/xtrie_node.h"
 #include "xcommon/xfixed_hash.h"
-
+#include "xcommon/xtable_address.h"
+#include "xevm_common/trie/xtrie_node.h"
 
 #include <map>
 #include <memory>
@@ -17,6 +17,13 @@ NS_BEG3(top, evm_common, trie)
 
 class xtop_kv_writer_face {
 public:
+    xtop_kv_writer_face() = default;
+    xtop_kv_writer_face(xtop_kv_writer_face const &) = delete;
+    xtop_kv_writer_face & operator=(xtop_kv_writer_face const &) = delete;
+    xtop_kv_writer_face(xtop_kv_writer_face &&) = default;
+    xtop_kv_writer_face & operator=(xtop_kv_writer_face &&) = default;
+    virtual ~xtop_kv_writer_face() = default;
+
     virtual void Put(xspan_t<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) = 0;
     virtual void PutBatch(std::map<xh256_t, xbytes_t> const & batch, std::error_code & ec) = 0;
 
@@ -33,10 +40,18 @@ using xkv_writer_face_t = xtop_kv_writer_face;
 
 class xtop_kv_reader_face {
 public:
+    xtop_kv_reader_face() = default;
+    xtop_kv_reader_face(xtop_kv_reader_face const &) = delete;
+    xtop_kv_reader_face & operator=(xtop_kv_reader_face const &) = delete;
+    xtop_kv_reader_face(xtop_kv_reader_face &&) = default;
+    xtop_kv_reader_face & operator=(xtop_kv_reader_face &&) = default;
+    virtual ~xtop_kv_reader_face() = default;
+
     virtual bool has(xspan_t<xbyte_t const> key, std::error_code & ec) const = 0;
     virtual bool HasDirect(xbytes_t const & key, std::error_code & ec) const = 0;
     virtual xbytes_t get(xspan_t<xbyte_t const> key, std::error_code & ec) const = 0;
     virtual xbytes_t GetDirect(xbytes_t const & key, std::error_code & ec) const = 0;
+    virtual common::xtable_address_t table_address() const = 0;
 };
 using xkv_reader_face_t = xtop_kv_reader_face;
 

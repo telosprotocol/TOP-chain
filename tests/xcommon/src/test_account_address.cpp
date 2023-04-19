@@ -80,7 +80,7 @@ TEST(account_address, valid_construction_3) {
         std::string const account_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
         std::uint16_t table_id_value{32};
 
-        top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
+        top::common::xaccount_address_t account_address = top::common::xaccount_address_t::build_from(top::common::xaccount_base_address_t::build_from(account_string), top::common::xtable_id_t{table_id_value});
 
         ASSERT_FALSE(account_address.empty());
         EXPECT_EQ(account_address.table_id().value(), table_id_value);
@@ -95,7 +95,8 @@ TEST(account_address, valid_construction_3) {
         std::string const account_string{"T00000LXWe8Z1CRrrMB54dVBH9mKn4AJukpEGi9j"};
         std::uint16_t table_id_value{3};
 
-        top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
+        top::common::xaccount_address_t account_address =
+            top::common::xaccount_address_t::build_from(top::common::xaccount_base_address_t::build_from(account_string), top::common::xtable_id_t{table_id_value});
 
         ASSERT_FALSE(account_address.empty());
         EXPECT_EQ(account_address.table_id().value(), table_id_value);
@@ -186,6 +187,15 @@ TEST(account_address, value_address_must_not_changed) {
 }
 
 TEST(account_address, size) {
+#if defined(XCXX20)
+    EXPECT_TRUE(sizeof(top::common::xaccount_address_t) <= 56);
+    EXPECT_TRUE(sizeof(top::common::xaccount_base_address_t) <= 40);
+    EXPECT_TRUE(sizeof(top::base::xvaccount_t) <= 128);
+
+    EXPECT_EQ(56, sizeof(top::common::xaccount_address_t));
+    EXPECT_EQ(40, sizeof(top::common::xaccount_base_address_t));
+    EXPECT_EQ(128, sizeof(top::base::xvaccount_t));
+#else
     EXPECT_TRUE(sizeof(top::common::xaccount_address_t) <= 32);
     EXPECT_TRUE(sizeof(top::common::xaccount_base_address_t) <= 16);
     EXPECT_TRUE(sizeof(top::base::xvaccount_t) <= 56);
@@ -193,17 +203,29 @@ TEST(account_address, size) {
     EXPECT_EQ(32, sizeof(top::common::xaccount_address_t));
     EXPECT_EQ(16, sizeof(top::common::xaccount_base_address_t));
     EXPECT_EQ(56, sizeof(top::base::xvaccount_t));
+#endif
 }
 
 TEST(account_address, table_id) {
-    top::common::xaccount_address_t const address{"T8000065f5442ab7d7b778394aa83747cb076e089cff0d"};
-    EXPECT_EQ(static_cast<uint16_t>(38), address.table_id().value());
+    {
+        top::common::xaccount_address_t const address{"T8000065f5442ab7d7b778394aa83747cb076e089cff0d"};
+        EXPECT_EQ(static_cast<uint16_t>(38), address.table_id().value());
+    }
 
-    top::common::xaccount_address_t const another{"T80000fa17a9505fb337f7b664e44880f6e0dad3d921a1"};
-    EXPECT_EQ(static_cast<uint16_t>(30), another.table_id().value());
+    {
+        top::common::xaccount_address_t const another{"T80000fa17a9505fb337f7b664e44880f6e0dad3d921a1"};
+        EXPECT_EQ(static_cast<uint16_t>(30), another.table_id().value());
+    }
 
-    top::common::xaccount_address_t const a2{"T800001753d40631a3ad31568c3141272cac45692888d1"};
-    EXPECT_EQ(static_cast<uint16_t>(11), a2.table_id().value());
+    {
+        top::common::xaccount_address_t const a2{"T800001753d40631a3ad31568c3141272cac45692888d1"};
+        EXPECT_EQ(static_cast<uint16_t>(11), a2.table_id().value());
+    }
+
+    {
+        top::common::xaccount_address_t const address{"T00000LTHfpc9otZwKmNcXA24qiA9A6SMHKkxwkg"};
+        EXPECT_FALSE(address.table_id().empty());
+    }
 }
 
 NS_END3

@@ -66,7 +66,7 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate,
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_canvas = unitstate->get_canvas();
     m_statectx = statectx;
-    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xdbg_info("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate) {
@@ -75,7 +75,7 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate)
     m_latest_exec_sendtx_nonce = 0;  // TODO(jimmy) for test
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_canvas = make_object_ptr<base::xvcanvas_t>();
-    xinfo(
+    xdbg_info(
         "create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
@@ -84,7 +84,6 @@ xaccount_context_t::~xaccount_context_t() {
 
 int32_t xaccount_context_t::create_user_account(const std::string& address) {
     assert(address == get_address());
-    xinfo("xaccount_context_t::create_user_account address:%s", address.c_str());
 
     auto old_token = token_balance(data::XPROPERTY_BALANCE_AVAILABLE);
     if (old_token != 0) {
@@ -100,7 +99,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     }
 
     auto default_token_type = XGET_CONFIG(evm_token_type);
-    xinfo("xaccount_context_t::create_user_account token type is %s.", default_token_type.c_str());
+    xdbg_info("xaccount_context_t::create_user_account address:%s token type is %s.", address.c_str(), default_token_type.c_str());
     if (default_token_type.empty()) {
         xerror("xaccount_context_t::create_user_account  configuration evm token empty");
         return ret;
@@ -1337,13 +1336,12 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
 
 data::xblock_t*
 xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t height) const {
-    // TODO(jimmy)
     base::xvaccount_t _vaddr(owner);
+    assert(_vaddr.is_unit_address());
     XMETRICS_GAUGE(metrics::blockstore_access_from_account_context, 1);
-    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, false);
+    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_unit(_vaddr, height);
     if (_block != nullptr) {
         // system contract only need input for full-table
-        base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddr, _block.get());
         _block->add_ref();
         return dynamic_cast<data::xblock_t*>(_block.get());
     }
@@ -1377,8 +1375,7 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     } else if (owner == m_current_table_addr) {
         height = m_current_table_commit_height;
     } else {
-        base::xvaccount_t _vaddr(owner);
-        height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(_vaddr);
+        height = m_statectx->load_account_height(common::xaccount_address_t{owner});
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;

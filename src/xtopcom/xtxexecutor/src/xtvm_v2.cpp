@@ -153,7 +153,7 @@ void xtvm_v2_t::fill_transfer_context(const statectx::xstatectx_face_ptr_t & sta
     if (tx->get_inner_table_flag() || tx->is_self_tx()) {
         // one stage
         if (ctx.action_stage() == data::xconsensus_action_stage_t::send || ctx.action_stage() == data::xconsensus_action_stage_t::self) {
-            auto recver_unitstate = statectx->load_unit_state(common::xaccount_address_t(tx->get_transaction()->get_target_addr()));
+            auto recver_unitstate = statectx->load_unit_state(tx->get_transaction()->target_address());
             ctx.set_unitstate_other(make_observer(recver_unitstate.get()));
             ctx.set_action_name("transfer");
         } else {

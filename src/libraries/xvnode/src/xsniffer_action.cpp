@@ -4,6 +4,7 @@
 
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer_action.h"
 
+#include "xbasic/xmodule_type.h"
 #include "xdata/xtx_factory.h"
 #include "xcommon/xmessage_id.h"
 #include "xvnetwork/xmessage.h"

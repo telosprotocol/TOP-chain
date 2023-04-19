@@ -94,6 +94,10 @@ bool xtxstoreimpl::store_blockhash_index(base::xvbindex_t * this_index) {
         return false;
     }
 
+    if (block_hash.empty()) {
+        xerror("xtxstoreimpl::store_blockhash_index index=%s",this_index->dump().c_str());
+    }
+
     xassert(!block_hash.empty());
     std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(block_hash);
     base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
@@ -171,8 +175,8 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
 
     std::vector<xobject_ptr_t<base::xvtxindex_t>> sub_txs;
     if (block_ptr->extract_sub_txs(sub_txs)) {
-        bool has_error = false;
         xassert(!sub_txs.empty());
+        std::map<std::string, std::string> kvs;
         for (auto & v : sub_txs) {
             base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
             const std::string tx_key = base::xvdbkey_t::create_tx_index_key(v->get_tx_hash(), txindex_type);
@@ -190,18 +194,25 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
                 XMETRICS_GAUGE(metrics::store_tx_index_confirm, 1);
             }
 
-            if (base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false) {
-                xerror("xvtxstore_t::store_txs_index,fail to store tx for block(%s)", block_ptr->dump().c_str());
-                has_error = false;  // mark it but let do rest work
-            } else {
-                xinfo("xvtxstore_t::store_txs_index,store tx to DB for block=%s,tx=%s",
-                      block_ptr->dump().c_str(),
-                      base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
-            }
+            kvs[tx_key] = tx_bin;
+            xdbg_info("xvtxstore_t::store_txs_index,store tx to DB for block=%s,tx=%s",
+                                block_ptr->dump().c_str(),
+                                base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
         }
-        if (has_error)
-            return false;
-        return true;
+
+        if (sub_txs.size() > 0) {
+            if (sub_txs.size() != kvs.size()) {
+                xerror("xvtxstore_t::store_txs_index,repeats txs for block(%s),size=%zu,%zu", block_ptr->dump().c_str(),sub_txs.size(),kvs.size());
+                return false;
+            }
+            bool has_error = base::xvchain_t::instance().get_xdbstore()->set_values(kvs);
+            if (!has_error) {
+                xerror("xvtxstore_t::store_txs_index,fail to store txs for block(%s)", block_ptr->dump().c_str());
+                return false;
+            }           
+        }
+        xinfo("xvtxstore_t::store_txs_index,tps_key succ store txs for block(%s), txs_size=%zu", block_ptr->dump().c_str(),sub_txs.size());
+        return true;        
     } else {
         xerror("xvtxstore_t::store_txs_index,fail to extract subtxs for block(%s)", block_ptr->dump().c_str());
         return false;

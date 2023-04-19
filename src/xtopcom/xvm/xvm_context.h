@@ -28,7 +28,7 @@ public:
     std::string                 m_action_para;
     common::xaccount_address_t  m_parent_account;
     common::xaccount_address_t  m_contract_account;
-    const std::string           m_exec_account;
+    common::xaccount_address_t const m_exec_account;
     shared_ptr<xcontract_helper> m_contract_helper;
     xtransaction_trace_ptr      m_trace_ptr;
 

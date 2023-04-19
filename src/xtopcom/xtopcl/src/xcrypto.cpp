@@ -512,13 +512,32 @@ void update_keystore_file(const std::string & pw, const string & raw_text, std::
 std::string get_keystore_filepath(string & dir, const string & account) {
     // create keystore directory
     std::string cmd = "mkdir -p ";
-    if (dir == "") {
+    if (dir.empty()) {
         cmd += g_keystore_dir;
         dir = g_keystore_dir;
     } else {
         cmd += dir;
     }
+
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunused-result"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wunused-result"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
     std::system(cmd.c_str());
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 
     // create keystore file
     std::string file_name = account;

@@ -19,6 +19,7 @@
 #include "xblockstore/src/xvblockhub.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstatestore/xstatestore_exec.h"
+#include "xstatestore/xstatestore_access.h"
 #include "test_common.hpp"
 #include "xmetrics/xmetrics.h"
 
@@ -281,18 +282,79 @@ TEST_F(test_memory, first_mpt_block_execute_BENCH) {
     base::xtime_utl::sleep_ms(60000);
 }
 
+TEST_F(test_memory, unitstate_cache) {
+    mock::xdatamock_table mocktable(1, 4);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+    xunitstate_cache_t _cache(100);
+    {
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[0].get_history_units()[0].get());
+        auto bstate = unitstate->get_bstate();
+        uint64_t height = bstate->get_block_height();
 
-// TEST_F(test_memory, new_delete_test) {
+        _cache.set_unitstate("111", bstate);
+        _cache.set_unitstate("222", bstate);
+        _cache.set_unitstate("333", bstate);
+        ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), height, "111"), nullptr);
+        ASSERT_EQ(_cache.get_unitstate(mockunits[0].get_account(), height, "222"), nullptr);
+        ASSERT_NE(_cache.get_unitstate(mockunits[0].get_account(), height, "333"), nullptr);
+        std::cout << "unitstate refcount " << unitstate.use_count() << std::endl;
+    }
 
-// class test_data {
-// public:
+    {
+        auto unitstate1 = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(mockunits[1].get_history_units()[0].get());    
+        auto bstate = unitstate1->get_bstate();
+        uint64_t height = bstate->get_block_height();
+        _cache.set_unitstate("111", bstate);
+        _cache.set_unitstate("222", bstate);
+        _cache.set_unitstate("333", bstate);
+        _cache.set_unitstate("444", bstate);
+        _cache.set_unitstate("555", bstate);
+        _cache.set_unitstate("666", bstate);
+        _cache.set_unitstate("777", bstate);
+        _cache.set_unitstate("888", bstate);
+        std::cout << "bstate refcount " << bstate->get_refcount() << std::endl;
+        ASSERT_EQ(bstate->get_refcount(), 4);
+    }
 
-//     std::string data1;
-//     std::string data2;
-//     std::string data3;
-//     std::string data4;
-//     std::string data5;
-// };
+    {
+        ASSERT_EQ(_cache.size(), 2);
+        _cache.clear();
+        ASSERT_EQ(_cache.size(), 0);
+    }
+}
+
+TEST_F(test_memory, unitstate_cache_2) {    
+    {
+        // normal users
+        xunitstate_cache_t _cache(5);
+        for (uint32_t i = 0; i < 10; i++) {
+            std::string addr = mock::xdatamock_address::make_user_address_random();
+            common::xaccount_address_t account_address(addr);
+            xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(addr,1,1,std::string(),std::string(),0,0,0);
+            std::string unit_hash = "11";
+            _cache.set_unitstate(unit_hash, bstate);
+        }
+        ASSERT_EQ(_cache.size(), 5);
+        _cache.clear();
+        ASSERT_EQ(_cache.size(), 0);
+    }
+    {
+        // contract users
+        xunitstate_cache_t _cache(5);
+        for (uint32_t i = 0; i < 10; i++) {
+            std::string addr = mock::xdatamock_address::make_contract_address_random(1);
+            common::xaccount_address_t account_address(addr);
+            for (uint64_t h = 1; h < 10; h++) {
+                xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(addr,h,h,std::string(),std::string(),0,0,0);
+                std::string unit_hash = std::to_string(h);
+                _cache.set_unitstate(unit_hash, bstate);
+            }
+        }
+        ASSERT_EQ(_cache.size(), 5);
+        _cache.clear();
+        ASSERT_EQ(_cache.size(), 0);        
+    }
+}
 
 
 

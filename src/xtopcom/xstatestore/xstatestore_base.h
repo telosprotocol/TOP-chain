@@ -8,7 +8,6 @@
 #include "xdata/xunit_bstate.h"
 #include "xcommon/xfixed_hash.h"
 #include "xstate_mpt/xstate_mpt.h"
-#include "xvledger/xvstatestore.h"
 
 NS_BEG2(top, statestore)
 

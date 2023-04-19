@@ -151,12 +151,30 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio, s
                                                                                                                    // effective_standby_size < 66% of current_group_size. Then
                                                                                                                    // needs to elects out
 
-#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+#if defined(XBUILD_DEV)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 41, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 3, 3, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t, normal, 64, 32, 256);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 3, 3, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 128, 64, 512);
+#elif defined(XBUILD_CI)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 41, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 3, 3, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t, normal, 4, 4, 256);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 3, 3, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 4, 4, 512);
+#elif defined(XBUILD_GALILEO)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 41, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 6, 6, 16);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t, normal, 16, 16, 256);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 6, 6, 16);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 16, 16, 512);
+#elif defined(XBUILD_BOUNTY)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 41, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 4, 4, 16);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t, normal, 7, 7, 256);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 4, 4, 16);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 7, 7, 512);
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 6, 6, 32);
@@ -632,8 +650,8 @@ XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 20);
 #else
 XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 1000);
 XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
-XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
-XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 256);
+XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 384);
+XDECLARE_CONFIGURATION(prune_table_state_max, uint64_t, 128);
 #endif
 
 

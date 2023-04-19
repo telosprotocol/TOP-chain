@@ -211,7 +211,7 @@ size_t RLP::items() const
 }
 
 
-xbytes_t RLP::encode(const u256 & value) noexcept {
+xbytes_t RLP::encode(u256 const & value) noexcept {
     using boost::multiprecision::cpp_int;
 
     xbytes_t bytes;
@@ -224,7 +224,7 @@ xbytes_t RLP::encode(const u256 & value) noexcept {
     return encode(bytes);
 }
 
-xbytes_t RLP::encodeList(const xbytes_t & encoded) noexcept {
+xbytes_t RLP::encodeList(xbytes_t const & encoded) noexcept {
     auto result = encodeHeader(encoded.size(), 0xc0, 0xf7);
     result.reserve(result.size() + encoded.size());
     result.insert(result.end(), encoded.begin(), encoded.end());
@@ -258,7 +258,7 @@ xbytes_t RLP::encodeHeader(uint64_t size, uint8_t smallTag, uint8_t largeTag) no
         return {static_cast<uint8_t>(smallTag + size)};
     }
 
-    const auto sizeData = putVarInt(size);
+    auto const sizeData = putVarInt(size);
 
     auto header = xbytes_t();
     header.reserve(1 + sizeData.size());
@@ -282,7 +282,7 @@ xbytes_t RLP::putVarInt(uint64_t i) {
     return bytes;
 }
 
-uint64_t RLP::parseVarInt(size_t size, const xbytes_t & data, size_t index) {
+uint64_t RLP::parseVarInt(size_t size, xbytes_t const & data, size_t index) {
     if (size < 1 || size > 8) {
         throw std::invalid_argument("invalid length length");
     }
@@ -300,7 +300,7 @@ uint64_t RLP::parseVarInt(size_t size, const xbytes_t & data, size_t index) {
     return static_cast<size_t>(val);
 }
 
-RLP::DecodedItem RLP::decodeList(const xbytes_t & input) {
+RLP::DecodedItem RLP::decodeList(xbytes_t const & input) {
     RLP::DecodedItem item;
     auto remainder = input;
     while (true) {
@@ -321,17 +321,17 @@ RLP::DecodedItem RLP::decodeList(const xbytes_t & input) {
     return item;
 }
 
-RLP::DecodedItem RLP::decode(const xbytes_t & input) {
-    if (input.size() == 0) {
+RLP::DecodedItem RLP::decode(xbytes_t const & input) {
+    if (input.empty()) {
         throw std::invalid_argument("can't decode empty rlp data");
     }
     RLP::DecodedItem item;
-    auto inputLen = input.size();
-    auto prefix = input[0];
+    auto const input_len = input.size();
+    auto const prefix = input[0];
     if (prefix <= 0x7f) {
         // 00--7f: a single byte whose value is in the [0x00, 0x7f] range, that byte is its own RLP encoding.
         item.decoded.push_back(xbytes_t{input[0]});
-        item.remainder = subData(input, 1);
+        item.remainder = sub_data(input, 1);
         return item;
     }
     if (prefix <= 0xb7) {
@@ -341,21 +341,21 @@ RLP::DecodedItem RLP::decode(const xbytes_t & input) {
 
         // empty string
         if (prefix == 0x80) {
-            item.decoded.emplace_back(xbytes_t());
-            item.remainder = subData(input, 1);
+            item.decoded.emplace_back();
+            item.remainder = sub_data(input, 1);
             return item;
         }
 
-        size_t strLen = prefix - 0x80;
-        if (strLen == 1 && input[1] <= 0x7f) {
+        size_t const str_len = prefix - 0x80;
+        if (str_len == 1 && input[1] <= 0x7f) {
             throw std::invalid_argument("single byte below 128 must be encoded as itself");
         }
 
-        if (inputLen < (1 + strLen)) {
-            throw std::invalid_argument(std::string("invalid short string, length ") + std::to_string(strLen));
+        if (input_len < (1 + str_len)) {
+            throw std::invalid_argument(std::string("invalid short string, length ") + std::to_string(str_len));
         }
-        item.decoded.push_back(subData(input, 1, strLen));
-        item.remainder = subData(input, 1 + strLen);
+        item.decoded.push_back(sub_data(input, 1, str_len));
+        item.remainder = sub_data(input, 1 + str_len);
 
         return item;
     }
@@ -363,32 +363,32 @@ RLP::DecodedItem RLP::decode(const xbytes_t & input) {
         // b8--bf: long string
         auto lenOfStrLen = size_t(prefix - 0xb7);
         auto strLen = static_cast<size_t>(parseVarInt(lenOfStrLen, input, 1));
-        if (inputLen < lenOfStrLen || inputLen < (1 + lenOfStrLen + strLen)) {
+        if (input_len < lenOfStrLen || input_len < (1 + lenOfStrLen + strLen)) {
             throw std::invalid_argument(std::string("Invalid rlp encoding length, length ") + std::to_string(strLen));
         }
-        auto data = subData(input, 1 + lenOfStrLen, strLen);
+        auto data = sub_data(input, 1 + lenOfStrLen, strLen);
         item.decoded.push_back(data);
-        item.remainder = subData(input, 1 + lenOfStrLen + strLen);
+        item.remainder = sub_data(input, 1 + lenOfStrLen + strLen);
         return item;
     }
     if (prefix <= 0xf7) {
         // c0--f7: a list between  0-55 bytes long
         auto listLen = size_t(prefix - 0xc0);
-        if (inputLen < (1 + listLen)) {
+        if (input_len < (1 + listLen)) {
             throw std::invalid_argument(std::string("Invalid rlp string length, length ") + std::to_string(listLen));
         }
         // empty list
         if (listLen == 0) {
-            item.remainder = subData(input, 1);
+            item.remainder = sub_data(input, 1);
             return item;
         }
 
         // decode list
-        auto listItem = decodeList(subData(input, 1, listLen));
+        auto listItem = decodeList(sub_data(input, 1, listLen));
         for (auto & data : listItem.decoded) {
             item.decoded.push_back(data);
         }
-        item.remainder = subData(input, 1 + listLen);
+        item.remainder = sub_data(input, 1 + listLen);
         return item;
     }
     // f8--ff
@@ -397,20 +397,20 @@ RLP::DecodedItem RLP::decode(const xbytes_t & input) {
     if (listLen < 56) {
         throw std::invalid_argument("length below 56 must be encoded in one byte");
     }
-    if (inputLen < lenOfListLen || inputLen < (1 + lenOfListLen + listLen)) {
+    if (input_len < lenOfListLen || input_len < (1 + lenOfListLen + listLen)) {
         throw std::invalid_argument(std::string("Invalid rlp list length, length ") + std::to_string(listLen));
     }
 
     // decode list
-    auto listItem = decodeList(subData(input, 1 + lenOfListLen, listLen));
+    auto listItem = decodeList(sub_data(input, 1 + lenOfListLen, listLen));
     for (auto & data : listItem.decoded) {
         item.decoded.push_back(data);
     }
-    item.remainder = subData(input, 1 + lenOfListLen + listLen);
+    item.remainder = sub_data(input, 1 + lenOfListLen + listLen);
     return item;
 }
 
-RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
+RLP::DecodedItem RLP::decode_once(xbytes_t const & input) {
     if (input.size() == 0) {
         throw std::invalid_argument("can't decode empty rlp data");
     }
@@ -420,7 +420,7 @@ RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
     if (prefix <= 0x7f) {
         // 00--7f: a single byte whose value is in the [0x00, 0x7f] range, that byte is its own RLP encoding.
         item.decoded.push_back(xbytes_t{input[0]});
-        item.remainder = subData(input, 1);
+        item.remainder = sub_data(input, 1);
         return item;
     }
     if (prefix <= 0xb7) {
@@ -431,7 +431,7 @@ RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
         // empty string
         if (prefix == 0x80) {
             item.decoded.emplace_back(xbytes_t());
-            item.remainder = subData(input, 1);
+            item.remainder = sub_data(input, 1);
             return item;
         }
 
@@ -443,8 +443,8 @@ RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
         if (inputLen < (1 + strLen)) {
             throw std::invalid_argument(std::string("invalid short string, length ") + std::to_string(strLen));
         }
-        item.decoded.push_back(subData(input, 1, strLen));
-        item.remainder = subData(input, 1 + strLen);
+        item.decoded.push_back(sub_data(input, 1, strLen));
+        item.remainder = sub_data(input, 1 + strLen);
 
         return item;
     }
@@ -455,9 +455,9 @@ RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
         if (inputLen < lenOfStrLen || inputLen < (1 + lenOfStrLen + strLen)) {
             throw std::invalid_argument(std::string("Invalid rlp encoding length, length ") + std::to_string(strLen));
         }
-        auto data = subData(input, 1 + lenOfStrLen, strLen);
+        auto data = sub_data(input, 1 + lenOfStrLen, strLen);
         item.decoded.push_back(data);
-        item.remainder = subData(input, 1 + lenOfStrLen + strLen);
+        item.remainder = sub_data(input, 1 + lenOfStrLen + strLen);
         return item;
     }
     if (prefix <= 0xf7) {
@@ -468,12 +468,12 @@ RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
         }
         // empty list
         if (listLen == 0) {
-            item.remainder = subData(input, 1);
+            item.remainder = sub_data(input, 1);
             return item;
         }
-        auto data = subData(input, 1, listLen);
+        auto data = sub_data(input, 1, listLen);
         item.decoded.push_back(data);
-        item.remainder = subData(input, 1 + listLen);
+        item.remainder = sub_data(input, 1 + listLen);
         return item;
     } else {
         // f8--ff
@@ -485,9 +485,9 @@ RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
         if (inputLen < lenOfListLen || inputLen < (1 + lenOfListLen + listLen)) {
             throw std::invalid_argument(std::string("Invalid rlp list length, length ") + std::to_string(listLen));
         }
-        auto data = subData(input, 1 + lenOfListLen, listLen);
+        auto data = sub_data(input, 1 + lenOfListLen, listLen);
         item.decoded.push_back(data);
-        item.remainder = subData(input, 1 + lenOfListLen + listLen);
+        item.remainder = sub_data(input, 1 + lenOfListLen + listLen);
         return item;
     }
 }

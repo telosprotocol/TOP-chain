@@ -3,20 +3,21 @@
 #include <sstream>
 #define private public
 
-#include "nlohmann/json.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 #include "xapplication/xerror/xerror.h"
 #include "xblockstore/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xrootblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xgenesis/xgenesis_manager.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xstatestore/xstatestore_face.h"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvstatestore.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
-#include "xstatestore/xstatestore_face.h"
+
+#include <nlohmann/json.hpp>
 
 using namespace top::genesis;
 using json = nlohmann::json;
@@ -487,14 +488,14 @@ TEST_F(test_genesis, test_create_genesis_block_before_init) {
     // data account
     {
         base::xvaccount_t account{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"};
-        EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
+        EXPECT_EQ(m_blockstore->exist_unit(account), false);
         auto vblock_g = m_genesis_manager->create_genesis_block(account, ec);
         EXPECT_EQ(bool(ec), false);
-        m_blockstore->store_block(account, vblock_g.get());
+        m_blockstore->store_unit(account, vblock_g.get());
 
-        EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
-        EXPECT_EQ(m_blockstore->get_latest_executed_block_height(account), 0);
-        auto vblock = m_blockstore->get_genesis_block(account);
+        EXPECT_EQ(m_blockstore->exist_unit(account), true);
+        // EXPECT_EQ(m_blockstore->get_latest_executed_block_height(account), 0);
+        auto vblock = m_blockstore->load_unit(account, 0);
         auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), 500600000);
         EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), 800000000);
@@ -503,7 +504,7 @@ TEST_F(test_genesis, test_create_genesis_block_before_init) {
     // contract
     {
         base::xvaccount_t account{sys_contract_zec_reward_addr};
-        EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
+        EXPECT_EQ(m_blockstore->exist_unit(account), false);
         auto vblock_g = m_genesis_manager->create_genesis_block(account, ec);
         EXPECT_EQ(bool(ec), false);
     }
@@ -512,7 +513,7 @@ TEST_F(test_genesis, test_create_genesis_block_before_init) {
         base::xvaccount_t account{"T00000LeXNqW7mCCoj23LEsxEmNcWKs8m6kJH446"};
         m_genesis_manager->m_user_accounts_data.clear();
         m_genesis_manager->m_genesis_accounts_data.insert(std::make_pair(common::xaccount_address_t{"T00000LeXNqW7mCCoj23LEsxEmNcWKs8m6kJH446"}, 1000000));
-        EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
+        EXPECT_EQ(m_blockstore->exist_unit(account), false);
         auto vblock_g = m_genesis_manager->create_genesis_block(account, ec);
         EXPECT_EQ(bool(ec), false);
     }
@@ -533,24 +534,24 @@ TEST_F(test_genesis, test_init_genesis_block_before) {
     m_genesis_manager->m_user_accounts_data = get_all_user_data();
 
     for (auto const & account : m_genesis_manager->m_contract_accounts) {
-        EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{account.to_string()}), false);
+        EXPECT_EQ(m_blockstore->exist_unit(base::xvaccount_t{account.to_string()}), false);
     }
     for (auto const & pair : m_genesis_manager->m_user_accounts_data) {
         if (pair.first.to_string() == "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp") {
-            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.to_string()), true);
+            EXPECT_EQ(m_blockstore->exist_unit(pair.first.to_string()), true);
         } else {
-            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.to_string()), false);
+            EXPECT_EQ(m_blockstore->exist_unit(pair.first.to_string()), false);
         }
     }
     
-    EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{"T00000LKnhu8oSgf4x5hPWUuHB8uC8YQsB1zeDhx"}), false);
-    EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{"T00000LKsHzz6D7TEXX3fTiRogHE2nkreR2USoLN"}), false);
+    EXPECT_EQ(m_blockstore->exist_unit(base::xvaccount_t{"T00000LKnhu8oSgf4x5hPWUuHB8uC8YQsB1zeDhx"}), false);
+    EXPECT_EQ(m_blockstore->exist_unit(base::xvaccount_t{"T00000LKsHzz6D7TEXX3fTiRogHE2nkreR2USoLN"}), false);
 }
 
 TEST_F(test_genesis, test_init_genesis_block) {
     EXPECT_EQ(m_genesis_manager->m_root_finish, true);
 
-    EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"}), true);
+    EXPECT_EQ(m_blockstore->exist_unit(base::xvaccount_t{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"}), true);
 
     EXPECT_EQ(false, chain_data::xtop_chain_data_processor::check_state());
     std::error_code ec;
@@ -567,11 +568,11 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
     // contract account
     {
         base::xvaccount_t contract{sys_contract_rec_registration_addr};
-        EXPECT_EQ(m_blockstore->exist_genesis_block(contract), true);
+        EXPECT_EQ(m_blockstore->exist_unit(contract), true);
         auto block = m_blockstore->create_genesis_block(contract, ec);
         EXPECT_EQ(bool(ec), false);
         EXPECT_NE(block, nullptr);
-        auto vblock = m_blockstore->get_genesis_block(contract);
+        auto vblock = m_blockstore->load_unit(contract, 0);
         auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         auto property_set = bstate->get_all_property_names();
         EXPECT_EQ(property_set.empty(), false);
@@ -580,11 +581,11 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
     // datauser account
     {
         base::xvaccount_t datauser{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"};
-        EXPECT_EQ(m_blockstore->exist_genesis_block(datauser), true);
+        EXPECT_EQ(m_blockstore->exist_unit(datauser), true);
         auto block = m_blockstore->create_genesis_block(datauser, ec);
         EXPECT_EQ(bool(ec), false);
         EXPECT_NE(block, nullptr);
-        auto vblock = m_blockstore->get_genesis_block(datauser);
+        auto vblock = m_blockstore->load_unit(datauser, 0);
         auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         auto property_set = bstate->get_all_property_names();
         EXPECT_EQ(property_set.count(data::XPROPERTY_BALANCE_AVAILABLE), true);
@@ -592,20 +593,20 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
     // common account
     {
         base::xvaccount_t account{"T00000LWtyNvjRk2Z2tcH4j6n27qPnM8agwf9ZJv"};
-        EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
+        EXPECT_EQ(m_blockstore->exist_unit(account), false);
         auto vblock_g = m_blockstore->create_genesis_block(account, ec);
         EXPECT_NE(vblock_g, nullptr);
-        m_blockstore->store_block(account, vblock_g.get());
+        m_blockstore->store_unit(account, vblock_g.get());
         EXPECT_EQ(bool(ec), false);
-        EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
-        auto vblock = m_blockstore->get_genesis_block(account);
+        EXPECT_EQ(m_blockstore->exist_unit(account), true);
+        auto vblock = m_blockstore->load_unit(account, 0);
         auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
         auto property_set = bstate->get_all_property_names();
         EXPECT_EQ(property_set.empty(), true);
     }
     {
         base::xvaccount_t account{"T00000LWtyNvjRk2Z2tcH4j6n27qPnM8agwf9ZJv"};
-        EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
+        EXPECT_EQ(m_blockstore->exist_unit(account), true);
         auto vblock_g = m_genesis_manager->create_genesis_block(account, ec);
         EXPECT_NE(vblock_g, nullptr);
     }
@@ -613,13 +614,13 @@ TEST_F(test_genesis, test_create_genesis_block_after_init) {
 
 TEST_F(test_genesis, test_blockstore_callback) {
     base::xvaccount_t account{"T00000LLhsJByy2XRLh1jPm7AHZ3X2CpzyxGzfoa"};
-    EXPECT_EQ(m_blockstore->exist_genesis_block(account), false);
+    EXPECT_EQ(m_blockstore->exist_unit(account), false);
     std::error_code ec;
     auto block = m_blockstore->create_genesis_block(account, ec);
-    m_blockstore->store_block(account, block.get());
+    m_blockstore->store_unit(account, block.get());
     EXPECT_EQ(bool(ec), false);
-    EXPECT_EQ(m_blockstore->exist_genesis_block(account), true);
-    auto vblock = m_blockstore->get_genesis_block(account);
+    EXPECT_EQ(m_blockstore->exist_unit(account), true);
+    auto vblock = m_blockstore->load_unit(account, 0);
     auto bstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get())->get_bstate();
     auto property_set = bstate->get_all_property_names();
     EXPECT_EQ(property_set.empty(), true);

@@ -36,7 +36,7 @@ public:
                  sys_contract_precompile_error & err) override;
 
     bool init(state_ptr const & state, evm_common::eth2::xinit_input_t const & init_input);
-    bool initialized(state_ptr const & state);
+    bool initialized(state_ptr const & state) const;
     uint64_t last_block_number(state_ptr const & state) const;
     h256 block_hash_safe(state_ptr const & state, u256 const block_number) const;
     bool is_confirmed(state_ptr state, u256 const height, h256 const & hash_bytes) const;
@@ -54,7 +54,7 @@ private:
     // impl
     std::set<std::string> load_whitelist();
     bool validate_light_client_update(state_ptr const & state, evm_common::eth2::xlight_client_update_t const & update);
-    bool verify_finality_branch(state_ptr const & state, evm_common::eth2::xlight_client_update_t const & update, uint64_t const finalized_period);
+    bool verify_finality_branch(state_ptr const & state, evm_common::eth2::xlight_client_update_t const & update, uint64_t const finalized_period) const;
     bool verify_bls_signatures(state_ptr const & state,
                                evm_common::eth2::xlight_client_update_t const & update,
                                std::string const & sync_committee_bits,

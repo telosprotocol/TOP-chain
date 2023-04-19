@@ -24,12 +24,10 @@ namespace top
         class xvchain_creator {
         public:
             xvchain_creator(std::string dbpath = std::string()) {
-                base::xvchain_t::instance().clean_all(true);
+                clear();
                 std::error_code ec;
-
                 m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(false, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
-
                 if (dbpath.empty()) {
                     m_db = db::xdb_factory_t::create_memdb();
                 } else {
@@ -41,9 +39,6 @@ namespace top
 
                 base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
                 base::xvchain_t::instance().set_xblockstore(blockstore);
-
-                // std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
-                // std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
                 base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), nullptr));
                 m_genesis_manager = top::make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore));
                 m_genesis_manager->init_genesis_block(ec);
@@ -52,11 +47,9 @@ namespace top
             }
 
             xvchain_creator(bool genesis, std::string dbpath = std::string()) {
-                base::xvchain_t::instance().clean_all(true);
-
+                clear();
                 m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(false, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
-
                 if (dbpath.empty()) {
                     m_db = db::xdb_factory_t::create_memdb();
                 } else {
@@ -82,6 +75,19 @@ namespace top
                     top::error::throw_error(ec);
                 }
                 statestore::xstatestore_hub_t::reset_instance();
+            }
+            ~xvchain_creator() {
+
+            }
+            void clear() {
+                // clean
+                base::xvchain_t::instance().clean_all(true);
+                contract::xcontract_deploy_t::instance().clear();
+                contract::xcontract_manager_t::instance().clear();
+                if (m_db != nullptr) {
+                    m_db->close();
+                    m_db = nullptr;
+                }
             }
 
             void create_blockstore_with_xstore() {

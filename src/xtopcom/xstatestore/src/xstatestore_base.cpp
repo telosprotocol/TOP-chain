@@ -5,7 +5,6 @@
 #include <string>
 #include "xbasic/xmemory.hpp"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvstatestore.h"
 #include "xvledger/xvledger.h"
 #include "xstatestore/xstatestore_base.h"
 #include "xstatestore/xerror.h"

@@ -40,7 +40,7 @@ namespace top
 
         xblockacct_t::~xblockacct_t()
         {
-            xinfo("xblockacct_t::destroy,account=%s objectid=% " PRId64 " ",
+            xdbg("xblockacct_t::destroy,account=%s objectid=% " PRId64 " ",
                   get_address().c_str(),
                   (int64_t)get_obj_id());
 
@@ -216,7 +216,7 @@ namespace top
             if(is_close() == false)
             {
                 xvblockplugin_t::close(force_async); //mark close status first
-                xkinfo("xblockacct_t::close,account=%s,objectid=% " PRId64 " and this=% " PRId64 "ptr",dump().c_str(),get_obj_id(),this);
+                xdbg("xblockacct_t::close,account=%s,objectid=% " PRId64 " and this=% " PRId64 "ptr",dump().c_str(),get_obj_id(),this);
 
                 //then clean all blocks at memory
                 close_blocks();
@@ -1215,7 +1215,7 @@ namespace top
                 write_block(final_cached_index,new_raw_block);
                 write_index(final_cached_index); //save index then
 
-                xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
+                xinfo("xblockacct_t::store_block,done for block, tps_key cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 
                 //update meta right now
                 if(new_raw_block->get_height() != 0)//genesis block might be created by load_index
@@ -1226,12 +1226,15 @@ namespace top
                 }
 
                 // TODO(jimmy) may keep latest blocks in cache better
-                final_cached_index->reset_this_block(NULL);
-
+                if (get_account_obj()->is_table_address() && get_account_obj()->get_zone_index() == base::enum_chain_zone_evm_index) {
+                    assert(final_cached_index->get_this_block() == new_raw_block);
+                } else {
+                    final_cached_index->reset_this_block(NULL);
+                }
                 return true;
             }
 
-            xinfo("xblockacct_t::store_block,cache index fail.block=%s", new_raw_block->dump().c_str());
+            xwarn("xblockacct_t::store_block,cache index fail.block=%s", new_raw_block->dump().c_str());
             return false;
         }
 
@@ -1611,6 +1614,7 @@ namespace top
         //update other meta except connected info
         bool xblockacct_t::update_meta_metric(base::xvbindex_t* new_block_ptr )
         {
+            xassert(false == new_block_ptr->is_unit_address());
             if(NULL == new_block_ptr)
                 return false;
 
@@ -2354,91 +2358,6 @@ namespace top
         bool  xunitbkplugin::store_block(base::xvblock_t* new_raw_block)
         {
             return xchainacct_t::store_block(new_raw_block);
-        }
-
-        bool    xunitbkplugin::store_committed_unit_block(base::xvblock_t* new_raw_block)
-        {
-            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
-            if(exist_cert) //found duplicated ones
-            {
-                if (!exist_cert->check_block_flag(base::enum_xvblock_flag_committed)) {
-                    // check if pre block is committed, update it if not.
-                    if (new_raw_block->get_height() > 1) {
-                        base::xauto_ptr<base::xvbindex_t> pre_idx(load_index(new_raw_block->get_height() - 1, new_raw_block->get_last_block_hash()));
-                        if (pre_idx != nullptr && !pre_idx->check_block_flag(base::enum_xvblock_flag_committed)) {
-                            update_bindex_to_committed(pre_idx.get());
-                            xinfo("xunitbkplugin::store_committed_unit_block update pre index,store_block,done for pre_idx(%s),dump:%s", pre_idx->dump().c_str(), dump().c_str());
-                        }
-                    }
-
-                    update_bindex_to_committed(exist_cert.get());
-                    xinfo("xunitbkplugin::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
-                } else {
-                    xwarn("xunitbkplugin::store_committed_unit_block already committed,block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
-                }
-                return true;
-            }
-            //first do store block
-            bool ret = store_block(new_raw_block);
-            if(!ret)
-            {
-                xwarn("xunitbkplugin::store_committed_unit_block,fail-store block(%s)", new_raw_block->dump().c_str());
-            } else {
-                base::xauto_ptr<base::xvbindex_t> bindex(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
-                update_bindex_to_committed(bindex.get());
-                xinfo("xunitbkplugin::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
-            }
-            return true;
-        }
-
-        bool   xunitbkplugin::try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block)
-        {
-            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(height, viewid));
-            if (exist_cert == nullptr) {
-                xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
-                return false;
-            }
-
-            bool ret = true;
-            if (update_pre_block && height > 1) {
-                base::xauto_ptr<base::xvbindex_t> exist_cert2(load_index(height - 1, exist_cert->get_last_block_hash()));
-                if (exist_cert2 == nullptr) {
-                    xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
-                    ret = false;
-                } else {
-                    update_bindex_to_committed(exist_cert2.get());
-                    xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
-                }
-            }
-
-            update_bindex_to_committed(exist_cert.get());
-            xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
-            return ret;
-        }
-
-        bool   xunitbkplugin::try_update_account_index(uint64_t height, const std::string & hash, bool update_pre_block)
-        {
-            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(height, hash));
-            if (exist_cert == nullptr) {
-                xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height, hash.c_str());
-                return false;
-            }
-
-            bool ret = true;
-            if (update_pre_block && height > 1) {
-                base::xauto_ptr<base::xvbindex_t> exist_cert2(load_index(height - 1, exist_cert->get_last_block_hash()));
-                if (exist_cert2 == nullptr) {
-                    xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
-                    ret = false;
-                } else {
-                    update_bindex_to_committed(exist_cert2.get());
-                    xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
-                }
-            }
-
-            update_bindex_to_committed(exist_cert.get());
-            xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height, hash.c_str());
-            return ret;
         }
 
         xrelay_plugin::xrelay_plugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)

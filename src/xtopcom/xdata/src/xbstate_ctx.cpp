@@ -37,17 +37,20 @@ NS_BEG2(top, data)
         }                                                                                                                                                                          \
     } while (0)
 
-xbstate_ctx_t::xbstate_ctx_t(base::xvbstate_t * bstate, bool readonly) {
+xbstate_ctx_t::xbstate_ctx_t(base::xvbstate_t * bstate) {
+    bstate->add_ref();
+    m_bstate.attach(bstate);
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_bstate_ctx, 1);
+}
+
+xbstate_ctx_t::xbstate_ctx_t(base::xvbstate_t * bstate, base::xvbstate_t* org_bstate) {
     bstate->add_ref();
     m_bstate.attach(bstate);
 
-    if (!readonly) {
-        m_canvas = make_object_ptr<base::xvcanvas_t>();
-        m_snapshot_canvas_height = 0;
-        base::xvbstate_t * _new_bstate = static_cast<base::xvbstate_t *>(bstate->clone());  // TODO(jimmy) performance not clone firstly, pass origin bstate
-        xassert(_new_bstate != nullptr);
-        m_snapshot_origin_bstate.attach(_new_bstate);  // clone another bstate
-    }
+    m_canvas = make_object_ptr<base::xvcanvas_t>();
+    m_snapshot_canvas_height = 0;
+    org_bstate->add_ref();
+    m_snapshot_origin_bstate.attach(org_bstate);  // record origin bstate
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_bstate_ctx, 1);
 }
 
@@ -73,15 +76,15 @@ bool xbstate_ctx_t::do_rollback() {
     if (m_snapshot_canvas_height < m_canvas->get_op_records_size()) {
         m_canvas->rollback(m_snapshot_canvas_height);
         std::deque<base::xvmethod_t> records = m_canvas->clone();
-
-        base::xauto_ptr<base::xvbstate_t> _new_bstate = dynamic_cast<base::xvbstate_t *>(m_snapshot_origin_bstate->clone());
+        // clone new bstate for write
+        base::xauto_ptr<base::xvbstate_t> _new_bstate = new base::xvbstate_t(m_bstate->get_last_block_hash(), *m_snapshot_origin_bstate.get());
         bool ret = _new_bstate->apply_changes_of_binlog(std::move(records));
         if (!ret) {
             xerror("xbstate_ctx_t::do_rollback fail-apply_changes_of_binlog");
             return ret;
         }
         m_bstate = _new_bstate;
-        xdbg("xbstate_ctx_t::do_rollback rollback addr %s", account_address().to_string().c_str());
+        xwarn("xbstate_ctx_t::do_rollback rollback addr %s,m_snapshot_canvas_height=%ld", _new_bstate->get_account().c_str(),m_snapshot_canvas_height);
     }
     return true;
 }
@@ -103,7 +106,7 @@ std::string xbstate_ctx_t::dump() const {
     xprintf(local_param_buf,
             sizeof(local_param_buf),
             "{bstatectx:address=%s,height=%ld,snapshot_h=%" PRIu64 ",records_h=0x%" PRIx64 " :}",
-            account_address().to_string().c_str(),
+            m_bstate->get_account().c_str(),
             height(),
             m_snapshot_canvas_height,
             m_canvas->get_op_records_size());
@@ -440,7 +443,7 @@ int32_t xbstate_ctx_t::token_withdraw(const std::string & key, base::vtoken_t su
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_withdraw", key);
     auto balance = propobj->get_balance();
     if (sub_token <= 0 || sub_token > balance) {
-        xwarn("xbstate_ctx_t::token_withdraw fail-can't do withdraw. propname=%ld,balance=%ld,sub_token=%ld", key.c_str(), balance, sub_token);
+        xwarn("xbstate_ctx_t::token_withdraw fail-can't do withdraw. propname=%s,balance=%ld,sub_token=%ld", key.c_str(), balance, sub_token);
         return xaccount_property_operate_fail;
     }
 

@@ -145,6 +145,49 @@ TEST_F(test_performance, db_write_endless_BENCH) {
     }
 }
 
+// batch write has better performance.
+TEST_F(test_performance, db_batch_write_endless_BENCH) {
+    string db_dir = DB_NAME;
+    std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);
+    ASSERT_NE(db, nullptr);
+
+	int64_t begin = top::base::xtime_utl::gmttime_ms();
+	string key;
+	std::string value(256, 'A');
+    int64_t lasttime = begin;
+    uint32_t i = 0;
+    std::map<std::string, std::string> batch_kv;
+    std::vector<std::string> empty_keys;
+    while(1) {
+		key = "key"+to_string(i);
+        batch_kv[key] = value;
+        if (batch_kv.size() >= 100) {
+            db->batch_change(batch_kv, empty_keys);
+            batch_kv.clear();
+        }
+        if (i%1000000 == 0) {
+            int64_t cur = top::base::xtime_utl::gmttime_ms();
+            auto mem = GetProcessMemory();
+#ifdef ENABLE_METRICS
+            db->GetDBMemStatus();
+            uint32_t mem_block_all = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_block_cache);
+            uint32_t mem_reader_memtable_all = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_table_readers);
+            uint32_t all_mem_tables = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_all_mem_tables);
+            uint32_t pinned = XMETRICS_GAUGE_GET_VALUE(xmetrics_tag_t::db_rocksdb_cache_pinned);
+            uint32_t total = mem_block_all + mem_reader_memtable_all + all_mem_tables + pinned;
+            std::cout << "i:" << i << ", timecost(ms):" << (cur - lasttime) << ", time begin-cur(s):" << ((cur - begin) / 1000) << ", block:" << mem_block_all
+                      << ", reader_memtable:" << mem_reader_memtable_all << ", all_mem_tables:" << all_mem_tables << ", pinned:" << pinned << ", total:" << total
+                      << ", physicalMem:" << mem.physicalMem << ", virtualMem:" << mem.virtualMem << std::endl;
+#else
+            std::cout << "i:" << i << ", timecost(ms):" << (cur - lasttime) << ", time begin-cur(s):" << ((cur - begin) / 1000) << ", physicalMem:" << mem.physicalMem
+                      << ", virtualMem:" << mem.virtualMem << std::endl;
+#endif
+            lasttime = cur;
+        }
+        i++;
+    }
+}
+
 TEST_F(test_performance, db_write_BENCH) {
     string db_dir = DB_NAME;
     std::shared_ptr<xdb_face_t> db = xdb_factory_t::create_kvdb(db_dir);

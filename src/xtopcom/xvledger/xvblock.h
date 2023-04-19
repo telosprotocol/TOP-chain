@@ -250,7 +250,7 @@ namespace top
             inline void                 set_input_hash(const std::string& input_hash)   {m_input_hash = input_hash;}
             inline void                 set_output_hash(const std::string& output_hash) {m_output_hash = output_hash;}
             
-            virtual int32_t     get_object_size_real() const override;
+            size_t get_object_size_real() const override;
         private:
             //information about this block
             uint16_t            m_types;        //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
@@ -453,7 +453,7 @@ namespace top
 
             virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vqcert;}
         private:
-            virtual int32_t     get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         private: //m_modified_count not serialized into binary,put here make alignment of this class better
             uint32_t            m_modified_count;   //count how many times modified since last save,it is 0 if nothing changed
@@ -534,7 +534,7 @@ namespace top
 
             virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vinput;}
         private:
-            virtual int32_t             get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
@@ -577,7 +577,7 @@ namespace top
 
             virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_voutput;}
         private:
-            virtual int32_t             get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
 
         protected:
@@ -630,7 +630,8 @@ namespace top
 
         class xvblock_excontainer_base {
         public:
-            virtual void commit(base::xvblock_t* current_block){}
+            virtual void commit(base::xvblock_t* current_block) = 0;
+            virtual void extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) const = 0;
         };
 
         class xvsubblock_index_t {
@@ -795,11 +796,9 @@ namespace top
 
             void  set_vote_extend_data(const std::string & vote_data);
             const std::string &  get_vote_extend_data() const;
-            void  set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
-            const std::vector<xobject_ptr_t<xvblock_t>> & get_subblocks() const;
 
-            void  set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer) {m_excontainer = excontainer;}
-            const std::shared_ptr<xvblock_excontainer_base> & get_excontainer() const {return m_excontainer;}
+            void  set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer);
+            std::shared_ptr<xvblock_excontainer_base> get_excontainer() const;
 
         public: // input&output public apis
             xvinput_t*                  load_input(std::error_code & ec)  const;//load input on-demand
@@ -847,7 +846,7 @@ namespace top
             void                        set_not_serialize_input_output(bool value);
             virtual int32_t            get_class_type() const override {return xstatistic::enum_statistic_vblock;}
         private:
-            virtual int32_t             get_object_size_real() const override;
+            size_t get_object_size_real() const override;
         private:
             std::string                 m_cert_hash;        //hash(vqcert_bin)
 
@@ -878,6 +877,7 @@ namespace top
             std::shared_ptr<xvblock_excontainer_base> m_excontainer{nullptr};
             std::string                 m_proposal;    //raw proposal
             bool                        m_not_serialize_input_output{false};
+            mutable xspinlock_t         m_spin_lock;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

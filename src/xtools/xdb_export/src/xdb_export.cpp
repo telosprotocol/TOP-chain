@@ -13,8 +13,8 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xblocktool.h"
-#include "xdepends/include/asio/post.hpp"
-#include "xdepends/include/asio/thread_pool.hpp"
+#include "asio/post.hpp"
+#include "asio/thread_pool.hpp"
 #include "xelection/xvnode_house.h"
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_iterator.h"
@@ -238,9 +238,10 @@ std::string get_ave_string(uint64_t numerator, uint64_t denominator) {
 }
 
 void xdb_export_tools_t::query_table_performance(std::string const & account) {
+    base::xvaccount_t table_vaccount(account);
     json root;
-    auto const h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
-    auto const vblock1 = m_blockstore->load_block_object(account, 1, 0, false);
+    auto const h = m_blockstore->get_latest_committed_block_height(table_vaccount);
+    auto const vblock1 = m_blockstore->load_block_object(table_vaccount, 1, base::enum_xvblock_flag_committed, false);
     if (vblock1 == nullptr) {
         std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
         return;
@@ -262,7 +263,7 @@ void xdb_export_tools_t::query_table_performance(std::string const & account) {
     uint32_t tx_num_in_10_blocks = tx_num1;
     uint64_t gmttime_start_for_10_blocks = last_gmtime;
     for (size_t i = 2; i <= h; i++) {
-        auto const vblock = m_blockstore->load_block_object(account, i, 0, false);
+        auto const vblock = m_blockstore->load_block_object(table_vaccount, i, base::enum_xvblock_flag_committed, false);
         if (vblock == nullptr) {
             std::cerr << "account: " << account << ", height: " << i << " block null" << std::endl;
             return;
@@ -379,30 +380,6 @@ void xdb_export_tools_t::query_tx_info(std::vector<std::string> const & tables, 
     print_all_table_txinfo_to_file();
 }
 
-void xdb_export_tools_t::query_block_exist(std::string const & address, const uint64_t height) {
-    auto const block_vec = m_blockstore->load_block_object(address, height).get_vector();
-    std::cout << "account: " << address << " , height: " << height << " , block exist, total num: " << block_vec.size() << std::endl;
-    for (auto const & block : block_vec) {
-        if (block != nullptr) {
-            std::cout << block->dump2() ;//<< std::endl;
-            printf("real-flags=0x%x\n", (int32_t)block->get_block_flags());
-        } else {
-            std::cerr << "exist one null block!!!" << std::endl;
-        }
-    }
-
-    auto const block_bindex_vec = m_blockstore->load_block_index(address, height).get_vector();
-    // std::cout << "account: " << address << " , height: " << height << " , block exist, total num: " << block_vec.size() << std::endl;
-    for (auto const & block : block_bindex_vec) {
-        if (block != nullptr) {
-            std::cout << block->dump() ;//<< std::endl;
-            printf("real-flags=0x%x\n", (int32_t)block->get_block_flags());
-        } else {
-            std::cerr << "exist one null block!!!" << std::endl;
-        }
-    }
-}
-
 void xdb_export_tools_t::query_block_info(std::string const & account, std::string const & param) {
     Json::Value root;
     if (param == "last") {
@@ -452,7 +429,13 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, std::str
 }
 
 void xdb_export_tools_t::query_block_basic(std::string const & account, const uint64_t h, json & result) {
-    auto const vblock = m_blockstore->load_block_object(account, h, 0, false);
+    xvblock_ptr_t vblock = nullptr;
+    base::xvaccount_t vaccount(account);
+    if (vaccount.is_unit_address()) {
+        vblock = m_blockstore->load_unit(vaccount, h);
+    } else {
+        vblock = m_blockstore->load_block_object(vaccount, h, 0, false);
+    }
     if (vblock == nullptr) {
         std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
         return;
@@ -494,20 +477,24 @@ void xdb_export_tools_t::query_state_basic(std::string const & account, std::str
 }
 
 void xdb_export_tools_t::query_state_basic(std::string const & account, const uint64_t h, json & result) {
-    auto const vblock = m_blockstore->load_block_object(account, h, 0, false);
-    if (vblock == nullptr) {
-        std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
-        return;
-    }
-
     xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
     common::xaccount_address_t account_address(account);
     if (base::xvaccount_t::is_table_address_type(account_address.type())) {
+        auto const vblock = m_blockstore->load_block_object(account_address.vaccount(), h, 0, false);
+        if (vblock == nullptr) {
+            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+            return;
+        }
         auto tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(vblock.get());
         if (nullptr != tablestate_ext && tablestate_ext->get_table_state() != nullptr) {
             bstate = tablestate_ext->get_table_state()->get_bstate();
         }
     } else {
+        auto const vblock = m_blockstore->load_unit(account_address.vaccount(), h);
+        if (vblock == nullptr) {
+            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+            return;
+        }        
         auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(vblock.get());
         if (nullptr != unitstate) {
             bstate = unitstate->get_bstate();
@@ -655,8 +642,9 @@ void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & 
 
 void xdb_export_tools_t::query_table_unit_info(std::string const & account) {
     common::xaccount_address_t table_address(account);
+    base::xvaccount_t table_vaccount{account};
     json root;
-    auto const h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
+    auto const h = m_blockstore->get_latest_committed_block_height(table_vaccount);
     for (size_t i = 0; i <= h; i++) {
         query_block_basic(account, i, root["block" + std::to_string(i)]);
     }
@@ -664,7 +652,7 @@ void xdb_export_tools_t::query_table_unit_info(std::string const & account) {
     query_meta(account, root["meta"]);
     generate_json_file(std::string{account + "_basic_info.json"}, root);
 
-    auto const vblock = m_blockstore->load_block_object(account, h, 0, false);
+    auto const vblock = m_blockstore->load_block_object(table_vaccount, h, 0, false);
     if (vblock == nullptr) {
         std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
         return;
@@ -712,19 +700,24 @@ void xdb_export_tools_t::query_property(std::string const & account, std::string
 }
 
 void xdb_export_tools_t::query_property(std::string const & account, std::string const & prop_name, const uint64_t height, json & j) {
-    auto const block = m_blockstore->load_block_object(account, height, 0, false);
-    if (block == nullptr) {
-        std::cerr << account << " height: " << height << " block null!" << std::endl;
-        return;
-    }
     xobject_ptr_t<base::xvbstate_t> bstate = nullptr;
     common::xaccount_address_t account_address(account);
     if (base::xvaccount_t::is_table_address_type(account_address.type())) {
+        auto const block = m_blockstore->load_block_object(account, height, 0, false);
+        if (block == nullptr) {
+            std::cerr << account << " height: " << height << " block null!" << std::endl;
+            return;
+        }
         auto tablestate_ext = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(block.get());
         if (nullptr != tablestate_ext && tablestate_ext->get_table_state() != nullptr) {
             bstate = tablestate_ext->get_table_state()->get_bstate();
         }
     } else {
+        auto const block = m_blockstore->load_unit(account, height);
+        if (block == nullptr) {
+            std::cerr << account << " height: " << height << " block null!" << std::endl;
+            return;
+        }
         auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(block.get());
         if (nullptr != unitstate) {
             bstate = unitstate->get_bstate();
@@ -923,9 +916,9 @@ void xdb_export_tools_t::query_archive_db_internal(common::xtable_address_t cons
             base::xvaccount_t _unit_vaccount = unit.first.vaccount();
             xobject_ptr_t<base::xvblock_t> _unit;
             if (_accountindex.get_latest_unit_hash().empty()) {
-                _unit = m_blockstore->load_block_object(_unit_vaccount, _accountindex.get_latest_unit_height(), _accountindex.get_latest_unit_viewid(), true);
+                _unit = m_blockstore->load_unit(_unit_vaccount, _accountindex.get_latest_unit_height(), _accountindex.get_latest_unit_viewid());
             } else {
-                _unit = m_blockstore->load_block_object(_unit_vaccount, _accountindex.get_latest_unit_height(), _accountindex.get_latest_unit_hash(), true);
+                _unit = m_blockstore->load_unit(_unit_vaccount, _accountindex.get_latest_unit_height(), _accountindex.get_latest_unit_hash());
             }
             if (_unit == nullptr) {
                 std::lock_guard<std::mutex> guard(m_write_lock);
@@ -938,7 +931,7 @@ void xdb_export_tools_t::query_archive_db_internal(common::xtable_address_t cons
             auto unit_h = _unit->get_height();
 
             while (unit_h-- > 0) {
-                _unit = m_blockstore->load_block_object(_unit_vaccount, unit_h, unit_hash, true);
+                _unit = m_blockstore->load_unit(_unit_vaccount, unit_h, unit_hash);
                 if (_unit == nullptr) {
                     std::lock_guard<std::mutex> guard(m_write_lock);
                     file << "[warn] " << table_vaddr.get_account() << ": " << _unit_vaccount.get_account() << ", height: " << unit_h << ",hash: " << base::xstring_utl::to_hex(unit_hash) << ", block is nullptr!" << std::endl;
@@ -1018,7 +1011,7 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, st
         std::string unit = v.first.to_string();
 
         auto const unit_height = index.get_latest_unit_height();
-        auto const & unit_vblock = m_blockstore->load_block_object(unit, unit_height, 0, false);
+        auto const & unit_vblock = m_blockstore->load_unit(unit, unit_height);
         if (unit_vblock == nullptr) {
             std::cerr << unit << " height " << unit_height << " block nullptr!" << std::endl;
             continue;
@@ -1305,7 +1298,7 @@ bool xdb_export_tools_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enu
 void xdb_export_tools_t::get_txinfo_from_txaction(const data::xlightunit_action_t & txaction, const data::xblock_t * block, const data::xtransaction_ptr_t & tx_ptr, std::vector<tx_ext_t> & batch_tx_exts) {
     base::xtable_shortid_t tableid;
     if (tx_ptr != nullptr) {
-        base::xvaccount_t _vaddr(tx_ptr->get_source_addr());
+        base::xvaccount_t _vaddr(tx_ptr->source_address().to_string());
         tableid = _vaddr.get_short_table_id();
     } else {
         tableid = txaction.get_rawtx_source_tableid();
@@ -1492,7 +1485,13 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
 }
 
 void xdb_export_tools_t::query_block_info(std::string const & account, const uint64_t h, Json::Value & root) {
-    auto vblock = m_blockstore->load_block_object(account, h, 0, true);
+    xvblock_ptr_t vblock = nullptr;
+    base::xvaccount_t vaccount(account);
+    if (vaccount.is_unit_address()) {
+        vblock = m_blockstore->load_unit(vaccount, h);
+    } else {
+        vblock = m_blockstore->load_block_object(vaccount, h, 0, true);
+    }
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (bp == nullptr) {
         std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
@@ -1974,7 +1973,13 @@ void  xdb_export_tools_t::prune_db(){
 }
 
 bool xdb_check_data_func_block_t::is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const {
-    auto vblock = blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+    xvblock_ptr_t vblock = nullptr;
+    base::xvaccount_t vaccount(account);
+    if (vaccount.is_unit_address()) {
+        vblock = blockstore->load_unit(vaccount, height);
+    } else {
+        vblock = blockstore->load_block_object(vaccount, height, base::enum_xvblock_flag_committed, false);
+    }
     data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
     return (block != nullptr);
 }
@@ -1983,7 +1988,13 @@ std::string xdb_check_data_func_block_t::data_type() const {
 }
 
 bool xdb_check_data_func_table_state_t::is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const {
-    auto vblock = blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+    xvblock_ptr_t vblock = nullptr;
+    base::xvaccount_t vaccount(account);
+    if (vaccount.is_unit_address()) {
+        vblock = blockstore->load_unit(vaccount, height);
+    } else {
+        vblock = blockstore->load_block_object(vaccount, height, base::enum_xvblock_flag_committed, false);
+    }
     data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
     if (block == nullptr) {
         return false;
@@ -1998,7 +2009,13 @@ std::string xdb_check_data_func_table_state_t::data_type() const {
 }
 
 bool xdb_check_data_func_unit_state_t::is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const {
-    auto vblock = blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+    xvblock_ptr_t vblock = nullptr;
+    base::xvaccount_t vaccount(account);
+    if (vaccount.is_unit_address()) {
+        vblock = blockstore->load_unit(vaccount, height);
+    } else {
+        vblock = blockstore->load_block_object(vaccount, height, base::enum_xvblock_flag_committed, false);
+    }
     data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
     if (block == nullptr) {
         return false;
@@ -2013,7 +2030,13 @@ std::string xdb_check_data_func_unit_state_t::data_type() const {
 }
 
 bool xdb_check_data_func_off_data_t::is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const {
-    auto vblock = blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+    xvblock_ptr_t vblock = nullptr;
+    base::xvaccount_t vaccount(account);
+    if (vaccount.is_unit_address()) {
+        vblock = blockstore->load_unit(vaccount, height);
+    } else {
+        vblock = blockstore->load_block_object(vaccount, height, base::enum_xvblock_flag_committed, false);
+    }
     data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
     if (block == nullptr) {
         return false;

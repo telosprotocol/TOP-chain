@@ -19,24 +19,19 @@ constexpr uint32_t IdealBatchSize = 1024;
 
 constexpr auto PreimagePrefix = ConstBytes<11>("secure-key-");
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
-    return NewDatabaseWithConfig(std::move(diskdb), nullptr);
+xtop_trie_db::xtop_trie_db(xkv_db_face_ptr_t diskdb, size_t const cache_size) : diskdb_{std::move(diskdb)}, cleans_{cache_size} {
 }
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t /*config*/) {
-    //if (config != nullptr && config->Cache_size > 0) {
-    //    if (config->Journal.empty()) {
-    //        // todo
-    //    } else {
-    //        // todo
-    //    }
-    //}
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb, size_t cache_size) {
+    return std::make_shared<xtop_trie_db>(std::move(diskdb), cache_size);
+}
 
-    return std::make_shared<xtop_trie_db>(std::move(diskdb));
+xkv_db_face_ptr_t const & xtop_trie_db::DiskDB() const noexcept {
+    return diskdb_;
 }
 
 void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     // If the node's already cached, skip
     if (dirties_.find(hash) != dirties_.end()) {
         return;
@@ -64,13 +59,13 @@ void xtop_trie_db::insert(xh256_t const & hash, int32_t const size, xtrie_node_f
 }
 
 void xtop_trie_db::insertPreimage(xh256_t const & hash, xbytes_t const & preimage) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     preimages_.insert({hash, preimage});
     // todo cal preimage size metrics.
 }
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     XMETRICS_GAUGE(metrics::mpt_trie_cache_visit, 1);
     // todo:
     xbytes_t value;
@@ -90,12 +85,12 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t const & hash) {
         return nullptr;
     }
     // put into clean cache
-    cleans_put(hash, enc);
+    cleans_put_lock_hold_outside(hash, enc);
     return xtrie_node_rlp::must_decode_node(hash, enc);
 }
 
 xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     // It doesn't make sense to retrieve the metaroot
     if (hash.empty()) {
         ec = error::xerrc_t::trie_db_not_found;
@@ -120,12 +115,12 @@ xbytes_t xtop_trie_db::Node(xh256_t const & hash, std::error_code & ec) {
         return xbytes_t{};
     }
     // put into clean cache
-    cleans_put(hash, enc);
+    cleans_put_lock_hold_outside(hash, enc);
     return enc;
 }
 
 xbytes_t xtop_trie_db::preimage(xh256_t const & hash) const {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     if (preimages_.find(hash) != preimages_.end()) {
         return preimages_.at(hash);
     }
@@ -139,7 +134,9 @@ xbytes_t xtop_trie_db::preimage(xh256_t const & hash) const {
 }
 
 void xtop_trie_db::Commit(xh256_t const & hash, AfterCommitCallback cb, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
+    assert(!ec);
+
+    std::lock_guard<std::mutex> lck(mutex_);
 
     // what we can optimize here:
     // 1. use batch writer to sum all <k,v> into db with once writeDB operation
@@ -195,7 +192,7 @@ void xtop_trie_db::commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & da
     auto enc = node.rlp();
     // auto const hash_bytes = to_bytes(hash);
     xdbg("xtop_trie_db::Commit write node %s, size %zu", top::to_hex(hash).c_str(), enc.size());
-    data.emplace(std::make_pair(hash, enc));
+    data.emplace(hash, enc);
 
     if (cb) {
         cb(hash);
@@ -209,52 +206,32 @@ void xtop_trie_db::commit(xh256_t const & hash, std::map<xh256_t, xbytes_t> & da
     dirties_.erase(hash);
 
     // and move it to cleans:
-    cleans_put(hash, enc);
+    cleans_put_lock_hold_outside(hash, enc);
     // todo mark size everywhere with cleans/dirties' insert/erase/...
 }
 
 void xtop_trie_db::prune(xh256_t const & hash, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
+    std::lock_guard<std::mutex> lck(mutex_);
     {
-        XMETRICS_TIME_RECORD("mpt_prune_time");
-        XMETRICS_CPU_TIME_RECORD("mpt_prune_time_cpu");
         if (pruned_hashes_.find(hash) != std::end(pruned_hashes_)) {
             return;
         }
 
-        cleans_erase(hash);
+        cleans_erase_lock_hold_outside(hash);
 
         assert(dirties_.find(hash) == dirties_.end());
 
         pruned_hashes_.insert(hash);
     }
-    // xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
-}
-
-void xtop_trie_db::prune(xh256_t const & hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) {
-    {
-        XMETRICS_TIME_RECORD("mpt_prune_time");
-        XMETRICS_CPU_TIME_RECORD("mpt_prune_time_cpu");
-        if (pruned_hashes.find(hash) != std::end(pruned_hashes)) {
-            return;
-        }
-
-        pruned_hashes.insert(hash);
-    }
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
 }
 
 void xtop_trie_db::commit_pruned(std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
-
-    XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
-    XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
     assert(!ec);
-
     std::vector<xspan_t<xbyte_t const>> pruned_keys;
+
+    std::lock_guard<std::mutex> lck(mutex_);
+
     pruned_keys.reserve(pruned_hashes_.size());
-    // std::transform(std::begin(pruned_hashes_), std::end(pruned_hashes_), std::back_inserter(pruned_keys), [](xh256_t const & hash) { return hash; });
     for (auto const & pruned_hash : pruned_hashes_) {
         pruned_keys.emplace_back(pruned_hash);
     }
@@ -265,27 +242,22 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
     }
 
     xkinfo("%zu keys pruned from disk", pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_total_pruned_trie_node_cnt, pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, -static_cast<int32_t>(pruned_hashes_.size()));
 
     pruned_hashes_.clear();
 }
 
 void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) {
-    std::lock_guard<std::mutex> lck(mutex);
-
-    XMETRICS_TIME_RECORD("mpt_commit_pruned_time");
-    XMETRICS_CPU_TIME_RECORD("mpt_commit_pruned_time_cpu");
     assert(!ec);
-
     std::vector<xspan_t<xbyte_t const>> pruned_keys;
     pruned_keys.reserve(pruned_hashes.size());
+
+    std::lock_guard<std::mutex> lck(mutex_);
     for (auto const & hash : pruned_hashes) {
-        cleans_erase(hash);
+        cleans_erase_lock_hold_outside(hash);
         assert(dirties_.find(hash) == dirties_.end());
         pruned_keys.emplace_back(hash);
     }
-    // std::transform(std::begin(pruned_hashes), std::end(pruned_hashes), std::back_inserter(pruned_keys), [](xh256_t const & hash) { return hash; });
+
     diskdb_->DeleteBatch(pruned_keys, ec);
     if (ec) {
         xwarn("pruning MPT nodes failed. %s", ec.message().c_str());
@@ -293,24 +265,111 @@ void xtop_trie_db::commit_pruned(std::unordered_set<xh256_t> const & pruned_hash
     }
 
     xkinfo("%zu keys pruned from disk", pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_total_pruned_trie_node_cnt, pruned_hashes_.size());
-    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, -static_cast<int32_t>(pruned_hashes_.size()));
 
-    // cleans_.clear();
     pruned_hashes_.clear();
 }
 
-//void xtop_trie_db::clear_cleans() {
-//    std::lock_guard<std::mutex> lck(mutex);
-//    for(;;) {
-//        xh256_t k;
-//        xbytes_t _;
-//        if (false == cleans_.back(k, _)) {
-//            break;
-//        }
-//        cleans_.erase(k);
-//    }
-//}
+void xtop_trie_db::prune(xh256_t const & root_key, std::vector<xh256_t> to_be_pruned_keys, std::error_code & ec) {
+    assert(!ec);
+    std::lock_guard<std::mutex> lck(mutex_);
+
+    auto const it = pruned_hashes2_.find(root_key);
+    if (it == std::end(pruned_hashes2_)) {
+#if defined(ENABLE_METRICS)
+        std::string const metrics_key = "triedb_prune_count_" + top::to_string(diskdb_->table_address());
+        XMETRICS_COUNTER_SET(metrics_key, to_be_pruned_keys.size());
+#endif
+        pruned_hashes2_.emplace(root_key, std::move(to_be_pruned_keys));
+        return;
+    }
+
+    ec = error::xerrc_t::trie_prune_data_duplicated;
+}
+
+void xtop_trie_db::commit_pruned(std::vector<xh256_t> pruned_root_hashes, std::error_code & ec) {
+    assert(!ec);
+
+    std::lock_guard<std::mutex> lck(mutex_);
+
+    pruned_root_hashes.erase(std::remove_if(std::begin(pruned_root_hashes),
+                                            std::end(pruned_root_hashes),
+                                            [this](xh256_t const & root_hash) { return pruned_hashes2_.find(root_hash) == std::end(pruned_hashes2_); }),
+                             std::end(pruned_root_hashes));
+
+    std::vector<xspan_t<xbyte_t const>> pruned_keys;
+    size_t const pruned_keys_count = std::accumulate(
+        std::begin(pruned_root_hashes), std::end(pruned_root_hashes), 0u, [this](size_t const cnt, xh256_t const & root_hash) { return cnt + pruned_hashes2_[root_hash].size(); });
+    pruned_keys.reserve(pruned_keys_count);
+
+    for (auto const & root_hash : pruned_root_hashes) {
+        for (auto const & hash : pruned_hashes2_[root_hash]) {
+            cleans_erase_lock_hold_outside(hash);
+            assert(dirties_.find(hash) == dirties_.end());
+            pruned_keys.emplace_back(hash);
+        }
+    }
+
+    if (!pruned_keys.empty()) {
+#if defined(ENABLE_METRICS)
+        std::string const metrics_key = "triedb_commit_prune_count_" + top::to_string(diskdb_->table_address());
+        XMETRICS_COUNTER_SET(metrics_key, pruned_keys.size());
+#endif
+
+        diskdb_->DeleteBatch(pruned_keys, ec);
+        if (ec) {
+            xwarn("pruning MPT nodes failed. errc %d msg %s", ec.value(), ec.message().c_str());
+        }
+    }
+
+    for (auto const & root_hash : pruned_root_hashes) {
+        pruned_hashes2_.erase(root_hash);
+    }
+
+#if defined(ENABLE_METRICS)
+    size_t total_remaining_count{0};
+    for (auto const & pruned_hash_info : pruned_hashes2_) {
+        auto const & prune_ready = top::get<std::vector<xh256_t>>(pruned_hash_info);
+        total_remaining_count += prune_ready.size();
+    }
+
+    std::string const metrics_key = "triedb_pending_prune_count_" + top::to_string(diskdb_->table_address());
+    XMETRICS_COUNTER_SET(metrics_key, total_remaining_count);
+#endif
+}
+
+void xtop_trie_db::clear_pruned(xh256_t const & root_hash, std::error_code & ec) {
+    assert(!ec);
+
+    std::lock_guard<std::mutex> lck(mutex_);
+
+    auto const it = pruned_hashes2_.find(root_hash);
+    if (it == std::end(pruned_hashes2_)) {
+        ec = error::xerrc_t::trie_prune_data_not_found;
+        xwarn("xtrie_db_t::clear_pruned fail to find pending root hash %s to be reverted", root_hash.hex().c_str());
+        return;
+    }
+
+    pruned_hashes2_.erase(it);
+}
+
+void xtop_trie_db::clear_pruned(XMAYBE_UNUSED std::error_code & ec) {
+    assert(!ec);
+    std::lock_guard<std::mutex> lck(mutex_);
+    pruned_hashes2_.clear();
+}
+
+size_t xtop_trie_db::pending_pruned_size(xh256_t const & root_hash) const noexcept {
+    std::lock_guard<std::mutex> lck(mutex_);
+
+    auto const it = pruned_hashes2_.find(root_hash);
+    if (it == std::end(pruned_hashes2_)) {
+        xwarn("xtrie_db_t::pruned_size returns 0 due to root hash %s not found", root_hash.hex().c_str());
+        return 0 ;
+    }
+
+    return top::get<std::vector<xh256_t>>(*it).size();
+}
+
 
 xbytes_t xtop_trie_db::preimage_key(xh256_t const & hash_key) const {
     xbytes_t res;
@@ -319,7 +378,7 @@ xbytes_t xtop_trie_db::preimage_key(xh256_t const & hash_key) const {
     return res;
 }
 
-void xtop_trie_db::cleans_put(xh256_t const & hash, xbytes_t const & data) {
+void xtop_trie_db::cleans_put_lock_hold_outside(xh256_t const & hash, xbytes_t const & data) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
     auto erased_vec = cleans_.put(hash, data);
     int32_t inc_num = 1 - (int32_t)erased_vec.size();
@@ -343,7 +402,7 @@ void xtop_trie_db::cleans_put(xh256_t const & hash, xbytes_t const & data) {
 #endif
 }
 
-void xtop_trie_db::cleans_erase(xh256_t const & hash) {
+void xtop_trie_db::cleans_erase_lock_hold_outside(xh256_t const & hash) {
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
     auto erased_vec = cleans_.erase(hash);
     if (erased_vec.empty()) {
@@ -358,6 +417,7 @@ void xtop_trie_db::cleans_erase(xh256_t const & hash) {
     XMETRICS_GAUGE(metrics::statistic_total_size, -dec_size);
 #else
     cleans_.erase(hash);
+    xdbg("erased hash %s from clean", hash.hex().c_str());
 #endif
 }
 

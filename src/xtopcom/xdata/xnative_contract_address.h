@@ -54,8 +54,9 @@ XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr_with_suffix{"Ta
 
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_addr{"Ta0005@0"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_block_addr{"Tb0005@0"};
+XINLINE_CONSTEXPR char const * rec_elect_zec_table_addr{"Ta0001@0"};  // TODO(Jimmy)
+XINLINE_CONSTEXPR char const * zec_elect_shard_table_addr{"Ta0002@2"};  // TODO(Jimmy)
 
-extern common::xaccount_address_t const black_hole_system_address;
 extern common::xaccount_address_t const genesis_root_system_address;
 extern common::xaccount_address_t const timer_system_address;
 extern common::xaccount_address_t const drand_system_address;
@@ -80,15 +81,15 @@ extern common::xaccount_address_t const zec_group_assoc_contract_address;
 extern common::xaccount_address_t const zec_elect_eth_contract_address;
 extern common::xaccount_address_t const zec_elect_relay_contract_address;
 
-extern common::xaccount_address_t const sharding_vote_contract_address;
-extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
+extern common::xaccount_address_t const table_vote_contract_address;
+extern common::xaccount_address_t const table_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
 extern common::xaccount_address_t const sharding_fork_info_contract_address;
 extern common::xaccount_base_address_t const table_vote_contract_base_address;
 
 extern common::xaccount_base_address_t const sharding_vote_contract_base_address;
 extern common::xaccount_base_address_t const sharding_reward_claiming_contract_base_address;
-extern common::xaccount_base_address_t const sharding_statistic_info_contract_base_address;
+extern common::xaccount_base_address_t const table_statistic_info_contract_base_address;
 extern common::xaccount_base_address_t const sharding_fork_info_contract_base_address;
 
 extern common::xaccount_address_t const eth_fork_info_contract_address;

@@ -440,49 +440,49 @@ void xtxpool_service::push_send_fail_record(int32_t err_type) {
 
 int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_ptr_t & tx, bool local) {
     xdbg("xtxpool_service::request_transaction_consensus in, tx:source:%s target:%s hash:%s",
-         tx->get_source_addr().c_str(),
-         tx->get_target_addr().c_str(),
+         tx->source_address().to_string().c_str(),
+         tx->target_address().to_string().c_str(),
          tx->get_digest_hex_str().c_str());
     if (status() == enum_txpool_service_status_unreged) {
         xwarn(
-            "[xtxpool_service]not running, tx dropped:source:%s target:%s hash:%s", tx->get_source_addr().c_str(), tx->get_target_addr().c_str(), tx->get_digest_hex_str().c_str());
+            "[xtxpool_service]not running, tx dropped:source:%s target:%s hash:%s", tx->source_address().to_string().c_str(), tx->target_address().to_string().c_str(), tx->get_digest_hex_str().c_str());
         push_send_fail_record(xtxpool_v2::xtxpool_error_service_not_running);
         return xtxpool_v2::xtxpool_error_service_not_running;
     }
 
     int32_t ret = xverifier::xtx_verifier::verify_send_tx_source(tx.get(), local);
     if (ret) {
-        xwarn("[global_trace][xtxpool_service]tx=%s,account=%s verify send tx source fail", tx->get_digest_hex_str().c_str(), tx->get_source_addr().c_str());
+        xwarn("[global_trace][xtxpool_service]tx=%s,account=%s verify send tx source fail", tx->get_digest_hex_str().c_str(), tx->source_address().to_string().c_str());
         push_send_fail_record(ret);
         return ret;
     }
 
     std::error_code ec;
-    auto account_address = common::xaccount_address_t::build_from(tx->get_source_addr(), ec);
+    auto account_address = tx->source_address();
     if (ec) {
-        xwarn("xtxpool_service::request_transaction_consensus in, invalid source account %s", tx->get_source_addr().c_str());
+        xwarn("xtxpool_service::request_transaction_consensus in, invalid source account %s", tx->source_address().to_string().c_str());
         return xtxpool_v2::xtxpool_error_service_invalid_account_address;
     }
 
-    auto tableid = data::account_map_to_table_id(account_address);
+    auto const tableid = data::account_map_to_table_id(account_address);
     if (!is_belong_to_service(tableid)) {
         xerror("[global_trace][xtxpool_service]%s %s zone%d table%d not match this network driver",
                tx->get_digest_hex_str().c_str(),
-               tx->get_source_addr().c_str(),
+               tx->source_address().to_string().c_str(),
                tableid.get_zone_index(),
                tableid.get_subaddr());
         push_send_fail_record(xtxpool_v2::xtxpool_error_transaction_not_belong_to_this_service);
         return xtxpool_v2::xtxpool_error_transaction_not_belong_to_this_service;
     }
 
-    account_address = common::xaccount_address_t::build_from(tx->get_target_addr(), ec);
-    if (ec) {
-        xwarn("xtxpool_service::request_transaction_consensus in, invalid target account %s", tx->get_target_addr().c_str());
-        return xtxpool_v2::xtxpool_error_service_invalid_account_address;
-    }
+    account_address = tx->target_address();
+    //if (ec) {
+    //    xwarn("xtxpool_service::request_transaction_consensus in, invalid target account %s", tx->target_address().to_string().c_str());
+    //    return xtxpool_v2::xtxpool_error_service_invalid_account_address;
+    //}
 
     if (data::is_sys_sharding_contract_address(account_address)) {
-        tx->adjust_target_address(tableid.get_subaddr());
+        tx->adjust_target_address(tx->source_address().table_id());
     }
 
     data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());

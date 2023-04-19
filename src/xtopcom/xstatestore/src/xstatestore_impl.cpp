@@ -85,9 +85,9 @@ void xstatestore_impl_t::on_table_block_committed(base::xvblock_t* block) const 
     tablestore->on_table_block_committed(block);
 }
 
-xtablestate_ext_ptr_t xstatestore_impl_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
+xtablestate_ext_ptr_t xstatestore_impl_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(current_block->get_account());
-    return tablestore->do_commit_table_all_states(current_block, tablestate_store, ec);
+    return tablestore->do_commit_table_all_states(current_block, tablestate_store, account_index_map, ec);
 }
 
 void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
@@ -198,6 +198,23 @@ xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_table_addr
     return nullptr;
 }
 
+base::xvblock_ptr_t xstatestore_impl_t::get_unit_block(xblock_number_t number, common::xaccount_address_t const & account_address) const {
+    base::xvblock_ptr_t unitblock = nullptr;
+    if (number == LatestConnectBlock || number == LatestBlock || number == PendingBlock) {
+        // XTODO always get by LatestConnectBlock
+        base::xaccount_index_t accountindex;        
+        get_accountindex(LatestConnectBlock, account_address, accountindex);        
+        if (accountindex.get_latest_unit_hash().empty()) {
+            unitblock = get_blockstore()->load_unit(account_address.vaccount(), accountindex.get_latest_unit_height(), accountindex.get_latest_unit_viewid());
+        } else {
+            unitblock = get_blockstore()->load_unit(account_address.vaccount(), accountindex.get_latest_unit_height(), accountindex.get_latest_unit_hash());
+        }
+    } else {
+        unitblock = get_blockstore()->load_unit(account_address.vaccount(), number);
+    }
+    return unitblock;
+}
+
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_unit_addr(account_address);
     auto unitstate = tablestore->get_unit_state_from_block(account_address, target_block);
@@ -224,27 +241,6 @@ data::xtablestate_ptr_t xstatestore_impl_t::get_table_state_by_block(base::xvblo
     return nullptr;
 }
 
-bool xstatestore_impl_t::get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t& account_index) const {
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
-
-    auto tablestate = tablestore->get_latest_connectted_table_state();
-    if (tablestate == nullptr) {
-        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load latest state. table=%s,account=%s",
-               table_address.to_string().c_str(),
-               account_address.to_string().c_str());
-        return false;
-    }    
-    std::error_code ec;
-    tablestate->get_accountindex(account_address.to_string(), account_index, ec);
-    if (ec) {
-        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load accountindex. table=%s,account=%s",
-               table_address.to_string().c_str(),
-               account_address.to_string().c_str());
-        return false;
-    }
-    return true;
-}
-
 bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
     XMETRICS_TIME_RECORD("statestore_getindex_cost");
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_block->get_account());
@@ -252,6 +248,23 @@ bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_addr
         return tablestore->get_accountindex_from_table_block(account_address, table_block, account_index);
     }
     xwarn("xstatestore_impl_t::get_accountindex_from_table_block fail.block=%s", table_block->dump().c_str());
+    return false;
+}
+
+bool xstatestore_impl_t::accountindex_cache_unbroken(base::xvblock_t * table_block) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_block->get_account());
+    if (tablestore != nullptr) {
+        return tablestore->accountindex_cache_unbroken(table_block);
+    }
+    return false;
+}
+
+bool xstatestore_impl_t::get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_block->get_account());
+    if (tablestore != nullptr) {
+        return tablestore->get_accountindex_by_recent_blocks_cache(account_address, table_block, account_index);
+    }
+    xwarn("xstatestore_impl_t::get_accountindex_by_recent_blocks_cache fail.block=%s", table_block->dump().c_str());
     return false;
 }
 
@@ -288,14 +301,15 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_state(comm
 
     base::xvaccount_t vaccount(account_address.vaccount());
     if (!vaccount.has_valid_table_addr()) {
+        xwarn("xstatestore_impl_t::get_unit_latest_connectted_state fail-invalid account address %s", account_address.to_string().c_str());
         return nullptr;
     }
-    std::string table_address = base::xvaccount_t::make_table_account_address(vaccount);
-    common::xaccount_address_t _table_addr(table_address);
 
+    common::xtable_address_t table_address = account_address.table_address();
     base::xaccount_index_t account_index;
-    auto ret = get_accountindex_from_latest_connected_table(_table_addr, account_address, account_index);
+    auto ret = get_accountindex(LatestConnectBlock, table_address, account_address, account_index);
     if (!ret) {
+        xwarn("xstatestore_impl_t::get_unit_latest_connectted_state fail-get account index %s", account_address.to_string().c_str());
         return nullptr;
     }
 
@@ -312,7 +326,7 @@ data::xunitstate_ptr_t  xstatestore_impl_t::get_unit_committed_changed_state(com
 }
 
 data::xunitstate_ptr_t  xstatestore_impl_t::get_unit_committed_state(common::xaccount_address_t const & account_address, uint64_t height) const {
-    auto _block = get_blockstore()->load_block_object(account_address.vaccount(), height, base::enum_xvblock_flag_committed, false);
+    auto _block = get_blockstore()->load_unit(account_address.vaccount(), height);
     if (nullptr == _block) {
         xwarn("xstatestore_impl_t::get_unit_committed_state fail-get block.%s,height=%ld", account_address.to_string().c_str(), height);
         return nullptr;
@@ -334,18 +348,9 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_by_unit_block(base::xv
     return get_unit_state_from_block(account_address, target_block);
 }
 
-bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const {
-    base::xvaccount_t vaccount(account_address.vaccount());
-    if (!vaccount.has_valid_table_addr()) {
-        xwarn("xstatestore_impl_t::get_accountindex fail-invalid addr.%s",account_address.to_string().c_str());
-        return false;
-    }
-    std::string table_addr = base::xvaccount_t::make_table_account_address(account_address.vaccount());
-    common::xaccount_address_t table_address(table_addr);
-
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_addr);
-
-    if (number == LatestConnectBlock) {
+bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xtable_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
+    if (number == LatestConnectBlock || number == LatestBlock || number == PendingBlock) {
         auto tablestate = tablestore->get_latest_connectted_table_state();
         if (tablestate == nullptr) {
             xerror("xstatestore_impl_t::get_accountindex fail-load state. table=%s,account=%s",table_address.to_string().c_str(),account_address.to_string().c_str());
@@ -360,11 +365,8 @@ bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xaccou
         return true;
     }
 
-    // TODO(jimmy) get latest commit and cert executed state
     xobject_ptr_t<base::xvblock_t> _block = nullptr;
-    if (number == LatestBlock || number == PendingBlock) {
-        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(table_address.vaccount());
-    } else if (number == 0) {
+    if (number == 0) {
         _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(table_address.vaccount());
     } else {
         uint64_t commit_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(table_address.vaccount());
@@ -378,7 +380,18 @@ bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xaccou
         xwarn("xstatestore_impl_t::get_accountindex fail-get block.table=%s,account=%sheight=%ld", table_address.to_string().c_str(),account_address.to_string().c_str(), number);
         return false;
     }
-    return tablestore->get_accountindex_from_table_block(account_address, _block.get(), account_index);
+    return tablestore->get_accountindex_from_table_block(account_address, _block.get(), account_index);    
+}
+
+bool xstatestore_impl_t::get_accountindex(xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const {
+    base::xvaccount_t vaccount(account_address.vaccount());
+    if (!vaccount.has_valid_table_addr()) {
+        xwarn("xstatestore_impl_t::get_accountindex fail-invalid addr.%s",account_address.to_string().c_str());
+        return false;
+    }
+
+    common::xtable_address_t table_address = account_address.table_address();
+    return get_accountindex(number, table_address, account_address, account_index);
 }
 
 std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstatestore_impl_t::get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const {
@@ -388,7 +401,7 @@ std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstat
         return {};
     }
 
-    auto state_root = tablestate_ext->get_state_mpt()->get_original_root_hash();
+    auto const & state_root = tablestate_ext->get_state_mpt()->original_root_hash();
     if (state_root.empty()) {
         if (tablestate_ext->get_table_state() == nullptr) {
             ec = error::xerrc_t::statestore_load_tablestate_err;
@@ -404,7 +417,7 @@ std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xstat
         for (auto & leaf : leafs) {
             state_mpt::xaccount_info_t info;
             info.decode({leaf.begin(), leaf.end()});
-            accounts_index.emplace_back(info.m_account, info.m_index);
+            accounts_index.emplace_back(info.account, info.index);
         }
         return accounts_index;
     }
@@ -427,16 +440,16 @@ data::xaccountstate_ptr_t xstatestore_impl_t::get_accountstate(xblock_number_t n
 
 bool xstatestore_impl_t::get_accountindex(const std::string& table_height, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const {
     xblock_number_t number;
-    if (table_height == "latest")
+    if (table_height == BlockHeightLatest)
         number = LatestBlock;
-    else if (table_height == "earliest")
+    else if (table_height == BlockHeightEarliest)
         number = 0;
-    else if (table_height == "pending")
+    else if (table_height == BlockHeightPending)
         number = PendingBlock;
     else {
         number = std::strtoul(table_height.c_str(), NULL, 16);
     }
-
+    
     return get_accountindex(number, account_address, account_index);
 }
 
@@ -450,14 +463,14 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_by_table(common::xacco
     return get_unit_state_by_accountindex(account_address, accountindex);
 }
 
-uint64_t xstatestore_impl_t::get_blockchain_height(common::xaccount_address_t const & account_address) const {
-    auto unitstate = get_unit_latest_connectted_state(account_address);
-    if (nullptr == unitstate) {
-        xwarn("xstatestore_impl_t::map_get fail-find account. account=%s", account_address.to_string().c_str());
-        return 0;
-    }
-    return unitstate->height();
-}
+// uint64_t xstatestore_impl_t::get_blockchain_height(common::xaccount_address_t const & account_address) const {
+//     auto unitstate = get_unit_latest_connectted_state(account_address);
+//     if (nullptr == unitstate) {
+//         xwarn("xstatestore_impl_t::map_get fail-find account. account=%s", account_address.to_string().c_str());
+//         return 0;
+//     }
+//     return unitstate->height();
+// }
 
 int32_t xstatestore_impl_t::map_get(common::xaccount_address_t const & account_address, const std::string &key, const std::string &field, std::string &value) const {
     auto unitstate = get_unit_latest_connectted_state(account_address);
@@ -517,9 +530,9 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
     }
     xobject_ptr_t<base::xvblock_t> vblock = nullptr;
     if (!account_index.get_latest_unit_hash().empty()) {
-        vblock = blockstore->load_block_object(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash(), false);
+        vblock = blockstore->load_unit(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash());
     } else {
-        vblock = blockstore->load_block_object(account, account_index.get_latest_unit_height(), base::enum_xvblock_flag_committed, false);
+        vblock = blockstore->load_unit(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid());
     }
     if (vblock == nullptr) {
         xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load object addr.%s %s",account_address.to_string().c_str(), account_index.dump().c_str());
@@ -533,7 +546,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
     uint64_t current_height = vblock->get_height();
     auto block_hash = vblock->get_last_block_hash();
     while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, block_hash, false);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_unit(account, current_height - 1, block_hash);
         if (prev_vblock == nullptr) {
             xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
@@ -552,18 +565,23 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
 base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account, uint64_t max_height) {
     // there is mostly two empty units
     XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(account, max_height, base::enum_xvblock_flag_committed, false);
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_unit(account, max_height);
+    if (nullptr == vblock) {
+        xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), max_height);
+        return nullptr;
+    }
     xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
     if (vblock->is_state_changed_unit()) {
         return vblock;
     }
 
     uint64_t current_height = vblock->get_height();
+    auto block_hash = vblock->get_last_block_hash();
     while (current_height > 0) {
         XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_unit(account, current_height - 1, block_hash);
         if (prev_vblock == nullptr) {
-            xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
+            xwarn("xstatestore_impl_t::get_committed_state_changed_block fail-load prev unit.%s,height=%ld",account.get_account().c_str(), current_height - 1);
             return prev_vblock;
         }
 
@@ -572,11 +590,12 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
         }
 
         current_height = prev_vblock->get_height();
+        block_hash = prev_vblock->get_last_block_hash();
     }
     return nullptr;
 }
 
-data::xtablestate_ptr_t xstatestore_impl_t::get_table_connectted_state(common::xaccount_address_t const & table_address) const {
+data::xtablestate_ptr_t xstatestore_impl_t::get_table_connectted_state(common::xtable_address_t const & table_address) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
     auto tablestate = tablestore->get_latest_connectted_table_state();
     if (nullptr != tablestate) {
@@ -669,6 +688,16 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
     property_prove_ptr = property_prove;
     tablestate_ptr = tablestate;
     return true;
+}
+
+void xstatestore_impl_t::clear_cache(common::xtable_address_t const & table_address) {
+    if (table_address.vaccount().get_zone_index() == base::enum_chain_zone_evm_index) {
+        return; // TODO(jimmy) not clear evm cache for performance
+    }
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
+    if (nullptr != tablestore) {
+        tablestore->clear_cache();
+    }
 }
 
 base::xvblockstore_t*  xstatestore_impl_t::get_blockstore() const {

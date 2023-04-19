@@ -1,6 +1,6 @@
 #!/bin/bash
-source /etc/profile
-source ~/.bashrc
+# source /etc/profile
+# source ~/.bashrc
 # set -x
 
 build_mode=""

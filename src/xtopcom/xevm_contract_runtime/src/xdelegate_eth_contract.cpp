@@ -30,7 +30,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
     // chain_uuid (1 byte) | erc20_method_id (4 bytes) | parameters (depends)
     if (input.empty()) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
         xwarn("precompiled eth contract: invalid input");
@@ -40,7 +40,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
     common::xchain_uuid_t const chain_uuid{top::from_byte<common::xchain_uuid_t>(input.front())};
     if (chain_uuid != common::xchain_uuid_t::eth) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
         xwarn("precompiled eth contract: not supported token: %d", static_cast<int>(chain_uuid));
@@ -51,7 +51,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
     std::error_code ec;
     evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(xbytes_t{std::next(std::begin(input), 1), std::end(input)}, ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
         xwarn("precompiled eth contract: illegal input data");
@@ -61,7 +61,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
     auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
     if (ec) {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
         xwarn("precompiled eth contract: illegal input function selector");
@@ -87,7 +87,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         xbytes_t result(32, 0);
 
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = mint_gas_cost;
             err.output = result;
@@ -102,7 +102,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(chain_uuid);
         if (msg_sender != token_controller) {
-             err.fail_status = precompile_error::Fatal;
+             err.fail_status = precompile_error::fatal;
              err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
              xwarn("precompiled eth contract: mint called by non-admin account %s", context.caller.c_str());
@@ -111,7 +111,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
 
         if (target_gas < mint_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled eth contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
@@ -120,7 +120,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 2) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: mint with invalid parameter");
@@ -130,7 +130,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         auto const recver = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: mint with invalid receiver address");
@@ -141,7 +141,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: mint with invalid value");
@@ -170,7 +170,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = mint_gas_cost;
             err.output = result;
@@ -188,7 +188,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         xbytes_t result(32, 0);
 
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = burn_gas_cost;
             err.output = result;
@@ -202,7 +202,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(chain_uuid);
         if (msg_sender != token_controller) {
-             err.fail_status = precompile_error::Fatal;
+             err.fail_status = precompile_error::fatal;
              err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
              xwarn("precompiled eth contract: burnFrom called by non-admin account %s", context.caller.c_str());
@@ -211,7 +211,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
 
         if (target_gas < burn_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled eth contract: burnFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, burn_gas_cost);
@@ -220,7 +220,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 2) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: burnFrom with invalid parameter");
@@ -230,7 +230,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         auto const & burn_from = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: burnFrom with invalid burn from address");
@@ -240,7 +240,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: burnFrom with invalid value");
@@ -268,7 +268,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = burn_gas_cost;
             err.output = result;
@@ -286,7 +286,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         xbytes_t result(32, 0);
 
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = transfer_ownership_gas_cost;
             err.output = result;
@@ -302,7 +302,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_owner = contract_state->tep_token_owner(chain_uuid);
         if (msg_sender != token_owner) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: transferOwnership called by non-admin account %s", context.caller.c_str());
@@ -312,7 +312,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         ec.clear();
 
         if (target_gas < transfer_ownership_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled eth contract: transferOwnership out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_ownership_gas_cost);
@@ -321,7 +321,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 1) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: transferOwnership with invalid parameter");
@@ -331,7 +331,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         auto const new_owner = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: transferOwnership with invalid burn from address");
@@ -355,7 +355,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(std::move(log));
         } else {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = transfer_ownership_gas_cost;
             err.output = result;
@@ -373,7 +373,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         xbytes_t result(32, 0);
 
         if (is_static) {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = set_controller_gas_cost;
             err.output = result;
@@ -390,7 +390,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_owner = contract_state->tep_token_owner(chain_uuid);
         if (msg_sender != token_owner) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: setController called by non-admin account %s", context.caller.c_str());
@@ -400,7 +400,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         ec.clear();
 
         if (target_gas < set_controller_gas_cost) {
-            err.fail_status = precompile_error::Error;
+            err.fail_status = precompile_error::error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
             xwarn("precompiled eth contract: setController out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, set_controller_gas_cost);
@@ -409,7 +409,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
 
         if (abi_decoder.size() != 1) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: setController with invalid parameter");
@@ -419,7 +419,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
 
         auto const new_controller = abi_decoder.extract<common::xeth_address_t>(ec);
         if (ec) {
-            err.fail_status = precompile_error::Fatal;
+            err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("precompiled eth contract: setController with invalid burn from address");
@@ -445,7 +445,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(std::move(log));
         } else {
-            err.fail_status = precompile_error::Revert;
+            err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = set_controller_gas_cost;
             err.output = result;
@@ -488,7 +488,7 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
     }
 
     default: {
-        err.fail_status = precompile_error::Fatal;
+        err.fail_status = precompile_error::fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
         xwarn("precompiled eth contract: not supported method_id: %" PRIx32, function_selector.method_id);

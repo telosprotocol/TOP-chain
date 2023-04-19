@@ -19,10 +19,12 @@
 #include "xchain_fork/xutility.h"
 #include "xdbstore/xstore_face.h"
 #define private public
+#include "xdata/xelect_transaction.hpp"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xrootblock.h"
 #include "xvm/manager/xcontract_manager.h"
 
 
@@ -60,15 +62,15 @@ public:
         config_center.init_static_config();
 
         // tcc contract
-        xcontract_manager_t::instance().register_contract<xrec_proposal_contract>(common::xaccount_address_t{sys_contract_rec_tcc_addr}, common::xtopchain_network_id);
-        xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_contract_rec_tcc_addr}, common::xaccount_address_t{sys_contract_rec_tcc_addr});
-        xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_contract_rec_tcc_addr}, m_blockstore.get());
+        xcontract_manager_t::instance().register_contract<xrec_proposal_contract>(rec_tcc_contract_address, common::xtopchain_network_id);
+        xcontract_manager_t::instance().register_contract_cluster_address(rec_tcc_contract_address, rec_tcc_contract_address);
+        xcontract_manager_t::instance().setup_chain(rec_tcc_contract_address, m_blockstore.get());
     }
 
     static data::xtransaction_ptr_t submit_proposal(std::string const& source_param, std::string const& target_param) {
         data::xtransaction_v2_ptr_t submit_proposal_trx = make_object_ptr<data::xtransaction_v2_t>();
-        submit_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
-        submit_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
+        submit_proposal_trx->source_address(common::xaccount_address_t::build_from("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73"));
+        submit_proposal_trx->target_address(rec_tcc_contract_address);
         submit_proposal_trx->set_source_action_para(source_param);
         submit_proposal_trx->set_target_action_name("submitProposal");
         submit_proposal_trx->set_target_action_para(target_param);
@@ -78,8 +80,8 @@ public:
 
     static data::xtransaction_ptr_t withdraw_proposal(std::string const& target_param) {
         data::xtransaction_v2_ptr_t withdraw_proposal_trx = make_object_ptr<data::xtransaction_v2_t>();
-        withdraw_proposal_trx->set_source_addr("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73");
-        withdraw_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
+        withdraw_proposal_trx->source_address(common::xaccount_address_t::build_from("T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73"));
+        withdraw_proposal_trx->target_address(rec_tcc_contract_address);
         withdraw_proposal_trx->set_target_action_name("withdrawProposal");
         withdraw_proposal_trx->set_target_action_para(target_param);
         return withdraw_proposal_trx;
@@ -87,8 +89,8 @@ public:
 
     static data::xtransaction_ptr_t vote_proposal(std::string const& target_param) {
         data::xtransaction_v2_ptr_t vote_proposal_trx = make_object_ptr<data::xtransaction_v2_t>();
-        vote_proposal_trx->set_source_addr("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB");
-        vote_proposal_trx->set_target_addr(sys_contract_rec_tcc_addr);
+        vote_proposal_trx->source_address(common::xaccount_address_t::build_from("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB"));
+        vote_proposal_trx->target_address(rec_tcc_contract_address);
         vote_proposal_trx->set_target_action_name("tccVote");
         vote_proposal_trx->set_target_action_para(target_param);
         return vote_proposal_trx;

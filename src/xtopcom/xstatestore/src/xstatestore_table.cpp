@@ -6,7 +6,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xchain_fork/xutility.h"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvstatestore.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
@@ -49,8 +48,8 @@ bool xstatestore_table_t::on_table_block_committed_by_height(uint64_t height, co
     return m_table_executor.on_table_block_committed_by_height(height, block_hash);
 }
 
-xtablestate_ext_ptr_t xstatestore_table_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
-    return m_table_executor.do_commit_table_all_states(current_block, tablestate_store, ec);
+xtablestate_ext_ptr_t xstatestore_table_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::map<std::string, base::xaccount_index_t> const& account_index_map, std::error_code & ec) const {
+    return m_table_executor.do_commit_table_all_states(current_block, tablestate_store, account_index_map, ec);
 }
 
 xtablestate_ext_ptr_t xstatestore_table_t::get_tablestate_ext_from_block(base::xvblock_t* target_block, bool bstate_must) const {
@@ -68,11 +67,19 @@ bool xstatestore_table_t::get_accountindex_from_table_block(common::xaccount_add
     return true;
 }
 
+bool xstatestore_table_t::accountindex_cache_unbroken(base::xvblock_t * table_block) const {
+    return m_table_executor.accountindex_cache_unbroken(table_block);
+}
+
+bool xstatestore_table_t::get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
+    return m_table_executor.get_accountindex_by_recent_blocks_cache(table_block, account_address, account_index);
+}
+
 data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block) const {
     base::xaccount_index_t account_index;
     if (false == get_accountindex_from_table_block(account_address, table_block, account_index)) {
         xwarn("xstatestore_table_t::get_unit_state_from_table_block fail-get accountindex.%s,block=%s", account_address.to_string().c_str(), table_block->dump().c_str());
-        return nullptr;        
+        return nullptr;
     }
     return get_unit_state_from_accountindex(account_address, account_index);
 }
@@ -86,6 +93,10 @@ uint64_t xstatestore_table_t::get_need_sync_state_block_height() const {
 
 void xstatestore_table_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
     return m_table_executor.raise_execute_height(sync_info);
+}
+
+void xstatestore_table_t::clear_cache() {
+    return m_table_executor.clear_cache();
 }
 
 // void xstatestore_table_t::state_prune() {

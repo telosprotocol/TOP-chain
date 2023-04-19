@@ -8,8 +8,8 @@
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xchain_param.h"
-#include "xdata/xgenesis_data.h"
 #include "xdata/xtx_factory.h"
 #include "xhttp/xhttp_client_base.h"
 #include "xmbus/xevent_store.h"
@@ -20,7 +20,6 @@
 #include "xrpc/xuint_format.h"
 #include "xsafebox/safebox_proxy.h"
 
-#include <cinttypes>
 
 using namespace top::data;
 
@@ -68,18 +67,18 @@ void xelect_client_imp::bootstrap_node_join() {
         for (auto & item : ip_set) {
             std::string seed_edge_host = item + ":" + http_port;
             BootstrapClient client{seed_edge_host};
-            xdbg("bootstrap to %s", seed_edge_host.c_str());
+            xinfo("bootstrap_node_join try_count %zu bootstrap to %s", i, seed_edge_host.c_str());
 
             try {
                 std::string token_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=requestToken&sequence_id=1";
                 xdbg("token_request:%s", token_request.c_str());
                 auto token_response_str = client.Request(token_request);
-                xdbg("token_response:%s", token_response_str.c_str());
+                xinfo("bootstrap_node_join token_response:%s", token_response_str.c_str());
                 Json::Reader reader;
                 Json::Value token_response_json;
                 xdbg("json parse: %d", reader.parse(token_response_str, token_response_json));
                 if (!reader.parse(token_response_str, token_response_json) || token_response_json[xrpc::RPC_ERRNO].asUInt() != xrpc::RPC_OK_CODE) {
-                    xerror("token_response error");
+                    xerror("bootstrap_node_join token_response error");
                     continue;
                 }
                 std::string token = token_response_json["data"][xrpc::RPC_TOKEN].asString();
@@ -89,7 +88,7 @@ void xelect_client_imp::bootstrap_node_join() {
                                                    "&body=" + client.percent_encode("{\"params\": {\"account_addr\": \"" + user_params.account.to_string() + "\"}}");
                 xdbg("account_info_request:%s", account_info_request.c_str());
                 auto account_info_response_str = client.Request(account_info_request);
-                xdbg("account_info_response:%s", account_info_response_str.c_str());
+                xinfo("bootstrap_node_join account_info_response:%s", account_info_response_str.c_str());
 
                 top::base::xstream_t param_stream(base::xcontext_t::instance());
                 param_stream << user_params.account;
@@ -106,7 +105,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 // uint64_t last_hash = 0;
                 Json::Value account_info_response_json;
                 if (!reader.parse(account_info_response_str, account_info_response_json) || account_info_response_json[xrpc::RPC_ERRNO].asInt() != xrpc::RPC_OK_CODE) {
-                    xwarn("account_info_response_json error");
+                    xwarn("bootstrap_node_join account_info_response_json error");
                 } else {
                     nonce = account_info_response_json["data"]["nonce"].asUInt64();
                     // std::string last_trans_hash = account_info_response_json["data"]["latest_tx_hash_xxhash64"].asString();
@@ -134,12 +133,12 @@ void xelect_client_imp::bootstrap_node_join() {
                 xdbg("send_tx_request: %s", send_tx_request.c_str());
 
                 auto send_tx_response_str = client.Request(send_tx_request);
-                xkinfo("send_tx_response: %s", send_tx_response_str.c_str());
+                xkinfo("bootstrap_node_join send_tx_response: %s", send_tx_response_str.c_str());
                 if (++success_count >= 3) {
                     break;
                 }
             } catch (const std::exception & e) {
-                xerror("Client exception error: %s", e.what());
+                xerror("bootstrap_node_join Client exception error: %s", e.what());
             }
         }
         if (success_count) {

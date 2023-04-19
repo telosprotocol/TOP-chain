@@ -162,6 +162,9 @@ namespace top
             virtual bool    proc_vote_complate(base::xvblock_t * proposal_block);
             virtual bool    verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data);
 
+            // for preproposal
+            virtual bool    proc_preproposal(const xvip2_t & leader_xip,  uint64_t height, uint64_t viewid, uint64_t clock, uint32_t viewtoken, const std::string & msgdata);
+            
             //send clock event to child objects
             virtual bool    fire_clock(base::xvblock_t & latest_clock_block,int32_t cur_thread_id,uint64_t timenow_ms);
             //dispatch view-change event to both upper(parent objects) and lower layers(child objects)
@@ -263,6 +266,9 @@ namespace top
             //call from lower layer to higher layer(parent)
             virtual bool  on_certificate_finish(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms);
 
+            //call from lower layer to higher layer(parent)
+            virtual bool  on_update_view(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms);
+            
         public: //help function and allow called from outside
 
             //proposal_start_event always go down from higher layer

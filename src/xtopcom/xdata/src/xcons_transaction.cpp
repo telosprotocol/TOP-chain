@@ -87,8 +87,8 @@ void xcons_transaction_t::set_not_need_confirm() {
         return;
     }
     if (is_send_tx()) {
-        if (data::is_sys_contract_address(common::xaccount_address_t{get_transaction()->get_source_addr()}) ||
-            !data::is_sys_contract_address(common::xaccount_address_t{get_transaction()->get_target_addr()})) {
+        if (data::is_sys_contract_address(get_transaction()->source_address()) ||
+            !data::is_sys_contract_address(get_transaction()->target_address())) {
             xdbg("xcons_transaction_t::set_not_need_confirm tx:%s true", dump().c_str());
             m_execute_state.set_not_need_confirm(true);
         }
@@ -119,7 +119,7 @@ void xcons_transaction_t::set_tx_subtype(enum_transaction_subtype _subtype) {
 
 void xcons_transaction_t::update_transation() {
     if (m_receipt == nullptr) {
-        if (m_tx->get_source_addr() == m_tx->get_target_addr() || data::is_black_hole_address(common::xaccount_address_t{m_tx->get_target_addr()})) {
+        if (m_tx->source_address() == m_tx->target_address() || data::is_black_hole_address(m_tx->target_address())) {
             set_tx_subtype(enum_transaction_subtype_self);
         } else if (m_tx->get_tx_version() == xtransaction_version_3 && m_tx->get_tx_type() == xtransaction_type_deploy_evm_contract) {
             set_tx_subtype(enum_transaction_subtype_self);
@@ -241,7 +241,7 @@ std::string xcons_transaction_t::dump(bool detail) const {
                 get_peer_tableid(),
                 get_transaction()->get_tx_nonce(),
                 get_transaction()->get_tx_type(),
-                get_transaction()->get_source_addr().c_str());
+                get_transaction()->source_address().to_string().c_str());
     } else if (is_send_tx()) {
         xprintf(local_param_buf,
                 sizeof(local_param_buf),
@@ -251,8 +251,8 @@ std::string xcons_transaction_t::dump(bool detail) const {
                 get_peer_tableid(),
                 get_transaction()->get_tx_nonce(),
                 get_transaction()->get_tx_type(),
-                get_transaction()->get_source_addr().c_str(),
-                get_transaction()->get_target_addr().c_str());
+                get_transaction()->source_address().to_string().c_str(),
+                get_transaction()->target_address().to_string().c_str());
     } else if (is_recv_tx()) {
         xprintf(local_param_buf,
                 sizeof(local_param_buf),
@@ -424,7 +424,7 @@ uint256_t xcons_transaction_t::get_tx_hash_256() const {  // TODO(jimmy) always 
 
 std::string xcons_transaction_t::get_account_addr() const {
     if (get_transaction() != nullptr) {
-        return is_recv_tx()? m_tx->get_target_addr() : m_tx->get_source_addr();
+        return is_recv_tx()? m_tx->target_address().to_string() : m_tx->source_address().to_string();
     } else {
         xassert(m_receipt != nullptr);
         xassert(!m_receipt->get_caller().empty());

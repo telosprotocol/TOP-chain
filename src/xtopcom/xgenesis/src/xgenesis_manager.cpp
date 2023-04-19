@@ -15,6 +15,7 @@
 #include "xcommon/common_data.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xgenesis/xerror/xerror.h"
+#include "xgenesis/xgenesis_accounts.h"
 #include "xstore/xaccount_context.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
@@ -38,8 +39,6 @@ namespace genesis {
         xwarn("[xtop_genesis_manager] error occured, category: %s, msg: %s!", ec.category().name(), ec.message().c_str());                                                         \
         return;                                                                                                                                                                    \
     } while (0)
-
-std::set<common::xaccount_address_t>     xtop_genesis_manager::m_all_genesis_accounts;
 
 xtop_genesis_manager::xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore)
   : m_blockstore{blockstore} {
@@ -145,8 +144,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
     xassert(genesis_block != nullptr);
     // check
     xassert(!account.vaccount().get_account().empty());
-    if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account.vaccount())) {
-        auto const existed_genesis_block = m_blockstore->load_block_object(account.vaccount(), (uint64_t)0, (uint64_t)0, false);
+    if (src == xenum_create_src_t::init && m_blockstore->exist_unit(account.vaccount())) {
+        auto const existed_genesis_block = m_blockstore->load_unit(account.vaccount(), (uint64_t)0);
         if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {
             xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s, genesis block already exists", account.to_string().c_str());
             return nullptr;
@@ -165,7 +164,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
                   account.to_string().c_str(),
                   base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
                   base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
-            m_blockstore->delete_block(account.vaccount(), existed_genesis_block.get());
+            m_blockstore->delete_unit(account.vaccount(), existed_genesis_block.get());
         } else {
             xerror("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, %s, %s",
                    account.to_string().c_str(),
@@ -200,8 +199,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);
-        if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
-            auto const existed_genesis_block = m_blockstore->load_block_object(account, (uint64_t)0, (uint64_t)0, false);
+        if (src == xenum_create_src_t::init && m_blockstore->exist_unit(account)) {
+            auto const existed_genesis_block = m_blockstore->load_unit(account, (uint64_t)0);
             if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {
                 xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s, genesis block already exists", account.get_account().c_str());
                 return nullptr;
@@ -211,7 +210,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
                     account.get_account().c_str(),
                     base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
                     base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
-                m_blockstore->delete_block(account, existed_genesis_block.get());
+                m_blockstore->delete_unit(account, existed_genesis_block.get());
             }
         }
         xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
@@ -230,8 +229,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);
-        if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
-            auto const existed_genesis_block = m_blockstore->load_block_object(account, (uint64_t)0, (uint64_t)0, false);
+        if (src == xenum_create_src_t::init && m_blockstore->exist_unit(account)) {
+            auto const existed_genesis_block = m_blockstore->load_unit(account, (uint64_t)0);
             if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {
                 xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s, genesis block already exists", account.get_account().c_str());
                 return nullptr;
@@ -241,7 +240,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
                     account.get_account().c_str(),
                     base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
                     base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
-                m_blockstore->delete_block(account, existed_genesis_block.get());
+                m_blockstore->delete_unit(account, existed_genesis_block.get());
             }
         }
         xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
@@ -272,7 +271,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_datause
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
     // check
-    if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
+    if (src == xenum_create_src_t::init && m_blockstore->exist_unit(account)) {
         xinfo("[xtop_genesis_manager::create_genesis_of_datauser_account] account: %s, genesis block already exists", account.get_account().c_str());
         return nullptr;
     }
@@ -291,7 +290,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_genesis
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
     // check
-    if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
+    if (src == xenum_create_src_t::init && m_blockstore->exist_unit(account)) {
         xinfo("[xtop_genesis_manager::create_genesis_of_genesis_account] account: %s, genesis block already exists", account.get_account().c_str());
         return nullptr;
     }
@@ -303,7 +302,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_genesis
 }
 
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_common_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
-    xinfo("[xtop_genesis_manager::create_genesis_of_common_account] account: %s", account.get_account().c_str());
+    xdbg("[xtop_genesis_manager::create_genesis_of_common_account] account: %s", account.get_account().c_str());
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
     // check
@@ -312,15 +311,23 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_common_
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_empty_table(account.get_account());
     xassert(genesis_block != nullptr);
     genesis_block->reset_modified_count();
-    xinfo("[xtop_genesis_manager::create_genesis_of_common_account] account: %s, create empty genesis block success", account.get_account().c_str());
+    xdbg("[xtop_genesis_manager::create_genesis_of_common_account] account: %s, create empty genesis block success", account.get_account().c_str());
     return genesis_block;
 }
 
 void xtop_genesis_manager::store_block(base::xvaccount_t const & account, base::xvblock_t * block, std::error_code & ec) {
-    if (false == m_blockstore->store_block(account, block)) {
-        xerror("[xtop_genesis_manager::store_block] account: %s, store genesis block failed", account.get_account().c_str());
-        xassert(false);
-        SET_EC_RETURN(ec, error::xenum_errc::genesis_block_store_failed);
+    if (account.is_unit_address()) {
+        if (false == m_blockstore->store_unit(account, block)) {
+            xerror("[xtop_genesis_manager::store_block] account: %s, store genesis block failed", account.get_account().c_str());
+            xassert(false);
+            SET_EC_RETURN(ec, error::xenum_errc::genesis_block_store_failed);
+        }
+    } else {
+        if (false == m_blockstore->store_block(account, block)) {
+            xerror("[xtop_genesis_manager::store_block] account: %s, store genesis block failed", account.get_account().c_str());
+            xassert(false);
+            SET_EC_RETURN(ec, error::xenum_errc::genesis_block_store_failed);
+        }        
     }
 }
 
@@ -338,8 +345,8 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
         if (vblock != nullptr) {
             store_block(base::xvaccount_t{account.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
+            xgenesis_accounts_mpt_t::instance().add_account(account);
         }
-        m_all_genesis_accounts.insert(account);
     }
     for (auto const & account : m_evm_contract_accounts) {
         auto vblock = create_genesis_of_evm_contract_account(base::xvaccount_t{account.to_string()}, src, ec);
@@ -347,8 +354,8 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
         if (vblock != nullptr) {
             store_block(base::xvaccount_t{account.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
+            xgenesis_accounts_mpt_t::instance().add_account(account);
         }
-        m_all_genesis_accounts.insert(account);
     }
     {
         common::xaccount_address_t account(sys_contract_relay_block_addr);
@@ -357,8 +364,8 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
         if (vblock != nullptr) {
             store_block(base::xvaccount_t{account.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
+            xgenesis_accounts_mpt_t::instance().add_account(account);
         }
-        m_all_genesis_accounts.insert(account);
     }
     // step3: user accounts with data(reset)
     if (false == chain_data::xtop_chain_data_processor::check_state()) {
@@ -368,8 +375,8 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
             if (vblock != nullptr) {
                 store_block(base::xvaccount_t{pair.first.to_string()}, vblock.get(), ec);
                 CHECK_EC_RETURN(ec);
+                xgenesis_accounts_mpt_t::instance().add_account(pair.first);
             }
-            m_all_genesis_accounts.insert(pair.first);
         }
         if (false == chain_data::xtop_chain_data_processor::set_state()) {
             xerror("[xtop_genesis_manager::init_genesis_block] chain_data_processor set state failed");
@@ -383,8 +390,8 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
         if (vblock != nullptr) {
             store_block(base::xvaccount_t{pair.first.to_string()}, vblock.get(), ec);
             CHECK_EC_RETURN(ec);
+            xgenesis_accounts_mpt_t::instance().add_account(pair.first);
         }
-        m_all_genesis_accounts.insert(pair.first);
     }
 }
 
@@ -426,5 +433,6 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_relay_a
     xassert(nullptr != genesis_block);
     return genesis_block;
 }
+
 }  // namespace genesis
 }  // namespace top

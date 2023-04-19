@@ -1,15 +1,14 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
 
-// #include "xbasic/xrunnable.h"
 #include "xcommon/xlogic_time.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
 
-NS_BEG2(top, vnode)
+NS_BEG3(top, vnode, details)
 
 class xtop_vnode_role_proxy_face /*: public xbasic_runnable_t<xtop_vnode_role_proxy_face>*/ {
 public:
@@ -27,6 +26,9 @@ public:
     virtual void unreg(common::xnode_address_t const & address) = 0;
     virtual void destroy(common::xnode_address_t const & address) = 0;
 };
-using xvnode_role_proxy_face_t = xtop_vnode_role_proxy_face;
 
+NS_END3
+
+NS_BEG2(top, vnode)
+using xvnode_role_proxy_face_t = details::xtop_vnode_role_proxy_face;
 NS_END2

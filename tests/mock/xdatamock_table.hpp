@@ -88,7 +88,7 @@ class xdatamock_table : public base::xvaccount_t {
     void                                store_genesis_units(base::xvblockstore_t* blockstore) {
         for (auto & mockunit : m_mock_units) {
             auto gene_block = mockunit.get_history_units()[0];
-            blockstore->store_block(base::xvaccount_t(mockunit.get_account()), gene_block.get());
+            blockstore->store_unit(base::xvaccount_t(mockunit.get_account()), gene_block.get());
         }
     }
 
@@ -253,7 +253,7 @@ class xdatamock_table : public base::xvaccount_t {
                 }
             }            
         }
-        m_table_state = std::make_shared<xtable_bstate_t>(current_state.get(), false);
+        m_table_state = std::make_shared<xtable_bstate_t>(current_state.get());
         m_table_states.push_back(m_table_state);
         if (m_table_states.size() > 3) {
             m_table_states.pop_front();
@@ -313,7 +313,7 @@ class xdatamock_table : public base::xvaccount_t {
         // always clone new state
         xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *(m_table_state->get_bstate()));
 
-        return std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);
+        return std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), m_table_state->get_bstate().get());
     }
 
     xblock_ptr_t generate_batch_table(const data::xblock_consensus_para_t & cs_para) {
@@ -323,41 +323,39 @@ class xdatamock_table : public base::xvaccount_t {
         m_batch_units.clear();        
 
         data::xtablestate_ptr_t proposal_table_state = build_proposal_state();
-        std::map<std::string, data::xunitstate_ptr_t>  proposal_states;
+        std::map<std::string, data::xaccountstate_ptr_t>  proposal_states;
 
         txexecutor::xexecute_output_t execute_output;
         for (auto & tx : m_proposal_txs) {                
-            if (tx->is_send_or_self_tx() || tx->is_confirm_tx())
-            {
-                base::xvaccount_t _source_vaddr(tx->get_source_addr());
-                xdatamock_unit s_mockunit = find_mock_unit(tx->get_source_addr());
-                data::xunitstate_ptr_t pstate;
-                auto iter = proposal_states.find(s_mockunit.get_account());
-                if (iter != proposal_states.end()) {
-                    pstate = iter->second;
-                } else {
-                    pstate = s_mockunit.build_proposal_state();
-                    proposal_states[s_mockunit.get_account()] = pstate;
-                }
-                
-                pstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));        
+            std::string state_addr;
+            if (tx->is_send_or_self_tx() || tx->is_confirm_tx()) {
+                state_addr = tx->get_source_addr();
+            } else {
+                state_addr = tx->get_target_addr();
             }
 
-            if (tx->is_recv_tx())
-            {
-                base::xvaccount_t _source_vaddr(tx->get_target_addr());
-                xdatamock_unit s_mockunit = find_mock_unit(tx->get_target_addr());
-                data::xunitstate_ptr_t pstate;
-                auto iter = proposal_states.find(s_mockunit.get_account());
-                if (iter != proposal_states.end()) {
-                    pstate = iter->second;
-                } else {
-                    pstate = s_mockunit.build_proposal_state();
-                    proposal_states[s_mockunit.get_account()] = pstate;
-                }
-
-                pstate->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));      
+            xdatamock_unit s_mockunit = find_mock_unit(state_addr);
+            data::xaccountstate_ptr_t pstate;
+            auto iter = proposal_states.find(s_mockunit.get_account());
+            if (iter != proposal_states.end()) {
+                pstate = iter->second;
+            } else {
+                pstate = s_mockunit.build_proposal_account_state();
+                proposal_states[s_mockunit.get_account()] = pstate;
             }
+
+
+            if (tx->is_send_or_self_tx() || tx->is_confirm_tx()){               
+                pstate->get_unitstate()->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));    
+                if (tx->is_send_or_self_tx()) {
+                    pstate->set_tx_nonce(tx->get_tx_nonce());
+                }
+            }
+
+            if (tx->is_recv_tx()) {
+                pstate->get_unitstate()->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));      
+            }
+            pstate->do_snapshot();
 
             txexecutor::xatomictx_output_t output;
             output.m_tx = tx;
@@ -368,12 +366,9 @@ class xdatamock_table : public base::xvaccount_t {
 
         for (auto & v : proposal_states) {
             xdatamock_unit s_mockunit = find_mock_unit(v.first);
-
-            base::xvblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block_v2(v.second, cs_para);
-            xassert(unitblock != nullptr);
-            data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(), unitblock->get_block_hash(), unitblock->get_fullstate_hash(), 1);
-            // std::cout << "unit=" << unitblock->dump() << " aindex=" << aindex.dump() << std::endl;
-            m_batch_units.push_back(std::make_pair(unitblock, aindex));
+            blockmaker::xunit_build_result_t unit_result;
+            blockmaker::xunitbuilder_t::make_unitblock_and_unitstate(v.second, cs_para, unit_result);
+            m_batch_units.push_back(std::make_pair(unit_result.unitblock, unit_result.accountindex));
         }
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
@@ -382,7 +377,7 @@ class xdatamock_table : public base::xvaccount_t {
         std::error_code ec;
         auto const & last_state_root = data::xblockextract_t::get_state_root(get_cert_block().get(), ec);
         xassert(!ec);
-        auto table_mpt = state_mpt::xtop_state_mpt::create(common::xtable_address_t::build_from(get_cert_block()->get_account()), last_state_root, m_store.get(), ec);
+        auto table_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(get_cert_block()->get_account()), last_state_root, m_store.get(), ec);
         if (ec) {
             xassert(false);
         }

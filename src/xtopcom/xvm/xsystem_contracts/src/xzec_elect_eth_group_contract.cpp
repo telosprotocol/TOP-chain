@@ -89,14 +89,14 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
     adv_election_group_result.start_time(current_time);
 
     auto adv_group_node_infos = xstatic_election_center::instance().get_static_evm_consensus_election_nodes(adv_group_id.value());
-    for (auto node : adv_group_node_infos) {
+    for (auto const & node : adv_group_node_infos) {
         xelection_info_t new_election_info{};
-        new_election_info.joined_version = next_version;
-        new_election_info.stake = node.stake;
-        new_election_info.comprehensive_stake = node.stake;
-        new_election_info.consensus_public_key = node.pub_key;
-        new_election_info.genesis = false;
-        new_election_info.miner_type = common::xminer_type_t::advance;
+        new_election_info.joined_epoch(next_version);
+        new_election_info.stake(node.stake);
+        new_election_info.comprehensive_stake(node.stake);
+        new_election_info.public_key(node.pub_key);
+        new_election_info.genesis(false);
+        new_election_info.miner_type(common::xminer_type_t::advance);
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.account_address(node.node_id);
@@ -104,7 +104,6 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
         adv_election_group_result.insert(std::move(election_info_bundle));
     }
 
-     
     auto & val_election_group_result =
         election_result_store.result_of(m_network_id).result_of(val_node_type).result_of(common::xdefault_cluster_id).result_of(val_group_id);
 
@@ -125,14 +124,14 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
     val_election_group_result.associated_group_version(adv_election_group_result.group_version());
 
     auto val_group_node_infos = xstatic_election_center::instance().get_static_evm_consensus_election_nodes(val_group_id.value());
-    for (auto node : val_group_node_infos) {
+    for (auto const & node : val_group_node_infos) {
         xelection_info_t new_election_info{};
-        new_election_info.joined_version = next_version;
-        new_election_info.stake = node.stake;
-        new_election_info.comprehensive_stake = node.stake;
-        new_election_info.consensus_public_key = node.pub_key;
-        new_election_info.genesis = false;
-        new_election_info.miner_type = common::xminer_type_t::validator;
+        new_election_info.joined_epoch(next_version);
+        new_election_info.stake(node.stake);
+        new_election_info.comprehensive_stake(node.stake);
+        new_election_info.public_key(node.pub_key);
+        new_election_info.genesis(false);
+        new_election_info.miner_type(common::xminer_type_t::validator);
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.account_address(node.node_id);

@@ -32,9 +32,7 @@ metrics_xtop_node_id::~metrics_xtop_node_id() {
 }
 
 xtop_node_id::xtop_node_id(std::string const & value) {
-    if (!value.empty()) {
-        parse(value);
-    }
+    parse(value);
 }
 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_base_address{std::move(base_address)} {
@@ -87,6 +85,10 @@ xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::
 
 xtop_node_id xtop_node_id::build_from(xaccount_base_address_t const & account_base_address) {
     return build_from(account_base_address.to_string());
+}
+
+xtop_node_id xtop_node_id::build_from(xaccount_base_address_t const & account_base_address, xtable_id_t table_id) {
+    return xtop_node_id{account_base_address, table_id};
 }
 
 bool xtop_node_id::empty() const noexcept {
@@ -196,11 +198,15 @@ xaccount_id_t const & xtop_node_id::account_id() const noexcept {
     return m_account_id;
 }
 
-xledger_id_t const & xtop_node_id::ledger_id() const noexcept {
+xledger_id_t xtop_node_id::ledger_id() const noexcept {
     return m_account_base_address.ledger_id();
 }
 
-xtable_id_t const & xtop_node_id::table_id() const noexcept {
+xzone_id_t xtop_node_id::zone_id() const noexcept {
+    return ledger_id().zone_id();
+}
+
+xtable_id_t xtop_node_id::table_id() const noexcept {
     if (!m_assigned_table_id.empty()) {
         return m_assigned_table_id;
     }
@@ -267,6 +273,11 @@ int32_t xtop_node_id::serialize_from(base::xbuffer_t & buffer) {
 }
 
 void xtop_node_id::parse(std::string const & account_string) {
+    if (account_string.empty()) {
+        xwarn("xaccount_address_t::parse empty string");
+        return;
+    }
+
     if (account_string.length() < static_cast<size_t>(base::xvaccount_t::enum_vaccount_address_prefix_size) ||
         account_string.length() > static_cast<size_t>(static_cast<int>(base::xvaccount_t::enum_vaccount_address_max_size))) {
         top::error::throw_error(error::xerrc_t::invalid_account_address);

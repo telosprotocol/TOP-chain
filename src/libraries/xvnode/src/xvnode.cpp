@@ -31,7 +31,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xbasic_vnode_t{common::xnode_address_t{sharding_address,
@@ -53,16 +52,14 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_logic_timer{logic_timer}
   , m_sync_obj{sync_obj}
   , m_grpc_mgr{grpc_mgr}
-  , m_txpool{txpool}
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost, m_election_cache_data_accessor,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
-
         joined_election_round)}
    {
-    bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
-    bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
+    bool const is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
+    bool const is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
     if (!is_edge_archive && !is_frozen && !common::has<common::xnode_type_t::fullnode>(m_the_binding_driver->type())) {
         m_txpool_face = txpool_service_mgr->create(m_the_binding_driver, m_router);
 
@@ -90,7 +87,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xtop_vnode{elect_main,
@@ -111,9 +107,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                logic_timer,
                sync_obj,
                grpc_mgr,
-               //    cons_mgr,
                txpool_service_mgr,
-               txpool,
                election_cache_data_accessor,
                nodesvr} {}
 
@@ -121,9 +115,9 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & xtop_vnode::vnetwork_
     return m_the_binding_driver;
 }
 
-xtxpool_service_v2::xtxpool_proxy_face_ptr const & xtop_vnode::txpool_proxy() const {
-    return m_txpool_face;
-}
+//xtxpool_service_v2::xtxpool_proxy_face_ptr const & xtop_vnode::txpool_proxy() const {
+//    return m_txpool_face;
+//}
 
 void xtop_vnode::synchronize() {
     m_the_binding_driver->start();
@@ -259,33 +253,27 @@ void xtop_vnode::update_contract_manager(bool destory) {
 }
 
 void xtop_vnode::sync_add_vnet() {
-    bool is_storage_node = false;
-    bool has_other_node = false;
-
     if (miner_type() != common::xenum_miner_type::invalid) {
-        if (genesis()) {
+        bool is_storage_node = false;
+        bool has_other_node = false;
+        if (genesis()
+            || common::has<common::xminer_type_t::archive>(miner_type())
+            || common::has<common::xminer_type_t::exchange>(miner_type())) {
             is_storage_node = true;
-            has_other_node = true;
-        } else if (miner_type() == common::xenum_miner_type::archive || miner_type() == common::xenum_miner_type::exchange) {
-            is_storage_node = true;
-            has_other_node = false;
-        } else if (miner_type() == common::xenum_miner_type::advance || miner_type() == common::xenum_miner_type::validator) {
-            is_storage_node = false;
-            has_other_node = true;
-        } else if (miner_type() == common::xenum_miner_type::edge) {
-            is_storage_node = false;
-            has_other_node = true;
-        } else {
-            xassert(false);
-            is_storage_node = true;
+        }
+        if (genesis()
+            || common::has<common::xminer_type_t::advance>(miner_type())
+            || common::has<common::xminer_type_t::validator>(miner_type())
+            || common::has<common::xminer_type_t::edge>(miner_type())) {
             has_other_node = true;
         }
+
         base::xvchain_t::instance().set_node_type(is_storage_node, has_other_node);
     }
-    
+
     m_sync_obj->add_vnet(vnetwork_driver(), miner_type(), genesis());
 
-    xinfo("vnode (%p) at address %s starts synchronizing. miner_type=%d,genesis=%d", this, address().to_string().c_str(), miner_type(), genesis());
+    xinfo("xtop_vnode::sync_add_vnet vnode (%p) at address %s starts synchronizing. miner_type=%d,genesis=%d", this, address().to_string().c_str(), miner_type(), genesis());
 }
 
 void xtop_vnode::sync_remove_vnet() {

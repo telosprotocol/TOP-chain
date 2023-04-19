@@ -74,20 +74,20 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
     return index_detail;
 }
 
-void xrpc_loader_t::parse_logs(const xtxindex_detail_ptr_t & index, xJson::Value & jv) {
+void xrpc_loader_t::parse_logs(const xtxindex_detail_ptr_t & index, Json::Value & jv) {
     if (index == nullptr) {
         return;
     }
     data::xtop_store_receipt_t tx_receipt;
     if (false == index->get_txaction().get_tvm_transaction_receipt(tx_receipt)) {
-        jv["logs"] = xJson::arrayValue;
+        jv["logs"] = Json::arrayValue;
         jv["logsBloom"] = evm_common::xbloom9_t{}.to_hex_string();
         return;
     }
-    xJson::Value i;
+    Json::Value i;
     uint64_t idx = 0;
     for (auto & log: tx_receipt.get_logs()) {
-        xJson::Value j;
+        Json::Value j;
         j["logIndex"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(idx);
         idx++;
         j["address"] = log.address.to_string();
@@ -118,7 +118,7 @@ Json::Value xrpc_loader_t::parse_send_tx(const xtxindex_detail_ptr_t & sendindex
     Json::Value jv;
     parse_common_info(sendindex, jv);
     jv["used_deposit"] = static_cast<Json::UInt64>(sendindex->get_txaction().get_used_deposit());
-    auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(sendindex->get_raw_tx()->get_source_addr(), sendindex->get_raw_tx()->get_target_addr());
+    auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(sendindex->get_raw_tx()->source_address().to_string(), sendindex->get_raw_tx()->target_address().to_string());
     jv["tx_fee"] = static_cast<Json::UInt64>(beacon_tx_fee);
     if (sendindex->get_txaction().is_self_tx()) {  // XTODO sendtx not need set exec_status, only confirmtx and selftx need set exec_status
         jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(sendindex->get_txaction().get_tx_exec_status());
@@ -155,8 +155,8 @@ Json::Value xrpc_loader_t::parse_confirm_tx(const xtxindex_detail_ptr_t & sendin
     return jv;
 }
 
-xJson::Value xrpc_loader_t::load_and_parse_recv_tx(const std::string & raw_tx_hash, const xtxindex_detail_ptr_t & sendindex, xtxindex_detail_ptr_t & recvindex, data::enum_xunit_tx_exec_status & recvtx_status) {
-    xJson::Value jv;
+Json::Value xrpc_loader_t::load_and_parse_recv_tx(const std::string & raw_tx_hash, const xtxindex_detail_ptr_t & sendindex, xtxindex_detail_ptr_t & recvindex, data::enum_xunit_tx_exec_status & recvtx_status) {
+    Json::Value jv;
     if (sendindex->get_txaction().get_inner_table_flag()) {  // not need recvindex, create a mock recv json
         jv = xrpc_loader_t::parse_recv_tx(sendindex, nullptr);
         recvtx_status = sendindex->get_txaction().get_tx_exec_status();

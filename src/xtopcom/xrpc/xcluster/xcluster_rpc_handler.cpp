@@ -12,6 +12,7 @@
 #include "xrpc/xuint_format.h"
 #include "xvledger/xvaccount.h"
 #include "xvnetwork/xvnetwork_error.h"
+#include "xtxpool_v2/xtxpool_error.h"
 
 #include <cinttypes>
 
@@ -49,14 +50,14 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
         auto message = para->m_message;
         auto edge_sender = para->m_sender;
         auto msgid = message.id();
-/*        if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
-            xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
-            if (msgid == rpc_msg_request) {
-                self->cluster_process_request(msg, edge_sender, message);
-                XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
-            } else {
-                xwarn("xcluster_rpc_handler::on_message msgid is rpc_msg_query_request");
-            }*/
+        /*        if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
+                    xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
+                    if (msgid == rpc_msg_request) {
+                        self->cluster_process_request(msg, edge_sender, message);
+                        XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
+                    } else {
+                        xwarn("xcluster_rpc_handler::on_message msgid is rpc_msg_query_request");
+                    }*/
         if (msgid == rpc_msg_response || msgid == rpc_msg_eth_response) {
             self->cluster_process_response(message, edge_sender);
             return true;
@@ -83,7 +84,7 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
 
 void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
     std::string tx_hash;
-    std::string account;
+    common::xaccount_address_t account;
     bool is_evm_tx = false;
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
         xtransaction_ptr_t tx_ptr;
@@ -94,15 +95,15 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
         }
 
         tx_hash = tx_ptr->get_digest_hex_str();
-        account = tx_ptr->get_source_addr();
-        xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
+        account = tx_ptr->source_address();
+        xdbg("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
                tx_hash.c_str(),
                tx_ptr->get_tx_version(),
-               account.c_str(),
+               account.to_string().c_str(),
                edge_sender.to_string().c_str(),
                m_cluster_vhost->address().to_string().c_str(),
                message.hash());
-        is_evm_tx = base::xvaccount_t::get_addrtype_from_account(account) == base::enum_vaccount_addr_type_secp256k1_evm_user_account;
+        is_evm_tx = base::xvaccount_t::get_addrtype_from_account(account.to_string()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account;
 
         uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
         // uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
@@ -111,15 +112,17 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
         }
         XMETRICS_GAUGE(metrics::txdelay_from_client_to_auditor, tx_ptr->get_delay_from_fire_timestamp(now));
 
-        if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
-            xwarn("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
-                  tx_hash.c_str(),
-                  account.c_str(),
-                  edge_sender.to_string().c_str(),
-                  m_cluster_vhost->address().to_string().c_str(),
-                  message.hash());
-            return;
-        }
+        // todo: check return value. if signature is invalid, not forward to validators.
+        m_txpool_service->request_transaction_consensus(tx_ptr, false);
+        // if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
+        //     xwarn("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
+        //           tx_hash.c_str(),
+        //           account.to_string().c_str(),
+        //           edge_sender.to_string().c_str(),
+        //           m_cluster_vhost->address().to_string().c_str(),
+        //           message.hash());
+        //     return;
+        // }
     } else {
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;
@@ -137,10 +140,10 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
             auto cluster_addr =
                 m_router_ptr->sharding_address_from_account(common::xaccount_address_t{edge_msg.m_account}, edge_sender.network_id(), type);
             assert(is_evm_tx ? common::has<common::xnode_type_t::evm_validator>(cluster_addr.type()) : common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()));
-            vnetwork::xvnode_address_t vaddr{std::move(cluster_addr)};
+            common::xnode_address_t vaddr{cluster_addr};
             xkinfo("[global_trace][advance_rpc][forward shard]%s,%s,src %s,dst %s,old_msg=%" PRIx64",new_msg=%" PRIx64,
                    tx_hash.c_str(),
-                   account.c_str(),
+                   account.to_string().c_str(),
                    m_cluster_vhost->address().to_string().c_str(),
                    vaddr.to_string().c_str(),
                    message.hash(),

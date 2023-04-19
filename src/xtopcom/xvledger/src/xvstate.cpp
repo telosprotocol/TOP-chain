@@ -9,7 +9,6 @@
 #include "xstatistic/xbasic_size.hpp"
 #include "../xvblock.h"
 #include "../xvstate.h"
-#include "../xvstatestore.h"
 #include "../xvledger.h"
 #include "xmetrics/xmetrics.h"
 
@@ -1181,18 +1180,17 @@ namespace top
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvbstate, -1);
         }
 
-        void xvbstate_t::update_final_block_info(xvblock_t* for_block) {
-            m_block_types    = for_block->get_header()->get_block_raw_types();
-            m_block_versions = for_block->get_header()->get_block_raw_versions();
-            
-            xassert(m_block_height == for_block->get_height());
-            xassert(m_last_block_hash == for_block->get_last_block_hash());
-            m_block_height = for_block->get_height();
-            m_block_viewid = for_block->get_viewid();
-            
-            m_last_block_hash = for_block->get_last_block_hash();
-            m_last_full_block_hash = for_block->get_last_full_block_hash();
-            m_last_full_block_height = for_block->get_last_full_block_height();
+        void xvbstate_t::update_final_block_info(xvheader_t* _header, uint64_t viewid) {
+            assert(m_block_height == _header->get_height());
+            assert(m_last_block_hash == _header->get_last_block_hash()); 
+            assert(viewid > 0);           
+            m_block_types    = _header->get_block_raw_types();
+            m_block_versions = _header->get_block_raw_versions();
+            m_block_height = _header->get_height();
+            m_block_viewid = viewid;
+            m_last_block_hash = _header->get_last_block_hash();
+            m_last_full_block_hash = _header->get_last_full_block_hash();
+            m_last_full_block_height = _header->get_last_full_block_height();
         }
 
         xvexeunit_t* xvbstate_t::clone() //each property is readonly after clone
@@ -1343,12 +1341,12 @@ namespace top
             return false;
         }
 
-        int32_t xvbstate_t::get_object_size_real() const {
-            int32_t total_size = sizeof(*this);
+        size_t xvbstate_t::get_object_size_real() const {
+            size_t total_size = sizeof(*this);
             auto ex_size = get_ex_alloc_size();
             total_size +=
                 get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + get_size(get_xvid_str()) + get_size(get_address()) + get_size(get_storage_key()) + ex_size;
-            xdbg("------cache size------ xvbstate_t total_size:%d this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,xvid_str:%d,address:%d,storage_key:%d,ex_size:%d",
+            xdbg("------cache size------ xvbstate_t total_size:%zu this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,xvid_str:%d,address:%d,storage_key:%d,ex_size:%d",
                  total_size,
                  sizeof(*this),
                  get_size(m_last_block_hash),

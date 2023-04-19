@@ -97,10 +97,13 @@ void xsync_peerset_t::update(const vnetwork::xvnode_address_t &self_address, con
                 }
             }
         }
+    } else {
+        xsync_dbg("peerset update %s not exist.", peer_address.to_string().c_str());
     }
 }
 
-bool xsync_peerset_t::get_newest_peer(const vnetwork::xvnode_address_t &self_address, const std::string &address, uint64_t &start_height, uint64_t &end_height, vnetwork::xvnode_address_t &peer_addr) {
+bool xsync_peerset_t::get_newest_peer(const vnetwork::xvnode_address_t &self_address, const std::string &address, uint64_t &start_height, 
+                                      uint64_t &end_height, vnetwork::xvnode_address_t &peer_addr, bool random_check) {
 
     std::unique_lock<std::mutex> lock(m_lock);
 
@@ -111,25 +114,32 @@ bool xsync_peerset_t::get_newest_peer(const vnetwork::xvnode_address_t &self_add
     uint64_t local_start_height = start_height; 
     uint64_t local_end_height = end_height;
  
-    xsync_role_peers_t &peers = it->second;
+    xsync_role_peers_t& peers = it->second;
+    auto it2 = peers.begin();
 
-    for (auto &it2: peers) {
-        xsync_peer_chains_t &chains = it2.second;
+    if (random_check && peers.size() > 1) {
+        uint32_t random_idx = top::base::xtime_utl::get_fast_randomu() % peers.size();
+        std::advance(it2, random_idx);
+    }
+
+    for (uint32_t i = 0; i < peers.size(); i++, it2++) {
+        if (it2 == peers.end())
+            it2 = peers.begin();
+
+        xsync_peer_chains_t& chains = it2->second;
 
         auto it3 = chains.find(address);
         if (it3 == chains.end())
             continue;
 
         xsync_chain_info_t &info = it3->second;
-
         if (info.end_height > end_height) {
             start_height = info.start_height;
             end_height = info.end_height;
-            peer_addr = it2.first;
+            peer_addr = it2->first;
             continue;
         }
     }
-
     if(local_start_height != start_height || local_end_height!= end_height) {
         return true;
     } 

@@ -225,7 +225,7 @@ class xmock_statectx_t final : public statectx::xstatectx_face_t {
             m_state->load_string_map_var(data::system_contract::XPORPERTY_CONTRACT_REG_KEY)
                 ->insert(val, {reinterpret_cast<char *>(stream.data()), static_cast<size_t>(stream.size())}, canvas.get());
         }
-        m_unitstate = std::make_shared<data::xunit_bstate_t>(m_state.get(), false);
+        m_unitstate = std::make_shared<data::xunit_bstate_t>(m_state.get(), m_state.get());
     }
 
     ~xmock_statectx_t() override = default;
@@ -266,7 +266,11 @@ class xmock_statectx_t final : public statectx::xstatectx_face_t {
     bool is_state_dirty() const override {
         return false;
     }
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const override {
+        return m_changed_ctxs;
+    }
 
+    std::map<std::string, statectx::xunitstate_ctx_ptr_t> m_changed_ctxs;
     xobject_ptr_t<base::xvbstate_t> m_state{nullptr};
     data::xunitstate_ptr_t m_unitstate{nullptr};
 };
@@ -277,11 +281,11 @@ public:
     ~xtest_table_vote_contract_dev_t() override = default;
 
     void init() {
-        m_exe_addr = std::string{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"};
-        m_table_addr = std::string{sys_contract_sharding_vote_addr} + "@0";
+        m_exe_addr = top::common::xaccount_address_t::build_from(std::string{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"});
+        m_table_addr = common::xaccount_address_t::build_from(table_vote_contract_base_address, common::xtable_id_t{0});
         m_exe_addr = m_table_addr;
-        m_contract_addr = common::xnode_id_t{m_table_addr};
-        m_vbstate = make_object_ptr<xvbstate_t>(m_table_addr, 1 , 1, std::string{}, std::string{}, 0, 0, 0);
+        m_contract_addr = m_table_addr;
+        m_vbstate = make_object_ptr<xvbstate_t>(m_table_addr.to_string(), 1 , 1, std::string{}, std::string{}, 0, 0, 0);
         m_unitstate = std::make_shared<data::xunit_bstate_t>(m_vbstate.get());
         m_statectx = std::make_shared<xmock_statectx_t>();
         m_account_index = std::make_shared<store::xaccount_context_t>(m_unitstate, m_statectx, 0);
@@ -297,9 +301,9 @@ public:
     void TearDown() override {
     }
 
-    std::string m_exe_addr;
-    std::string m_table_addr;
-    common::xnode_id_t m_contract_addr;
+    common::xaccount_address_t m_exe_addr;
+    common::xaccount_address_t m_table_addr;
+    common::xaccount_address_t m_contract_addr;
     xobject_ptr_t<xvbstate_t> m_vbstate{nullptr};
     std::shared_ptr<data::xunit_bstate_t> m_unitstate{nullptr};
     statectx::xstatectx_face_ptr_t m_statectx{nullptr};
@@ -309,7 +313,7 @@ public:
 };
 
 TEST_F(xtest_table_vote_contract_dev_t, test_get_set_all_time_ineffective_votes) {
-    for (auto i = 0; i < voters.size(); ++i) {
+    for (auto i = 0u; i < voters.size(); ++i) {
         auto voter = common::xaccount_address_t{voters[i]};
         auto all_time_ineffective_votes = contract.get_all_time_ineffective_votes(voter);
         EXPECT_TRUE(all_time_ineffective_votes.empty());

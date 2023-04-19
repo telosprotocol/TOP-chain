@@ -72,7 +72,7 @@ TEST(test_xquic_node, multi_thread_send) {
     // wait quic engine finish.
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    for (std::size_t node_cnt; node_cnt <= TEST_NODE_COUNT; ++node_cnt) {
+    for (std::size_t node_cnt = 0; node_cnt < TEST_NODE_COUNT; ++node_cnt) {
         nodes[node_cnt]->stop();
     }
     xinfo("recv sum: %zu", recv_cnt.load());

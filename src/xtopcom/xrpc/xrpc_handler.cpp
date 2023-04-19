@@ -34,7 +34,7 @@ xrpc_handler::xrpc_handler(std::shared_ptr<xvnetwork_driver_face_t>           ar
   , m_txpool_service(txpool_service)
   , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
   , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(block_store, nullptr, txpool_service, txstore, exchange_flag))
-  , m_rpc_eth_query_mgr(std::make_shared<xrpc_eth_query_manager>(block_store, nullptr, txpool_service, txstore, exchange_flag))
+  , m_rpc_eth_query_mgr(std::make_shared<xrpc_eth_query_manager>(block_store))
   , m_thread(thread) {
 }
 
@@ -84,7 +84,7 @@ void xrpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessa
 
 void xrpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
     std::string tx_hash;
-    std::string account;
+    common::xaccount_address_t account;
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
         xtransaction_ptr_t tx_ptr;
 #if !defined(NDEBUG)
@@ -94,11 +94,11 @@ void xrpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, 
         assert(ret == true);
 
         tx_hash = tx_ptr->get_digest_hex_str();
-        account = tx_ptr->get_source_addr();
+        account = tx_ptr->source_address();
         xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] deal tx hash: %s, version: %d, %s,src %s,dst %s,%" PRIx64,
                tx_hash.c_str(),
                tx_ptr->get_tx_version(),
-               account.c_str(),
+               account.to_string().c_str(),
                edge_sender.to_string().c_str(),
                m_arc_vhost->address().to_string().c_str(),
                message.hash());
@@ -106,7 +106,7 @@ void xrpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, 
         if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
             xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
                   tx_hash.c_str(),
-                  account.c_str(),
+                  account.to_string().c_str(),
                   edge_sender.to_string().c_str(),
                   m_arc_vhost->address().to_string().c_str(),
                   message.hash());
@@ -131,7 +131,7 @@ void xrpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, 
             vnetwork::xvnode_address_t vaddr{std::move(cluster_addr)};
             xkinfo("[global_trace][advance_rpc][forward shard]%s,%s,src %s,dst %s,%" PRIx64,
                    tx_hash.c_str(),
-                   account.c_str(),
+                   account.to_string().c_str(),
                    m_arc_vhost->address().to_string().c_str(),
                    vaddr.to_string().c_str(),
                    msg.hash());

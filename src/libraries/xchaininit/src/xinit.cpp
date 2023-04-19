@@ -164,14 +164,8 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
 
 void catch_system_signals()
 {
-// XTODO disable signal capture for test networks
-#if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO)
-    #ifndef DISABLE_SIGNAL_CAPTURE
-        #define DISABLE_SIGNAL_CAPTURE
-    #endif
-#endif
-
-#ifndef DISABLE_SIGNAL_CAPTURE
+// XTODO always not enable signal capture feature for dead-lock issue
+#if 0  // #ifndef DISABLE_SIGNAL_CAPTURE
     static struct sigaction _sys_sigact;
     memset(&_sys_sigact, 0, sizeof(_sys_sigact));
     

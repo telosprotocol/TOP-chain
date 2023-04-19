@@ -53,10 +53,6 @@ namespace top
             //better performance with batch mode
             virtual bool           store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks);
 
-            virtual bool           store_committed_unit_block(base::xvblock_t* new_raw_block) {return true;} // TODO(jimmy)
-            virtual bool           try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block) {return true;}  // TODO(jimmy)
-            virtual bool           try_update_account_index(uint64_t height, const std::string & hash, bool update_pre_block) {return true;}  // TODO(jimmy)
-
             virtual bool           delete_block(base::xvblock_t* target_block);
             virtual bool           delete_block(const uint64_t target_height);
             
@@ -192,10 +188,6 @@ namespace top
             virtual bool   write_block(base::xvbindex_t* index_ptr,base::xvblock_t * new_block_ptr) override;
             
             virtual bool   store_block(base::xvblock_t* new_raw_block) override;
-
-            virtual bool           store_committed_unit_block(base::xvblock_t* new_raw_block) override;
-            virtual bool           try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block) override;
-            virtual bool           try_update_account_index(uint64_t height, const std::string & hash, bool update_pre_block) override;
         };
     
         class xtablebkplugin : public xchainacct_t

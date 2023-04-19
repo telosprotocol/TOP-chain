@@ -779,8 +779,8 @@ TEST_F(test_tx_v3, ethtx_to_v3_1) {
     if (ec.error_code) {xassert(false);}
 
     xtransaction_ptr_t v3tx = xtx_factory::create_v3_tx(ethtx);
-    EXPECT_EQ(v3tx->get_source_addr(), "T6000483d85d169f750ad626dc10565043a802b5499a3f");
-    EXPECT_EQ(v3tx->get_target_addr(), "T60004b7762d8dbd7e5c023ff99402b78af7c13b01eec1");
+    EXPECT_EQ(v3tx->source_address().to_string(), "T6000483d85d169f750ad626dc10565043a802b5499a3f");
+    EXPECT_EQ(v3tx->target_address().to_string(), "T60004b7762d8dbd7e5c023ff99402b78af7c13b01eec1");
     // std::cout << "to:" << v3tx->get_target_addr() << std::endl;
     auto txhash = v3tx->digest();
     // std::cout << "txhash:" << top::to_hex_prefixed(top::to_bytes(txhash)) << std::endl;
@@ -804,8 +804,8 @@ TEST_F(test_tx_v3, ethtx_to_v3_2) {
 
     xtransaction_ptr_t v3tx2 = make_object_ptr<xtransaction_v3_t>();
     v3tx2->serialize_from_string(v3tx_bin);
-    EXPECT_EQ(v3tx2->get_source_addr(), "T6000483d85d169f750ad626dc10565043a802b5499a3f");
-    EXPECT_EQ(v3tx2->get_target_addr(), "T60004b7762d8dbd7e5c023ff99402b78af7c13b01eec1");
+    EXPECT_EQ(v3tx2->source_address().to_string(), "T6000483d85d169f750ad626dc10565043a802b5499a3f");
+    EXPECT_EQ(v3tx2->target_address().to_string(), "T60004b7762d8dbd7e5c023ff99402b78af7c13b01eec1");
     EXPECT_EQ(v3tx2->get_tx_len(), 115);
     EXPECT_EQ(v3tx2->get_digest_hex_str(), "0x9c09bae2c4a8f1487e11260efd4a19b7cb719ad4dc40fdd4ac461e04fae01aba");
 }
@@ -824,6 +824,6 @@ TEST_F(test_tx_v3, ethtx_to_v3_3) {
     if (ec.error_code) {xassert(false);}
 
     xtransaction_ptr_t v3tx = xtx_factory::create_v3_tx(ethtx);
-    std::cout << "source_addr=" << v3tx->get_source_addr() << std::endl;
-    EXPECT_EQ(v3tx->get_source_addr(), "T60004906e3926766494124f2c4f9930fe9ee10e46c2e7");
+    std::cout << "source_addr=" << v3tx->source_address().to_string() << std::endl;
+    EXPECT_EQ(v3tx->source_address().to_string(), "T60004906e3926766494124f2c4f9930fe9ee10e46c2e7");
 }

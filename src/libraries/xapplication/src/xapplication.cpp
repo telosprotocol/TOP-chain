@@ -17,6 +17,7 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xutility.h"
+#include "xcrypto/xckey.h"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"

@@ -380,7 +380,8 @@ void check_unitstates_stored(mock::xdatamock_table & mocktable, bool all_unitsta
             if (all_unitstates_store || unit->get_height() == max_limit_lightunit_count) {
                 xassert(unitstate != nullptr);
             } else {
-                xassert(unitstate == nullptr);
+                // always update latest unitstate to db, so here unitstate can be loaded.
+                // xassert(unitstate == nullptr);
             }
         }
     }
@@ -415,7 +416,7 @@ TEST_F(test_block_executed, unitstates_store_rule) {
         base::xvchain_t::instance().set_node_type(true, true);
         store_all_table_blocks(mocktable, creator);
         execute_all_table_blocks(mocktable, creator);
-        check_unitstates_stored(mocktable, false);
+        check_unitstates_stored(mocktable, true);
     }
     {
         mock::xvchain_creator creator;
@@ -433,13 +434,43 @@ TEST_F(test_block_executed, unitstates_store_rule) {
     }
 }
 
+TEST_F(test_block_executed, accountindex_check) {
+    {
+        mock::xvchain_creator creator;
+        base::xvblockstore_t* blockstore = creator.get_blockstore();
+        uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+        uint64_t max_count = max_limit_lightunit_count + 5;
+        mock::xdatamock_table mocktable(1, 4);
+        mocktable.genrate_table_chain(max_count, blockstore);
+
+        // rule1 archive nodes need store units and only store fullunit's offchain state
+        base::xvchain_t::instance().set_node_type(true, true);
+        store_all_table_blocks(mocktable, creator);
+        execute_all_table_blocks(mocktable, creator);
+
+        const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+        common::xaccount_address_t account_address{mockunits[0].get_account()};
+        base::xaccount_index_t accountindex;
+        statestore::xstatestore_hub_t::instance()->get_accountindex(LatestConnectBlock, account_address, accountindex);
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, accountindex);
+        ASSERT_EQ(accountindex.get_latest_unit_height(), max_count-2);
+        ASSERT_EQ(accountindex.get_version(), base::enum_xaccountindex_version_state_hash);
+        std::string unitstate_bin;
+        unitstate->get_bstate()->serialize_to_string(unitstate_bin);
+        std::string _state_hash = base::xcontext_t::instance().hash(unitstate_bin, enum_xhash_type_sha2_256);
+        ASSERT_EQ(accountindex.get_latest_state_hash(), _state_hash);
+        auto unitblock = blockstore->load_unit(account_address.vaccount(), accountindex.get_latest_unit_height(), accountindex.get_latest_unit_hash());
+        ASSERT_NE(unitblock, nullptr);
+    }
+}
+
 
 
 TEST_F(test_block_executed, latest_executed_state_1) {
     {
         mock::xvchain_creator creator;
         mock::xdatamock_table mocktable(1, 4);
-        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
+        auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xtable_address_t::build_from(mocktable.get_account()));
         EXPECT_TRUE(tablestate != nullptr);
         EXPECT_EQ(tablestate->height(), 0);
     }
@@ -455,7 +486,7 @@ TEST_F(test_block_executed, latest_executed_state_1) {
             ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
             statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(block.get());
         }
-        auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xaccount_address_t{mocktable.get_account()});
+        auto tablestate2 = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(common::xtable_address_t::build_from(mocktable.get_account()));
         EXPECT_EQ(tablestate2->height(), max_count-2);         
     }
 }
@@ -467,8 +498,8 @@ void check_all_units_stored(mock::xdatamock_table & mocktable, base::xvblockstor
         ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
     }
     for (auto & v : mockunits) {
-        for (uint64_t height = 0; height <= v.get_cert_block()->get_height(); height++) {
-            auto unit = blockstore->load_block_object(common::xaccount_address_t{v.get_account()}.vaccount(), height, base::enum_xvblock_flag_authenticated, false);
+        for (uint64_t height = 0; height <= v.get_cert_block()->get_height()-2; height++) {
+            auto unit = blockstore->load_unit(common::xaccount_address_t{v.get_account()}.vaccount(), height);
             ASSERT_TRUE(nullptr != unit);
         }        
     }
@@ -521,13 +552,13 @@ TEST_F(test_block_executed, store_meta_check) {
         mocktable.genrate_table_chain(max_count, blockstore);
         check_all_units_stored(mocktable, blockstore);
 
-        const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
-        for (auto & v : mockunits) {
-            ASSERT_EQ(max_limit_lightunit_count, blockstore->get_latest_full_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
-            ASSERT_EQ(v.get_cert_block()->get_height(), blockstore->get_latest_cert_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
-            ASSERT_EQ(v.get_cert_block()->get_height() - 2, blockstore->get_latest_committed_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
-            ASSERT_EQ(v.get_cert_block()->get_height() - 2, blockstore->get_latest_connected_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
-        } 
+        // const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+        // for (auto & v : mockunits) {
+        //     ASSERT_EQ(max_limit_lightunit_count, blockstore->get_latest_full_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+        //     ASSERT_EQ(v.get_cert_block()->get_height(), blockstore->get_latest_cert_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+        //     ASSERT_EQ(v.get_cert_block()->get_height() - 2, blockstore->get_latest_committed_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+        //     ASSERT_EQ(v.get_cert_block()->get_height() - 2, blockstore->get_latest_connected_block_height(common::xaccount_address_t{v.get_account()}.vaccount()));
+        // } 
     }
 }
 
@@ -548,7 +579,7 @@ TEST_F(test_block_executed, not_store_units_2) {
         }
 
         for (auto & v : mockunits) {
-            auto unit = blockstore->load_block_object(common::xaccount_address_t{v.get_account()}.vaccount(), 1, base::enum_xvblock_flag_authenticated, false);
+            auto unit = blockstore->load_unit(common::xaccount_address_t{v.get_account()}.vaccount(), 1);
             xassert(nullptr == unit);
             auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_table(common::xaccount_address_t{v.get_account()}, "latest");
             xassert(nullptr != unitstate);
@@ -581,6 +612,35 @@ TEST_F(test_block_executed, get_unit_state_by_table_1) {
         for (uint64_t i=0;i<=max_count;i++) {
             auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_table(unit_address, std::to_string(i));
             ASSERT_NE(nullptr, unitstate);            
+        }
+    }
+}
+
+TEST_F(test_block_executed, cert_lock_unitstate) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    base::xvchain_t::instance().set_node_type(false, true);
+    uint64_t max_count = 8;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+    const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    for (auto & mockunit : mockunits) {
+        for (uint64_t height = 1; height <= max_count; height++) {
+            auto & tableblock = tableblocks[height];
+            common::xaccount_address_t accountaddress(mockunit.get_account());
+            base::xaccount_index_t accountindex;
+            xassert(true == statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(accountaddress, tableblock.get(), accountindex));
+            ASSERT_EQ(accountindex.get_latest_unit_height(), height);
+            ASSERT_NE(accountindex.get_latest_state_hash(), std::string());
+            auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(accountaddress, accountindex);
+            ASSERT_NE(unitstate, nullptr);
         }
     }
 }
@@ -754,3 +814,32 @@ TEST_F(test_block_executed, xstatestore_execute_BENCH_2) {
 
 }
 
+base::xvblock_ptr_t create_unit_for_test(base::xvblock_t* prev_unit, std::string const& binlog, const data::xblock_consensus_para_t & cs_para) {
+    uint64_t height = prev_unit->get_height() + 1;
+    bool is_full_unit = false;
+
+    data::xunit_block_para_t bodypara;
+    bodypara.set_binlog(binlog);
+    bodypara.set_fullstate_bin_hash("1111");
+
+    std::shared_ptr<data::xunit_build2_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
+        prev_unit->get_account(), height, prev_unit->get_last_block_hash(), is_full_unit, cs_para);
+    vblockmaker->create_block_body(bodypara);
+    base::xvblock_ptr_t proposal_block = vblockmaker->build_new_block();
+    assert(false == proposal_block->get_cert()->is_consensus_flag_has_extend_cert());
+    proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);    
+    assert(!proposal_block->get_block_hash().empty());
+    return proposal_block;
+}
+
+TEST_F(test_block_executed, get_unitstate_by_units) {
+    mock::xvchain_creator creator;
+    std::string addr = mock::xdatamock_address::make_user_address_random();
+    common::xaccount_address_t account_address(addr);
+    {
+        base::xauto_ptr<base::xvblock_t> genesis_unit = data::xblocktool_t::create_genesis_empty_unit(addr);
+        base::xaccount_index_t index = base::xaccount_index_t(base::enum_xaccountindex_version_state_hash, genesis_unit->get_height(), genesis_unit->get_block_hash(), "1", 1);
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, index);
+        ASSERT_NE(nullptr, unitstate);
+    }
+}

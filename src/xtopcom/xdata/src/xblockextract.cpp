@@ -399,6 +399,13 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
     //     return;
     // }
 
+    auto excontainer = _block->get_excontainer();
+    if (excontainer != nullptr) {
+        excontainer->extract_sub_blocks(sublocks);
+        xdbg_info("xblockextract_t::unpack_subblocks from container.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
+        return;
+    }
+
     if (base::xvblock_fork_t::is_block_older_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
         sublocks = xlighttable_build_t::unpack_units_from_table(_block);
     } else {

@@ -1,5 +1,4 @@
 #!/bin/bash
-source /etc/profile
 
 while getopts "o:i:d:h" arg;
 do

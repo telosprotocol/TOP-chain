@@ -206,7 +206,8 @@ namespace top
 
             virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_vbstate;}
 
-            void        update_final_block_info(xvblock_t* for_block);
+            // void        update_final_block_info(xvblock_t* for_block);
+            void        update_final_block_info(xvheader_t* _header, uint64_t viewid);
 
         protected:
             //subclass extend behavior and load more information instead of a raw one
@@ -214,7 +215,7 @@ namespace top
             virtual int32_t         do_write(xstream_t & stream) override;//allow subclass extend behavior
             virtual int32_t         do_read(xstream_t & stream)  override;//allow subclass extend behavior
         private:
-            virtual int32_t         get_object_size_real() const override;
+            size_t get_object_size_real() const override;
 
         private:
             //belong to current block

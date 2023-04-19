@@ -11,6 +11,9 @@
 #include "xsync/xsync_store_shadow.h"
 #include "xchain_fork/xutility.h"
 #include "xdata/xcheckpoint.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
+
 NS_BEG2(top, sync)
 
 xsync_store_t::xsync_store_t(std::string vnode_id, const observer_ptr<base::xvblockstore_t> &blockstore, xsync_store_shadow_t *shadow):
@@ -24,16 +27,12 @@ bool xsync_store_t::store_block(base::xvblock_t* block) {
     base::xvaccount_t _vaddress(block->get_account());
     if (block->get_block_level() == base::enum_xvblock_level_unit) {
         XMETRICS_GAUGE(metrics::xsync_store_block_units, 1);
-        return m_blockstore->store_committed_unit_block(_vaddress, block);
+        xassert(false); // TODO(jimmy) not support unit sync now
+        return false;
     } else if (block->get_block_level() == base::enum_xvblock_level_table) {
         XMETRICS_GAUGE(metrics::xsync_store_block_tables, 1);
     }
     return m_blockstore->store_block(_vaddress, block, metrics::blockstore_access_from_sync_store_blk);
-}
-
-bool xsync_store_t::store_block_committed_flag(base::xvblock_t* block) {
-    base::xvaccount_t _vaddress(block->get_account());
-    return m_blockstore->store_committed_unit_block(_vaddress, block); // XTODO also can be used for table-block
 }
 
 bool xsync_store_t::store_blocks(std::vector<base::xvblock_t*> &blocks) {
@@ -76,6 +75,9 @@ uint64_t xsync_store_t::get_genesis_block_height(const std::string & account) {
 
 uint64_t xsync_store_t::get_latest_committed_block_height(const std::string & account) {
     base::xvaccount_t _vaddress(account);
+    if (_vaddress.is_unit_address()) {
+        xerror("xsync_store_t::get_latest_committed_block_height %s",account.c_str());
+    }
     return m_blockstore->get_latest_committed_block_height(_vaddress);
 }
 
@@ -299,19 +301,6 @@ xsync_store_shadow_t* xsync_store_t::get_shadow() {
     return m_shadow;
 };
 
-bool xsync_store_t::remove_empty_unit_forked() {
-    if (m_remove_empty_unit_forked) {
-        return true;
-    }
-
-    set_fork_point();
-    return m_remove_empty_unit_forked;
-}
-
-bool xsync_store_t::is_sync_protocal_forked() {
-    return m_sync_forked;
-}
-
 bool xsync_store_t::is_support_big_pack_forked() {
     if (m_sync_big_pack) {
         return true;
@@ -321,11 +310,25 @@ bool xsync_store_t::is_support_big_pack_forked() {
     return m_sync_big_pack;
 }
 
+bool xsync_store_t::is_fullnode_elect_forked() {
+    if (m_sync_fullnode_elect_forked) {
+        return true;
+    }
+
+    set_fork_point();
+    return m_sync_fullnode_elect_forked;
+}
+
 base::xauto_ptr<base::xvbindex_t> xsync_store_t::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
     return m_blockstore->recover_and_load_commit_index(account, height);
 }
 
 void xsync_store_t::set_fork_point() {
+
+    if (m_sync_big_pack && m_sync_fullnode_elect_forked) {
+        return;
+    }
+    
     auto vb = m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
     if (vb == nullptr) {
         return;
@@ -333,11 +336,22 @@ void xsync_store_t::set_fork_point() {
 
     xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
     // TODO(jimmy) remove fork points
-    bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_sync_big_packet, vb->get_height());
-    if (forked) {
-        m_sync_big_pack = true;
-        xinfo("xsync_store_t::block fork point already forked clock:%llu", vb->get_height());
+    if(!m_sync_big_pack) {
+        bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_sync_big_packet, vb->get_height());
+        if (forked) {
+            m_sync_big_pack = true;
+            xinfo("xsync_store_t::block fork point:sync_big_packet already forked clock:%llu", vb->get_height());
+        }
     }
+    
+    if(!m_sync_fullnode_elect_forked) {
+        bool forked = chain_fork::xutility_t::is_forked(fork_points::v11200_fullnode_elect, vb->get_height());
+        if (forked) {
+            m_sync_fullnode_elect_forked = true;
+            xinfo("xsync_store_t::block fork point:fullnode_elect already forked clock:%llu", vb->get_height());
+        }
+    }
+
     return;
 }
 
