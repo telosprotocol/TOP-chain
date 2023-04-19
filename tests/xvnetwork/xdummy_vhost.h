@@ -39,7 +39,7 @@ public:
 
     common::xnetwork_id_t const & network_id() const noexcept override { return net_id; }
 
-    common::xnode_id_t const & host_node_id() const noexcept override { return node_id; }
+    common::xaccount_address_t const & account_address() const noexcept override { return node_id; }
 
     xvnode_address_t parent_group_address(xvnode_address_t const &) const override {
         m_counter++;

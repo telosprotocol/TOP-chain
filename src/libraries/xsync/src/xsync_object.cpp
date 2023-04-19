@@ -18,7 +18,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
                                    observer_ptr<base::xiothread_t> const & sync_thread,
                                    std::vector<observer_ptr<base::xiothread_t>> const & sync_account_thread_pool,
                                    std::vector<observer_ptr<base::xiothread_t>> const & sync_handler_thread_pool):
-    m_bus{ bus }, m_instance(vhost->host_node_id().to_string().c_str())
+    m_bus{ bus }, m_instance(vhost->account_address().to_string())
   ,
     m_store_shadow(top::make_unique<sync::xsync_store_shadow_t>()),
     m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore), m_store_shadow.get())),

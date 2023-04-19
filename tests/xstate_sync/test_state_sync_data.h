@@ -220,8 +220,8 @@ public:
     void broadcast(common::xip2_t const & to, vnetwork::xmessage_t const & message, std::error_code & ec) override {
         }
 
-    common::xnode_id_t const & host_node_id() const noexcept override {
-        static common::xnode_id_t id;
+    common::xaccount_address_t const & account_address() const noexcept override {
+        static common::xaccount_address_t id;
         return id;
     }
 

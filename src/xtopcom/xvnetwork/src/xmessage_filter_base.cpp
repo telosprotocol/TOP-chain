@@ -27,7 +27,7 @@ void xtop_message_filter_base::normalize_message_recver(xvnetwork_message_t & vn
             auto const& node_element = group_element->node_element(recver.account_address(), ec);
             if (ec) {
                 xinfo("message_filter: normalizing vnetwork_message failed. %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      vhost->host_node_id().to_string().c_str(),
+                      vhost->account_address().to_string().c_str(),
                       static_cast<uint32_t>(vnetwork_message.message_id()),
                       static_cast<uint64_t>(vnetwork_message.hash()),
                       vnetwork_message.sender().to_string().c_str(),
@@ -47,7 +47,7 @@ void xtop_message_filter_base::normalize_message_recver(xvnetwork_message_t & vn
                     ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
 
                     xinfo("message_filter: normalizing vnetwork_message failed. %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          vhost->host_node_id().to_string().c_str(),
+                          vhost->account_address().to_string().c_str(),
                           static_cast<uint32_t>(vnetwork_message.message_id()),
                           static_cast<uint64_t>(vnetwork_message.hash()),
                           vnetwork_message.sender().to_string().c_str(),
@@ -80,7 +80,7 @@ void xtop_message_filter_base::normalize_message_recver(xvnetwork_message_t & vn
             auto const & node_element = recver_group->node_element(recver.account_address(), ec);
             if (ec) {
                 xinfo("message_filter: normalizing vnetwork_message failed. %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      vhost->host_node_id().to_string().c_str(),
+                      vhost->account_address().to_string().c_str(),
                       static_cast<uint32_t>(vnetwork_message.message_id()),
                       static_cast<uint64_t>(vnetwork_message.hash()),
                       vnetwork_message.sender().to_string().c_str(),
@@ -101,7 +101,7 @@ void xtop_message_filter_base::normalize_message_recver(xvnetwork_message_t & vn
 
                     xinfo("message_filter: normalizing vnetwork_message failed. %s recv message %" PRIx32 " hash %" PRIx64
                           " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          vhost->host_node_id().to_string().c_str(),
+                          vhost->account_address().to_string().c_str(),
                           static_cast<uint32_t>(vnetwork_message.message_id()),
                           static_cast<uint64_t>(vnetwork_message.hash()),
                           vnetwork_message.sender().to_string().c_str(),
@@ -136,7 +136,7 @@ void xtop_message_filter_base::normalize_message_recver_by_message_sender(xvnetw
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                     vnetwork_message.hash(),
                     static_cast<std::uint32_t>(vhost->network_id().value()),
-                  vhost->host_node_id().to_string().c_str(),
+                  vhost->account_address().to_string().c_str(),
                     recver.to_string().c_str(),
                     vnetwork_message.sender().to_string().c_str(),
                     ec.message().c_str());
@@ -147,7 +147,7 @@ void xtop_message_filter_base::normalize_message_recver_by_message_sender(xvnetw
         auto const & node_element = group->node_element(recver.account_address(), ec);
         if (ec) {
             xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                  vhost->host_node_id().to_string().c_str(),
+                  vhost->account_address().to_string().c_str(),
                   static_cast<uint32_t>(vnetwork_message.message_id()),
                   static_cast<uint64_t>(vnetwork_message.hash()),
                   vnetwork_message.sender().to_string().c_str(),
@@ -167,7 +167,7 @@ void xtop_message_filter_base::normalize_message_recver_by_message_sender(xvnetw
                 ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
 
                 xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                      vhost->host_node_id().to_string().c_str(),
+                      vhost->account_address().to_string().c_str(),
                       static_cast<uint32_t>(vnetwork_message.message_id()),
                       static_cast<uint64_t>(vnetwork_message.hash()),
                       vnetwork_message.sender().to_string().c_str(),
