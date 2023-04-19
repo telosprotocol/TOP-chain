@@ -49,7 +49,7 @@ xfilter_result_t xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwo
          recver.to_string().c_str());
 
     xdbg("[vnetwork] %s receives message %" PRIx64 " from %s msg id %" PRIx32 " logic time %" PRIu64,
-         m_vhost->host_node_id().to_string().c_str(),
+         m_vhost->account_address().to_string().c_str(),
          vnetwork_message.hash(),
          sender.to_string().c_str(),
          static_cast<std::uint32_t>(message.id()),
@@ -66,7 +66,7 @@ xfilter_result_t xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwo
 
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " from %s to %s, but sender's address is a broadcast address",
               vnetwork_message.hash(),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               static_cast<std::uint32_t>(message.id()),
               sender.to_string().c_str(),
               recver.to_string().c_str());
@@ -84,7 +84,7 @@ xfilter_result_t xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwo
 
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " from %s to %s, but sender's address is a broadcast address",
                   vnetwork_message.hash(),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                   static_cast<std::uint32_t>(message.id()),
                   sender.to_string().c_str(),
                   recver.to_string().c_str());
@@ -99,7 +99,7 @@ xfilter_result_t xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwo
 
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " from %s to %s, but sender doesn't provide logic epoch",
               vnetwork_message.hash(),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               static_cast<std::uint32_t>(message.id()),
               sender.to_string().c_str(),
               recver.to_string().c_str());
@@ -112,7 +112,7 @@ xfilter_result_t xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwo
 
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " from %s to %s, but sender's account address is empty",
               vnetwork_message.hash(),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               static_cast<std::uint32_t>(message.id()),
               sender.to_string().c_str(),
               recver.to_string().c_str());
@@ -138,10 +138,10 @@ xfilter_result_t xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwo
     auto const local_time = m_vhost->last_logic_time();
     xdbg("[vnetwork] message logic time %" PRIu64, msg_time);
 
-    if (recver.account_address().has_value() && recver.account_address() != m_vhost->host_node_id()) {
+    if (recver.account_address().has_value() && recver.account_address() != m_vhost->account_address()) {
         ec = vnetwork::xvnetwork_errc2_t::invalid_account_address;
         xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped",
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
              static_cast<uint32_t>(vnetwork_message.message_id()),
              static_cast<uint64_t>(vnetwork_message.hash()),
              vnetwork_message.sender().to_string().c_str(),
@@ -217,7 +217,7 @@ xfilter_result_t xtop_message_filter_message_id::filter(xvnetwork_message_t & vn
     auto const message_category = get_message_category(message_id);
 
     xdbg("message_filter: %s recv message %" PRIx32 " category %" PRIx16 " hash %" PRIx64 " from %s to %s ",
-         m_vhost->host_node_id().to_string().c_str(),
+         m_vhost->account_address().to_string().c_str(),
         static_cast<uint32_t>(message_id),
          static_cast<uint16_t>(message_category),
         static_cast<uint64_t>(vnetwork_message.hash()),
@@ -355,7 +355,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_edge(xvnetwork_
     ec = xvnetwork_errc2_t::invalid_src_address;
     xinfo("[vnetwork][message_filter] hash: %" PRIx64 " node %s receives msg sent to %s from %s. ignored. error: %s",
             vnetwork_message.hash(),
-          m_vhost->host_node_id().to_string().c_str(),
+          m_vhost->account_address().to_string().c_str(),
             vnetwork_message.receiver().to_string().c_str(),
             vnetwork_message.sender().to_string().c_str(),
             ec.message().c_str());
@@ -509,7 +509,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_auditor(xvnetwo
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
               static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               recver.to_string().c_str(),
               sender.to_string().c_str(),
               ec.message().c_str());
@@ -522,7 +522,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_auditor(xvnetwo
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
               static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               recver.to_string().c_str(),
               sender.to_string().c_str(),
               ec.message().c_str());
@@ -562,7 +562,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_same_validator_
 
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s but version not match",
               vnetwork_message.hash(),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               static_cast<std::uint32_t>(message.id()),
               message.hash(),
               sender.to_string().c_str(),
@@ -609,7 +609,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
               static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               recver.to_string().c_str(),
               sender.to_string().c_str(),
               ec.message().c_str());
@@ -622,7 +622,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
               static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               recver.to_string().c_str(),
               sender.to_string().c_str(),
               ec.message().c_str());
@@ -669,7 +669,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                     vnetwork_message.hash(),
                     static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                     recver.to_string().c_str(),
                     sender.to_string().c_str(),
                     ec.message().c_str());
@@ -684,7 +684,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
                 xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                       vnetwork_message.hash(),
                       static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                      m_vhost->host_node_id().to_string().c_str(),
+                      m_vhost->account_address().to_string().c_str(),
                       recver.to_string().c_str(),
                       sender.to_string().c_str(),
                       ec.message().c_str());
@@ -698,7 +698,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
                 xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                       vnetwork_message.hash(),
                       static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                      m_vhost->host_node_id().to_string().c_str(),
+                      m_vhost->account_address().to_string().c_str(),
                       recver.to_string().c_str(),
                       sender.to_string().c_str(),
                       ec.message().c_str());
@@ -718,7 +718,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
                   static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                   recver.to_string().c_str(),
                   sender.to_string().c_str(),
                   ec.message().c_str());
@@ -733,7 +733,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
             auto const & node_element = recver_validator_group->node_element(recver.account_address(), ec);
             if (ec) {
                 xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().to_string().c_str(),
+                      m_vhost->account_address().to_string().c_str(),
                       static_cast<uint32_t>(vnetwork_message.message_id()),
                       static_cast<uint64_t>(vnetwork_message.hash()),
                       vnetwork_message.sender().to_string().c_str(),
@@ -752,7 +752,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
                     ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
 
                     xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().to_string().c_str(),
+                          m_vhost->account_address().to_string().c_str(),
                           static_cast<uint32_t>(vnetwork_message.message_id()),
                           static_cast<uint64_t>(vnetwork_message.hash()),
                           vnetwork_message.sender().to_string().c_str(),
@@ -843,7 +843,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
                   static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                   recver.to_string().c_str(),
                   sender.to_string().c_str(),
                   ec.message().c_str());
@@ -857,7 +857,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
                 xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                         vnetwork_message.hash(),
                         static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                      m_vhost->host_node_id().to_string().c_str(),
+                      m_vhost->account_address().to_string().c_str(),
                         recver.to_string().c_str(),
                         sender.to_string().c_str(),
                         ec.message().c_str());
@@ -870,7 +870,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
                 xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                       vnetwork_message.hash(),
                       static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                      m_vhost->host_node_id().to_string().c_str(),
+                      m_vhost->account_address().to_string().c_str(),
                       recver.to_string().c_str(),
                       sender.to_string().c_str(),
                       ec.message().c_str());
@@ -884,7 +884,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
                   static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                   recver.to_string().c_str(),
                   sender.to_string().c_str(),
                   ec.message().c_str());
@@ -898,7 +898,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
             auto const & node_element = validator_group->node_element(recver.account_address(), ec);
             if (ec) {
                 xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().to_string().c_str(),
+                      m_vhost->account_address().to_string().c_str(),
                       static_cast<uint32_t>(vnetwork_message.message_id()),
                       static_cast<uint64_t>(vnetwork_message.hash()),
                       vnetwork_message.sender().to_string().c_str(),
@@ -917,7 +917,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
                     ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
 
                     xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().to_string().c_str(),
+                          m_vhost->account_address().to_string().c_str(),
                           static_cast<uint32_t>(vnetwork_message.message_id()),
                           static_cast<uint64_t>(vnetwork_message.hash()),
                           vnetwork_message.sender().to_string().c_str(),
@@ -1209,7 +1209,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_validator(xvnetwo
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
               static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               recver.to_string().c_str(),
               sender.to_string().c_str(),
               ec.message().c_str());
@@ -1228,7 +1228,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_validator(xvnetwo
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
               vnetwork_message.hash(),
               static_cast<std::uint32_t>(m_vhost->network_id()),
-              m_vhost->host_node_id().to_string().c_str(),
+              m_vhost->account_address().to_string().c_str(),
               recver.to_string().c_str(),
               sender.to_string().c_str(),
               ec.message().c_str());
@@ -1268,7 +1268,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_same_auditor_grou
 
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s but version not match",
                 vnetwork_message.hash(),
-                m_vhost->host_node_id().to_string().c_str(),
+                m_vhost->account_address().to_string().c_str(),
                 static_cast<std::uint32_t>(message.id()),
                 message.hash(),
                 sender.to_string().c_str(),
@@ -1360,7 +1360,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_valida
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
                   static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                   recver.to_string().c_str(),
                   sender.to_string().c_str(),
                   ec.message().c_str());
@@ -1374,7 +1374,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_valida
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
                   static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                   recver.to_string().c_str(),
                   sender.to_string().c_str(),
                   ec.message().c_str());
@@ -1423,7 +1423,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_non_associated_va
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
                   static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().to_string().c_str(),
+                  m_vhost->account_address().to_string().c_str(),
                   recver.to_string().c_str(),
                   sender.to_string().c_str(),
                   ec.message().c_str());

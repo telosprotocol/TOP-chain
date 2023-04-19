@@ -9,7 +9,7 @@
 #include "xnetwork/xnetwork_message_ready_callback.h"
 
 #include <system_error>
-#include <vector>
+
 NS_BEG2(top, elect)
 
 class xtop_network_driver_face : public xbasic_runnable_t<xtop_network_driver_face> {
@@ -17,8 +17,8 @@ public:
     xtop_network_driver_face() = default;
     xtop_network_driver_face(xtop_network_driver_face const &) = delete;
     xtop_network_driver_face & operator=(xtop_network_driver_face const &) = delete;
-    xtop_network_driver_face(xtop_network_driver_face &&) = default;
-    xtop_network_driver_face & operator=(xtop_network_driver_face &&) = default;
+    xtop_network_driver_face(xtop_network_driver_face &&) = delete;
+    xtop_network_driver_face & operator=(xtop_network_driver_face &&) = delete;
     ~xtop_network_driver_face() override = default;
 
     virtual void send_to(common::xip2_t const & src, common::xip2_t const & dst, xbyte_buffer_t const & byte_message, std::error_code & ec) const = 0;
@@ -30,7 +30,7 @@ public:
      * \brief Get the host node id.
      * \return The host node id.
      */
-    virtual common::xnode_id_t const & host_node_id() const noexcept = 0;
+    virtual common::xaccount_address_t const & account_address() const noexcept = 0;
 
     /**
      * \brief Register the data ready notify handler.
@@ -39,7 +39,7 @@ public:
      *        In release mode, the later handler registered in will replace the older one.
      * \param callback The callback handles data ready notify.
      */
-    virtual void register_message_ready_notify(top::network::xnetwork_message_ready_callback_t callback) noexcept = 0;
+    virtual void register_message_ready_notify(network::xnetwork_message_ready_callback_t callback) noexcept = 0;
 
     /**
      * \brief Un-register the data ready notify handler.

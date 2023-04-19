@@ -90,8 +90,8 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
 
     assert(!election_data.empty());
 
-    auto const & host_node_id = m_vhost->host_node_id();
-    xdbg("[vnode mgr] host %s sees election data size %zu", host_node_id.to_string().c_str(), election_data.size());
+    auto const & account_address = m_vhost->account_address();
+    xdbg("[vnode mgr] host %s sees election data size %zu", account_address.to_string().c_str(), election_data.size());
 
     std::vector<common::xip2_t> purely_outdated_xips;
     std::vector<common::xip2_t> logical_outdated_xips;
@@ -107,8 +107,8 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
         assert(added_group != nullptr);
 
         bool vnode_outdated{false};
-        if (outdated_group != nullptr && outdated_group->contains(host_node_id)) {
-            auto const & address = outdated_group->node_element(host_node_id)->address();
+        if (outdated_group != nullptr && outdated_group->contains(account_address)) {
+            auto const & address = outdated_group->node_element(account_address)->address();
             assert(!broadcast(address.slot_id()));
 
             auto const it = m_all_nodes.find(address);
@@ -132,8 +132,8 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
             purely_outdated_xips.push_back(std::move(xip));
         }
 
-        if (faded_group != nullptr && faded_group->contains(host_node_id)) {
-            auto const & address = faded_group->node_element(host_node_id)->address();
+        if (faded_group != nullptr && faded_group->contains(account_address)) {
+            auto const & address = faded_group->node_element(account_address)->address();
             assert(!broadcast(address.slot_id()));
 
             auto const & it = m_all_nodes.find(address);
@@ -147,10 +147,10 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
             }
         }
 
-        if (added_group->contains(host_node_id)) {
+        if (added_group->contains(account_address)) {
             vnode_outdated = false;
 
-            auto const & address = added_group->node_element(host_node_id)->address();
+            auto const & address = added_group->node_element(account_address)->address();
             assert(!broadcast(address.slot_id()));
 
             auto const it = m_all_nodes.find(address);
