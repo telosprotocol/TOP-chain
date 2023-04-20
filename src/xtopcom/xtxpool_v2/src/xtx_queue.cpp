@@ -22,7 +22,7 @@ namespace xtxpool_v2 {
 
 
 #define account_send_tx_queue_size_max (16)
-#define unconfirm_tx_num_max (4096)
+#define unconfirm_tx_num_max (65536)
 
 void xsend_tx_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
