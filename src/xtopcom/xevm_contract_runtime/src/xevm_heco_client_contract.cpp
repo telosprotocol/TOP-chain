@@ -150,7 +150,7 @@ bool xtop_evm_heco_client_contract::sync(const xbytes_t & rlp_bytes, state_ptr s
         }
         const uint32_t validators_index = validator_num_index + 1;
         for (uint64_t i = 0; i < validator_num; ++i) {
-            snap.validators.insert(item.decoded[i + validators_index]);
+            snap.validators.insert(common::xeth_address_t::build_from(item.decoded[i + validators_index]));
         }
         const uint32_t recent_num_index = validator_num + validator_num_index + 1;
         auto recent_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[recent_num_index]));
@@ -161,7 +161,7 @@ bool xtop_evm_heco_client_contract::sync(const xbytes_t & rlp_bytes, state_ptr s
         const uint32_t recents_index = recent_num_index + 1;
         for (uint64_t i = 0; i < recent_num; ++i) {
             auto k = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[recents_index + i * 2]));
-            snap.recents[k] = item.decoded[recents_index + i * 2 + 1];
+            snap.recents[k] = common::xeth_address_t::build_from(item.decoded[recents_index + i * 2 + 1]);
         }
 
         xeth_header_t parent_header;

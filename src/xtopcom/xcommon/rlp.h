@@ -5,18 +5,17 @@
 
 #pragma once
 
-#include "xbasic/xspan.h"
 #include "fixed_hash.h"
 #include "vector_ref.h"
+#include "xbasic/xspan.h"
 #include "xcommon/common.h"
 #include "xcommon/data.h"
+#include "xcommon/xeth_address_fwd.h"
 
 #include <array>
 #include <exception>
-#include <iomanip>
 #include <iosfwd>
 #include <vector>
-
 
 namespace top {
 namespace evm_common {
@@ -504,6 +503,7 @@ public:
     }
     RLPStream& append(std::string const& _s) { return append(bytesConstRef(_s)); }
     RLPStream& append(char const* _s) { return append(std::string(_s)); }
+    RLPStream & append(common::xeth_address_t const & address);
     template <unsigned N> RLPStream& append(FixedHash<N> _s, bool _compact = false, bool _allOrNothing = false) { return _allOrNothing && !_s ? append(bytesConstRef()) : append(_s.ref(), _compact); }
 
     /// Appends an arbitrary RLP fragment - this *must* be a single item unless @a _itemCount is given.

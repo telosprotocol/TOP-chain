@@ -2409,7 +2409,7 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
         Json::Value j_header;
         j_header["parentHash"] = header.parent_hash.hex();
         j_header["uncleHash"] = header.uncle_hash.hex();
-        j_header["miner"] = header.miner.hex();
+        j_header["miner"] = header.miner.to_hex_string();
         j_header["stateMerkleRoot"] = header.state_merkleroot.hex();
         j_header["txMerkleRoot"] = header.tx_merkleroot.hex();
         j_header["receiptMerkleRoot"] = header.receipt_merkleroot.hex();

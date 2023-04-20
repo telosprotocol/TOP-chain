@@ -45,9 +45,9 @@ xtop_eth_address xtop_eth_address::build_from(xbytes_t const & address_data, std
         return {};
     }
 
-    std::array<uint8_t, xtop_eth_address::size()> addr_data;
+    std::array<uint8_t, xtop_eth_address::size()> addr_data{};
     std::copy_n(std::begin(address_data), xtop_eth_address::size(), std::begin(addr_data));
-    return xtop_eth_address(addr_data);
+    return xtop_eth_address{addr_data};
 }
 
 xtop_eth_address xtop_eth_address::build_from(xbytes_t const & address_data) {
