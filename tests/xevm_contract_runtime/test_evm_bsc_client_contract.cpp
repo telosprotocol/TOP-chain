@@ -122,7 +122,7 @@ TEST_F(xbsc_contract_fixture_t, test_parse_validators) {
     xvalidators_snapshot_t snap;
     EXPECT_TRUE(snap.init_with_epoch(header));
     for (auto v : snap.validators) {
-        printf("%s\n", to_hex(v).c_str());
+        printf("%s\n", v.to_hex_string().c_str());
     }
 }
 

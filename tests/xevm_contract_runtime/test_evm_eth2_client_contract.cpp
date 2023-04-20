@@ -257,7 +257,7 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_init_input) {
     xinit_input_t init;
     init.finalized_execution_header.parent_hash = static_cast<evm_common::h256>(UINT32_MAX - 1);
     init.finalized_execution_header.uncle_hash = static_cast<evm_common::h256>(UINT32_MAX - 2);
-    init.finalized_execution_header.miner = static_cast<evm_common::Address>(UINT32_MAX - 3);
+    init.finalized_execution_header.miner = common::xeth_address_t::build_from(static_cast<evm_common::Address>(UINT32_MAX - 3).asBytes());
     init.finalized_execution_header.state_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 4);
     init.finalized_execution_header.tx_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 5);
     init.finalized_execution_header.receipt_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 6);
@@ -315,7 +315,7 @@ std::vector<xeth_header_t> parse_header_data() {
         xeth_header_t h;
         h.parent_hash = static_cast<h256>(from_hex(it->at("parent_hash").get<std::string>()));
         h.uncle_hash = static_cast<h256>(from_hex(it->at("uncles_hash").get<std::string>()));
-        h.miner = static_cast<h160>(from_hex(it->at("author").get<std::string>()));
+        h.miner = common::xeth_address_t::build_from(static_cast<h160>(from_hex(it->at("author").get<std::string>())).asBytes());
         h.state_merkleroot = static_cast<h256>(from_hex(it->at("state_root").get<std::string>()));
         h.tx_merkleroot = static_cast<h256>(from_hex(it->at("transactions_root").get<std::string>()));
         h.receipt_merkleroot = static_cast<h256>(from_hex(it->at("receipts_root").get<std::string>()));

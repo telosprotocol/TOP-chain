@@ -23,7 +23,7 @@ TEST_F(xcontract_fixture_t, header_encode_decode) {
     evm_common::xeth_header_t header_decode;
     header.parent_hash = static_cast<evm_common::h256>(UINT32_MAX - 1);
     header.uncle_hash = static_cast<evm_common::h256>(UINT32_MAX - 2);
-    header.miner = static_cast<evm_common::Address>(UINT32_MAX - 3);
+    header.miner = common::xeth_address_t::build_from(static_cast<evm_common::Address>(UINT32_MAX - 3).asBytes());
     header.state_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 4);
     header.tx_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 5);
     header.receipt_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 6);
@@ -411,7 +411,7 @@ static xeth_header_t create_header(h256 parent_hash, uint32_t number, uint32_t d
     xeth_header_t header;
     header.parent_hash = parent_hash;
     header.uncle_hash = static_cast<evm_common::h256>(0);
-    header.miner = static_cast<evm_common::Address>(0);
+    header.miner = common::xeth_address_t::build_from(static_cast<evm_common::Address>(0).asBytes());
     header.state_merkleroot = static_cast<evm_common::h256>(0);
     header.tx_merkleroot = static_cast<evm_common::h256>(0);
     header.receipt_merkleroot = static_cast<evm_common::h256>(0);

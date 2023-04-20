@@ -204,9 +204,9 @@ bool xethash_t::verify_seal(const xeth_header_t & header, const std::vector<doub
     std::memcpy(mix_hash.bytes, header.mix_digest.data(), 32);
     hash256 difficulty;
     std::memcpy(difficulty.bytes, toBigEndian(static_cast<u256>(header.difficulty)).data(), 32);
-    uint64_t nonce = std::stoull(header.nonce.hex(), nullptr, 16);
-    uint64_t number = static_cast<uint64_t>(header.number);
-    auto hashes = hashimoto_merkle(hash, nonce, number, nodes);
+    uint64_t const nonce = std::stoull(header.nonce.hex(), nullptr, 16);
+    auto const number = header.number.convert_to<uint64_t>();
+    auto const hashes = hashimoto_merkle(hash, nonce, number, nodes);
     if (!::ethash::equal(hashes.first, mix_hash)) {
         return false;
     }

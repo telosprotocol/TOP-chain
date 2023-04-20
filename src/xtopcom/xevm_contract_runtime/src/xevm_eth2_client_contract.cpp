@@ -14,14 +14,18 @@ NS_BEG4(top, contract_runtime, evm, sys_contract)
 using namespace evm_common::eth2;
 
 enum {
-    epochs_per_sync_committee_period = 256U,
-    slots_per_epoch = 32U,
-    min_sync_committee_participants = 1U,
+    // epochs_per_sync_committee_period = 256U,
+    // slots_per_epoch = 32U,
+    // min_sync_committee_participants = 1U,
     finality_tree_depth = 6U,
     finality_tree_index = 41U,
     sync_committee_tree_depth = 5U,
     sync_committee_tree_index = 23U
 };
+
+constexpr static uint64_t slots_per_epoch{32};
+constexpr static uint64_t epochs_per_sync_committee_period{256};
+XINLINE_CONSTEXPR uint64_t min_sync_committee_participants{1};
 
 constexpr uint64_t hashes_gc_threshold = 51000;
 

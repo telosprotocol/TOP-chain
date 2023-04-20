@@ -3,10 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xcommon/rlp.h"
+
 #include "xcommon/data.h"
+#include "xcommon/xeth_address.h"
 
 #include <algorithm>
-#include <tuple>
 
 // using namespace std;
 
@@ -602,6 +603,10 @@ RLPStream& RLPStream::append(bigint _i)
     }
     noteAppended();
     return *this;
+}
+
+RLPStream & RLPStream::append(common::xeth_address_t const & address) {
+    return append(address.to_bytes());
 }
 
 void RLPStream::pushCount(size_t _count, xbyte_t _base)

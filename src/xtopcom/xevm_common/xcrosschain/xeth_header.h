@@ -3,6 +3,7 @@
 #include "xbasic/xoptional.hpp"
 #include "xcommon/common.h"
 #include "xcommon/xfixed_hash.h"
+#include "xcommon/xeth_address.h"
 
 #include <vector>
 
@@ -10,14 +11,14 @@ NS_BEG2(top, evm_common)
 
 // The log bloom's size (2048-bit).
 //using Hash = top::evm_common::h256;
-using Address = top::evm_common::h160;
+// using Address = top::evm_common::h160;
 using LogBloom = top::evm_common::h2048;
 using BlockNonce = top::evm_common::h64;
 
 struct xeth_header_t {
     xh256_t parent_hash;
     xh256_t uncle_hash;
-    Address miner;
+    common::xeth_address_t miner;
     xh256_t state_merkleroot;
     xh256_t tx_merkleroot;
     xh256_t receipt_merkleroot;
@@ -44,7 +45,7 @@ struct xeth_header_t {
     // encode and decode
     xbytes_t encode_rlp() const;
     xbytes_t encode_rlp_withoutseal() const;
-    bool decode_rlp(const xbytes_t & bytes);
+    bool decode_rlp(xbytes_t const & bytes);
 
     // debug
     std::string dump() const;
@@ -53,10 +54,16 @@ struct xeth_header_t {
 
 struct xeth_header_info_t {
     xeth_header_info_t() = default;
-    xeth_header_info_t(bigint difficult_sum_, xh256_t parent_hash_, bigint number_);
+    xeth_header_info_t(xeth_header_info_t const &) = default;
+    xeth_header_info_t & operator=(xeth_header_info_t const &) = default;
+    xeth_header_info_t(xeth_header_info_t &&) = default;
+    xeth_header_info_t & operator=(xeth_header_info_t &&) = default;
+    ~xeth_header_info_t() = default;
+
+    xeth_header_info_t(bigint difficult_sum, xh256_t parent_hash, bigint number);
 
     xbytes_t encode_rlp() const;
-    bool decode_rlp(const xbytes_t & input);
+    bool decode_rlp(xbytes_t const & input);
 
     bigint difficult_sum;
     xh256_t parent_hash;

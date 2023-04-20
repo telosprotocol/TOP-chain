@@ -36,15 +36,15 @@ bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
 }
 
 xh256_t xeth_header_t::hash() const {
-    auto value = encode_rlp();
-    auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size());
-    return FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
+    auto const value = encode_rlp();
+    auto const hash_value = utl::xkeccak256_t::digest(value.data(), value.size());
+    return xh256_t{hash_value.data(), xh256_t::ConstructFromPointer};
 }
 
 xh256_t xeth_header_t::hash_without_seal() const {
-    auto value = encode_rlp_withoutseal();
-    auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size());
-    return FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
+    auto const value = encode_rlp_withoutseal();
+    auto const hash_value = utl::xkeccak256_t::digest(value.data(), value.size());
+    return xh256_t{hash_value.data(), xh256_t::ConstructFromPointer};
 }
 
 xbytes_t xeth_header_t::encode_rlp_withoutseal() const {
@@ -58,7 +58,7 @@ xbytes_t xeth_header_t::encode_rlp_withoutseal() const {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(miner.asBytes());
+        auto tmp = RLP::encode(miner.to_bytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -123,7 +123,7 @@ xbytes_t xeth_header_t::encode_rlp() const {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(miner.asBytes());
+        auto tmp = RLP::encode(miner.to_bytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -185,7 +185,7 @@ xbytes_t xeth_header_t::encode_rlp() const {
     return RLP::encodeList(out);
 }
 
-bool xeth_header_t::decode_rlp(const xbytes_t & bytes) {
+bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
     auto l = RLP::decodeList(bytes);
     if (l.decoded.size() < 15) {
         return false;
@@ -204,7 +204,7 @@ bool xeth_header_t::decode_rlp(const xbytes_t & bytes) {
     if (l.decoded[2].size() != xh160_t::size()) {
         return false;
     }
-    miner = static_cast<Address>(l.decoded[2]);
+    miner = common::xeth_address_t::build_from(l.decoded[2]);
 
     if (l.decoded[3].size() != xh256_t::size()) {
         return false;
@@ -228,9 +228,9 @@ bool xeth_header_t::decode_rlp(const xbytes_t & bytes) {
 
     difficulty = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[7]));
     number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[8]));
-    gas_limit = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[9]));
-    gas_used = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[10]));
-    time = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[11]));
+    gas_limit = evm_common::fromBigEndian<u64>(l.decoded[9]).convert_to<uint64_t>();
+    gas_used = evm_common::fromBigEndian<u64>(l.decoded[10]).convert_to<uint64_t>();
+    time = evm_common::fromBigEndian<u64>(l.decoded[11]).convert_to<uint64_t>();
     extra = l.decoded[12];
 
     if (l.decoded[13].size() != xh256_t::size()) {
@@ -260,7 +260,7 @@ std::string xeth_header_t::dump() const {
 void xeth_header_t::print() const {
     printf("parent_hash: %s\n", parent_hash.hex().c_str());
     printf("uncle_hash: %s\n", uncle_hash.hex().c_str());
-    printf("miner: %s\n", miner.hex().c_str());
+    printf("miner: %s\n", miner.to_hex_string().c_str());
     printf("state_merkleroot: %s\n", state_merkleroot.hex().c_str());
     printf("tx_merkleroot: %s\n", tx_merkleroot.hex().c_str());
     printf("receipt_merkleroot: %s\n", receipt_merkleroot.hex().c_str());
@@ -282,7 +282,8 @@ void xeth_header_t::print() const {
     }
 }
 
-xeth_header_info_t::xeth_header_info_t(bigint difficult_sum_, xh256_t parent_hash_, bigint number_) : difficult_sum{difficult_sum_}, parent_hash{parent_hash_}, number{number_} {
+xeth_header_info_t::xeth_header_info_t(bigint difficult_sum, xh256_t parent_hash, bigint number)
+  : difficult_sum{std::move(difficult_sum)}, parent_hash{parent_hash}, number{std::move(number)} {
 }
 
 xbytes_t xeth_header_info_t::encode_rlp() const {
@@ -302,7 +303,7 @@ xbytes_t xeth_header_info_t::encode_rlp() const {
     return RLP::encodeList(out);
 }
 
-bool xeth_header_info_t::decode_rlp(const xbytes_t & input) {
+bool xeth_header_info_t::decode_rlp(xbytes_t const & input) {
     auto l = RLP::decodeList(input);
     if (l.decoded.size() != 3) {
         return false;
