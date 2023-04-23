@@ -25,7 +25,7 @@ enum {
 
 constexpr static uint64_t slots_per_epoch{32};
 constexpr static uint64_t epochs_per_sync_committee_period{256};
-XINLINE_CONSTEXPR uint64_t min_sync_committee_participants{1};
+constexpr static uint64_t min_sync_committee_participants{1};
 
 constexpr uint64_t hashes_gc_threshold = 51000;
 

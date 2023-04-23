@@ -2414,7 +2414,7 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
         j_header["receiptMerkleRoot"] = header.receipt_merkleroot.hex();
         j_header["bloom"] = header.bloom.hex();
         j_header["difficulty"] = header.difficulty.str();
-        j_header["number"] = header.number.str();
+        j_header["number"] = static_cast<Json::UInt64>(header.number);
         j_header["gasLimit"] = std::to_string(header.gas_limit);
         j_header["gasUsed"] = std::to_string(header.gas_used);
         j_header["time"] = std::to_string(header.time);

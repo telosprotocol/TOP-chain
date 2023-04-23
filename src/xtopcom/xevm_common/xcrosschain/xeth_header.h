@@ -24,7 +24,7 @@ struct xeth_header_t {
     xh256_t receipt_merkleroot;
     LogBloom bloom;
     bigint difficulty;
-    bigint number;
+    uint64_t number;
     uint64_t gas_limit{0};
     uint64_t gas_used{0};
     uint64_t time{0};
