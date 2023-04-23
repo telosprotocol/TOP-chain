@@ -28,7 +28,7 @@ constexpr uint64_t ConfirmHeight = 25;
 constexpr uint64_t HashReserveNum = 40000;
 constexpr uint64_t BlockReserveNum = 500;
 
-bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::init(xbytes_t const & rlp_bytes, state_ptr state) {
     // step 1: check init
     if (get_last_hash(state) != h256()) {
         xwarn("[xtop_evm_eth_bridge_contract::init] init already");
@@ -49,20 +49,20 @@ bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes, state_ptr st
         return false;
     }
     if (!set_effective_hash(header.number, header.hash(), state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_effective_hash failed, height: %s, hash: %s", header.number.str().c_str(), header.hash().hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
         return false;
     }
     if (!set_hashes(header.number, {header.hash()}, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_hash failed, height: %s, hash: %s", header.number.str().c_str(), header.hash().hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_hash failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
         return false;
     }
     if (!set_header(header.hash(), header, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_header failed, height: %s, hash: %s", header.number.str().c_str(), header.hash().hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_header failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
         return false;
     }
     xeth_header_info_t header_info{header.difficulty, header.parent_hash, header.number};
     if (!set_header_info(header.hash(), header_info, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_header_info failed, height: %s, hash: %s", header.number.str().c_str(), header.hash().hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
         return false;
     }
 
@@ -70,7 +70,7 @@ bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes, state_ptr st
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::sync(xbytes_t const & rlp_bytes, state_ptr state) {
     // step 1: check init
     if (get_last_hash(state) == h256()) {
         xwarn("[xtop_evm_eth_bridge_contract::sync] not init yet");
@@ -160,7 +160,7 @@ bigint xtop_evm_eth_bridge_contract::get_height(state_ptr state) const {
     return info.number;
 }
 
-xheader_status_t xtop_evm_eth_bridge_contract::query_height(const u256 height, state_ptr state) const {
+xheader_status_t xtop_evm_eth_bridge_contract::query_height(u256 const height, state_ptr state) const {
     auto now_height = get_height(state);
     if (now_height == 0) {
         return xheader_status_t::header_not_confirmed;
@@ -174,7 +174,7 @@ xheader_status_t xtop_evm_eth_bridge_contract::query_height(const u256 height, s
     return xheader_status_t::header_confirmed;
 }
 
-bool xtop_evm_eth_bridge_contract::is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const {
+bool xtop_evm_eth_bridge_contract::is_known(u256 const height, xbytes_t const & hash_bytes, state_ptr state) const {
     h256 hash = static_cast<h256>(hash_bytes);
     auto hashes = get_hashes(height, state);
     if (!hashes.count(hash)) {
@@ -185,7 +185,7 @@ bool xtop_evm_eth_bridge_contract::is_known(const u256 height, const xbytes_t & 
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::is_confirmed(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const {
+bool xtop_evm_eth_bridge_contract::is_confirmed(u256 const height, xbytes_t const & hash_bytes, state_ptr state) const {
     h256 hash = static_cast<h256>(hash_bytes);
     h256 origin_hash = get_effective_hash(height, state);
     if (hash != origin_hash) {
@@ -206,9 +206,9 @@ bool xtop_evm_eth_bridge_contract::is_confirmed(const u256 height, const xbytes_
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<double_node_with_merkle_proof> & nodes) const {
+bool xtop_evm_eth_bridge_contract::verify(xeth_header_t const & prev_header, xeth_header_t const & new_header, std::vector<double_node_with_merkle_proof> const & nodes) const {
     if (new_header.number != prev_header.number + 1) {
-        xwarn("[xtop_evm_eth_bridge_contract::verify] height mismatch, new: %s, old: %s", new_header.number.str().c_str(), prev_header.number.str().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::verify] height mismatch, new: %" PRIu64 ", old: %" PRIu64, new_header.number, prev_header.number);
         return false;
     }
     if (new_header.extra.size() > MaximumExtraDataSize) {
@@ -255,7 +255,7 @@ bool xtop_evm_eth_bridge_contract::verify(const xeth_header_t & prev_header, con
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::record(const xeth_header_t & header, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::record(xeth_header_t const & header, state_ptr state) {
     h256 header_hash = header.hash();
     h256 last_hash = get_last_hash(state);
     xeth_header_info_t last_info;
@@ -264,8 +264,8 @@ bool xtop_evm_eth_bridge_contract::record(const xeth_header_t & header, state_pt
         return false;
     }
     if (header.number + BlockReserveNum < last_info.number) {
-        xwarn("[xtop_evm_eth_bridge_contract::record] header is too old height: %s, hash: %s, now height: %s",
-              header.number.str().c_str(),
+        xwarn("[xtop_evm_eth_bridge_contract::record] header is too old height: %" PRIu64 ", hash: %s, now height: %s",
+              header.number,
               header_hash.hex().c_str(),
               last_info.number.str().c_str());
         return false;
@@ -282,7 +282,7 @@ bool xtop_evm_eth_bridge_contract::record(const xeth_header_t & header, state_pt
     }
     all_hashes.insert(header_hash);
     if (!set_hashes(header.number, all_hashes, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::record] set hashes failed, height: %s", header.number.str().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::record] set hashes failed, height: %" PRIu64, header.number);
         return false;
     }
     if (!set_header(header_hash, header,state)) {
@@ -291,7 +291,7 @@ bool xtop_evm_eth_bridge_contract::record(const xeth_header_t & header, state_pt
     }
     xeth_header_info_t info{header.difficulty + parent_info.difficult_sum, header.parent_hash, header.number};
     if (!set_header_info(header.hash(), info,state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::record] set_header_info failed, height: %s, hash: %s", header.number.str().c_str(), header.hash().hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
         return false;
     }
     if (info.difficult_sum > last_info.difficult_sum || (info.difficult_sum == last_info.difficult_sum && header.difficulty % 2 == 0)) {
@@ -304,7 +304,7 @@ bool xtop_evm_eth_bridge_contract::record(const xeth_header_t & header, state_pt
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::rebuild(const xeth_header_t & header, const xeth_header_info_t & last_info, const xeth_header_info_t & cur_info, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::rebuild(xeth_header_t const & header, xeth_header_info_t const & last_info, xeth_header_info_t const & cur_info, state_ptr state) {
     if (last_info.number > cur_info.number) {
         for (bigint i = cur_info.number + 1; i <= last_info.number; ++i) {
             remove_effective_hash(i, state);
@@ -316,7 +316,7 @@ bool xtop_evm_eth_bridge_contract::rebuild(const xeth_header_t & header, const x
         return false;
     }
     if (!set_effective_hash(header.number, header_hash, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_effective_hash failed, height: %s, hash: %s", header.number.str().c_str(), header_hash.hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", header.number, header_hash.hex().c_str());
         return false;
     }
     bigint height = header.number - 1;
@@ -343,7 +343,7 @@ bool xtop_evm_eth_bridge_contract::rebuild(const xeth_header_t & header, const x
     return true;
 }
 
-void xtop_evm_eth_bridge_contract::release(const bigint number, state_ptr state) {
+void xtop_evm_eth_bridge_contract::release(bigint const number, state_ptr state) {
     xeth_header_t header;
     bigint difficulty;
     h256 hash;
@@ -380,7 +380,7 @@ void xtop_evm_eth_bridge_contract::release(const bigint number, state_ptr state)
     }
 }
 
-bool xtop_evm_eth_bridge_contract::get_header(const h256 hash, xeth_header_t & header, state_ptr state) const {
+bool xtop_evm_eth_bridge_contract::get_header(h256 const hash, xeth_header_t & header, state_ptr state) const {
     auto k = hash.asBytes();
     auto header_str = state->map_get(data::system_contract::XPROPERTY_HEADERS, {k.begin(), k.end()});
     if (header_str.empty()) {
@@ -394,7 +394,7 @@ bool xtop_evm_eth_bridge_contract::get_header(const h256 hash, xeth_header_t & h
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::set_header(const h256 hash, const xeth_header_t & header, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::set_header(h256 const hash, xeth_header_t const & header, state_ptr state) {
     auto k = hash.asBytes();
     auto v = header.encode_rlp();
     if (0 != state->map_set(data::system_contract::XPROPERTY_HEADERS, {k.begin(), k.end()}, {v.begin(), v.end()})) {
@@ -403,7 +403,7 @@ bool xtop_evm_eth_bridge_contract::set_header(const h256 hash, const xeth_header
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::remove_header(const h256 hash, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::remove_header(h256 const hash, state_ptr state) {
     auto k = hash.asBytes();
     if (0 != state->map_remove(data::system_contract::XPROPERTY_HEADERS, {k.begin(), k.end()})) {
         return false;
@@ -411,7 +411,7 @@ bool xtop_evm_eth_bridge_contract::remove_header(const h256 hash, state_ptr stat
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::get_header_info(const h256 hash, xeth_header_info_t & header_info, state_ptr state) const {
+bool xtop_evm_eth_bridge_contract::get_header_info(h256 const hash, xeth_header_info_t & header_info, state_ptr state) const {
     auto k = hash.asBytes();
     auto info_str = state->map_get(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()});
     if (info_str.empty()) {
@@ -425,7 +425,7 @@ bool xtop_evm_eth_bridge_contract::get_header_info(const h256 hash, xeth_header_
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::set_header_info(const h256 hash, const xeth_header_info_t & header_info, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::set_header_info(h256 const hash, xeth_header_info_t const & header_info, state_ptr state) {
     auto k = hash.asBytes();
     auto v = header_info.encode_rlp();
     if (0 != state->map_set(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()}, {v.begin(), v.end()})) {
@@ -434,7 +434,7 @@ bool xtop_evm_eth_bridge_contract::set_header_info(const h256 hash, const xeth_h
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::remove_header_info(const h256 hash, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::remove_header_info(h256 const hash, state_ptr state) {
     auto k = hash.asBytes();
     if (0 != state->map_remove(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()})) {
         return false;
@@ -442,7 +442,7 @@ bool xtop_evm_eth_bridge_contract::remove_header_info(const h256 hash, state_ptr
     return true;
 }
 
-h256 xtop_evm_eth_bridge_contract::get_effective_hash(const bigint height, state_ptr state) const {
+h256 xtop_evm_eth_bridge_contract::get_effective_hash(bigint const height, state_ptr state) const {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto hash_str = state->map_get(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, {k.begin(), k.end()});
     if (hash_str.empty()) {
@@ -451,7 +451,7 @@ h256 xtop_evm_eth_bridge_contract::get_effective_hash(const bigint height, state
     return static_cast<h256>(xbytes_t{std::begin(hash_str), std::end(hash_str)});
 }
 
-bool xtop_evm_eth_bridge_contract::set_effective_hash(const bigint height, const h256 hash, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::set_effective_hash(bigint const height, h256 const hash, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto v = hash.asBytes();
     if (0 != state->map_set(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, {k.begin(), k.end()}, {v.begin(), v.end()})) {
@@ -460,7 +460,7 @@ bool xtop_evm_eth_bridge_contract::set_effective_hash(const bigint height, const
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::remove_effective_hash(const bigint height, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::remove_effective_hash(bigint const height, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     if (0 != state->map_remove(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, {k.begin(), k.end()})) {
         return false;
@@ -468,7 +468,7 @@ bool xtop_evm_eth_bridge_contract::remove_effective_hash(const bigint height, st
     return true;
 }
 
-std::set<h256> xtop_evm_eth_bridge_contract::get_hashes(const bigint height, state_ptr state) const {
+std::set<h256> xtop_evm_eth_bridge_contract::get_hashes(bigint const height, state_ptr state) const {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto str = state->map_get(data::system_contract::XPROPERTY_ALL_HASHES, {k.begin(), k.end()});
     if (str.empty()) {
@@ -482,7 +482,7 @@ std::set<h256> xtop_evm_eth_bridge_contract::get_hashes(const bigint height, sta
     return hashes;
 }
 
-bool xtop_evm_eth_bridge_contract::set_hashes(const bigint height, const std::set<h256> & hashes, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::set_hashes(bigint const height, std::set<h256> const & hashes, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     xbytes_t v;
     for (auto h : hashes) {
@@ -495,7 +495,7 @@ bool xtop_evm_eth_bridge_contract::set_hashes(const bigint height, const std::se
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::remove_hashes(const bigint height, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::remove_hashes(bigint const height, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     if (0 != state->map_remove(data::system_contract::XPROPERTY_ALL_HASHES, {k.begin(), k.end()})) {
         return false;
@@ -511,7 +511,7 @@ h256 xtop_evm_eth_bridge_contract::get_last_hash(state_ptr state) const {
     return static_cast<h256>(xbytes_t{std::begin(hash_str), std::end(hash_str)});
 }
 
-bool xtop_evm_eth_bridge_contract::set_last_hash(const h256 hash, state_ptr state) {
+bool xtop_evm_eth_bridge_contract::set_last_hash(h256 const hash, state_ptr state) {
     auto bytes = hash.asBytes();
     if (0 != state->string_set(data::system_contract::XPROPERTY_LAST_HASH, {bytes.begin(), bytes.end()})) {
         return false;

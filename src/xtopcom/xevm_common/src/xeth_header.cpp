@@ -25,8 +25,9 @@
 #include "xcommon/rlp.h"
 #include "xutility/xhash.h"
 
-NS_BEG2(top, evm_common)
+#include <cinttypes>
 
+NS_BEG2(top, evm_common)
 bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
     return (this->parent_hash == rhs.parent_hash)
     && (this->uncle_hash == rhs.uncle_hash)
@@ -229,9 +230,8 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
     }
     bloom = static_cast<LogBloom>(l.decoded[6]);
 
-
     difficulty = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[7]));
-    number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[8]));
+    number = evm_common::fromBigEndian<u256>(l.decoded[8]).convert_to<uint64_t>();
     gas_limit = evm_common::fromBigEndian<u64>(l.decoded[9]).convert_to<uint64_t>();
     gas_used = evm_common::fromBigEndian<u64>(l.decoded[10]).convert_to<uint64_t>();
     time = evm_common::fromBigEndian<u64>(l.decoded[11]).convert_to<uint64_t>();
@@ -251,7 +251,7 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
 
 std::string xeth_header_t::dump() const {
     char local_param_buf[256];
-    xprintf(local_param_buf, sizeof(local_param_buf), "height: %s, hash: %s, parent_hash: %s", number.str().c_str(), hash().hex().c_str(), parent_hash.hex().c_str());
+    xprintf(local_param_buf, sizeof(local_param_buf), "height: %" PRIu64 ", hash: %s, parent_hash: %s", number, hash().hex().c_str(), parent_hash.hex().c_str());
     return std::string(local_param_buf);
 }
 
@@ -264,7 +264,7 @@ void xeth_header_t::print() const {
     printf("receipt_merkleroot: %s\n", receipt_merkleroot.hex().c_str());
     printf("bloom: %s\n", bloom.hex().c_str());
     printf("difficulty: %s\n", difficulty.str().c_str());
-    printf("number: %s\n", number.str().c_str());
+    printf("number: %" PRIu64 "\n", number);
     printf("gas_limit: %lu\n", gas_limit);
     printf("gas_used: %lu\n", gas_used);
     printf("time: %lu\n", time);
