@@ -4,7 +4,7 @@ endif()
 
 add_definitions(-DASIO_STANDALONE -DUSE_STANDALONE_ASIO)
 
-find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
 
 aux_source_directory(./xerror error)
 aux_source_directory(./prerequest prerequest)

@@ -1,6 +1,6 @@
-if (NOT ${XSYS_VER} EQUAL 0)
-    find_library(secp256k1_LIBRARY secp256k1 REQUIRED)
-    find_library(cryptopp_LIBRARY cryptopp REQUIRED)
+if (${XOS_ID} MATCHES "ubuntu")
+    find_library(secp256k1_LIBRARY libsecp256k1.a REQUIRED)
+    find_library(cryptopp_LIBRARY libcryptopp.a REQUIRED)
 endif()
 
 if (DISABLE_REAL_STAKE)
@@ -14,7 +14,7 @@ aux_source_directory(${SRC_DIR}/base cppsdk_src)
 aux_source_directory(${SRC_DIR}/network cppsdk_src)
 aux_source_directory(${SRC_DIR}/task cppsdk_src)
 
-if (${XSYS_VER} EQUAL 0)
+if (${XOS_ID} MATCHES "centos")
     set(LINK_ARGS secp256k1 trezor-crypto cryptopp)
 else()
     set(LINK_ARGS ${secp256k1_LIBRARY} trezor-crypto ${cryptopp_LIBRARY})

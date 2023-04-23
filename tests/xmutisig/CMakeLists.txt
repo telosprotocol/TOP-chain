@@ -6,7 +6,7 @@ add_executable(xmutisig_test ${unit_src})
 
 #add_dependencies(xmutisig_test xmutisig)
 
-if (${XSYS_VER} EQUAL 0)
+if (${XOS_ID} MATCHES "centos")
 target_include_directories(xmutisig_test PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
 endif()
 target_link_libraries(xmutisig_test PRIVATE xmutisig gtest xcrypto xutility)

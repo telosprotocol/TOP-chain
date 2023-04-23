@@ -1,13 +1,7 @@
-find_library(RocksDB_LIBRARIES rocksdb REQUIRED)
-find_library(zstd_LIBRARIES zstd REQUIRED)
-find_library(Snappy_LIBRARIES snappy REQUIRED)
-find_library(minigzip_LIBRARIES minizip REQUIRED)
-find_library(lz4_LIBRARIES lz4 HINTS ${LIBRARY_OUTPUT_DIRECTORY})
-find_package(BZip2 REQUIRED)
-find_package(ZLIB REQUIRED)
+find_library(minizip_LIBRARIES libminizip.a REQUIRED)
 
 aux_source_directory(./ db_tool_src)
 add_library(db_tool ${db_tool_src} )
 
 add_dependencies(db_tool xpbase)
-target_link_libraries(db_tool PRIVATE ${RocksDB_LIBRARIES} ${minigzip_LIBRARIES} ZLIB::ZLIB BZip2::BZip2 ${zstd_LIBRARIES} ${Snappy_LIBRARIES} ${lz4_LIBRARIES} pthread)
+target_link_libraries(db_tool PRIVATE ${rocksdb_LIBRARIES} ${minizip_LIBRARIES} pthread)

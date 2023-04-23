@@ -37,7 +37,12 @@ endif()
 
 add_dependencies(xvm xstatestore xconfig xstore xchain_upgrade xcertauth xdata xdata xevm_common xcommon xrouter xcodec xbasic xxbase)
 
-target_link_libraries(xvm PRIVATE xstatestore xconfig xevm_common xrouter xcertauth xdata xchain_upgrade xdata xcommon xcodec xbasic xstore xxbase protobuf jsoncpp ethash keccak)
+if (${XOS_ID} MATCHES "ubuntu")
+    find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+    target_link_libraries(xvm PRIVATE xstatestore xconfig xevm_common xrouter xcertauth xdata xchain_upgrade xdata xcommon xcodec xbasic xstore xxbase ${protobuf_LIBRARY} ${z_LIBRARY} ${jsoncpp_LIBRARIES} ethash keccak)
+else()
+    target_link_libraries(xvm PRIVATE xstatestore xconfig xevm_common xrouter xcertauth xdata xchain_upgrade xdata xcommon xcodec xbasic xstore xxbase protobuf jsoncpp ethash keccak)
+endif()
 
 if (BUILD_METRICS)
     #add_dependencies(xvm xmetrics)

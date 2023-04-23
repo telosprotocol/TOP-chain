@@ -1,6 +1,4 @@
-if (DISABLE_REAL_STAKE)
-    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
-endif()
+find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
 
 aux_source_directory(./src src_dir)
 
@@ -8,5 +6,4 @@ add_library(xelect STATIC ${src_dir})
 
 add_dependencies(xelect xconfig xvnetwork xdata xvm xstore xrouter xxbase)
 
-find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
-target_link_libraries(xelect PRIVATE xsafebox xconfig xvnetwork xdata xvm protobuf xstore xrouter xxbase ${jsoncpp_LIBRARIES} pthread)
+target_link_libraries(xelect PRIVATE xsafebox xconfig xvnetwork xdata xvm xstore xrouter xxbase ${protobuf_LIBRARY} ${z_LIBRARY} ${jsoncpp_LIBRARIES} pthread)

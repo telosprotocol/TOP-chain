@@ -1,6 +1,7 @@
-find_library(Libevent_LIBRARY event REQUIRED)
-find_library(Libevent_pthreads_LIBRARY event_pthreads REQUIRED)
-find_library(Libevent_core_LIBRARY event_core REQUIRED)
+find_library(Libevent_LIBRARY libevent.a REQUIRED)
+find_library(Libevent_pthreads_LIBRARY libevent_pthreads.a REQUIRED)
+find_library(Libevent_core_LIBRARY libevent_core.a REQUIRED)
+find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
 
 if (DISABLE_REAL_STAKE)
     add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
@@ -17,7 +18,7 @@ target_include_directories(xtransport PRIVATE ${PROJECT_SOURCE_DIR}/third_party/
 
 set(SSL_LIB_PATH ${CMAKE_SOURCE_DIR}/third_party/prebuild/libs/${XSYSTEM_NAME_LOWERCASE}/libbrssl.a;${CMAKE_SOURCE_DIR}/third_party/prebuild/libs/${XSYSTEM_NAME_LOWERCASE}/libbrcrypto.a)
 target_link_libraries(xtransport PRIVATE xquic-static ${SSL_LIB_PATH})
-target_link_libraries(xtransport PUBLIC xsafebox xpbase xutility xxbase protobuf jsoncpp xcrypto m pthread)
+target_link_libraries(xtransport PUBLIC xsafebox xpbase xutility xxbase ${protobuf_LIBRARY} ${z_LIBRARY} ${jsoncpp_LIBRARIES} xcrypto m pthread)
 
 target_link_libraries(xtransport PRIVATE ${Libevent_LIBRARY}) # static library output path
 target_link_libraries(xtransport PRIVATE ${Libevent_pthreads_LIBRARY}) # for event pthread

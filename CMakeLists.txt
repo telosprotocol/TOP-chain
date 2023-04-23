@@ -1,19 +1,26 @@
 cmake_minimum_required(VERSION 3.22)
 
 cmake_host_system_information(RESULT XOS_ID QUERY DISTRIB_ID)
-if (${XOS_ID} MATCHES "centos")
-    set(XSYS_VER 0)
-elseif(${XOS_ID} MATCHES "ubuntu")
-    set(XSYS_VER 1)
-else()
-    message(FATAL_ERROR "Uknown OS distribution ID")
+
+project(XTOPCHAIN CXX C)
+
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+
+set(XEXPECTED_GCC_VERSION 12.1.0)
+set(XEXPECTED_MINIMUM_GCC_VERSION 4.8.5)
+
+if (NOT CMAKE_CXX_COMPILER)
+    message(FATAL_ERROR "C++ Compiler not found")
 endif()
 
-if (${XSYS_VER} EQUAL 0)
+if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL XEXPECTED_GCC_VERSION)
+    set(CMAKE_CXX_STANDARD 23)
+elseif (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL XEXPECTED_MINIMUM_GCC_VERSION)
     set(CMAKE_CXX_STANDARD 11)
 else()
-    set(CMAKE_CXX_STANDARD 23)
+    message(FATAL_ERROR "GCC version ${CMAKE_CXX_COMPILER_VERSION} is not supported")
 endif()
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -28,21 +35,13 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-project(XTOPCHAIN CXX C)
-
-SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-
-if (NOT CMAKE_CXX_COMPILER)
-    message(FATAL_ERROR "C++ Compiler not found")
-endif()
-
 string(TOLOWER ${CMAKE_BUILD_TYPE} XBUILD_TYPE)
 if ("${XBUILD_TYPE}" MATCHES "rel")
     set(XBUILD_TYPE release)
 endif()
 string(TOLOWER ${CMAKE_SYSTEM_NAME} XSYSTEM_NAME_LOWERCASE)
 
-if (${XSYS_VER} EQUAL 1)
+if (${XOS_ID} MATCHES "ubuntu")
     add_definitions(-DMSGPACK_NO_BOOST)
     add_definitions(-DOPENSSL_API_COMPAT=10101)
 endif()
@@ -380,7 +379,7 @@ include_directories(src/libraries)
 include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-if (${XSYS_VER} EQUAL 0)
+if (${XOS_ID} MATCHES "centos")
     include_directories(SYSTEM src/xtopcom/xdepends/include/trezor-crypto)
     include_directories(SYSTEM src/xtopcom/xdepends/include)
     include_directories(SYSTEM src/xtopcom/xdepends/GSL/include)
@@ -404,6 +403,62 @@ else()
     link_directories(third_party/prebuild/libs/${XSYSTEM_NAME_LOWERCASE})
 
     add_subdirectory(third_party)
+
+    set(rocksdb_LIBRARIES)
+    find_library(rocksdb_LIBRARY librocksdb.a REQUIRED)
+    find_library(lz4_LIBRARY liblz4.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+    find_library(zstd_LIBRARY libzstd.a REQUIRED)
+    find_library(snappy_LIBRARY libsnappy.a REQUIRED)
+    find_library(bz2_LIBRARY libbz2.a REQUIRED)
+    find_library(z_LIBRARY libz.a REQUIRED)
+    find_library(gflags_LIBRARY libgflags.a REQUIRED)
+    list(APPEND rocksdb_LIBRARIES ${rocksdb_LIBRARY} ${lz4_LIBRARY} ${zstd_LIBRARY} ${snappy_LIBRARY} ${bz2_LIBRARY} ${z_LIBRARY} ${gflags_LIBRARY})
+
+    set(absl_LIBRARIES)
+    find_library(absl_time_LIBRARY libabsl_time.a REQUIRED)
+    find_library(absl_str_format_internal_LIBRARY libabsl_str_format_internal.a REQUIRED)
+    find_library(absl_strings_LIBRARY libabsl_strings.a REQUIRED)
+    find_library(absl_strings_internal_LIBRARY libabsl_strings_internal.a REQUIRED)
+    find_library(absl_throw_delegate_LIBRARY libabsl_throw_delegate.a REQUIRED)
+    find_library(absl_base_LIBRARY libabsl_base.a REQUIRED)
+    find_library(absl_raw_logging_internal_LIBRARY libabsl_raw_logging_internal.a REQUIRED)
+    find_library(absl_spinlock_wait_LIBRARY libabsl_spinlock_wait.a REQUIRED)
+    find_library(absl_bad_optional_access_LIBRARY libabsl_bad_optional_access.a REQUIRED)
+    find_library(absl_time_zone_LIBRARY libabsl_time_zone.a REQUIRED)
+    find_library(absl_int128_LIBRARY libabsl_int128.a REQUIRED)
+    list(APPEND absl_LIBRARIES ${absl_time_LIBRARY}
+                               ${absl_str_format_internal_LIBRARY}
+                               ${absl_strings_LIBRARY}
+                               ${absl_strings_internal_LIBRARY}
+                               ${absl_throw_delegate_LIBRARY}
+                               ${absl_base_LIBRARY}
+                               ${absl_raw_logging_internal_LIBRARY}
+                               ${absl_spinlock_wait_LIBRARY}
+                               ${absl_bad_optional_access_LIBRARY}
+                               ${absl_time_zone_LIBRARY}
+                               ${absl_int128_LIBRARY})
+
+    set(openssl_LIBRARIES)
+    find_library(openssl_crypto_LIBRARY libcrypto.a REQUIRED)
+    find_library(openssl_ssl_LIBRARY libssl.a REQUIRED)
+    list(APPEND openssl_LIBRARIES ${openssl_ssl_LIBRARY} ${openssl_crypto_LIBRARY})
+
+    find_library(protobuf_LIBRARY libprotobuf.a REQUIRED)
+    find_library(cares_LIBRARY libcares.a REQUIRED)
+
+    set(grpc_LIBRARIES)
+    find_library(gRPCPP_LIBRARY libgrpc++.a REQUIRED)
+    find_library(gRPC_LIBRARY libgrpc.a REQUIRED)
+    find_library(gRPC_GPR_LIBRARY libgpr.a REQUIRED)
+    list(APPEND grpc_LIBRARIES ${gRPCPP_LIBRARY}
+                               ${gRPC_LIBRARY}
+                               ${gRPC_GPR_LIBRARY}
+                               ${gRPC_ADDRESS_SORTING_LIBRARY}
+                               ${cares_LIBRARY}
+                               ${absl_LIBRARIES}
+                               ${protobuf_LIBRARY}
+                               ${openssl_LIBRARIES}
+                               ${z_LIBRARY})
 endif()
 
 link_directories(${LIBRARY_OUTPUT_DIRECTORY})
@@ -415,7 +470,7 @@ add_subdirectory(src)
 if (XBUILD_TEST)
     enable_testing()
 
-    if (${XSYS_VER} EQUAL 0)
+    if (${XOS_ID} MATCHES "centos")
         include_directories(SYSTEM src/xtopcom/xdepends/googletest/googletest/include)
         include_directories(SYSTEM src/xtopcom/xdepends/googletest/googlemock/include)
     endif()
