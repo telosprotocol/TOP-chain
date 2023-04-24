@@ -25,6 +25,7 @@ m_xip2(xip2) {
     // EDGE_REGISTER_V1_LOCAL_METHOD(T, import_private_key);
     // EDGE_REGISTER_V1_LOCAL_METHOD(T, get_private_keys);
     EDGE_REGISTER_V1_LOCAL_METHOD(T, get_edge_neighbors);
+    EDGE_REGISTER_V1_LOCAL_METHOD(T, getClientVersion);    
 }
 
 template<class T>
@@ -159,6 +160,14 @@ void xedge_local_method<T>::get_edge_neighbors_method(xjson_proc_t &json_proc) {
         dataJson.append(ips[i]);
     }
     xdbg("edge_neighbors size: %d, pool size: %d ", ips.size(), pool_size);
+    json_proc.m_response_json["data"] = dataJson;
+}
+
+template<class T>
+void xedge_local_method<T>::getClientVersion_method(xjson_proc_t &json_proc) {
+    #include "generated/version.h"
+    Json::Value dataJson;
+    dataJson["topio_version"] = PROGRAM_VERSION;
     json_proc.m_response_json["data"] = dataJson;
 }
 
