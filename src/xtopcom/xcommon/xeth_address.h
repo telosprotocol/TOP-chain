@@ -8,6 +8,7 @@
 #include "xcommon/xaccount_address_fwd.h"
 #include "xcommon/xerror/xerror.h"
 #include "xcommon/xeth_address_fwd.h"
+#include "xbasic/xfixed_hash.h"
 
 #include <array>
 #include <cassert>
@@ -80,7 +81,9 @@ public:
     std::string to_string() const;
     xbytes_t to_bytes() const;
     xbytes_t to_h160() const;
+    void to_h160(xh160_t & h160) const;
     xbytes_t to_h256() const;
+    void to_h256(xh256_t & h256) const;
     char const * c_str() const;
     bool is_zero() const;
 

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xspan.h"
-#include "xcommon/xfixed_hash.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/xtable_address.h"
 #include "xevm_common/trie/xtrie_node.h"
 

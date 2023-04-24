@@ -1,8 +1,8 @@
 
 #pragma once
 
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/common.h"
-#include "xcommon/fixed_hash.h"
 #include "xcommon/rlp.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_runner/evm_engine_interface.h"

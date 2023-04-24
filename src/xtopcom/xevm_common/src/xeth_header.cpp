@@ -46,6 +46,13 @@ xh256_t xeth_header_t::hash() const {
     return xh256_t{hash_value.data(), xh256_t::ConstructFromPointer};
 }
 
+void xeth_header_t::hash(xh256_t & out) const {
+    auto const value = encode_rlp();
+    auto const hash_value = utl::xkeccak256_t::digest(value.data(), value.size());
+    assert(static_cast<size_t>(hash_value.size()) == out.size());
+    std::memcpy(out.data(), hash_value.data(), std::min(out.size(), static_cast<size_t>(hash_value.size())));
+}
+
 xh256_t xeth_header_t::hash_without_seal() const {
     auto const value = encode_rlp_withoutseal();
     auto const hash_value = utl::xkeccak256_t::digest(value.data(), value.size());

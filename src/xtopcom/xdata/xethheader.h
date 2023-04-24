@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <string>
 #include "xbasic/xbyte_buffer.h"
-#include "xcommon/xeth_address.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/common.h"
-#include "xcommon/xfixed_hash.h"
 #include "xcommon/rlp.h"
 #include "xcommon/xbloom9.h"
+#include "xcommon/xeth_address.h"
+
+#include <string>
 
 NS_BEG2(top, data)
 
@@ -31,9 +32,9 @@ class xeth_header_t {
     uint64_t    get_gasused() const {return m_gasused;}
     const evm_common::u256 &            get_baseprice() const {return m_baseprice;}
     const evm_common::xbloom9_t &       get_logBloom() const {return m_logBloom;}
-    const evm_common::xh256_t &         get_transactions_root() const {return m_transactions_root;}
-    const evm_common::xh256_t &         get_receipts_root() const {return m_receipts_root;}
-    evm_common::xh256_t const & get_state_root() const {
+    const xh256_t &         get_transactions_root() const {return m_transactions_root;}
+    const xh256_t &         get_receipts_root() const {return m_receipts_root;}
+    xh256_t const & get_state_root() const {
         return m_state_root;
     }
     xbytes_t const&                     get_extra_data() const {return m_extra_data;}
@@ -44,9 +45,9 @@ class xeth_header_t {
     void        set_gasused(uint64_t gasused);
     void        set_baseprice(const evm_common::u256 & price);
     void        set_logBloom(const evm_common::xbloom9_t & bloom);
-    void        set_transactions_root(const evm_common::xh256_t & root);
-    void        set_receipts_root(const evm_common::xh256_t & root);
-    void        set_state_root(evm_common::xh256_t const & root);
+    void        set_transactions_root(const xh256_t & root);
+    void        set_receipts_root(const xh256_t & root);
+    void        set_state_root(xh256_t const & root);
     void        set_extra_data(xbytes_t const& _data);
     void        set_coinbase(const common::xeth_address_t & miner);
 
@@ -56,9 +57,9 @@ class xeth_header_t {
     evm_common::u256        m_baseprice;
     uint64_t                m_gasused{0};  // the block gasUsed by all txs
     evm_common::xbloom9_t   m_logBloom;
-    evm_common::xh256_t     m_transactions_root;
-    evm_common::xh256_t     m_receipts_root;
-    evm_common::xh256_t     m_state_root;
+    xh256_t     m_transactions_root;
+    xh256_t     m_receipts_root;
+    xh256_t     m_state_root;
     xbytes_t                m_extra_data;
     common::xeth_address_t  m_coinbase;
 };

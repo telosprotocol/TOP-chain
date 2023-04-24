@@ -6,7 +6,6 @@
 
 #include <string>
 #include "xcommon/common.h"
-#include "xcommon/xfixed_hash.h"
 #include "xevm_common/xevm_transaction_result.h"
 #include "xcommon/rlp.h"
 #include "xevm_common/address.h"

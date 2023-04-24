@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "xbasic/xfixed_hash.h"
 #include "xbasic/xoptional.hpp"
 #include "xcommon/common.h"
-#include "xcommon/xfixed_hash.h"
 #include "xcommon/xeth_address.h"
 
 #include <vector>
@@ -44,6 +44,7 @@ struct xeth_header_t {
 
     // hash
     xh256_t hash() const;
+    void hash(xh256_t & out) const;
     xh256_t hash_without_seal() const;
 
     // encode and decode

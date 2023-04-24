@@ -5,8 +5,8 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xfixed_hash.h"
 #include "xevm_common/trie/xtrie_db.h"
-#include "xcommon/xfixed_hash.h"
 
 #include <system_error>
 

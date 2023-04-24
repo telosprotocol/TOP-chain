@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "fixed_hash.h"
 #include "vector_ref.h"
+#include "xbasic/xfixed_hash.h"
 #include "xbasic/xspan.h"
 #include "xcommon/common.h"
 #include "xcommon/data.h"
@@ -369,10 +369,10 @@ public:
 
     /// Encodes a static array.
     template <std::size_t N>
-    static xbytes_t encode(const std::array<uint8_t, N> & data) noexcept {
+    static xbytes_t encode(std::array<uint8_t, N> const & data) noexcept {
         if (N == 1 && data[0] <= 0x7f) {
             // Fits in single byte, no header
-            return bytes(data.begin(), data.end());
+            return xbytes_t{data[0]};
         }
 
         auto encoded = encodeHeader(data.size(), 0x80, 0xb7);

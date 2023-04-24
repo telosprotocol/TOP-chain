@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include "xbasic/xfixed_hash.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xtable_address.h"
 #include "xevm_common/trie/xsecure_trie.h"
-#include "xcommon/xfixed_hash.h"
 #include "xstate_mpt/xstate_mpt_store_fwd.h"
 #include "xstate_mpt/xstate_object.h"
 #include "xvledger/xvdbstore.h"
@@ -32,7 +32,7 @@ private:
 
     std::unique_ptr<evm_common::trie::xtrie_face_t> m_trie{nullptr};
     observer_ptr<evm_common::trie::xtrie_db_t> m_trie_db{nullptr};
-    // evm_common::xh256_t m_original_root;
+    // xh256_t m_original_root;
 
     mutable std::mutex m_state_objects_lock;
     mutable std::mutex m_trie_lock;
@@ -47,7 +47,7 @@ public:
     /// @param db Db interface.
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occurred if cannot find root in db.
-    static std::shared_ptr<xtop_state_mpt> create(common::xtable_address_t const & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
+    static std::shared_ptr<xtop_state_mpt> create(common::xtable_address_t const & table, const xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
 
     /// @brief Get index of specific account.
     /// @param account Account string.
@@ -75,24 +75,24 @@ public:
     /// @brief Commit all modifies to db.
     /// @param ec Log the error code.
     /// @return New root hash.
-    evm_common::xh256_t commit(std::error_code & ec);
+    xh256_t commit(std::error_code & ec);
 
-    void prune(evm_common::xh256_t const & old_trie_root_hash, std::unordered_set<evm_common::xh256_t> & pruned_hashes, std::error_code & ec) const;
-    void commit_pruned(std::unordered_set<evm_common::xh256_t> const & pruned_hashes, std::error_code & ec) const;
+    void prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) const;
+    void commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) const;
 
     void prune(std::error_code & ec);
-    void commit_pruned(std::vector<evm_common::xh256_t> pruned_keys, std::error_code & ec) const;
-    void clear_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const;
+    void commit_pruned(std::vector<xh256_t> pruned_keys, std::error_code & ec) const;
+    void clear_pruned(xh256_t const & pruned_key, std::error_code & ec) const;
     void clear_pruned(std::error_code & ec) const;
 
     /// @brief Update modifies to trie and calculate root hash.
     /// @param ec Log the error code.
     /// @return New root hash.
-    evm_common::xh256_t get_root_hash(std::error_code & ec);
+    xh256_t get_root_hash(std::error_code & ec);
 
     /// @brief Get original root hash.
     /// @return Original root hash.
-    evm_common::xh256_t const & original_root_hash() const noexcept;
+    xh256_t const & original_root_hash() const noexcept;
 
 private:
     /// @brief Internal interface to init an empty state MPT.
@@ -100,7 +100,7 @@ private:
     /// @param root Root hash of MPT.
     /// @param db Db interface.
     /// @param ec Log the error code.
-    void init(common::xtable_address_t const & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
+    void init(common::xtable_address_t const & table, const xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
 
     /// @brief Get or create state object of specific account.
     /// @param account Account string.

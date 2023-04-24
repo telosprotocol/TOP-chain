@@ -2420,7 +2420,7 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
         j_header["time"] = std::to_string(header.time);
         j_header["extra"] = top::to_hex(header.extra);
         j_header["mixDigest"] = header.mix_digest.hex();
-        j_header["nonce"] = header.nonce.hex();
+        j_header["nonce"] = to_hex(header.nonce);
         if (header.base_fee.has_value()) {
             j_header["baseFee"] = header.base_fee.value().str();
         }

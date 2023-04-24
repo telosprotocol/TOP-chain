@@ -124,11 +124,19 @@ xbytes_t xtop_eth_address::to_h160() const {
     return to_bytes();
 }
 
+void xtop_eth_address::to_h160(xh160_t & h160) const {
+    std::copy_n(std::begin(raw_address_), raw_address_.size(), std::begin(h160.asArray()));
+}
+
 xbytes_t xtop_eth_address::to_h256() const {
     xbytes_t h256(32, 0);
     xbytes_t h160 = to_h160();
     std::copy_n(std::begin(h160), h160.size(), std::next(std::begin(h256), 12));
     return h256;
+}
+
+void xtop_eth_address::to_h256(xh256_t & h256) const {
+    std::copy_n(std::begin(raw_address_), raw_address_.size(), std::next(std::begin(h256.asArray()), 12));
 }
 
 char const * xtop_eth_address::c_str() const {

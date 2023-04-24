@@ -6,6 +6,7 @@
 
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
+#include "xbasic/xfixed_hash.h"
 #include "xbasic/xutility.h"
 #include "xcodec/xcodec.h"
 #include "xcodec/xcodec_category.h"
@@ -20,7 +21,6 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xevm/xevm.h"
-#include "xcommon/fixed_hash.h"
 #include "xevm_common/xcodec/xmsgpack/xboost_u256_codec.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_utils.h"

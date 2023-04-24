@@ -84,9 +84,9 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
         for (int i = 0; i < return_result.logs_size(); ++i) {
             common::xeth_address_t address = common::xeth_address_t::build_from(top::to_bytes(return_result.logs(i).address().value()));
             xbytes_t data = top::to_bytes(return_result.logs(i).data());
-            evm_common::xh256s_t topics;
+            xh256s_t topics;
             for (int j = 0; j < return_result.logs(i).topics_size(); ++j) {
-                topics.push_back(evm_common::xh256_t(top::to_bytes(return_result.logs(i).topics(j).data())));
+                topics.push_back(xh256_t(top::to_bytes(return_result.logs(i).topics(j).data())));
             }
             evm_common::xevm_log_t log(address, topics, data);
             result.logs.push_back(log);

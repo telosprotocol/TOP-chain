@@ -4,13 +4,13 @@
 
 #include "xcommon/xtop_log.h"
 
-#include "xcommon/xerror/xerror.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/xbloom9.h"
-#include "xcommon/xfixed_hash.h"
+#include "xcommon/xerror/xerror.h"
 
 NS_BEG2(top, common)
 
-xtop_log_t::xtop_log_t(xaccount_address_t const & _address, evm_common::xh256s_t const & _topics, xbytes_t const & _data) : address(_address), topics(_topics), data(_data) {
+xtop_log_t::xtop_log_t(xaccount_address_t const & _address, xh256s_t const & _topics, xbytes_t const & _data) : address(_address), topics(_topics), data(_data) {
 }
 
 void xtop_log_t::streamRLP(evm_common::RLPStream & _s) const {
@@ -32,7 +32,7 @@ void xtop_log_t::decodeRLP(evm_common::RLP const & _r, std::error_code & ec) {
     if (ec) {
         return;
     }
-    topics = _r[1].toVector<evm_common::xh256_t>();
+    topics = _r[1].toVector<xh256_t>();
     data = _r[2].toBytes();
     return;
 }

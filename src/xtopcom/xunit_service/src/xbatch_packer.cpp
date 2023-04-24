@@ -371,8 +371,8 @@ bool xbatch_packer::do_state_sync(uint64_t sync_height) {
     auto const & state_root = data::xblockextract_t::get_state_root_from_block(sync_block.get());
     std::string table_bstate_hash_str = sync_block->get_fullstate_hash();
     xassert(!table_bstate_hash_str.empty());
-    evm_common::xh256_t const table_bstate_hash(top::to_bytes(table_bstate_hash_str));
-    evm_common::xh256_t const sync_block_hash(top::to_bytes(sync_block->get_block_hash()));
+    xh256_t const table_bstate_hash(top::to_bytes(table_bstate_hash_str));
+    xh256_t const sync_block_hash(top::to_bytes(sync_block->get_block_hash()));
     xinfo("xbatch_packer::do_state_sync sync state begin.table:%s,height:%llu,root:%s", get_account().c_str(), sync_height, state_root.hex().c_str());
     get_resources()->get_state_downloader()->sync_state(common::xaccount_address_t::build_from(m_table_addr.to_string()), sync_height, sync_block_hash, table_bstate_hash, state_root, true, ec);
     if (ec) {

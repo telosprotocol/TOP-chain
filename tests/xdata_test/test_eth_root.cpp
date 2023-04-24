@@ -166,9 +166,9 @@ xbytes_t  legecy_json_tx_to_bytes(Json::Value const& txjson) {
     tx.m_data = top::from_hex(txjson["input"].asString(), ec);
     tx.m_signV = test_ethtx_tool::jsToU256(txjson["v"].asString());
     xbytes_t rbs = top::from_hex(txjson["r"].asString(), ec);    
-    tx.m_signR = evm_common::xh256_t(rbs);
+    tx.m_signR = xh256_t(rbs);
     xbytes_t sbs = top::from_hex(txjson["s"].asString(), ec);    
-    tx.m_signS= evm_common::xh256_t(sbs);
+    tx.m_signS= xh256_t(sbs);
     return tx.encodeBytes();
 }
 
@@ -250,8 +250,8 @@ TEST_F(test_eth_root, txs_root_one) {
     tx.m_value = test_ethtx_tool::jsToU256("0x16345785d8a0000");
     tx.m_data = top::from_hex("0x", ec);
     tx.m_signV = test_ethtx_tool::jsToU256("0x557");
-    tx.m_signR = evm_common::xh256_t(top::from_hex("0x39eb0fe3b093f02f96fc277d85d785f4f638a5ed61bde31d7f09e451c0c56bf4", ec));
-    tx.m_signS= evm_common::xh256_t(top::from_hex("0x89672aacfc50bb3c7c27e7e119afb085cbe2ce8d23128ad105676500a9ec0c", ec));
+    tx.m_signR = xh256_t(top::from_hex("0x39eb0fe3b093f02f96fc277d85d785f4f638a5ed61bde31d7f09e451c0c56bf4", ec));
+    tx.m_signS= xh256_t(top::from_hex("0x89672aacfc50bb3c7c27e7e119afb085cbe2ce8d23128ad105676500a9ec0c", ec));
 
     // ASSERT_EQ(top::to_hex_prefixed(to_bytes(tx.get_tx_hash())), "0x631311a3658fde222a4bce3e3a8e4f31444a78d6e184e31b676d91aa72bb65c5");
     // ASSERT_EQ(top::to_hex_prefixed(tx.get_from().to_bytes()), "0x4dce5c8961e283786cb31ad7fc072347227d7ea2");
@@ -524,10 +524,10 @@ TEST_F(test_eth_root, contract_call_one_tx_2) {
     receipt1.set_cumulative_gas_used((uint64_t)test_ethtx_tool::jsToU256("0x57506"));
 
     common::xeth_address_t log_address = common::xeth_address_t::build_from("0x7618e07ed0bd6d2e2d7dd044200c1b44f7ae33ef");
-    evm_common::xh256s_t log_topics;
-    log_topics.push_back(evm_common::xh256_t(top::from_hex("0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735", ec)));
-    log_topics.push_back(evm_common::xh256_t(top::from_hex("0x0000000000000000000000000000000000000000000000000000000000000000", ec)));
-    log_topics.push_back(evm_common::xh256_t(top::from_hex("0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea2", ec)));
+    xh256s_t log_topics;
+    log_topics.push_back(xh256_t(top::from_hex("0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735", ec)));
+    log_topics.push_back(xh256_t(top::from_hex("0x0000000000000000000000000000000000000000000000000000000000000000", ec)));
+    log_topics.push_back(xh256_t(top::from_hex("0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea2", ec)));
     xbytes_t log_data;
     evm_common::xevm_log_t log(log_address, log_topics, log_data);
     evm_common::xevm_logs_t logs;
