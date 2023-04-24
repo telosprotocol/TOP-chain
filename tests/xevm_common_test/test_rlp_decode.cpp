@@ -105,4 +105,19 @@ TEST(xeth_header_t, fuzzy) {
     }
 }
 
+TEST(rlp, u64_codec) {
+    constexpr uint64_t u64 = 0x123456789abcdef0ull;
+
+    auto const bytes = RLP::encode(u64);
+    uint64_t const u64_decoded = evm_common::fromBigEndian<uint64_t>(bytes);
+
+    ASSERT_EQ(u64, u64_decoded);
+
+    evm_common::h64 const h64{"0x123456789abcdef0"};
+    auto const bytes_2 = RLP::encode(h64.asBytes());
+    uint64_t const u64_decoded_2 = evm_common::fromBigEndian<uint64_t>(bytes_2);
+
+    ASSERT_EQ(u64, u64_decoded_2);
+}
+
 NS_END3

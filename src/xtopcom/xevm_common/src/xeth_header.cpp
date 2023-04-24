@@ -1,3 +1,7 @@
+// Copyright (c) 2022-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "xevm_common/xcrosschain/xeth_header.h"
 
 #if defined(__clang__)
@@ -79,11 +83,11 @@ xbytes_t xeth_header_t::encode_rlp_withoutseal() const {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(static_cast<u256>(difficulty));
+        auto tmp = RLP::encode(difficulty);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(static_cast<u256>(number));
+        auto tmp = RLP::encode(number);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -144,11 +148,11 @@ xbytes_t xeth_header_t::encode_rlp() const {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(static_cast<u256>(difficulty));
+        auto tmp = RLP::encode(difficulty);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(static_cast<u256>(number));
+        auto tmp = RLP::encode(number);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -172,7 +176,7 @@ xbytes_t xeth_header_t::encode_rlp() const {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(nonce.asBytes());
+        auto tmp = RLP::encode(nonce);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     if (base_fee.has_value()) {
@@ -195,12 +199,12 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
     if (l.decoded[0].size() != xh256_t::size()) {
         return false;
     }
-    parent_hash = static_cast<xh256_t>(l.decoded[0]);
+    parent_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[0]}};
 
     if (l.decoded[1].size() != xh256_t::size()) {
         return false;
     }
-    uncle_hash = static_cast<xh256_t>(l.decoded[1]);
+    uncle_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[1]}};
 
     if (l.decoded[2].size() != xh160_t::size()) {
         return false;
@@ -210,24 +214,24 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
     if (l.decoded[3].size() != xh256_t::size()) {
         return false;
     }
-    state_merkleroot = static_cast<xh256_t>(l.decoded[3]);
+    state_merkleroot = xh256_t{xspan_t<xbyte_t const>{l.decoded[3]}};
 
     if (l.decoded[4].size() != xh256_t::size()) {
         return false;
     }
-    tx_merkleroot = static_cast<xh256_t>(l.decoded[4]);
+    tx_merkleroot = xh256_t{xspan_t<xbyte_t const>{l.decoded[4]}};
 
     if (l.decoded[5].size() != xh256_t::size()) {
         return false;
     }
-    receipt_merkleroot = static_cast<xh256_t>(l.decoded[5]);
+    receipt_merkleroot = xh256_t{xspan_t<xbyte_t const>{l.decoded[5]}};
 
     if (l.decoded[6].size() != xh2048_t::size()) {
         return false;
     }
-    bloom = static_cast<LogBloom>(l.decoded[6]);
+    bloom = LogBloom{xspan_t<xbyte_t const>{l.decoded[6]}};
 
-    difficulty = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[7]));
+    difficulty = evm_common::fromBigEndian<u256>(l.decoded[7]);
     number = evm_common::fromBigEndian<u256>(l.decoded[8]).convert_to<uint64_t>();
     gas_limit = evm_common::fromBigEndian<u64>(l.decoded[9]).convert_to<uint64_t>();
     gas_used = evm_common::fromBigEndian<u64>(l.decoded[10]).convert_to<uint64_t>();
@@ -237,9 +241,9 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
     if (l.decoded[13].size() != xh256_t::size()) {
         return false;
     }
-    mix_digest = static_cast<xh256_t>(l.decoded[13]);
+    mix_digest = xh256_t{xspan_t<xbyte_t const>{l.decoded[13]}};
 
-    nonce = static_cast<BlockNonce>(l.decoded[14]);
+    nonce = evm_common::fromBigEndian<uint64_t>(l.decoded[14]);
     if (l.decoded.size() >= 16) {
         base_fee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
     }
@@ -253,9 +257,9 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
 }
 
 std::string xeth_header_t::dump() const {
-    char local_param_buf[256];
+    char local_param_buf[256] = {0};
     xprintf(local_param_buf, sizeof(local_param_buf), "height: %" PRIu64 ", hash: %s, parent_hash: %s", number, hash().hex().c_str(), parent_hash.hex().c_str());
-    return std::string(local_param_buf);
+    return std::string{local_param_buf};
 }
 
 void xeth_header_t::print() const {
@@ -273,7 +277,7 @@ void xeth_header_t::print() const {
     printf("time: %lu\n", time);
     printf("extra: %s\n", top::to_hex(extra).c_str());
     printf("mix_digest: %s\n", mix_digest.hex().c_str());
-    printf("nonce: %s\n", nonce.hex().c_str());
+    printf("nonce: %" PRIu64 "\n", nonce);
     printf("hash: %s\n", hash().hex().c_str());
     if (base_fee.has_value()) {
         printf("base_fee: %s\n", base_fee.value().str().c_str());
@@ -313,7 +317,7 @@ bool xeth_header_info_t::decode_rlp(xbytes_t const & input) {
         return false;
     }
     difficult_sum = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[0]));
-    parent_hash = static_cast<xh256_t>(l.decoded[1]);
+    parent_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[1]}};
     number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[2]));
     return true;
 }

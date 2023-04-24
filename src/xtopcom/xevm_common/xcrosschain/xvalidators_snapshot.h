@@ -27,8 +27,8 @@ struct xvalidators_snap_info_t {
     xbytes_t encode_rlp() const;
     bool decode_rlp(xbytes_t const & input);
 
-    h256 snap_hash;
-    h256 parent_hash;
+    xh256_t snap_hash{};
+    xh256_t parent_hash{};
     bigint number;
 };
 

@@ -51,7 +51,7 @@ static uint256_t seal_hash(xeth_header_t const & header) {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(static_cast<u256>(header.number));
+        auto tmp = RLP::encode(header.number);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -76,7 +76,7 @@ static uint256_t seal_hash(xeth_header_t const & header) {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.nonce.asBytes());
+        auto tmp = RLP::encode(header.nonce);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     auto const value = RLP::encodeList(out);
@@ -122,7 +122,7 @@ static uint256_t seal_hash(xeth_header_t const & header, bigint const & chainid)
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(static_cast<u256>(header.number));
+        auto tmp = RLP::encode(header.number);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -147,7 +147,7 @@ static uint256_t seal_hash(xeth_header_t const & header, bigint const & chainid)
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.nonce.asBytes());
+        auto tmp = RLP::encode(header.nonce);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     auto value = RLP::encodeList(out);
@@ -218,7 +218,7 @@ bool xvalidators_snapshot_t::init_with_epoch(xeth_header_t const & header) {
     return true;
 }
 
-bool xvalidators_snapshot_t::init_with_double_epoch(xeth_header_t const & header1, const xeth_header_t & header2) {
+bool xvalidators_snapshot_t::init_with_double_epoch(xeth_header_t const & header1, xeth_header_t const & header2) {
     if (header1.number % epoch != 0 || header2.number % epoch != 0) {
         xwarn("[xvalidators_snapshot_t::init_with_epoch] not epoch header");
         return false;
@@ -485,7 +485,7 @@ xbytes_t xvalidators_snap_info_t::encode_rlp() const {
     return RLP::encodeList(out);
 }
 
-bool xvalidators_snap_info_t::decode_rlp(const xbytes_t & input) {
+bool xvalidators_snap_info_t::decode_rlp(xbytes_t const & input) {
     auto l = RLP::decodeList(input);
     if (l.decoded.size() != 3) {
         return false;
@@ -493,8 +493,8 @@ bool xvalidators_snap_info_t::decode_rlp(const xbytes_t & input) {
     if (!l.remainder.empty()) {
         return false;
     }
-    snap_hash = static_cast<h256>(l.decoded[0]);
-    parent_hash = static_cast<h256>(l.decoded[1]);
+    snap_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[0]}};
+    parent_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[1]}};
     number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[2]));
     return true;
 }
