@@ -92,8 +92,6 @@ static void dump_chains(std::string &result, const std::map<uint32_t, xsync_prog
         result += "\t\t";
         result += std::to_string(it.second.cur_height);
         result += "\t\t";
-        result += std::to_string(it.second.max_height);
-        result += "\t\t";
         result += std::to_string(it.second.peer_max_height);
         result += "\t\t";
 
@@ -214,16 +212,16 @@ std::string xtop_sync_object::status() const {
                 uint64_t peer_start_height = 0;
                 common::xnode_address_t peer_addr;
                 m_peerset->get_newest_peer(self_addr, address, peer_start_height, info.peer_max_height, peer_addr);
-  
-                if (info.max_height == 0) {
+
+                if (info.peer_max_height == 0) {
                     info.rate = 100;
                 } else {
-                    info.rate = (double)info.cur_height*100/(double)info.max_height;
+                    info.rate = (double)info.cur_height*100/(double)info.peer_max_height;
                 }
 
                 tables_progress[get_table_type(_account.table_address())].insert(std::make_pair(table_id, info));
                 table_display[get_table_type(_account.table_address())].total_cur_height += info.cur_height;
-                table_display[get_table_type(_account.table_address())].total_max_height += info.max_height;
+                table_display[get_table_type(_account.table_address())].total_max_height += info.peer_max_height;
             }
         }
         for (auto it : table_display) {
@@ -260,14 +258,13 @@ std::string xtop_sync_object::status() const {
         result += "\t\t\t";
         result += "index\t\t";
         result += "cur_height\t";
-        result += "max_height\t";
-        result += "peer_max_height\n";
+        result += "max_height\n";
 
         for (auto const &it:tables_progress) {
             if (it.second.empty())
                 continue;
 
-            result += get_title(it.first) + " chains\t\t\t\t\t\t\t\t";
+            result += get_title(it.first) + " chains\t\t\t\t\t\t";
 
             if (table_display[it.first].total_max_height == 0) {
                 result += "100.00%";
