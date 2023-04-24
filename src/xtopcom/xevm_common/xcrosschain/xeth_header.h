@@ -1,3 +1,7 @@
+// Copyright (c) 2022-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
 #include "xbasic/xoptional.hpp"
@@ -13,7 +17,7 @@ NS_BEG2(top, evm_common)
 //using Hash = top::evm_common::h256;
 // using Address = top::evm_common::h160;
 using LogBloom = top::evm_common::h2048;
-using BlockNonce = top::evm_common::h64;
+using BlockNonce = uint64_t;
 
 struct xeth_header_t {
     xh256_t parent_hash;
@@ -23,14 +27,14 @@ struct xeth_header_t {
     xh256_t tx_merkleroot;
     xh256_t receipt_merkleroot;
     LogBloom bloom;
-    bigint difficulty;
+    u256 difficulty;
     uint64_t number;
     uint64_t gas_limit{0};
     uint64_t gas_used{0};
     uint64_t time{0};
     xbytes_t extra;
     xh256_t mix_digest;
-    BlockNonce nonce;
+    uint64_t nonce;
 
     // base_fee was added by EIP-1559 and is ignored in legacy headers.
     optional<bigint> base_fee;
