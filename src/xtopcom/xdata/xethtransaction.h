@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+
 #include "xbase/xrefcount.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/common.h"
-#include "xcommon/xfixed_hash.h"
 #include "xcommon/rlp.h"
 #include "xcommon/xeth_address.h"
 
@@ -34,7 +35,7 @@ class xeth_accesstuple_t {
 
  private:
     common::xeth_address_t  m_addr;
-    evm_common::xh256s_t    m_storage_keys;
+    xh256s_t    m_storage_keys;
 };
 
 class xeth_accesslist_t {
@@ -117,8 +118,8 @@ class xeth_transaction_t {
     xbytes_t            m_data;
     xeth_accesslist_t   m_accesslist;
     evm_common::u256    m_signV;
-    evm_common::xh256_t m_signR;
-    evm_common::xh256_t m_signS;
+    xh256_t m_signR;
+    xh256_t m_signS;
 
  private:
     // cache members

@@ -32,18 +32,18 @@ class xtablestate_store_t {
  public:
     xtablestate_store_t(const data::xtablestate_ptr_t & table_state, 
                                 std::shared_ptr<state_mpt::xstate_mpt_t> const& state_mpt, 
-                                evm_common::xh256_t const & state_root,
+                                xh256_t const & state_root,
                                 std::vector<data::xunitstate_store_para_t> && unitstates);
 
     const data::xtablestate_ptr_t &                     get_table_state() const {return m_table_state;}
     std::shared_ptr<state_mpt::xstate_mpt_t> const&     get_state_mpt() const {return m_state_mpt;}
-    evm_common::xh256_t const&                          get_state_root() const {return m_state_root;}
+    xh256_t const&                          get_state_root() const {return m_state_root;}
     std::vector<data::xunitstate_store_para_t> const&          get_unitstates() const {return m_unitstates;}
 
  private:
     data::xtablestate_ptr_t                     m_table_state{nullptr};
     std::shared_ptr<state_mpt::xstate_mpt_t>    m_state_mpt{nullptr};
-    evm_common::xh256_t m_state_root;
+    xh256_t m_state_root;
     std::vector<data::xunitstate_store_para_t>         m_unitstates;
 };
 

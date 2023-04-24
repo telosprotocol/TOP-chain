@@ -398,7 +398,7 @@ class xdatamock_table : public base::xvaccount_t {
         if (ec) {
             xassert(false);
         }
-        evm_common::xh256_t state_root = evm_common::xh256_t(root_hash.to_bytes());
+        xh256_t state_root = xh256_t(root_hash.to_bytes());
         data::xeth_header_t eth_header;
         eth_header.set_state_root(state_root);
         std::string _ethheader_str = eth_header.serialize_to_string();

@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "xbasic/xbyte_buffer.h"
-#include "xcommon/xeth_address.h"
 #include "xbase/xmem.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/rlp.h"
 #include "xcommon/xbloom9.h"
-#include "xcommon/xfixed_hash.h"
+#include "xcommon/xeth_address.h"
 
 #include <string>
 #include <vector>

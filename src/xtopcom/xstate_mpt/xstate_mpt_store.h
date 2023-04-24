@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/xaccount_address.h"
 #include "xstate_mpt/xstate_mpt_store_fwd.h"
-#include "xcommon/xfixed_hash.h"
 
 #include <map>
 #include <system_error>
@@ -25,9 +25,9 @@ NS_BEG2(top, state_mpt)
 class xtop_state_mpt_store {
 private:
     common::xtable_address_t table_account_address_;
-    // std::unordered_map<evm_common::xh256_t, uint64_t> trie_root_hash_to_table_height_map_;
-    std::map<uint64_t, std::vector<evm_common::xh256_t>> table_height_to_root_hashes_map_;
-    std::unordered_map<evm_common::xh256_t, std::unordered_set<evm_common::xh256_t>> trie_node_hashes_;
+    // std::unordered_map<xh256_t, uint64_t> trie_root_hash_to_table_height_map_;
+    std::map<uint64_t, std::vector<xh256_t>> table_height_to_root_hashes_map_;
+    std::unordered_map<xh256_t, std::unordered_set<xh256_t>> trie_node_hashes_;
 
 public:
     xtop_state_mpt_store() = default;
@@ -39,7 +39,7 @@ public:
 
     explicit xtop_state_mpt_store(common::xtable_address_t table_address);
 
-    void load_state(evm_common::xh256_t const & root_hash, base::xvdbstore_t * db, std::error_code & ec) const;
+    void load_state(xh256_t const & root_hash, base::xvdbstore_t * db, std::error_code & ec) const;
 };
 using xstate_mpt_store_t = xtop_state_mpt_store;
 

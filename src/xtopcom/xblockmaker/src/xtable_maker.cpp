@@ -453,7 +453,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         return nullptr;
     }
     xinfo("xtable_maker_t::make_light_table_v2 tps_key create_new_mpt finish is_leader=%d,%s", is_leader, cs_para.dump().c_str());
-    evm_common::xh256_t state_root = table_mpt->get_root_hash(ec);
+    xh256_t state_root = table_mpt->get_root_hash(ec);
     if (ec) {
         xerror("xtable_maker_t::make_light_table_v2 fail-get mpt root. %s, ec=%s", cs_para.dump().c_str(), ec.message().c_str());
         return nullptr;
@@ -771,7 +771,7 @@ std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const da
     return mpt;
 }
 
-std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, evm_common::xh256_t const & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
+std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, xh256_t const & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
     std::error_code ec;
     uint64_t gas_used = 0;
     data::xeth_receipts_t eth_receipts;

@@ -1,16 +1,15 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#include "xcommon/rlp.h"
-#include "xevm_common/address.h"
-#include "xcommon/common.h"
-#include "xcommon/fixed_hash.h"
-#include "xevm_common/xevm_transaction_result.h"
-#include "xcommon/xeth_address.h"
-#include "xbase/xmem.h"
-#include "xbase/xcontext.h"
-#include "xbase/xutl.h"
 #include "trezor-crypto/sha3.h"
+#include "xbase/xcontext.h"
+#include "xbase/xmem.h"
+#include "xbase/xutl.h"
+#include "xbasic/xfixed_hash.h"
+#include "xcommon/common.h"
+#include "xcommon/rlp.h"
+#include "xcommon/xeth_address.h"
+#include "xevm_common/xevm_transaction_result.h"
 
 #include <gtest/gtest.h>
 
@@ -52,9 +51,9 @@ TEST(test_evm_log, logsbloom) {
 // compare log bloom
 {
     common::xeth_address_t ethaddr = common::xeth_address_t::build_from(address_str);
-    evm_common::xh256s_t topics2;
+    xh256s_t topics2;
     for (auto & topic : topics) {
-        topics2.push_back(evm_common::xh256_t(topic));
+        topics2.push_back(xh256_t(topic));
     }
     xbytes_t data;
     evm_common::xevm_log_t log(ethaddr, topics2, data);
@@ -74,9 +73,9 @@ TEST(test_evm_log, log_rlpstream) {
                                        "0000000000000000000000000000000000000000000000000000000000000000",
                                        "000000000000000000000000047b2c1e1e9258ca2a7549d5b7987096f55109d1"};
     common::xeth_address_t ethaddr = common::xeth_address_t::build_from(address_str);
-    evm_common::xh256s_t topics2;
+    xh256s_t topics2;
     for (auto & topic : topics) {
-        topics2.push_back(evm_common::xh256_t(topic));
+        topics2.push_back(xh256_t(topic));
     }
     xbytes_t data;
     evm_common::xevm_log_t log(ethaddr, topics2, data);
@@ -109,9 +108,9 @@ TEST(test_evm_log, log_xstream) {
                                        "0000000000000000000000000000000000000000000000000000000000000000",
                                        "000000000000000000000000047b2c1e1e9258ca2a7549d5b7987096f55109d1"};
     common::xeth_address_t ethaddr = common::xeth_address_t::build_from(address_str);
-    evm_common::xh256s_t topics2;
+    xh256s_t topics2;
     for (auto & topic : topics) {
-        topics2.push_back(evm_common::xh256_t(topic));
+        topics2.push_back(xh256_t(topic));
     }
     xbytes_t data;
     evm_common::xevm_log_t log(ethaddr, topics2, data);

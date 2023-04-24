@@ -24,13 +24,13 @@ void xeth_header_t::set_baseprice(const evm_common::u256 & price) {
 void xeth_header_t::set_logBloom(const evm_common::xbloom9_t & bloom) {
     m_logBloom = bloom;
 }
-void xeth_header_t::set_transactions_root(const evm_common::xh256_t & root) {
+void xeth_header_t::set_transactions_root(const xh256_t & root) {
     m_transactions_root = root;
 }
-void xeth_header_t::set_receipts_root(const evm_common::xh256_t & root) {
+void xeth_header_t::set_receipts_root(const xh256_t & root) {
     m_receipts_root = root;
 }
-void xeth_header_t::set_state_root(evm_common::xh256_t const & root) {
+void xeth_header_t::set_state_root(xh256_t const & root) {
     m_state_root = root;
 }
 void xeth_header_t::set_extra_data(xbytes_t const& _data) {
@@ -142,7 +142,7 @@ void xeth_header_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
                 xerror("xeth_header_t::decodeRLP fail tx root,%s", top::to_hex(_r[field].toString()).c_str());
                 return;
             }
-            m_transactions_root = evm_common::xh256_t(_bytes);
+            m_transactions_root = xh256_t(_bytes);
         }
 
         const auto & receiptsroot_r = _r[field = 6];
@@ -153,7 +153,7 @@ void xeth_header_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
                 xerror("xeth_header_t::decodeRLP fail receipts root,%s", top::to_hex(_r[field].toString()).c_str());
                 return;
             }
-            m_receipts_root = evm_common::xh256_t(_bytes);
+            m_receipts_root = xh256_t(_bytes);
         }
 
         const auto & stateroot_r = _r[field = 7];
@@ -164,7 +164,7 @@ void xeth_header_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
                 xerror("xeth_header_t::decodeRLP fail state root,%s", top::to_hex(_r[field].toString()).c_str());
                 return;
             }
-            m_state_root = evm_common::xh256_t(_bytes);
+            m_state_root = xh256_t(_bytes);
         }
 
         m_extra_data = _r[field = 8].toBytes();

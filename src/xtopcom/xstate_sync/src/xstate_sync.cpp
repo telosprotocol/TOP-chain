@@ -35,9 +35,9 @@ xtop_state_sync::~xtop_state_sync() {
 
 std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::xaccount_address_t & table,
                                                                  const uint64_t height,
-                                                                 const evm_common::xh256_t & block_hash,
-                                                                 const evm_common::xh256_t & state_hash,
-                                                                 const evm_common::xh256_t & root_hash,
+                                                                 const xh256_t & block_hash,
+                                                                 const xh256_t & state_hash,
+                                                                 const xh256_t & root_hash,
                                                                  std::function<sync_peers(const common::xtable_id_t & id)> peers,
                                                                  std::function<void(const state_req &)> track_req,
                                                                  base::xvdbstore_t * db,
@@ -258,7 +258,7 @@ void xtop_state_sync::assign_table_tasks(const sync_peers & peers) {
 void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
     for (uint32_t i = 0; i < m_max_req_nums; ++i) {
         state_req req;
-        std::vector<evm_common::xh256_t> nodes;
+        std::vector<xh256_t> nodes;
         std::vector<xbytes_t> units;
         fill_tasks(m_items_per_task, m_units_per_task, req, nodes, units);
         if (nodes.size() + units.size() == 0) {
@@ -309,7 +309,7 @@ common::xnode_address_t xtop_state_sync::send_message(const sync_peers & peers, 
     return random_fullnode;
 }
 
-void xtop_state_sync::fill_tasks(uint32_t total_n, uint32_t unit_n, state_req & req, std::vector<evm_common::xh256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
+void xtop_state_sync::fill_tasks(uint32_t total_n, uint32_t unit_n, state_req & req, std::vector<xh256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
     if (total_n > m_trie_tasks.size() + m_unit_tasks.size()) {
         auto fill = total_n - m_trie_tasks.size() - m_unit_tasks.size();
         auto const res = m_sched->Missing(fill);
@@ -371,7 +371,7 @@ void xtop_state_sync::process_table(state_req & req, std::error_code & ec) {
         auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
         auto snapshot = table_state->take_snapshot();
         auto hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-        if (evm_common::xh256_t{to_bytes(hash)} != m_table_state_hash) {
+        if (xh256_t{to_bytes(hash)} != m_table_state_hash) {
             xwarn("xtop_state_sync::process_table state hash mismatch: %s, %s, {%s}", to_hex(hash).c_str(), to_hex(m_table_state_hash).c_str(), symbol().c_str());
             return;
         }
@@ -449,7 +449,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
                         "xtop_state_sync::process_trie process_unit_data abnormal: %s,id:%u, %s, %s %s", symbol().c_str(), req.id, to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
                 }
                 
-                xassert(iter->first == evm_common::xh256_t(xbytes_t{info.index.get_latest_state_hash().begin(), info.index.get_latest_state_hash().end()}));
+                xassert(iter->first == xh256_t(xbytes_t{info.index.get_latest_state_hash().begin(), info.index.get_latest_state_hash().end()}));
                 if (hash.empty() || hash != iter->first) {//only happen when response data invalid
                     xwarn("xtop_state_sync::process_trie unit state hash mismatch abnormal: %s,id:%u, account=%s,index=%s, %s, %s", symbol().c_str(), req.id, info.account.to_string().c_str(), info.index.dump().c_str(), to_hex(hash).c_str(), to_hex(iter->first).c_str());
                     ++iter;
@@ -474,17 +474,17 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
     return;
 }
 
-evm_common::xh256_t xtop_state_sync::process_node_data(const xbytes_t & blob, std::error_code & ec) {
+xh256_t xtop_state_sync::process_node_data(const xbytes_t & blob, std::error_code & ec) {
     evm_common::trie::SyncResult res;
     auto hash_bytes = to_bytes(utl::xkeccak256_t::digest({blob.begin(), blob.end()}));
-    res.Hash = evm_common::xh256_t{hash_bytes};
+    res.Hash = xh256_t{hash_bytes};
     res.Data = blob;
     m_sched->Process(res, ec);
     xinfo("xtop_state_sync::process_node_data hash: %s, data: %s", res.Hash.hex().c_str(), to_hex(res.Data).c_str());
     return res.Hash;
 }
 
-evm_common::xh256_t xtop_state_sync::process_unit_data(const xbytes_t & blob, uint8_t version, std::error_code & ec) {
+xh256_t xtop_state_sync::process_unit_data(const xbytes_t & blob, uint8_t version, std::error_code & ec) {
     evm_common::trie::SyncResult res;
     if (version == base::enum_xaccountindex_version_snapshot_hash) {
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvblock_t::create_state_object({blob.begin(), blob.end()});
@@ -496,11 +496,11 @@ evm_common::xh256_t xtop_state_sync::process_unit_data(const xbytes_t & blob, ui
         auto const unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
         auto const snapshot = unit_state->take_snapshot();
         auto const state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
+        res.Hash = xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
         res.Data = blob;
     } else {
         auto const state_hash = base::xcontext_t::instance().hash({blob.begin(), blob.end()}, enum_xhash_type_sha2_256);
-        res.Hash = evm_common::xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
+        res.Hash = xh256_t{xspan_t<xbyte_t const>(reinterpret_cast<xbyte_t const *>(state_hash.data()), state_hash.size())};
         res.Data = blob;
     }
 

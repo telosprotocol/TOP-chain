@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include "xbase/xmem.h"
 #include "xbasic/xbyte_buffer.h"
-#include "xcommon/xaccount_address.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/rlp.h"
+#include "xcommon/xaccount_address.h"
 #include "xcommon/xbloom9.h"
-#include "xcommon/xfixed_hash.h"
 
 #include <string>
 #include <vector>
@@ -25,14 +24,14 @@ public:
     xtop_log_t & operator=(xtop_log_t &&) = default;
     ~xtop_log_t() = default;
 
-    xtop_log_t(xaccount_address_t const & _address, evm_common::xh256s_t const & topics, xbytes_t const & data);
+    xtop_log_t(xaccount_address_t const & _address, xh256s_t const & topics, xbytes_t const & data);
     
     void streamRLP(evm_common::RLPStream & _s) const;
     void decodeRLP(evm_common::RLP const & _r, std::error_code & ec);
     evm_common::xbloom9_t bloom() const;
 
     xaccount_address_t address;
-    evm_common::xh256s_t topics;
+    xh256s_t topics;
     xbytes_t data;
 };
 

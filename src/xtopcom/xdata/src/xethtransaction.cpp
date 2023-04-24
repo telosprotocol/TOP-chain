@@ -39,7 +39,7 @@ void xeth_accesstuple_t::decodeRLP(evm_common::RLP const& _r, std::error_code & 
         xerror("xxeth_accesstuple_t::decodeRLP fail keyslist");
         return;
     }
-    m_storage_keys = _r[1].toVector<evm_common::xh256_t>();
+    m_storage_keys = _r[1].toVector<xh256_t>();
 }
 
 void xeth_accesslist_t::streamRLP(evm_common::RLPStream& _s) const {

@@ -43,8 +43,8 @@ class test_ethtx_tool {
         tx.set_value(jsToU256("0x1bc16d674ec80000"));
         tx.set_data(top::from_hex("0x", ec));
         tx.set_signV(jsToU256("0x1"));
-        tx.set_signR(evm_common::xh256_t(top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec)));
-        tx.set_signS(evm_common::xh256_t(top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec)));    
+        tx.set_signR(xh256_t(top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec)));
+        tx.set_signS(xh256_t(top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec)));    
         return tx;
     }
 

@@ -318,8 +318,8 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
     xtablestate_and_offdata_prune_info_t prune_info;
     xaccounts_prune_info_t accounts_prune_info;
     uint32_t delete_mpt_num_old_style = 0;
-    std::unordered_set<evm_common::xh256_t> pruned_hashes;
-    std::vector<evm_common::xh256_t> pruned_root_hashes;
+    std::unordered_set<xh256_t> pruned_hashes;
+    std::vector<xh256_t> pruned_root_hashes;
     pruned_root_hashes.reserve(to_height - from_height + 1);
     for (uint64_t height = from_height; height <= to_height; height++) {
         // prune include fork blocks.

@@ -4,21 +4,17 @@
 
 #pragma once
 
-#include <string>
-#include "xbasic/xmemory.hpp"
-#include "xcommon/xaccount_address.h"
+#include "xbasic/xfixed_hash.h"
+#include "xcommon/xcommon.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
-#include "xcommon/xfixed_hash.h"
-#include "xvledger/xaccountindex.h"
-#include "xvledger/xvpropertyprove.h"
-#include "xcommon/xaccount_address.h"
-#include "xcommon/xcommon.h"
 #include "xstate_mpt/xstate_mpt.h"
+#include "xstatectx/xunitstate_ctx.h"
 #include "xstatestore/xtablestate_ext.h"
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xvpropertyprove.h"
-#include "xstatectx/xunitstate_ctx.h"
+
+#include <string>
 
 NS_BEG2(top, statestore)
 
@@ -26,16 +22,16 @@ class xstate_sync_info_t {
 public:
     xstate_sync_info_t() {
     }
-    xstate_sync_info_t(uint64_t height, const evm_common::xh256_t & root_hash, const evm_common::xh256_t & table_state_hash, const std::string & blockhash)
+    xstate_sync_info_t(uint64_t height, const xh256_t & root_hash, const xh256_t & table_state_hash, const std::string & blockhash)
       : m_height(height), m_root_hash(root_hash), m_table_state_hash(table_state_hash), m_blockhash(blockhash) {
     }
     uint64_t get_height() const {
         return m_height;
     }
-    const evm_common::xh256_t & get_root_hash() const {
+    const xh256_t & get_root_hash() const {
         return m_root_hash;
     }
-    const evm_common::xh256_t & get_table_state_hash() const {
+    const xh256_t & get_table_state_hash() const {
         return m_table_state_hash;
     }
 
@@ -45,8 +41,8 @@ public:
 
 private:
     uint64_t m_height;
-    evm_common::xh256_t m_root_hash;
-    evm_common::xh256_t m_table_state_hash;
+    xh256_t m_root_hash;
+    xh256_t m_table_state_hash;
     std::string m_blockhash;
 };
 

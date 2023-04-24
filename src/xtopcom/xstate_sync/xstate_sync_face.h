@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include "xcommon/xnode_id.h"
-#include "xcommon/xmessage_id.h"
-#include "xvnetwork/xmessage.h"
+#include "xcommon/xaccount_address.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
 namespace top {
@@ -15,12 +13,12 @@ namespace state_sync {
 struct sync_result {
     common::xaccount_address_t account;
     uint64_t height{0};
-    evm_common::xh256_t block_hash;
-    evm_common::xh256_t state_hash;
-    evm_common::xh256_t root_hash;
+    xh256_t block_hash;
+    xh256_t state_hash;
+    xh256_t root_hash;
     std::error_code ec;
 
-    sync_result(common::xaccount_address_t _account, uint64_t h, evm_common::xh256_t _block_hash, evm_common::xh256_t _state_hash, evm_common::xh256_t _root, std::error_code _ec)
+    sync_result(common::xaccount_address_t _account, uint64_t h, xh256_t _block_hash, xh256_t _state_hash, xh256_t _root, std::error_code _ec)
       : account(_account), height(h), block_hash(_block_hash), state_hash(_state_hash), root_hash(_root), ec(_ec) {
     }
     sync_result() = default;
@@ -42,8 +40,8 @@ struct state_req {
     state_req_type type;
     common::xnode_address_t peer;
     uint32_t n_items{0};
-    std::set<evm_common::xh256_t> trie_tasks;
-    std::map<evm_common::xh256_t, xbytes_t> unit_tasks;
+    std::set<xh256_t> trie_tasks;
+    std::map<xh256_t, xbytes_t> unit_tasks;
     uint64_t start{0};
     uint64_t delivered{0};
     std::vector<xbytes_t> nodes_response;
