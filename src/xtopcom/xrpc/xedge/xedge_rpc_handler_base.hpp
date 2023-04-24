@@ -70,8 +70,11 @@ xedge_handler_base<T>::xedge_handler_base(shared_ptr<xrpc_edge_vhost> edge_vhost
 
 template <class T>
 void xedge_handler_base<T>::init()
-{
+{   
     assert(type() != enum_xrpc_type::enum_xrpc_error_type);
+    if (type() == enum_xrpc_type::enum_xrpc_evm_http_type) {
+        m_msg_seq_id = 0x10000000;
+    }
     m_edge_vhost_ptr->register_message_handler(type(), std::bind(&xedge_handler_base<T>::on_message, this, _1, _2));
 }
 
@@ -95,6 +98,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
             uint32_t edge_max_msg_packet_size = XGET_CONFIG(edge_max_msg_packet_size);
             xdbg("[global_trace][edge][forward advance] packet_size: %zu, max_size: %zu", msg.payload().size(), edge_max_msg_packet_size);
             if (msg.payload().size() > edge_max_msg_packet_size) {
+                xerror_rpc("[global_trace][edge][forward advance] msg packet size %zu bigger than %zu", msg.payload().size(), edge_max_msg_packet_size);
                 throw xrpc_error{ enum_xrpc_error_code::rpc_param_param_error, "msg packet size " + std::to_string(msg.payload().size()) + " bigger than " + std::to_string(edge_max_msg_packet_size) };
             }
 
@@ -131,7 +135,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
 
                 for (auto & cluster : cluster_addresses) {
                     if ((msghash % cluster_addresses.size() == count || (msghash + 1) % cluster_addresses.size() == count)) {
-                        xdbg("[edge][forward archive]%s,src %s, dst %s, archive group size %zu, %" PRIx64,
+                        xinfo_rpc("[edge][forward archive]%s,src %s, dst %s, archive group size %zu, %" PRIx64,  // TODO(jimmy) xdbg_rpc
                                 msg_ptr->m_account.c_str(),
                                 vd->address().to_string().c_str(),
                                 cluster.to_string().c_str(),
@@ -166,7 +170,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
 template <class T>
 void xedge_handler_base<T>::on_message(const xvnode_address_t&, const xrpc_msg_response_t& msg)
 {
-    xdbg_rpc("xrpc_edge_vhost edge_process_response:%s" , msg.to_string().c_str());
+    xinfo_rpc("xedge_handler_base::on_message,uuid=%lx,%s,this=%p" , msg.m_uuid, msg.to_string().c_str(),this);
     std::lock_guard<std::mutex> lock(m_mutex);
     auto iter = m_forward_session_map.find(msg.m_uuid);
     if (iter != m_forward_session_map.end()) {
@@ -179,7 +183,7 @@ void xedge_handler_base<T>::on_message(const xvnode_address_t&, const xrpc_msg_r
         }
     }
     else {
-        xdbg_rpc("not find message: %x, %s", msg.m_uuid, msg.to_string().c_str());
+        xwarn_rpc("xedge_handler_base::on_message,not find message:uuid=%lx,%s,this=%p", msg.m_uuid, msg.to_string().c_str(),this);
     }
 }
 template <class T>
@@ -202,7 +206,7 @@ void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg
 
     std::lock_guard<std::mutex> lock(m_mutex);
     m_forward_session_map.emplace(edge_msg_ptr_list.front()->m_uuid, forward_session.get());
-    xdbg_rpc("insert_session: %x, %x", edge_msg_ptr_list.front()->m_uuid, msg_type);
+    xinfo_rpc("xedge_handler_base::insert_session,uuid=%lx,%x,this=%p", edge_msg_ptr_list.front()->m_uuid, msg_type,this); // TODO(jimmy) xdbg_rpc
     forward_session->set_timeout(TIME_OUT);
 }
 NS_END2

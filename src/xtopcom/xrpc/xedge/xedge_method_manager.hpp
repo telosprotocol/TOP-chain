@@ -273,6 +273,8 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
         auto vd = m_edge_handler_ptr->get_rpc_edge_vhost()->get_vnetwork_driver();
         const xvnode_address_t & source_address = vd->address();
 
+        xinfo_rpc("xedge_method_base::forward_method uuid=%lx,this=%p", uuid,this);
+
         for (const auto & account : json_proc.m_account_set) {
             std::error_code ec;
             auto account_address = common::xaccount_address_t::build_from(account, ec);

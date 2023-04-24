@@ -423,6 +423,7 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
     }    
 }
 void xrpc_eth_query_manager::eth_getCode(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    xinfo("xrpc_eth_query_manager::eth_getCode");
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
@@ -434,6 +435,7 @@ void xrpc_eth_query_manager::eth_getCode(Json::Value & js_req, Json::Value & js_
 
     std::string account = js_req[0].asString();
     account = xvaccount_t::to_evm_address(account);
+    xinfo("xrpc_eth_query_manager::eth_getCode account: %s", account.c_str());
 
     // add top address check
     ETH_ADDRESS_CHECK_VALID(account)

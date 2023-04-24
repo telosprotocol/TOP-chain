@@ -137,7 +137,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     //xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
     const string & version = jsonrpc_version;
     const string & method = json_proc.m_request_json["method"].asString();
-    xinfo_rpc("rpc request: %s,%s", version.c_str(), method.c_str());
+    xinfo_rpc("xedge_evm_method_base::do_method rpc request: %s,%s", version.c_str(), method.c_str());
 
     if (jsonrpc_version != "2.0") {
         xerror("xedge_evm_method_base do_method fail-jsonrpc version not 2.0 version=%s", jsonrpc_version.c_str());
@@ -273,7 +273,7 @@ shared_ptr<xrpc_msg_request_t> xedge_evm_method_base<T>::generate_request(const 
     const string client_id = json_proc.m_request_json["id"].asString();
     if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_query_type) {
         edge_msg_ptr = std::make_shared<xrpc_msg_request_t>(type(), json_proc.m_tx_type, source_address, uuid, client_id, account, json_proc.get_request());
-        xdbg_rpc("json_proc.get_request: %s", json_proc.get_request().c_str());
+        xinfo_rpc("xedge_evm_method_base:generate_request json_proc.get_request,uuid=%lx,%s,this=%p", uuid, json_proc.get_request().c_str(),this);
     } else if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
         base::xstream_t stream(xcontext_t::instance());
         // json_proc.m_tx_ptr->add_modified_count();
@@ -290,13 +290,15 @@ shared_ptr<xrpc_msg_request_t> xedge_evm_method_base<T>::generate_request(const 
 
 template <class T>
 void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc) {
-    do {
+    do {        
         // get shard address
         unordered_set<xvnode_address_t> shard_addr_set;
         std::vector<shared_ptr<xrpc_msg_request_t>> edge_msg_list;
         uint64_t uuid = m_edge_handler_ptr->add_seq_id();
         auto vd = m_edge_handler_ptr->get_rpc_edge_vhost()->get_vnetwork_driver();
         const xvnode_address_t & source_address = vd->address();
+
+        xinfo_rpc("xedge_evm_method_base::forward_method uuid=%lx,this=%p", uuid,this);
 
         //for (const auto & account : json_proc.m_account_set) {
         std::string account;
