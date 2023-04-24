@@ -748,6 +748,16 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
     }
 }
 
+TEST_F(xeth2_contract_fixture_t, test_init_sepolia_header) {
+    // m_contract.m_network = xeth2_client_net_t::eth2_net_sepolia;
+    auto init_param_rlp = from_hex(init_sepolia_header_data);
+    xinit_input_t init_input;
+    EXPECT_TRUE(init_input.decode_rlp(init_param_rlp));
+    auto const & hash = init_input.finalized_execution_header.hash();
+    if (hash != init_input.finalized_beacon_header.execution_block_hash) {
+       std::cout<<  hash.hex().c_str() << " : "<<init_input.finalized_beacon_header.execution_block_hash.hex().c_str() << std::endl;
+    }
+}
 
 
 }  // namespace tests

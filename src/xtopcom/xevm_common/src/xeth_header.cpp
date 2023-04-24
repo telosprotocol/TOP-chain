@@ -20,30 +20,19 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xhex.h"
 #include "json/reader.h"
+#include "xbasic/xhex.h"
 #include "xcommon/rlp.h"
 #include "xutility/xhash.h"
 
 NS_BEG2(top, evm_common)
 
 bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
-    return (this->parent_hash == rhs.parent_hash)
-    && (this->uncle_hash == rhs.uncle_hash)
-    && (this->miner == rhs.miner)
-    && (this->state_merkleroot == rhs.state_merkleroot)
-    && (this->tx_merkleroot == rhs.tx_merkleroot)
-    && (this->receipt_merkleroot == rhs.receipt_merkleroot)
-    && (this->bloom == rhs.bloom)
-    && (this->difficulty == rhs.difficulty)
-    && (this->number == rhs.number)
-    && (this->gas_limit == rhs.gas_limit)
-    && (this->gas_used == rhs.gas_used)
-    && (this->time == rhs.time)
-    && (this->extra == rhs.extra)
-    && (this->mix_digest == rhs.mix_digest)
-    && (this->nonce == rhs.nonce)
-    && (this->base_fee.value() == rhs.base_fee.value());
+    return (this->parent_hash == rhs.parent_hash) && (this->uncle_hash == rhs.uncle_hash) && (this->miner == rhs.miner) && (this->state_merkleroot == rhs.state_merkleroot) &&
+           (this->tx_merkleroot == rhs.tx_merkleroot) && (this->receipt_merkleroot == rhs.receipt_merkleroot) && (this->bloom == rhs.bloom) &&
+           (this->difficulty == rhs.difficulty) && (this->number == rhs.number) && (this->gas_limit == rhs.gas_limit) && (this->gas_used == rhs.gas_used) &&
+           (this->time == rhs.time) && (this->extra == rhs.extra) && (this->mix_digest == rhs.mix_digest) && (this->nonce == rhs.nonce) &&
+           (this->base_fee.value() == rhs.base_fee.value()) && (this->withdrawals_hash.value() == rhs.withdrawals_hash.value());
 }
 
 xh256_t xeth_header_t::hash() const {
@@ -116,6 +105,10 @@ xbytes_t xeth_header_t::encode_rlp_withoutseal() const {
         auto tmp = RLP::encode(static_cast<u256>(base_fee.value()));
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
+    if (withdrawals_hash.has_value()) {
+        auto tmp = RLP::encode(withdrawals_hash.value().asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
     return RLP::encodeList(out);
 }
 
@@ -185,6 +178,10 @@ xbytes_t xeth_header_t::encode_rlp() const {
         auto tmp = RLP::encode(static_cast<u256>(base_fee.value()));
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
+    if (withdrawals_hash.has_value()) {
+        auto tmp = RLP::encode(withdrawals_hash.value().asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
     return RLP::encodeList(out);
 }
 
@@ -229,7 +226,6 @@ bool xeth_header_t::decode_rlp(const xbytes_t & bytes) {
     }
     bloom = static_cast<LogBloom>(l.decoded[6]);
 
-
     difficulty = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[7]));
     number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[8]));
     gas_limit = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[9]));
@@ -245,6 +241,12 @@ bool xeth_header_t::decode_rlp(const xbytes_t & bytes) {
     nonce = static_cast<BlockNonce>(l.decoded[14]);
     if (l.decoded.size() >= 16) {
         base_fee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
+    }
+    if (l.decoded.size() >= 17) {
+        if (l.decoded[16].size() != xh256_t::size()) {
+            return false;
+        }
+        withdrawals_hash = static_cast<xh256_t>(l.decoded[16]);
     }
     return true;
 }
@@ -274,6 +276,9 @@ void xeth_header_t::print() const {
     printf("hash: %s\n", hash().hex().c_str());
     if (base_fee.has_value()) {
         printf("base_fee: %s\n", base_fee.value().str().c_str());
+    }
+    if (withdrawals_hash.has_value()) {
+        printf("withdrawals_hash: %s\n", withdrawals_hash.value().hex().c_str());
     }
 }
 
