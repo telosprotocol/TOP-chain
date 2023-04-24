@@ -193,6 +193,11 @@ xtxindex_detail_ptr_t xrpc_loader_t::load_ethtx_indx_detail(const std::string & 
     }  
 
     base::xvaccount_t _vaddress(txindex->get_block_addr());
+    auto zone = _vaddress.get_zone_index();
+    if (zone != base::enum_chain_zone_evm_index) {
+        xwarn("xrpc_loader_t::load_ethtx_indx_detail,fail-not evm table hash:%s, zone:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), zone);
+        return nullptr;
+    }
     auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), base::enum_xvblock_flag_committed, false);
     if (nullptr == _block) {
         xwarn("xrpc_loader_t::load_ethtx_indx_detail,fail to load block for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
@@ -214,7 +219,7 @@ xtxindex_detail_ptr_t xrpc_loader_t::load_ethtx_indx_detail(const std::string & 
         }
     }
     if (transaction_index >= (uint32_t)eth_txactions.size()) {
-        xerror("xrpc_loader_t::load_ethtx_indx_detail,fail to find txaction hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
+        xwarn("xrpc_loader_t::load_ethtx_indx_detail,fail to find txaction hash:%s,block:%s,might be a v2 tx.", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
         return nullptr;
     }
     xtxindex_detail_ptr_t index_detail = std::make_shared<xtxindex_detail_t>(txindex, _block->get_block_hash(), *txaction_ptr, transaction_index);

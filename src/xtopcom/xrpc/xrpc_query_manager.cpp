@@ -898,6 +898,14 @@ void xrpc_query_manager::getTransactionV2(Json::Value & js_req, Json::Value & js
                 std::error_code ec;
                 xrpc_eth_parser_t::receipt_to_json_for_top_rpc(tx_hash, sendindex, js_result, ec);
                 if (!ec) {
+                    data::xeth_transaction_t ethtx = sendindex->get_raw_tx()->to_eth_tx(ec);
+                    if (ec) {
+                        xerror("xrpc_query_manager::getTransactionV2 fail-to eth tx");
+                        return;
+                    }
+                    if (ethtx.get_to().is_zero()) {
+                        result_json["original_tx_info"]["receiver_account"] = "";
+                    }
                     result_json["evm"] = js_result;
                     js_rsp = result_json;
                     return;
