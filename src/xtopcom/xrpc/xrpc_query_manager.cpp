@@ -906,6 +906,9 @@ void xrpc_query_manager::getTransactionV2(Json::Value & js_req, Json::Value & js
                     if (ethtx.get_to().is_zero()) {
                         result_json["original_tx_info"]["receiver_account"] = "";
                     }
+
+                    result_json["original_tx_info"]["amount"] = js_result["value"];
+                    result_json["original_tx_info"]["send_timestamp"] = std::to_string(sendindex->get_blocktimestamp());
                     result_json["evm"] = js_result;
                     js_rsp = result_json;
                     return;
