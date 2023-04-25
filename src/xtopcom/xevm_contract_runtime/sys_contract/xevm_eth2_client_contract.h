@@ -70,7 +70,7 @@ private:
     evm_common::eth2::xexecution_header_info_t get_unfinalized_headers(state_ptr const & state, h256 const & hash) const;
     bool set_unfinalized_headers(state_ptr const & state, h256 const & hash, evm_common::eth2::xexecution_header_info_t const & info);
     bool del_unfinalized_headers(state_ptr const & state, h256 const & hash);
-    evm_common::eth2::xextended_beacon_block_header_t get_finalized_beacon_header(state_ptr const & state) const;
+    static evm_common::eth2::xextended_beacon_block_header_t get_finalized_beacon_header(state_ptr const & state);
     bool set_finalized_beacon_header(state_ptr const & state, evm_common::eth2::xextended_beacon_block_header_t const & beacon);
     evm_common::eth2::xexecution_header_info_t get_finalized_execution_header(state_ptr const & state) const;
     bool set_finalized_execution_header(state_ptr const & state, evm_common::eth2::xexecution_header_info_t const & info);

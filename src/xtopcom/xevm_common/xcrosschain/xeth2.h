@@ -16,17 +16,21 @@ NS_BEG3(top, evm_common, eth2)
 struct xbeacon_block_header_t {
     uint64_t slot{0};
     uint64_t proposer_index{0};
-    h256 parent_root;
-    h256 state_root;
-    h256 body_root;
+    xh256_t parent_root{};
+    xh256_t state_root{};
+    xh256_t body_root{};
 
+#if defined(XCXX20)
+    bool operator==(xbeacon_block_header_t const & rhs) const = default;
+#else
     bool operator==(xbeacon_block_header_t const & rhs) const {
         return (this->slot == rhs.slot) && (this->proposer_index == rhs.proposer_index) && (this->parent_root == rhs.parent_root) && (this->state_root == rhs.state_root) &&
                (this->body_root == rhs.body_root);
     }
+#endif
 
     bool empty() const {
-        return (parent_root == h256() && state_root == h256() && body_root == h256());
+        return parent_root.empty() && state_root.empty() && body_root.empty();
     }
 
     xbytes_t encode_rlp() const {
@@ -35,11 +39,11 @@ struct xbeacon_block_header_t {
         out.insert(out.end(), item1.begin(), item1.end());
         auto const & item2 = RLP::encode(proposer_index);
         out.insert(out.end(), item2.begin(), item2.end());
-        auto const & item3 = RLP::encode(parent_root.asBytes());
+        auto const & item3 = RLP::encode(parent_root.asArray());
         out.insert(out.end(), item3.begin(), item3.end());
-        auto const & item4 = RLP::encode(state_root.asBytes());
+        auto const & item4 = RLP::encode(state_root.asArray());
         out.insert(out.end(), item4.begin(), item4.end());
-        auto const & item5 = RLP::encode(body_root.asBytes());
+        auto const & item5 = RLP::encode(body_root.asArray());
         out.insert(out.end(), item5.begin(), item5.end());
         return RLP::encodeList(out);
     }
@@ -49,26 +53,26 @@ struct xbeacon_block_header_t {
         if (items.decoded.size() != 5) {
             return false;
         }
-        slot = static_cast<uint64_t>(fromBigEndian<u64>(items.decoded.at(0)));
-        proposer_index = static_cast<uint64_t>(fromBigEndian<u64>(items.decoded.at(1)));
-        parent_root = static_cast<h256>(items.decoded.at(2));
-        state_root = static_cast<h256>(items.decoded.at(3));
-        body_root = static_cast<h256>(items.decoded.at(4));
+        slot = fromBigEndian<uint64_t>(items.decoded.at(0));
+        proposer_index = fromBigEndian<uint64_t>(items.decoded.at(1));
+        parent_root = xh256_t{xspan_t<xbyte_t const>{items.decoded.at(2)}};
+        state_root = xh256_t{xspan_t<xbyte_t const>{items.decoded.at(3)}};
+        body_root = xh256_t{xspan_t<xbyte_t const>{items.decoded.at(4)}};
         return true;
     }
 
-    h256 tree_hash_root() const {
+    xh256_t tree_hash_root() const {
         auto const & rlp = encode_rlp();
-        xbytes_t hash_bytes(32);
-        unsafe_beacon_header_root(rlp.data(), rlp.size(), hash_bytes.data());
-        return static_cast<h256>(hash_bytes);
+        xh256_t h256;
+        unsafe_beacon_header_root(rlp.data(), rlp.size(), h256.data());
+        return h256;
     }
 };
 
 struct xextended_beacon_block_header_t {
-    xbeacon_block_header_t header;
-    h256 beacon_block_root;
-    h256 execution_block_hash;
+    xbeacon_block_header_t header{};
+    xh256_t beacon_block_root{};
+    xh256_t execution_block_hash{};
 
     bool operator==(xextended_beacon_block_header_t const & rhs) const {
         return (this->header == rhs.header) && (this->beacon_block_root == rhs.beacon_block_root) && (this->execution_block_hash == rhs.execution_block_hash);
@@ -90,25 +94,32 @@ struct xextended_beacon_block_header_t {
     }
 
     bool decode_rlp(xbytes_t const & bytes) {
-        auto items = RLP::decodeList(bytes);
+        auto const & items = RLP::decodeList(bytes);
         if (items.decoded.size() != 3) {
             return false;
         }
         if (header.decode_rlp(items.decoded.at(0)) == false) {
+            assert(header.empty());
             return false;
         }
-        beacon_block_root = static_cast<h256>(items.decoded.at(1));
-        execution_block_hash = static_cast<h256>(items.decoded.at(2));
+        beacon_block_root = xh256_t{xspan_t<xbyte_t const>{items.decoded.at(1)}};
+        execution_block_hash = xh256_t{xspan_t<xbyte_t const>{items.decoded.at(2)}};
         return true;
     }
 };
 
 struct xexecution_header_info_t {
-    h256 parent_hash;
+    xh256_t parent_hash{};
     uint64_t block_number{0};
 
     xexecution_header_info_t() = default;
-    xexecution_header_info_t(h256 const & parent_hash_, uint64_t const block_number_) : parent_hash(parent_hash_), block_number(block_number_) {
+    xexecution_header_info_t(xexecution_header_info_t const &) = default;
+    xexecution_header_info_t & operator=(xexecution_header_info_t const &) = default;
+    xexecution_header_info_t(xexecution_header_info_t &&) = default;
+    xexecution_header_info_t & operator=(xexecution_header_info_t &&) = default;
+    ~xexecution_header_info_t() = default;
+
+    xexecution_header_info_t(xh256_t const & parent_hash, uint64_t const block_number) : parent_hash(parent_hash), block_number(block_number) {
     }
 
     bool operator==(xexecution_header_info_t const & rhs) const {
@@ -116,12 +127,12 @@ struct xexecution_header_info_t {
     }
 
     bool empty() const {
-        return (parent_hash == h256() && block_number == 0);
+        return (parent_hash.empty() && block_number == 0);
     }
 
     xbytes_t encode_rlp() const {
         xbytes_t out;
-        auto item1 = RLP::encode(parent_hash.asBytes());
+        auto item1 = RLP::encode(parent_hash.asArray());
         out.insert(out.end(), item1.begin(), item1.end());
         auto item2 = RLP::encode(block_number);
         out.insert(out.end(), item2.begin(), item2.end());
@@ -129,12 +140,12 @@ struct xexecution_header_info_t {
     }
 
     bool decode_rlp(xbytes_t const & bytes) {
-        auto items = RLP::decodeList(bytes);
+        auto const & items = RLP::decodeList(bytes);
         if (items.decoded.size() != 2) {
             return false;
         }
-        parent_hash = static_cast<h256>(items.decoded.at(0));
-        block_number = static_cast<uint64_t>(fromBigEndian<u64>(items.decoded.at(1)));
+        parent_hash = xh256_t{xspan_t<xbyte_t const>{items.decoded.at(0)}};
+        block_number = fromBigEndian<uint64_t>(items.decoded.at(1));
         return true;
     }
 };

@@ -5,8 +5,11 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xstring_view.h"
 #include "xbasic/xutility.h"
 
+#include <algorithm>
+#include <sstream>
 #include <system_error>
 
 NS_BEG1(top)
@@ -20,18 +23,30 @@ std::string to_hex(Iterator begin, Iterator end, std::string const & prefix) {
     std::size_t off = prefix.size();
     std::string hex(std::distance(begin, end) * 2 + off, '0');
     hex.replace(0, off, prefix);
-    for (; begin != end; begin++) {
+    for (; begin != end; ++begin) {
         hex[off++] = hexdigits[(*begin >> 4) & 0x0f];
         hex[off++] = hexdigits[*begin & 0x0f];
     }
     return hex;
 }
 
+template <typename T, typename std::enable_if<std::is_fundamental<T>::value && std::is_integral<T>::value>::type * = nullptr>
+std::string to_hex(T const value, std::string const & prefix) {
+    std::stringstream stream;
+    stream << prefix << std::hex << value;
+    return stream.str();
+}
+
 /// Convert a series of bytes to the corresponding hex string.
 /// @example to_hex("A\x69") == "4169"
-template <class T>
+template <class T, typename std::enable_if<!(std::is_fundamental<T>::value && std::is_integral<T>::value)>::type * = nullptr>
 std::string to_hex(T const & input) {
     return to_hex(input.begin(), input.end(), "");
+}
+
+template <typename T, typename std::enable_if<std::is_fundamental<T>::value && std::is_integral<T>::value>::type * = nullptr>
+std::string to_hex(T const value) {
+    return to_hex(value, "");
 }
 
 /// Convert a series of bytes to the corresponding hex string with 0x prefix.
@@ -108,5 +123,32 @@ bool is_hex_string(std::string const & input) noexcept;
 // static bool isHash(std::string const & _hash) {
 //     return (_hash.size() == T::size * 2 || (_hash.size() == T::size * 2 + 2 && _hash.substr(0, 2) == "0x")) && is_hex_string(_hash);
 // }
+
+template <typename T,
+          typename std::enable_if<std::is_same<T, uint8_t>::value || std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value ||
+                                  std::is_same<T, uint64_t>::value>::type * = nullptr>
+auto hex_to(std::string const & input) -> T {
+    xstring_view_t input_view{input.c_str(), input.size()};
+
+    if (input.compare(0, 2, "0x") == 0 || input.compare(0, 2, "0X") == 0) {
+        input_view.remove_prefix(2);
+    }
+    assert(std::all_of(std::begin(input_view), std::end(input_view), [](char const ch) { return std::isxdigit(ch); }));
+
+    T ret = 0;
+    for (auto const c : input_view) {
+        ret <<= 4;
+        if (c >= '0' && c <= '9') {
+            ret |= (c - '0');
+        } else if (c >= 'a' && c <= 'f') {
+            ret |= (c - 'a' + 10);
+        } else if (c >= 'A' && c <= 'F') {
+            ret |= (c - 'A' + 10);
+        } else {
+            return 0;
+        }
+    }
+    return ret;
+}
 
 NS_END1

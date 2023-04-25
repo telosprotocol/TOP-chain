@@ -263,8 +263,8 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_init_input) {
     init.finalized_execution_header.receipt_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 6);
     init.finalized_execution_header.bloom = static_cast<evm_common::LogBloom>(UINT32_MAX - 7);
     init.finalized_execution_header.mix_digest = static_cast<evm_common::h256>(UINT32_MAX - 8);
-    init.finalized_execution_header.nonce = static_cast<evm_common::h64>(UINT32_MAX - 9);
-    init.finalized_execution_header.difficulty = static_cast<evm_common::bigint>(UINT64_MAX - 1);
+    init.finalized_execution_header.nonce = UINT32_MAX - 9;
+    init.finalized_execution_header.difficulty = UINT64_MAX - 1;
     init.finalized_execution_header.number = UINT64_MAX - 2;
     init.finalized_execution_header.gas_limit = UINT64_MAX - 3;
     init.finalized_execution_header.gas_used = UINT64_MAX - 4;
@@ -331,7 +331,7 @@ std::vector<xeth_header_t> parse_header_data() {
         auto time = it->at("timestamp").get<std::string>();
         h.time = data::hex_to_uint64(time);
         h.mix_digest = static_cast<h256>(from_hex(it->at("mix_hash").get<std::string>()));
-        h.nonce = static_cast<h64>(from_hex(it->at("nonce").get<std::string>()));
+        h.nonce = hex_to<uint64_t>(it->at("nonce").get<std::string>());
         auto base_fee = it->at("base_fee").get<std::string>();
         h.base_fee = bigint(data::hex_to_uint64(base_fee));
         res.emplace_back(h);
@@ -339,25 +339,27 @@ std::vector<xeth_header_t> parse_header_data() {
     return res;
 }
 
-xlight_client_update_t parse_update_data(const char * data_ptr) {
+xlight_client_update_t parse_update_data(char const * data_ptr) {
     xlight_client_update_t res;
     auto j = json::parse(data_ptr);
     res.attested_beacon_header.slot = std::stoll(j["attested_beacon_header"]["slot"].get<std::string>());
     res.attested_beacon_header.proposer_index = std::stoll(j["attested_beacon_header"]["proposer_index"].get<std::string>());
-    res.attested_beacon_header.parent_root = static_cast<h256>(from_hex(j["attested_beacon_header"]["parent_root"].get<std::string>()));
-    res.attested_beacon_header.state_root = static_cast<h256>(from_hex(j["attested_beacon_header"]["state_root"].get<std::string>()));
-    res.attested_beacon_header.body_root = static_cast<h256>(from_hex(j["attested_beacon_header"]["body_root"].get<std::string>()));
+    res.attested_beacon_header.parent_root = xh256_t{xspan_t<xbyte_t const>{from_hex(j["attested_beacon_header"]["parent_root"].get<std::string>())}};
+    res.attested_beacon_header.state_root = xh256_t{xspan_t<xbyte_t const>{from_hex(j["attested_beacon_header"]["state_root"].get<std::string>())}};
+    res.attested_beacon_header.body_root = xh256_t{xspan_t<xbyte_t const>{from_hex(j["attested_beacon_header"]["body_root"].get<std::string>())}};
     res.sync_aggregate.sync_committee_bits = to_bytes(j["sync_aggregate"]["sync_committee_bits"].get<std::string>());
     res.sync_aggregate.sync_committee_signature = from_hex(j["sync_aggregate"]["sync_committee_signature"].get<std::string>());
     res.signature_slot = std::stoll(j["signature_slot"].get<std::string>());
     res.finality_update.header_update.beacon_header.slot = std::stoll(j["finality_update"]["header_update"]["beacon_header"]["slot"].get<std::string>());
     res.finality_update.header_update.beacon_header.proposer_index = std::stoll(j["finality_update"]["header_update"]["beacon_header"]["proposer_index"].get<std::string>());
     res.finality_update.header_update.beacon_header.parent_root =
-        static_cast<h256>(from_hex(j["finality_update"]["header_update"]["beacon_header"]["parent_root"].get<std::string>()));
+        xh256_t{xspan_t<xbyte_t const>{from_hex(j["finality_update"]["header_update"]["beacon_header"]["parent_root"].get<std::string>())}};
     res.finality_update.header_update.beacon_header.state_root =
-        static_cast<h256>(from_hex(j["finality_update"]["header_update"]["beacon_header"]["state_root"].get<std::string>()));
-    res.finality_update.header_update.beacon_header.body_root = static_cast<h256>(from_hex(j["finality_update"]["header_update"]["beacon_header"]["body_root"].get<std::string>()));
-    res.finality_update.header_update.execution_block_hash = static_cast<h256>(from_hex(j["finality_update"]["header_update"]["execution_block_hash"].get<std::string>()));
+        xh256_t{xspan_t<xbyte_t const>{from_hex(j["finality_update"]["header_update"]["beacon_header"]["state_root"].get<std::string>())}};
+    res.finality_update.header_update.beacon_header.body_root =
+        xh256_t{xspan_t<xbyte_t const>{from_hex(j["finality_update"]["header_update"]["beacon_header"]["body_root"].get<std::string>())}};
+    res.finality_update.header_update.execution_block_hash =
+        xh256_t{xspan_t<xbyte_t const>{from_hex(j["finality_update"]["header_update"]["execution_block_hash"].get<std::string>())}};
     auto const & finality_branch_array = j["finality_update"]["finality_branch"];
     for (auto const b : finality_branch_array) {
         res.finality_update.finality_branch.emplace_back(from_hex(b.get<std::string>()));
