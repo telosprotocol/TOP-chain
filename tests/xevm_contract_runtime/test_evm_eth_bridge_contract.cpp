@@ -29,8 +29,8 @@ TEST_F(xcontract_fixture_t, header_encode_decode) {
     header.receipt_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 6);
     header.bloom = static_cast<evm_common::LogBloom>(UINT32_MAX - 7);
     header.mix_digest = static_cast<evm_common::h256>(UINT32_MAX - 8);
-    header.nonce = static_cast<evm_common::h64>(UINT32_MAX - 9);
-    header.difficulty = static_cast<evm_common::bigint>(UINT64_MAX - 1);
+    header.nonce = UINT32_MAX - 9;
+    header.difficulty = UINT64_MAX - 1;
     header.number = UINT64_MAX - 2;
     header.gas_limit = UINT64_MAX - 3;
     header.gas_used = UINT64_MAX - 4;
@@ -417,7 +417,7 @@ static xeth_header_t create_header(h256 parent_hash, uint32_t number, uint32_t d
     header.receipt_merkleroot = static_cast<evm_common::h256>(0);
     header.bloom = static_cast<evm_common::LogBloom>(0);
     header.mix_digest = static_cast<evm_common::h256>(0);
-    header.nonce = static_cast<evm_common::h64>(0);
+    header.nonce = 0;
     header.difficulty = difficulty;
     header.number = number;
     header.gas_limit = 0;

@@ -206,9 +206,11 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth2_client_contract::execute] init headers error");
             return false;
         }
-        evm_common::xh256s_t topics;
-        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
-        evm_common::xevm_log_t log(context.address, topics, top::to_bytes(evm_common::u256(0)));
+        xh256s_t topics;
+        topics.emplace_back();
+        context.caller.to_h256(topics.back());
+        // topics.push_back(xh256_t(context.caller.to_h256()));
+        evm_common::xevm_log_t log(context.address, std::move(topics), top::to_bytes(evm_common::u256(0)));
         output.cost = 0;
         output.exit_status = Returned;
         output.logs.push_back(log);
@@ -468,11 +470,13 @@ bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t 
         xwarn("xtop_evm_eth2_client_contract::init already");
         return false;
     }
-    auto const & hash = init_input.finalized_execution_header.hash();
+    xh256_t hash;
+    init_input.finalized_execution_header.hash(hash);
     if (hash != init_input.finalized_beacon_header.execution_block_hash) {
         xwarn("xtop_evm_eth2_client_contract::init hash mismatch %s, %s", hash.hex().c_str(), init_input.finalized_beacon_header.execution_block_hash.hex().c_str());
         return false;
     }
+
     auto const & finalized_execution_header_info =
         xexecution_header_info_t{init_input.finalized_execution_header.parent_hash, static_cast<uint64_t>(init_input.finalized_execution_header.number)};
     if (false == set_finalized_beacon_header(state, init_input.finalized_beacon_header)) {
@@ -925,7 +929,7 @@ bool xtop_evm_eth2_client_contract::del_unfinalized_headers(state_ptr const & st
     return true;
 }
 
-xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_beacon_header(state_ptr const & state) const {
+xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_beacon_header(state_ptr const & state) {
     auto const & v = state->string_get(data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_finalized_beacon_header empty");
@@ -933,6 +937,7 @@ xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_bea
     }
     xextended_beacon_block_header_t beacon;
     if (beacon.decode_rlp({v.begin(), v.end()}) == false) {
+        assert(beacon.empty());
         xwarn("xtop_evm_eth2_client_contract::get_finalized_beacon_header decode error");
     }
     return beacon;
