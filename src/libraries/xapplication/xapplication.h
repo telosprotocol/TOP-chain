@@ -104,7 +104,7 @@ private:
     std::unique_ptr<router::xrouter_face_t> m_router;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<time::xchain_time_face_t> m_logic_timer;
-    xobject_ptr_t<base::xiothread_t> m_grpc_thread{};
+    // xobject_ptr_t<base::xiothread_t> m_grpc_thread{};
     xobject_ptr_t<base::xiothread_t> m_sync_thread{};
     std::unique_ptr<elect::xelect_client_imp> m_elect_client;
     xobject_ptr_t<store::xstore_face_t> m_store;
@@ -125,7 +125,7 @@ private:
     std::shared_ptr<vnetwork::xvhost_face_t> m_vhost;
     std::shared_ptr<vnetwork::xmessage_callback_hub_t> m_message_callback_hub;
     std::unique_ptr<sync::xsync_object_t> m_sync_obj;
-    std::unique_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
+    // std::unique_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     std::shared_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
     std::shared_ptr<state_sync::xstate_downloader_t> m_downloader;
     std::shared_ptr<vnode::xvnode_manager_face_t> m_vnode_manager;

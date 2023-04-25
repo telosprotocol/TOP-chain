@@ -40,7 +40,6 @@ private:
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     observer_ptr<time::xchain_time_face_t> m_logic_timer;
     observer_ptr<sync::xsync_object_t> m_sync_obj;
-    observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     observer_ptr<data::xuser_params> m_user_params;
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_the_binding_driver;
@@ -68,7 +67,6 @@ public:
                observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                observer_ptr<time::xchain_time_face_t> const & logic_timer,
                observer_ptr<sync::xsync_object_t> const & sync_obj,
-               observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                observer_ptr<base::xvnodesrv_t> const & nodesvr);
@@ -90,7 +88,6 @@ public:
                observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                observer_ptr<time::xchain_time_face_t> const & logic_timer,
                observer_ptr<sync::xsync_object_t> const & sync_obj,
-               observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                observer_ptr<base::xvnodesrv_t> const & nodesvr);

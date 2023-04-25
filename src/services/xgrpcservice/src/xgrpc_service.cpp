@@ -277,7 +277,7 @@ uint32_t xgrpc_service::sync_run(const std::shared_ptr<xrpc_handle_face_t> & han
 
     ServerBuilder builder;
     // reduce threads spawned by grpc
-    builder.SetSyncServerOption(grpc::ServerBuilder::MAX_POLLERS, 1);
+    builder.SetSyncServerOption(grpc::ServerBuilder::MIN_POLLERS, 1);
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(m_address, grpc::InsecureServerCredentials());
     // Register "service" as the instance through which we'll communicate with
