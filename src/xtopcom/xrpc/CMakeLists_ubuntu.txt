@@ -21,8 +21,8 @@ aux_source_directory(./eth_rpc eth_rpc)
 
 add_library(xrpc STATIC ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${shard} ${arc} ${xrpc} ${xhttp} ${xws} ${xratelimit} ${eth_rpc})
 
-add_dependencies(xrpc xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xdata xxbase crossguid)
-target_link_libraries(xrpc PRIVATE xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xdata xbasic xxbase crossguid ${jsoncpp_LIBRARIES} pthread)
+add_dependencies(xrpc xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xdata xversion xxbase crossguid)
+target_link_libraries(xrpc PRIVATE xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xdata xversion xbasic xxbase crossguid ${jsoncpp_LIBRARIES} pthread)
 
 if (NOT DISABLE_EVM)
     target_link_libraries(xrpc PRIVATE xevm_contract_runtime)

@@ -88,4 +88,5 @@ add_subdirectory(xstatistic)
 
 add_subdirectory(xpreprocess)
 add_subdirectory(xplugin)
+add_subdirectory(xversion)
 

@@ -23,6 +23,7 @@ public:
     void import_private_key_method(xjson_proc_t &json_proc);
     void get_private_keys_method(xjson_proc_t &json_proc);
     void get_edge_neighbors_method(xjson_proc_t &json_proc);
+    void getClientVersion_method(xjson_proc_t &json_proc);
     void reset_edge_local_method(common::xip2_t xip2);
 public:
     static unordered_map<string, vector<string>> m_sub_account_map;

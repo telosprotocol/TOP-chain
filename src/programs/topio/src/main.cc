@@ -4,7 +4,6 @@
 
 #include "main.h"
 
-#include "xchaininit/version.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xinit.h"
 #include "xchaininit/xconfig.h"
@@ -18,7 +17,7 @@
 #else
 #    include "CLI11.hpp"
 #endif
-#include "generated/version.h"
+#include "xversion/version.h"
 #include "topio_setproctitle.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
 #include "xbasic/xtimer_driver.h"
