@@ -25,12 +25,6 @@ constexpr uint32_t total_fetch_num = 64;
 constexpr uint32_t unit_fetch_num = 4;
 constexpr uint32_t max_req_num = 20;
 
-xtop_state_sync::xtop_state_sync() {
-}
-
-xtop_state_sync::~xtop_state_sync() {
-}
-
 std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::xaccount_address_t & table,
                                                                  const uint64_t height,
                                                                  const evm_common::xh256_t & block_hash,

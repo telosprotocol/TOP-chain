@@ -699,7 +699,9 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         auto excontainer = vblock->get_excontainer();
         if (excontainer != nullptr) {
             excontainer->commit(vblock);
-            m_para->get_resources()->get_txpool()->add_tx_action_cache(vblock, excontainer->get_input_actions_cache());
+            if (vblock->get_block_class() == base::enum_xvblock_class_light) {
+                m_para->get_resources()->get_txpool()->add_tx_action_cache(vblock, excontainer->get_input_actions_cache());
+            }
         }
         
         xunit_info("xbatch_packer::on_proposal_finish tps_key after commit leader:%d,proposal=%s", is_leader, _evt_obj->get_target_proposal()->dump().c_str());

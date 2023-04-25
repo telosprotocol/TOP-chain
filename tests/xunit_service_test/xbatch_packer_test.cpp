@@ -96,6 +96,8 @@ public:
     }
 
     void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) override {}
+
+    void add_tx_action_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) override {}
 private:
     std::set<base::xtable_shortid_t> m_all_table_sids;
 };

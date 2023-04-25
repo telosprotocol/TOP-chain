@@ -37,9 +37,6 @@ Sync::Sync(xh256_t const & root, xkv_db_face_ptr_t _database, leaf_callback call
 Sync::Sync(xkv_db_face_ptr_t _database) : database{_database} {
 }
 
-Sync::~Sync() {
-}
-
 std::shared_ptr<Sync> Sync::NewSync(xh256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback) {
     return std::make_shared<Sync>(root, _database, callback);
 }

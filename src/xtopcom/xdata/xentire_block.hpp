@@ -14,8 +14,7 @@ using namespace base;
 class xentire_block_t : public top::basic::xserialize_face_t {
 public:
 
-    xentire_block_t() {
-    }
+    xentire_block_t() = default;
 
     virtual int32_t do_write(base::xstream_t & stream) {
         KEEP_SIZE();
@@ -39,8 +38,7 @@ public:
     }
 
 private:
-    virtual ~xentire_block_t() {
-    }
+    ~xentire_block_t() override = default;
 
 public:
     xblock_ptr_t block_ptr{};

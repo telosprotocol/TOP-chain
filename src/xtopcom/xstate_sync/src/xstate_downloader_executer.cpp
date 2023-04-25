@@ -18,9 +18,6 @@ namespace state_sync {
 xtop_download_executer::xtop_download_executer(observer_ptr<base::xiothread_t> thread, uint32_t overtime) : m_syncer_thread{thread}, m_overtime(overtime) {
 }
 
-xtop_download_executer::~xtop_download_executer() {
-}
-
 void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback) {
 #if !defined(NDEBUG)
     if (executor_thread_id_ == std::thread::id{}) {
