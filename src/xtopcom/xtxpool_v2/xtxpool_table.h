@@ -82,15 +82,15 @@ struct update_id_state_para {
 };
 
 struct xtx_actions_t {
-    xtx_actions_t(const std::string & blockhash, const std::shared_ptr<std::vector<base::xvaction_t>> & txaction) : m_blockhash(blockhash), m_txactions(txaction) {}
+    xtx_actions_t(const std::string & blockhash, const std::shared_ptr<base::xinput_actions_cache_base> & input_actions_cache) : m_blockhash(blockhash), m_input_actions_cache(input_actions_cache) {}
     std::string m_blockhash;
-    std::shared_ptr<std::vector<base::xvaction_t>> m_txactions;
+    std::shared_ptr<base::xinput_actions_cache_base> m_input_actions_cache;
 };
 
 class xtx_actions_cache_t {
 public:
-    void add_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions);
-    std::shared_ptr<std::vector<base::xvaction_t>> get_cache(base::xvblock_t * block);
+    void add_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & input_actions_cache);
+    std::shared_ptr<base::xinput_actions_cache_base> get_cache(base::xvblock_t * block);
 private:
     mutable std::mutex m_mutex;
     std::map<uint64_t, std::shared_ptr<xtx_actions_t>> m_cache;
@@ -144,7 +144,7 @@ public:
 
     void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block);
     uint32_t get_tx_cache_size() const;    
-    void add_tx_action_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions);
+    void add_tx_action_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache);
 
 private:
     // bool is_account_need_update(const std::string & account_addr) const;

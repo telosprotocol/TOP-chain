@@ -160,15 +160,15 @@ void     xtablebuilder_t::make_table_block_para(const data::xtablestate_ptr_t & 
                                                 txexecutor::xexecute_output_t const& execute_output, 
                                                 data::xtable_block_para_t & lighttable_para) {
     int64_t tgas_balance_change = 0;
-    std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
+    std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> txs_info = std::make_shared<std::vector<data::xlightunit_tx_info_ptr_t>>();
     std::map<std::string, std::string> property_hashs;
 
     // change to xvaction and calc tgas balance change
     for (auto & txout : execute_output.pack_outputs) {
-        txs_info.push_back(data::xblockaction_build_t::build_tx_info(txout.m_tx));
+        txs_info->push_back(data::xblockaction_build_t::build_tx_info(txout.m_tx));
         tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
         for (auto & v : txout.m_vm_output.m_contract_create_txs) {
-            txs_info.push_back(data::xblockaction_build_t::build_tx_info(v));
+            txs_info->push_back(data::xblockaction_build_t::build_tx_info(v));
         }
     }
 

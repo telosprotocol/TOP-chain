@@ -123,7 +123,8 @@ private:
     common::xtable_address_t                 m_table_addr;
     xpack_strategy_t                         m_pack_strategy;
 #ifdef ENABLE_METRICS
-    std::string                              m_cons_fail_metrics_tag;
+    std::string                              m_cons_leader_fail_metrics_tag;
+    std::string                              m_cons_backup_fail_metrics_tag;
     std::string                              m_cons_succ_height_metrics_tag;
 #endif
 };

@@ -55,7 +55,8 @@ xbatch_packer::xbatch_packer(base::xtable_index_t                             &t
     m_proposal_maker->set_certauth(cert_auth);
     m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
 #ifdef ENABLE_METRICS
-    m_cons_fail_metrics_tag = "cons_table_failed_" + get_account();
+    m_cons_leader_fail_metrics_tag = "cons_table_leader_failed_" + get_account();
+    m_cons_backup_fail_metrics_tag = "cons_table_backup_failed_" + get_account();
     m_cons_succ_height_metrics_tag = "cons_table_succ_height_" + get_account();
 #endif
     xunit_info("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid.to_table_shortid());
@@ -678,13 +679,13 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
     xunit_info("xbatch_packer::on_proposal_finish tps_key in leader:%d,proposal=%s",is_leader, _evt_obj->get_target_proposal()->dump().c_str());
     xcsaccount_t::on_proposal_finish(event, from_child, cur_thread_id, timenow_ms);
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
-        XMETRICS_COUNTER_INCREMENT(m_cons_fail_metrics_tag , 1);
-         xunit_warn("xbatch_packer::on_proposal_finish fail tps_key. leader:%d,error_code:%d,proposal=%s,at_node:%s,m_last_xip2:%s",
-             is_leader,
-             _evt_obj->get_error_code(),
-             _evt_obj->get_target_proposal()->dump().c_str(),
-             xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
-             xcons_utl::xip_to_hex(m_last_xip2).c_str());
+        XMETRICS_COUNTER_INCREMENT(is_leader ? m_cons_leader_fail_metrics_tag : m_cons_backup_fail_metrics_tag, 1);
+        xunit_warn("xbatch_packer::on_proposal_finish fail tps_key. leader:%d,error_code:%d,proposal=%s,at_node:%s,m_last_xip2:%s",
+            is_leader,
+            _evt_obj->get_error_code(),
+            _evt_obj->get_target_proposal()->dump().c_str(),
+            xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
+            xcons_utl::xip_to_hex(m_last_xip2).c_str());
     } else {
         xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,tps_key proposal=%s,at_node:%s,m_last_xip2:%s",
             is_leader,
@@ -698,7 +699,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         auto excontainer = vblock->get_excontainer();
         if (excontainer != nullptr) {
             excontainer->commit(vblock);
-            m_para->get_resources()->get_txpool()->add_tx_action_cache(vblock, excontainer->get_input_actions());
+            m_para->get_resources()->get_txpool()->add_tx_action_cache(vblock, excontainer->get_input_actions_cache());
         }
         
         xunit_info("xbatch_packer::on_proposal_finish tps_key after commit leader:%d,proposal=%s", is_leader, _evt_obj->get_target_proposal()->dump().c_str());

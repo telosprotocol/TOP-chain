@@ -89,16 +89,29 @@ public:
 
 using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;
 
+class xtable_input_actions_cache : public base::xinput_actions_cache_base {
+public:
+    xtable_input_actions_cache(std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> actions) : m_actions(actions) {
+    }
+    void loop_actions(std::function<void(const base::xvaction_t & _action)> _func) const {
+        for (auto & action : *m_actions) {
+            if (action->get_org_tx_hash().empty()) {
+                continue;
+            }
+            _func(*action);
+        }
+    }
+private:
+    std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> m_actions;
+};
+
 // TODO(jimmy) the whold table state do commit
 class xtable_mpt_container : public base::xvblock_excontainer_base {
 public:
     xtable_mpt_container(statectx::xstatectx_face_ptr_t const & _ctx,
-                         const std::vector<data::xlightunit_tx_info_ptr_t> & txactions)
+                         std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> actions)
       : m_statectx(_ctx) {
-        m_txactions = std::make_shared<std::vector<base::xvaction_t>>();
-        for(auto & action : txactions) {
-            m_txactions->push_back(*action);
-        }
+        m_input_actions_cache = std::make_shared<xtable_input_actions_cache>(actions);
     }
     virtual void commit(base::xvblock_t* current_block) override {
         m_statectx->do_commit(current_block);
@@ -109,13 +122,14 @@ public:
             sub_blocks.push_back(v.second->get_unit());
         }
     }
-    virtual std::shared_ptr<std::vector<base::xvaction_t>> get_input_actions() const override {
-        return m_txactions;
+
+    virtual std::shared_ptr<base::xinput_actions_cache_base> get_input_actions_cache() const override {
+        return m_input_actions_cache;
     }
 
 private:
     statectx::xstatectx_face_ptr_t m_statectx;
-    std::shared_ptr<std::vector<base::xvaction_t>> m_txactions;
+    std::shared_ptr<base::xinput_actions_cache_base> m_input_actions_cache;
 };
 
 NS_END2

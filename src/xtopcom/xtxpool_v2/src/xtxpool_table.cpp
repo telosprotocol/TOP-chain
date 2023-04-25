@@ -279,23 +279,10 @@ void xtxpool_table_t::deal_commit_table_block(data::xblock_t * table_block, bool
 
     std::vector<xtx_id_height_info> tx_id_height_infos;
     std::vector<xraw_tx_info> raw_txs;
-
     std::vector<update_id_state_para> update_id_state_para_vec;
-    std::vector<data::xlightunit_action_t> tx_actions;
 
-    auto tx_action_cache = m_tx_action_cache.get_cache(table_block);
-    if (tx_action_cache != nullptr) {
-        xdbg("xtxpool_table_t::deal_commit_table_block use txaction block:%s", table_block->dump().c_str());
-        for (auto & action : *tx_action_cache) {
-            tx_actions.push_back(action);
-        }
-    } else {
-        tx_actions = data::xblockextract_t::unpack_txactions(table_block);
-    }
-
-    xdbg("xtxpool_table_t::deal_commit_table_block table block:%s", table_block->dump().c_str());
-
-    for (auto & txaction : tx_actions) {
+    auto f = [this, &update_id_state_para_vec, &table_block, &raw_txs, &update_txmgr, &tx_id_height_infos](const base::xvaction_t & _action) {
+        data::xlightunit_action_t txaction(_action);
         bool need_confirm = !txaction.get_not_need_confirm();
         if (need_confirm && txaction.get_tx_subtype() == base::enum_transaction_subtype_send && !txaction.get_inner_table_flag()) {
             data::xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
@@ -336,6 +323,18 @@ void xtxpool_table_t::deal_commit_table_block(data::xblock_t * table_block, bool
             } else {
                 xdbg("xtxpool_table_t::deal_commit_table_block no id height tx=%s", base::xstring_utl::to_hex(txaction.get_org_tx_hash()).c_str());
             }
+        }
+    };
+    
+    xdbg("xtxpool_table_t::deal_commit_table_block table block:%s", table_block->dump().c_str());
+    auto tx_action_cache = m_tx_action_cache.get_cache(table_block);
+    if (tx_action_cache != nullptr) {
+        xdbg("xtxpool_table_t::deal_commit_table_block use txaction block:%s", table_block->dump().c_str());
+        tx_action_cache->loop_actions(f);
+    } else {
+        std::vector<data::xlightunit_action_t> tx_actions = data::xblockextract_t::unpack_txactions(table_block);
+        for (auto & action : tx_actions) {
+            f(action);
         }
     }
 
@@ -878,22 +877,22 @@ uint32_t xtxpool_table_t::get_tx_cache_size() const {
     return m_txmgr_table.get_tx_cache_size();
 }
 
-void xtxpool_table_t::add_tx_action_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions) {
-    m_tx_action_cache.add_cache(block, txactions);
+void xtxpool_table_t::add_tx_action_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) {
+    m_tx_action_cache.add_cache(block, txactions_cache);
 }
 
-void xtx_actions_cache_t::add_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions) {
+void xtx_actions_cache_t::add_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) {
     std::lock_guard<std::mutex> lck(m_mutex);
     xdbg("xtx_actions_cache_t::add_cache block:%s", block->dump().c_str());
-    m_cache.emplace(block->get_height(), std::make_shared<xtx_actions_t>(block->get_block_hash(), txactions));
+    m_cache.emplace(block->get_height(), std::make_shared<xtx_actions_t>(block->get_block_hash(), txactions_cache));
 }
 
-std::shared_ptr<std::vector<base::xvaction_t>> xtx_actions_cache_t::get_cache(base::xvblock_t * block) {
+std::shared_ptr<base::xinput_actions_cache_base> xtx_actions_cache_t::get_cache(base::xvblock_t * block) {
     std::lock_guard<std::mutex> lck(m_mutex);
-    std::shared_ptr<std::vector<base::xvaction_t>> actions = nullptr;
+    std::shared_ptr<base::xinput_actions_cache_base> actions = nullptr;
     auto it = m_cache.find(block->get_height());
     if (it != m_cache.end() && it->second->m_blockhash == block->get_block_hash()) {
-        actions = it->second->m_txactions;
+        actions = it->second->m_input_actions_cache;
     }
     
     for (auto iter = m_cache.begin(); iter != m_cache.end();) {

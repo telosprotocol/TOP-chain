@@ -628,11 +628,16 @@ namespace top
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
         using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
 
+        class xinput_actions_cache_base {
+        public:
+            virtual void loop_actions(std::function<void(const base::xvaction_t & _action)> _func) const = 0;
+        };
+
         class xvblock_excontainer_base {
         public:
             virtual void commit(base::xvblock_t* current_block) = 0;
             virtual void extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) const = 0;
-            virtual std::shared_ptr<std::vector<base::xvaction_t>> get_input_actions() const = 0;
+            virtual std::shared_ptr<xinput_actions_cache_base> get_input_actions_cache() const = 0;
         };
 
         class xvsubblock_index_t {

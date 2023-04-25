@@ -79,7 +79,7 @@ public:
     const std::set<base::xtable_shortid_t> & get_all_table_sids() const override;
     uint32_t get_tx_cache_size(const std::string & table_addr) const override;
     void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) override;
-    void add_tx_action_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions) override;
+    void add_tx_action_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) override;
 
 private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;

@@ -83,13 +83,8 @@ void xblockextract_t::loop_all_txactions(base::xvblock_t* _block, std::function<
 
     auto excontainer = _block->get_excontainer();
     if (excontainer != nullptr) {
-        auto actions = excontainer->get_input_actions();
-        for (auto & action : *actions) {
-            if (action.get_org_tx_hash().empty()) {
-                continue;
-            }
-            _func(action);
-        }
+        auto actions_cache = excontainer->get_input_actions_cache();
+        actions_cache->loop_actions(_func);
         return;
     }
 

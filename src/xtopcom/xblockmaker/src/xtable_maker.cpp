@@ -472,7 +472,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(),
             lighttable_para.get_units().size(), lighttable_para.get_accountindexs().get_account_indexs().size(), 
             lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),tableblock->get_output_offdata().size(),
-            lighttable_para.get_txs().size());
+            lighttable_para.get_txs()->size());
         tableblock->set_excontainer(std::make_shared<xtable_mpt_container>(statectx_ptr, lighttable_para.get_txs()));
     }
 
