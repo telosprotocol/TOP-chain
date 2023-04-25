@@ -309,6 +309,14 @@ void xtxpool_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock
     table->update_uncommit_txs(_lock_block, _cert_block);
 }
 
+void xtxpool_t::add_tx_action_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions) {
+    auto table = get_txpool_table_by_addr(block->get_account());
+    if (table == nullptr) {
+        return;
+    }
+    table->add_tx_action_cache(block, txactions);
+}
+
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const {
     auto table = get_txpool_table(zone, subaddr);
     if (table != nullptr) {

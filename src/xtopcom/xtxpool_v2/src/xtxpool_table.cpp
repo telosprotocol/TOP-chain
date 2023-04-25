@@ -281,7 +281,17 @@ void xtxpool_table_t::deal_commit_table_block(data::xblock_t * table_block, bool
     std::vector<xraw_tx_info> raw_txs;
 
     std::vector<update_id_state_para> update_id_state_para_vec;
-    auto tx_actions = data::xblockextract_t::unpack_txactions(table_block);
+    std::vector<data::xlightunit_action_t> tx_actions;
+
+    auto tx_action_cache = m_tx_action_cache.get_cache(table_block);
+    if (tx_action_cache != nullptr) {
+        xdbg("xtxpool_table_t::deal_commit_table_block use txaction block:%s", table_block->dump().c_str());
+        for (auto & action : *tx_action_cache) {
+            tx_actions.push_back(action);
+        }
+    } else {
+        tx_actions = data::xblockextract_t::unpack_txactions(table_block);
+    }
 
     xdbg("xtxpool_table_t::deal_commit_table_block table block:%s", table_block->dump().c_str());
 
@@ -866,6 +876,34 @@ data::xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer
 uint32_t xtxpool_table_t::get_tx_cache_size() const {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
     return m_txmgr_table.get_tx_cache_size();
+}
+
+void xtxpool_table_t::add_tx_action_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions) {
+    m_tx_action_cache.add_cache(block, txactions);
+}
+
+void xtx_actions_cache_t::add_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions) {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    xdbg("xtx_actions_cache_t::add_cache block:%s", block->dump().c_str());
+    m_cache.emplace(block->get_height(), std::make_shared<xtx_actions_t>(block->get_block_hash(), txactions));
+}
+
+std::shared_ptr<std::vector<base::xvaction_t>> xtx_actions_cache_t::get_cache(base::xvblock_t * block) {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    std::shared_ptr<std::vector<base::xvaction_t>> actions = nullptr;
+    auto it = m_cache.find(block->get_height());
+    if (it != m_cache.end() && it->second->m_blockhash == block->get_block_hash()) {
+        actions = it->second->m_txactions;
+    }
+    
+    for (auto iter = m_cache.begin(); iter != m_cache.end();) {
+        if (iter->first <= block->get_height()) {
+            m_cache.erase(iter++);
+        } else {
+            break;
+        }
+    }
+    return actions;
 }
 
 }  // namespace xtxpool_v2

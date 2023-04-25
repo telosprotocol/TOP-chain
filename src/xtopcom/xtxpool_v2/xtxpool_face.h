@@ -264,6 +264,7 @@ public:
     virtual const std::set<base::xtable_shortid_t> & get_all_table_sids() const = 0;
     virtual uint32_t get_tx_cache_size(const std::string & table_addr) const = 0;
     virtual void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) = 0;
+    virtual void add_tx_action_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions) = 0;
 };
 
 class xtxpool_instance {

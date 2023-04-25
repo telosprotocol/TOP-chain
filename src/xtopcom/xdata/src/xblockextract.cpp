@@ -81,6 +81,18 @@ void xblockextract_t::loop_all_txactions(base::xvblock_t* _block, std::function<
         return;
     }
 
+    auto excontainer = _block->get_excontainer();
+    if (excontainer != nullptr) {
+        auto actions = excontainer->get_input_actions();
+        for (auto & action : *actions) {
+            if (action.get_org_tx_hash().empty()) {
+                continue;
+            }
+            _func(action);
+        }
+        return;
+    }
+
     loop_top_txactions(_block, _func);
     loop_eth_txactions(_block, _func);
     return;

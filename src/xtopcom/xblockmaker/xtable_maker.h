@@ -9,6 +9,7 @@
 #include <vector>
 #include <mutex>
 #include "xstate_mpt/xstate_mpt.h"
+#include "xdata/xblockaction.h"
 #include "xdata/xethheader.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
@@ -91,7 +92,14 @@ using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;
 // TODO(jimmy) the whold table state do commit
 class xtable_mpt_container : public base::xvblock_excontainer_base {
 public:
-    xtable_mpt_container(statectx::xstatectx_face_ptr_t const& _ctx) : m_statectx(_ctx) {}
+    xtable_mpt_container(statectx::xstatectx_face_ptr_t const & _ctx,
+                         const std::vector<data::xlightunit_tx_info_ptr_t> & txactions)
+      : m_statectx(_ctx) {
+        m_txactions = std::make_shared<std::vector<base::xvaction_t>>();
+        for(auto & action : txactions) {
+            m_txactions->push_back(*action);
+        }
+    }
     virtual void commit(base::xvblock_t* current_block) override {
         m_statectx->do_commit(current_block);
     }
@@ -101,9 +109,13 @@ public:
             sub_blocks.push_back(v.second->get_unit());
         }
     }
+    virtual std::shared_ptr<std::vector<base::xvaction_t>> get_input_actions() const override {
+        return m_txactions;
+    }
 
 private:
     statectx::xstatectx_face_ptr_t m_statectx;
+    std::shared_ptr<std::vector<base::xvaction_t>> m_txactions;
 };
 
 NS_END2

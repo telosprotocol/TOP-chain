@@ -81,6 +81,21 @@ struct update_id_state_para {
     uint64_t m_receiptid;
 };
 
+struct xtx_actions_t {
+    xtx_actions_t(const std::string & blockhash, const std::shared_ptr<std::vector<base::xvaction_t>> & txaction) : m_blockhash(blockhash), m_txactions(txaction) {}
+    std::string m_blockhash;
+    std::shared_ptr<std::vector<base::xvaction_t>> m_txactions;
+};
+
+class xtx_actions_cache_t {
+public:
+    void add_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions);
+    std::shared_ptr<std::vector<base::xvaction_t>> get_cache(base::xvblock_t * block);
+private:
+    mutable std::mutex m_mutex;
+    std::map<uint64_t, std::shared_ptr<xtx_actions_t>> m_cache;
+};
+
 class xtxpool_table_t {
 public:
     xtxpool_table_t(xtxpool_resources_face * para,
@@ -129,6 +144,7 @@ public:
 
     void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block);
     uint32_t get_tx_cache_size() const;    
+    void add_tx_action_cache(base::xvblock_t * block, std::shared_ptr<std::vector<base::xvaction_t>> txactions);
 
 private:
     // bool is_account_need_update(const std::string & account_addr) const;
@@ -162,6 +178,8 @@ private:
     std::string m_push_send_tx_metrics_name;
 
     std::atomic<uint64_t> m_latest_commit_height{0};
+
+    xtx_actions_cache_t m_tx_action_cache;
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
