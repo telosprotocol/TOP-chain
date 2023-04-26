@@ -8,29 +8,25 @@
 
 #include <cinttypes>
 #include <string>
-#include <type_traits>
-
-class xtop_base_category : public std::error_category {
-public:
-    const char * name() const noexcept override {
-        return "base";
-    }
-
-    std::string message(int errc) const override {
-        auto const ec = static_cast<enum_xerror_code>(errc);
-        switch (ec) {
-        case enum_xerror_code_bad_packet:
-            return "bad packet";
-
-        default:
-            return "unknown error";
-        }
-    }
-};
-using xbase_category_t = xtop_base_category;
 
 std::error_category const & base_category() {
-    static xbase_category_t base_cagegory;
+    static class : public std::error_category {
+    public:
+        char const * name() const noexcept override {
+            return "base";
+        }
+
+        std::string message(int errc) const override {
+            auto const ec = static_cast<enum_xerror_code>(errc);
+            switch (ec) {
+            case enum_xerror_code_bad_packet:
+                return "bad packet";
+
+            default:
+                return "unknown error";
+            }
+        }
+    } base_cagegory;
     return base_cagegory;
 }
 
@@ -44,13 +40,13 @@ std::error_condition make_error_condition(enum_xerror_code ec) noexcept {
 
 NS_BEG2(top, error)
 
-xtop_top_error::xtop_top_error(std::error_code ec) : base_t{ec.message()}, m_ec{std::move(ec)} {
+xtop_top_error::xtop_top_error(std::error_code const ec) : base_t{ec.message()}, m_ec{ec} {
 }
 
-xtop_top_error::xtop_top_error(std::error_code ec, char const * extra_what) : base_t{ec.message() + ": " + extra_what}, m_ec{std::move(ec)} {
+xtop_top_error::xtop_top_error(std::error_code const ec, char const * extra_what) : base_t{ec.message() + ": " + extra_what}, m_ec{ec} {
 }
 
-xtop_top_error::xtop_top_error(std::error_code ec, std::string const & extra_what) : base_t{ec.message() + ": " + extra_what}, m_ec{std::move(ec)} {
+xtop_top_error::xtop_top_error(std::error_code const ec, std::string const & extra_what) : base_t{ec.message() + ": " + extra_what}, m_ec{ec} {
 }
 
 xtop_top_error::xtop_top_error(int const ev, std::error_category const & ecat) : base_t{std::error_code{ev, ecat}.message()}, m_ec{ev, ecat} {
@@ -78,19 +74,19 @@ void throw_exception(ExceptionT const & eh) {
 }
 
 static void do_throw_error(std::error_code const & ec) {
-    xtop_error_t eh{ec};
+    xtop_error_t const eh{ec};
     xwarn("throw_error. category %s, errc %" PRIi32 " msg %s", eh.category().name(), eh.code().value(), eh.what());
     throw_exception(eh);
 }
 
 static void do_throw_error(std::error_code const & ec, char const * extra_what) {
-    xtop_error_t eh{ec, extra_what};
+    xtop_error_t const eh{ec, extra_what};
     xwarn("throw_error. category %s, errc %" PRIi32 " msg %s", eh.category().name(), eh.code().value(), eh.what());
     throw_exception(eh);
 }
 
 static void do_throw_error(std::error_code const & ec, std::string const & extra_what) {
-    xtop_error_t eh{ec, extra_what};
+    xtop_error_t const eh{ec, extra_what};
     xwarn("throw_error. category %s, errc %" PRIi32 " msg %s", eh.category().name(), eh.code().value(), eh.what());
     throw_exception(eh);
 }
@@ -114,7 +110,7 @@ void throw_error(std::error_code const ec, std::string const & extra_what) {
 }
 
 static char const * errc_to_message(int const errc) noexcept {
-    auto ec = static_cast<error::xbasic_errc_t>(errc);
+    auto const ec = static_cast<error::xbasic_errc_t>(errc);
     switch (ec) {
     case xbasic_errc_t::successful:
         return "successful";
@@ -128,33 +124,34 @@ static char const * errc_to_message(int const errc) noexcept {
     case xbasic_errc_t::invalid_char_data:
         return "invalid_char error";
 
+    case xenum_basic_errc::invalid_fixed_bytes_size:
+        return "invalid_fixed_bytes_size error";
+
     default:
         return "unknown error";
     }
 }
 
-class xtop_basic_category : public std::error_category {
-public:
-    const char * name() const noexcept override {
-        return "basic";
-    }
-
-    std::string message(int errc) const override {
-        return errc_to_message(errc);
-    }
-};
-using xbasic_category_t = xtop_basic_category;
-
 std::error_code make_error_code(xbasic_errc_t errc) noexcept {
-    return std::error_code(static_cast<int>(errc), basic_category());
+    return std::error_code{static_cast<int>(errc), basic_category()};
 }
 
 std::error_condition make_error_condition(xbasic_errc_t errc) noexcept {
-    return std::error_condition(static_cast<int>(errc), basic_category());
+    return std::error_condition{static_cast<int>(errc), basic_category()};
 }
 
 std::error_category const & basic_category() {
-    static xbasic_category_t category;
+    static class : public std::error_category {
+    public:
+        char const * name() const noexcept override {
+            return "basic";
+        }
+
+        std::string message(int const errc) const override {
+            return errc_to_message(errc);
+        }
+    } category;
+
     return category;
 }
 
