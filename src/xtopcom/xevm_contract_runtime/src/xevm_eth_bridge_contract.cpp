@@ -248,7 +248,7 @@ bool xtop_evm_eth_bridge_contract::verify(xeth_header_t const & prev_header, xet
     }
     // step 7: verify ethash
     if (!eth::xethash_t::instance().verify_seal(new_header, nodes)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", new_header.hash().hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", new_header.calc_hash().hex().c_str());
         return false;
     }
 #endif
