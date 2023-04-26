@@ -108,12 +108,12 @@ constexpr std::array<std::uint8_t, Length> ConstBytes(const char (&input)[Length
 /// Converts a (printable) ASCII hex string into the corresponding byte stream.
 /// @example fromHex("41626261") == asBytes("Abba")
 /// If _throw = ThrowType::DontThrow, it replaces bad hex characters with 0's, otherwise it will throw an exception.
-xbytes_t from_hex(std::string const & input, std::error_code & ec);
+xbytes_t from_hex(xstring_view_t input, std::error_code & ec);
 
 /// Converts a (printable) ASCII hex string into the corresponding byte stream.
 /// @example fromHex("41626261") == asBytes("Abba")
 /// Throw xtop_error_t exception when error occurs.
-xbytes_t from_hex(std::string const & input);
+xbytes_t from_hex(xstring_view_t input);
 
 /// @returns true if @a input is a hex string.
 bool is_hex_string(std::string const & input) noexcept;

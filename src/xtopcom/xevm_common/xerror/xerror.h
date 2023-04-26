@@ -34,6 +34,8 @@ enum class xenum_errc {
     trie_sync_already_processed,
     trie_prune_data_duplicated,
     trie_prune_data_not_found,
+    rlp_bytes_invalid,
+    rlp_list_size_not_match,
 };
 using xerrc_t = xenum_errc;
 

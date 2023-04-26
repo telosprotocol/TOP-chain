@@ -35,7 +35,7 @@ xbyte_t hex_char_to_binary(char const ch, std::error_code & ec) noexcept {
 
 }  // namespace
 
-xbytes_t from_hex(std::string const & input, std::error_code & ec) {
+xbytes_t from_hex(xstring_view_t const input, std::error_code & ec) {
     assert(!ec);
 
     std::size_t prefix_size = (input.size() >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')) ? 2 : 0;
@@ -66,7 +66,7 @@ xbytes_t from_hex(std::string const & input, std::error_code & ec) {
     return ret;
 }
 
-xbytes_t from_hex(std::string const & input) {
+xbytes_t from_hex(xstring_view_t const input) {
     std::error_code ec;
     auto ret = from_hex(input, ec);
     top::error::throw_error(ec);

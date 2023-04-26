@@ -1,11 +1,15 @@
+// Copyright (c) 2023-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
 
-#include "xbasic/xfixed_hash.h"
 #include "xbasic/xfixed_bytes.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/common.h"
 #include "xcommon/rlp.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
+#include "xevm_common/xerror/xerror.h"
 #include "xevm_runner/evm_engine_interface.h"
 
 NS_BEG3(top, evm_common, eth2)
@@ -115,6 +119,7 @@ struct xextended_beacon_block_header_t {
 struct xexecution_header_info_t {
     xh256_t parent_hash{};
     uint64_t block_number{0};
+    common::xeth_address_t submitter{};
 
     xexecution_header_info_t() = default;
     xexecution_header_info_t(xexecution_header_info_t const &) = default;
@@ -123,11 +128,13 @@ struct xexecution_header_info_t {
     xexecution_header_info_t & operator=(xexecution_header_info_t &&) = default;
     ~xexecution_header_info_t() = default;
 
-    xexecution_header_info_t(xh256_t const & parent_hash, uint64_t const block_number) : parent_hash(parent_hash), block_number(block_number) {
+    xexecution_header_info_t(xh256_t const & parent_hash, uint64_t const block_number, common::xeth_address_t const & submitter)
+      : parent_hash{parent_hash}, block_number{block_number}, submitter{submitter} {
+        assert(!submitter.is_zero());
     }
 
     bool operator==(xexecution_header_info_t const & rhs) const {
-        return (this->parent_hash == rhs.parent_hash) && (this->block_number == rhs.block_number);
+        return parent_hash == rhs.parent_hash && block_number == rhs.block_number && submitter == rhs.submitter;
     }
 
     bool empty() const {
@@ -140,17 +147,32 @@ struct xexecution_header_info_t {
         out.insert(out.end(), item1.begin(), item1.end());
         auto item2 = RLP::encode(block_number);
         out.insert(out.end(), item2.begin(), item2.end());
+        auto item3 = RLP::encode(submitter);
+        out.insert(out.end(), item3.begin(), item3.end());
         return RLP::encodeList(out);
     }
 
     bool decode_rlp(xbytes_t const & bytes) {
-        auto const & items = RLP::decodeList(bytes);
-        if (items.decoded.size() != 2) {
-            return false;
+        std::error_code ec;
+        decode_rlp(bytes, ec);
+        return !ec;
+    }
+
+    void decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
+        auto const & items = RLP::decode_list(bytes, ec);
+        if (ec) {
+            xwarn("xexecution_header_info_t::decode_rlp - RLP::decodeList failed: %s", ec.message().c_str());
+            return;
+        }
+
+        if (items.decoded.size() <= 3) {
+            xwarn("xexecution_header_info_t::decode_rlp - invalid decoded size: %zu", items.decoded.size());
+            ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+            return;
         }
         parent_hash = xh256_t{xspan_t<xbyte_t const>{items.decoded.at(0)}};
         block_number = fromBigEndian<uint64_t>(items.decoded.at(1));
-        return true;
+        submitter = common::xeth_address_t::build_from(xspan_t<xbyte_t const>{items.decoded.at(2)});
     }
 };
 
@@ -488,6 +510,7 @@ struct xinit_input_t {
         if (items.decoded.size() != 4) {
             return false;
         }
+
         if (false == finalized_execution_header.decode_rlp(items.decoded.at(0))) {
             return false;
         }
@@ -501,6 +524,32 @@ struct xinit_input_t {
             return false;
         }
         return true;
+    }
+
+    void decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
+        assert(!ec);
+
+        auto const & items = RLP::decodeList(bytes);
+        if (items.decoded.size() != 4) {
+            xwarn("xinit_input_t::decode_rlp failed, rlp list size not match");
+            ec = error::xerrc_t::rlp_list_size_not_match;
+            return;
+        }
+
+        finalized_execution_header.decode_rlp(items.decoded.at(0), ec);
+        if (ec) {
+            return;
+        }
+
+        if (false == finalized_beacon_header.decode_rlp(items.decoded.at(1))) {
+            return;
+        }
+        if (false == current_sync_committee.decode_rlp(items.decoded.at(2))) {
+            return;
+        }
+        if (false == next_sync_committee.decode_rlp(items.decoded.at(3))) {
+            return;
+        }
     }
 };
 

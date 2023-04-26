@@ -25,11 +25,12 @@
 #endif
 
 #include "xbasic/xhex.h"
-#include "json/reader.h"
 #include "xcommon/rlp.h"
+#include "xevm_common/xerror/xerror.h"
 #include "xutility/xhash.h"
 
 #include <cinttypes>
+#include <cstring>
 
 NS_BEG2(top, evm_common)
 bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
@@ -68,11 +69,11 @@ void xeth_header_t::calc_hash(xh256_t & out, bool const partial) const {
 xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
     xbytes_t out;
     {
-        auto tmp = RLP::encode(parent_hash.asBytes());
+        auto tmp = RLP::encode(parent_hash.asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(uncle_hash.asBytes());
+        auto tmp = RLP::encode(uncle_hash.asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -80,19 +81,19 @@ xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(state_root.asBytes());
+        auto tmp = RLP::encode(state_root.asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(transactions_root.asBytes());
+        auto tmp = RLP::encode(transactions_root.asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(receipts_root.asBytes());
+        auto tmp = RLP::encode(receipts_root.asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(bloom.asBytes());
+        auto tmp = RLP::encode(bloom.asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -144,43 +145,61 @@ xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
     return RLP::encodeList(out);
 }
 
-bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
+bool xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
+    assert(!ec);
+
     auto l = RLP::decodeList(bytes);
     if (l.decoded.size() < 15) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp list size not match");
+        ec = error::xerrc_t::rlp_list_size_not_match;
         return false;
     }
 
     if (l.decoded[0].size() != xh256_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp parent hash invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     parent_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[0]}};
 
     if (l.decoded[1].size() != xh256_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp uncle hash invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     uncle_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[1]}};
 
     if (l.decoded[2].size() != xh160_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp miner invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     miner = common::xeth_address_t::build_from(l.decoded[2]);
 
     if (l.decoded[3].size() != xh256_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp state root invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     state_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[3]}};
 
     if (l.decoded[4].size() != xh256_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp transactions root invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     transactions_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[4]}};
 
     if (l.decoded[5].size() != xh256_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp receipts root invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     receipts_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[5]}};
 
     if (l.decoded[6].size() != xh2048_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp bloom invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     bloom = LogBloom{xspan_t<xbyte_t const>{l.decoded[6]}};
@@ -193,11 +212,15 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
     extra = l.decoded[12];
 
     if (l.decoded[13].size() != xh256_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp mix digest invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     mix_digest = xh256_t{xspan_t<xbyte_t const>{l.decoded[13]}};
 
     if (l.decoded[14].size() != xh64_t::size()) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp nonce invalid");
+        ec = error::xerrc_t::rlp_bytes_invalid;
         return false;
     }
     nonce = xh64_t{xspan_t<xbyte_t const>{l.decoded[14]}};
@@ -208,12 +231,33 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
 
     if (l.decoded.size() >= 17) {
         if (l.decoded[16].size() != xh256_t::size()) {
+            xwarn("xeth_header_t::decode_rlp failed, rlp withdrawals root invalid");
+            ec = error::xerrc_t::rlp_bytes_invalid;
             return false;
         }
         withdrawals_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[16]}};
     }
 
+    calc_hash(hash);
+    auto const & bytes_hash = utl::xkeccak256_t::digest(bytes.data(), bytes.size());
+    assert(hash.size() == bytes_hash.size());
+    if (std::memcmp(hash.data(), bytes_hash.data(), hash.size()) != 0) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp hash invalid");
+        hash.clear();
+        ec = error::xerrc_t::rlp_bytes_invalid;
+        return false;
+    }
+
+    calc_hash(partial_hash, true);
+
     return true;
+}
+
+bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
+    std::error_code ec;
+    auto const successful = decode_rlp(bytes, ec);
+    top::error::throw_error(ec);
+    return successful;
 }
 
 std::string xeth_header_t::dump() const {
@@ -258,7 +302,7 @@ xbytes_t xeth_header_info_t::encode_rlp() const {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(parent_hash.asBytes());
+        auto tmp = RLP::encode(parent_hash.asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {

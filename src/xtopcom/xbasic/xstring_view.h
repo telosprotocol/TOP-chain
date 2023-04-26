@@ -182,6 +182,9 @@ public:
     xtop_basic_string_view & operator=(xtop_basic_string_view &&) = default;
     ~xtop_basic_string_view() = default;
 
+    xtop_basic_string_view(std::basic_string<CharT, TraitsT> const & str) noexcept : data_{str.data()}, size_{str.size()} {
+    }
+
     xtop_basic_string_view(const_pointer const cstr) noexcept : data_{cstr}, size_{TraitsT::length(cstr)} {
     }
 

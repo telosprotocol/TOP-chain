@@ -9,6 +9,7 @@
 #include "xcommon/common.h"
 #include "xcommon/xeth_address.h"
 
+#include <system_error>
 #include <vector>
 
 NS_BEG2(top, evm_common)
@@ -17,7 +18,6 @@ NS_BEG2(top, evm_common)
 //using Hash = top::evm_common::h256;
 // using Address = top::evm_common::h160;
 using LogBloom = top::evm_common::h2048;
-using BlockNonce = uint64_t;
 
 struct xeth_header_t {
     xh256_t parent_hash;
@@ -40,8 +40,8 @@ struct xeth_header_t {
     optional<uint64_t> base_fee_per_gas;
     optional<xh256_t> withdrawals_root;
 
-    xh256_t hash;
-    xh256_t partial_hash;
+    mutable xh256_t hash;
+    mutable xh256_t partial_hash;
 
     bool operator==(xeth_header_t const & rhs) const;
 
@@ -52,6 +52,7 @@ struct xeth_header_t {
     // encode and decode
     xbytes_t encode_rlp(bool partial = false) const;
     bool decode_rlp(xbytes_t const & bytes);
+    bool decode_rlp(xbytes_t const & bytes, std::error_code & ec);
 
     // debug
     std::string dump() const;

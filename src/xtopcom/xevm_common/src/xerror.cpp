@@ -82,6 +82,12 @@ static char const * errc_to_string(int code) {
     case xerrc_t::trie_prune_data_not_found:
         return "trie prune data not found";
 
+    case xerrc_t::rlp_bytes_invalid:
+        return "rlp bytes invalid";
+
+    case xenum_errc::rlp_list_size_not_match:
+        return "rlp list size not match";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         assert(false);
         return "unknown evm common error";
@@ -96,27 +102,25 @@ std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition{static_cast<int>(errc), evm_common_category()};
 }
 
-class xtop_evm_common_category final : public std::error_category {
-public:
-    xtop_evm_common_category() = default;
-    xtop_evm_common_category(xtop_evm_common_category const &) = delete;
-    xtop_evm_common_category & operator=(xtop_evm_common_category const &) = delete;
-    xtop_evm_common_category(xtop_evm_common_category &&) = delete;
-    xtop_evm_common_category & operator=(xtop_evm_common_category &&) = delete;
-    ~xtop_evm_common_category() override = default;
-
-    char const * name() const noexcept override {
-        return "evm_common";
-    }
-
-    std::string message(int const errc) const override {
-        return errc_to_string(errc);
-    }
-};
-using xevm_common_category_t = xtop_evm_common_category;
-
 std::error_category const & evm_common_category() {
-    static xevm_common_category_t category{};
+    static class xtop_evm_common_category final : public std::error_category {
+    public:
+        xtop_evm_common_category() = default;
+        xtop_evm_common_category(xtop_evm_common_category const &) = delete;
+        xtop_evm_common_category & operator=(xtop_evm_common_category const &) = delete;
+        xtop_evm_common_category(xtop_evm_common_category &&) = delete;
+        xtop_evm_common_category & operator=(xtop_evm_common_category &&) = delete;
+        ~xtop_evm_common_category() override = default;
+
+        char const * name() const noexcept override {
+            return "evm_common";
+        }
+
+        std::string message(int const errc) const override {
+            return errc_to_string(errc);
+        }
+    } category{};
+
     return category;
 }
 
