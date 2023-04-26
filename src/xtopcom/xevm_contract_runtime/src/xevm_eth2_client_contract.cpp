@@ -200,7 +200,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth2_client_contract::execute] init_put decode error");
             return false;
         }
-        if (!init(state, init_put)) {
+        if (!init(state, init_put, context.caller)) {
             err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] init headers error");
@@ -419,7 +419,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
                     return false;
                 }
             }
-            if (!submit_execution_header(state, header)) {
+            if (!submit_execution_header(state, header, context.caller)) {
                 err.fail_status = precompile_error::revert;
                 err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
                 xwarn("[xtop_evm_eth2_client_contract::execute] submit_execution_header error");
@@ -484,7 +484,9 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     return true;
 }
 
-bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t const & init_input) {
+bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t const & init_input, common::xeth_address_t const & sender) {
+    assert(!sender.is_zero());
+
     if (initialized(state)) {
         xwarn("xtop_evm_eth2_client_contract::init already");
         return false;
@@ -497,7 +499,7 @@ bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t 
     }
 
     auto const & finalized_execution_header_info =
-        xexecution_header_info_t{init_input.finalized_execution_header.parent_hash, static_cast<uint64_t>(init_input.finalized_execution_header.number)};
+        xexecution_header_info_t{init_input.finalized_execution_header.parent_hash, init_input.finalized_execution_header.number, sender};
     if (false == set_finalized_beacon_header(state, init_input.finalized_beacon_header)) {
         xwarn("xtop_evm_eth2_client_contract::init set_finalized_beacon_header error");
         return false;
@@ -631,7 +633,9 @@ bool xtop_evm_eth2_client_contract::submit_beacon_chain_light_client_update(stat
     return true;
 }
 
-bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header) {
+bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header, common::xeth_address_t const & sender) {
+    assert(!sender.is_zero());
+
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     if (finalized_beacon_header.empty()) {
         xwarn("xtop_evm_eth2_client_contract::submit_execution_header get_finalized_beacon_header empty");
@@ -645,7 +649,7 @@ bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & st
         }
     }
     auto const & block_hash = block_header.calc_hash();
-    auto const & block_info = xexecution_header_info_t{block_header.parent_hash, static_cast<uint64_t>(block_header.number)};
+    auto const & block_info = xexecution_header_info_t{block_header.parent_hash, block_header.number, sender};
     if (false == set_unfinalized_headers(state, block_hash, block_info)) {
         xwarn("xtop_evm_eth2_client_contract::submit_execution_header set_unfinalized_headers error: %s", block_hash.hex().c_str());
         return false;

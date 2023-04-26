@@ -322,7 +322,7 @@ public:
 
 
 public:
-    static xbytes_t encode(const std::string & string) noexcept {
+    static xbytes_t encode(std::string const & string) noexcept {
         return encode(xbytes_t(string.begin(), string.end()));
     }
 
@@ -357,10 +357,10 @@ public:
         return encode(udata);
     }
 
-    static xbytes_t encode(const u256 & number) noexcept;
+    static xbytes_t encode(u256 const & number) noexcept;
 
     /// Wraps encoded data as a list.
-    static xbytes_t encodeList(const xbytes_t & encoded) noexcept;
+    static xbytes_t encodeList(xbytes_t const & encoded) noexcept;
 
     /// Encodes a block of data.
     // static xbytes_t encode(const xbytes_t & data);
@@ -384,7 +384,7 @@ public:
     template <typename T>
     static xbytes_t encodeList(T elements) noexcept {
         xbytes_t encoded_data{};
-        for (const auto & el : elements) {
+        for (auto const & el : elements) {
             auto encoded = encode(el);
             if (encoded.empty()) {
                 return {};
@@ -403,18 +403,23 @@ public:
     /// Returns the representation of an integer using the least number of bytes
     /// needed.
     static xbytes_t putVarInt(uint64_t i);
-    static uint64_t parseVarInt(size_t size, const xbytes_t & data, size_t index);
+    static uint64_t parseVarInt(size_t size, xbytes_t const & data, size_t index);
+
+    static uint64_t parse_variant_int(size_t size, xbytes_t const & data, size_t index, std::error_code & ec);
 
     struct DecodedItem {
         std::vector<xbytes_t> decoded;
         xbytes_t remainder;
     };
 
-    static DecodedItem decodeList(const xbytes_t & input);
-    static uint64_t decodeLength(const xbytes_t & data);
+    static DecodedItem decodeList(xbytes_t const & input);
+    // static uint64_t decodeLength(xbytes_t const & data);
     /// Decodes data, remainder from RLP encoded data
-    static DecodedItem decode(const xbytes_t & data);
-    static DecodedItem decode_once(const xbytes_t & input);
+    static DecodedItem decode(xbytes_t const & input);
+    static DecodedItem decode_once(xbytes_t const & input);
+
+    static DecodedItem decode_list(xbytes_t const & input, std::error_code & ec);
+    static DecodedItem decode(xbytes_t const & input, std::error_code & ec);
 
 private:
     /// Disable construction from rvalue

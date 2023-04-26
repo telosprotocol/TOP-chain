@@ -34,7 +34,7 @@ public:
                  sys_contract_precompile_output & output,
                  sys_contract_precompile_error & err) override;
 
-    bool init(state_ptr const & state, evm_common::eth2::xinit_input_t const & init_input);
+    bool init(state_ptr const & state, evm_common::eth2::xinit_input_t const & init_input, common::xeth_address_t const & sender);
     bool initialized(state_ptr const & state) const;
     uint64_t last_block_number(state_ptr const & state) const;
     h256 block_hash_safe(state_ptr const & state, uint64_t block_number) const;
@@ -45,7 +45,7 @@ public:
     evm_common::eth2::xextended_beacon_block_header_t finalized_beacon_block_header(state_ptr const & state) const;
     evm_common::eth2::xlight_client_state_t get_light_client_state(state_ptr const & state) const;
     bool submit_beacon_chain_light_client_update(state_ptr const & state, evm_common::eth2::xlight_client_update_t const & update);
-    bool submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header);
+    bool submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header, common::xeth_address_t const & sender);
     bool reset(state_ptr state);
     bool disable_reset(state_ptr state);
 

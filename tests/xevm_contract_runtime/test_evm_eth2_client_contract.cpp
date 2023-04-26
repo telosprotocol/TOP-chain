@@ -62,12 +62,12 @@ TEST_F(xeth2_contract_fixture_t, property_unfinalized_headers) {
     }
     // set
     for (auto i = 0; i < 5; i++) {
-        EXPECT_TRUE(m_contract.set_unfinalized_headers(m_contract_state, h256(i + 1), xexecution_header_info_t(h256(i), i)));
+        EXPECT_TRUE(m_contract.set_unfinalized_headers(m_contract_state, h256(i + 1), xexecution_header_info_t(h256(i), i, common::xeth_address_t::random())));
     }
     // get value
     for (auto i = 0; i < 10; i++) {
         if (i < 5) {
-            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i));
+            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i, common::xeth_address_t::random()));
         } else {
             EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
         }
@@ -79,7 +79,7 @@ TEST_F(xeth2_contract_fixture_t, property_unfinalized_headers) {
     // get value
     for (auto i = 0; i < 10; i++) {
         if (i >= 3 && i < 5) {
-            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i));
+            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i, common::xeth_address_t::random()));
         } else {
             EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
         }
@@ -107,7 +107,7 @@ TEST_F(xeth2_contract_fixture_t, property_finalized_execution_header) {
     // get empty
     EXPECT_TRUE(m_contract.get_finalized_execution_header(m_contract_state).empty());
     // set
-    xexecution_header_info_t info(h256(rand()), rand());
+    xexecution_header_info_t info(h256(rand()), rand(), common::xeth_address_t::random());
     EXPECT_TRUE(m_contract.set_finalized_execution_header(m_contract_state, info));
     // get value
     EXPECT_TRUE(m_contract.get_finalized_execution_header(m_contract_state) == info);
@@ -403,12 +403,12 @@ TEST_F(xeth2_contract_fixture_t, test_submit_update_two_periods) {
     for (auto const & p : sync_committee_100) {
         init.next_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(from_hex(p)));
     }
-    EXPECT_TRUE(m_contract.init(m_contract_state, init));
+    EXPECT_TRUE(m_contract.init(m_contract_state, init, common::xeth_address_t::random()));
     EXPECT_EQ(m_contract.last_block_number(m_contract_state), 0xbb247);
 
     headers.erase(headers.begin());
     for (auto const & header : headers) {
-        m_contract.submit_execution_header(m_contract_state, header);
+        m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random());
         EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
         EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
     }
@@ -424,22 +424,21 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
     auto init_param_rlp = from_hex(init_param_rlp_hex);
     xinit_input_t init_param;
     EXPECT_TRUE(init_param.decode_rlp(init_param_rlp));
-    EXPECT_TRUE(m_contract.init(m_contract_state, init_param));
+    EXPECT_TRUE(m_contract.init(m_contract_state, init_param, common::xeth_address_t::random()));
 
     {
         auto cur_committee = m_contract.get_current_sync_committee(m_contract_state);
         EXPECT_EQ(cur_committee.pubkeys.size(), 512);
         EXPECT_EQ(cur_committee.aggregate_pubkey, from_hex("0xab2f06f681f10383788e9c7ab89275d602cbedbcfbaedcd4ed92c3bff7d15561ec7df684d43c531370157357806a8453"));
-        EXPECT_EQ(0, std::memcmp(cur_committee.pubkeys[0].data(), from_hex("0xab7eff4ef8696db334bce564bc273af0412bb4de547056326dff2037e1eca7abde039a51953948dd61d3d15925cd92f6").data(), PUBLIC_KEY_BYTES_LEN));
-        EXPECT_EQ(0, std::memcmp(cur_committee.pubkeys[1].data(), from_hex("0x87c5670e16a84e27529677881dbedc5c1d6ebb4e4ff58c13ece43d21d5b42dc89470f41059bfa6ebcf18167f97ddacaa").data(), PUBLIC_KEY_BYTES_LEN));
-        EXPECT_EQ(0, std::memcmp(cur_committee.pubkeys[511].data(), from_hex("0x8c64035c18e2d684b5800039a4e273b2d08a1ba037c72609fd9e73595d980637ef2b812204710e32dc91147bf034c19c").data(), PUBLIC_KEY_BYTES_LEN));
+        EXPECT_EQ(cur_committee.pubkeys[0], from_hex("0xab7eff4ef8696db334bce564bc273af0412bb4de547056326dff2037e1eca7abde039a51953948dd61d3d15925cd92f6"));
+        EXPECT_EQ(cur_committee.pubkeys[1], from_hex("0x87c5670e16a84e27529677881dbedc5c1d6ebb4e4ff58c13ece43d21d5b42dc89470f41059bfa6ebcf18167f97ddacaa"));
+        EXPECT_EQ(cur_committee.pubkeys[511], from_hex("0x8c64035c18e2d684b5800039a4e273b2d08a1ba037c72609fd9e73595d980637ef2b812204710e32dc91147bf034c19c"));
 
         auto next_committee = m_contract.get_next_sync_committee(m_contract_state);
         EXPECT_EQ(next_committee.pubkeys.size(), 512);
-        EXPECT_EQ(0, std::memcmp(next_committee.aggregate_pubkey.data(), from_hex("0xb99e31d04473fa778efc8a22ed4fa3b1048043244d33cbdcb509d11f5e3a74bdb501d7db06919cc2844209ab32cdd629").data(), PUBLIC_KEY_BYTES_LEN));
-        EXPECT_EQ(0, std::memcmp(next_committee.pubkeys[0].data(), from_hex("0xb01ee30d120b97e7b60ea89b9b6c537cdf20b6e36337e70d289ed5949355dd32679dc0a747525d6f2076f5be051d3a89").data(), PUBLIC_KEY_BYTES_LEN));
-        EXPECT_EQ(0, std::memcmp(next_committee.pubkeys[1].data(), from_hex("0xb549cef11bf7c8bcf4bb11e5cdf5a289fc4bf145826e96a446fb4c729a2c839a4d8d38629cc599eda7efa05f3cf3425b").data(), PUBLIC_KEY_BYTES_LEN));
-        EXPECT_EQ(0, std::memcmp(next_committee.pubkeys[511].data(), from_hex("0x949cf015ce50e27cf5c2ff1b8e2e066679905ac91164e3423d3fb7e05c64429e77e432db0f549acb99f91fb134b6edad").data(), PUBLIC_KEY_BYTES_LEN));
+        EXPECT_EQ(next_committee.aggregate_pubkey, from_hex("0xb99e31d04473fa778efc8a22ed4fa3b1048043244d33cbdcb509d11f5e3a74bdb501d7db06919cc2844209ab32cdd629"));
+        EXPECT_EQ(next_committee.pubkeys[0], from_hex("0xb01ee30d120b97e7b60ea89b9b6c537cdf20b6e36337e70d289ed5949355dd32679dc0a747525d6f2076f5be051d3a89"));
+        EXPECT_EQ(next_committee.pubkeys[511], from_hex("0x949cf015ce50e27cf5c2ff1b8e2e066679905ac91164e3423d3fb7e05c64429e77e432db0f549acb99f91fb134b6edad"));
     }
     auto fin_header = m_contract.get_finalized_beacon_header(m_contract_state);
     EXPECT_EQ(fin_header.header.slot, 1024000);
@@ -490,7 +489,7 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
     for (; it != j.end(); ++it) {
         xeth_header_t header;
         EXPECT_TRUE(header.decode_rlp(from_hex(it->get<std::string>())));
-        EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header));
+        EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random()));
         EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
         EXPECT_EQ(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)), h256());
         if (header.number == 2260221) {
@@ -535,7 +534,7 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
     for (; it != j.end(); ++it) {
         xeth_header_t header;
         EXPECT_TRUE(header.decode_rlp(from_hex(it->get<std::string>())));
-        EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header));
+        EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random()));
         EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
         EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
     }
@@ -637,7 +636,7 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
         for (; it != j.end(); ++it) {
             xeth_header_t header;
             EXPECT_TRUE(header.decode_rlp(from_hex(it->get<std::string>())));
-            EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header));
+            EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random()));
             EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
             EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
         }

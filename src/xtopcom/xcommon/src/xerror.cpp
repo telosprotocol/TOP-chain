@@ -88,6 +88,18 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::invalid_eth_address:
         return "invalid eth address";
 
+    case xerrc_t::rlp_input_empty:
+        return "rlp input empty";
+
+    case xerrc_t::rlp_invalid_encoded_data:
+        return "rlp invalid encoded data";
+
+    case xerrc_t::rlp_invalid_size_of_length_field:
+        return "rlp invalid size of length field";
+
+    case xerrc_t::rlp_not_enough_data:
+        return "rlp not enough data";
+
     default:
         assert(false);
         return "unknown common category error";
