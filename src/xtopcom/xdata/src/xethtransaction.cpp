@@ -92,7 +92,39 @@ data::xeth_transaction_t  xeth_transaction_t::build_from(xbytes_t const& rawtx_b
     return _tx;
 }
 
+xeth_transaction_t xeth_transaction_t::build_eip1559_tx(evm_common::u256 const& chainid, evm_common::u256 const& nonce, evm_common::u256 const& max_priority_fee_per_gas, evm_common::u256 const& max_fee_per_gas, 
+                                                      evm_common::u256 const& gas, common::xeth_address_t const& to, evm_common::u256 const& value, xbytes_t const& data) {
+    xeth_transaction_t _tx;
+    _tx.set_ethtx_type(enum_ethtx_type::enum_ethtx_type_message_call);
+    _tx.set_tx_version(enum_ethtx_version::EIP_1559);
+    _tx.set_chainid(chainid);
+    _tx.set_nonce(nonce);
+    _tx.set_max_priority_fee_per_gas(max_priority_fee_per_gas);
+    _tx.set_max_fee_per_gas(max_fee_per_gas);
+    _tx.set_gas(gas);
+    _tx.set_to(to);
+    _tx.set_value(value);
+    _tx.set_data(data);
+    return _tx;
+}
+
+xeth_transaction_t xeth_transaction_t::build_eip1559_tx(evm_common::u256 const& chainid, evm_common::u256 const& nonce, evm_common::u256 const& max_priority_fee_per_gas, evm_common::u256 const& max_fee_per_gas, 
+                                                      evm_common::u256 const& gas, evm_common::u256 const& value, xbytes_t const& data) {
+    xeth_transaction_t _tx;
+    _tx.set_ethtx_type(enum_ethtx_type::enum_ethtx_type_contract_creation);
+    _tx.set_tx_version(enum_ethtx_version::EIP_1559);
+    _tx.set_chainid(chainid);
+    _tx.set_nonce(nonce);
+    _tx.set_max_priority_fee_per_gas(max_priority_fee_per_gas);
+    _tx.set_max_fee_per_gas(max_fee_per_gas);
+    _tx.set_gas(gas);
+    _tx.set_value(value);
+    _tx.set_data(data);
+    return _tx;
+}
+
 xeth_transaction_t::xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, evm_common::u256 const& _value, evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice) {
+    m_tx_type = enum_ethtx_type_message_call;
     m_from = _from;
     m_to = _to;
     m_data = _data;
@@ -162,7 +194,8 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
     _s << m_max_priority_fee_per_gas;
     _s << m_max_fee_per_gas;
     _s << m_gas;
-    if (!m_to.is_zero()) {
+    assert(m_tx_type != enum_ethtx_type_null_transaction);
+    if (m_tx_type == enum_ethtx_type_message_call) {
         _s << m_to.to_bytes();
     } else {
         _s << "";
@@ -233,8 +266,10 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string invalid for common.Address, decoding into (types.DynamicFeeTx).To");
                 return;
             }
-        } else {
+            m_tx_type = enum_ethtx_type_message_call;
+        } else {            
             m_to = common::xeth_address_t::zero();
+            m_tx_type = enum_ethtx_type_contract_creation;
         }
         if (_r[6].size() > 32) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.value, decoding into (types.DynamicFeeTx).value");
@@ -264,11 +299,6 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
                 return;
             }
             m_signS = _r[field = 11].toInt<evm_common::u256>();
-        }
-
-        if (m_data.empty() && m_to.is_zero()) {
-            ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input data and to all empty, not valid tx");
-            return;
         }
     }
     catch (...)
