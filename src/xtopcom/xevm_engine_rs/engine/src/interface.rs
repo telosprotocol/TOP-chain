@@ -312,9 +312,10 @@ mod interface {
     }
 
     #[no_mangle]
-    pub extern "C" fn unsafe_compute_bellatrix_committee_signing_root(
+    pub extern "C" fn unsafe_compute_committee_signing_root(
         object_root_ptr: *const u8,
         version: u64,
+        signature_slot: u64,
         signing_root_ptr: *mut u8,
     ) -> bool {
         let object_root = engine_eth2_types::H256::from(unsafe {
@@ -324,12 +325,8 @@ mod interface {
         if version == 0 {
             netstr = "mainnet".to_string();
         } else if version == 1 {
-            netstr = "kiln".to_string();
-        } else if version == 2 {
-            netstr = "ropsten".to_string();
-        } else if version == 3 {
             netstr = "goerli".to_string();
-        } else if version == 4 {
+        } else if version == 2 {
             netstr = "sepolia".to_string();
         } else {
             return false;
@@ -337,9 +334,10 @@ mod interface {
 
         let network = engine_eth2_utility::consensus::Network::from_str(netstr.as_str()).unwrap();
         let config = engine_eth2_utility::consensus::NetworkConfig::new(&network);
+        let fork_version = config.compute_fork_version_by_slot(signature_slot).expect("Unsupported fork version");
         let domain = engine_eth2_utility::consensus::compute_domain(
             engine_eth2_utility::consensus::DOMAIN_SYNC_COMMITTEE,
-            config.bellatrix_fork_version,
+            fork_version,
             config.genesis_validators_root.into(),
         );
         let binding = engine_eth2_types::eth2::SigningData {

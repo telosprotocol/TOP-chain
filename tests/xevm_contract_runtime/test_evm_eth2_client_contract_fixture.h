@@ -34,7 +34,6 @@ public:
         m_statectx_observer = make_observer<statectx::xstatectx_face_t>(m_statectx.get());
         m_context.address = common::xtop_eth_address::build_from("ff00000000000000000000000000000000000010");
         m_context.caller = common::xtop_eth_address::build_from("f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38");
-        m_contract.m_network = xeth2_client_net_t::eth2_net_kiln;
     }
 
     void TearDown() override {
