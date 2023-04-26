@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xbytes.h"
+#include "xbasic/xerror/xerror.h"
 
 #include <boost/functional/hash.hpp>
 
@@ -44,6 +45,32 @@ public:
     }
 
     explicit xtop_fixed_bytes(internal_type const & data) : data_{ data } {
+    }
+
+private:
+    explicit xtop_fixed_bytes(xbytes_t const & data) : xtop_fixed_bytes{} {
+        assert(data.size() == N);
+        std::copy(data.cbegin(), data.cend(), data_.begin());
+    }
+
+public:
+    static xtop_fixed_bytes build_from(xbytes_t const & data, std::error_code & ec) noexcept {
+        assert(!ec);
+
+        if (data.size() != N) {
+            ec = error::xbasic_errc_t::invalid_fixed_bytes_size;
+            return {};
+        }
+        return xtop_fixed_bytes{data};
+    }
+
+    static void build_from(xbytes_t const & data, xtop_fixed_bytes & out, std::error_code & ec) noexcept {
+        assert(!ec);
+        if (data.size() != N) {
+            ec = error::xbasic_errc_t::invalid_fixed_bytes_size;
+            return;
+        }
+        std::copy(data.cbegin(), data.cend(), out.begin());
     }
 
     struct hash {
