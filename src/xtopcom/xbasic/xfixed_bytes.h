@@ -64,6 +64,13 @@ public:
         return xtop_fixed_bytes{data};
     }
 
+    static xtop_fixed_bytes build_from(xbytes_t const & data) {
+        std::error_code ec;
+        auto const result = build_from(data, ec);
+        error::throw_error(ec);
+        return result;
+    }
+
     static void build_from(xbytes_t const & data, xtop_fixed_bytes & out, std::error_code & ec) noexcept {
         assert(!ec);
         if (data.size() != N) {
@@ -71,6 +78,12 @@ public:
             return;
         }
         std::copy(data.cbegin(), data.cend(), out.begin());
+    }
+
+    static void build_from(xbytes_t const & data, xtop_fixed_bytes & out) {
+        std::error_code ec;
+        build_from(data, out, ec);
+        error::throw_error(ec);
     }
 
     struct hash {

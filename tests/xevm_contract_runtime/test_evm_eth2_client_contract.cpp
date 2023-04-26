@@ -118,12 +118,9 @@ TEST_F(xeth2_contract_fixture_t, property_current_sync_committee) {
     EXPECT_TRUE(m_contract.get_current_sync_committee(m_contract_state).empty());
     // set
     xsync_committee_t committee;
-    auto bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(committee.pubkeys.back()));
+        committee.pubkeys.emplace_back(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32));
     }
     EXPECT_TRUE(m_contract.set_current_sync_committee(m_contract_state, committee));
     // get value
@@ -134,13 +131,10 @@ TEST_F(xeth2_contract_fixture_t, property_next_sync_committee) {
     // get empty
     EXPECT_TRUE(m_contract.get_next_sync_committee(m_contract_state).empty());
     // set
-    auto bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
     xsync_committee_t committee;
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(committee.pubkeys.back()));
+        committee.pubkeys.emplace_back(xbytes48_t::build_from(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32)));
     }
     EXPECT_TRUE(m_contract.set_next_sync_committee(m_contract_state, committee));
     // get value
@@ -149,12 +143,9 @@ TEST_F(xeth2_contract_fixture_t, property_next_sync_committee) {
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_committee_update) {
     xsync_committee_update_t update;
-    auto bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(update.next_sync_committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), update.next_sync_committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        update.next_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(update.next_sync_committee.pubkeys.back()));
+        update.next_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32)));
     }
     for (auto i = 0; i < 16; i++) {
         update.next_sync_committee_branch.emplace_back(h256(rand()).to_bytes());
@@ -225,12 +216,9 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_update) {
     for (auto i = 0; i < 16; i++) {
         update.finality_update.finality_branch.emplace_back(h256(rand()).to_bytes());
     }
-    auto bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(update.sync_committee_update.next_sync_committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), update.sync_committee_update.next_sync_committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        update.sync_committee_update.next_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(update.sync_committee_update.next_sync_committee.pubkeys.back()));
+        update.sync_committee_update.next_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32)));
     }
     for (auto i = 0; i < 16; i++) {
         update.sync_committee_update.next_sync_committee_branch.emplace_back(h256(rand()).to_bytes());
@@ -250,19 +238,13 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_state) {
     state.finalized_beacon_header.header.state_root = h256(5);
     state.finalized_beacon_header.beacon_block_root = h256(6);
     state.finalized_beacon_header.execution_block_hash = h256(7);
-    auto bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(state.current_sync_committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), state.current_sync_committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        state.current_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(state.current_sync_committee.pubkeys.back()));
+        state.current_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32)));
     }
-    bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(state.next_sync_committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), state.next_sync_committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        state.next_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(state.next_sync_committee.pubkeys.back()));
+        state.next_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32)));
     }
     auto b = state.encode_rlp();
     xlight_client_state_t state_decode;
@@ -295,19 +277,13 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_init_input) {
     init.finalized_beacon_header.header.state_root = h256(5);
     init.finalized_beacon_header.beacon_block_root = h256(6);
     init.finalized_beacon_header.execution_block_hash = h256(7);
-    auto bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(init.current_sync_committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), init.current_sync_committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        init.current_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(init.current_sync_committee.pubkeys.back()));
+        init.current_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32)));
     }
-    bytes = xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes();
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(init.next_sync_committee.aggregate_pubkey));
+    xbytes48_t::build_from(xbytes_t(PUBLIC_KEY_BYTES_LEN - 32) + h256(rand()).to_bytes(), init.next_sync_committee.aggregate_pubkey);
     for (auto i = 0; i < 32; i++) {
-        bytes = h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32);
-        init.next_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(init.next_sync_committee.pubkeys.back()));
+        init.next_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(h256(rand()).to_bytes() + xbytes_t(PUBLIC_KEY_BYTES_LEN - 32)));
     }
     auto b = init.encode_rlp();
     xinit_input_t init_decode;
@@ -419,19 +395,13 @@ TEST_F(xeth2_contract_fixture_t, test_submit_update_two_periods) {
     init.finalized_beacon_header.header.body_root = static_cast<h256>(from_hex("44c9d4b7b97a9e147cff85f90e68f8c30dae846fd6b969e6b8298e4d8311769e"));
     init.finalized_beacon_header.beacon_block_root = static_cast<h256>(("dfb0d6f3164271032200b94138f0b1cceaee36bad55748a1efc830f3c62f5c9c"));
     init.finalized_beacon_header.execution_block_hash = static_cast<h256>(("603c233dbb57105d0a73b47b6a6936cbf59f9d6005fbf8d4a7def7f35b5f6a4f"));
-    auto bytes = from_hex(aggregate_pubkey_99);
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(init.current_sync_committee.aggregate_pubkey));
-    for (auto const p : sync_committee_99) {
-        bytes = from_hex(p);
-        init.current_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(init.current_sync_committee.pubkeys.back()));
+    xbytes48_t::build_from(from_hex(aggregate_pubkey_99), init.current_sync_committee.aggregate_pubkey);
+    for (auto const & p : sync_committee_99) {
+        init.current_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(from_hex(p)));
     }
-    bytes = from_hex(aggregate_pubkey_100);
-    std::copy(std::begin(bytes), std::end(bytes), std::begin(init.next_sync_committee.aggregate_pubkey));
-    for (auto const p : sync_committee_100) {
-        bytes = from_hex(p);
-        init.next_sync_committee.pubkeys.emplace_back();
-        std::copy(std::begin(bytes), std::end(bytes), std::begin(init.next_sync_committee.pubkeys.back()));
+    xbytes48_t::build_from(from_hex(aggregate_pubkey_100), init.next_sync_committee.aggregate_pubkey);
+    for (auto const & p : sync_committee_100) {
+        init.next_sync_committee.pubkeys.emplace_back(xbytes48_t::build_from(from_hex(p)));
     }
     EXPECT_TRUE(m_contract.init(m_contract_state, init));
     EXPECT_EQ(m_contract.last_block_number(m_contract_state), 0xbb247);
