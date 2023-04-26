@@ -51,7 +51,7 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
             assert(tx != nullptr && table != nullptr);
             return table->push_send_tx(tx) == xsuccess;
         };
-        data::xmessage_t msg{common::xaccount_address_t{tx->get_tx()->get_account_addr()}, tx->get_tx(), f};
+        data::xmessage_t msg{common::xaccount_address_t{tx->get_tx()->get_source_addr()}, tx->get_tx(), f};
         if (data::xpreprocess::instance().send(msg)) {
             return xsuccess;
         }
@@ -263,13 +263,16 @@ int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xco
 
     for (auto const & tx : txs) {
         if (nullptr == table->query_tx(tx->get_tx_hash())) {
+            if (!tx->is_send_or_self_tx()) {
+                continue;
+            }
             xtxpool_v2::xtx_para_t para;
             std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
             auto f = [tx_ent, table]() {
                 assert(tx_ent != nullptr && table != nullptr);
                 return table->push_send_tx(tx_ent) == xsuccess;
             };
-            data::xmessage_t msg{common::xaccount_address_t{tx_ent->get_tx()->get_account_addr()}, tx_ent->get_tx(), f};
+            data::xmessage_t msg{common::xaccount_address_t{tx_ent->get_tx()->get_source_addr()}, tx_ent->get_tx(), f};
             if (data::xpreprocess::instance().send(msg)) {
                 return xtxpool_error_account_tx_not_ready_yet;
             }
