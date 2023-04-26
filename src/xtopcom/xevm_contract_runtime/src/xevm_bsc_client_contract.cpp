@@ -84,7 +84,7 @@ bool xtop_evm_bsc_client_contract::init(xbytes_t const & rlp_bytes, state_ptr st
             }
         }
         auto snap_hash = snap.digest();
-        auto header_hash = h.hash();
+        auto header_hash = h.calc_hash();
         // step 3: store with no check
         xinfo("[xtop_evm_bsc_client_contract::init] header dump: %s, snap_hash: %s", h.dump().c_str(), snap_hash.hex().c_str());
         if (!set_last_hash(header_hash, state)) {
@@ -146,7 +146,7 @@ bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         uint32_t const validator_num_index = 1;
         snap.number = static_cast<uint64_t>(header.number) - 1;
         snap.hash = header.parent_hash;
-        auto validator_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[validator_num_index]));
+        auto validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[validator_num_index]);
         // check decoded_size with recent_num
         if (decoded_size < validator_num + validator_num_index + 1 + 1) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
@@ -158,7 +158,7 @@ bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         }
 
         uint32_t const last_validator_num_index = validator_num + validator_num_index + 1;
-        auto last_validator_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[last_validator_num_index]));
+        auto last_validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[last_validator_num_index]);
         if (decoded_size < last_validator_num_index + 1 + last_validator_num) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
@@ -169,14 +169,14 @@ bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         }
 
         uint32_t const recent_num_index = last_validator_num + last_validator_num_index + 1;
-        auto recent_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[recent_num_index]));
+        auto recent_num = evm_common::fromBigEndian<uint64_t>(item.decoded[recent_num_index]);
         if (decoded_size < recent_num_index + 1 + recent_num) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
         }
         uint32_t const recents_index = recent_num_index + 1;
         for (uint64_t i = 0; i < recent_num; ++i) {
-            auto k = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[recents_index + i * 2]));
+            auto k = evm_common::fromBigEndian<uint64_t>(item.decoded[recents_index + i * 2]);
             snap.recents[k] = common::xeth_address_t::build_from(item.decoded[recents_index + i * 2 + 1]);
         }
 
@@ -302,20 +302,23 @@ bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xet
         return false;
     }
     if (new_header.gas_limit > max_gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] gaslimit too big: %lu > %lu", new_header.gas_limit, max_gas_limit);
+        xwarn("[xtop_evm_bsc_client_contract::verify] gaslimit too big: %s > %lu", new_header.gas_limit.str().c_str(), max_gas_limit);
         return false;
     }
     if (new_header.gas_used > new_header.gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] gasUsed: %lu > gasLimit: %lu", new_header.gas_used, new_header.gas_limit);
+        xwarn("[xtop_evm_bsc_client_contract::verify] gasUsed: %s > gasLimit: %s", new_header.gas_used.str().c_str(), new_header.gas_limit.str().c_str());
         return false;
     }
-    bigint diff = bigint(prev_header.gas_limit) - bigint(new_header.gas_limit);
+    auto diff = prev_header.gas_limit - new_header.gas_limit;
     if (diff < 0) {
         diff *= -1;
     }
-    bigint limit = prev_header.gas_limit / gas_limit_bound_divisor;
-    if (uint64_t(diff) >= limit || new_header.gas_limit < min_gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] invalid gas limit: have %lu, want %lu + %lu", new_header.gas_limit, prev_header.gas_limit, diff.str().c_str());
+    auto const limit = prev_header.gas_limit / gas_limit_bound_divisor;
+    if (diff >= limit || new_header.gas_limit < min_gas_limit) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] invalid gas limit: have %s, want %s + %s",
+              new_header.gas_limit.str().c_str(),
+              prev_header.gas_limit.str().c_str(),
+              diff.str().c_str());
         return false;
     }
     if (new_header.number != prev_header.number + 1) {
@@ -342,7 +345,7 @@ bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xet
 }
 
 bool xtop_evm_bsc_client_contract::record(xeth_header_t const & header, xvalidators_snapshot_t const & snap, state_ptr state) {
-    h256 header_hash = header.hash();
+    h256 header_hash = header.calc_hash();
     h256 last_hash = get_last_hash(state);
     xvalidators_snap_info_t last_info;
     if (!get_snap_info(last_hash, last_info, state)) {
@@ -376,8 +379,8 @@ bool xtop_evm_bsc_client_contract::record(xeth_header_t const & header, xvalidat
         return false;
     }
     xvalidators_snap_info_t info{snap.digest(), header.parent_hash, header.number};
-    if (!set_snap_info(header.hash(), info, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
+    if (!set_snap_info(header.calc_hash(), info, state)) {
+        xwarn("[xtop_evm_bsc_client_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
     if (!rebuild(header, last_info, info, state)) {
@@ -394,7 +397,7 @@ bool xtop_evm_bsc_client_contract::rebuild(xeth_header_t const & header, xvalida
             remove_effective_hash(i, state);
         }
     }
-    auto header_hash = header.hash();
+    auto const header_hash = header.calc_hash();
     if (!set_last_hash(header_hash, state)) {
         xwarn("[xtop_evm_bsc_client_contract::record] set_last_hash failed, hash: %s", header_hash.hex().c_str());
         return false;

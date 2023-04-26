@@ -38,8 +38,8 @@ public:
     bool init(state_ptr const & state, evm_common::eth2::xinit_input_t const & init_input);
     bool initialized(state_ptr const & state) const;
     uint64_t last_block_number(state_ptr const & state) const;
-    h256 block_hash_safe(state_ptr const & state, u256 const block_number) const;
-    bool is_confirmed(state_ptr state, u256 const height, h256 const & hash_bytes) const;
+    h256 block_hash_safe(state_ptr const & state, uint64_t block_number) const;
+    bool is_confirmed(state_ptr state, uint64_t number, h256 const & hash_bytes) const;
     bool is_known_execution_header(state_ptr const & state, h256 const & hash) const;
     h256 finalized_beacon_block_root(state_ptr const & state) const;
     uint64_t finalized_beacon_block_slot(state_ptr const & state) const;

@@ -2410,22 +2410,25 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
         j_header["parentHash"] = header.parent_hash.hex();
         j_header["uncleHash"] = header.uncle_hash.hex();
         j_header["miner"] = header.miner.to_hex_string();
-        j_header["stateMerkleRoot"] = header.state_merkleroot.hex();
-        j_header["txMerkleRoot"] = header.tx_merkleroot.hex();
-        j_header["receiptMerkleRoot"] = header.receipt_merkleroot.hex();
+        j_header["stateMerkleRoot"] = header.state_root.hex();
+        j_header["txMerkleRoot"] = header.transactions_root.hex();
+        j_header["receiptMerkleRoot"] = header.receipts_root.hex();
         j_header["bloom"] = header.bloom.hex();
         j_header["difficulty"] = header.difficulty.str();
         j_header["number"] = static_cast<Json::UInt64>(header.number);
-        j_header["gasLimit"] = std::to_string(header.gas_limit);
-        j_header["gasUsed"] = std::to_string(header.gas_used);
+        j_header["gasLimit"] = header.gas_limit.str();
+        j_header["gasUsed"] = header.gas_used.str();
         j_header["time"] = std::to_string(header.time);
         j_header["extra"] = top::to_hex(header.extra);
         j_header["mixDigest"] = header.mix_digest.hex();
         j_header["nonce"] = to_hex(header.nonce);
-        if (header.base_fee.has_value()) {
-            j_header["baseFee"] = header.base_fee.value().str();
+        if (header.base_fee_per_gas.has_value()) {
+            j_header["baseFee"] = static_cast<Json::UInt64>(header.base_fee_per_gas.value());
         }
-        j_header["hash"] = header.hash().hex();
+        if (header.withdrawals_root.has_value()) {
+            j_header["withdrawalsRoot"] = header.withdrawals_root.value().hex();
+        }
+        j_header["hash"] = header.calc_hash().hex();
         json[hash.hex()] = j_header;
     }
 }

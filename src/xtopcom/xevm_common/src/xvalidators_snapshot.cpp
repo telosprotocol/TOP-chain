@@ -31,15 +31,15 @@ static uint256_t seal_hash(xeth_header_t const & header) {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.state_merkleroot.asBytes());
+        auto tmp = RLP::encode(header.state_root.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.tx_merkleroot.asBytes());
+        auto tmp = RLP::encode(header.transactions_root.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.receipt_merkleroot.asBytes());
+        auto tmp = RLP::encode(header.receipts_root.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -102,15 +102,15 @@ static uint256_t seal_hash(xeth_header_t const & header, bigint const & chainid)
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.state_merkleroot.asBytes());
+        auto tmp = RLP::encode(header.state_root.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.tx_merkleroot.asBytes());
+        auto tmp = RLP::encode(header.transactions_root.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
-        auto tmp = RLP::encode(header.receipt_merkleroot.asBytes());
+        auto tmp = RLP::encode(header.receipts_root.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     {
@@ -202,7 +202,7 @@ bool xvalidators_snapshot_t::init_with_epoch(xeth_header_t const & header) {
         return false;
     }
     number = static_cast<uint64_t>(header.number);
-    hash = header.hash();
+    hash = header.calc_hash();
     xbytes_t new_validators_bytes{header.extra.begin() + extraVanity, header.extra.end() - extraSeal};
     if (new_validators_bytes.size() % common::xeth_address_t::size() != 0) {
         xwarn("[xvalidators_snapshot_t::init_with_epoch] new_validators_bytes size error: %zu", new_validators_bytes.size());
@@ -225,7 +225,7 @@ bool xvalidators_snapshot_t::init_with_double_epoch(xeth_header_t const & header
     }
     {
         number = static_cast<uint64_t>(header1.number);
-        hash = header1.hash();
+        hash = header1.calc_hash();
         xbytes_t new_validators_bytes{header1.extra.begin() + extraVanity, header1.extra.end() - extraSeal};
         if (new_validators_bytes.size() % common::xeth_address_t::size() != 0) {
             xwarn("[xvalidators_snapshot_t::init_with_epoch] new_validators_bytes size error: %zu", new_validators_bytes.size());
@@ -240,13 +240,13 @@ bool xvalidators_snapshot_t::init_with_double_epoch(xeth_header_t const & header
     }
     {
         number = static_cast<uint64_t>(header2.number);
-        hash = header2.hash();
+        hash = header2.calc_hash();
         xbytes_t new_validators_bytes{header2.extra.begin() + extraVanity, header2.extra.end() - extraSeal};
         if (new_validators_bytes.size() % common::xeth_address_t::size() != 0) {
             xwarn("[xvalidators_snapshot_t::init_with_epoch] new_validators_bytes size error: %zu", new_validators_bytes.size());
             return false;
         }
-        auto new_validators_num = new_validators_bytes.size() / common::xeth_address_t::size();
+        auto const new_validators_num = new_validators_bytes.size() / common::xeth_address_t::size();
         for (uint32_t i = 0; i < new_validators_num; ++i) {
             auto b = common::xeth_address_t::build_from(std::next(std::begin(new_validators_bytes), static_cast<intptr_t>(i * common::xeth_address_t::size())),
                                                         std::next(std::begin(new_validators_bytes), static_cast<intptr_t>((i + 1) * common::xeth_address_t::size())));
@@ -326,7 +326,7 @@ bool xvalidators_snapshot_t::apply(xeth_header_t const & header, bool const chec
         }
     }
 
-    hash = header.hash();
+    hash = header.calc_hash();
     return true;
 }
 
@@ -412,7 +412,7 @@ bool xvalidators_snapshot_t::apply_with_chainid(xeth_header_t const & header, bi
         }
     }
 
-    hash = header.hash();
+    hash = header.calc_hash();
     return true;
 }
 

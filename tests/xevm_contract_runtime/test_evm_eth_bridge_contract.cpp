@@ -24,29 +24,29 @@ TEST_F(xcontract_fixture_t, header_encode_decode) {
     header.parent_hash = static_cast<evm_common::h256>(UINT32_MAX - 1);
     header.uncle_hash = static_cast<evm_common::h256>(UINT32_MAX - 2);
     header.miner = common::xeth_address_t::build_from(static_cast<evm_common::Address>(UINT32_MAX - 3).asBytes());
-    header.state_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 4);
-    header.tx_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 5);
-    header.receipt_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 6);
+    header.state_root = static_cast<evm_common::h256>(UINT32_MAX - 4);
+    header.transactions_root = static_cast<evm_common::h256>(UINT32_MAX - 5);
+    header.receipts_root = static_cast<evm_common::h256>(UINT32_MAX - 6);
     header.bloom = static_cast<evm_common::LogBloom>(UINT32_MAX - 7);
     header.mix_digest = static_cast<evm_common::h256>(UINT32_MAX - 8);
-    header.nonce = UINT32_MAX - 9;
+    header.nonce = static_cast<xh64_t>(UINT32_MAX - 9);
     header.difficulty = UINT64_MAX - 1;
     header.number = UINT64_MAX - 2;
     header.gas_limit = UINT64_MAX - 3;
     header.gas_used = UINT64_MAX - 4;
     header.time = UINT64_MAX - 5;
-    header.base_fee = static_cast<evm_common::bigint>(UINT64_MAX - 6);
+    header.base_fee_per_gas = UINT64_MAX - 6;
     header.extra = {1, 3, 5, 7};
 
-    EXPECT_TRUE(contract.set_header(header.hash(), header, contract_state));
-    EXPECT_TRUE(contract.get_header(header.hash(), header_decode, contract_state));
+    EXPECT_TRUE(contract.set_header(header.calc_hash(), header, contract_state));
+    EXPECT_TRUE(contract.get_header(header.calc_hash(), header_decode, contract_state));
 
     EXPECT_TRUE(header.parent_hash == header_decode.parent_hash);
     EXPECT_TRUE(header.uncle_hash == header_decode.uncle_hash);
     EXPECT_EQ(header.miner, header_decode.miner);
-    EXPECT_TRUE(header.state_merkleroot == header_decode.state_merkleroot);
-    EXPECT_TRUE(header.tx_merkleroot == header_decode.tx_merkleroot);
-    EXPECT_TRUE(header.receipt_merkleroot == header_decode.receipt_merkleroot);
+    EXPECT_TRUE(header.state_root == header_decode.state_root);
+    EXPECT_TRUE(header.transactions_root == header_decode.transactions_root);
+    EXPECT_TRUE(header.receipts_root == header_decode.receipts_root);
     EXPECT_EQ(header.bloom, header_decode.bloom);
     EXPECT_TRUE(header.difficulty == header_decode.difficulty);
     EXPECT_TRUE(header.number == header_decode.number);
@@ -56,7 +56,7 @@ TEST_F(xcontract_fixture_t, header_encode_decode) {
     EXPECT_EQ(header.extra, header_decode.extra);
     EXPECT_TRUE(header.mix_digest == header_decode.mix_digest);
     EXPECT_TRUE(header.nonce == header_decode.nonce);
-    EXPECT_TRUE(header.base_fee == header_decode.base_fee);
+    EXPECT_TRUE(header.base_fee_per_gas == header_decode.base_fee_per_gas);
 }
 
 TEST_F(xcontract_fixture_t, test_last_hash_property) {
@@ -80,7 +80,7 @@ TEST_F(xcontract_fixture_t, test_headers_property) {
         header.number = i;
         xeth_header_t get_header;
         EXPECT_TRUE(contract.get_header(h256(i), get_header, contract_state));
-        EXPECT_TRUE(header.hash() == get_header.hash());
+        EXPECT_TRUE(header.calc_hash() == get_header.calc_hash());
         return;
     }
     for (auto i = 0; i < 50; i++) {
@@ -95,7 +95,7 @@ TEST_F(xcontract_fixture_t, test_headers_property) {
             header.number = i;
             xeth_header_t get_header;
             EXPECT_TRUE(contract.get_header(h256(i), get_header, contract_state));
-            EXPECT_TRUE(header.hash() == get_header.hash());
+            EXPECT_TRUE(header.calc_hash() == get_header.calc_hash());
         }
     }
 }
@@ -232,7 +232,7 @@ static void verify_ethash(xbytes_t & left_bytes) {
             auto header_bytes = item_header.decoded[0];
             header.decode_rlp(header_bytes);
         }
-        auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
+        auto proofs_per_node = evm_common::fromBigEndian<uint64_t>(item.decoded[item.decoded.size() - 1]);
         std::vector<double_node_with_merkle_proof> nodes;
         uint32_t nodes_size{64};
         uint32_t nodes_start_index{2};
@@ -412,101 +412,101 @@ static xeth_header_t create_header(h256 parent_hash, uint32_t number, uint32_t d
     header.parent_hash = parent_hash;
     header.uncle_hash = static_cast<evm_common::h256>(0);
     header.miner = common::xeth_address_t::build_from(static_cast<evm_common::Address>(0).asBytes());
-    header.state_merkleroot = static_cast<evm_common::h256>(0);
-    header.tx_merkleroot = static_cast<evm_common::h256>(0);
-    header.receipt_merkleroot = static_cast<evm_common::h256>(0);
+    header.state_root = static_cast<evm_common::h256>(0);
+    header.transactions_root = static_cast<evm_common::h256>(0);
+    header.receipts_root = static_cast<evm_common::h256>(0);
     header.bloom = static_cast<evm_common::LogBloom>(0);
     header.mix_digest = static_cast<evm_common::h256>(0);
-    header.nonce = 0;
+    header.nonce = xh64_t{0};
     header.difficulty = difficulty;
     header.number = number;
     header.gas_limit = 0;
     header.gas_used = 0;
     header.time = 0;
-    header.base_fee = static_cast<evm_common::bigint>(0);
+    header.base_fee_per_gas = static_cast<uint64_t>(0);
     return header;
 }
 
 TEST_F(xcontract_fixture_t, test_rebuild1) {
     auto h10 = create_header(static_cast<evm_common::h256>(0), 10, 10);
-    auto h11 = create_header(h10.hash(), 11, 10);
-    auto h12 = create_header(h11.hash(), 12, 10);
-    auto h13 = create_header(h12.hash(), 13, 10);
-    auto h14 = create_header(h13.hash(), 14, 10);
-    auto h15 = create_header(h14.hash(), 15, 10);
-    auto h12_fork = create_header(h11.hash(), 12, 5);
-    auto h13_fork = create_header(h12_fork.hash(), 13, 100);
+    auto h11 = create_header(h10.calc_hash(), 11, 10);
+    auto h12 = create_header(h11.calc_hash(), 12, 10);
+    auto h13 = create_header(h12.calc_hash(), 13, 10);
+    auto h14 = create_header(h13.calc_hash(), 14, 10);
+    auto h15 = create_header(h14.calc_hash(), 15, 10);
+    auto h12_fork = create_header(h11.calc_hash(), 12, 5);
+    auto h13_fork = create_header(h12_fork.calc_hash(), 13, 100);
 
-    contract.set_header_info(h10.hash(), xeth_header_info_t{10, static_cast<evm_common::h256>(0), 10}, contract_state);
-    contract.set_header_info(h11.hash(), xeth_header_info_t{20, h10.hash(), 11}, contract_state);
-    contract.set_header_info(h12.hash(), xeth_header_info_t{30, h11.hash(), 12}, contract_state);
-    contract.set_header_info(h13.hash(), xeth_header_info_t{40, h12.hash(), 13}, contract_state);
-    contract.set_header_info(h14.hash(), xeth_header_info_t{50, h13.hash(), 14}, contract_state);
-    contract.set_header_info(h15.hash(), xeth_header_info_t{60, h14.hash(), 15}, contract_state);
-    contract.set_header_info(h12_fork.hash(), xeth_header_info_t{15, h11.hash(), 12}, contract_state);
-    contract.set_header_info(h13_fork.hash(), xeth_header_info_t{115, h12_fork.hash(), 13}, contract_state);
-    EXPECT_TRUE(contract.set_effective_hash(10, h10.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(11, h11.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(12, h12.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(13, h13.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(14, h14.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(15, h15.hash(), contract_state));
-    EXPECT_TRUE(contract.set_last_hash(h15.hash(), contract_state));
-    EXPECT_TRUE(contract.rebuild(h13_fork, xeth_header_info_t{60, h14.hash(), 15}, xeth_header_info_t{115, h12_fork.hash(), 13}, contract_state));
+    contract.set_header_info(h10.calc_hash(), xeth_header_info_t{10, static_cast<evm_common::h256>(0), 10}, contract_state);
+    contract.set_header_info(h11.calc_hash(), xeth_header_info_t{20, h10.calc_hash(), 11}, contract_state);
+    contract.set_header_info(h12.calc_hash(), xeth_header_info_t{30, h11.calc_hash(), 12}, contract_state);
+    contract.set_header_info(h13.calc_hash(), xeth_header_info_t{40, h12.calc_hash(), 13}, contract_state);
+    contract.set_header_info(h14.calc_hash(), xeth_header_info_t{50, h13.calc_hash(), 14}, contract_state);
+    contract.set_header_info(h15.calc_hash(), xeth_header_info_t{60, h14.calc_hash(), 15}, contract_state);
+    contract.set_header_info(h12_fork.calc_hash(), xeth_header_info_t{15, h11.calc_hash(), 12}, contract_state);
+    contract.set_header_info(h13_fork.calc_hash(), xeth_header_info_t{115, h12_fork.calc_hash(), 13}, contract_state);
+    EXPECT_TRUE(contract.set_effective_hash(10, h10.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(11, h11.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(12, h12.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(13, h13.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(14, h14.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(15, h15.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_last_hash(h15.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.rebuild(h13_fork, xeth_header_info_t{60, h14.calc_hash(), 15}, xeth_header_info_t{115, h12_fork.calc_hash(), 13}, contract_state));
 
-    EXPECT_TRUE(contract.get_last_hash(contract_state) == h13_fork.hash());
+    EXPECT_TRUE(contract.get_last_hash(contract_state) == h13_fork.calc_hash());
     EXPECT_TRUE(contract.get_effective_hash(15, contract_state) == h256());
     EXPECT_TRUE(contract.get_effective_hash(14, contract_state) == h256());
-    EXPECT_TRUE(contract.get_effective_hash(13, contract_state) == h13_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(12, contract_state) == h12_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(11, contract_state) == h11.hash());
-    EXPECT_TRUE(contract.get_effective_hash(10, contract_state) == h10.hash());
+    EXPECT_TRUE(contract.get_effective_hash(13, contract_state) == h13_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(12, contract_state) == h12_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(11, contract_state) == h11.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(10, contract_state) == h10.calc_hash());
 }
 
 TEST_F(xcontract_fixture_t, test_rebuild2) {
     auto h10 = create_header(static_cast<evm_common::h256>(0), 10, 10);
-    auto h11 = create_header(h10.hash(), 11, 10);
-    auto h12 = create_header(h11.hash(), 12, 10);
-    auto h13 = create_header(h12.hash(), 13, 10);
-    auto h14 = create_header(h13.hash(), 14, 10);
-    auto h15 = create_header(h14.hash(), 15, 10);
-    auto h12_fork = create_header(h11.hash(), 12, 5);
-    auto h13_fork = create_header(h12_fork.hash(), 13, 5);
-    auto h14_fork = create_header(h13_fork.hash(), 14, 5);
-    auto h15_fork = create_header(h14_fork.hash(), 15, 5);
-    auto h16_fork = create_header(h15_fork.hash(), 16, 5);
-    auto h17_fork = create_header(h16_fork.hash(), 17, 100);
+    auto h11 = create_header(h10.calc_hash(), 11, 10);
+    auto h12 = create_header(h11.calc_hash(), 12, 10);
+    auto h13 = create_header(h12.calc_hash(), 13, 10);
+    auto h14 = create_header(h13.calc_hash(), 14, 10);
+    auto h15 = create_header(h14.calc_hash(), 15, 10);
+    auto h12_fork = create_header(h11.calc_hash(), 12, 5);
+    auto h13_fork = create_header(h12_fork.calc_hash(), 13, 5);
+    auto h14_fork = create_header(h13_fork.calc_hash(), 14, 5);
+    auto h15_fork = create_header(h14_fork.calc_hash(), 15, 5);
+    auto h16_fork = create_header(h15_fork.calc_hash(), 16, 5);
+    auto h17_fork = create_header(h16_fork.calc_hash(), 17, 100);
 
-    contract.set_header_info(h10.hash(), xeth_header_info_t{10, static_cast<evm_common::h256>(0), 10}, contract_state);
-    contract.set_header_info(h11.hash(), xeth_header_info_t{20, h10.hash(), 11}, contract_state);
-    contract.set_header_info(h12.hash(), xeth_header_info_t{30, h11.hash(), 12}, contract_state);
-    contract.set_header_info(h13.hash(), xeth_header_info_t{40, h12.hash(), 13}, contract_state);
-    contract.set_header_info(h14.hash(), xeth_header_info_t{50, h13.hash(), 14}, contract_state);
-    contract.set_header_info(h15.hash(), xeth_header_info_t{60, h14.hash(), 15}, contract_state);
-    contract.set_header_info(h12_fork.hash(), xeth_header_info_t{15, h11.hash(), 12}, contract_state);
-    contract.set_header_info(h13_fork.hash(), xeth_header_info_t{20, h12_fork.hash(), 13}, contract_state);
-    contract.set_header_info(h14_fork.hash(), xeth_header_info_t{25, h13_fork.hash(), 14}, contract_state);
-    contract.set_header_info(h15_fork.hash(), xeth_header_info_t{30, h14_fork.hash(), 15}, contract_state);
-    contract.set_header_info(h16_fork.hash(), xeth_header_info_t{35, h15_fork.hash(), 16}, contract_state);
-    contract.set_header_info(h17_fork.hash(), xeth_header_info_t{135, h16_fork.hash(), 17}, contract_state);
-    EXPECT_TRUE(contract.set_effective_hash(10, h10.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(11, h11.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(12, h12.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(13, h13.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(14, h14.hash(), contract_state));
-    EXPECT_TRUE(contract.set_effective_hash(15, h15.hash(), contract_state));
-    EXPECT_TRUE(contract.set_last_hash(h15.hash(), contract_state));
-    EXPECT_TRUE(contract.rebuild(h17_fork, xeth_header_info_t{60, h14.hash(), 15}, xeth_header_info_t{135, h16_fork.hash(), 17}, contract_state));
+    contract.set_header_info(h10.calc_hash(), xeth_header_info_t{10, static_cast<evm_common::h256>(0), 10}, contract_state);
+    contract.set_header_info(h11.calc_hash(), xeth_header_info_t{20, h10.calc_hash(), 11}, contract_state);
+    contract.set_header_info(h12.calc_hash(), xeth_header_info_t{30, h11.calc_hash(), 12}, contract_state);
+    contract.set_header_info(h13.calc_hash(), xeth_header_info_t{40, h12.calc_hash(), 13}, contract_state);
+    contract.set_header_info(h14.calc_hash(), xeth_header_info_t{50, h13.calc_hash(), 14}, contract_state);
+    contract.set_header_info(h15.calc_hash(), xeth_header_info_t{60, h14.calc_hash(), 15}, contract_state);
+    contract.set_header_info(h12_fork.calc_hash(), xeth_header_info_t{15, h11.calc_hash(), 12}, contract_state);
+    contract.set_header_info(h13_fork.calc_hash(), xeth_header_info_t{20, h12_fork.calc_hash(), 13}, contract_state);
+    contract.set_header_info(h14_fork.calc_hash(), xeth_header_info_t{25, h13_fork.calc_hash(), 14}, contract_state);
+    contract.set_header_info(h15_fork.calc_hash(), xeth_header_info_t{30, h14_fork.calc_hash(), 15}, contract_state);
+    contract.set_header_info(h16_fork.calc_hash(), xeth_header_info_t{35, h15_fork.calc_hash(), 16}, contract_state);
+    contract.set_header_info(h17_fork.calc_hash(), xeth_header_info_t{135, h16_fork.calc_hash(), 17}, contract_state);
+    EXPECT_TRUE(contract.set_effective_hash(10, h10.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(11, h11.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(12, h12.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(13, h13.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(14, h14.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_effective_hash(15, h15.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.set_last_hash(h15.calc_hash(), contract_state));
+    EXPECT_TRUE(contract.rebuild(h17_fork, xeth_header_info_t{60, h14.calc_hash(), 15}, xeth_header_info_t{135, h16_fork.calc_hash(), 17}, contract_state));
 
-    EXPECT_TRUE(contract.get_last_hash(contract_state) == h17_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(17, contract_state) == h17_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(16, contract_state) == h16_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(15, contract_state) == h15_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(14, contract_state) == h14_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(13, contract_state) == h13_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(12, contract_state) == h12_fork.hash());
-    EXPECT_TRUE(contract.get_effective_hash(11, contract_state) == h11.hash());
-    EXPECT_TRUE(contract.get_effective_hash(10, contract_state) == h10.hash());
+    EXPECT_TRUE(contract.get_last_hash(contract_state) == h17_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(17, contract_state) == h17_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(16, contract_state) == h16_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(15, contract_state) == h15_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(14, contract_state) == h14_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(13, contract_state) == h13_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(12, contract_state) == h12_fork.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(11, contract_state) == h11.calc_hash());
+    EXPECT_TRUE(contract.get_effective_hash(10, contract_state) == h10.calc_hash());
 }
 
 TEST_F(xcontract_fixture_t, execute_input_with_error_account) {

@@ -23,32 +23,34 @@ struct xeth_header_t {
     xh256_t parent_hash;
     xh256_t uncle_hash;
     common::xeth_address_t miner;
-    xh256_t state_merkleroot;
-    xh256_t tx_merkleroot;
-    xh256_t receipt_merkleroot;
+    xh256_t state_root;
+    xh256_t transactions_root;
+    xh256_t receipts_root;
     LogBloom bloom;
     u256 difficulty;
     uint64_t number;
-    uint64_t gas_limit{0};
-    uint64_t gas_used{0};
+    u256 gas_limit{0};
+    u256 gas_used{0};
     uint64_t time{0};
     xbytes_t extra;
     xh256_t mix_digest;
-    uint64_t nonce;
+    xh64_t nonce;
 
     // base_fee was added by EIP-1559 and is ignored in legacy headers.
-    optional<bigint> base_fee;
+    optional<uint64_t> base_fee_per_gas;
+    optional<xh256_t> withdrawals_root;
+
+    xh256_t hash;
+    xh256_t partial_hash;
 
     bool operator==(xeth_header_t const & rhs) const;
 
     // hash
-    xh256_t hash() const;
-    void hash(xh256_t & out) const;
-    xh256_t hash_without_seal() const;
+    xh256_t calc_hash(bool partial = false) const;
+    void calc_hash(xh256_t & out, bool partial = false) const;
 
     // encode and decode
-    xbytes_t encode_rlp() const;
-    xbytes_t encode_rlp_withoutseal() const;
+    xbytes_t encode_rlp(bool partial = false) const;
     bool decode_rlp(xbytes_t const & bytes);
 
     // debug
