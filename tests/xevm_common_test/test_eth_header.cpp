@@ -30,9 +30,9 @@ TEST(xeth_header, hash) {
     header.parent_hash = top::xh256_t{"0x1e77d8f1267348b516ebc4f4da1e2aa59f85f0cbd853949500ffac8bfc38ba14"};
     header.uncle_hash = top::xh256_t{"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"};
     header.miner = top::common::xeth_address_t::build_from("0x2a65aca4d5fc5b5c859090a6c34d164135398226");
-    header.state_merkleroot = top::xh256_t{"0x0b5e4386680f43c224c5c037efc0b645c8e1c3f6b30da0eec07272b4e6f8cd89"};
-    header.tx_merkleroot = top::xh256_t{"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"};
-    header.receipt_merkleroot = top::xh256_t{"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"};
+    header.state_root = top::xh256_t{"0x0b5e4386680f43c224c5c037efc0b645c8e1c3f6b30da0eec07272b4e6f8cd89"};
+    header.transactions_root = top::xh256_t{"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"};
+    header.receipts_root = top::xh256_t{"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"};
     header.bloom = top::evm_common::LogBloom{
         "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -45,9 +45,9 @@ TEST(xeth_header, hash) {
     header.time = 1445130204;
     header.extra = top::xbytes_t{0xd5, 0x83, 0x01, 0x02, 0x02, 0x84, 0x47, 0x65, 0x74, 0x68, 0x85, 0x67, 0x6f, 0x31, 0x2e, 0x35, 0x85, 0x6c, 0x69, 0x6e, 0x75, 0x78};
     header.mix_digest = top::xh256_t{"0x3fbea7af642a4e20cd93a945a1f5e23bd72fc5261153e09102cf718980aeff38"};
-    header.nonce = 0x6af23caae95692ef;
+    header.nonce = top::xh64_t{0x6af23caae95692ef};
 
-    auto const rlp_data = header.encode_rlp();
+    auto const rlp_data = header.encode_rlp(false);
     top::xbytes_t const & expected_rlp = top::evm_common::FixedHash<534>{
         "0xf90213a01e77d8f1267348b516ebc4f4da1e2aa59f85f0cbd853949500ffac8bfc38ba14a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347942a65aca4d5fc5b5c859090a6c34d"
         "164135398226a00b5e4386680f43c224c5c037efc0b645c8e1c3f6b30da0eec07272b4e6f8cd89a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e6"
@@ -60,5 +60,5 @@ TEST(xeth_header, hash) {
     ASSERT_EQ(rlp_data, expected_rlp);
 
     top::xh256_t const expected_hash{"0x5d15649e25d8f3e2c0374946078539d200710afc977cdfc6a977bd23f20fa8e8"};
-    ASSERT_EQ(header.hash(), expected_hash);
+    ASSERT_EQ(header.calc_hash(), expected_hash);
 }

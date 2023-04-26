@@ -2,6 +2,7 @@
 #pragma once
 
 #include "xbasic/xfixed_hash.h"
+#include "xbasic/xfixed_bytes.h"
 #include "xcommon/common.h"
 #include "xcommon/rlp.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
@@ -9,9 +10,12 @@
 
 NS_BEG3(top, evm_common, eth2)
 
-#define PUBLIC_KEY_BYTES_LEN 48U
+XINLINE_CONSTEXPR size_t PUBLIC_KEY_BYTES_LEN{48};
 #define HASH_LEN 32U
-#define SIGNATURE_LEN 96U
+XINLINE_CONSTEXPR size_t SIGNATURE_BYTES_LEN{96};
+XINLINE_CONSTEXPR size_t SYNC_COMMITTEE_BITS_SIZE_IN_BYTES{512 >> 3};
+
+using xbytes48_t = xfixed_bytes_t<PUBLIC_KEY_BYTES_LEN>;
 
 struct xbeacon_block_header_t {
     uint64_t slot{0};
@@ -151,8 +155,8 @@ struct xexecution_header_info_t {
 };
 
 struct xsync_committee_t {
-    std::vector<xbytes_t> pubkeys;
-    xbytes_t aggregate_pubkey;
+    std::vector<xbytes48_t> pubkeys;
+    xbytes48_t aggregate_pubkey;
 
     bool operator==(xsync_committee_t const & rhs) const {
         return (this->pubkeys == rhs.pubkeys) && (this->aggregate_pubkey == rhs.aggregate_pubkey);
@@ -180,26 +184,29 @@ struct xsync_committee_t {
     }
 
     bool decode_rlp(xbytes_t const & bytes) {
-        auto items = RLP::decodeList(bytes);
+        auto const & items = RLP::decodeList(bytes);
         if (items.decoded.size() < 2) {
             return false;
         }
+
         for (size_t i = 0; i < items.decoded.size(); ++i) {
             auto const & data = items.decoded.at(i);
             if (data.size() != PUBLIC_KEY_BYTES_LEN) {
                 return false;
             }
             if (i != items.decoded.size() - 1) {
-                pubkeys.emplace_back(data);
+                pubkeys.emplace_back();
+                std::copy(data.begin(), data.end(), pubkeys.back().begin());
             } else {
-                aggregate_pubkey = data;
+                // aggregate_pubkey = data;
+                std::copy(data.begin(), data.end(), aggregate_pubkey.begin());
             }
         }
         return true;
     }
 
     h256 tree_hash_root() const {
-        assert(pubkeys.size() > 0);
+        assert(!pubkeys.empty());
         assert(aggregate_pubkey.size() == PUBLIC_KEY_BYTES_LEN);
         xbytes_t data;
         for (auto const & p : pubkeys) {
@@ -222,7 +229,7 @@ struct xsync_aggregate_t {
 
     xbytes_t encode_rlp() const {
         xbytes_t out;
-        assert(sync_committee_signature.size() == SIGNATURE_LEN);
+        assert(sync_committee_signature.size() == SIGNATURE_BYTES_LEN);
         auto const & item1 = RLP::encode(sync_committee_bits);
         out.insert(out.end(), item1.begin(), item1.end());
         auto const & item2 = RLP::encode(sync_committee_signature);
@@ -237,7 +244,7 @@ struct xsync_aggregate_t {
         }
         sync_committee_bits = items.decoded.at(0);
         sync_committee_signature = items.decoded.at(1);
-        if (sync_committee_signature.size() != SIGNATURE_LEN) {
+        if (sync_committee_signature.size() != SIGNATURE_BYTES_LEN) {
             return false;
         }
         return true;

@@ -44,25 +44,25 @@ bool xtop_evm_eth_bridge_contract::init(xbytes_t const & rlp_bytes, state_ptr st
     }
     // step 3: store with no check
     xinfo("[xtop_evm_eth_bridge_contract::init] header dump: %s", header.dump().c_str());
-    if (!set_last_hash(header.hash(), state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_last_hash failed, hash: %s", header.hash().hex().c_str());
+    if (!set_last_hash(header.calc_hash(), state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_last_hash failed, hash: %s", header.calc_hash().hex().c_str());
         return false;
     }
-    if (!set_effective_hash(header.number, header.hash(), state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
+    if (!set_effective_hash(header.number, header.calc_hash(), state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
-    if (!set_hashes(header.number, {header.hash()}, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_hash failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
+    if (!set_hashes(header.number, {header.calc_hash()}, state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_hash failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
-    if (!set_header(header.hash(), header, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_header failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
+    if (!set_header(header.calc_hash(), header, state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_header failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
     xeth_header_info_t header_info{header.difficulty, header.parent_hash, header.number};
-    if (!set_header_info(header.hash(), header_info, state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
+    if (!set_header_info(header.calc_hash(), header_info, state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
 
@@ -92,7 +92,7 @@ bool xtop_evm_eth_bridge_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
             }
         }
         xinfo("[xtop_evm_eth_bridge_contract::sync] header dump: %s", header.dump().c_str());
-        auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
+        auto proofs_per_node = evm_common::fromBigEndian<uint64_t>(item.decoded[item.decoded.size() - 1]);
         std::vector<double_node_with_merkle_proof> nodes;
         uint32_t nodes_size{64};
         if (proofs_per_node * nodes_size + 2 * nodes_size + 3 != item.decoded.size()) {
@@ -220,15 +220,15 @@ bool xtop_evm_eth_bridge_contract::verify(xeth_header_t const & prev_header, xet
         return false;
     }
     if (new_header.gas_limit > MaxGasLimit) {
-        xwarn("[xtop_evm_eth_bridge_contract::verify] gaslimit too big: %lu > 0x7fffffffffffffff", new_header.gas_limit);
+        xwarn("[xtop_evm_eth_bridge_contract::verify] gaslimit too big: %s > 0x7fffffffffffffff", new_header.gas_limit.str().c_str());
         return false;
     }
     if (new_header.gas_used > new_header.gas_limit) {
-        xwarn("[xtop_evm_eth_bridge_contract::verify] gasUsed: %lu > gasLimit: %lu", new_header.gas_used, new_header.gas_limit);
+        xwarn("[xtop_evm_eth_bridge_contract::verify] gasUsed: %s > gasLimit: %s", new_header.gas_used.str().c_str(), new_header.gas_limit.str().c_str());
         return false;
     }
     if ((new_header.gas_limit >= prev_header.gas_limit * 1025 / 1024) || (new_header.gas_limit <= prev_header.gas_limit * 1023 / 1024)) {
-        xwarn("[xtop_evm_eth_bridge_contract::verify] gaslimit mismatch, new: %lu, old: %lu", new_header.gas_limit, prev_header.gas_limit);
+        xwarn("[xtop_evm_eth_bridge_contract::verify] gaslimit mismatch, new: %s, old: %s", new_header.gas_limit.str().c_str(), prev_header.gas_limit.str().c_str());
         return false;
     }
     if (!eth::config::is_london(new_header.number)) {
@@ -236,7 +236,7 @@ bool xtop_evm_eth_bridge_contract::verify(xeth_header_t const & prev_header, xet
         return false;
     }
     if (!eth::verify_eip1559_header(prev_header, new_header)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] verifyEip1559Header failed, new: %lu, old: %lu", new_header.gas_limit, prev_header.gas_limit);
+        xwarn("[xtop_evm_eth_bridge_contract::sync] verifyEip1559Header failed, new: %s, old: %s", new_header.gas_limit.str().c_str(), prev_header.gas_limit.str().c_str());
         return false;
     }
 #if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
@@ -256,7 +256,7 @@ bool xtop_evm_eth_bridge_contract::verify(xeth_header_t const & prev_header, xet
 }
 
 bool xtop_evm_eth_bridge_contract::record(xeth_header_t const & header, state_ptr state) {
-    h256 header_hash = header.hash();
+    h256 header_hash = header.calc_hash();
     h256 last_hash = get_last_hash(state);
     xeth_header_info_t last_info;
     if (!get_header_info(last_hash, last_info, state)) {
@@ -290,8 +290,8 @@ bool xtop_evm_eth_bridge_contract::record(xeth_header_t const & header, state_pt
         return false;
     }
     xeth_header_info_t info{header.difficulty + parent_info.difficult_sum, header.parent_hash, header.number};
-    if (!set_header_info(header.hash(), info,state)) {
-        xwarn("[xtop_evm_eth_bridge_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.hash().hex().c_str());
+    if (!set_header_info(header.calc_hash(), info, state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
     if (info.difficult_sum > last_info.difficult_sum || (info.difficult_sum == last_info.difficult_sum && header.difficulty % 2 == 0)) {
@@ -310,7 +310,7 @@ bool xtop_evm_eth_bridge_contract::rebuild(xeth_header_t const & header, xeth_he
             remove_effective_hash(i, state);
         }
     }
-    auto header_hash = header.hash();
+    auto header_hash = header.calc_hash();
     if (!set_last_hash(header_hash, state)) {
         xwarn("[xtop_evm_eth_bridge_contract::record] set_last_hash failed, hash: %s", header_hash.hex().c_str());
         return false;
