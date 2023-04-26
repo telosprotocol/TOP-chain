@@ -24,7 +24,7 @@ using namespace data;
 
 #define BATCH_SIZE                 (40)
 #define BATCH_MAX_END              (200)  // BATCH_SIZE < BATCH_MAX_END
-#define INCREASE_WAIT_DATA_TIMEOUT (30000)  
+#define INCREASE_WAIT_DATA_TIMEOUT (10000)  
 #define CONTINUOUS_TIMEOUT_COUNT   (3)
 
 

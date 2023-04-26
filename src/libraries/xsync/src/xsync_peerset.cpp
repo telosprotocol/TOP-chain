@@ -90,7 +90,7 @@ void xsync_peerset_t::update(const vnetwork::xvnode_address_t &self_address, con
                 peer_chains.insert(std::make_pair(info.address, chaininfo));
             } else {
                 // TODO compare height and viewid
-                if (info.end_height > it3->second.end_height) {
+                if (info.end_height != it3->second.end_height) {
                     xsync_dbg("peerset update %s,start_height=%lu,end_height=%lu,%s",
                         info.address.c_str(), info.start_height, info.end_height, peer_address.to_string().c_str());
                     it3->second.update(info.start_height, info.end_height);
