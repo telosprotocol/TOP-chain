@@ -903,7 +903,11 @@ void xrpc_query_manager::getTransactionV2(Json::Value & js_req, Json::Value & js
                         xerror("xrpc_query_manager::getTransactionV2 fail-to eth tx");
                         return;
                     }
-                    if (ethtx.get_to().is_zero()) {
+
+                    if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
+                        result_json["original_tx_info"]["receiver_account"] = common::xaccount_address_t::build_from(ethtx.get_to(),
+                                                                                        base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
+                    } else {
                         result_json["original_tx_info"]["receiver_account"] = "";
                     }
 

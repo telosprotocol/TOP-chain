@@ -230,7 +230,11 @@ void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data:
         }
     } else {
         js_v["to"] = Json::Value::null;
-        js_v["contractAddress"] = evm_tx_receipt.get_contract_address().to_hex_string();
+        if (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) {
+            js_v["contractAddress"] = evm_tx_receipt.get_contract_address().to_hex_string();
+        } else {
+            js_v["contractAddress"] = Json::Value::null;
+        }
     }
 
     evm_common::xbloom9_t logs_bloom = evm_tx_receipt.bloom();
@@ -262,13 +266,17 @@ void xrpc_eth_parser_t::receipt_to_json_for_top_rpc(std::string const & blockhas
     js_v["cumulativeGasUsed"] = std::to_string(evm_tx_receipt.get_cumulative_gas_used());
     js_v["effectiveGasPrice"] = evm_tx_receipt.get_gas_price().str();
 
-    if (!ethtx.get_to().is_zero()) {
+    if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
         if (!ethtx.get_data().empty()) {
             js_v["contractAddress"] = common::xaccount_address_t::build_from(ethtx.get_to(), base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
         }
     } else {
-        js_v["contractAddress"] = common::xaccount_address_t::build_from(evm_tx_receipt.get_contract_address(),
-                                                                         base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
+        if (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) {
+            js_v["contractAddress"] = common::xaccount_address_t::build_from(evm_tx_receipt.get_contract_address(),
+                                                                            base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();            
+        } else {
+            js_v["contractAddress"] = "";
+        }
     }
 
     evm_common::xbloom9_t logs_bloom = evm_tx_receipt.bloom();
