@@ -1,4 +1,4 @@
-find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
 
 if (XBUILD_TEST)
     add_definitions(-DXENABLE_TESTS)

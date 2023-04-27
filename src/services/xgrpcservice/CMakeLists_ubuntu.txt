@@ -1,25 +1,7 @@
 add_compile_options(-Wall)
 add_compile_options(-Werror)
 
-find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
-find_library(gRPCPP_LIBRARIES grpc++ REQUIRED)
-find_library(gRPCPP_UNSECURE_LIBRARIES grpc++_unsecure REQUIRED)
-find_library(gRPC_LIBRARIES grpc REQUIRED)
-# find_library(gRPC_UNSECURE_LIBRARIES grpc_unsecure REQUIRED)
-find_library(gRPC_GPR_LIBRARIES gpr)
-find_library(gRPC_ADDRESS_SORTING_LIBRARIES address_sorting)
-find_library(ares_LIBRARIES cares REQUIRED)
-find_package(Protobuf REQUIRED)
-find_package(ZLIB REQUIRED)
-find_library(absl_strings_LIBRARY absl_strings REQUIRED)
-find_library(absl_strings_internal_LIBRARY absl_strings_internal REQUIRED)
-find_library(absl_str_format_internal_LIBRARY absl_str_format_internal REQUIRED)
-find_library(absl_throw_delegate_LIBRARY absl_throw_delegate REQUIRED)
-find_library(absl_bad_optional_access_LIBRARY absl_bad_optional_access REQUIRED)
-find_library(absl_int128_LIBRARY absl_int128 REQUIRED)
-find_library(absl_raw_logging_internal_LIBRARY absl_raw_logging_internal REQUIRED)
-find_library(absl_time_LIBRARY absl_time REQUIRED)
-find_package(OpenSSL REQUIRED)
+find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
 
 aux_source_directory(./src src_dir)
 aux_source_directory(./src/${XOS_ID} proto_src)
@@ -31,23 +13,5 @@ target_link_libraries(
     xgrpcservice
     PRIVATE
     ${jsoncpp_LIBRARIES}
-    ${gRPCPP_LIBRARIES}
-    ${gRPCPP_UNSECURE_LIBRARIES}
-    ${gRPC_LIBRARIES}
-    ${gRPC_UNSECURE_LIBRARIES}
-    ${gRPC_GPR_LIBRARIES}
-    ${gRPC_ADDRESS_SORTING_LIBRARIES}
-    ${ares_LIBRARIES}
-    ZLIB::ZLIB
-    ${Protobuf_LIBRARIES}
-    ${absl_strings_LIBRARY}
-    ${absl_strings_internal_LIBRARY}
-    ${absl_str_format_internal_LIBRARY}
-    ${absl_throw_delegate_LIBRARY}
-    ${absl_bad_optional_access_LIBRARY}
-    ${absl_int128_LIBRARY}
-    ${absl_raw_logging_internal_LIBRARY}
-    ${absl_time_LIBRARY}
-    OpenSSL::SSL
-    OpenSSL::Crypto
+    ${grpc_LIBRARIES}
 )

@@ -5,7 +5,7 @@ add_executable(xdb_test ${dir})
 
 if (XDB_TYPE STREQUAL "ROCKSDB")
 
-    if (${XSYS_VER} EQUAL 0)
+    if (${XOS_ID} MATCHES "centos")
         target_link_libraries(xdb_test
             xdb
             xxbase
@@ -14,22 +14,11 @@ if (XDB_TYPE STREQUAL "ROCKSDB")
             gtest
         )
     else()
-        find_library(RocksDB_LIBRARIES rocksdb REQUIRED)
-        find_library(lz4_LIBRARIES lz4 HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
-        find_library(zstd_LIBRARIES zstd REQUIRED)
-        find_library(Snappy_LIBRARIES snappy REQUIRED)
-        find_package(BZip2 REQUIRED)
-        find_package(ZLIB REQUIRED)
-
         target_link_libraries(xdb_test
             xdb
             xxbase
             xvledger
-            ${RocksDB_LIBRARIES}
-            ${lz4_LIBRARIES}
-            ${zstd_LIBRARIES}
-            ${Snappy_LIBRARIES}
-            ZLIB::ZLIB BZip2::BZip2
+            ${rocksdb_LIBRARIES}
             gflags
             gtest
         )

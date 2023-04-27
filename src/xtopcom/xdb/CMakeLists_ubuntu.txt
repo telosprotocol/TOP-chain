@@ -1,12 +1,5 @@
 message(STATUS "XDB_TYPE:" ${XDB_TYPE})
 
-find_library(RocksDB_LIBRARIES rocksdb REQUIRED)
-find_library(lz4_LIBRARIES lz4 HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
-find_library(zstd_LIBRARIES zstd REQUIRED)
-find_library(Snappy_LIBRARIES snappy REQUIRED)
-find_package(BZip2 REQUIRED)
-find_package(ZLIB REQUIRED)
-
 add_library(xdb STATIC
     ./src/xdb_factory.cpp
     ./src/xdb_rocksdb.cpp
@@ -18,12 +11,7 @@ target_link_libraries(
     xdb
     PRIVATE
     xxbase
-    ${RocksDB_LIBRARIES}
-    ${zstd_LIBRARIES}
-    ${Snappy_LIBRARIES}
-    BZip2::BZip2
-    ZLIB::ZLIB
-    ${lz4_LIBRARIES}
+    ${rocksdb_LIBRARIES}
 )
 
 if (BUILD_METRICS)

@@ -13,8 +13,8 @@ elseif(TCMALLOC)
     target_link_libraries(xchaininit PRIVATE tcmalloc_minimal)
 endif()
 
-find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
-find_library(secp256k1_LIBRARY secp256k1 REQUIRED)
+find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+find_library(secp256k1_LIBRARY libsecp256k1.a REQUIRED)
 
 target_link_libraries(
     xchaininit
