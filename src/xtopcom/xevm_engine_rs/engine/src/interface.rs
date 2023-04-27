@@ -324,9 +324,11 @@ mod interface {
         let mut netstr: String;
         if version == 0 {
             netstr = "mainnet".to_string();
-        } else if version == 1 {
-            netstr = "goerli".to_string();
+        } else if version == 1{
+            netstr = "kiln".to_string();
         } else if version == 2 {
+            netstr = "goerli".to_string();
+        } else if version == 3 {
             netstr = "sepolia".to_string();
         } else {
             return false;
@@ -334,7 +336,7 @@ mod interface {
 
         let network = engine_eth2_utility::consensus::Network::from_str(netstr.as_str()).unwrap();
         let config = engine_eth2_utility::consensus::NetworkConfig::new(&network);
-        let fork_version = config.compute_fork_version_by_slot(signature_slot).expect("Unsupported fork version");
+        let fork_version = config.compute_fork_version_by_slot(signature_slot).expect("Unsupported fork");
         let domain = engine_eth2_utility::consensus::compute_domain(
             engine_eth2_utility::consensus::DOMAIN_SYNC_COMMITTEE,
             fork_version,

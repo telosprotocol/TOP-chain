@@ -32,7 +32,7 @@ bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
            (this->tx_merkleroot == rhs.tx_merkleroot) && (this->receipt_merkleroot == rhs.receipt_merkleroot) && (this->bloom == rhs.bloom) &&
            (this->difficulty == rhs.difficulty) && (this->number == rhs.number) && (this->gas_limit == rhs.gas_limit) && (this->gas_used == rhs.gas_used) &&
            (this->time == rhs.time) && (this->extra == rhs.extra) && (this->mix_digest == rhs.mix_digest) && (this->nonce == rhs.nonce) &&
-           (this->base_fee.value() == rhs.base_fee.value()) && (this->withdrawals_hash.value() == rhs.withdrawals_hash.value());
+           (this->base_fee == rhs.base_fee) && (this->withdrawals_hash == rhs.withdrawals_hash);
 }
 
 xh256_t xeth_header_t::hash() const {
