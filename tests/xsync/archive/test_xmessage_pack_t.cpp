@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#define protected public
+#define private   public
 #include "xsync/xsync_message.h"
 #include "common_func.h"
 #include "xsync/xsync_util.h"
@@ -13,6 +15,11 @@
 #include "xsync/xmessage_pack.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "test_message_class_codec.hpp"
+#include "xsync/xgossip_message.h"
+#undef protected
+#undef private
+
+
 
 #include <sys/time.h>
 #include <sys/timeb.h>
@@ -533,3 +540,463 @@ TEST(test_xmessage_pack_t, xmessage_pack_big_pack_message_test)
         }
     }
 }
+
+
+#define MESSAGE_VECTOR_COUNT (20)
+
+TEST(test_xmessage_pack_t, sync_gossip_normal_and_error) {
+    // 0 is normal, 1 2 is error
+    for (int i = 0; i < 3; i++) {
+    
+        std::vector<xgossip_chain_info_ptr_t> info_list;
+        for (int j = 0; j < MESSAGE_VECTOR_COUNT; j++) {
+            xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
+            info->owner = "Ta0000@"  + std::to_string(j);
+            info->max_height = j + 100;
+            info_list.push_back(info);
+        }
+        xbyte_buffer_t bloom_data(32, 0);
+        auto body = make_object_ptr<xsync_message_gossip_t>(info_list, bloom_data);
+
+        base::xstream_t pack_stream(base::xcontext_t::instance());
+        auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+        header->serialize_to(pack_stream);
+        if (1 == i) {
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+        }
+      
+        if (i != 2) {
+            ASSERT_EQ(body->info_list.size(), MESSAGE_VECTOR_COUNT);
+            body->serialize_to(pack_stream);
+        } else {
+            std::string str = "1234567890";
+            pack_stream << str;
+        }
+
+
+        vnetwork::xmessage_t _msg = vnetwork::xmessage_t({pack_stream.data(), pack_stream.data() + pack_stream.size()}, xmessage_id_sync_frozen_gossip);
+      
+        vnetwork::xmessage_t pack_msg;
+        xmessage_pack_t::pack_message(_msg, false, pack_msg, false);
+
+        xbyte_buffer_t unpack_msg;
+        vnetwork::xmessage_t::message_type msg_type = pack_msg.id();
+        xmessage_pack_t::unpack_message(pack_msg.payload(), msg_type, unpack_msg);
+
+        if (0 == i) {
+            //
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto ptr = make_object_ptr<xsync_message_gossip_t>();
+            len = ptr->serialize_from(unpack_stream);
+            ASSERT_EQ(ptr->info_list.size(), MESSAGE_VECTOR_COUNT);
+            for (int index = 0; index < MESSAGE_VECTOR_COUNT; index++) {
+                ASSERT_EQ(ptr->info_list[index]->owner, body->info_list[index]->owner);
+                ASSERT_EQ(ptr->info_list[index]->max_height, body->info_list[index]->max_height);
+                ASSERT_EQ(ptr->info_list[index]->owner,  "Ta0000@"  + std::to_string(index));
+                ASSERT_EQ(ptr->info_list[index]->max_height, (index + 100));
+            }
+        } else {  // is error
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto ptr = make_object_ptr<xsync_message_gossip_t>();
+            len = ptr->serialize_from(unpack_stream);
+            ASSERT_EQ(ptr->info_list.size(), 0);
+        }
+
+    }
+}
+
+TEST(test_xmessage_pack_t, sync_broadcast_chain_state_normal_and_error) {
+    // 0 is normal, 1 2 is error
+    for (int i = 0; i < 3; i++) {
+        std::cout << "i " << i << std::endl;
+        base::xstream_t pack_stream(base::xcontext_t::instance());
+        auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+        if (1 == i) {
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+        }
+        header->serialize_to(pack_stream);
+
+        std::vector<xchain_state_info_t> info_list;
+
+        for (int j = 0; j < MESSAGE_VECTOR_COUNT; j++) {
+            xchain_state_info_t info;
+            info.address = "T800001753d40631a3ad31568c3141272cac45692888d1";
+            info.start_height = j;
+            info.end_height = j + 100;
+            info_list.push_back(info);
+        }
+
+        auto body = make_object_ptr<xsync_message_chain_state_info_t>(info_list);
+        if (i != 2) {
+            ASSERT_EQ(body->info_list.size(), MESSAGE_VECTOR_COUNT);
+            body->serialize_to(pack_stream);
+        } else {
+            std::string str = "1234567890";
+            pack_stream << str;
+        }
+
+        vnetwork::xmessage_t _msg = vnetwork::xmessage_t({pack_stream.data(), pack_stream.data() + pack_stream.size()}, xmessage_id_sync_broadcast_chain_state);
+        vnetwork::xmessage_t pack_msg;
+        xmessage_pack_t::pack_message(_msg, false, pack_msg, false);
+
+        xbyte_buffer_t unpack_msg;
+        vnetwork::xmessage_t::message_type msg_type = pack_msg.id();
+        xmessage_pack_t::unpack_message(pack_msg.payload(), msg_type, unpack_msg);
+
+        if (0 == i) {
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
+            len = ptr->serialize_from(unpack_stream);
+            ASSERT_EQ(ptr->info_list.size(), MESSAGE_VECTOR_COUNT);
+            for (int index = 0; index < MESSAGE_VECTOR_COUNT; index++) {
+                ASSERT_EQ(ptr->info_list[index].address, body->info_list[index].address);
+                ASSERT_EQ(ptr->info_list[index].start_height, body->info_list[index].start_height);
+                ASSERT_EQ(ptr->info_list[index].end_height, body->info_list[index].end_height);
+                ASSERT_EQ(ptr->info_list[index].address, "T800001753d40631a3ad31568c3141272cac45692888d1");
+                ASSERT_EQ(ptr->info_list[index].start_height, index);
+                ASSERT_EQ(ptr->info_list[index].end_height, (index + 100));
+            }
+        } else {  // is error
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            std::cout << "xsync_message_chain_state_info_t unpack_header check error len " << len << std::endl;
+            auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
+            len = ptr->serialize_from(unpack_stream);
+            ASSERT_EQ(ptr->info_list.size(), 0);
+        }
+    }
+}
+
+TEST(test_xmessage_pack_t, sync_newblock_push_normal_and_error) {
+    mock::xvchain_creator * m_creator = new mock::xvchain_creator(true);
+    m_creator->create_blockstore_with_xstore();
+    base::xvblockstore_t * m_blockstore = m_creator->get_blockstore();
+    mock::xdatamock_table m_mocktable;
+    m_mocktable.genrate_table_chain(MESSAGE_VECTOR_COUNT, m_blockstore);
+
+    const std::vector<xblock_ptr_t> & tables = m_mocktable.get_history_tables();
+    std::string address = m_mocktable.get_account();
+
+    xsync_session_manager_t session_mager_t(100, 1000);
+
+    // 0 is normal, 1 2 is error
+    for (int i = 0; i < 3; i++) {
+        xwarn("xmessage_pack_t::sync_newblock_push_normal_and_error i %d ", i);
+        std::cout << "i " << i << std::endl;
+
+        std::vector<data::xblock_ptr_t> block_vec{tables[0]};
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_push, 0, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+        auto block_str_vec = convert_blocks_to_stream(enum_sync_data_all, block_vec);
+        auto body = make_object_ptr<xsync_msg_block_push_t>(address, request_option, block_str_vec);
+
+        base::xstream_t pack_stream(base::xcontext_t::instance());
+        auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+        if (1 == i) {
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+        }
+        header->serialize_to(pack_stream);
+        if (i != 2) {
+            ASSERT_EQ(block_vec.size(), 1);
+            body->serialize_to(pack_stream);
+        } else {
+            std::string str = "1234567890";
+            pack_stream << str;
+        }
+
+        vnetwork::xmessage_t _msg = vnetwork::xmessage_t({pack_stream.data(), pack_stream.data() + pack_stream.size()}, xmessage_id_sync_newblock_push);
+        vnetwork::xmessage_t pack_msg;
+        xmessage_pack_t::pack_message(_msg, false, pack_msg, false);
+
+        xbyte_buffer_t unpack_msg;
+        vnetwork::xmessage_t::message_type msg_type = pack_msg.id();
+        xmessage_pack_t::unpack_message(pack_msg.payload(), msg_type, unpack_msg);
+        std::cout << "unpack_msg sync_newblock_push_normal_and_error size" << unpack_msg.size() << std::endl;
+
+        if (0 == i) {
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            std::cout << "sync_newblock_push_normal_and_error unpack_header check ok len " << len << std::endl;
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_push_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+
+            ASSERT_EQ(session_mager_t.sync_block_push_valid_check(msg_push_ptr), true); 
+            auto unpack_blocks_vec = msg_push_ptr->get_all_xblock_ptr();
+
+            ASSERT_EQ(unpack_blocks_vec.size(), 1);
+            ASSERT_EQ(msg_push_ptr->get_address(), address);
+            ASSERT_EQ(msg_push_ptr->get_request_type(), body->get_request_type());
+            ASSERT_EQ(msg_push_ptr->get_requeset_param_type(), body->get_requeset_param_type());
+            ASSERT_EQ(msg_push_ptr->get_data_type(), body->get_data_type());
+            ASSERT_EQ(msg_push_ptr->get_block_object_type(), body->get_block_object_type());
+            ASSERT_EQ(msg_push_ptr->get_extend_bits(), body->get_extend_bits());
+            ASSERT_EQ(msg_push_ptr->get_option(), body->get_option());
+            ASSERT_EQ(msg_push_ptr->get_block_version(), body->get_block_version());
+            ASSERT_EQ(msg_push_ptr->get_push_option(), body->get_push_option());
+            ASSERT_EQ(msg_push_ptr->get_extend_data(), body->get_extend_data());
+
+        } else {  // is error
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_push_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+            auto unpack_blocks_vec = msg_push_ptr->get_all_xblock_ptr();
+
+            ASSERT_EQ(session_mager_t.sync_block_push_valid_check(msg_push_ptr), false); 
+            ASSERT_EQ(unpack_blocks_vec.size(), 0);
+        }
+    }
+}
+
+
+TEST(test_xmessage_pack_t, sync_block_request_normal_and_error) {
+
+    xsync_session_manager_t session_mager_t(100, 1000);
+
+    // 0 is normal, 1 2 is error
+    for (int i = 0; i < 3; i++) {
+        std::cout << "i " << i << std::endl;
+
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_ontime, enum_sync_block_by_height, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+        auto body = make_object_ptr<xsync_msg_block_request_t>("Ta0000@1", request_option, 1, 100, "");
+
+        base::xstream_t pack_stream(base::xcontext_t::instance());
+        auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+        if (1 == i) {
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+        }
+        header->serialize_to(pack_stream);
+        if (i != 2) {
+            body->serialize_to(pack_stream);
+        } else {
+            std::string str = "1234567890";
+            pack_stream << str;
+        }
+
+        vnetwork::xmessage_t _msg = vnetwork::xmessage_t({pack_stream.data(), pack_stream.data() + pack_stream.size()}, xmessage_id_sync_block_request);
+        vnetwork::xmessage_t pack_msg;
+        xmessage_pack_t::pack_message(_msg, false, pack_msg, false);
+
+        xbyte_buffer_t unpack_msg;
+        vnetwork::xmessage_t::message_type msg_type = pack_msg.id();
+        xmessage_pack_t::unpack_message(pack_msg.payload(), msg_type, unpack_msg);
+
+        if (0 == i) {
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_request_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+
+            ASSERT_EQ(session_mager_t.sync_block_request_valid_check(msg_push_ptr), true); 
+
+            std::cout << "sync_block_request_normal_and_error check ok len " << len << std::endl;
+
+            ASSERT_EQ(msg_push_ptr->get_address(), "Ta0000@1");
+            ASSERT_EQ(msg_push_ptr->get_request_type(), body->get_request_type());
+            ASSERT_EQ(msg_push_ptr->get_requeset_param_type(), body->get_requeset_param_type());
+            ASSERT_EQ(msg_push_ptr->get_data_type(), body->get_data_type());
+            ASSERT_EQ(msg_push_ptr->get_block_object_type(), body->get_block_object_type());
+            ASSERT_EQ(msg_push_ptr->get_extend_bits(), body->get_extend_bits());
+            ASSERT_EQ(msg_push_ptr->get_requeset_param_str(), body->get_requeset_param_str());
+            ASSERT_EQ(msg_push_ptr->get_request_start_height(), 1);
+            ASSERT_EQ(msg_push_ptr->get_time(), 0);
+            ASSERT_EQ(msg_push_ptr->get_count(), 100);
+
+        } else {  // is error
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_request_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+            ASSERT_EQ(session_mager_t.sync_block_request_valid_check(msg_push_ptr), false); 
+        }
+    }
+}
+
+TEST(test_xmessage_pack_t, sync_block_response_normal_and_error) {
+    mock::xvchain_creator * m_creator = new mock::xvchain_creator(true);
+    m_creator->create_blockstore_with_xstore();
+    base::xvblockstore_t * m_blockstore = m_creator->get_blockstore();
+    mock::xdatamock_table m_mocktable;
+    m_mocktable.genrate_table_chain(MESSAGE_VECTOR_COUNT, m_blockstore);
+
+    const std::vector<xblock_ptr_t> & tables = m_mocktable.get_history_tables();
+    std::string address = m_mocktable.get_account();
+
+    xsync_session_manager_t session_mager_t(100, 1000);
+
+    uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_ontime, enum_sync_block_by_height, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+    auto request_ptr = make_object_ptr<xsync_msg_block_request_t>(address, request_option, 1, MESSAGE_VECTOR_COUNT, "");
+
+    // 0 is normal, 1 2 is error
+    for (int i = 0; i < 3; i++) {
+        std::cout << "i " << i << std::endl;
+
+        session_mager_t.sync_block_request_insert(request_ptr);
+
+        // create response
+
+        auto block_str_vec = convert_blocks_to_stream(request_ptr->get_data_type(), tables);
+        auto body = make_object_ptr<xsync_msg_block_response_t>(request_ptr->get_sessionID(), request_ptr->get_address(), request_ptr->get_option(), block_str_vec, 0, "");
+
+        base::xstream_t pack_stream(base::xcontext_t::instance());
+        auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+        if (1 == i) {
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+        }
+        header->serialize_to(pack_stream);
+        if (i != 2) {
+            body->serialize_to(pack_stream);
+        } else {
+            std::string str = "1234567890";
+            pack_stream << str;
+        }
+
+        vnetwork::xmessage_t _msg = vnetwork::xmessage_t({pack_stream.data(), pack_stream.data() + pack_stream.size()}, xmessage_id_sync_block_response);
+        vnetwork::xmessage_t pack_msg;
+        xmessage_pack_t::pack_message(_msg, false, pack_msg, false);
+
+        xbyte_buffer_t unpack_msg;
+        vnetwork::xmessage_t::message_type msg_type = pack_msg.id();
+        xmessage_pack_t::unpack_message(pack_msg.payload(), msg_type, unpack_msg);
+
+        if (0 == i) {
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_response_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+
+            ASSERT_EQ(session_mager_t.sync_block_resopnse_valid_check(msg_push_ptr, request_ptr), true);
+            ASSERT_EQ(session_mager_t.m_request_ptr_cache.size(), 0);
+
+            ASSERT_EQ(msg_push_ptr->get_address(), address);
+            ASSERT_EQ(msg_push_ptr->get_request_type(), body->get_request_type());
+            ASSERT_EQ(msg_push_ptr->get_requeset_param_type(), body->get_requeset_param_type());
+            ASSERT_EQ(msg_push_ptr->get_data_type(), body->get_data_type());
+            ASSERT_EQ(msg_push_ptr->get_block_object_type(), body->get_block_object_type());
+            ASSERT_EQ(msg_push_ptr->get_extend_bits(), body->get_extend_bits());
+            ASSERT_EQ(msg_push_ptr->get_block_version(), body->get_block_version());
+            ASSERT_EQ(msg_push_ptr->get_response_option(), body->get_response_option());
+
+            auto unpack_blocks_vec = msg_push_ptr->get_all_xblock_ptr();
+            ASSERT_EQ(unpack_blocks_vec.size(), MESSAGE_VECTOR_COUNT+1);
+
+        } else {  // is error
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_response_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+            ASSERT_EQ(session_mager_t.sync_block_resopnse_valid_check(msg_push_ptr, request_ptr), false);
+            ASSERT_EQ(session_mager_t.m_request_ptr_cache.size(), 1);
+            auto unpack_blocks_vec = msg_push_ptr->get_all_xblock_ptr();
+            ASSERT_EQ(unpack_blocks_vec.size(), 0);
+        }
+    }
+}
+
+TEST(test_xmessage_pack_t, sync_block_response_bigpack_normal_and_error) {
+    mock::xvchain_creator * m_creator = new mock::xvchain_creator(true);
+    m_creator->create_blockstore_with_xstore();
+    base::xvblockstore_t * m_blockstore = m_creator->get_blockstore();
+    mock::xdatamock_table m_mocktable;
+    m_mocktable.genrate_table_chain(MESSAGE_VECTOR_COUNT, m_blockstore);
+
+    const std::vector<xblock_ptr_t> & tables = m_mocktable.get_history_tables();
+    std::string address = m_mocktable.get_account();
+
+    xsync_session_manager_t session_mager_t(100, 1000);
+
+    uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_ontime, enum_sync_block_by_height, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+    auto request_ptr = make_object_ptr<xsync_msg_block_request_t>(address, request_option, 1, MESSAGE_VECTOR_COUNT, "");
+
+    // 0 is normal, 1 2 is error
+    for (int i = 0; i < 3; i++) {
+        std::cout << "i " << i << std::endl;
+
+        session_mager_t.sync_block_request_insert(request_ptr);
+
+        // create response
+
+        auto block_str_vec = convert_blocks_to_stream(request_ptr->get_data_type(), tables);
+        auto body = make_object_ptr<xsync_msg_block_response_t>(request_ptr->get_sessionID(), request_ptr->get_address(), request_ptr->get_option(), block_str_vec, 0, "");
+
+        base::xstream_t pack_stream(base::xcontext_t::instance());
+        auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+        if (1 == i) {
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+            header->serialize_to(pack_stream);
+        }
+        header->serialize_to(pack_stream);
+        if (i != 2) {
+            body->serialize_to(pack_stream);
+        } else {
+            std::string str = "1234567890";
+            pack_stream << str;
+        }
+
+        vnetwork::xmessage_t _msg = vnetwork::xmessage_t({pack_stream.data(), pack_stream.data() + pack_stream.size()}, xmessage_id_sync_block_response);
+        vnetwork::xmessage_t pack_msg;
+        xmessage_pack_t::pack_message(_msg, true, pack_msg, true);
+
+        xbyte_buffer_t unpack_msg;
+        vnetwork::xmessage_t::message_type msg_type = pack_msg.id();
+        xmessage_pack_t::unpack_message(pack_msg.payload(), msg_type, unpack_msg);
+
+        if (0 == i) {
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_response_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+
+            ASSERT_EQ(session_mager_t.sync_block_resopnse_valid_check(msg_push_ptr, request_ptr), true);
+            ASSERT_EQ(session_mager_t.m_request_ptr_cache.size(), 0);
+
+            ASSERT_EQ(msg_push_ptr->get_address(), address);
+            ASSERT_EQ(msg_push_ptr->get_request_type(), body->get_request_type());
+            ASSERT_EQ(msg_push_ptr->get_requeset_param_type(), body->get_requeset_param_type());
+            ASSERT_EQ(msg_push_ptr->get_data_type(), body->get_data_type());
+            ASSERT_EQ(msg_push_ptr->get_block_object_type(), body->get_block_object_type());
+            ASSERT_EQ(msg_push_ptr->get_extend_bits(), body->get_extend_bits());
+            ASSERT_EQ(msg_push_ptr->get_block_version(), body->get_block_version());
+            ASSERT_EQ(msg_push_ptr->get_response_option(), body->get_response_option());
+
+            auto unpack_blocks_vec = msg_push_ptr->get_all_xblock_ptr();
+            ASSERT_EQ(unpack_blocks_vec.size(), MESSAGE_VECTOR_COUNT+1);
+
+        } else {  // is error
+            base::xstream_t unpack_stream(base::xcontext_t::instance(), (uint8_t *)unpack_msg.data(), unpack_msg.size());
+            xsync_message_header_ptr_t unpack_header = make_object_ptr<xsync_message_header_t>();
+            auto len = unpack_header->serialize_from(unpack_stream);
+            auto msg_push_ptr = make_object_ptr<xsync_msg_block_response_t>();
+            len = msg_push_ptr->serialize_from(unpack_stream);
+            ASSERT_EQ(session_mager_t.sync_block_resopnse_valid_check(msg_push_ptr, request_ptr), false);
+            ASSERT_EQ(session_mager_t.m_request_ptr_cache.size(), 1);
+            auto unpack_blocks_vec = msg_push_ptr->get_all_xblock_ptr();
+            ASSERT_EQ(unpack_blocks_vec.size(), 0);
+        }
+    }
+}
+

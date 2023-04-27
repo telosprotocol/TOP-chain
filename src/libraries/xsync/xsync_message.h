@@ -187,9 +187,14 @@ protected:
             KEEP_SIZE();
 
             DESERIALIZE_CONTAINER(info_list) {
-
+                int32_t start_size = stream.size();
                 xchain_state_info_t info;
                 info.serialize_from(stream);
+                int32_t now_size = stream.size();
+                if (start_size == now_size) {
+                   //xwarn("enum_xerror_code_bad_packet start_size %d len %d now_size %d", start_size, len, now_size);
+                  throw enum_xerror_code_bad_packet;
+                }
                 info_list.push_back(info);
             }
 

@@ -503,14 +503,24 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
 
     // compare before and after
     for (uint32_t i = 0; i < count; i++) {
-        xblock_ptr_t &block = blocks[i];
+        xblock_ptr_t & block = blocks[i];
         enum_result_code ret = handle_block(block, next_block->get_height());
 
         if (ret == enum_result_code::success) {
             xsync_dbg("chain_downloader on_response(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
-                m_address.c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_last_block_hash()).c_str());
-        } else if (ret == enum_result_code::failed) {
+                      m_address.c_str(),
+                      block->get_height(),
+                      block->get_viewid(),
+                      to_hex_str(block->get_last_block_hash()).c_str());
+        } else {
             xsync_warn("chain_downloader on_response(failed) reason %d, block is: %s", ret, block->dump().c_str());
+            if (ret == auth_failed) {
+                return invalid_node;
+            } else if (ret == wait_auth_data) {
+                return wait_data;
+            } else {
+                return abort;
+            }
         }
     }
 

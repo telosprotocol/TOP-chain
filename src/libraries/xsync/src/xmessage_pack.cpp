@@ -116,9 +116,11 @@ void xmessage_pack_t::unpack_message(const xbyte_buffer_t& packed_msg,
                          packed_msg.size());
 
     xmessage_pack_t mp;
-    mp.serialize_from(pack);
-
-    msg = std::move(mp.message);
+    if (mp.serialize_from(pack) < 0) {
+        xwarn("xmessage_pack_t::unpack_message error");
+    } else {
+        msg = std::move(mp.message);
+    }
 }
 
 void xmessage_pack_t::unpack_message(const xbyte_buffer_t& packed_msg, vnetwork::xmessage_t::message_type &msg_type,
