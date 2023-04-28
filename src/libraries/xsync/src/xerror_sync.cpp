@@ -37,7 +37,7 @@ void XErrorSync_obj::set_error_height(xchain_state_info_t & info) {
 std::vector<top::data::xblock_ptr_t> XErrorSync_obj::set_error_block_vector(std::vector<top::data::xblock_ptr_t> const & vector_blocks) {
     if (!m_time_error_rejecter.reject()) {
         m_error_type++;
-        if (m_error_type > (int)(kErrorQcertNonce)) {
+        if (m_error_type >= (int)(kErrorQcertNonce)) {
             m_error_type = (int)kErrorNoError;
         }
     }
