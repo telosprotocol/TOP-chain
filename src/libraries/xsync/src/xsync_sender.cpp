@@ -125,6 +125,7 @@ void xsync_sender_t::send_broadcast_chain_state(const std::vector<xchain_state_i
 
 void xsync_sender_t::send_response_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
     auto body = make_object_ptr<xsync_message_chain_state_info_t>(info_list);
+
     send_message(body, xmessage_id_sync_response_chain_state, "response_chain_state", self_addr, target_addr);
     xsync_dbg("xsync_sender_t send response_chain_state count(%u) src %s dst %s", info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 }
@@ -253,6 +254,7 @@ bool xsync_sender_t::send_message(
     base::xstream_t stream(base::xcontext_t::instance());
     auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
     header->serialize_to(stream);
+    //test,rank
     if(!without_dataunit_serialize) {
         serializer->serialize_to(stream);
     } else {
@@ -269,7 +271,15 @@ bool xsync_sender_t::send_message(
     XMETRICS_COUNTER_INCREMENT(bytes_metric_name, msg.payload().size());
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
     
-    xsync_info("xsync_sender_t %s %s msg_id: %x msg_hash: %" PRIx64" send to %s", self_addr.to_string().c_str(), metric_key.c_str(), msg.id(),  msg.hash(),target_addr.to_string().c_str());
+    int random_send = xtime_utl::get_fast_randomu() % 100;
+    if (random_send < 6) {
+         xsync_info("xsync_sender_t droped %s %s msg_id: %x msg_hash: %" PRIx64" send to %s random_send %d", 
+                    self_addr.to_string().c_str(), metric_key.c_str(), msg.id(),  msg.hash(),target_addr.to_string().c_str(), random_send);
+        return true;
+    }
+
+    xsync_info("xsync_sender_t %s %s msg_id: %x msg_hash: %" PRIx64" send to %s random_send %d", 
+                self_addr.to_string().c_str(), metric_key.c_str(), msg.id(),  msg.hash(),target_addr.to_string().c_str(), random_send);
     std::error_code ec;
     if (self_addr.zone_id() == common::xfrozen_zone_id)
         m_vhost->send_to_through_frozen(self_addr, target_addr, msg, ec);

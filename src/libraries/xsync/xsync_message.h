@@ -198,6 +198,9 @@ protected:
                 info_list.push_back(info);
             }
 
+
+
+
             return CALC_LEN();
         } catch (...) {
             info_list.clear();

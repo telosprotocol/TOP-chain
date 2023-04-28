@@ -8,6 +8,8 @@
 #include "xsync/xsync_prune.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xnative_contract_address.h"
+//test,rank
+#include "xsync/xerror_sync.h"
 
 NS_BEG2(top, sync)
 
@@ -158,7 +160,9 @@ void xsync_peer_keeper_t::walk_role(const common::xnode_address_t &self_addr, co
         xchain_state_info_t info;
         info.address = address;
         info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
-        info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);        
+        info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);   
+        //test,rank
+        top::sync::XErrorSync_obj::instance().set_error_height(info);    
         info_list.push_back(info);
     }
 

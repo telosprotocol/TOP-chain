@@ -210,7 +210,7 @@ namespace top
             //part#3:extra data
             inline const std::string &         get_extra_data()             const {return m_extra_data;}
 
-        protected: //the reason provide beblow setting, just given subclass the flex for construction function
+        public: //the reason provide beblow setting, just given subclass the flex for construction function
 
             //[1][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_character] =  [1][3][3][7][2] = 16bits
             inline void                 set_block_level(enum_xvblock_level _level)  {m_types = ( (m_types & 0x8FFF) | (_level << 12));}
@@ -419,6 +419,7 @@ namespace top
 
             virtual int32_t      serialize_to_string(std::string & bin_data) override final; //wrap function fo serialize_to(stream)
 
+            void                 set_error_nonce(const uint64_t nonce) { m_nonce = nonce; add_modified_count();}
         protected: //note: not allow do any modify once m_verify_signature/m_audit_signature is valid or  m_parent_cert is valid
 
             //[3bit[2bit][3bit] = [enum_xconsensus_type][enum_xconsensus_threshold][enum_xconsensus_audit_flag]

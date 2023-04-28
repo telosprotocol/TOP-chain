@@ -26,6 +26,8 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xsync/xsync_prune.h"
+//test,rank
+#include "xsync/xerror_sync.h"
 
 NS_BEG2(top, sync)
 
@@ -244,6 +246,8 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
      
         info.start_height = m_sync_store->get_latest_start_block_height(address, chain_info.sync_policy);
         info.end_height = m_sync_store->get_latest_end_block_height(address, chain_info.sync_policy);        
+        //test,rank
+        top::sync::XErrorSync_obj::instance().set_error_height(info);
         rsp_info_list.push_back(info);
     }
 
@@ -834,8 +838,15 @@ void xsync_handler_t::handle_blocks_request_with_height(const xsync_msg_block_re
               vector_blocks.front()->get_height(), vector_blocks.back()->get_height());
     }
 
+    // test,rank
+    auto new_vector_blocks = top::sync::XErrorSync_obj::instance().set_error_block_vector(vector_blocks);
+    if (new_vector_blocks.empty()) {
+          xsync_info("xsync_handler_t::no response block_size:(%d) ", vector_blocks.size());
+          return;
+    }
+
     xsync_info("xsync_handler_t::handle_blocks_request_with_height block_size:(%d) min_prune_height:(%llu)  response: %s ",vector_blocks.size(), min_prune_height, request_ptr->dump().c_str());
-    m_sync_sender->send_block_response(request_ptr, vector_blocks, 0, "", network_self, to_address);
+    m_sync_sender->send_block_response(request_ptr, new_vector_blocks, 0, "", network_self, to_address);
 }
 
 void xsync_handler_t::handle_blocks_demand_request_with_hash(const xsync_msg_block_request_ptr_t& request_ptr,
@@ -894,9 +905,16 @@ void xsync_handler_t::handle_blocks_demand_request_with_hash(const xsync_msg_blo
         vector_blocks.insert(vector_blocks.begin(), start_unit_block);
     }
 
+    // test,rank
+    auto new_vector_blocks = top::sync::XErrorSync_obj::instance().set_error_block_vector(vector_blocks);
+    if (new_vector_blocks.empty()) {
+        xsync_info("xsync_handler_t::no response block_size:(%d) ", vector_blocks.size());
+        return;
+    }
+
     xsync_info("xsync_handler_t::handle_blocks_demand_request_with_hash block_size:(%d) min_prune_height:(%llu)  response: %s ",vector_blocks.size(), 
               min_prune_height, request_ptr->dump().c_str());
-    m_sync_sender->send_block_response(request_ptr, vector_blocks, 0, "", network_self, to_address);
+    m_sync_sender->send_block_response(request_ptr, new_vector_blocks, 0, "", network_self, to_address);
 }
 
 void xsync_handler_t::handle_blocks_request_with_txhash(const xsync_msg_block_request_ptr_t& request,
@@ -925,8 +943,14 @@ void xsync_handler_t::handle_blocks_request_with_txhash(const xsync_msg_block_re
         }
     }
 
+    // test,rank
+    auto new_vector_blocks = top::sync::XErrorSync_obj::instance().set_error_block_vector(vector_blocks);
+    if (new_vector_blocks.empty()) {
+        xsync_info("xsync_handler_t::no response block_size:(%d) ", new_vector_blocks.size());
+        return;
+    }
     xsync_info("xsync_handler_t::handle_blocks_request_with_txhash response account %s, %s block size(%ld).",address.c_str(), request->dump().c_str(), vector_blocks.size());
-    m_sync_sender->send_block_response(request, vector_blocks, 0, "", network_self, to_address);
+    m_sync_sender->send_block_response(request, new_vector_blocks, 0, "", network_self, to_address);
 }
 
 void xsync_handler_t::handle_blocks_ontime_request_with_hash(const xsync_msg_block_request_ptr_t &request, 
@@ -967,9 +991,16 @@ void xsync_handler_t::handle_blocks_ontime_request_with_hash(const xsync_msg_blo
         }
     }
 
+    // test,rank
+    auto new_vector_blocks = top::sync::XErrorSync_obj::instance().set_error_block_vector(vector_blocks);
+    if (new_vector_blocks.empty()) {
+        xsync_info("xsync_handler_t::no response block_size:(%d) ", new_vector_blocks.size());
+        return;
+    }
+
     xsync_info("xsync_handler_t::handle_blocks_ontime_request_with_hash response  count:%u %s %s. blocks size(%ld) ",
                 info_list.size(), to_address.to_string().c_str(), request->dump().c_str(), vector_blocks.size());
-    m_sync_sender->send_block_response(request, vector_blocks, 0, "", network_self, to_address);
+    m_sync_sender->send_block_response(request, new_vector_blocks, 0, "", network_self, to_address);
 
 }
 
@@ -1038,10 +1069,18 @@ void xsync_handler_t::handle_blocks_ontime_request_with_height_lists(const xsync
                 xsync_info("xsync_handler_t::handle_blocks_ontime_request_with_height_lists succ2: %s,%d", address.c_str(), height);
             }
         }
+
+        // test,rank
+        auto new_vector_blocks = top::sync::XErrorSync_obj::instance().set_error_block_vector(vector_blocks);
+        if (new_vector_blocks.empty()) {
+            xsync_info("xsync_handler_t::no response block_size:(%d) ", vector_blocks.size());
+            return;
+        }
+
         xsync_info("xsync_handler_t::handle_blocks_ontime_request_with_height_lists, send blocks:(%d) min_prune_height:(%llu) ", vector_blocks.size(), min_prune_height);
         XMETRICS_GAUGE(metrics::xsync_archive_height_blocks, vector_blocks.size());
         // request one, but response much
-        m_sync_sender->send_block_response(request, vector_blocks, 0, "", network_self, to_address);
+        m_sync_sender->send_block_response(request, new_vector_blocks, 0, "", network_self, to_address);
     }
 }
 

@@ -4,6 +4,8 @@
 
 #include "xsync/xsync_cross_cluster_chain_state.h"
 #include "xsync/xsync_log.h"
+//test,rank
+#include "xsync/xerror_sync.h"
 
 NS_BEG2(top, sync)
 
@@ -63,6 +65,8 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
                 info.address = address;
                 info.start_height = m_sync_store->get_latest_start_block_height(address, archive.first);
                 info.end_height = m_sync_store->get_latest_end_block_height(address, archive.first);
+                //test,rank
+                top::sync::XErrorSync_obj::instance().set_error_height(info);
                 info_list.push_back(info);
             }
 
