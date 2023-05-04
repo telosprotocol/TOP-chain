@@ -81,7 +81,7 @@ std::vector<top::data::xblock_ptr_t> XErrorSync_obj::set_block_valid_sign(std::v
             block->reset_block_flags(block->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);  // reset all status flags and redo it from authenticated status
             block->set_verify_signature(muti_signature);
             block->set_block_flag(base::enum_xvblock_flag_authenticated);
-            xinfo("XErrorSync_obj::set_block_valid_sign set block valid sign block %s", block->dump().c_str());
+            xinfo("XErrorSync_obj::set_block_valid_sign set block valid sign block %s new_hash:%s", block->dump().c_str(), base::xstring_utl::to_hex(block->get_block_hash()).c_str());
         }
         return new_block_vec;
     }
@@ -99,7 +99,7 @@ std::vector<top::data::xblock_ptr_t> XErrorSync_obj::set_block_lower_height(std:
 
         for (auto & block : new_block_vec) {
             block->get_header()->set_height(block->get_height() - height_interval);
-            xinfo("XErrorSync_obj::set_block_lower_height set block valid sign block %s", block->dump().c_str());
+            xinfo("XErrorSync_obj::set_block_lower_height set block %s new_hash:%s", block->dump().c_str(), base::xstring_utl::to_hex(block->get_block_hash()).c_str());
         }
         return new_block_vec;
     }
@@ -113,7 +113,7 @@ std::vector<top::data::xblock_ptr_t> XErrorSync_obj::set_block_super_height(std:
 
         for (auto & block : new_block_vec) {
             block->get_header()->set_height(block->get_height() + 200);
-            xinfo("XErrorSync_obj::set_block_super_height set block valid sign block %s", block->dump().c_str());
+            xinfo("XErrorSync_obj::set_block_super_height set block %s new_hash:%s", block->dump().c_str(), base::xstring_utl::to_hex(block->get_block_hash()).c_str());
         }
         return new_block_vec;
     }
@@ -127,7 +127,7 @@ std::vector<top::data::xblock_ptr_t> XErrorSync_obj::set_block_error_nonce(std::
 
         for (auto & block : new_block_vec) {          
             block->get_cert()->set_error_nonce(block->get_cert()->get_nonce() + 10);
-            xinfo("XErrorSync_obj::set_block_error_nonce set block error nonce  block %s", block->dump().c_str());
+            xinfo("XErrorSync_obj::set_block_error_nonce set block %s new_hash:%s", block->dump().c_str(), base::xstring_utl::to_hex(block->get_block_hash()).c_str());
         }
         return new_block_vec;
     }
