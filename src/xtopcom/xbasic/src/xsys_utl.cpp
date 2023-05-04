@@ -77,7 +77,7 @@ int xsys_utl_t::check_and_remove_old_log_files(std::string const & log_path, int
 
     struct dirent * entry;
     while ((entry = readdir(dir)) != nullptr) {
-        if (entry->d_type == DT_REG) {
+        if (DT_REG == entry->d_type || DT_UNKNOWN == entry->d_type) {
             if (strstr(entry->d_name, ".log") == nullptr) {
                 continue;
             }
