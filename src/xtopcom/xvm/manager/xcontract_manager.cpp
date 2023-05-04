@@ -2395,14 +2395,17 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
                               Json::Value & json) {
     auto headers = unitstate->map_get(property_name);
     if (headers.empty()) {
-        xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        xdbg("get_eth_chains_hash, contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
     for (auto pair : headers) {
         xbytes_t k{std::begin(pair.first), std::end(pair.first)};
         auto hash = static_cast<evm_common::h256>(k);
         evm_common::xeth_header_t header;
-        if (header.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
+        std::error_code ec;
+        header.decode_rlp({pair.second.begin(), pair.second.end()}, ec);
+        if (ec) {
+            xwarn("get_eth_chains_hash, contract_address: %s, property_name: %s, decode_rlp error %s", contract_address.to_string().c_str(), property_name.c_str(), ec.message().c_str());
             continue;
         }
         Json::Value j_header;
@@ -2551,10 +2554,10 @@ static void get_current_sync_committee(common::xaccount_address_t const & contra
         xwarn("[get_current_sync_committee] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    for (auto p : committee.pubkeys) {
+    for (auto const & p : committee.pubkeys()) {
         json["pubkeys"].append(to_hex(p));
     }
-    json["aggregate_pubkey"] = to_hex(committee.aggregate_pubkey);
+    json["aggregate_pubkey"] = to_hex(committee.aggregate_pubkey());
 }
 
 static void get_next_sync_committee(common::xaccount_address_t const & contract_address,
@@ -2572,10 +2575,10 @@ static void get_next_sync_committee(common::xaccount_address_t const & contract_
         xwarn("[get_next_sync_committee] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    for (auto p : committee.pubkeys) {
+    for (auto const & p : committee.pubkeys()) {
         json["pubkeys"].append(to_hex(p));
     }
-    json["aggregate_pubkey"] = to_hex(committee.aggregate_pubkey);
+    json["aggregate_pubkey"] = to_hex(committee.aggregate_pubkey());
 }
 
 static void get_chain_last_hash(common::xaccount_address_t const & contract_address,
@@ -2639,11 +2642,11 @@ static void get_node_manage_info_map(common::xaccount_address_t const & contract
                                     const xjson_format_t json_format,
                                     Json::Value & json) {
     std::map<std::string, std::string> info_map = unitstate->map_get(property_name);
-    if (info_map.size() < 1) {
+    if (info_map.empty()) {
         xdbg("[get_node_manage_info_map] contract_address: %s, property_name: %s,info_map.size() %d, error", contract_address.to_string().c_str(), property_name.c_str(), info_map.size());
         return;
     }
-    for (auto m : info_map) {
+    for (auto const & m : info_map) {
         // auto const &account =  m.first;
         auto const &detail = m.second;
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};

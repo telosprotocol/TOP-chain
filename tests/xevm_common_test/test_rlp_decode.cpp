@@ -94,8 +94,9 @@ TEST(xeth_header_t, fuzzy) {
 
         try {
             xeth_header_t header;
-            auto const ret = header.decode_rlp(bytes);
-            ASSERT_FALSE(ret);
+            std::error_code ec;
+            header.decode_rlp(bytes, ec);
+            ASSERT_FALSE(!ec);
         } catch (std::invalid_argument const &) {
         } catch (std::exception const &) {
             ASSERT_FALSE(true);

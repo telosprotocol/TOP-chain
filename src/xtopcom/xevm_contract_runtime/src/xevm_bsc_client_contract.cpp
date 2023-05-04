@@ -49,14 +49,16 @@ bool xtop_evm_bsc_client_contract::init(xbytes_t const & rlp_bytes, state_ptr st
     // step 2: decode
     auto left_bytes = std::move(rlp_bytes);
     std::vector<xeth_header_t> headers;
+    std::error_code ec;
     while (!left_bytes.empty()) {
         auto item = RLP::decode_once(left_bytes);
         left_bytes = item.remainder;
         xeth_header_t header;
-        if (header.decode_rlp(item.decoded[0]) == false) {
-            xwarn("[xtop_evm_bsc_client_contract::init] header decode error");
+        header.decode_rlp(item.decoded[0], ec);
+        if (ec) {
+            xwarn("[xtop_evm_bsc_client_contract::init] header decode error. msg %s", ec.message().c_str());
             return false;
-        };
+        }
         headers.emplace_back(header);
     }
     // min 12 + 1 to construnct state
@@ -65,7 +67,6 @@ bool xtop_evm_bsc_client_contract::init(xbytes_t const & rlp_bytes, state_ptr st
         return false;
     }
 
-    std::error_code ec;
     xvalidators_snapshot_t snap;
     if (!snap.init_with_double_epoch(headers[0], headers[1])) {
         xwarn("[xtop_evm_bsc_client_contract::init] new_epoch_snapshot error");
@@ -121,11 +122,12 @@ bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         return false;
     }
 
-    auto left_bytes = std::move(rlp_bytes);
-    while (left_bytes.size() != 0) {
+    auto left_bytes = rlp_bytes;
+    std::error_code ec;
+    while (!left_bytes.empty()) {
         // step 2: decode
         auto item = RLP::decode(left_bytes);
-        auto decoded_size = item.decoded.size();
+        auto const decoded_size = item.decoded.size();
         if (decoded_size < 2) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
@@ -135,8 +137,9 @@ bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         {
             auto item_header = RLP::decode_once(item.decoded[0]);
             auto header_bytes = item_header.decoded[0];
-            if (header.decode_rlp(header_bytes) == false) {
-                xwarn("[xtop_evm_bsc_client_contract::sync] decode header error");
+            header.decode_rlp(header_bytes, ec);
+            if (ec) {
+                xwarn("xtop_evm_bsc_client_contract::sync, decode header error, msg %s", ec.message().c_str());
                 return false;
             }
         }
@@ -144,7 +147,7 @@ bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
 
         xvalidators_snapshot_t snap;
         uint32_t const validator_num_index = 1;
-        snap.number = static_cast<uint64_t>(header.number) - 1;
+        snap.number = header.number - 1;
         snap.hash = header.parent_hash;
         auto validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[validator_num_index]);
         // check decoded_size with recent_num
@@ -474,8 +477,10 @@ bool xtop_evm_bsc_client_contract::get_header(h256 const hash, xeth_header_t & h
         xwarn("[xtop_evm_bsc_client_contract::get_header] get_header not exist, hash: %s", hash.hex().c_str());
         return false;
     }
-    if (header.decode_rlp({std::begin(header_str), std::end(header_str)}) == false) {
-        xwarn("[xtop_evm_bsc_client_contract::get_header] decode_header failed, hash: %s", hash.hex().c_str());
+    std::error_code ec;
+    header.decode_rlp({std::begin(header_str), std::end(header_str)}, ec);
+    if (ec) {
+        xwarn("xtop_evm_bsc_client_contract::get_header, decode_header failed, hash: %s, msg %s", hash.hex().c_str(), ec.message().c_str());
         return false;
     }
     return true;

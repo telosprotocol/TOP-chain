@@ -88,6 +88,9 @@ static char const * errc_to_string(int code) {
     case xenum_errc::rlp_list_size_not_match:
         return "rlp list size not match";
 
+    case xenum_errc::invalid_public_key_size:
+        return "invalid public key size";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         assert(false);
         return "unknown evm common error";

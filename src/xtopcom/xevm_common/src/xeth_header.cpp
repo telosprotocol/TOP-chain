@@ -145,62 +145,62 @@ xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
     return RLP::encodeList(out);
 }
 
-bool xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
+void xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
     assert(!ec);
 
     auto l = RLP::decodeList(bytes);
     if (l.decoded.size() < 15) {
         xwarn("xeth_header_t::decode_rlp failed, rlp list size not match");
         ec = error::xerrc_t::rlp_list_size_not_match;
-        return false;
+        return;
     }
 
     if (l.decoded[0].size() != xh256_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp parent hash invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     parent_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[0]}};
 
     if (l.decoded[1].size() != xh256_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp uncle hash invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     uncle_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[1]}};
 
     if (l.decoded[2].size() != xh160_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp miner invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     miner = common::xeth_address_t::build_from(l.decoded[2]);
 
     if (l.decoded[3].size() != xh256_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp state root invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     state_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[3]}};
 
     if (l.decoded[4].size() != xh256_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp transactions root invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     transactions_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[4]}};
 
     if (l.decoded[5].size() != xh256_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp receipts root invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     receipts_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[5]}};
 
     if (l.decoded[6].size() != xh2048_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp bloom invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     bloom = LogBloom{xspan_t<xbyte_t const>{l.decoded[6]}};
 
@@ -214,14 +214,14 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
     if (l.decoded[13].size() != xh256_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp mix digest invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     mix_digest = xh256_t{xspan_t<xbyte_t const>{l.decoded[13]}};
 
     if (l.decoded[14].size() != xh64_t::size()) {
         xwarn("xeth_header_t::decode_rlp failed, rlp nonce invalid");
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
     nonce = xh64_t{xspan_t<xbyte_t const>{l.decoded[14]}};
 
@@ -233,31 +233,28 @@ bool xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
         if (l.decoded[16].size() != xh256_t::size()) {
             xwarn("xeth_header_t::decode_rlp failed, rlp withdrawals root invalid");
             ec = error::xerrc_t::rlp_bytes_invalid;
-            return false;
+            return;
         }
         withdrawals_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[16]}};
     }
 
     calc_hash(hash);
     auto const & bytes_hash = utl::xkeccak256_t::digest(bytes.data(), bytes.size());
-    assert(hash.size() == bytes_hash.size());
+    assert(hash.size() == static_cast<size_t>(bytes_hash.size()));
     if (std::memcmp(hash.data(), bytes_hash.data(), hash.size()) != 0) {
         xwarn("xeth_header_t::decode_rlp failed, rlp hash invalid");
         hash.clear();
         ec = error::xerrc_t::rlp_bytes_invalid;
-        return false;
+        return;
     }
 
     calc_hash(partial_hash, true);
-
-    return true;
 }
 
-bool xeth_header_t::decode_rlp(xbytes_t const & bytes) {
+void xeth_header_t::decode_rlp(xbytes_t const & bytes) {
     std::error_code ec;
-    auto const successful = decode_rlp(bytes, ec);
+    decode_rlp(bytes, ec);
     top::error::throw_error(ec);
-    return successful;
 }
 
 std::string xeth_header_t::dump() const {

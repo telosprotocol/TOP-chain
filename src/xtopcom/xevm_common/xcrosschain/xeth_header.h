@@ -51,8 +51,8 @@ struct xeth_header_t {
 
     // encode and decode
     xbytes_t encode_rlp(bool partial = false) const;
-    bool decode_rlp(xbytes_t const & bytes);
-    bool decode_rlp(xbytes_t const & bytes, std::error_code & ec);
+    void decode_rlp(xbytes_t const & bytes);
+    void decode_rlp(xbytes_t const & bytes, std::error_code & ec);
 
     // debug
     std::string dump() const;

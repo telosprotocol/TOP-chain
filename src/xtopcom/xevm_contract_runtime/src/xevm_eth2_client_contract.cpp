@@ -50,10 +50,11 @@ static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
     return bin_str_lsb;
 }
 
-static std::vector<xbytes48_t> get_participant_pubkeys(std::vector<xbytes48_t> const & public_keys, std::string const & sync_committee_bits) {
+static std::vector<xbytes48_t> get_participant_pubkeys(std::vector<xbytes48_t> const & public_keys,
+                                                       std::bitset<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits) {
     std::vector<xbytes48_t> ret;
     for (size_t i = 0; i < sync_committee_bits.size(); ++i) {
-        if (sync_committee_bits[i] == '1') {
+        if (sync_committee_bits[i]) {
             ret.push_back(public_keys[i]);
         }
     }
@@ -412,10 +413,11 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
                 }
 
                 auto header_bytes = item_header.decoded[0];
-                if (header.decode_rlp(header_bytes) == false) {
+                header.decode_rlp(header_bytes, ec);
+                if (ec) {
                     err.fail_status = precompile_error::revert;
                     err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-                    xwarn("[xtop_evm_eth2_client_contract::execute] decode header error");
+                    xwarn("xtop_evm_eth2_client_contract::execute, xeth_header_t::decode_rlp failed, msg %s", ec.message().c_str());
                     return false;
                 }
             }
@@ -670,12 +672,14 @@ bool xtop_evm_eth2_client_contract::validate_light_client_update(state_ptr const
         return false;
     }
     auto const & sync_committee_bits = update.sync_aggregate.sync_committee_bits;
-    auto const & bits_str = covert_committee_bits_to_bin_str({sync_committee_bits.begin(), sync_committee_bits.end()});
+    assert(sync_committee_bits.size() == SYNC_COMMITTEE_BITS_SIZE);
+    // auto const & bits_str = covert_committee_bits_to_bin_str({sync_committee_bits.begin(), sync_committee_bits.end()});
 
     uint64_t sync_committee_bits_sum{0};
-    for (auto const & b : bits_str) {
-        sync_committee_bits_sum += (b == '1' ? 1 : 0);
+    for (auto i = 0u; i < sync_committee_bits.size(); ++i) {
+        sync_committee_bits_sum += static_cast<uint64_t>(sync_committee_bits[i]);
     }
+
     if (sync_committee_bits_sum < min_sync_committee_participants) {
         xwarn("xtop_evm_eth2_client_contract::validate_light_client_update error sync_committee_bits_sum: %lu", sync_committee_bits_sum);
         return false;
@@ -686,7 +690,7 @@ bool xtop_evm_eth2_client_contract::validate_light_client_update(state_ptr const
               sync_committee_bits.size());
         return false;
     }
-    if (false == verify_bls_signatures(state, update, bits_str, finalized_period)) {
+    if (false == verify_bls_signatures(state, update, sync_committee_bits, finalized_period)) {
         xwarn("xtop_evm_eth2_client_contract::validate_light_client_update verify_bls_signatures error");
         return false;
     }
@@ -766,7 +770,7 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
 
 bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & state,
                                                           xlight_client_update_t const & update,
-                                                          std::string const & sync_committee_bits,
+                                                          std::bitset<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits,
                                                           uint64_t const finalized_period) {
     auto const signature_period = compute_sync_committee_period(update.signature_slot);
     if (signature_period != finalized_period && signature_period != finalized_period + 1) {
@@ -787,7 +791,7 @@ bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & stat
             return false;
         }
     }
-    auto const & participant_pubkeys = get_participant_pubkeys(sync_committee.pubkeys, sync_committee_bits);
+    auto const & participant_pubkeys = get_participant_pubkeys(sync_committee.pubkeys(), sync_committee_bits);
     xbytes_t signing_root(32);
     unsafe_compute_committee_signing_root(update.attested_beacon_header.tree_hash_root().data(), uint8_t(m_network), update.signature_slot, signing_root.data());
     xbytes_t pubkeys_data;

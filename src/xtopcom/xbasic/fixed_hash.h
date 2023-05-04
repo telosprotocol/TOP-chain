@@ -125,7 +125,7 @@ public:
     }
 
     /// Convert to arithmetic type.
-    operator Arith() const {
+    explicit operator Arith() const {
         return fromBigEndian<Arith>(m_data);
     }
 
@@ -256,8 +256,16 @@ public:
         return m_data.begin();
     }
 
+    auto begin() -> typename std::array<xbyte_t, N>::iterator {
+        return m_data.begin();
+    }
+
     /// @returns end iterator.
     auto end() const -> typename std::array<xbyte_t, N>::const_iterator {
+        return m_data.end();
+    }
+
+    auto end() -> typename std::array<xbyte_t, N>::iterator {
         return m_data.end();
     }
 

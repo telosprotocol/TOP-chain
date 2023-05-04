@@ -38,8 +38,10 @@ bool xtop_evm_eth_bridge_contract::init(xbytes_t const & rlp_bytes, state_ptr st
     auto item = RLP::decode_once(rlp_bytes);
     xassert(item.decoded.size() == 1);
     xeth_header_t header;
-    if (header.decode_rlp(item.decoded[0]) == false) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] decode header error");
+    std::error_code ec;
+    header.decode_rlp(item.decoded[0], ec);
+    if (ec) {
+        xwarn("xtop_evm_eth_bridge_contract::init, decode header error, msg %s", ec.message().c_str());
         return false;
     }
     // step 3: store with no check
@@ -60,7 +62,7 @@ bool xtop_evm_eth_bridge_contract::init(xbytes_t const & rlp_bytes, state_ptr st
         xwarn("[xtop_evm_eth_bridge_contract::init] set_header failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
-    xeth_header_info_t header_info{header.difficulty, header.parent_hash, header.number};
+    xeth_header_info_t const header_info{header.difficulty, header.parent_hash, header.number};
     if (!set_header_info(header.calc_hash(), header_info, state)) {
         xwarn("[xtop_evm_eth_bridge_contract::init] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
@@ -77,8 +79,9 @@ bool xtop_evm_eth_bridge_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         return false;
     }
 
-    auto left_bytes = std::move(rlp_bytes);
-    while (left_bytes.size() != 0) {
+    auto left_bytes = rlp_bytes;
+    std::error_code ec;
+    while (!left_bytes.empty()) {
         // step 2: decode
         RLP::DecodedItem item = RLP::decode(left_bytes);
         left_bytes = std::move(item.remainder);
@@ -86,8 +89,9 @@ bool xtop_evm_eth_bridge_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         {
             auto item_header = RLP::decode_once(item.decoded[0]);
             auto header_bytes = item_header.decoded[0];
-            if (header.decode_rlp(header_bytes) == false) {
-                xwarn("[xtop_evm_eth_bridge_contract::sync] decode header error");
+            header.decode_rlp(header_bytes, ec);
+            if (ec) {
+                xwarn("xtop_evm_eth_bridge_contract::sync, xeth_header_t::decode_rlp failed, msg %s", ec.message().c_str());
                 return false;
             }
         }
@@ -387,8 +391,10 @@ bool xtop_evm_eth_bridge_contract::get_header(h256 const hash, xeth_header_t & h
         xwarn("[xtop_evm_eth_bridge_contract::get_header] get_header not exist, hash: %s", hash.hex().c_str());
         return false;
     }
-    if (header.decode_rlp({std::begin(header_str), std::end(header_str)}) == false) {
-        xwarn("[xtop_evm_eth_bridge_contract::get_header] decode_header failed, hash: %s", hash.hex().c_str());
+    std::error_code ec;
+    header.decode_rlp({std::begin(header_str), std::end(header_str)}, ec);
+    if (ec) {
+        xwarn("xtop_evm_eth_bridge_contract::get_header, xeth_header_t::decode_rlp, hash: %s msg %s", hash.hex().c_str(), ec.message().c_str());
         return false;
     }
     return true;

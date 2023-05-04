@@ -135,7 +135,9 @@ TEST_F(xbsc_contract_fixture_t, test_init_error) {
 
     auto item = RLP::decode_once(init_error);
     xeth_header_t header;
-    assert(header.decode_rlp(item.decoded[0]));
+    std::error_code ec;
+    header.decode_rlp(item.decoded[0], ec);
+    assert(!ec);
     header.extra = extra_bytes;
     auto b = header.encode_rlp();
     b += init_error;
