@@ -44,14 +44,16 @@ enum_result_code check_auth(const observer_ptr<base::xvcertauth_t> &certauth, da
          || result == base::enum_vcert_auth_result ::enum_bad_block || result == base::enum_vcert_auth_result ::enum_bad_address 
          || result == base::enum_vcert_auth_result ::enum_bad_signature || result == base::enum_vcert_auth_result ::enum_bad_scheme 
          || result == base::enum_vcert_auth_result ::enum_bad_consensus) {
+            xwarn("xsync check_auth failed, %s,result=%d", block->dump().c_str(), result);
             return enum_result_code::auth_failed;
         } else {
+            xwarn("xsync check_auth failed-wait data, %s,result=%d", block->dump().c_str(), result);
             return enum_result_code::wait_auth_data;
         }
     }
 
     block->set_block_flag(base::enum_xvblock_flag_authenticated);
-    xdbg("xsync check_auth ok, %s", block->get_account().c_str());
+    xinfo("xsync check_auth ok, %s", block->dump().c_str());
     return success;
 }
 
