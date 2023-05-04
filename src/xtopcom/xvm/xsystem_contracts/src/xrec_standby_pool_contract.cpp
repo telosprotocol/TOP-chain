@@ -104,8 +104,6 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
                                                       uint64_t const stake,
 #endif  // #if defined(XENABLE_MOCK_ZEC_STAKE)
                                                      std::string const & program_version) {
-    XMETRICS_TIME_RECORD(XREC_STANDBY "add_node_all_time");
-    XMETRICS_CPU_TIME_RECORD(XREC_STANDBY "add_node_cpu_time");
 #if !defined(XENABLE_MOCK_ZEC_STAKE)
 
     // get reg_node_info && standby_info
@@ -577,8 +575,6 @@ void xtop_rec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
     // static_consensus won't sync registration contract data.
     return;
 #endif
-    XMETRICS_TIME_RECORD(XREC_STANDBY "on_timer_all_time");
-    XMETRICS_CPU_TIME_RECORD(XREC_STANDBY "on_timer_cpu_time");
     XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xrec_standby_pool_contract_t instance is triggled by others");
     XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_rec_standby_pool_addr, "xrec_standby_pool_contract_t instance is not triggled by xrec_standby_pool_contract_t");
     // XCONTRACT_ENSURE(current_time <= TIME(), "xrec_standby_pool_contract_t::on_timer current_time > consensus leader's time");

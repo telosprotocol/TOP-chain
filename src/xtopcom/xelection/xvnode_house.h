@@ -19,11 +19,11 @@ class xvnode_wrap_t : public base::xvnode_t {
 public:
     xvnode_wrap_t(const std::string & account, const xvip2_t & xip2_addr,const std::string & sign_pub_key):
     base::xvnode_t(account, xip2_addr, sign_pub_key) {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_count", 1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_count, 1);
     }
 
     virtual ~xvnode_wrap_t() {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_count", -1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_count, -1);
     }
 };
 
@@ -31,11 +31,11 @@ class xvnode_group_wrap_t : public base::xvnodegroup_t {
 public:
     xvnode_group_wrap_t(const xvip2_t & group_address, const uint64_t effect_clock_height, std::vector<base::xvnode_t*> & nodes):
     base::xvnodegroup_t(group_address, effect_clock_height, nodes) {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_group_count", 1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_group_count, 1);
     }
 
     virtual ~xvnode_group_wrap_t() {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_group_count", -1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_group_count, 1);
     }
 };
 

@@ -279,13 +279,10 @@ void xtxpool_table_t::deal_commit_table_block(data::xblock_t * table_block, bool
 
     std::vector<xtx_id_height_info> tx_id_height_infos;
     std::vector<xraw_tx_info> raw_txs;
-
     std::vector<update_id_state_para> update_id_state_para_vec;
-    auto tx_actions = data::xblockextract_t::unpack_txactions(table_block);
 
-    xdbg("xtxpool_table_t::deal_commit_table_block table block:%s", table_block->dump().c_str());
-
-    for (auto & txaction : tx_actions) {
+    auto f = [this, &update_id_state_para_vec, &table_block, &raw_txs, &update_txmgr, &tx_id_height_infos](const base::xvaction_t & _action) {
+        data::xlightunit_action_t txaction(_action);
         bool need_confirm = !txaction.get_not_need_confirm();
         if (need_confirm && txaction.get_tx_subtype() == base::enum_transaction_subtype_send && !txaction.get_inner_table_flag()) {
             data::xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
@@ -326,6 +323,18 @@ void xtxpool_table_t::deal_commit_table_block(data::xblock_t * table_block, bool
             } else {
                 xdbg("xtxpool_table_t::deal_commit_table_block no id height tx=%s", base::xstring_utl::to_hex(txaction.get_org_tx_hash()).c_str());
             }
+        }
+    };
+    
+    xdbg("xtxpool_table_t::deal_commit_table_block table block:%s", table_block->dump().c_str());
+    auto tx_action_cache = m_tx_action_cache.get_cache(table_block);
+    if (tx_action_cache != nullptr) {
+        xdbg("xtxpool_table_t::deal_commit_table_block use txaction block:%s", table_block->dump().c_str());
+        tx_action_cache->loop_actions(f);
+    } else {
+        std::vector<data::xlightunit_action_t> tx_actions = data::xblockextract_t::unpack_txactions(table_block);
+        for (auto & action : tx_actions) {
+            f(action);
         }
     }
 
@@ -608,7 +617,6 @@ void xtxpool_table_t::filter_txs_by_black_white_list(std::vector<xcons_transacti
 }
 
 int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) const {
-    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_verify_receipt_tx");
     if (tx->is_confirm_tx()) {
         if (tx->get_last_not_need_confirm()) {
             xtxpool_info("xtxpool_table_t::verify_receipt_tx not need confirm.tx=%s", tx->dump(true).c_str());
@@ -867,6 +875,34 @@ data::xtransaction_ptr_t xtxpool_table_t::get_raw_tx(base::xtable_shortid_t peer
 uint32_t xtxpool_table_t::get_tx_cache_size() const {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
     return m_txmgr_table.get_tx_cache_size();
+}
+
+void xtxpool_table_t::add_tx_action_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) {
+    m_tx_action_cache.add_cache(block, txactions_cache);
+}
+
+void xtx_actions_cache_t::add_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    xdbg("xtx_actions_cache_t::add_cache block:%s", block->dump().c_str());
+    m_cache.emplace(block->get_height(), std::make_shared<xtx_actions_t>(block->get_block_hash(), txactions_cache));
+}
+
+std::shared_ptr<base::xinput_actions_cache_base> xtx_actions_cache_t::get_cache(base::xvblock_t * block) {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    std::shared_ptr<base::xinput_actions_cache_base> actions = nullptr;
+    auto it = m_cache.find(block->get_height());
+    if (it != m_cache.end() && it->second->m_blockhash == block->get_block_hash()) {
+        actions = it->second->m_input_actions_cache;
+    }
+    
+    for (auto iter = m_cache.begin(); iter != m_cache.end();) {
+        if (iter->first <= block->get_height()) {
+            m_cache.erase(iter++);
+        } else {
+            break;
+        }
+    }
+    return actions;
 }
 
 }  // namespace xtxpool_v2

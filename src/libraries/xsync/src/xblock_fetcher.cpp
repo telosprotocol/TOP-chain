@@ -32,7 +32,6 @@ m_block_fetcher(block_fetcher) {
 
 bool xblock_fetcher_event_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
 #ifdef ENABLE_METRICS
-    XMETRICS_COUNTER_INCREMENT("block_fetcher_event_count", 1);
     int64_t in, out;
     int32_t queue_size = m_observed_thread->count_calls(in, out);
     XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_block_fetcher_cur, queue_size);
@@ -41,7 +40,6 @@ bool xblock_fetcher_event_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
 }
 
 void xblock_fetcher_event_monitor_t::process_event(const mbus::xevent_ptr_t& e) {
-    XMETRICS_COUNTER_INCREMENT("block_fetcher_event_count", -1);
     m_block_fetcher->process_event(e);
 }
 
@@ -153,31 +151,25 @@ void xblock_fetcher_t::process_event(const mbus::xevent_ptr_t& e) {
     switch(e->major_type) {
     case mbus::xevent_major_type_account:
         if (e->minor_type == mbus::xevent_account_t::add_role) {
-            XMETRICS_TIME_RECORD("sync_cost_fetcher_chain_add_role_event");
             on_add_role(address, e);
         } else if (e->minor_type == mbus::xevent_account_t::remove_role) {
-            XMETRICS_TIME_RECORD("sync_cost_fetcher_chain_remove_role_event");
             on_remove_role(address, e);
         }
         break;
     case mbus::xevent_major_type_timer:
         {
-            XMETRICS_TIME_RECORD("sync_cost_fetcher_timer_event");
             on_timer_event(e);
         }
         break;
     case mbus::xevent_major_type_blockfetcher:
         if (e->minor_type == mbus::xevent_blockfetcher_t::newblock) {
-            XMETRICS_TIME_RECORD("sync_cost_fetcher_newblock_event");
             on_newblock_event(address, e);
         } else if (e->minor_type == mbus::xevent_blockfetcher_t::newblockhash) {
-            XMETRICS_TIME_RECORD("sync_cost_fetcher_newblockhash_event");
             on_newblockhash_event(address, e);
         }
         break;
     case mbus::xevent_major_type_sync_executor:
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
-            XMETRICS_TIME_RECORD("sync_cost_fetcher_response_blocks_event");
             on_response_block_event(address, e);
         }
         break;

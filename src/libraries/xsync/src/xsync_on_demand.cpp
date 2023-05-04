@@ -80,11 +80,9 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     if (permit) {
             m_sync_sender->send_get_on_demand_blocks_with_params(address, start_height, count, is_consensus,
                                                 last_unit_hash, self_addr, target_addr);
-        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         xsync_info("xsync_on_demand_t::on_behind_event is not permit because of overflow or during downloading, account: %s",
         address.c_str());
-        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_overflow", 1);
     }
 }
 
@@ -389,7 +387,6 @@ void xsync_on_demand_t::handle_blocks_response_with_params(const std::vector<dat
     int32_t count = tracer.height_interval().second - tracer.trace_height();
     if (count > 0) {
         m_sync_sender->send_get_on_demand_blocks_with_params(account,  tracer.trace_height() + 1, count, is_consensus, "", network_self, to_address);
-        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         m_download_tracer.expire(account);
     }

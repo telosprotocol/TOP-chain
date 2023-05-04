@@ -30,8 +30,6 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
         return;
     m_counter = 0;
 
-    XMETRICS_TIME_RECORD("sync_cost_cross_cluster_chain_state_timer_event");
-
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
     for (const auto &role_it: roles) {
 

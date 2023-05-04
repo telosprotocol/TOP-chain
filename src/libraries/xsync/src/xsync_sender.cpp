@@ -50,8 +50,6 @@ void xsync_sender_t::send_gossip(const std::vector<xgossip_chain_info_ptr_t> &in
 
     for (auto& addr : lists) {
         xsync_dbg("xsync_sender_t send gossip %s -> %s", self_xip.to_string().c_str(), addr.to_string().c_str());
-        XMETRICS_COUNTER_INCREMENT("sync_bytes_gossip_send", msg.payload().size());
-        XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
         std::error_code ec;
         m_vhost->send_to(self_xip, addr, msg, ec);
         if (ec) {
@@ -80,9 +78,6 @@ void xsync_sender_t::send_frozen_gossip(const std::vector<xgossip_chain_info_ptr
 
     vnetwork::xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg, m_sync_store->is_support_big_pack_forked());
-
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_frozen_gossip_send", msg.payload().size());
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
 
     common::xnode_address_t addr(common::build_frozen_sharding_address(self_xip.network_id()));
     xsync_dbg("xsync_sender_t send frozen gossip src %s dst %s", self_xip.to_string().c_str(), addr.to_string().c_str());
@@ -266,8 +261,6 @@ bool xsync_sender_t::send_message(
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg, m_sync_store->is_support_big_pack_forked());
 
     std::string bytes_metric_name = "sync_pkgs_" + metric_key + "_send";
-    XMETRICS_COUNTER_INCREMENT(bytes_metric_name, msg.payload().size());
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
     
     xsync_info("xsync_sender_t %s %s msg_id: %x msg_hash: %" PRIx64" send to %s", self_addr.to_string().c_str(), metric_key.c_str(), msg.id(),  msg.hash(),target_addr.to_string().c_str());
     std::error_code ec;

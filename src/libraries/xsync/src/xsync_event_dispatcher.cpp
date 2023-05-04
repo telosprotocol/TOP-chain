@@ -75,48 +75,15 @@ bool xsync_event_dispatcher_t::filter_event(const mbus::xevent_ptr_t& e) {
     int64_t in, out;
     int32_t queue_size = m_observed_thread->count_calls(in, out);
     XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_xsync_cur, queue_size);
-    
-    if (ret)
-        XMETRICS_COUNTER_INCREMENT("sync_eventdispatcher_event_count", 1);
 #endif
     return ret;
 }
 
 void xsync_event_dispatcher_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
-    XMETRICS_COUNTER_INCREMENT("sync_event_total", 1);
     if (e->major_type == mbus::xevent_major_type_role) {
         discard = false;
     }
     XMETRICS_GAUGE(metrics::mailbox_xsync_total, discard ? 0 : 1);
-#ifdef DEBUG
-    if(discard) {
-        XMETRICS_COUNTER_INCREMENT("sync_total_discard", 1);
-    } else {
-        switch(e->major_type) {
-            case mbus::xevent_major_type_behind:
-                switch(e->minor_type) {
-                    case mbus::xevent_behind_t::type_download: XMETRICS_COUNTER_INCREMENT("sync_event_behind_known", 1); break;
-                    case mbus::xevent_behind_t::type_check: XMETRICS_COUNTER_INCREMENT("sync_event_behind_table", 1); break;
-                    case mbus::xevent_behind_t::type_on_demand: XMETRICS_COUNTER_INCREMENT("sync_event_behind_on_demand", 1); break;
-                }
-                break;
-            case mbus::xevent_major_type_role:
-                if (e->minor_type == xevent_role_t::add_role)
-                    XMETRICS_COUNTER_INCREMENT("sync_event_add_role", 1);
-                else if (e->minor_type == xevent_role_t::remove_role)
-                    XMETRICS_COUNTER_INCREMENT("sync_event_remove_role", 1);
-                break;
-            case mbus::xevent_major_type_consensus:
-                XMETRICS_COUNTER_INCREMENT("sync_event_consensus", 1);
-                break;
-            case mbus::xevent_major_type_chain_timer:
-                XMETRICS_COUNTER_INCREMENT("sync_event_chain_timer", 1);
-                break;
-            default:
-                break;
-        }
-    }
-#endif
 }
 
 void xsync_event_dispatcher_t::dump_queue_info(const mbus::xevent_object_t *e_obj) {
@@ -126,7 +93,7 @@ void xsync_event_dispatcher_t::dump_queue_info(const mbus::xevent_object_t *e_ob
 }
 
 void xsync_event_dispatcher_t::check_queue_info(int64_t wait_cost, int32_t queue_size) {
-    XMETRICS_COUNTER_INCREMENT("sync_cost_event_queue", wait_cost);
+    XMETRICS_GAUGE(metrics::xsync_cost_event_queue, wait_cost);
     if (wait_cost > 200) {
         xsync_warn("xsync_event_dispatcher_t too long to wait. wait_cost(%ldms) event_queue(%d)", 
                 wait_cost, queue_size);
@@ -134,10 +101,6 @@ void xsync_event_dispatcher_t::check_queue_info(int64_t wait_cost, int32_t queue
 }
 
 void xsync_event_dispatcher_t::process_event(const mbus::xevent_ptr_t& e) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_eventdispatcher_event_count", -1);
-
-    XMETRICS_TIME_RECORD("sync_cost_event_process");
     m_sync_handler->on_event(e);
 }
 

@@ -111,7 +111,7 @@ void xevm_server::start(uint16_t nPort, uint32_t nThreadNum) {
 void xevm_server::start_service(std::shared_ptr<SimpleWeb::ServerBase<SimpleWeb::HTTP>::Response> response,
                                  std::shared_ptr<SimpleWeb::ServerBase<SimpleWeb::HTTP>::Request> request) {
     auto content = request->content.string();
-    XMETRICS_COUNTER_INCREMENT("rpc_http_request", 1);
+    XMETRICS_GAUGE(metrics::rpc_http_request, 1);
     asio::ip::address addr = request->remote_endpoint->address();
     if (m_enable_ratelimit) {
         // get ip

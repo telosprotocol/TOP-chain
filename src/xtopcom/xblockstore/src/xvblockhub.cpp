@@ -929,8 +929,6 @@ namespace top
 
                         (*it)->release_ref();   //release ptr that reference added by read_index_from_db
                     }
-                   
-                    XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
                     
                     return (int)_indexes.size();
                 }
@@ -973,8 +971,6 @@ namespace top
 
                         (*it)->release_ref();   //release ptr that reference added by read_index_from_db
                     }
-                    
-                    XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
                     
                     return (int)_indexes.size();
                 }
@@ -1193,9 +1189,6 @@ namespace top
             }
 
             xdbg("xblockacct_t::store_block,prepare for block=%s,cache_size:%zu,dump=%s",new_raw_block->dump().c_str(), m_all_blocks.size(), dump().c_str());
-          
-            XMETRICS_TIME_RECORD_KEY("blockstore_store_block_time", new_raw_block->get_account() + ":" + std::to_string(new_raw_block->get_height()));
-           
 
             //#1:cache_block() ->link neighbor -> mark_connect_flag() -> update metric
             //#2:connect_block() ->process_block()

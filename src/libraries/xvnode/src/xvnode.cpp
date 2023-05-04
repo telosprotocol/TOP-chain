@@ -29,7 +29,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
-                       observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
@@ -51,7 +50,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_bus{bus}
   , m_logic_timer{logic_timer}
   , m_sync_obj{sync_obj}
-  , m_grpc_mgr{grpc_mgr}
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost, m_election_cache_data_accessor,
@@ -84,7 +82,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
-                       observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
@@ -106,7 +103,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                bus,
                logic_timer,
                sync_obj,
-               grpc_mgr,
                txpool_service_mgr,
                election_cache_data_accessor,
                nodesvr} {}
@@ -136,8 +132,8 @@ void xtop_vnode::start() {
     top::store::install_block_recycler(nullptr);
     sync_add_vnet();
     new_driver_added();
-    m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
-                                 common::has<common::xnode_type_t::storage_exchange>(vnetwork_driver()->type()));
+    // m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()) ||
+    //                              common::has<common::xnode_type_t::storage_exchange>(vnetwork_driver()->type()));
     // if (m_cons_face != nullptr) {
     //     m_cons_face->start(this->start_time());
     // }
@@ -175,7 +171,7 @@ void xtop_vnode::stop() {
     if (m_txpool_face != nullptr) {
         m_txpool_face->unreg();
     }
-    m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
+    // m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
     driver_removed();
     update_contract_manager(true);

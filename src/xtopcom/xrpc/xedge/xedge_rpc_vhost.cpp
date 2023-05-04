@@ -22,7 +22,6 @@ xrpc_edge_vhost::xrpc_edge_vhost(std::shared_ptr<xvnetwork_driver_face_t> edge_h
 
 void xrpc_edge_vhost::on_message(const xvnode_address_t& sender, const xmessage_t& message)
 {
-    XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_rpc_edge_vhost");
     auto msgid = message.id();
     xinfo_rpc("xedge_rpc_handler on_message,id(%x), %" PRIx64, msgid, message.hash());    //TODO address to_string
 

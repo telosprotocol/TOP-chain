@@ -18,7 +18,6 @@ xbatchtx_executor_t::xbatchtx_executor_t(const statectx::xstatectx_face_ptr_t & 
 }
 
 int32_t xbatchtx_executor_t::execute(const std::vector<xcons_transaction_ptr_t> & txs, xexecute_output_t & outputs) {
-    XMETRICS_TIME_RECORD("cons_batch_execute_cost");
     xatomictx_executor_t atomic_executor(m_statectx, m_para);
     uint64_t gas_used = 0;
     xassert(!txs.empty());

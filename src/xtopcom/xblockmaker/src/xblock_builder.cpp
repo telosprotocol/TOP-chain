@@ -160,15 +160,15 @@ void     xtablebuilder_t::make_table_block_para(const data::xtablestate_ptr_t & 
                                                 txexecutor::xexecute_output_t const& execute_output, 
                                                 data::xtable_block_para_t & lighttable_para) {
     int64_t tgas_balance_change = 0;
-    std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
+    std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> txs_info = std::make_shared<std::vector<data::xlightunit_tx_info_ptr_t>>();
     std::map<std::string, std::string> property_hashs;
 
     // change to xvaction and calc tgas balance change
     for (auto & txout : execute_output.pack_outputs) {
-        txs_info.push_back(data::xblockaction_build_t::build_tx_info(txout.m_tx));
+        txs_info->push_back(data::xblockaction_build_t::build_tx_info(txout.m_tx));
         tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
         for (auto & v : txout.m_vm_output.m_contract_create_txs) {
-            txs_info.push_back(data::xblockaction_build_t::build_tx_info(v));
+            txs_info->push_back(data::xblockaction_build_t::build_tx_info(v));
         }
     }
 
@@ -189,7 +189,6 @@ void     xtablebuilder_t::make_table_block_para(const data::xtablestate_ptr_t & 
 }
 
 data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
-    XMETRICS_TIME_RECORD("cons_build_light_table_cost");
     std::shared_ptr<base::xvblockmaker_t> vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);
     auto _new_block = vbmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());

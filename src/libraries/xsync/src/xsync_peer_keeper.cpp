@@ -25,8 +25,6 @@ m_peerset(peerset) {
 }
 
 void xsync_peer_keeper_t::on_timer() {
-    XMETRICS_TIME_RECORD("sync_cost_peerkeeper_timer_event");
-
     std::unique_lock<std::mutex> lock(m_lock);
     if (m_time_rejecter.reject()){
         return;
@@ -66,9 +64,6 @@ std::vector<common::xnode_address_t> xsync_peer_keeper_t::get_random_neighbors(c
 }
 
 void xsync_peer_keeper_t::add_role(const common::xnode_address_t& addr) {
-
-    XMETRICS_TIME_RECORD("sync_cost_peerkeeper_add_role_event");
-
     {
         std::unique_lock<std::mutex> lock(m_lock);
         for (auto &it: m_maps) {
@@ -257,8 +252,6 @@ void xsync_peer_keeper_t::send_chain_state(const common::xnode_address_t &self_a
     if (info_list.empty())
         return;
 
-    XMETRICS_COUNTER_INCREMENT("sync_broadcast_chain_state_send", 1);
-
     for (const auto &it : target_list) {
         m_sync_sender->send_broadcast_chain_state(info_list, self_addr, it);
     }
@@ -268,8 +261,6 @@ void xsync_peer_keeper_t::send_frozen_chain_state(const common::xnode_address_t 
 
     if (info_list.empty())
         return;
-
-    XMETRICS_COUNTER_INCREMENT("sync_frozen_broadcast_chain_state_send", 1);
 
     const std::vector<data::node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();
     std::vector<data::node_info_t> rand_seeds;

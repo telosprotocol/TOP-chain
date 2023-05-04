@@ -55,7 +55,6 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_router{top::make_unique<router::xrouter_t>()}
   , m_bus{top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000)}
   , m_logic_timer{make_object_ptr<time::xchain_timer_t>(m_timer_driver)}
-  , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
 
@@ -147,7 +146,7 @@ void xtop_application::start() {
         m_message_callback_hub = std::make_shared<vnetwork::xmessage_callback_hub_t>(make_observer(m_vhost));
         m_sync_obj = top::make_unique<sync::xsync_object_t>(
             make_observer(m_bus), make_observer(m_vhost), m_blockstore, m_cert_ptr, make_observer(m_sync_thread), sync_account_thread_pool, sync_handler_thread_pool);
-        m_grpc_mgr = top::make_unique<grpcmgr::xgrpc_mgr_t>(make_observer(m_bus), make_observer(m_grpc_thread));
+        // m_grpc_mgr = top::make_unique<grpcmgr::xgrpc_mgr_t>(make_observer(m_bus), make_observer(m_grpc_thread));
 
         m_txpool_service_mgr = xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(
             make_observer(m_blockstore), make_observer(m_txpool), m_thread_pools.at(xthread_pool_type_t::txpool_service), make_observer(m_bus), make_observer(m_logic_timer));
@@ -164,7 +163,6 @@ void xtop_application::start() {
                                                                     m_cert_ptr,
                                                                     make_observer(m_vhost),
                                                                     make_observer(m_sync_obj),
-                                                                    make_observer(m_grpc_mgr),
                                                                     make_observer(m_txpool_service_mgr.get()),
                                                                     make_observer(m_txpool),
                                                                     make_observer(m_election_cache_data_accessor),

@@ -39,7 +39,6 @@ using xjson_format_t = xtop_enum_json_format;
 class xtop_contract_manager final : public mbus::xbase_sync_event_monitor_t {
 public:
     xtop_contract_manager(){
-        XMETRICS_COUNTER_INCREMENT("xvm_contract_manager_counter", 1);
     }
     virtual ~xtop_contract_manager();
 

@@ -88,10 +88,6 @@ void xzec_reward_contract::setup() {
 }
 
 void xzec_reward_contract::on_timer(const common::xlogic_time_t onchain_timer_round) {
-    XMETRICS_COUNTER_INCREMENT(XREWARD_CONTRACT "on_timer_Called", 1);
-    XMETRICS_TIME_RECORD(XREWARD_CONTRACT "on_timer_ExecutionTime");
-    XMETRICS_CPU_TIME_RECORD(XREWARD_CONTRACT "on_timer_cpu_time");
-
     std::string source_address = SOURCE_ADDRESS();
     if (SELF_ADDRESS().to_string() != source_address) {
         xwarn("[xzec_reward_contract::on_timer] invalid call from %s", source_address.c_str());
@@ -193,8 +189,6 @@ void xzec_reward_contract::calculate_reward(common::xlogic_time_t current_time, 
 }
 
 void xzec_reward_contract::reward(const common::xlogic_time_t current_time) {
-    XMETRICS_TIME_RECORD(XREWARD_CONTRACT "reward_ExecutionTime");
-    XMETRICS_CPU_TIME_RECORD(XREWARD_CONTRACT "reward_cpu_time");
     xinfo("[xzec_reward_contract::reward] start reward");
     // step1 get related params
     common::xlogic_time_t activation_time;                 // system activation time
@@ -259,7 +253,6 @@ uint32_t xzec_reward_contract::get_task_id() {
     std::map<std::string, std::string> dispatch_tasks;
 
     {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_GetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
     }
 
@@ -291,19 +284,15 @@ void xzec_reward_contract::add_task(const uint32_t task_id,
     ss << std::setw(10) << std::setfill('0') << task_id;
     auto key = ss.str();
     {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_SetExecutionTime");
         MAP_SET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, key, std::string((char *)stream.data(), stream.size()));
     }
 }
 
 void xzec_reward_contract::execute_task() {
-    XMETRICS_TIME_RECORD(XREWARD_CONTRACT "execute_task_ExecutionTime");
-    XMETRICS_CPU_TIME_RECORD(XREWARD_CONTRACT "execute_task_cpu_time");
     std::map<std::string, std::string> dispatch_tasks;
     data::system_contract::xreward_dispatch_task task;
 
     {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_CopyGetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
     }
 
@@ -366,7 +355,6 @@ void xzec_reward_contract::execute_task() {
         }
 
         {
-            XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_TASK_KEY_RemoveExecutionTime");
             MAP_REMOVE(data::system_contract::XPORPERTY_CONTRACT_TASK_KEY, it->first);
         }
 
@@ -424,7 +412,6 @@ void xzec_reward_contract::update_accumulated_issuance(uint64_t const issuance, 
     std::string cur_year_issuances_str;
     std::string total_issuances_str;
     try {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_GetExecutionTime");
         if (MAP_FIELD_EXIST(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year))) {
             cur_year_issuances_str = MAP_GET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year));
         }
@@ -447,8 +434,6 @@ void xzec_reward_contract::update_accumulated_issuance(uint64_t const issuance, 
     total_issuances += issuance;
 
     {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_SetExecutionTime");
-
         MAP_SET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, base::xstring_utl::tostring(current_year), base::xstring_utl::tostring(cur_year_issuances));
         MAP_SET(data::system_contract::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE, "total", base::xstring_utl::tostring(total_issuances));
         xinfo("[xzec_reward_contract::update_accumulated_issuance] set property: %s, year: , current_year: %lu -> cur_year_issuances: %lu, total -> total_issuances: %lu",
@@ -580,9 +565,6 @@ int xzec_reward_contract::get_node_info(const std::map<std::string, data::system
 }
 
 void xzec_reward_contract::on_receive_workload(std::string const & workload_str) {
-    XMETRICS_COUNTER_INCREMENT(XREWARD_CONTRACT "on_receive_workload_Called", 1);
-    XMETRICS_TIME_RECORD(XREWARD_CONTRACT "on_receive_workload_ExecutionTime");
-
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)workload_str.data(), workload_str.size());
     std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> workload_info;
 
@@ -625,10 +607,8 @@ void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const 
     std::string value_str;
     int32_t ret;
     if (auditor) {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_GetExecutionTime");
         ret = MAP_GET2(property, group_address_str, value_str);
     } else {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY_GetExecutionTime");
         ret = MAP_GET2(property, group_address_str, value_str);
     }
 
@@ -657,23 +637,18 @@ void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const 
     workload.serialize_to(stream);
     std::string value = std::string((const char *)stream.data(), stream.size());
     if (auditor) {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_SetExecutionTime");
         MAP_SET(property, group_address_str, value);
     } else {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY_SetExecutionTime");
         MAP_SET(property, group_address_str, value);
     }
 }
 
 void xzec_reward_contract::clear_workload() {
-    XMETRICS_TIME_RECORD("zec_reward_clear_workload_all_time");
 
     {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_SetExecutionTime");
         CLEAR(enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY);
     }
     {
-        XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY_SetExecutionTime");
         CLEAR(enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY);
     }
 }
@@ -1686,8 +1661,6 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
                                                   std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, ::uint128_t>> & table_node_dividend_detail,
                                                   ::uint128_t & community_reward,
                                                   uint64_t & actual_issuance) {
-    XMETRICS_COUNTER_INCREMENT(XREWARD_CONTRACT "dispatch_all_reward_Called", 1);
-    XMETRICS_TIME_RECORD(XREWARD_CONTRACT "dispatch_all_reward");
     xinfo("[xzec_reward_contract::dispatch_all_reward_v3] dispatch_all_reward");
     // dispatch table reward
     uint64_t issuance = 0;

@@ -448,7 +448,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         m_state_accessor.write_unitstate_to_cache(v.m_unitstate, v.m_unit_hash);
         xdbg("xstatestore_executor_t::write_table_all_states unitstate=%s.block=%s", v.m_unitstate->get_bstate()->dump().c_str(), current_block->dump().c_str());        
     }
-    xinfo("xstatestore_executor_t::write_table_all_states tps_key serialize states,block:%s,kvs=%zu,serialize_count=%d,fullunit_count=%d",current_block->dump().c_str(), unitstate_db_kvs.size(),serialize_count,fullunit_count);
+    xdbg("xstatestore_executor_t::write_table_all_states tps_key serialize states,block:%s,kvs=%zu,serialize_count=%d,fullunit_count=%d",current_block->dump().c_str(), unitstate_db_kvs.size(),serialize_count,fullunit_count);
     if (!unitstate_db_kvs.empty()) {
         m_state_accessor.batch_write_unit_bstate(unitstate_db_kvs, ec);
         if (ec) {
@@ -457,13 +457,14 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         }
     }
 
-    xinfo("xstatestore_executor_t::write_table_all_states tps_key store unitstate ok,block:%s,size=%zu",current_block->dump().c_str(),unitstate_db_kvs.size());
+    // store unit state and table state very fast. not need info log.
+    xdbg("xstatestore_executor_t::write_table_all_states store unitstate ok,block:%s,size=%zu",current_block->dump().c_str(),unitstate_db_kvs.size());
     m_state_accessor.write_table_bstate_to_db(m_table_addr, current_block->get_block_hash(), tablestate_store->get_table_state(), ec);
     if (ec) {
         xerror("xstatestore_executor_t::write_table_all_states fail-write tablestate,block:%s", current_block->dump().c_str());
         return nullptr;
     }
-    xinfo("xstatestore_executor_t::write_table_all_states tps_key tablestate=%s.block=%s", tablestate_store->get_table_state()->get_bstate()->dump().c_str(), current_block->dump().c_str());
+    xinfo("xstatestore_executor_t::write_table_all_states tps_key store state done.block=%s", current_block->dump().c_str());
 
     if (current_block->get_block_class() != base::enum_xvblock_class_nil) {
         if (!tablestate_store->get_state_root().empty()) {
@@ -473,7 +474,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
                 xerror("xstatestore_executor_t::write_table_all_states fail-write mpt,block:%s.ec=%s", current_block->dump().c_str(),ec.message().c_str());
                 return nullptr;
             }
-            xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().hex().c_str(), current_block->dump().c_str());
+            xinfo("xstatestore_executor_t::write_table_all_states tps_key mpt_root=%s.block=%s", tablestate_store->get_state_root().hex().c_str(), current_block->dump().c_str());
 
             if (!base::xvchain_t::instance().need_store_units(m_table_vaddr.get_zone_index())) {
                 // only state aware node need to push pending pruned data into trie db (memory db)
@@ -486,13 +487,14 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
             }
         }
     }
-    xinfo("xstatestore_executor_t::write_table_all_states tps_key after commit,block:%s",current_block->dump().c_str());
+    // create mpt ptr and table state ptr very fast. not need info log.
+    xdbg("xstatestore_executor_t::write_table_all_states after commit,block:%s",current_block->dump().c_str());
     std::shared_ptr<state_mpt::xstate_mpt_t> cur_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(current_block->get_account()), tablestate_store->get_state_root(), m_statestore_base.get_dbstore(), ec);
     if (ec) {
         xerror("xstatestore_executor_t::write_table_all_states fail-create mpt.block:%s", current_block->dump().c_str());
         return nullptr;
     }
-    xinfo("xstatestore_executor_t::write_table_all_states tps_key create cur mpt ok,block:%s",current_block->dump().c_str());
+    xdbg("xstatestore_executor_t::write_table_all_states create cur mpt ok,block:%s",current_block->dump().c_str());
     xtablestate_ext_ptr_t tablestate = std::make_shared<xtablestate_ext_t>(tablestate_store->get_table_state(), cur_mpt);
     m_state_accessor.write_table_bstate_to_cache(m_table_addr, current_block->get_height(), current_block->get_block_hash(), tablestate, current_block->check_block_flag(base::enum_xvblock_flag_committed));
 
@@ -530,7 +532,6 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         bool         m_auto_lock;
     };
 
-    XMETRICS_TIME_RECORD("statestore_execute_from_prev_cost");
     if (current_block->get_height() != prev_state->get_table_state()->height() + 1) {
         ec = error::xerrc_t::statestore_block_unmatch_prev_err;
         xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-block and state unmatch.block=%s,state=%s",current_block->dump().c_str(),prev_state->get_table_state()->get_bstate()->dump().c_str());

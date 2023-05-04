@@ -202,7 +202,6 @@ namespace top
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
                 //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
-                XMETRICS_TIME_RECORD("cons_store_block_cost");
                 get_vblockstore()->store_block(*this,_target_cert_block); //just store cert only
                 xdbg("xcsaccount_t::on_proposal_finish _target_cert_block:%s", _target_cert_block->dump().c_str());
             }

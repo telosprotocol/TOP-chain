@@ -92,14 +92,12 @@ uint64_t xsync_store_t::get_latest_genesis_connected_block_height(const std::str
 }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid) {
-    XMETRICS_TIME_RECORD("xsync_store_load_block_object");
     base::xvaccount_t _vaddress(account);
     // TODO(jimmy) need changed
     return m_blockstore->load_block_object(_vaddress, height, viewid, ask_full_load, metrics::blockstore_access_from_sync_load_block_object);
 }
 
 bool xsync_store_t::existed(const std::string & account, const uint64_t height, uint64_t viewid) {
-    XMETRICS_TIME_RECORD("xsync_existed");
     base::xvaccount_t _vaddress(account);
     auto index = m_blockstore->load_block_index(_vaddress, height, viewid, metrics::blockstore_access_from_sync_existed_blk);
     return index != nullptr;

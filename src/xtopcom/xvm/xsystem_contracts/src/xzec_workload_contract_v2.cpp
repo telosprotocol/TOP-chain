@@ -53,8 +53,6 @@ bool xzec_workload_contract_v2::is_mainnet_activated() const {
 
 
 void xzec_workload_contract_v2::on_receive_workload(std::string const & table_info_str) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "on_receive_workload");
-    XMETRICS_COUNTER_INCREMENT(XWORKLOAD_CONTRACT "on_receive_workload", 1);
     XCONTRACT_ENSURE(!table_info_str.empty(), "workload_str empty");
 
 
@@ -75,7 +73,6 @@ void xzec_workload_contract_v2::on_receive_workload(std::string const & table_in
     std::map<std::string, std::string> workload_str_new;
     std::string tgas_str_new;
     {
-        XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "on_receive_workload_map_get");
         activation_str = STRING_GET2(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
         MAP_COPY_GET(XPORPERTY_CONTRACT_WORKLOAD_KEY, workload_str);
         tgas_str = STRING_GET2(XPORPERTY_CONTRACT_TGAS_KEY);
@@ -85,7 +82,6 @@ void xzec_workload_contract_v2::on_receive_workload(std::string const & table_in
     handle_workload_str(activation_str, table_info_str, workload_str, tgas_str, height_str, workload_str_new, tgas_str_new);
 
     {
-        XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "on_receive_workload_map_set");
         for (auto it = workload_str_new.cbegin(); it != workload_str_new.end(); it++) {
             MAP_SET(XPORPERTY_CONTRACT_WORKLOAD_KEY, it->first, it->second);
         }
@@ -102,7 +98,6 @@ void xzec_workload_contract_v2::handle_workload_str(const std::string & activati
                                                     const std::string & height_str,
                                                     std::map<std::string, std::string> & workload_str_new,
                                                     std::string & tgas_str_new) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "handle_workload_str");
     std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
     int64_t table_pledge_balance_change_tgas = 0;
     uint64_t height = 0;
@@ -180,7 +175,6 @@ std::vector<xobject_ptr_t<data::xblock_t>> xzec_workload_contract_v2::get_fullbl
 uint64_t xzec_workload_contract_v2::get_table_height(const uint32_t table_id) const {
     uint64_t last_read_height = 0;
     std::string value_str;
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "get_property_fulltableblock_height");
 
     std::string key = std::to_string(table_id);
     if (MAP_FIELD_EXIST(XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, key)) {
@@ -195,14 +189,12 @@ uint64_t xzec_workload_contract_v2::get_table_height(const uint32_t table_id) co
 }
 
 void xzec_workload_contract_v2::update_table_height(const uint32_t table_id, const uint64_t cur_read_height) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "set_property_contract_fulltableblock_height");
     MAP_SET(XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(table_id), xstring_utl::tostring(cur_read_height));
 }
 
 void xzec_workload_contract_v2::update_tgas(int64_t table_pledge_balance_change_tgas) {
     std::string pledge_tgas_str;
     {
-        XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "XPORPERTY_CONTRACT_TGAS_KEY_GetExecutionTime");
         pledge_tgas_str = STRING_GET2(XPORPERTY_CONTRACT_TGAS_KEY);
     }
     int64_t tgas = 0;
@@ -212,7 +204,6 @@ void xzec_workload_contract_v2::update_tgas(int64_t table_pledge_balance_change_
     tgas += table_pledge_balance_change_tgas;
 
     {
-        XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "XPORPERTY_CONTRACT_TGAS_KEY_SetExecutionTime");
         STRING_SET(XPORPERTY_CONTRACT_TGAS_KEY, xstring_utl::tostring(tgas));
     }
 }
@@ -273,8 +264,6 @@ void xzec_workload_contract_v2::accumulate_workload_with_fullblock(common::xlogi
                                                                    const uint32_t start_table,
                                                                    const uint32_t end_table,
                                                                    std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "accumulate_total_time");
-    XMETRICS_CPU_TIME_RECORD(XWORKLOAD_CONTRACT "accumulate_total_cpu_time");
     int64_t table_pledge_balance_change_tgas = 0;
     int64_t total_table_fullblock_num = 0;
     int64_t total_get_fullblock_time = 0;
@@ -333,8 +322,6 @@ void xzec_workload_contract_v2::accumulate_workload_with_fullblock(common::xlogi
 }
 
 xgroup_workload_t xzec_workload_contract_v2::get_workload(common::xgroup_address_t const & group_address) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "get_workload_time");
-    XMETRICS_CPU_TIME_RECORD(XWORKLOAD_CONTRACT "get_workload_cpu_time");
         std::string group_address_str;
         xstream_t stream(xcontext_t::instance());
         stream << group_address;
@@ -343,7 +330,6 @@ xgroup_workload_t xzec_workload_contract_v2::get_workload(common::xgroup_address
         {
             int32_t ret = 0;
             std::string value_str;
-            XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_GetExecutionTime");
             ret = MAP_GET2(XPORPERTY_CONTRACT_WORKLOAD_KEY, group_address_str, value_str);
             if (ret) {
                 xdbg("[xzec_workload_contract_v2::update_workload] group not exist: %s", group_address.to_string().c_str());
@@ -369,7 +355,6 @@ void xzec_workload_contract_v2::set_workload(common::xgroup_address_t const & gr
 void xzec_workload_contract_v2::update_workload(const std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload,
                                                 const std::map<std::string, std::string> & workload_str,
                                                 std::map<std::string, std::string> & workload_new) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "update_workload");
     for (auto const & one_group_workload : group_workload) {
         auto const & group_address = one_group_workload.first;
         auto const & workload = one_group_workload.second;
@@ -440,8 +425,6 @@ void xzec_workload_contract_v2::update_workload(std::map<common::xgroup_address_
 }
 
 void xzec_workload_contract_v2::upload_workload(common::xlogic_time_t const timestamp) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "upload_workload_time");
-    XMETRICS_CPU_TIME_RECORD(XWORKLOAD_CONTRACT "upload_workload_cpu_time");
     std::string call_contract_str{};
     upload_workload_internal(timestamp, call_contract_str);
     if (!call_contract_str.empty()) {
@@ -497,13 +480,10 @@ void xzec_workload_contract_v2::upload_workload_internal(common::xlogic_time_t c
 }
 
 void xzec_workload_contract_v2::clear_workload() {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_SetExecutionTime");
     MAP_CLEAR(XPORPERTY_CONTRACT_WORKLOAD_KEY);
 }
 
 void xzec_workload_contract_v2::on_timer(common::xlogic_time_t const timestamp) {
-    XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "on_timer");
-    XMETRICS_CPU_TIME_RECORD(XWORKLOAD_CONTRACT "on_timer_cpu_time");
     upload_workload(timestamp);
     clear_workload();
 }

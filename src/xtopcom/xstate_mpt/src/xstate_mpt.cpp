@@ -107,7 +107,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
     // get from db
     xbytes_t index_bytes;
     {
-        XMETRICS_TIME_RECORD("state_mpt_load_db_index");
+        // XMETRICS_TIME_RECORD("state_mpt_load_db_index");
         std::lock_guard<std::mutex> lock(m_trie_lock);
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
@@ -171,7 +171,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     xbytes_t index_bytes;
     {
         std::lock_guard<std::mutex> lock(m_trie_lock);
-        XMETRICS_TIME_RECORD("state_mpt_load_db_index");
+        // XMETRICS_TIME_RECORD("state_mpt_load_db_index");
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
     if (ec) {
@@ -234,7 +234,7 @@ evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_trie_lock);
     std::pair<evm_common::xh256_t, int32_t> res;
     {
-        XMETRICS_TIME_RECORD("state_mpt_trie_commit");
+        // XMETRICS_TIME_RECORD("state_mpt_trie_commit");
         res = m_trie->commit(ec);
     }
     if (ec) {

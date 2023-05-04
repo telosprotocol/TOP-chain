@@ -184,6 +184,7 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
             v->serialize_to_string(tx_bin);
             xassert(!tx_bin.empty());
 
+#ifdef ENABLE_METRICS
             if (v->get_tx_phase_type() == base::enum_transaction_subtype_send) {
                 XMETRICS_GAUGE(metrics::store_tx_index_send, 1);
             } else if (v->get_tx_phase_type() == base::enum_transaction_subtype_recv) {
@@ -193,6 +194,7 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
             } else if (v->get_tx_phase_type() == base::enum_transaction_subtype_confirm) {
                 XMETRICS_GAUGE(metrics::store_tx_index_confirm, 1);
             }
+#endif
 
             kvs[tx_key] = tx_bin;
             xdbg_info("xvtxstore_t::store_txs_index,store tx to DB for block=%s,tx=%s",

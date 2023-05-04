@@ -242,7 +242,6 @@ data::xtablestate_ptr_t xstatestore_impl_t::get_table_state_by_block(base::xvblo
 }
 
 bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
-    XMETRICS_TIME_RECORD("statestore_getindex_cost");
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_block->get_account());
     if (tablestore != nullptr) {
         return tablestore->get_accountindex_from_table_block(account_address, table_block, account_index);

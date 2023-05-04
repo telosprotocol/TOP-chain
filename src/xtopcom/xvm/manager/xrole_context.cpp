@@ -35,11 +35,11 @@ xrole_context_t::xrole_context_t(const observer_ptr<store::xsyncvstore_t> & sync
                                  const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & driver,
                                  xcontract_info_t * info)
   : m_syncstore(syncstore), m_unit_service(unit_service), m_driver(driver), m_contract_info(info) {
-    XMETRICS_COUNTER_INCREMENT("xvm_contract_role_context_counter", 1);
+    XMETRICS_GAUGE(metrics::xvm_contract_role_context_counter, 1);
   }
 
 xrole_context_t::~xrole_context_t() {
-    XMETRICS_COUNTER_INCREMENT("xvm_contract_role_context_counter", -1);
+    XMETRICS_GAUGE(metrics::xvm_contract_role_context_counter, -1);
     delete m_contract_info;
 }
 

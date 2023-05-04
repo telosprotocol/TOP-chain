@@ -34,6 +34,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     vhost_recv_callback,
     vnode_recv_msg,
     vnode_recv_callback,
+    vnode_election_house_vnode_count,
+    vnode_election_house_vnode_group_count,
 
     dataobject_cons_transaction,
     dataobject_block_lightunit,
@@ -77,20 +79,11 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_mpt_state_object,
     dataobject_mpt_trie_node_cnt,
 
-    //data 
-    data_relay_release_input,
-    data_relay_release_output,
-    data_relay_release_resource,
-
     db_read,
     db_write,
     db_delete,
     db_delete_range,
-    db_read_size,
     db_write_size,
-    db_read_tick,
-    db_write_tick,
-    db_delete_tick,
     db_rocksdb_block_cache,
     db_rocksdb_table_readers,
     db_rocksdb_all_mem_tables,
@@ -98,11 +91,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_rocksdb_total,
 
     // consensus
-    cons_drand_leader_succ,
-    cons_drand_backup_succ,
-    cons_tableblock_leader_succ,
-    cons_tableblock_backup_succ,
-    cons_tableblock_total_succ,
     cons_pacemaker_tc_discontinuity,
 
     cons_table_leader_make_proposal_succ,
@@ -117,44 +105,23 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_verify_proposal_confirm_id_error,
 
     cons_view_fire_clock_delay,
-    cons_view_fire_succ,
     cons_cp_check_succ,
     cons_state_check_succ,
-    cons_view_fire_is_leader,
     cons_fail_backup_view_not_match,
-    cons_make_proposal_tick,
-    cons_verify_proposal_tick,
-    cons_make_fulltable_tick,
-    cons_make_lighttable_tick,
-    cons_verify_lighttable_tick,
-    cons_tablebuilder_fulltable_tick,
-    cons_tablemaker_verify_proposal_tick,
-    cons_tablemaker_make_proposal_tick,
 
-    cons_table_leader_get_txpool_tx_count,
-    cons_table_leader_get_txpool_sendtx_count,
-    cons_table_leader_get_txpool_recvtx_count,
-    cons_table_leader_get_txpool_confirmtx_count,
-    cons_table_leader_make_tx_count,
-    cons_table_leader_make_unit_count,
-
-    cons_packtx_succ,
-    cons_packtx_sendtx_succ,
-    cons_packtx_recvtx_succ,
-    cons_packtx_confirmtx_succ,
     cons_packtx_fail_load_origintx,
-    cons_packtx_with_threshold,
     cons_invoke_sync_state_count,
     cons_invoke_sync_block_count,
+    
+    cons_bft_verify_vote_msg_fail,
+
+    cons_drand_highqc_height,
 
     clock_aggregate_height,
     clock_leader_broadcast_height,
     clock_received_height,
 
     // store
-    store_state_table_write,
-    store_state_unit_write,
-    store_state_delete,
     store_block_table_read,
     store_block_unit_read,
     store_block_other_read,
@@ -177,18 +144,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_tx_index_send,
     store_tx_index_recv,
     store_tx_index_confirm,
-    store_tx_origin,
     store_block_meta_write,
     store_block_meta_read,
-
-
-    store_dbsize_block_unit_empty,
-    store_dbsize_block_unit_light,
-    store_dbsize_block_unit_full,
-    store_dbsize_block_table_empty,
-    store_dbsize_block_table_light,
-    store_dbsize_block_table_full,
-    store_dbsize_block_other,
 
     // message category
     message_category_begin_contains_duplicate,
@@ -254,68 +211,48 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     // sync
     xsync_recv_new_block,
-    xsync_recv_new_hash,
     xsync_recv_invalid_block,
     xsync_recv_duplicate_block,
     xsync_recv_block_size,
     xsync_getblocks_recv_req,
-    xsync_getblocks_send_resp,
-    xsync_recv_broadcast_newblockhash,
-    xsync_recv_blocks,
-    xsync_recv_blocks_size,
-    xsync_handler_blocks,
     xsync_recv_gossip_recv,
     xsync_bytes_gossip_recv,
     xsync_recv_get_on_demand_blocks,
     xsync_recv_get_on_demand_blocks_bytes,
-    xsync_recv_on_demand_blocks,
-    xsync_recv_on_demand_blocks_bytes,
     xsync_recv_broadcast_chain_state,
     xsync_recv_broadcast_chain_state_bytes,
     xsync_recv_response_chain_state,
     xsync_recv_response_chain_state_bytes,
     xsync_recv_cross_cluster_chain_state,
     xsync_recv_cross_cluster_chain_state_bytes,
-    xsync_recv_blocks_by_hashes,
-    xsync_recv_blocks_by_hashes_bytes,
     xsync_handler_blocks_by_hashes,
     xsync_cost_role_add_event,
     xsync_cost_role_remove_event,
-    xsync_handle_chain_snapshot_request,
-    xsync_handler_chain_snapshot_reponse,
-    xsync_handle_ondemand_chain_snapshot_request,
-    xsync_handle_ondemand_chain_snapshot_reponse,
-    xsync_recv_on_demand_by_hash_blocks_req,
-    xsync_recv_on_demand_by_hash_blocks_req_bytes,
-    xsync_recv_on_demand_by_hash_blocks_resp,
-    xsync_recv_on_demand_by_hash_blocks_resp_bytes,
     xsync_behind_download,
     xsync_behind_check,
     xsync_behind_on_demand,
     xsync_behind_on_demand_by_hash,
     xsync_recv_get_blocks_by_hashes,
-    xsync_recv_get_blocks_by_hashes_bytes,
     xsync_store_block_units,
     xsync_store_block_tables,
-    xsync_unit_proof_sync_req_send,
-    xsync_unit_proof_sync_req_recv,
-    xsync_recv_archive_height,
     xsync_archive_height_blocks,
-    xsync_recv_archive_blocks,
-    xsync_recv_archive_blocks_size,
     xsync_recv_query_archive_height,
     xsync_recv_archive_height_list,
     xsync_block_send_request,
     xsync_block_recv_response,
     xsync_block_request_count,
     xsync_sender_net_succ,
+    xsync_blockfetcher_request,
+    xsync_blockfetcher_response,
+    xsync_downloader_overflow,
+    xsync_downloader_request,
+    xsync_downloader_block_behind,
+    xsync_downloader_response_cost,
+    xsync_cost_event_queue,
+    xsync_gossip_send,
 
     // txpool
-    txpool_received_self_send_receipt_num,
-    txpool_received_other_send_receipt_num,
-    txpool_confirm_tx_retry_send,
-    txpool_recv_tx_first_send,
-    txpool_confirm_tx_first_send,
+    txpool_receipt_first_send_succ,
     txpool_request_origin_tx,
     txpool_receipt_tx,
     txpool_pull_recv_tx,
@@ -325,8 +262,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_recv_tx_cur,
     txpool_confirm_tx_cur,
     txpool_unconfirm_tx_cur,
-    txpool_recv_tx_first_send_fail,
-    txpool_confirm_tx_first_send_fail,
     txpool_drop_send_receipt_msg,
     txpool_drop_receive_receipt_msg,
     txpool_drop_push_receipt_msg,
@@ -354,12 +289,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_push_send_fail_nonce_duplicate,
     txpool_push_send_fail_other,
     txpool_send_tx_timeout,
-    txpool_tx_delay_from_push_to_pack_send,
-    txpool_tx_delay_from_push_to_pack_recv,
-    txpool_tx_delay_from_push_to_pack_confirm,
-    txpool_tx_delay_from_push_to_commit_send,
-    txpool_tx_delay_from_push_to_commit_recv,
-    txpool_tx_delay_from_push_to_commit_confirm,
     txpool_receipt_id_state_msg_send_num,
     txpool_alarm_confirm_tx_reached_upper_limit,
     txpool_alarm_recv_tx_reached_upper_limit,
@@ -380,15 +309,12 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     // blockstore accessing
     blockstore_access_from_account_context,
-    blockstore_access_from_contract_runtime,
 
     // assess from bus
     blockstore_access_from_mbus,
     blockstore_access_from_mbus_begin,
-    blockstore_access_from_mbus_onchain_loader_t_update = blockstore_access_from_mbus_begin,
-    blockstore_access_from_mbus_contract_db_on_block,
+    blockstore_access_from_mbus_contract_db_on_block = blockstore_access_from_mbus_begin,
     blockstore_access_from_mbus_txpool_db_event_on_block,
-    blockstore_access_from_mbus_xelect_process_elect,
     blockstore_access_from_mbus_grpc_process_event,
     blockstore_access_from_mbus_end = blockstore_access_from_mbus_grpc_process_event,
 
@@ -408,8 +334,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_rpc_get_block_json,
     blockstore_access_from_rpc_end = blockstore_access_from_rpc_get_block_json,
 
-
-    blockstore_access_from_store,
     // txpool
     blockstore_access_from_txpool,
     blockstore_access_from_txpool_begin,
@@ -445,9 +369,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_sync_load_block_object,
     blockstore_access_from_sync_end = blockstore_access_from_sync_load_block_object,
 
-
-    blockstore_access_from_sync_index,
-
     // blockstore_access_from_blk_mk
     blockstore_access_from_blk_mk,
     blockstore_access_from_blk_mk_begin,
@@ -461,7 +382,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_us,
     blockstore_access_from_us_begin,
     blockstore_access_from_us_on_view_fire = blockstore_access_from_us_begin,
-    blockstore_access_from_us_on_timer_fire,
     blockstore_access_from_us_on_proposal_finish,
     blockstore_access_from_us_timer_blk_maker,
     blockstore_access_from_us_timer_picker_constructor,
@@ -471,8 +391,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     // blockstore_access_from_bft
     blockstore_access_from_bft,
     blockstore_access_from_bft_begin,
-    blockstore_access_from_bft_check_proposal = blockstore_access_from_bft_begin,
-    blockstore_access_from_bft_on_clock_fire,
+    blockstore_access_from_bft_on_clock_fire = blockstore_access_from_bft_begin,
     blockstore_access_from_bft_pdu_event_down,
     blockstore_access_from_bft_consaccnt_on_proposal_start,
     blockstore_access_from_bft_consdriv_on_proposal_start,
@@ -487,11 +406,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access,
     statestore_access_begin,
     statestore_access_from_blk_ctx = statestore_access_begin,
-    statestore_access_from_vnodesrv_load_state,
     statestore_access_from_application_isbeacon,
-    statestore_access_from_blockstore,
-    statestore_access_from_contract_framework,
-    statestore_access_end = statestore_access_from_contract_framework,
+    statestore_access_end = statestore_access_from_application_isbeacon,
 
     statestore_get_unit_state_succ,
     statestore_get_unit_state_from_cache,
@@ -506,12 +422,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_account_index_cache_unbroken,
 
     statestore_sync_succ,
-
-    state_delete_table_data,
-    state_delete_unit_state,
-    state_delete_mpt,
-    state_delete_by_full_table,
-    state_delete_create_mpt_fail,
 
     // data structure
     data_table_unpack_units,
@@ -548,12 +458,24 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     rpc_auditor_forward_request,
     rpc_validator_tx_request,
     rpc_query_account_succ,
+    rpc_txdelay_client_timestamp_unmatch,
+    rpc_edge_tx_response,
+    rpc_edge_query_response,
+    rpc_xtransaction_cache_fail_digest,
+    rpc_xtransaction_cache_fail_sign,
+    rpc_xtransaction_validation_fail,
+    rpc_xtransaction_cache_fail_expiration,
+    rpc_http_request,
+    rpc_ws_connect,
+    rpc_ws_close,
+    rpc_ws_request,
 
     // contract
     contract_table_fullblock_event,
     contract_table_statistic_exec_fullblock,
     contract_table_statistic_report_fullblock,
     contract_zec_slash_summarize_fullblock,
+    contract_table_statistic_empty_ptr,
 
     // mailbox
     mailbox_grpc_total,
@@ -576,15 +498,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     mailbox_txpool_slow_cur,
     mailbox_us_cur,
     mailbox_statestore_cur,
-
-    //txdelay
-    txdelay_client_timestamp_unmatch,
-    txdelay_from_client_to_edge,
-    txdelay_from_client_to_auditor,
-    txdelay_from_client_to_validator,
-    txdelay_from_client_to_sendtx_exec,
-    txdelay_from_client_to_recvtx_exec,
-    txdelay_from_client_to_confirmtx_exec,
 
     //cpu
     cpu_hash_256_calc,
@@ -611,19 +524,18 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cpu_hash_256_receiptid_bin_calc,
     cpu_hash_256_xvproperty_prove_t_leafs_calc,
     cpu_hash_256_xvproperty_property_bin_calc,
-    cpu_hash_256_xhashplugin_t_calc,
-
-    //bft
-    bft_verify_vote_msg_fail,
-    contract_table_statistic_empty_ptr,
+    cpu_ethtx_get_from,
 
     //statectx
     statectx_load_block_succ,
 
-    // mpt_total_pruned_trie_node_cnt,
-    // mpt_cached_pruned_trie_node_cnt,
     mpt_trie_cache_visit,
     mpt_trie_cache_miss,
+    mpt_trie_put_nodes,
+    mpt_trie_put_units,
+    mpt_trie_get_nodes,
+    mpt_trie_get_units,
+    mpt_trie_prune_to_trie_db,
 
     //prune
     prune_block_table,
@@ -631,10 +543,17 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     prune_block_drand,
     prune_block_timer,
     prune_block_contract,
-    prune_state_unitstate,
+    prune_state_table_data,
+    prune_state_unit_state,
+    prune_state_mpt,
+    prune_state_by_full_table,
+    prune_state_create_mpt_fail,
 
-    //eth
-    ethtx_get_from,
+    chaintimer_clock_discontinuity,
+
+    xtransport_xudp_num,
+
+    xvm_contract_role_context_counter,
 
 #if defined(CACHE_SIZE_STATISTIC) || defined(CACHE_SIZE_STATISTIC_MORE_DETAIL)
     // calculate by xstatistic_t, the order must match with enum_statistic_class_type.

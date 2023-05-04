@@ -112,7 +112,6 @@ void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
         top::unreachable();
     }
 
-    XMETRICS_TIME_RECORD("sysContract_tableVote_vote_node");
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xinfo("[xtable_vote_contract::voteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s, pid: %d\n",
           timestamp,
@@ -150,7 +149,6 @@ void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
         top::unreachable();
     }
 
-    XMETRICS_TIME_RECORD("sysContract_tableVote_unvote_node");
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xinfo("[xtable_vote_contract::unvoteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s", timestamp, account.to_string().c_str(), SELF_ADDRESS().to_string().c_str());
 
@@ -204,7 +202,6 @@ void xtable_vote_contract::commit_stake() {
     std::map<std::string, std::string> adv_votes;
 
     try {
-        XMETRICS_TIME_RECORD("sysContract_tableVote_get_property_contract_pollable_key");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, adv_votes);
     } catch (std::runtime_error & e) {
         xdbg("[update_adv_votes] MAP COPY GET error:%s", e.what());
@@ -269,7 +266,6 @@ std::map<std::string, uint64_t> xtable_vote_contract::get_table_votes_detail(com
     uint32_t sub_map_no = (utl::xxh32_t::digest(account.to_string()) % data::system_contract::XPROPERTY_SPLITED_NUM) + 1;
     std::string property = std::string{data::system_contract::XPORPERTY_CONTRACT_VOTES_KEY_BASE} + "-" + std::to_string(sub_map_no);
     {
-        XMETRICS_TIME_RECORD("sysContract_tableVote_get_property_contract_votes_key");
         std::string vote_info_str;
         // here if not success, means account has no vote info yet, so vote_info_str is empty, using above default votes_table directly
         if (MAP_GET2(property, account.to_string(), vote_info_str)){
@@ -343,7 +339,6 @@ void xtable_vote_contract::update_table_votes_detail(common::xaccount_address_t 
         stream << votes_table;
         std::string vote_info_str = std::string((char *)stream.data(), stream.size());
         {
-            XMETRICS_TIME_RECORD("sysContract_tableVote_set_property_contract_voter_key");
             MAP_SET(property, account.to_string(), vote_info_str);
         }
     }
@@ -353,10 +348,8 @@ void xtable_vote_contract::add_advance_tickets(common::xaccount_address_t const 
     xdbg("[xtable_vote_contract::add_advance_tickets] adv account: %s, tickets: %llu, pid:%d\n", advance_account.to_string().c_str(), tickets, getpid());
 
     if (tickets == 0) {
-        XMETRICS_TIME_RECORD("sysContract_tableVote_remove_property_contract_pollable_key");
         REMOVE(xvm::xcontract::enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, advance_account.to_string());
     } else {
-        XMETRICS_TIME_RECORD("sysContract_tableVote_set_property_contract_pollable_key");
         WRITE(xvm::xcontract::enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, base::xstring_utl::tostring(tickets), advance_account.to_string());
     }
 }
@@ -365,7 +358,6 @@ uint64_t xtable_vote_contract::get_advance_tickets(common::xaccount_address_t co
     std::string value_str;
 
     {
-        XMETRICS_TIME_RECORD("sysContract_tableVote_get_property_contract_pollable_key");
         int32_t ret = MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, advance_account.to_string(), value_str);
         if (ret || value_str.empty()) {
             return 0;
@@ -402,7 +394,6 @@ void xtable_vote_contract::commit_total_votes_num() {
     // uint64_t total_votes = 0;
     std::map<std::string, std::string> pollables;
     try {
-        XMETRICS_TIME_RECORD("sysContract_tableVote_get_property_contract_pollable_key");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_POLLABLE_KEY, pollables);
     } catch (std::runtime_error & e) {
         xdbg("[xtable_vote_contract::commit_total_votes_num] MAP COPY GET error:%s", e.what());

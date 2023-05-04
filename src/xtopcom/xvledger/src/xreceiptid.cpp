@@ -426,7 +426,6 @@ void    xreceiptid_check_t::set_confirm_rsp_id(xtable_shortid_t sid, uint64_t va
 }
 
 bool    xreceiptid_check_t::check_continuous(const xreceiptid_state_ptr_t & receiptid_state) const {
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_check_continuous");
     bool ret = m_sendids.check_continuous(receiptid_state);
     if (!ret) {
         return false;

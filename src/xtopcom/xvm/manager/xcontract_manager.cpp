@@ -86,7 +86,6 @@ xtop_contract_manager & xtop_contract_manager::instance() {
 }
 
 xtop_contract_manager::~xtop_contract_manager() {
-    XMETRICS_COUNTER_INCREMENT("xvm_contract_manager_counter", -1);
     clear();
 }
 

@@ -14,9 +14,7 @@ using namespace base;
 class xentire_block_t : public top::basic::xserialize_face_t {
 public:
 
-    xentire_block_t() {
-        XMETRICS_COUNTER_INCREMENT("sync_entire_blocks", 1);
-    }
+    xentire_block_t() = default;
 
     virtual int32_t do_write(base::xstream_t & stream) {
         KEEP_SIZE();
@@ -40,9 +38,7 @@ public:
     }
 
 private:
-    virtual ~xentire_block_t() {
-        XMETRICS_COUNTER_INCREMENT("sync_entire_blocks", -1);
-    }
+    ~xentire_block_t() override = default;
 
 public:
     xblock_ptr_t block_ptr{};

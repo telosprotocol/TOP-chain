@@ -55,8 +55,8 @@ private:
     uint32_t m_max_req_nums{0};
 
 public:
-    xtop_state_sync();
-    ~xtop_state_sync() override;
+    xtop_state_sync() = default;
+    ~xtop_state_sync() override = default;
 
     static std::shared_ptr<xtop_state_sync> new_state_sync(const common::xaccount_address_t & table,
                                                            const uint64_t height,

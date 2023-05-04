@@ -40,12 +40,9 @@ void xsend_tx_queue_internal_t::erase_tx(const uint256_t & hash) {
     auto it_ready = m_tx_map.find(hash_str);
     if (it_ready != m_tx_map.end()) {
         auto & tx_ent = *it_ready->second.m_send_tx_set_iter;
-        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
-        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx pop tx from send queue,table:%s,tx:%s,delay:%llu",
+        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx pop tx from send queue,table:%s,tx:%s",
                      m_xtable_info->get_table_addr().c_str(),
-                     tx_ent->get_tx()->dump(true).c_str(),
-                     delay);
-        XMETRICS_GAUGE(metrics::txpool_tx_delay_from_push_to_commit_send, delay);
+                     tx_ent->get_tx()->dump(true).c_str());
         m_tx_set.erase(it_ready->second.m_send_tx_set_iter);
         m_tx_time_order_set.erase(it_ready->second.m_send_tx_time_order_set_iter);
         m_tx_map.erase(it_ready);

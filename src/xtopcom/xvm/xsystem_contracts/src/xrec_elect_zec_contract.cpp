@@ -124,8 +124,6 @@ void xtop_rec_elect_zec_contract::on_timer(common::xlogic_time_t const current_t
         return;
     }
 #endif
-    XMETRICS_TIME_RECORD(XZEC_ELECT "on_timer_all_time");
-    XMETRICS_CPU_TIME_RECORD(XZEC_ELECT "on_timer_cpu_time");
     XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xrec_elect_zec_contract_t instance is triggled by others");
     XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_rec_elect_zec_addr, "xrec_elect_zec_contract_t instance is not triggled by sys_contract_rec_elect_zec_addr");
     // XCONTRACT_ENSURE(current_time <= TIME(), "xrec_elect_zec_contract_t::on_timer current_time > consensus leader's time");

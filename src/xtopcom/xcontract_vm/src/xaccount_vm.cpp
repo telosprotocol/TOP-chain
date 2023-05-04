@@ -53,21 +53,6 @@ xaccount_vm_output_t xtop_account_vm::execute(std::vector<data::xcons_transactio
     size_t i = 0;
     try {
         for (i = 0; i < result_size; i++) {
-
-#if defined(ENABLE_METRICS)
-            // calc delay time collection
-            {
-                auto delay_time = txs[i]->get_transaction()->get_delay_from_fire_timestamp(cs_para.get_gettimeofday_s());
-                if (txs[i]->is_self_tx() || txs[i]->is_send_tx()) {
-                    XMETRICS_GAUGE(metrics::txdelay_from_client_to_sendtx_exec, delay_time);
-                } else if (txs[i]->is_recv_tx()) {
-                    XMETRICS_GAUGE(metrics::txdelay_from_client_to_recvtx_exec, delay_time);
-                } else if (txs[i]->is_confirm_tx()) {
-                    XMETRICS_GAUGE(metrics::txdelay_from_client_to_confirmtx_exec, delay_time);
-                }
-            }
-#endif
-
             auto action_result = execute_action(std::move(actions[i]), param, sa);
             if (action_result.status.ec) {
                 xwarn("[xtop_account_vm::execute] tx[%" PRIu64 "] failed, category: %s, msg: %s, abort all txs after!",
