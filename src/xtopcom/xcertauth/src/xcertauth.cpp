@@ -648,7 +648,7 @@ namespace top
             xdbg("xauthcontext_t_impl::verify_muti_sign enter block=%s",test_for_block->dump().c_str());
             if(false == test_for_block->is_valid(true)) //do deep test before verify signature
             {
-                xerror("xauthcontext_t_impl::verify_muti_sign,fail-pass the deep test for block:%s",test_for_block->dump().c_str());
+                xwarn("xauthcontext_t_impl::verify_muti_sign,fail-pass the deep test for block:%s",test_for_block->dump().c_str());
                 return base::enum_vcert_auth_result::enum_bad_block;
             }
             return verify_muti_sign(test_for_block->get_cert(),test_for_block->get_account());
