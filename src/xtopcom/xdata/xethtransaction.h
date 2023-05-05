@@ -90,14 +90,17 @@ class xeth_transaction_t {
     common::xeth_address_t const&   get_to() const { return m_to; }
     evm_common::u256 const&    get_value() const { return m_value; }
     xbytes_t const&            get_data() const { return m_data; }
-    evm_common::u256 const&    get_signV() const { return m_signV; }
-    evm_common::h256 const&    get_signR() const { return m_signR; }
-    evm_common::h256 const&    get_signS() const { return m_signS; }
+    xh256_t const& get_signR() const noexcept { return m_signR; }
+    xh256_t const& get_signS() const noexcept { return m_signS; }
+    xbyte_t get_signV() const noexcept { return m_signV; }
     const xeth_accesslist_t&   get_accesslist() const { return m_accesslist; }
     enum_ethtx_type            get_ethtx_type() const { return m_tx_type; }
 
- public:
-    void    set_sign(evm_common::u256 const& v, evm_common::h256 const& r, evm_common::h256 const& s) {m_signV = v; m_signR = r; m_signS = s;}
+    void set_sign(xh256_t const & r, xh256_t const & s, xbyte_t const v) {
+        m_signR = r;
+        m_signS = s;
+        m_signV = v;
+    }
 
  protected:
     void    set_tx_version(enum_ethtx_version version) {m_version = version;}
@@ -131,9 +134,9 @@ class xeth_transaction_t {
     evm_common::u256    m_value;
     xbytes_t            m_data;
     xeth_accesslist_t   m_accesslist;
-    evm_common::u256    m_signV;
     xh256_t m_signR;
     xh256_t m_signS;
+    xbyte_t m_signV;
 
  private:
     // cache members

@@ -206,19 +206,21 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
     _s << m_data;
     m_accesslist.streamRLP(_s);
     if (includesig) {
-        _s << m_signV;
-        _s << m_signR;
-        _s << m_signS;
+        _s << static_cast<evm_common::u256>(m_signV);
+        _s << static_cast<evm_common::u256>(m_signR);
+        _s << static_cast<evm_common::u256>(m_signS);
     }
 }
 
 void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP const& _r, eth_error & ec) {
-    size_t itemcount = includesig ? 12 : 9;
+    size_t const itemcount = includesig ? 12 : 9;
 
     if (_r.itemCount() > itemcount) {
         ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input list has too many elements for types.DynamicFeeTx");
         return;
-    } else if (_r.itemCount() < itemcount) {
+    }
+
+    if (_r.itemCount() < itemcount) {
         ec = eth_error(error::xenum_errc::eth_server_error, "rlp: too few elements for types.DynamicFeeTx");
         return;
     }
@@ -290,7 +292,7 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.signV, decoding into (types.DynamicFeeTx).signV");
                 return;
             }
-            m_signV = _r[field = 9].toInt<evm_common::u256>();
+            m_signV = _r[field = 9].toInt<evm_common::u256>().convert_to<xbyte_t>();
             if (_r[10].size() > 32) {
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.signR, decoding into (types.DynamicFeeTx).signR");
                 return;
