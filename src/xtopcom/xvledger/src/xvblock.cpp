@@ -2599,9 +2599,9 @@ namespace top
                 }
             }
 
-            if (deep_test) {
+            if (deep_test && get_height() != 0) {
                 // XTODO already check body hash with header, not need check hash again, only check exist
-                if (false == is_body_and_offdata_ready()) {
+                if (false == is_body_and_offdata_ready(false)) {
                     xwarn("xvblock_t::is_valid,fail-body not ready,%s", dump().c_str());
                     return false;
                 }
@@ -2630,8 +2630,15 @@ namespace top
         
         bool    xvblock_t::is_deliver(bool deep_test) const //test everytiing
         {
-            if(is_valid(deep_test) && check_block_flag(enum_xvblock_flag_authenticated) )
-            {
+            if (false == check_block_flag(enum_xvblock_flag_authenticated)) {
+                xwarn("xvblock_t::is_deliver fail-not authenticated.%s", dump().c_str());
+                return false;
+            }
+            if (false == is_valid(deep_test)) {
+                xwarn("xvblock_t::is_deliver fail-not valid.%s", dump().c_str());
+                return false;
+            }
+
                 if(m_cert_hash.empty()) //cert_hash must has been generated already
                 {
                     xerror("xvblock_t::is_deliver,hash of cert is empty,but block mark as enum_xvblock_flag_authenticated");
@@ -2647,12 +2654,13 @@ namespace top
                 }
                 
                 //genesis block dont need verify certification
-                if(get_cert()->is_deliver())
+            if(false == get_cert()->is_deliver())
                 {
-                    return true;
-                }
-            }
+                xwarn("xvblock_t::is_deliver fail-not deliver.%s", dump().c_str());
             return false;
+            }
+            xdbg("xvblock_t::is_deliver ok.%s", dump().c_str());
+            return true;
         }
         
         bool   xvblock_t::is_equal(const xvblock_t & other)  const//compare everyting except certification
