@@ -182,7 +182,7 @@ void xchain_block_fetcher_t::on_response_blocks(xblock_ptr_t &block, const vnetw
         forget_hash(hash);
 
         if (enum_result_code::success != check_auth(m_certauth, block)) {
-            xsync_info("chain_fetcher on_response_event(auth failed) : %s %s", block->dump().c_str(), from_address.to_string().c_str());
+            xsync_warn("chain_fetcher on_response_event(auth failed) : %s %s", block->dump().c_str(), from_address.to_string().c_str());
             return;
         }
 

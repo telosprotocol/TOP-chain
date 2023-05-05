@@ -128,7 +128,7 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
 enum_result_code xchain_downloader_t::handle_archive_block(xblock_ptr_t &block, uint64_t quota_height) {
     if (m_is_elect_chain) {
         if (enum_result_code::success != check_auth(m_certauth, block)) {
-            xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
+            xsync_warn("xchain_downloader_t::handle_block, check_auth fail.");
             return enum_result_code::auth_failed;
         }
     }
@@ -174,7 +174,7 @@ void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blo
     if (!m_is_elect_chain){
         xblock_ptr_t &block = blocks[count-1];
         if (enum_result_code::success != check_auth(m_certauth, block)) {
-            xsync_info("chain_downloader on_archive_blocks(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
+            xsync_warn("chain_downloader on_archive_blocks(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
             return;
         }
     }
@@ -231,7 +231,7 @@ enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, uint64_t
     if (m_is_elect_chain) {
         auto auth_ret = check_auth(m_certauth, block);
         if (enum_result_code::success != auth_ret) {
-            xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
+            xsync_warn("xchain_downloader_t::handle_block, check_auth fail.");
             return auth_ret;
         }
     }
