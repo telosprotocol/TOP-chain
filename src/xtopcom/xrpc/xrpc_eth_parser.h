@@ -36,6 +36,10 @@ class xrpc_eth_parser_t {
     static  void receipt_to_json(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, Json::Value & js_v, std::error_code & ec);
     static  void receipt_to_json(xtx_location_t const& txlocation,  data::xeth_transaction_t const& ethtx,
                                 data::xeth_store_receipt_t const &evm_tx_receipt,Json::Value & js_v, std::error_code & ec);
+    static  void log_to_json_for_top_rpc(uint32_t log_idx, evm_common::xevm_log_t const& log, Json::Value & js_v);
+    static  void receipt_to_json_for_top_rpc(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, Json::Value & js_v, std::error_code & ec);
+    static  void receipt_to_json_for_top_rpc(std::string const & blockhash, uint32_t tx_idx,  data::xeth_transaction_t const& ethtx,
+                                             data::xeth_store_receipt_t const &evm_tx_receipt,Json::Value & js_v, std::error_code & ec);
     static  void transaction_to_json(xtx_location_t const& txlocation, data::xtransaction_ptr_t const& rawtx, Json::Value & js_v, std::error_code & ec);
     static  void transaction_to_json(xtx_location_t const& txlocation, data::xeth_transaction_t const& ethtx, Json::Value & js_v, std::error_code & ec);
     static  void blockheader_to_json(base::xvblock_t* _block, Json::Value & js_v, std::error_code & ec);

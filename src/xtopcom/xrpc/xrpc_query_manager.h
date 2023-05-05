@@ -75,6 +75,7 @@ public:
         REGISTER_QUERY_METHOD(getProperty);
         REGISTER_QUERY_METHOD(getAccount);
         REGISTER_QUERY_METHOD(getTransaction);
+        REGISTER_QUERY_METHOD(getTransactionV2);
         REGISTER_QUERY_METHOD(getGeneralInfos);
         REGISTER_QUERY_METHOD(getRootblockInfo);
         REGISTER_QUERY_METHOD(getTimerInfo);
@@ -172,6 +173,7 @@ private:
     void getRootblockInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
     void getTransaction(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getTransactionV2(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
     void get_node_infos();
 

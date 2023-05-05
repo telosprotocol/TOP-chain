@@ -60,53 +60,36 @@ TEST_F(test_xrpc_eth_parser, log_to_json) {
     xrpc::xrpc_eth_parser_t::log_to_json(loglocation, log, js_log);
     EXPECT_EQ(js_log.empty(), false);
 }
+
 TEST_F(test_xrpc_eth_parser, receipt_to_json) {
-    std::error_code ec;
-    xrpc::xtx_location_t txlocation("","","","");
-    data::xeth_transaction_t ethtx;
+    std::string rawtx_bin = "0x02f8708203ff80822710822710827b0c94b7762d8dbd7e5c023ff99402b78af7c13b01eec1881bc16d674ec8000080c001a0d336694faa98f9cd69792ee30f9979f906f997d7562a0cb86d109f3476643a65a0679a7f510b12d48f9d1637884245229b7037b4f4094d1fb30e0f4f5cc77388ec";
+    data::eth_error ec;
+    data::xeth_transaction_t ethtx = data::xeth_transaction_t::build_from(rawtx_bin,ec);
+    if (ec.error_code) {xassert(false);}
     Json::Value js_v;
     data::xeth_store_receipt_t evm_tx_receipt;
-//    top::utl::xkeyaddress_t pubkey1("");
-    xrpc::xrpc_eth_parser_t::receipt_to_json(txlocation, ethtx, evm_tx_receipt, js_v, ec);
-    EXPECT_EQ(js_v.empty(), false);
-    
-}
-TEST_F(test_xrpc_eth_parser, receipt_to_json2) {
-    std::error_code ec;
-    xrpc::xtx_location_t txlocation("","","","");
-    data::xeth_transaction_t ethtx;
-    Json::Value js_v;
-
-    std::string raw_tx_hash;
-    xrpc::xtxindex_detail_ptr_t sendindex = xrpc::xrpc_loader_t::load_ethtx_indx_detail(raw_tx_hash);
-    if (sendindex == nullptr)
-        return;
-    xrpc::xrpc_eth_parser_t::receipt_to_json("", sendindex, js_v, ec);    
+    // xtx_location_t(std::string const& blockhash, std::string const& blocknumber, std::string const& txhash, std::string const& txindex)
+    xrpc::xtx_location_t txlocation("bhash","height","thash","idx");
+    std::error_code ec1;
+    xrpc::xrpc_eth_parser_t::receipt_to_json(txlocation, ethtx, evm_tx_receipt, js_v, ec1);
     EXPECT_EQ(js_v.empty(), false);
 }
-TEST_F(test_xrpc_eth_parser, transaction_to_json) {
-    std::error_code ec;
-    xrpc::xtx_location_t txlocation("","","","");
-    data::xeth_transaction_t ethtx;
+
+TEST_F(test_xrpc_eth_parser, receipt_to_json_for_top_rpc) {
+    std::string rawtx_bin = "0x02f8708203ff80822710822710827b0c94b7762d8dbd7e5c023ff99402b78af7c13b01eec1881bc16d674ec8000080c001a0d336694faa98f9cd69792ee30f9979f906f997d7562a0cb86d109f3476643a65a0679a7f510b12d48f9d1637884245229b7037b4f4094d1fb30e0f4f5cc77388ec";
+    data::eth_error ec;
+    data::xeth_transaction_t ethtx = data::xeth_transaction_t::build_from(rawtx_bin,ec);
+    if (ec.error_code) {xassert(false);}
     Json::Value js_v;
-
-    xrpc::xrpc_eth_parser_t::transaction_to_json(txlocation, ethtx, js_v, ec);    
-    EXPECT_EQ(js_v.empty(), false);
-
-}
-TEST_F(test_xrpc_eth_parser, transaction_to_json2) {
-    std::error_code ec;
-    xrpc::xtx_location_t txlocation("","","","");
-    data::xeth_transaction_t ethtx;
-    Json::Value js_v;
-    std::string tx_hash_str;
-    xrpc::xtxindex_detail_ptr_t sendindex = xrpc::xrpc_loader_t::load_ethtx_indx_detail(tx_hash_str);
-    if (sendindex == nullptr)
-        return;
-
-    xrpc::xrpc_eth_parser_t::transaction_to_json(txlocation, sendindex->get_raw_tx(), js_v, ec);    
-    EXPECT_EQ(js_v.empty(), false);
-
+    data::xeth_store_receipt_t evm_tx_receipt;
+    // xtx_location_t(std::string const& blockhash, std::string const& blocknumber, std::string const& txhash, std::string const& txindex)
+    xrpc::xtx_location_t txlocation("bhash","height","thash","idx");
+    std::error_code ec1;
+    xrpc::xrpc_eth_parser_t::receipt_to_json_for_top_rpc("bhash", 1, ethtx, evm_tx_receipt, js_v, ec1);
+    EXPECT_EQ(js_v["blockHash"], "bhash");
+    EXPECT_EQ(js_v["transactionIndex"].asInt(), 1);
+    EXPECT_EQ(js_v["type"].asInt(), 2);
+    EXPECT_EQ(js_v["status"].asInt(), 0);
 }
 
 

@@ -47,12 +47,20 @@ void xrpc_eth_parser_t::log_to_json(xlog_location_t const& loglocation, evm_comm
     js_v["data"] = top::to_hex_prefixed(log.data);
 }
 
+void xrpc_eth_parser_t::log_to_json_for_top_rpc(uint32_t log_idx, evm_common::xevm_log_t const& log, Json::Value & js_v) {
+    js_v["logIndex"] = log_idx;
+    js_v["removed"] = false;
+    js_v["address"] = common::xaccount_address_t::build_from(log.address, base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
+    for (auto & topic : log.topics) {
+        js_v["topics"].append(top::to_hex_prefixed(topic.asBytes()));
+    }
+    js_v["data"] = top::to_hex_prefixed(log.data);
+}
+
 void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, Json::Value & js_v, std::error_code & ec) {
     std::string block_hash = top::to_hex_prefixed(sendindex->get_block_hash());
     std::string block_num = uint64_to_hex_prefixed(sendindex->get_txindex()->get_block_height());
     std::string tx_idx = uint64_to_hex_prefixed((uint64_t)sendindex->get_transaction_index());
-    common::xeth_address_t _from_addr = common::xeth_address_t::build_from(sendindex->get_raw_tx()->source_address());
-    std::string _from_addr_str = _from_addr.to_hex_string();
     xtx_location_t txlocation(block_hash,block_num,tx_hash,tx_idx);
 
     data::xeth_store_receipt_t evm_tx_receipt;
@@ -69,6 +77,23 @@ void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_de
         return;
     }
     receipt_to_json(txlocation, ethtx, evm_tx_receipt, js_v, ec);
+}
+
+void xrpc_eth_parser_t::receipt_to_json_for_top_rpc(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, Json::Value & js_v, std::error_code & ec) {
+    data::xeth_store_receipt_t evm_tx_receipt;
+    auto ret = sendindex->get_txaction().get_evm_transaction_receipt(evm_tx_receipt);
+    if (!ret) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("receipt_to_json_for_top_rpc::receipt_to_json fail-get_evm_receipt");
+        return;
+    }
+
+    data::xeth_transaction_t ethtx = sendindex->get_raw_tx()->to_eth_tx(ec);
+    if (ec) {
+        xerror("xrpc_eth_parser_t::receipt_to_json fail-to eth tx");
+        return;
+    }
+    receipt_to_json_for_top_rpc(top::to_hex_prefixed(sendindex->get_block_hash()), (uint32_t)sendindex->get_transaction_index(), ethtx, evm_tx_receipt, js_v, ec);
 }
 
 void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, data::xtransaction_ptr_t const& rawtx, Json::Value & js_v, std::error_code & ec) {
@@ -169,7 +194,7 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
     js_v["maxFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
     js_v["input"] = top::to_hex_prefixed(ethtx.get_data());
     js_v["nonce"] = u256_to_hex_prefixed(ethtx.get_nonce());
-    if (!ethtx.get_to().is_zero()) {
+    if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
         js_v["to"] = ethtx.get_to().to_hex_string();
     } else {
         js_v["to"] = Json::Value::null;
@@ -198,14 +223,18 @@ void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data:
 
 
     js_v["from"] =  ethtx.get_from().to_hex_string();
-    if (!ethtx.get_to().is_zero()) {
+    if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
         js_v["to"] = ethtx.get_to().to_hex_string();
         if (!ethtx.get_data().empty()) {
             js_v["contractAddress"] = ethtx.get_to().to_hex_string();
         }
     } else {
         js_v["to"] = Json::Value::null;
-        js_v["contractAddress"] = evm_tx_receipt.get_contract_address().to_hex_string();
+        if (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) {
+            js_v["contractAddress"] = evm_tx_receipt.get_contract_address().to_hex_string();
+        } else {
+            js_v["contractAddress"] = Json::Value::null;
+        }
     }
 
     evm_common::xbloom9_t logs_bloom = evm_tx_receipt.bloom();
@@ -224,6 +253,54 @@ void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data:
     } else {
         js_v["logs"].resize(0);
     }
+}
+
+void xrpc_eth_parser_t::receipt_to_json_for_top_rpc(std::string const & blockhash, uint32_t tx_idx,  data::xeth_transaction_t const& ethtx,
+                                        data::xeth_store_receipt_t const &evm_tx_receipt,Json::Value & js_v, std::error_code & ec) {
+    // fields from eth_getTransactionReceipt
+    js_v["blockHash"] = blockhash;
+    js_v["transactionIndex"] = tx_idx;
+    js_v["status"] = (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) ? 1 : 0;
+    js_v["type"] = (uint32_t)ethtx.get_tx_version();
+    js_v["gasUsed"] = std::to_string(evm_tx_receipt.get_gas_used());
+    js_v["cumulativeGasUsed"] = std::to_string(evm_tx_receipt.get_cumulative_gas_used());
+    js_v["effectiveGasPrice"] = evm_tx_receipt.get_gas_price().str();
+
+    if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
+        if (!ethtx.get_data().empty()) {
+            js_v["contractAddress"] = common::xaccount_address_t::build_from(ethtx.get_to(), base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
+        }
+    } else {
+        if (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) {
+            js_v["contractAddress"] = common::xaccount_address_t::build_from(evm_tx_receipt.get_contract_address(),
+                                                                            base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();            
+        } else {
+            js_v["contractAddress"] = "";
+        }
+    }
+
+    evm_common::xbloom9_t logs_bloom = evm_tx_receipt.bloom();
+    js_v["logsBloom"] = top::to_hex_prefixed(logs_bloom.get_data());
+
+    if (!evm_tx_receipt.get_logs().empty()) {
+        uint32_t index = 0;
+        for (auto & log : evm_tx_receipt.get_logs()) {
+            index++;
+            Json::Value js_log;
+            log_to_json_for_top_rpc(index, log, js_log);
+            js_v["logs"].append(js_log);
+        }
+    } else {
+        js_v["logs"].resize(0);
+    }
+
+    // fields from eth_getTransactionByHash
+    js_v["input"] = top::to_hex_prefixed(ethtx.get_data());
+    js_v["gas"] = ethtx.get_gas().str();
+    js_v["gasPrice"] = ethtx.get_max_fee_per_gas().str();
+    js_v["maxPriorityFeePerGas"] = ethtx.get_max_priority_fee_per_gas().str();
+    js_v["maxFeePerGas"] = ethtx.get_max_fee_per_gas().str();
+    js_v["value"] = ethtx.get_value().str();
 }
 
 }  // namespace chain_info

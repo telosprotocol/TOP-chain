@@ -16,6 +16,12 @@ enum enum_ethtx_version {
     EIP_1559 = 2,
 };
 
+enum enum_ethtx_type {
+    enum_ethtx_type_null_transaction = 0,
+    enum_ethtx_type_contract_creation = 1,
+    enum_ethtx_type_message_call = 2,
+};
+
 static std::string strNull = "";
 
 struct eth_error
@@ -52,6 +58,10 @@ class xeth_transaction_t {
  public:
     static data::xeth_transaction_t  build_from(std::string const& rawtx_bin, eth_error & ec);
     static data::xeth_transaction_t  build_from(xbytes_t const& rawtx_bs, eth_error & ec);
+    static data::xeth_transaction_t  build_eip1559_tx(evm_common::u256 const& chainid, evm_common::u256 const& nonce, evm_common::u256 const& max_priority_fee_per_gas, evm_common::u256 const& max_fee_per_gas, 
+                                                      evm_common::u256 const& gas, common::xeth_address_t const& to, evm_common::u256 const& value, xbytes_t const& data);
+    static data::xeth_transaction_t  build_eip1559_tx(evm_common::u256 const& chainid, evm_common::u256 const& nonce, evm_common::u256 const& max_priority_fee_per_gas, evm_common::u256 const& max_fee_per_gas, 
+                                                      evm_common::u256 const& gas, evm_common::u256 const& value, xbytes_t const& data);                                                  
  public:
     xeth_transaction_t() = default;
     xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, evm_common::u256 const& _value, evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice);
@@ -82,8 +92,12 @@ class xeth_transaction_t {
     evm_common::h256 const&    get_signR() const { return m_signR; }
     evm_common::h256 const&    get_signS() const { return m_signS; }
     const xeth_accesslist_t&   get_accesslist() const { return m_accesslist; }
+    enum_ethtx_type            get_ethtx_type() const { return m_tx_type; }
 
  public:
+    void    set_sign(evm_common::u256 const& v, evm_common::h256 const& r, evm_common::h256 const& s) {m_signV = v; m_signR = r; m_signS = s;}
+
+ protected:
     void    set_tx_version(enum_ethtx_version version) {m_version = version;}
     void    set_chainid(evm_common::u256 const& value) {m_chainid = value;}
     void    set_nonce(evm_common::u256 const& value) {m_nonce = value;}
@@ -93,9 +107,7 @@ class xeth_transaction_t {
     void    set_to(common::xeth_address_t const& value) {m_to = value;}
     void    set_value(evm_common::u256 const& value) {m_value = value;}
     void    set_data(xbytes_t const& value) {m_data = value;}
-    void    set_signV(evm_common::u256 const& value) {m_signV = value;}
-    void    set_signR(evm_common::h256 const& value) {m_signR = value;}
-    void    set_signS(evm_common::h256 const& value) {m_signS = value;}
+    void    set_ethtx_type(enum_ethtx_type value) {m_tx_type = value;}
 
  protected:
     void        streamRLP_eip1599(bool includesig, evm_common::RLPStream& _s) const;
@@ -106,6 +118,7 @@ class xeth_transaction_t {
 
 
  private:
+    enum_ethtx_type     m_tx_type{enum_ethtx_type_null_transaction};
     enum_ethtx_version  m_version{EIP_1559};
     evm_common::u256    m_chainid;
     evm_common::u256    m_nonce;
