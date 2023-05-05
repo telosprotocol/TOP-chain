@@ -2599,6 +2599,32 @@ namespace top
                 }
             }
 
+            if (deep_test) {
+                // XTODO already check body hash with header, not need check hash again, only check exist
+                if (false == is_body_and_offdata_ready()) {
+                    xwarn("xvblock_t::is_valid,fail-body not ready,%s", dump().c_str());
+                    return false;
+                }
+
+                bool is_character_cert_header_only = get_header()->get_block_characters() & enum_xvblock_character_certify_header_only;
+                // calc and check header hash
+                std::string vheader_bin;
+                get_header()->serialize_to_string(vheader_bin);
+                std::string calc_header_hash;
+                if (is_character_cert_header_only) {
+                    calc_header_hash = get_cert()->hash(vheader_bin);
+                } else {
+                    std::string vinput_bin = get_input_data();
+                    std::string voutput_bin = get_output_data();
+                    const std::string vheader_input_output = vheader_bin + vinput_bin + voutput_bin;
+                    calc_header_hash = get_cert()->hash(vheader_input_output);
+                }
+                if (calc_header_hash != get_cert()->get_header_hash()) {
+                    xwarn("xvblock_t::is_valid,fail-header hash unmatch,%s", dump().c_str());
+                    return false;
+                }
+            }
+
             return true;
         }
         
