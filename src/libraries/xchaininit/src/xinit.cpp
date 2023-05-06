@@ -14,7 +14,7 @@
 #include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
 #include "xchaininit/xchain_command_http_server.h"
-#include "xchaininit/version.h"
+#include "xversion/version.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_utils.h"

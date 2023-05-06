@@ -110,6 +110,7 @@ public:
         REGISTER_QUERY_METHOD(queryVoterDividend);
         REGISTER_QUERY_METHOD(queryProposal);
         REGISTER_QUERY_METHOD(getLatestTables);
+        REGISTER_QUERY_METHOD(getClientVersion);
         REGISTER_QUERY_METHOD(getChainId);
         REGISTER_QUERY_METHOD(getCrossReceiptIds);
 #if defined(XBUILD_CONSORTIUM)
@@ -213,6 +214,7 @@ private:
     void queryVoterDividend(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void queryProposal(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getLatestTables(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getClientVersion(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
 
 

@@ -200,7 +200,7 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
             xinfo_rpc("req:%s >>>rsp part%u:%s", edge_msg.m_message_body.c_str(), i, response_msg_ptr->m_message_body.substr(i*800,800).c_str());
         }
         xinfo_rpc("req:%s >>>rsp part%u:%s", edge_msg.m_message_body.c_str(), i, response_msg_ptr->m_message_body.substr(i*800).c_str());
-        std::cout << "req" << edge_msg.m_message_body << " >>>rsp:" << response_msg_ptr->m_message_body << std::endl;
+        // std::cout << "req" << edge_msg.m_message_body << " >>>rsp:" << response_msg_ptr->m_message_body << std::endl;
     }
     std::error_code ec;
     m_arc_vhost->send_to(edge_sender, msg, ec);

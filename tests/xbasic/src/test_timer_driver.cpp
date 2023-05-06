@@ -46,7 +46,7 @@ TEST(xbasic, timer_driver) {
     io_context_wrapper.reset();
 }
 #endif
-
+#if defined(TEST_TIMER_DRIVER_PERF)
 TEST(xbasic, base_timer_driver_normal) {
     auto io_thread = top::make_object_ptr<top::base::xiothread_t>();
     auto io_context_wrapper = std::make_shared<top::xbase_io_context_wrapper_t>(io_thread);
@@ -113,7 +113,7 @@ TEST(xbasic, base_timer_driver_record) {
     std::this_thread::sleep_for(std::chrono::seconds{2});
 }
 
-#if defined(TEST_TIMER_DRIVER_PERF)
+
 TEST(xbasic, base_timer_driver_perf) {
     auto io_thread = top::make_object_ptr<top::base::xiothread_t>();
     auto io_context_wrapper = std::make_shared<top::xbase_io_context_wrapper_t>(io_thread);

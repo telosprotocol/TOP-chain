@@ -31,6 +31,7 @@ target_link_libraries(
     xtopcl
     xrouter
     xvnetwork
+    xversion
     db_tool
     xxbase
     xhttp

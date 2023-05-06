@@ -4,6 +4,7 @@
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
+#include "xversion/version.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xcommon/xtop_log.h"
@@ -2240,6 +2241,18 @@ void xrpc_query_manager::getLatestTables(Json::Value & js_req, Json::Value & js_
         xdbg("getLatestTables addr %s, height %ull", addr.c_str(), vb->get_height());
     }
 
+    js_rsp = jv;
+}
+
+void xrpc_query_manager::getClientVersion(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+    Json::Value jv;
+    jv["topio_version"] = get_program_version();
+    jv["git_commit"] = get_git_log_latest();
+    jv["git_submodule"] = get_git_submodule();
+    jv["build_date"] = get_build_date_time();
+    jv["build_options"] = get_build_options();
+    jv["md5"] = get_md5();
+    xinfo_rpc("xrpc_query_manager::getClientVersion: topio_version=%s", get_program_version().c_str());
     js_rsp = jv;
 }
 

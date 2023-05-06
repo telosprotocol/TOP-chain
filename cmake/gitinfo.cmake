@@ -74,7 +74,7 @@ macro(get_git_info)
         message("not find build_options file (should be generate by build.sh)")
     endif()
 
-    set(VersionInc "${PROJECT_SOURCE_DIR}/src/libraries/xchaininit/src/version.inc")
+    set(VersionInc "${PROJECT_SOURCE_DIR}/src/xtopcom/xversion/src/version.inc")
     file(WRITE  ${VersionInc} "const std::string TOP_VERSION_PREFIX  = \"TOP_VERSION\";\n")  # will overwrite
     file(APPEND ${VersionInc} "const std::string TOP_GIT_BRANCH      = \"${TOP_GIT_BRANCH}\";\n")
     file(APPEND ${VersionInc} "const std::string TOP_GIT_HASH        = \"${TOP_GIT_HASH}\";\n")

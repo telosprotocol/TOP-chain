@@ -4,7 +4,6 @@
 
 #include "main.h"
 
-#include "xchaininit/version.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xinit.h"
 #include "xchaininit/xconfig.h"
@@ -18,13 +17,14 @@
 #else
 #    include "CLI11.hpp"
 #endif
-#include "generated/version.h"
+#include "xversion/version.h"
 #include "topio_setproctitle.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
 #include "xbasic/xtimer_driver.h"
+#include "xbasic/xsys_utl.h"
 #include "xcommon/xrole_type.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xmonitor.h"
+// #include "xmonitor.h"
 #include "xsafebox/safebox_http_client.h"
 #include "xsafebox/safebox_http_server.h"
 
@@ -290,25 +290,23 @@ int start_monitor_thread(config_t & config) {
     std::thread(log_thread_proc).detach();
 #endif
 
-    auto cpu_thread_proc = std::bind(cpu_monitor_proc, config);
-    std::thread(cpu_thread_proc).detach();
-
     return 0;
 }
 
-int cpu_monitor_proc(config_t config) {
-    xmonitor_t monitor;
-    for (;;) {
-        monitor.monitor_cpu_and_network();
-        std::this_thread::sleep_for(std::chrono::seconds(config.cpu_net_interval));
-    }
-
-    return 0;
-}
 
 int log_monitor_proc(config_t config) {
+    std::string log_path = config.datadir + "/log";
+    int log_scope_sec = 6 * 3600; // max scope 6 hours
+
     while (true) {
-        check_log_path(config.datadir + "/log");
+        int available_space_GB = xsys_utl_t::get_log_directory_available_space_GB(log_path);
+        if (available_space_GB < 2) {
+            log_scope_sec = 10 * 60;  // ten minutes
+        } else if (available_space_GB < 5) {
+            log_scope_sec = 1 * 3600; // one hour
+        }
+        int metric_scope_sec = 4 * log_scope_sec;
+        xsys_utl_t::check_and_remove_old_log_files(log_path, log_scope_sec, metric_scope_sec);
         std::this_thread::sleep_for(std::chrono::seconds(10 * 60));  // every 10 min
     }
     return 0;
@@ -576,7 +574,7 @@ bool get_default_miner(config_t & config, std::map<std::string, std::string> & d
 void block_loop() {
     while (true) {
         // sleep forerver
-        std::this_thread::sleep_for(std::chrono::seconds(60));
+        std::this_thread::sleep_for(std::chrono::seconds(6000));
     }
 }
 

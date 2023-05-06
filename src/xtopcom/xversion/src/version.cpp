@@ -67,6 +67,27 @@ std::string get_md5() {
     return md5;
 }
 
+std::string get_program_version() {
+    #include "version.inc"
+    return PROGRAM_VERSION;
+}
+std::string get_git_log_latest() {
+    #include "version.inc"
+    return TOP_GIT_LOG_LATEST;
+}
+std::string get_git_submodule() {
+    #include "version.inc"
+    return TOP_GIT_SUBMODULE;
+}
+std::string get_build_date_time() {
+    #include "version.inc"
+    return TOP_BUILD_DATE + " " + TOP_BUILD_TIME;
+}
+std::string get_build_options() {
+    #include "version.inc"
+    return TOP_BUILD_OPTIONS;
+}
+
 void print_version() {
     #include "version.inc"
 
