@@ -130,6 +130,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xenum_basic_errc::invalid_hex_string:
         return "invalid_hex_string error";
 
+    case xenum_basic_errc::invalid_binary_string:
+        return "invalid_binary_string error";
+
     default:
         return "unknown error";
     }

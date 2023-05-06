@@ -59,6 +59,7 @@ enum class xenum_basic_errc {
     invalid_char_data,
     invalid_fixed_bytes_size,
     invalid_hex_string,
+    invalid_binary_string,
 
     unknown_error = std::numeric_limits<std::underlying_type<xenum_basic_errc>::type>::max()
 };

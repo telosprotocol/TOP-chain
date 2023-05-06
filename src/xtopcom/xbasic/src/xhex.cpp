@@ -13,7 +13,7 @@
 NS_BEG1(top)
 
 bool has_hex_prefix(xstring_view_t const input) noexcept {
-       return input.size() >= 2 && (input.compare(0, 2, "0x") == 0 || input.compare(0, 2, "0X") == 0);
+    return input.size() >= 2 && (input.compare(0, 2, "0x") == 0 || input.compare(0, 2, "0X") == 0);
 }
 
 xbyte_t hex_char_to_binary(char const ch, std::error_code & ec) noexcept {
