@@ -11,8 +11,19 @@
 #include "xstatestore/xstatestore_resource.h"
 
 #include <string>
+#include <unordered_map>
 
 NS_BEG2(top, statestore)
+
+enum enum_state_prune_para_t {
+#if defined(XBUILD_CI) || defined(XBUILD_DEV)    
+    prune_para_elect_contract_unit_keep_num = 100, // in test mode, elect contract units should also be pruned
+    prune_para_other_contract_unit_keep_num = 10,
+#else
+    prune_para_elect_contract_unit_keep_num = 10000000,  // XTODO not prune elect contract units in mainnet
+    prune_para_other_contract_unit_keep_num = 300,
+#endif
+};
 
 class xaccounts_prune_info_t {
 public:
@@ -34,6 +45,13 @@ private:
     std::vector<std::string> m_tablestate_keys;
 };
 
+struct xstatestore_unit_info_t {
+    xstatestore_unit_info_t() = default;
+    xstatestore_unit_info_t(uint32_t keep_unit_num, uint64_t lowest_keep_height) : m_keep_unit_num(keep_unit_num), m_lowest_keep_height(lowest_keep_height) {}
+    uint32_t m_keep_unit_num{0};
+    uint64_t m_lowest_keep_height{0};
+};
+
 class xstatestore_prune_t : public std::enable_shared_from_this<xstatestore_prune_t> {
 public:
     xstatestore_prune_t(common::xtable_address_t const & table_addr, std::shared_ptr<xstatestore_resources_t> para);
@@ -45,6 +63,7 @@ public:
 private:
     void prune_imp(uint64_t exec_height);
     void unitstate_prune_batch(const xaccounts_prune_info_t & accounts_prune_info);
+    void unit_prune_batch(const xaccounts_prune_info_t & accounts_prune_info);
     common::xtable_address_t const & get_account() const {return m_table_addr;}
     bool need_prune(uint64_t exec_height);
     bool get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height, uint64_t & lowest_keep_height);
@@ -60,6 +79,8 @@ private:
     mutable std::mutex m_prune_lock;
     common::xtable_address_t m_table_addr;
     base::xvaccount_t           m_table_vaddr; // TODO(jimmy) refactor
+    bool m_need_prune_unit{false};
+    std::unordered_map<std::string, xstatestore_unit_info_t>   m_prune_addrs; // key:account, value:low delete unit height
     uint64_t m_pruned_height{0};
     xstatestore_base_t m_statestore_base;
     std::shared_ptr<xstatestore_resources_t> m_para;
