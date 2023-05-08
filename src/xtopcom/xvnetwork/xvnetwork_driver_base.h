@@ -26,11 +26,11 @@ public:
     ~xtop_vnetwork_driver_base() override                                    = default;
 
     void
-    register_message_ready_notify(common::xmessage_category_t const message_category,
-                                  xvnetwork_message_ready_callback_t cb) override final;
+    register_message_ready_notify(common::xmessage_category_t message_category,
+                                  xvnetwork_message_ready_callback_t cb) final;
 
     void
-    unregister_message_ready_notify(common::xmessage_category_t const message_category) override final;
+    unregister_message_ready_notify(common::xmessage_category_t message_category) final;
 };
 using xvnetwork_driver_base_t = xtop_vnetwork_driver_base;
 

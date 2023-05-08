@@ -35,7 +35,7 @@ public:
 public:
     inline EcNetcardPtr & GetEcNetcard() {
         return ec_netcard_;
-    };
+    }
 
     inline std::shared_ptr<ElectManager> GetElectManager() const noexcept {
         return elect_manager_;

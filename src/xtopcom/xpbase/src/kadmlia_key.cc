@@ -6,11 +6,12 @@
 
 #include "xbase/xutl.h"
 #include "xutility/xhash.h"
+#include "xmetrics/xmetrics.h"
 
-#include <assert.h>
+#include <cassert>
 #include <ostream>
 #include <sstream>
-#include "xmetrics/xmetrics.h"
+
 namespace top {
 
 namespace base {
@@ -20,9 +21,8 @@ namespace base {
  * [ver:1]-[network_id:20]-[zone_id:7]-[cluster_id:7]-[group_id:8]-[height:21]
  */
 #define kRootNetworkId 0xFFFFFULL
-#define set_kad_service_ver(service_id, ver)                                   \
-    assert(ver == 0 || ver == 1);                                              \
-    ((service_id |= ((uint64_t)(ver)&0x1ULL) << 63))
+#define set_kad_service_ver(service_id)                                   \
+    ((service_id |= (0x1ULL) << 63))
 #define set_kad_network_id(service_id, network_id)                             \
     ((service_id |= ((uint64_t)(network_id)&0x0FFFFFULL) << 43))
 #define set_kad_zone_id(service_id, zone_id)                                   \
@@ -35,8 +35,40 @@ namespace base {
     ((service_id |= ((uint64_t)(height)&0x1FFFFFULL)))
 // #define set_kad_root(service_id) ((service_id |= (0xFFFFFFULL)))
 
-ServiceType::ServiceType(uint64_t type) : m_type{type} {
+ServiceType::ServiceType(common::xip2_t const xip2) {
+    set_kad_service_ver(m_type);
+    set_kad_network_id(m_type, xip2.network_id().value());
+    set_kad_zone_id(m_type, xip2.zone_id().value());
+    set_kad_cluster_id(m_type, xip2.cluster_id().value());
+    set_kad_group_id(m_type, xip2.group_id().value());
+    set_kad_height(m_type, xip2.height());
+
     update_info();
+}
+
+ServiceType::ServiceType(common::xip2_t const xip2, uint64_t const height) {
+    set_kad_service_ver(m_type);
+    set_kad_network_id(m_type, xip2.network_id().value());
+    set_kad_zone_id(m_type, xip2.zone_id().value());
+    set_kad_cluster_id(m_type, xip2.cluster_id().value());
+    set_kad_group_id(m_type, xip2.group_id().value());
+    set_kad_height(m_type, height);
+    update_info();
+}
+
+ServiceType ServiceType::build_from(uint64_t const type) {
+    ServiceType service_type;
+    service_type.m_type = type;
+    service_type.update_info();
+    return service_type;
+}
+
+ServiceType ServiceType::build_from(common::xip2_t const xip2) {
+    return ServiceType(xip2);
+}
+
+ServiceType ServiceType::build_from(common::xip2_t const xip2, uint64_t const height) {
+       return ServiceType(xip2, height);
 }
 
 void ServiceType::update_info() {
@@ -120,11 +152,11 @@ common::xgroup_id_t ServiceType::group_id() const {
 }
 uint64_t ServiceType::height() const { return (m_type << 43) >> 43; }
 
-void ServiceType::set_ver(uint64_t new_ver) {
-    m_type &= ((m_type << 1) >> 1);
-    m_type |= ((uint64_t)(new_ver) << 63);
-    update_info();
-}
+//void ServiceType::set_ver(uint64_t new_ver) {
+//    m_type &= ((m_type << 1) >> 1);
+//    m_type |= ((uint64_t)(new_ver) << 63);
+//    update_info();
+//}
 
 void ServiceType::set_height(uint64_t new_height) {
     m_type &= ((uint64_t)0xFFFFFFFFFFE00000ULL);
@@ -141,17 +173,17 @@ common::xip2_t ServiceType::group_xip2() const {
     return res;
 }
 
-std::string ServiceType::info() const { return m_info; }
+std::string const &  ServiceType::info() const noexcept{ return m_info; }
 
 ServiceType CreateServiceType(common::xip2_t const &xip) {
-    uint64_t res{0};
-    set_kad_service_ver(res, static_cast<size_t>(now_service_type_ver));
-    set_kad_network_id(res, xip.network_id().value());
-    set_kad_zone_id(res, xip.zone_id().value());
-    set_kad_cluster_id(res, xip.cluster_id().value());
-    set_kad_group_id(res, xip.group_id().value());
-    set_kad_height(res, xip.height());
-    return ServiceType(res);
+    //uint64_t res{0};
+    //set_kad_service_ver(res, static_cast<size_t>(now_service_type_ver));
+    //set_kad_network_id(res, xip.network_id().value());
+    //set_kad_zone_id(res, xip.zone_id().value());
+    //set_kad_cluster_id(res, xip.cluster_id().value());
+    //set_kad_group_id(res, xip.group_id().value());
+    //set_kad_height(res, xip.height());
+    return ServiceType::build_from(xip);
 }
 
 base::KadmliaKeyPtr GetKadmliaKey(common::xip2_t const &xip) {

@@ -33,7 +33,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xbasic_vnode_t{common::xnode_address_t{sharding_address,
-                                           common::xaccount_election_address_t{vhost->host_node_id(), slot_id},
+                                           common::xaccount_election_address_t{vhost->account_address(), slot_id},
                                            election_round,
                                            group_size,
                                            associated_blk_height},
@@ -53,7 +53,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
         m_vhost, m_election_cache_data_accessor,
-        common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
+        common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->account_address(), slot_id}, election_round, group_size, associated_blk_height},
         joined_election_round)}
    {
     bool const is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
@@ -87,12 +87,12 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xtop_vnode{elect_main,
-               group_info->node_element(vhost->host_node_id())->address().sharding_address(),
-               group_info->node_element(vhost->host_node_id())->slot_id(),
-               group_info->node_element(vhost->host_node_id())->joined_election_round(),
-               group_info->node_element(vhost->host_node_id())->election_info().miner_type(),
-               group_info->node_element(vhost->host_node_id())->election_info().genesis(),
-               group_info->node_element(vhost->host_node_id())->raw_credit_score(),
+               group_info->node_element(vhost->account_address())->address().sharding_address(),
+               group_info->node_element(vhost->account_address())->slot_id(),
+               group_info->node_element(vhost->account_address())->joined_election_round(),
+               group_info->node_element(vhost->account_address())->election_info().miner_type(),
+               group_info->node_element(vhost->account_address())->election_info().genesis(),
+               group_info->node_element(vhost->account_address())->raw_credit_score(),
                group_info->election_round(),
                group_info->group_size(),
                group_info->associated_blk_height(),

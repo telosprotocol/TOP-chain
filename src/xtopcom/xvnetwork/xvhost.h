@@ -7,7 +7,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xthreading/xthreadsafe_queue.hpp"
 #include "xcommon/xnode_id.h"
-// #include "xnetwork/xnetwork_driver_face.h"
 #include "xelect_net/include/elect_vhost_face.h"
 #include "xvnetwork/xbasic_vhost.h"
 #include "xvnetwork/xmessage.h"
@@ -15,7 +14,6 @@
 #include "xvnetwork/xvnetwork_message.h"
 
 #include <memory>
-#include <mutex>
 #if defined DEBUG
 #    include <thread>
 #endif
@@ -42,17 +40,10 @@ private:
 public:
     xtop_vhost(xtop_vhost const &) = delete;
     xtop_vhost & operator=(xtop_vhost const &) = delete;
-    xtop_vhost(xtop_vhost &&) = default;
-    xtop_vhost & operator=(xtop_vhost &&) = default;
+    xtop_vhost(xtop_vhost &&) = delete;
+    xtop_vhost & operator=(xtop_vhost &&) = delete;
     ~xtop_vhost() override = default;
 
-    /**
-     * @brief Construct the xvhost_t object.
-     * @param network_driver The network driver object this vhost used to communicate with other vhosts on the network.
-     * @param timer_driver The timer driver that this host used.
-     * @param role The request role when the vhost launched or the physical node launched in other words.
-     * @param nid The network id
-     */
     xtop_vhost(observer_ptr<elect::xnetwork_driver_face_t> const & network_driver,
                observer_ptr<time::xchain_time_face_t> const & chain_timer,
                common::xnetwork_id_t const & nid,
@@ -63,7 +54,7 @@ public:
 
     void stop() override;
 
-    common::xnode_id_t const & host_node_id() const noexcept override final;
+    common::xnode_id_t const & account_address() const noexcept override;
 
     //void broadcast(xmessage_t const & message, xvnode_address_t const & src) override;
 

@@ -9,19 +9,16 @@
 #include <chrono>
 #include <memory>
 
-#include "xcommon/xmessage_id.h"
-#include "xbasic/xsimple_message.hpp"
+#include "xbase/xbase.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xrunnable.h"
-#include "xnetwork/xnetwork_message_ready_callback.h"
+#include "xbasic/xsimple_message.hpp"
+#include "xcommon/xaddress.h"
+#include "xcommon/xmessage_id.h"
 #include "xcommon/xsharding_info.h"
-#include "xdata/xdata_common.h"
-
-#include "xpbase/base/top_utils.h"
-#include "xbase/xbase.h"
-#include "xelect_net/include/elect_vhost_face.h"
 #include "xelect_net/include/elect_netcard.h"
-#include "xvnetwork/xaddress.h"
+#include "xelect_net/include/elect_vhost_face.h"
+#include "xnetwork/xnetwork_message_ready_callback.h"
 
 namespace top {
     
@@ -36,9 +33,14 @@ using xelect_message_t = top::xsimple_message_t<top::common::xmessage_id_t>;
 
 class EcVHost : public std::enable_shared_from_this<EcVHost>, public elect::xnetwork_driver_face_t  {
 public:
-    EcVHost() {}
-    EcVHost(const uint32_t& xnetwork_id, const EcNetcardPtr& ec_netcard, common::xnode_id_t const & node_id);
-    virtual ~EcVHost() {}
+    EcVHost() = default;
+    EcVHost(EcVHost const &) = delete;
+    EcVHost & operator=(EcVHost const &) = delete;
+    EcVHost(EcVHost &&) = delete;
+    EcVHost & operator=(EcVHost &&) = delete;
+    ~EcVHost() override = default;
+
+    EcVHost(uint32_t xnetwork_id, const EcNetcardPtr & ec_netcard, common::xaccount_address_t const & node_id);
 
 public:
     void send_to(common::xip2_t const & src, common::xip2_t const & dst, xbyte_buffer_t const & byte_message, std::error_code & ec) const override;
@@ -52,7 +54,7 @@ public:
      * 
      * @return common::xnode_id_t const&  the host id
      */
-    virtual common::xnode_id_t const & host_node_id() const noexcept;
+    common::xaccount_address_t const & account_address() const noexcept override;
     /**
      * @brief get host node
      * 
@@ -105,12 +107,12 @@ public:
      * 
      * @param cb The callback handles data ready notify.
      */
-    virtual void register_message_ready_notify(network::xnetwork_message_ready_callback_t cb) noexcept;
+    void register_message_ready_notify(network::xnetwork_message_ready_callback_t cb) noexcept override;
     /**
      * @brief Unregister the data ready notify handler.
      * 
      */
-    virtual void unregister_message_ready_notify();
+    void unregister_message_ready_notify() override;
 #if 0
     virtual bool p2p_bootstrap(std::vector<network::xdht_node_t> const & seeds) const;
 
@@ -131,7 +133,7 @@ public:
      * 
      */
 #endif
-    virtual void start() {};
+    void start() override {}
     /**
      * @brief stop the network driver
      * 
@@ -139,19 +141,15 @@ public:
     virtual void stop() {};
 
 protected:
-    bool SyncMessageWhenStart(
-            const vnetwork::xvnode_address_t & send_address,
-            const vnetwork::xvnode_address_t & recv_address,
-            const common::xmessage_id_t& message_type) const;
+    bool SyncMessageWhenStart(common::xnode_address_t const & send_address,
+                              common::xnode_address_t const & recv_address,
+                              common::xmessage_id_t const & message_type) const;
  
 
 private:
     uint32_t xnetwork_id_ { 1 };
     EcNetcardPtr ec_netcard_ { nullptr };
-    common::xnode_id_t m_node_id_;
-
-
-    DISALLOW_COPY_AND_ASSIGN(EcVHost);
+    common::xaccount_address_t m_node_id_;
 };
 
 typedef std::shared_ptr<EcVHost> EcVHostPtr;

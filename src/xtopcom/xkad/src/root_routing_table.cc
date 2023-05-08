@@ -1057,7 +1057,7 @@ void RootRoutingTable::FindElectionNodesInfo(std::map<std::string, top::base::Ka
 }
 
 void RootRoutingTable::FindClosestNodes(int count, const std::vector<NodeInfoPtr> & nodes) {
-    xdbg("<bluefind> FindClosestNodes(count=%d, nodes.size=%d)", count, (int)nodes.size());
+    xdbg("<bluefind> FindClosestNodes(count=%d, nodes.size=%zu)", count, nodes.size());
 
     std::map<std::string, NodeInfoPtr> query_nodes;
     const size_t need_nodes_size = kKadParamAlpha + kKadParamAlphaRandom;
@@ -1070,7 +1070,7 @@ void RootRoutingTable::FindClosestNodes(int count, const std::vector<NodeInfoPtr
         }
     }
 
-    xdbg("findnodes count: %d", (int)query_nodes.size());
+    xdbg("findnodes count: %zu", query_nodes.size());
     for (auto & kv : query_nodes) {
         SendFindClosestNodes(kv.second, count, nodes, get_local_node_info()->service_type());
     }
@@ -1348,7 +1348,7 @@ void RootRoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessa
         node_ptr.reset(new NodeInfo(find_nodes_res.nodes(i).id()));
         node_ptr->public_ip = find_nodes_res.nodes(i).public_ip();
         node_ptr->public_port = find_nodes_res.nodes(i).public_port();
-        node_ptr->service_type = base::ServiceType(message.src_service_type());  // for RootRouting, is always kRoot
+        node_ptr->service_type = base::ServiceType::build_from(message.src_service_type());  // for RootRouting, is always kRoot
         node_ptr->xid = find_nodes_res.nodes(i).xid();
         node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
         if (CanAddNode(node_ptr)) {
@@ -1438,7 +1438,7 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
     assert(!pub_ip.empty());
     node_ptr->public_ip = pub_ip;
     node_ptr->public_port = pub_port;
-    node_ptr->service_type = base::ServiceType(message.src_service_type());
+    node_ptr->service_type = base::ServiceType::build_from(message.src_service_type());
     node_ptr->xid = handshake.xid();
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
     if (handshake.type() == kHandshakeResponse) {
@@ -1517,7 +1517,7 @@ void RootRoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMe
     node_ptr.reset(new NodeInfo(message.src_node_id()));
     node_ptr->public_ip = packet.get_from_ip_addr();
     node_ptr->public_port = packet.get_from_ip_port();
-    node_ptr->service_type = base::ServiceType(message.src_service_type());
+    node_ptr->service_type = base::ServiceType::build_from(message.src_service_type());
     node_ptr->xid = join_req.xid();
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
     SendBootstrapJoinResponse(message, packet);
@@ -1593,7 +1593,7 @@ void RootRoutingTable::HandleBootstrapJoinResponse(transport::protobuf::RoutingM
     node_ptr->local_port = packet.get_from_ip_port();
     node_ptr->public_ip = packet.get_from_ip_addr();
     node_ptr->public_port = packet.get_from_ip_port();
-    node_ptr->service_type = base::ServiceType(message.src_service_type());
+    node_ptr->service_type = base::ServiceType::build_from(message.src_service_type());
     node_ptr->xid = join_res.xid();
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
 

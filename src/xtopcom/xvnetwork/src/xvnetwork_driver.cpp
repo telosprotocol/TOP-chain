@@ -134,9 +134,9 @@ void xtop_vnetwork_driver::broadcast(common::xip2_t const & dst, xmessage_t cons
     m_vhost->broadcast(m_address, to, message, ec);
 }
 
-common::xnode_id_t const & xtop_vnetwork_driver::host_node_id() const noexcept {
+common::xnode_id_t const & xtop_vnetwork_driver::account_address() const noexcept {
     assert(m_vhost);
-    return m_vhost->host_node_id();
+    return m_vhost->account_address();
 }
 
 std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::neighbors_info2() const {
@@ -409,7 +409,7 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         auto const it = m_callbacks.find(message_cagegory);
         if (it != std::end(m_callbacks)) {
             xdbg("[vnetwork driver] host %s received msg %" PRIx64 " message id %" PRIx32 " at address %s from %s",
-                 host_node_id().to_string().c_str(),
+                 account_address().to_string().c_str(),
                  msg.hash(),
                  static_cast<std::uint32_t>(msg.id()),
                  address().to_string().c_str(),
@@ -426,7 +426,7 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         #endif
 
         xdbg("[vnetwork driver] host %s push msg %" PRIx64 " message id %" PRIx32 " at address %s to callback from %s",
-             host_node_id().to_string().c_str(),
+             account_address().to_string().c_str(),
              msg.hash(),
              static_cast<std::uint32_t>(msg.id()),
              address().to_string().c_str(),

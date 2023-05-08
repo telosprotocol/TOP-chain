@@ -4,14 +4,12 @@
 
 #pragma once
 
-#include "xpbase/base/top_timer.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xwrouter/multi_routing/net_node.h"
 
-#include <chrono>
-#include <deque>
 #include <map>
 #include <memory>
-#include <string>
+#include <mutex>
 #include <vector>
 
 namespace top {
@@ -30,10 +28,10 @@ public:
     bool Init();
 
     void GetAllServiceType(std::set<base::ServiceType> & svec);
-    void AddNode(std::vector<wrouter::WrouterTableNodes> node);
-    bool FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType service_type);
-    bool FindAllNode(std::vector<WrouterTableNodes> & node_vec, base::ServiceType service_type);
-    void GetAllNode(std::vector<WrouterTableNodes> & node_vec);
+    void AddNode(std::vector<wrouter::WrouterTableNode> node);
+    bool FindRandomNode(WrouterTableNode & Fnode, base::ServiceType service_type);
+    bool FindAllNode(std::vector<WrouterTableNode> & node_vec, base::ServiceType service_type);
+    void GetAllNode(std::vector<WrouterTableNode> & node_vec);
 
 private:
     SmallNetNodes();
@@ -42,7 +40,7 @@ private:
 private:
     std::mutex net_nodes_cache_map_mutex_;
     // key is service_type, value is vector of accounts
-    std::map<base::ServiceType, std::vector<wrouter::WrouterTableNodes>> net_nodes_cache_map_;
+    std::map<base::ServiceType, std::vector<wrouter::WrouterTableNode>> net_nodes_cache_map_;
 
     ServiceNodes * service_nodes_{nullptr};
 };

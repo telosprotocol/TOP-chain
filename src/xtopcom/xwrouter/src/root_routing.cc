@@ -162,7 +162,7 @@ void RootRouting::OnCacheElectNodesAsync(GetRootNodesV2AsyncCallback cb,
             }
             std::vector<kadmlia::NodeInfoPtr> nodes;
             
-            auto message_src_service_type = base::ServiceType(message.src_service_type());
+            auto message_src_service_type = base::ServiceType::build_from(message.src_service_type());
             for (int i = 0; i < nodes_res.nodes_size(); ++i) {
                 // if (base::GetKadmliaKey(nodes_res.nodes(i).id())->GetServiceType() != message_src_service_type) {
                 //     xdbg("[RootRouting::OnCacheElectNodesAsync] not this service type? des:%s get:%s",

@@ -51,7 +51,7 @@ void SmallNetNodes::GetAllServiceType(std::set<base::ServiceType> & svec) {
     return;
 }
 
-bool SmallNetNodes::FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType service_type) {
+bool SmallNetNodes::FindRandomNode(WrouterTableNode & Fnode, base::ServiceType service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
 
     for (auto const & _p : net_nodes_cache_map_) {
@@ -66,7 +66,7 @@ bool SmallNetNodes::FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType 
     return false;
 }
 
-bool SmallNetNodes::FindAllNode(std::vector<WrouterTableNodes> & node_vec, base::ServiceType service_type) {
+bool SmallNetNodes::FindAllNode(std::vector<WrouterTableNode> & node_vec, base::ServiceType service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
 
     for (auto const & _p : net_nodes_cache_map_) {
@@ -81,7 +81,7 @@ bool SmallNetNodes::FindAllNode(std::vector<WrouterTableNodes> & node_vec, base:
     return false;
 }
 
-void SmallNetNodes::GetAllNode(std::vector<WrouterTableNodes> & node_vec) {
+void SmallNetNodes::GetAllNode(std::vector<WrouterTableNode> & node_vec) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
     for (const auto & item : net_nodes_cache_map_) {
         for (auto & node : item.second) {
@@ -91,7 +91,7 @@ void SmallNetNodes::GetAllNode(std::vector<WrouterTableNodes> & node_vec) {
     return;
 }
 
-void SmallNetNodes::AddNode(std::vector<wrouter::WrouterTableNodes> node) {
+void SmallNetNodes::AddNode(std::vector<wrouter::WrouterTableNode> node) {
     if (node.empty())
         return;
     base::ServiceType comming_service_type = base::GetKadmliaKey(node[0].m_xip2)->GetServiceType();
