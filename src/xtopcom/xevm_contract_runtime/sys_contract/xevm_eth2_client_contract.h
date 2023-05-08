@@ -56,7 +56,7 @@ private:
     bool verify_finality_branch(state_ptr const & state, evm_common::eth2::xlight_client_update_t const & update, uint64_t const finalized_period) const;
     bool verify_bls_signatures(state_ptr const & state,
                                evm_common::eth2::xlight_client_update_t const & update,
-                               std::bitset<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits,
+                               xbitset_t<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits,
                                uint64_t const finalized_period);
     bool update_finalized_header(state_ptr const & state, evm_common::eth2::xextended_beacon_block_header_t const & finalized_header);
     bool commit_light_client_update(state_ptr const & state, evm_common::eth2::xlight_client_update_t const & update);

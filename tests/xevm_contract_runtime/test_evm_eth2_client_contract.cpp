@@ -189,8 +189,10 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_finalized_header_update) {
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_sync_aggregate) {
+    std::error_code ec;
     xsync_aggregate_t sync;
-    sync.sync_committee_bits = std::bitset<SYNC_COMMITTEE_BITS_SIZE>{std::string(32, '1')};
+    sync.sync_committee_bits = xbitset_t<SYNC_COMMITTEE_BITS_SIZE>::build_from(std::string(32, '1'), xstring_format_t::binary, ec);
+    ASSERT_TRUE(!ec);
     sync.sync_committee_signature = xbytes96_t::build_from(xbytes_t(96, 'b'));
     auto b = sync.encode_rlp();
     xsync_aggregate_t sync_decode;
@@ -199,13 +201,15 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_sync_aggregate) {
 }
 
 TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_update) {
+    std::error_code ec;
     xlight_client_update_t update;
     update.attested_beacon_header.slot = 1;
     update.attested_beacon_header.proposer_index = 2;
     update.attested_beacon_header.body_root = h256(3);
     update.attested_beacon_header.parent_root = h256(4);
     update.attested_beacon_header.state_root = h256(5);
-    update.sync_aggregate.sync_committee_bits = std::bitset<SYNC_COMMITTEE_BITS_SIZE>{std::string(32, '1')};
+    update.sync_aggregate.sync_committee_bits = xbitset_t<SYNC_COMMITTEE_BITS_SIZE>::build_from(std::string(32, '1'), xstring_format_t::binary, ec);
+    ASSERT_TRUE(!ec);
     update.sync_aggregate.sync_committee_signature = xbytes96_t::build_from(xbytes_t(96, 'b'));
     update.signature_slot = 10;
     update.finality_update.header_update.beacon_header.slot = 1;
@@ -341,6 +345,7 @@ std::vector<xeth_header_t> parse_header_data() {
 }
 
 xlight_client_update_t parse_update_data(char const * data_ptr) {
+    std::error_code ec;
     xlight_client_update_t res;
     auto j = json::parse(data_ptr);
     res.attested_beacon_header.slot = std::stoll(j["attested_beacon_header"]["slot"].get<std::string>());
@@ -349,8 +354,8 @@ xlight_client_update_t parse_update_data(char const * data_ptr) {
     res.attested_beacon_header.state_root = xh256_t{xspan_t<xbyte_t const>{from_hex(j["attested_beacon_header"]["state_root"].get<std::string>())}};
     res.attested_beacon_header.body_root = xh256_t{xspan_t<xbyte_t const>{from_hex(j["attested_beacon_header"]["body_root"].get<std::string>())}};
     auto sync_committee_bits = j["sync_aggregate"]["sync_committee_bits"].get<std::string>();
-    std::reverse(std::begin(sync_committee_bits), std::end(sync_committee_bits));
-    res.sync_aggregate.sync_committee_bits = std::bitset<SYNC_COMMITTEE_BITS_SIZE>{sync_committee_bits};
+    res.sync_aggregate.sync_committee_bits = xbitset_t<SYNC_COMMITTEE_BITS_SIZE>::build_from(sync_committee_bits, xstring_format_t::binary, ec);
+    assert(!ec);
     res.sync_aggregate.sync_committee_signature = xbytes96_t::build_from(from_hex(j["sync_aggregate"]["sync_committee_signature"].get<std::string>()));
     res.signature_slot = std::stoll(j["signature_slot"].get<std::string>());
     res.finality_update.header_update.beacon_header.slot = std::stoll(j["finality_update"]["header_update"]["beacon_header"]["slot"].get<std::string>());

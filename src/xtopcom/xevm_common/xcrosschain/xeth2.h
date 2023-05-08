@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xbitset.h"
 #include "xbasic/xfixed_bytes.h"
 #include "xbasic/xfixed_hash.h"
 #include "xcommon/common.h"
@@ -17,7 +18,6 @@
 NS_BEG3(top, evm_common, eth2)
 
 XINLINE_CONSTEXPR size_t PUBLIC_KEY_BYTES_LEN{48};
-#define HASH_LEN 32U
 XINLINE_CONSTEXPR size_t SIGNATURE_BYTES_LEN{96};
 XINLINE_CONSTEXPR size_t SYNC_COMMITTEE_BITS_SIZE{512};
 
@@ -319,7 +319,7 @@ public:
 };
 
 struct xsync_aggregate_t {
-    std::bitset<SYNC_COMMITTEE_BITS_SIZE> sync_committee_bits;
+    xbitset_t<SYNC_COMMITTEE_BITS_SIZE> sync_committee_bits;
     xbytes96_t sync_committee_signature;
 
     bool operator==(xsync_aggregate_t const & rhs) const {
@@ -330,9 +330,9 @@ struct xsync_aggregate_t {
         xbytes_t out;
         assert(sync_committee_signature.size() == SIGNATURE_BYTES_LEN);
 
-        auto bits_string_le = sync_committee_bits.to_string();
-        std::reverse(bits_string_le.begin(), bits_string_le.end());
-        auto const & item1 = RLP::encode(bits_string_le);
+        auto bytes_le = sync_committee_bits.to<xbytes_t>(xendian_t::little);
+        assert(bytes_le.size() == sync_committee_bits.size() / 8);
+        auto const & item1 = RLP::encode(bytes_le);
 
         out.insert(out.end(), item1.begin(), item1.end());
         auto const & item2 = RLP::encode(sync_committee_signature);
@@ -362,14 +362,12 @@ struct xsync_aggregate_t {
         }
 
         auto const & committee_bits_bytes = items.decoded.at(0);
-        if (committee_bits_bytes.size() != SYNC_COMMITTEE_BITS_SIZE) {
-            xwarn("xsync_aggregate_t::decode_rlp, committee_bits_bytes.size() != SYNC_COMMITTEE_BITS_SIZE, actual size %zu", committee_bits_bytes.size());
+        if (committee_bits_bytes.size() != sync_committee_bits.size() / 8) {
+            xwarn("xsync_aggregate_t::decode_rlp, committee_bits_bytes.size() != sync_committee_bits.size() / 8, actual size %zu", committee_bits_bytes.size());
             ec = error::xerrc_t::rlp_bytes_invalid;
             return;
         }
-        auto sync_committee_bits_string_be = std::string{committee_bits_bytes.begin(), committee_bits_bytes.end()};
-        std::reverse(sync_committee_bits_string_be.begin(), sync_committee_bits_string_be.end());
-        sync_committee_bits = std::bitset<SYNC_COMMITTEE_BITS_SIZE>{sync_committee_bits_string_be};
+        sync_committee_bits = xbitset_t<SYNC_COMMITTEE_BITS_SIZE>::build_from(committee_bits_bytes, xendian_t::little);
 
         auto const & signature_bytes = items.decoded.at(1);
         if (signature_bytes.size() != SIGNATURE_BYTES_LEN) {
@@ -393,11 +391,7 @@ struct xsync_committee_update_t {
 
     xbytes_t encode_rlp() const {
         assert(!next_sync_committee_branch.empty());
-#if !defined(NDEBUG)
-        for (auto const & b : next_sync_committee_branch) {
-            assert(b.size() == HASH_LEN);
-        }
-#endif
+
         xbytes_t out;
         auto const & item1 = RLP::encode(next_sync_committee.encode_rlp());
         out.insert(out.end(), item1.begin(), item1.end());
@@ -524,11 +518,6 @@ struct xfinalized_header_update_t {
     }
 
     xbytes_t encode_rlp() const {
-#if !defined(NDEBUG)
-        for (auto const & b : finality_branch) {
-            assert(b.size() == HASH_LEN);
-        }
-#endif
         xbytes_t out;
         auto const & item1 = RLP::encode(header_update.encode_rlp());
         out.insert(out.end(), item1.begin(), item1.end());

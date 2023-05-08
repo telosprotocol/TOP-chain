@@ -51,7 +51,7 @@ static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
 }
 
 static std::vector<xbytes48_t> get_participant_pubkeys(std::vector<xbytes48_t> const & public_keys,
-                                                       std::bitset<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits) {
+                                                       xbitset_t<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits) {
     std::vector<xbytes48_t> ret;
     for (size_t i = 0; i < sync_committee_bits.size(); ++i) {
         if (sync_committee_bits[i]) {
@@ -770,7 +770,7 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
 
 bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & state,
                                                           xlight_client_update_t const & update,
-                                                          std::bitset<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits,
+                                                          xbitset_t<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits,
                                                           uint64_t const finalized_period) {
     auto const signature_period = compute_sync_committee_period(update.signature_slot);
     if (signature_period != finalized_period && signature_period != finalized_period + 1) {

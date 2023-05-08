@@ -337,6 +337,14 @@ public:
     };
 
 private:
+    friend bool operator==(xtop_bitset const & lhs, xtop_bitset const & rhs) {
+        return lhs.bitset_ == rhs.bitset_;
+    }
+
+    friend bool operator!=(xtop_bitset const & lhs, xtop_bitset const & rhs) {
+        return !(lhs.bitset_ == rhs.bitset_);
+    }
+
     std::string to_hex_string() const {
         std::string result;
         result.resize(N / 4);
