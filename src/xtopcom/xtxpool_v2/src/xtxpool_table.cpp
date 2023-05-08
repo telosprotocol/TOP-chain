@@ -31,6 +31,7 @@ namespace xtxpool_v2 {
 #define load_table_block_num_max (20)
 #define table_fail_behind_height_diff_max (5)
 #define table_sync_on_demand_num_max (10)
+#define action_cache_keep_height_max (5)
 
 bool xtxpool_table_t::is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const {
     if (tx->get_tx()->is_send_tx()) {
@@ -881,10 +882,35 @@ void xtxpool_table_t::add_tx_action_cache(base::xvblock_t * block, const std::sh
     m_tx_action_cache.add_cache(block, txactions_cache);
 }
 
+#ifdef ENABLE_METRICS
+xtx_actions_cache_t::~xtx_actions_cache_t() {
+    int32_t cache_size = m_cache.size();
+    XMETRICS_GAUGE(metrics::txpool_tx_action_cache, -cache_size);
+    xdbg("xtx_actions_cache_t::~xtx_actions_cache_t action cache size:%d, reduce:%d", XMETRICS_GAUGE_GET_VALUE(metrics::txpool_tx_action_cache), cache_size);
+}
+#endif
+
 void xtx_actions_cache_t::add_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) {
     std::lock_guard<std::mutex> lck(m_mutex);
+#ifdef ENABLE_METRICS
+    int32_t cache_size = m_cache.size();
+#endif
     xdbg("xtx_actions_cache_t::add_cache block:%s", block->dump().c_str());
     m_cache.emplace(block->get_height(), std::make_shared<xtx_actions_t>(block->get_block_hash(), txactions_cache));
+    
+    for (auto iter = m_cache.begin(); iter != m_cache.end();) {
+        if (iter->first + action_cache_keep_height_max <= block->get_height()) {
+            m_cache.erase(iter++);
+        } else {
+            break;
+        }
+    }
+#ifdef ENABLE_METRICS
+    int32_t cache_size_after = m_cache.size();
+    int32_t add_num = cache_size_after - cache_size;
+    XMETRICS_GAUGE(metrics::txpool_tx_action_cache, add_num);
+    xdbg("xtx_actions_cache_t::add_cache action cache size:%d, add:%d", XMETRICS_GAUGE_GET_VALUE(metrics::txpool_tx_action_cache), add_num);
+#endif
 }
 
 std::shared_ptr<base::xinput_actions_cache_base> xtx_actions_cache_t::get_cache(base::xvblock_t * block) {
@@ -894,14 +920,7 @@ std::shared_ptr<base::xinput_actions_cache_base> xtx_actions_cache_t::get_cache(
     if (it != m_cache.end() && it->second->m_blockhash == block->get_block_hash()) {
         actions = it->second->m_input_actions_cache;
     }
-    
-    for (auto iter = m_cache.begin(); iter != m_cache.end();) {
-        if (iter->first <= block->get_height()) {
-            m_cache.erase(iter++);
-        } else {
-            break;
-        }
-    }
+
     return actions;
 }
 

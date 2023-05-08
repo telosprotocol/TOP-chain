@@ -270,6 +270,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_table_unconfirm_raw_txs);
         RETURN_METRICS_NAME(txpool_pack_nonce_expired);
         RETURN_METRICS_NAME(txpool_pack_nonce_uncontinuous);
+        RETURN_METRICS_NAME(txpool_tx_action_cache);
 
         // txstore
         RETURN_METRICS_NAME(txstore_request_origin_tx);
