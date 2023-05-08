@@ -354,8 +354,8 @@ void xtop_application::load_last_election_data() {
                 block_height != 0) {
                 uint64_t prev_block_height = block_height - 1;
                 data::xunitstate_ptr_t unitstate2 = statestore::xstatestore_hub_t::instance()->get_unit_committed_changed_state(addr, prev_block_height);
-                if (unitstate == nullptr) {
-                    xwarn("xtop_application::load_last_election_data fail-get state.");
+                if (unitstate2 == nullptr) {
+                    xwarn("xtop_application::load_last_election_data fail-get state.addr=%s,height=%ld", addr.to_string().c_str(), prev_block_height);
                 } else {
                     if (xsuccess != unitstate2->string_get(property, result)) {
                         xerror("xtop_application::load_last_election_data fail-get property.");
