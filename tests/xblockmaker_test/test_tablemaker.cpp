@@ -208,111 +208,137 @@ TEST_F(test_tablemaker, make_proposal_2) {
 
 TEST_F(test_tablemaker, select_peer_sids_for_confirm_id) {
     std::vector<base::xtable_shortid_t> all_sid_vec;
-    for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
-        base::xtable_index_t tableindex(base::enum_chain_zone_consensus_index, i);
-        all_sid_vec.push_back(tableindex.to_table_shortid());
-    }
-    for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
-        base::xtable_index_t tableindex(base::enum_chain_zone_beacon_index, i);
-        all_sid_vec.push_back(tableindex.to_table_shortid());
-    }
-    for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
-        base::xtable_index_t tableindex(base::enum_chain_zone_zec_index, i);
-        all_sid_vec.push_back(tableindex.to_table_shortid());
-    }
-
-    // for (uint32_t height = 0; height < 1000; height ++) {
-    //     auto select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, height);
-    //     assert(select_sids.size() == 1);
-    //     std::vector<base::xtable_shortid_t> select_sids_vec;
-    //     select_sids_vec.assign(select_sids.begin(), select_sids.end());
-    //     assert(select_sids_vec[0] == all_sid_vec[height%all_sid_vec.size()]);
-    // }
-
-    uint64_t pos = 0;
-    uint64_t mulriple = 0;
-    uint64_t height = 0;
-
-    uint32_t batch_num = 4;
-    uint64_t height_interval = 4;
-
-    for (pos = 1; pos < height_interval; pos++) {
-        for (mulriple = 0; mulriple < 100; mulriple++) {
-            height = pos + mulriple*height_interval;
-            auto select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, height);
-            ASSERT_EQ(select_sids.empty(), true);
+    std::map<base::enum_xchain_zone_index, uint16_t> const& all_table_indexs = base::xvledger_config_t::get_all_consensus_zone_subaddr_paris();
+    for (auto & table_index : all_table_indexs) {
+        for (uint16_t i = 0; i < table_index.second; i++) {
+            base::xtable_index_t tableindex(table_index.first, i);
+            all_sid_vec.push_back(tableindex.to_table_shortid());
         }
     }
 
-    uint64_t times_to_traverse_all_sids = (all_sid_vec.size() + batch_num - 1)/batch_num;
-    uint64_t traverse_times = 0;
+    std::set<base::xtable_shortid_t> select_sids;
+    std::vector<base::xtable_shortid_t> select_sids_vec;
 
-    for (mulriple = 0; mulriple < 100; mulriple++) {
-        height = mulriple*height_interval;
-        auto select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, height);
-        std::vector<base::xtable_shortid_t> select_sids_vec;
-        select_sids_vec.assign(select_sids.begin(), select_sids.end());
-
-        assert(select_sids_vec[0] == all_sid_vec[0 + traverse_times*batch_num]);
-        assert(select_sids_vec[1] == all_sid_vec[1 + traverse_times*batch_num]);
-        assert(select_sids_vec[2] == all_sid_vec[2 + traverse_times*batch_num]);
-        assert(select_sids_vec[3] == all_sid_vec[3 + traverse_times*batch_num]);
-
-        if (traverse_times == times_to_traverse_all_sids - 1) {
-            traverse_times = 0;
-        } else {
-            traverse_times++;
-        }
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 1, true, true);
+    ASSERT_EQ(select_sids.size(), 4);
+    select_sids_vec.assign(select_sids.begin(), select_sids.end());
+    for (uint32_t i = 0; i < 4; i++){
+        ASSERT_EQ(select_sids_vec[i], all_sid_vec[i]);
     }
-    
 
-    // uint64_t pos = 0;
-    // uint64_t mulriple = 0;
-    // uint64_t height = 0;
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 1, true, false);
+    ASSERT_EQ(select_sids.size(), 4);
+    select_sids_vec.assign(select_sids.begin(), select_sids.end());
+    for (uint32_t i = 0; i < 4; i++){
+        ASSERT_EQ(select_sids_vec[i], all_sid_vec[i]);
+    }
 
-    // uint32_t batch_num = 16;
-    // uint64_t height_interval = 8;
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 1, false, true);
+    ASSERT_EQ(select_sids.size(), 0);
 
-    // for (pos = 1; pos < height_interval; pos++) {
-    //     for (mulriple = 0; mulriple < 100; mulriple++) {
-    //         height = pos + mulriple*height_interval;
-    //         auto select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, height);
-    //         ASSERT_EQ(select_sids.empty(), true);
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 1, false, false);
+    ASSERT_EQ(select_sids.size(), 0);
+
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 2, true, true);
+    ASSERT_EQ(select_sids.size(), 4);
+    select_sids_vec.assign(select_sids.begin(), select_sids.end());
+    for (uint32_t i = 0; i < 4; i++){
+        ASSERT_EQ(select_sids_vec[i], all_sid_vec[i]);
+    }
+
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 2, true, false);
+    ASSERT_EQ(select_sids.size(), 0);
+
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 2, false, true);
+    ASSERT_EQ(select_sids.size(), 0);
+
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 2, false, false);
+    ASSERT_EQ(select_sids.size(), 0);
+
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 3, true, true);
+    ASSERT_EQ(select_sids.size(), 4);
+    select_sids_vec.assign(select_sids.begin(), select_sids.end());
+    for (uint32_t i = 0; i < 4; i++){
+        ASSERT_EQ(select_sids_vec[i], all_sid_vec[i + 4]);
+    }
+
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 3, true, false);
+    ASSERT_EQ(select_sids.size(), 4);
+    select_sids_vec.assign(select_sids.begin(), select_sids.end());
+    for (uint32_t i = 0; i < 4; i++){
+        ASSERT_EQ(select_sids_vec[i], all_sid_vec[i + 4]);
+    }
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 3, false, true);
+    ASSERT_EQ(select_sids.size(), 4);
+    select_sids_vec.assign(select_sids.begin(), select_sids.end());
+    for (uint32_t i = 0; i < 4; i++){
+        ASSERT_EQ(select_sids_vec[i], all_sid_vec[i + 4]);
+    }
+
+    select_sids.clear();
+    select_sids_vec.clear();
+    select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, 3, false, false);
+    ASSERT_EQ(select_sids.size(), 4);
+    select_sids_vec.assign(select_sids.begin(), select_sids.end());
+    for (uint32_t i = 0; i < 4; i++){
+        ASSERT_EQ(select_sids_vec[i], all_sid_vec[i + 4]);
+    }
+
+    // enum {
+    //     type_cert_emtpy_lock_empty = 0,
+    //     type_cert_emtpy_lock_nonempty,
+    //     type_cert_nonempt_lock_empty,
+    //     type_cert_nonempt_lock_nonempt,
+    //     type_max,
+    // };
+
+    // for (uint64_t height = 1; height  < 1000; height++) {
+    //     std::set<base::xtable_shortid_t> select_sids;
+    //     bool cert_empty = true;
+    //     bool lock_empty = true;
+    //     for (uint32_t t = type_cert_emtpy_lock_empty; t < type_max; t++) {
+    //         if (t == type_cert_nonempt_lock_empty || t == type_cert_nonempt_lock_nonempt) {
+    //             cert_empty = false;
+    //         } else {
+    //             cert_empty = true;
+    //         }
+    //         if (t == type_cert_emtpy_lock_nonempty || t == type_cert_nonempt_lock_nonempt) {
+    //             lock_empty = false;
+    //         } else {
+    //             lock_empty = true;
+    //         }
+
+    //         select_sids.clear();
+    //         select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, height, cert_empty, lock_empty);
     //     }
-    // }
-
-    // uint64_t times_to_traverse_all_sids = (all_sid_vec.size() + batch_num - 1)/batch_num;
-    // uint64_t traverse_times = 0;
-
-    // for (mulriple = 0; mulriple < 100; mulriple++) {
-    //     height = mulriple*height_interval;
-    //     auto select_sids = xproposal_maker_t::select_peer_sids_for_confirm_id(all_sid_vec, height);
+    //     if ()
+    //     ASSERT_EQ(select_sids.size(), 4);
     //     std::vector<base::xtable_shortid_t> select_sids_vec;
     //     select_sids_vec.assign(select_sids.begin(), select_sids.end());
-
-    //     assert(select_sids_vec[0] == all_sid_vec[0 + traverse_times*batch_num]);
-    //     assert(select_sids_vec[1] == all_sid_vec[1 + traverse_times*batch_num]);
-    //     assert(select_sids_vec[2] == all_sid_vec[2 + traverse_times*batch_num]);
-    //     assert(select_sids_vec[3] == all_sid_vec[3 + traverse_times*batch_num]);
-    //     if (traverse_times < times_to_traverse_all_sids - 1) {
-    //         assert(select_sids_vec[4] == all_sid_vec[4 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[5] == all_sid_vec[5 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[6] == all_sid_vec[6 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[7] == all_sid_vec[7 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[8] == all_sid_vec[8 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[9] == all_sid_vec[9 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[10] == all_sid_vec[10 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[11] == all_sid_vec[11 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[12] == all_sid_vec[12 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[13] == all_sid_vec[13 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[14] == all_sid_vec[14 + traverse_times*batch_num]);
-    //         assert(select_sids_vec[15] == all_sid_vec[15 + traverse_times*batch_num]);
-    //     }
-
-    //     if (traverse_times == times_to_traverse_all_sids - 1) {
-    //         traverse_times = 0;
-    //     } else {
-    //         traverse_times++;
+    //     for (uint32_t i = 0; i < 4; i++){
+    //         ASSERT_EQ(select_sids_vec[i], all_sid_vec[i]);
     //     }
     // }
 }
