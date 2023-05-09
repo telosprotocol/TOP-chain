@@ -55,9 +55,9 @@ namespace top
             enum_state_plugin_idle_timeout_ms   = 10*60*1000,  //idle duration for plugin
 #else
             enum_timer_check_interval           = 10000,  //check every 10 seconds    
-            enum_account_idle_timeout_ms        = 60*60*1000, //account change to idle status if not access within 60 minutes
-            enum_block_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes
-            enum_state_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes
+            enum_account_idle_timeout_ms        = 30*60*1000, //account change to idle status if not access within 30 minutes
+            enum_block_plugin_idle_timeout_ms   = 30*60*1000,  //idle duration for plugin  30minutes
+            enum_state_plugin_idle_timeout_ms   = 30*60*1000,  //idle duration for plugin  30minutes
 #endif
             enum_account_save_meta_interval = 64, //force save meta every 64 modification
             enum_account_save_meta_offset   = 8,  //force save meta when height offset skip

@@ -299,6 +299,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_table_unconfirm_raw_txs,
     txpool_pack_nonce_expired,
     txpool_pack_nonce_uncontinuous,
+    txpool_tx_action_cache,
     // txstore
     txstore_request_origin_tx,
     txstore_cache_origin_tx,

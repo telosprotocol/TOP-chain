@@ -89,6 +89,9 @@ struct xtx_actions_t {
 
 class xtx_actions_cache_t {
 public:
+#ifdef ENABLE_METRICS
+    ~xtx_actions_cache_t();
+#endif
     void add_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & input_actions_cache);
     std::shared_ptr<base::xinput_actions_cache_base> get_cache(base::xvblock_t * block);
 private:
