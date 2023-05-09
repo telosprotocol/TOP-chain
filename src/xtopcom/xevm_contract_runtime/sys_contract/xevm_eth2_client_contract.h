@@ -48,6 +48,7 @@ public:
     bool submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header, common::xeth_address_t const & sender);
     bool reset(state_ptr state);
     bool disable_reset(state_ptr state);
+    evm_common::eth2::xclient_mode_t client_mode(state_ptr state) const;
 
 private:
     // impl
@@ -79,6 +80,7 @@ private:
     bool set_next_sync_committee(state_ptr const & state, evm_common::eth2::xsync_committee_t const & committee);
     int get_flag(state_ptr state) const;
     bool set_flag(state_ptr state);
+    bool client_mode(state_ptr state, evm_common::eth2::xclient_mode_t mode);
 
     xeth2_client_net_t m_network;
     std::set<std::string> m_whitelist;

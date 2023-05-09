@@ -24,6 +24,12 @@ XINLINE_CONSTEXPR size_t SYNC_COMMITTEE_BITS_SIZE{512};
 using xbytes48_t = xfixed_bytes_t<PUBLIC_KEY_BYTES_LEN>;
 using xbytes96_t = xfixed_bytes_t<SIGNATURE_BYTES_LEN>;
 
+using xclient_mode_t = enum {
+    invalid = 0,
+    submit_light_client_update,
+    submit_header,
+};
+
 struct xbeacon_block_header_t {
     uint64_t slot{0};
     uint64_t proposer_index{0};

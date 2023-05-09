@@ -212,6 +212,20 @@ base::xauto_ptr<base::xvintvar_t<uint64_t>> xbstate_ctx_t::load_uin64_for_write(
     return nullptr;
 }
 
+base::xauto_ptr<base::xvintvar_t<int64_t>> xbstate_ctx_t::load_int64_for_write(std::string const & key) const {
+    if (false == get_bstate()->find_property(key)) {
+        if (base::xvpropertyrules_t::is_valid_native_property(key)) {
+            return get_bstate()->new_int64_var(key, m_canvas.get());
+        }
+    }
+    auto propobj = get_bstate()->load_int64_var(key);
+    if (nullptr != propobj) {
+        return propobj;
+    }
+    xassert(false);
+    return nullptr;
+}
+
 int32_t xbstate_ctx_t::string_create(const std::string & key) {
     xdbg("xbstate_ctx_t::string_create,property_modify_enter.address=%s,height=%ld,propname=%s", account_address().to_string().c_str(), height(), key.c_str());
     auto ret = check_create_property(key);
@@ -549,6 +563,27 @@ uint64_t xbstate_ctx_t::uint64_property_get(const std::string & prop) const {
     auto propobj = get_bstate()->load_uint64_var(prop);
     uint64_t value = propobj->get();
     return value;
+}
+
+int64_t xbstate_ctx_t::int64_get(std::string const & prop) const {
+    auto const bstate = get_bstate();
+    assert(bstate != nullptr);
+
+    if (false == bstate->find_property(prop)) {
+        xwarn("xbstate_ctx_t::int64_get, xvbstate_t::find_property returns false, property %s", prop.c_str());
+        return 0;
+    }
+
+    auto const var = bstate->load_int64_var(prop);
+    assert(var != nullptr);
+    return var->get();
+}
+
+int32_t xbstate_ctx_t::int64_set(std::string const & prop, int64_t value) {
+    xdbg("xbstate_ctx_t::int64_set,property_modify_enter.address=%s,height=%ld,propname=%s", account_address().to_string().c_str(), height(), prop.c_str());
+    auto propobj = load_int64_for_write(prop);
+    CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::int64_set", prop);
+    return propobj->set(value, m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
 }
 
 std::string xbstate_ctx_t::map_get(const std::string & prop, const std::string & field) const {
