@@ -8,10 +8,13 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 
 NS_BEG1(top)
 
-namespace {
+bool has_hex_prefix(xstring_view_t const input) noexcept {
+       return input.size() >= 2 && (input.compare(0, 2, "0x") == 0 || input.compare(0, 2, "0X") == 0);
+}
 
 xbyte_t hex_char_to_binary(char const ch, std::error_code & ec) noexcept {
     assert(!ec);
@@ -33,12 +36,10 @@ xbyte_t hex_char_to_binary(char const ch, std::error_code & ec) noexcept {
     return ch;
 }
 
-}  // namespace
-
 xbytes_t from_hex(xstring_view_t const input, std::error_code & ec) {
     assert(!ec);
 
-    std::size_t prefix_size = (input.size() >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')) ? 2 : 0;
+    std::size_t prefix_size = has_hex_prefix(input) ? 2 : 0;
     std::vector<uint8_t> ret;
     ret.reserve((input.size() - prefix_size + 1) / 2);
 
@@ -74,15 +75,15 @@ xbytes_t from_hex(xstring_view_t const input) {
 }
 
 bool is_hex_string(std::string const & input) noexcept {
-    auto it = input.begin();
-    if (input.compare(0, 2, "0x") == 0 || input.compare(0, 2, "0X") == 0) {
-        it += 2;
-    }
-    std::error_code ec;
-    return std::all_of(it, input.end(), [&ec](char const c) {
-        hex_char_to_binary(c, ec);
-        return !ec;
-    });
+    return is_hex_string_with_prefix(input) || is_hex_string_without_prefix(input);
+}
+
+bool is_hex_string_with_prefix(xstring_view_t const input) noexcept {
+    return has_hex_prefix(input) && is_hex_string_without_prefix(input.substr(0, 2));
+}
+
+bool is_hex_string_without_prefix(xstring_view_t const input) noexcept {
+    return std::all_of(input.begin(), input.end(), [](unsigned char const c) { return std::isxdigit(c); });
 }
 
 NS_END1

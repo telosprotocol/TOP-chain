@@ -127,6 +127,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xenum_basic_errc::invalid_fixed_bytes_size:
         return "invalid_fixed_bytes_size error";
 
+    case xenum_basic_errc::invalid_hex_string:
+        return "invalid_hex_string error";
+
     default:
         return "unknown error";
     }

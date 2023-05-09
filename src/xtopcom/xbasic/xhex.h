@@ -9,10 +9,17 @@
 #include "xbasic/xutility.h"
 
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <system_error>
 
 NS_BEG1(top)
+
+inline char to_hex_char(uint8_t const value) noexcept {
+    assert(value < 16);
+    constexpr char const * hexdigits = "0123456789abcdef";
+    return hexdigits[value];
+}
 
 template <class Iterator>
 std::string to_hex(Iterator begin, Iterator end, std::string const & prefix) {
@@ -77,15 +84,14 @@ std::string to_hex_prefixed_shrink_0(T const & input) {
     return hex_str;
 }
 
-namespace {
-constexpr std::uint8_t const_from_hex_char(char i) {
+constexpr std::uint8_t const_from_hex_char(char const i) {
     return ((i >= 'a') && (i <= 'f')) ? (i - 87) : // NOLINT
            ((i >= 'A') && (i <= 'F')) ? (i - 55) : // NOLINT
            ((i >= '0') && (i <= '9')) ? (i - 48) : // NOLINT
            throw std::exception{};                 // NOLINT
 }
 
-constexpr std::uint8_t const_hex_char(char h, char l) {
+constexpr std::uint8_t const_hex_char(char const h, char const l) {
     return (const_from_hex_char(h) << 4) | (const_from_hex_char(l));
 }
 
@@ -99,8 +105,6 @@ template <typename T, std::size_t Length, std::size_t... Index>
 constexpr T ConstBytes(const char (&Input)[Length], const index_sequence<Index...> &) {
     return T{static_cast<uint8_t>(Input[Index])...};
 }
-
-}  // namespace
 
 /* Entry function */
 template <typename T, std::size_t Length>
@@ -136,14 +140,13 @@ xbytes_t from_hex(xstring_view_t input, std::error_code & ec);
 /// Throw xtop_error_t exception when error occurs.
 xbytes_t from_hex(xstring_view_t input);
 
+bool has_hex_prefix(xstring_view_t input) noexcept;
+
 /// @returns true if @a input is a hex string.
 bool is_hex_string(std::string const & input) noexcept;
 
-/// @returns true if @a _hash is a hash conforming to FixedHash type @a T.
-// template <class T>
-// static bool isHash(std::string const & _hash) {
-//     return (_hash.size() == T::size * 2 || (_hash.size() == T::size * 2 + 2 && _hash.substr(0, 2) == "0x")) && is_hex_string(_hash);
-// }
+bool is_hex_string_with_prefix(xstring_view_t input) noexcept;
+bool is_hex_string_without_prefix(xstring_view_t input) noexcept;
 
 template <typename T,
           typename std::enable_if<std::is_same<T, uint8_t>::value || std::is_same<T, uint16_t>::value || std::is_same<T, uint32_t>::value ||
