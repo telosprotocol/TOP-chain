@@ -16,7 +16,6 @@ NS_BEG4(top, contract_runtime, evm, sys_contract)
 enum class xeth2_client_net_t : uint8_t {
     eth2_net_mainnet = 0,
     eth2_net_kiln,
-    eth2_net_ropsten,
     eth2_net_goerli,
     eth2_net_sepolia,
 };

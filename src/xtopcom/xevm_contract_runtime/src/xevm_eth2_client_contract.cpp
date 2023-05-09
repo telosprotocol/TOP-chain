@@ -758,7 +758,7 @@ bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & stat
     }
     auto const & participant_pubkeys = get_participant_pubkeys(sync_committee.pubkeys, sync_committee_bits);
     xbytes_t signing_root(32);
-    unsafe_compute_bellatrix_committee_signing_root(update.attested_beacon_header.tree_hash_root().data(), uint8_t(m_network), signing_root.data());
+    unsafe_compute_committee_signing_root(update.attested_beacon_header.tree_hash_root().data(), uint8_t(m_network), update.signature_slot, signing_root.data());
     xbytes_t pubkeys_data;
     for (auto const & pubkey : participant_pubkeys) {
         pubkeys_data.insert(pubkeys_data.begin(), pubkey.begin(), pubkey.end());
