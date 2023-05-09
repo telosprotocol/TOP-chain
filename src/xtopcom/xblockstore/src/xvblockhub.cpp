@@ -1155,7 +1155,7 @@ namespace top
             }
 
             if(   (false == new_raw_block->is_body_and_offdata_ready(false))
-               || (false == new_raw_block->is_deliver(true)) )// XTODO must have full valid data and has mark as enum_xvblock_flag_authenticated
+               || (false == new_raw_block->is_deliver(false)) )// XTODO must have full valid data and has mark as enum_xvblock_flag_authenticated
             {
                 xerror("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
                 return false;

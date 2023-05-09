@@ -555,8 +555,9 @@ namespace top
         base::enum_vcert_auth_result   xauthcontext_t_impl::verify_muti_sign_impl(const base::xvqcert_t * test_for_cert)
         {
             const std::string ask_verify_hash = test_for_cert->get_hash_to_sign();
+            const std::string cert_hash = const_cast<base::xvqcert_t *>(test_for_cert)->build_block_hash();
             bool result = false;
-            bool ret = m_verified_hash.get(ask_verify_hash, result);
+            bool ret = m_verified_hash.get(cert_hash, result);
             if (ret && result) {
                 return base::enum_vcert_auth_result::enum_successful;
             }
@@ -604,7 +605,7 @@ namespace top
                 if(audit_result != base::enum_vcert_auth_result::enum_successful)
                     return audit_result;
             }
-            m_verified_hash.put(ask_verify_hash, true);
+            m_verified_hash.put(cert_hash, true);
             return base::enum_vcert_auth_result::enum_successful;
         }
 
@@ -647,7 +648,7 @@ namespace top
             xdbg("xauthcontext_t_impl::verify_muti_sign enter block=%s",test_for_block->dump().c_str());
             if(false == test_for_block->is_valid(true)) //do deep test before verify signature
             {
-                xerror("xauthcontext_t_impl::verify_muti_sign,fail-pass the deep test for block:%s",test_for_block->dump().c_str());
+                xwarn("xauthcontext_t_impl::verify_muti_sign,fail-pass the deep test for block:%s",test_for_block->dump().c_str());
                 return base::enum_vcert_auth_result::enum_bad_block;
             }
             return verify_muti_sign(test_for_block->get_cert(),test_for_block->get_account());

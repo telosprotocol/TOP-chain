@@ -209,6 +209,7 @@ do
     ;;
     *)
         echo "unknown build option: "$option
+        exit
     ;;
     esac
 done

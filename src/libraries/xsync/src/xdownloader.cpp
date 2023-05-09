@@ -319,15 +319,8 @@ xchain_downloader_face_ptr_t xdownloader_t::on_behind_event(uint32_t idx, const 
 
     xchain_downloader_face_ptr_t chain_downloader = find_chain_downloader(idx, bme->address);
     if (chain_downloader != nullptr) {
-
-        uint64_t start_height = bme->start_height;
-        uint64_t end_height = bme->end_height;
-        enum_chain_sync_policy sync_policy = bme->sync_policy;
-        vnetwork::xvnode_address_t &self_addr = bme->self_addr;
-        vnetwork::xvnode_address_t &from_addr = bme->from_addr;
         const std::string &reason = bme->reason;
-
-        chain_downloader->on_behind(start_height, end_height, sync_policy, self_addr, from_addr, reason);
+        chain_downloader->on_behind(bme->sync_policy, bme->chain_behind_address_map, reason);
     }
 
     return chain_downloader;

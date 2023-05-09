@@ -90,7 +90,7 @@ void xsync_peerset_t::update(const vnetwork::xvnode_address_t &self_address, con
                 peer_chains.insert(std::make_pair(info.address, chaininfo));
             } else {
                 // TODO compare height and viewid
-                if (info.end_height > it3->second.end_height) {
+                if (info.end_height != it3->second.end_height) {
                     xsync_dbg("peerset update %s,start_height=%lu,end_height=%lu,%s",
                         info.address.c_str(), info.start_height, info.end_height, peer_address.to_string().c_str());
                     it3->second.update(info.start_height, info.end_height);
@@ -205,6 +205,55 @@ std::map<std::string, std::vector<std::string>> xsync_peerset_t::get_neighbors()
     }
 
     return all_neighbors;
+}
+
+bool xsync_peerset_t::get_peer_height_info_map(const vnetwork::xvnode_address_t& self_address, const std::string& address,
+    const uint64_t local_start_height, const uint64_t local_end_height,
+    std::multimap<uint64_t, mbus::chain_behind_event_address>& chain_behind_address_map) {
+    std::unique_lock<std::mutex> lock(m_lock);
+
+    auto it = m_multi_role_peers.find(self_address);
+    if (it == m_multi_role_peers.end())
+        return false;
+
+    xsync_role_peers_t& peers = it->second;
+
+    for (auto& it2 : peers) {
+        xsync_peer_chains_t& chains = it2.second;
+
+        auto it3 = chains.find(address);
+        if (it3 == chains.end())
+            continue;
+
+        xsync_chain_info_t& info = it3->second;
+
+        if (info.end_height > local_end_height && info.start_height < info.end_height) {
+            mbus::chain_behind_event_address chain_behind_address_info;
+            chain_behind_address_info.self_addr = self_address;
+            chain_behind_address_info.from_addr = it2.first;
+            //fast sync need start
+            if (info.start_height > local_start_height) {
+                chain_behind_address_info.start_height = info.start_height;
+            } else {
+                chain_behind_address_info.start_height = local_start_height;
+            }
+            chain_behind_address_map.insert(std::make_pair(info.end_height, chain_behind_address_info));
+        }
+    }
+
+    if (!chain_behind_address_map.empty()) {
+#ifdef DEBUG
+        int32_t index = 0;
+        for(auto chain_behind_info: chain_behind_address_map) {
+            xsync_dbg("index %d address %s chain_behind_address_map end_height %llu start_height %llu self_address %s peer_address %s", 
+            index, address.c_str(), chain_behind_info.first, chain_behind_info.second.start_height, 
+            chain_behind_info.second.self_addr.to_string().c_str(), chain_behind_info.second.from_addr.to_string().c_str());
+            index++;
+        }
+#endif
+        return true;
+    }
+    return false;
 }
 
 NS_END2
