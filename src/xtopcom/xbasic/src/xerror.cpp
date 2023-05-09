@@ -133,6 +133,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xenum_basic_errc::invalid_binary_string:
         return "invalid_binary_string error";
 
+    case xenum_basic_errc::invalid_format:
+        return "invalid_format error";
+
     default:
         return "unknown error";
     }

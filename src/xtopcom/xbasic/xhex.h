@@ -143,7 +143,7 @@ xbytes_t from_hex(xstring_view_t input);
 bool has_hex_prefix(xstring_view_t input) noexcept;
 
 /// @returns true if @a input is a hex string.
-bool is_hex_string(std::string const & input) noexcept;
+bool is_hex_string(xstring_view_t input) noexcept;
 
 bool is_hex_string_with_prefix(xstring_view_t input) noexcept;
 bool is_hex_string_without_prefix(xstring_view_t input) noexcept;

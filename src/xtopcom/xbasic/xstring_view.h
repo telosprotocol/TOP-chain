@@ -252,7 +252,11 @@ public:
         return data_[offset];
     }
 
-    XATTRIBUTE_NODISCARD constexpr const_reference front() const noexcept {
+    XATTRIBUTE_NODISCARD
+#if defined(XCXX14)
+    constexpr
+#endif
+    const_reference front() const noexcept {
         assert(size_ != 0);
         return data_[0];
     }

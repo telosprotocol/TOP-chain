@@ -74,12 +74,12 @@ xbytes_t from_hex(xstring_view_t const input) {
     return ret;
 }
 
-bool is_hex_string(std::string const & input) noexcept {
+bool is_hex_string(xstring_view_t const input) noexcept {
     return is_hex_string_with_prefix(input) || is_hex_string_without_prefix(input);
 }
 
 bool is_hex_string_with_prefix(xstring_view_t const input) noexcept {
-    return has_hex_prefix(input) && is_hex_string_without_prefix(input.substr(0, 2));
+    return has_hex_prefix(input) && is_hex_string_without_prefix(input.substr(2));
 }
 
 bool is_hex_string_without_prefix(xstring_view_t const input) noexcept {
