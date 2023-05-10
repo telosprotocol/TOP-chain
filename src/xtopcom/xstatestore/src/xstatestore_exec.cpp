@@ -606,7 +606,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                           accountindex.dump().c_str());
                     return nullptr;
                 }
-                m_statestore_base.get_blockstore()->clean_caches(account.vaccount()); // XTODO clean imediately for too much block cache for fist mpt build
+
                 m_state_accessor.write_unitstate_to_db(unitstate, accountindex.get_latest_unit_hash(), ec);
                 if (ec) {
                     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt fail-write unitstate for block(%s),account=%s,%s",

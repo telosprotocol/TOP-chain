@@ -268,7 +268,20 @@ bool xstatestore_impl_t::get_accountindex_by_recent_blocks_cache(common::xaccoun
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const {
-    auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount());
+    base::xaccount_index_t account_index;
+    auto ret = get_accountindex(LatestConnectBlock, account_address, account_index);
+    if (!ret) {
+        xwarn("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get accountindex addr.%s",account_address.to_string().c_str());
+        return nullptr;
+    }
+
+    // v2 version account index must be changed-state, try to load unitstate directly, the unit block may not been stored
+    if (account_index.get_latest_unit_height() > 0 && false == account_index.get_latest_unit_hash().empty()) {
+        return get_unit_state_by_accountindex(account_address, account_index);
+    }
+
+    // otherwise v1 version account index, try to load unitstate from unit block, it may be empty or full unit block
+    auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount(), account_index);
     if (nullptr == _block) {
         xerror("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get block");
         return nullptr;
@@ -519,14 +532,7 @@ int32_t xstatestore_impl_t::get_string_property(common::xaccount_address_t const
 }
 
 
-base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) const {
-    base::xaccount_index_t account_index;
-    common::xaccount_address_t account_address(account.get_account());
-    auto ret = get_accountindex(LatestConnectBlock, account_address, account_index);
-    if (!ret) {
-        xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-get accountindex addr.%s",account_address.to_string().c_str());
-        return nullptr;
-    }
+base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account, base::xaccount_index_t const& account_index) const {
     xobject_ptr_t<base::xvblock_t> vblock = nullptr;
     if (!account_index.get_latest_unit_hash().empty()) {
         vblock = blockstore->load_unit(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash());
@@ -534,7 +540,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
         vblock = blockstore->load_unit(account, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid());
     }
     if (vblock == nullptr) {
-        xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load object addr.%s %s",account_address.to_string().c_str(), account_index.dump().c_str());
+        xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-load object addr.%s %s",account.get_account().c_str(), account_index.dump().c_str());
         return nullptr;
     }
     if (vblock->is_state_changed_unit()) {
@@ -557,7 +563,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_latest_connectted_state
         current_height = prev_vblock->get_height();
         block_hash = prev_vblock->get_last_block_hash();
     }
-    xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-find addr.%s %s",account_address.to_string().c_str(), account_index.dump().c_str());
+    xwarn("xstatestore_impl_t::get_latest_connectted_state_changed_block fail-find addr.%s %s",account.get_account().c_str(), account_index.dump().c_str());
     return nullptr;
 }
 

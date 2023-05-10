@@ -7,6 +7,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xblockbuild.h"
 #include "xdata/xtable_bstate.h"
+#include "xdata/xnative_contract_address.h"
 #include "xmbus/xevent_behind.h"
 #include "xmetrics/xmetrics.h"
 #include "xstatestore/xerror.h"
@@ -155,6 +156,53 @@ void xstatestore_prune_t::on_table_block_executed(uint64_t exec_height) {
     m_para->get_prune_dispatcher()->dispatch(asyn_call);
 }
 
+void xstatestore_prune_t::unit_prune_batch(const xaccounts_prune_info_t & accounts_prune_info) {
+    if (false == m_need_prune_unit) {
+        return;
+    }
+
+    if (accounts_prune_info.get_prune_info().empty()) {
+        return;
+    }
+
+    for (auto & prune_info : accounts_prune_info.get_prune_info()) {
+        base::xvaccount_t account_addr(prune_info.first);
+        auto iter = m_prune_addrs.find(prune_info.first);
+        if (iter == m_prune_addrs.end()) {
+            xwarn("xstatestore_prune_t::unit_prune_batch prune addr not exist.account:%s", account_addr.get_account().c_str());
+            continue;
+        }
+  
+        if (prune_info.second <= iter->second.m_lowest_keep_height + iter->second.m_keep_unit_num) {
+            xdbg("xstatestore_prune_t::unit_prune_batch prune height not reach.account:%s max h:%llu low h:%llu keep num:%llu",
+                 account_addr.get_account().c_str(),
+                 prune_info.second,
+                 iter->second.m_lowest_keep_height,
+                 iter->second.m_keep_unit_num);
+            continue;
+        }
+
+        auto upper_height = prune_info.second - iter->second.m_keep_unit_num;
+        auto lower_height = iter->second.m_lowest_keep_height;
+
+        const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_addr, lower_height + 1);
+        const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_addr, upper_height);
+        if (base::xvchain_t::instance().get_xdbstore()->delete_range(begin_delete_key, end_delete_key)) {
+            xinfo("xstatestore_prune_t::unit_prune_batch unit prune success %s max h:%llu from %llu to %llu",
+                  account_addr.get_account().c_str(),
+                  prune_info.second,
+                  lower_height + 1,
+                  upper_height);
+            iter->second.m_lowest_keep_height = upper_height - 1;
+        } else {
+            xerror("xstatestore_prune_t::unit_prune_batch unit prune fail %s from %llu to %llu",
+                   account_addr.get_account().c_str(),
+                   lower_height + 1,
+                   upper_height);
+        }
+    }
+}
+
 void xstatestore_prune_t::unitstate_prune_batch(const xaccounts_prune_info_t & accounts_prune_info) {
     if (accounts_prune_info.get_prune_info().empty()) {
         return;
@@ -194,7 +242,40 @@ void xstatestore_prune_t::unitstate_prune_batch(const xaccounts_prune_info_t & a
 
 void xstatestore_prune_t::init() {
     m_pruned_height = m_statestore_base.get_lowest_executed_block_height(m_table_addr);
-    xinfo("xstatestore_prune_t::init table:%s init prune height:%llu", m_table_addr.to_string().c_str(), m_pruned_height);
+    xinfo("xstatestore_prune_t::init table:%s init prune height:%llu, zone_index:%d", m_table_addr.to_string().c_str(), m_pruned_height, m_table_vaddr.get_zone_index());
+
+    uint32_t prune_unit_elect_contract_keep_num = enum_state_prune_para_t::prune_para_elect_contract_unit_keep_num;
+    uint32_t prune_unit_other_contract_keep_num = enum_state_prune_para_t::prune_para_other_contract_unit_keep_num;
+    xstatestore_unit_info_t elect_contract_config{prune_unit_elect_contract_keep_num, 0};
+    xstatestore_unit_info_t other_contract_config{prune_unit_other_contract_keep_num, 0};
+
+    // only rec/zec table need prune. only some system contracts need prune.
+    if (m_table_vaddr.get_zone_index() == base::enum_chain_zone_beacon_index) {
+        m_need_prune_unit = true;
+
+        m_prune_addrs[sys_contract_rec_elect_rec_addr] = elect_contract_config;
+        m_prune_addrs[sys_contract_rec_elect_zec_addr] = elect_contract_config;
+
+        m_prune_addrs[sys_contract_rec_registration_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_rec_elect_edge_addr] = other_contract_config; // the elect contract of non-consensus node need not keep too much units
+        m_prune_addrs[sys_contract_rec_elect_fullnode_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_rec_elect_archive_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_rec_elect_exchange_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_rec_tcc_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_rec_standby_pool_addr] = other_contract_config;
+    } else if (m_table_vaddr.get_zone_index() == base::enum_chain_zone_zec_index) {
+        m_need_prune_unit = true;
+        m_prune_addrs[sys_contract_zec_elect_consensus_addr] = elect_contract_config;
+        m_prune_addrs[sys_contract_zec_elect_eth_addr] = elect_contract_config;
+        m_prune_addrs[sys_contract_zec_elect_relay_addr] = elect_contract_config;
+
+        m_prune_addrs[sys_contract_zec_workload_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_zec_vote_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_zec_reward_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_zec_slash_info_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_zec_standby_pool_addr] = other_contract_config;
+        m_prune_addrs[sys_contract_zec_group_assoc_addr] = other_contract_config;
+    }
 }
 
 uint64_t xstatestore_prune_t::prune_exec_storage(uint64_t from_height, uint64_t to_height) {
@@ -391,6 +472,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
     // prune offdata with tableblock for non strorage nodes.
     XMETRICS_GAUGE(metrics::prune_state_table_data, prune_info.get_tablestate_prune_keys().size());
     unitstate_prune_batch(accounts_prune_info);
+    unit_prune_batch(accounts_prune_info);
 
     xinfo("xstatestore_prune_t::prune_exec_cons prune mpt tablestate and unitstate for table %s from %llu to %llu", m_table_addr.to_string().c_str(), from_height, to_height);
     return to_height;
