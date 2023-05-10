@@ -2480,21 +2480,20 @@ static void get_unfinalized_headers(common::xaccount_address_t const & contract_
                                     const data::xunitstate_ptr_t unitstate,
                                     const xjson_format_t json_format,
                                     Json::Value & json) {
-    auto headers = unitstate->map_get(property_name);
-    if (headers.empty()) {
+    auto h = unitstate->string_get(property_name);
+    if (h.empty()) {
         xwarn("[get_unfinalized_headers] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    for (auto & h : headers) {
-        auto key = to_hex(h.first);
-        evm_common::eth2::xexecution_header_info_t info;
-        if (info.decode_rlp({std::begin(h.second), std::end(h.second)}) == false) {
-            xwarn("[get_unfinalized_headers] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
-            return;
-        }
-        json[key]["parent_hash"] = to_hex(info.parent_hash);
-        json[key]["block_number"] = static_cast<Json::UInt64>(info.block_number);
+
+    evm_common::eth2::xexecution_header_info_t info;
+    if (info.decode_rlp({std::begin(h), std::end(h)}) == false) {
+        xwarn("[get_unfinalized_headers] contract_address: %s, property_name: %s, decode error", contract_address.to_string().c_str(), property_name.c_str());
+        return;
     }
+    json["parent_hash"] = to_hex(info.parent_hash);
+    json["block_number"] = static_cast<Json::UInt64>(info.block_number);
+    json["submitter"] = info.submitter.to_hex_string();
 }
 
 static void get_finalized_beacon_header(common::xaccount_address_t const & contract_address,
@@ -2738,7 +2737,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_chain_headers_summary(contract_address, property_name, unitstate, json_format, json);
     } else if (property_name == data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS) {
         return get_finalized_execution_blocks(contract_address, property_name, unitstate, json_format, json);
-    } else if (property_name == data::system_contract::XPROPERTY_UNFINALIZED_HEADERS) {
+    } else if (property_name == data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER || property_name == data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER) {
         return get_unfinalized_headers(contract_address, property_name, unitstate, json_format, json);
     } else if (property_name == data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER) {
         return get_finalized_beacon_header(contract_address, property_name, unitstate, json_format, json); 

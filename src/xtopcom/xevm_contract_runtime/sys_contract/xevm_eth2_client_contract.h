@@ -39,7 +39,7 @@ public:
     uint64_t last_block_number(state_ptr const & state) const;
     h256 block_hash_safe(state_ptr const & state, uint64_t block_number) const;
     bool is_confirmed(state_ptr state, uint64_t number, h256 const & hash_bytes) const;
-    bool is_known_execution_header(state_ptr const & state, h256 const & hash) const;
+    bool is_known_execution_header(state_ptr const & state, uint64_t height) const;
     h256 finalized_beacon_block_root(state_ptr const & state) const;
     uint64_t finalized_beacon_block_slot(state_ptr const & state) const;
     evm_common::eth2::xextended_beacon_block_header_t finalized_beacon_block_header(state_ptr const & state) const;
@@ -64,9 +64,9 @@ private:
     void release_finalized_execution_blocks(state_ptr const & state, uint64_t number);
 
     // properties
-    h256 get_finalized_execution_blocks(state_ptr const & state, uint64_t const height) const;
-    bool set_finalized_execution_blocks(state_ptr const & state, uint64_t const height, h256 const & hash);
-    bool del_finalized_execution_blocks(state_ptr const & state, uint64_t const height);
+    h256 get_finalized_execution_blocks(state_ptr const & state, uint64_t height) const;
+    bool set_finalized_execution_blocks(state_ptr const & state, uint64_t height, h256 const & hash);
+    bool del_finalized_execution_blocks(state_ptr const & state, uint64_t height);
     evm_common::eth2::xexecution_header_info_t get_unfinalized_headers(state_ptr const & state, h256 const & hash) const;
     bool set_unfinalized_headers(state_ptr const & state, h256 const & hash, evm_common::eth2::xexecution_header_info_t const & info);
     bool del_unfinalized_headers(state_ptr const & state, h256 const & hash);
@@ -74,6 +74,7 @@ private:
     bool set_finalized_beacon_header(state_ptr const & state, evm_common::eth2::xextended_beacon_block_header_t const & beacon);
     evm_common::eth2::xexecution_header_info_t get_finalized_execution_header(state_ptr const & state) const;
     bool set_finalized_execution_header(state_ptr const & state, evm_common::eth2::xexecution_header_info_t const & info);
+    bool set_finalized_execution_header_bytes(state_ptr const & state, std::string const & bytes);
     evm_common::eth2::xsync_committee_t get_current_sync_committee(state_ptr const & state) const;
     bool set_current_sync_committee(state_ptr const & state, evm_common::eth2::xsync_committee_t const & committee);
     evm_common::eth2::xsync_committee_t get_next_sync_committee(state_ptr const & state) const;
@@ -81,6 +82,13 @@ private:
     int get_flag(state_ptr state) const;
     bool set_flag(state_ptr state);
     bool client_mode(state_ptr state, evm_common::eth2::xclient_mode_t mode);
+    evm_common::eth2::xexecution_header_info_t get_unfinalized_tail_execution_header_info(state_ptr const & state) const;
+    evm_common::eth2::xexecution_header_info_t get_unfinalized_head_execution_header_info(state_ptr const & state) const;
+    uint64_t get_diff_between_unfinalized_head_and_tail(state_ptr state) const;
+    bool reset_unfinalized_tail_execution_header(state_ptr const & state);
+    bool reset_unfinalized_head_execution_header(state_ptr const & state);
+    bool set_unfinalized_tail_execution_header_info(state_ptr const & state, evm_common::eth2::xexecution_header_info_t const & info);
+    bool set_unfinalized_head_execution_header_info(state_ptr const & state, evm_common::eth2::xexecution_header_info_t const & info);
 
     xeth2_client_net_t m_network;
     std::set<std::string> m_whitelist;

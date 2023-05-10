@@ -174,7 +174,7 @@ struct xexecution_header_info_t {
     }
 
     bool empty() const {
-        return (parent_hash.empty() && block_number == 0);
+        return parent_hash.empty() || block_number == 0;
     }
 
     xbytes_t encode_rlp() const {

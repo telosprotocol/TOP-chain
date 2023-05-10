@@ -222,13 +222,15 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
             make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
         xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
         bstate->new_string_map_var(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS, canvas.get());
-        bstate->new_string_map_var(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, canvas.get());
+        // bstate->new_string_map_var(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_RESET_FLAG, canvas.get());
         bstate->new_int64_var(data::system_contract::XPROPERTY_CLIENT_MODE, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, canvas.get());
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);
