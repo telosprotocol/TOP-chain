@@ -175,7 +175,7 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
 
     std::vector<xobject_ptr_t<base::xvtxindex_t>> sub_txs;
     if (block_ptr->extract_sub_txs(sub_txs)) {
-        xassert(!sub_txs.empty());
+        // xassert(!sub_txs.empty()); //XTODO for old version(eg. 0x100), the table block may only has empty units and has none of sub_txs
         std::map<std::string, std::string> kvs;
         for (auto & v : sub_txs) {
             base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
