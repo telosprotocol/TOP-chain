@@ -41,6 +41,27 @@ std::string to_hex_prefixed(T const & input) {
     return to_hex(input.begin(), input.end(), "0x");
 }
 
+/// Convert a series of bytes to the corresponding hex string.
+/// @example to_hex_shrink_0("A\x0000123") == "123"
+template <class T>
+std::string to_hex_shrink_0(T const & input) {
+    std::string hex_str = to_hex(input.begin(), input.end(), "");
+    hex_str.erase(0, hex_str.find_first_not_of('0'));
+    if (hex_str.size() == 0) {
+        hex_str = "0";
+    }
+    return hex_str;
+}
+
+/// Convert a series of bytes to the corresponding hex string with 0x prefix.
+/// @example to_hex_prefixed("A\x0000123") == "0x123"
+template <class T>
+std::string to_hex_prefixed_shrink_0(T const & input) {
+    std::string hex_str = to_hex_shrink_0(input);
+    hex_str = "0x" + hex_str;
+    return hex_str;
+}
+
 namespace {
 constexpr std::uint8_t const_from_hex_char(char i) {
     return ((i >= 'a') && (i <= 'f')) ? (i - 87) : // NOLINT

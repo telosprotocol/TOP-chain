@@ -9,6 +9,8 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xgasfee/xerror/xerror.h"
+#include "xconfig/xutility.h"
+#include "xchain_fork/xutility.h"
 
 #include <stdint.h>
 
@@ -62,35 +64,53 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_fee_per_gas() const {
     return m_tx->get_transaction()->get_max_fee_per_gas();
 }
 
-evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
+evm_common::u256 xtop_gas_tx_operator::tx_eth_priority_fee_per_gas() const {
+    return m_tx->get_transaction()->get_max_priority_fee_per_gas();
+}
+
+evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee_to_utop(bool evm_forked) const {
     // 1Gwei = (ratio / 10^3)Utop
     // 1Utop = (10^3 / ratio)Gwei
     evm_common::u256 limit = tx_eth_gas_limit();
     evm_common::u256 price = tx_eth_fee_per_gas();
     evm_common::u256 wei_gasfee = limit * price;
-    evm_common::u256 utop_gasfee = wei_to_utop(wei_gasfee);
-    xdbg("[xtop_gas_tx_operator::tx_eth_limited_gasfee] eth_gas_price: %s, eth_gas_limit: %s, wei_gasfee: %s, utop_gasfee: %s",
+    evm_common::u256 utop_gasfee = wei_to_utop(wei_gasfee, evm_forked);
+    xdbg("[xtop_gas_tx_operator::tx_eth_limited_gasfee_to_utop] eth_gas_price: %s, eth_gas_limit: %s, wei_gasfee: %s, utop_gasfee: %s evm_forked %d",
          price.str().c_str(),
          limit.str().c_str(),
          wei_gasfee.str().c_str(),
-         utop_gasfee.str().c_str());
+         utop_gasfee.str().c_str(),
+         evm_forked);
     return utop_gasfee;
 }
 
-evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei) {
-    evm_common::u256 gwei = wei / evm_common::u256(1000000000ULL);
-    evm_common::u256 mtop = gwei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
-    evm_common::u256 utop = mtop / 1000U;
-    xdbg("[xtop_gas_tx_operator::wei_to_utop] exchange ratio: %lu, wei: %s, utop: %s",
+evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei, bool evm_forked) {
+    evm_common::u256 utop{0};
+
+    if (evm_forked) {
+        // wei -> gwei -> ether -> top -> utop
+        // utop = wei / evm_common::u256(1000000000ULL / evm_common::u256(1000000000ULL) * 1000000ULL * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
+        utop = (wei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio)) / evm_common::u256(1000000000000ULL);
+    } else {
+        evm_common::u256 gwei = wei / evm_common::u256(1000000000ULL);
+        evm_common::u256 mtop = gwei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
+        utop = mtop / 1000U;
+    }
+
+    xdbg("[xtop_gas_tx_operator::wei_to_utop] exchange ratio: %lu, wei: %s, utop: %s evm_forked %d",
          XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio),
          wei.str().c_str(),
-         utop.str().c_str());
+         utop.str().c_str(), evm_forked);
     return utop;
 }
 
 evm_common::u256 xtop_gas_tx_operator::utop_to_wei(const evm_common::u256 utop) {
-    auto wei = utop * evm_common::u256(1000000000000ULL) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
-    xdbg("[xtop_gas_tx_operator::utop_to_wei] exchange ratio: %lu, utop: %s, wei: %s",
+    evm_common::u256 wei{0};
+
+    // utop -> top, top -> eth, eth -> wei
+    // wei = utop * 1000000ULL / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio) * 1000000000ULL * 1000000000ULL ;
+    wei = (utop * evm_common::u256(1000000000000ULL)) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
+    xdbg("[xtop_gas_tx_operator::utop_to_wei] exchange ratio: %lu, utop: %s, wei: %s ",
          XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio),
          utop.str().c_str(),
          wei.str().c_str());
@@ -148,6 +168,10 @@ evm_common::u256 xtop_gas_tx_operator::balance_to_tgas(const evm_common::u256 ba
 
 evm_common::u256 xtop_gas_tx_operator::tgas_to_balance(const evm_common::u256 tgas) {
     return tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+}
+
+evm_common::u256 xtop_gas_tx_operator::get_eth_amount() const {
+    return (m_tx->get_transaction()->get_amount_256());
 }
 
 }  // namespace gasfee

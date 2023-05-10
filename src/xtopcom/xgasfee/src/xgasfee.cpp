@@ -36,7 +36,7 @@ void xtop_gasfee::check(std::error_code & ec) {
     // top balance
     const uint64_t balance = account_balance();
     // gas fee
-    const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee();
+    const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee_to_utop();
     if (eth_max_gasfee > balance) {
         // top balance not enough
         ec = gasfee::error::xenum_errc::account_balance_not_enough;
@@ -56,7 +56,7 @@ void xtop_gasfee::init(std::error_code & ec) {
     // top balance
     const uint64_t balance = account_balance();
     // gas fee
-    const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee();
+    const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee_to_utop();
     xdbg("[xtop_gasfee::init] evm tx, eth_max_gasfee: %s", eth_max_gasfee.str().c_str());
     if (eth_max_gasfee > balance) {
         // top balance not enough
@@ -189,75 +189,6 @@ void xtop_gasfee::store_in_one_stage() {
     xdbg("[xtop_gasfee::store_in_one_stage] gasfee_detail: %s", m_detail.str().c_str());
 }
 
-// void xtop_gasfee::store_in_send_stage() {
-//     m_detail.m_state_used_tgas = m_free_tgas_usage + account_formular_used_tgas(m_time);
-//     m_detail.m_state_last_time = m_time;
-//     uint64_t deposit_total = tgas_to_balance(m_converted_tgas);
-//     m_detail.m_state_lock_balance = deposit_total;
-//     const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
-//     m_detail.m_tx_used_tgas = m_free_tgas_usage;
-//     m_detail.m_tx_used_deposit = deposit_usage;
-//     xdbg("[xtop_gasfee::store_in_send_stage] m_free_tgas_usage: %lu, m_converted_tgas_usage: %lu, deposit_usage: %lu, m_converted_tgas: %lu, deposit_total: %lu",
-//          m_free_tgas_usage,
-//          m_converted_tgas_usage,
-//          deposit_usage,
-//          m_converted_tgas,
-//          deposit_total);
-//     xdbg("[xtop_gasfee::store_in_send_stage] gasfee_detail: %s", m_detail.str().c_str());
-// }
-
-// void xtop_gasfee::store_in_recv_stage() {
-//     m_detail.m_tx_used_deposit = tx_last_action_used_deposit();
-// }
-
-// void xtop_gasfee::store_in_confirm_stage() {
-//     uint64_t deposit_total = tgas_to_balance(m_converted_tgas);
-//     m_detail.m_state_unlock_balance = deposit_total;
-//     uint64_t deposit_usage = tx_last_action_used_deposit();
-//     m_detail.m_state_burn_balance = deposit_usage;
-//     m_detail.m_tx_used_deposit = deposit_usage;
-//     xdbg("[xtop_gasfee::store_in_confirm_stage] m_free_tgas_usage: %lu, deposit_usage: %lu, deposit_total: %lu", m_free_tgas_usage, deposit_usage, deposit_total);
-//     xdbg("[xtop_gasfee::store_in_confirm_stage] gasfee_detail: %s", m_detail.str().c_str());
-// }
-
-// void xtop_gasfee::preprocess_one_stage(std::error_code & ec) {
-//     // 0. init
-//     init(ec);
-//     CHECK_EC_RETURN(ec);
-//     // 1. calculate common tgas
-//     calculate(0, ec);
-//     // 2. store if not eth tx(need postprocess)
-//     store_in_one_stage();
-// }
-
-// void xtop_gasfee::preprocess_send_stage(std::error_code & ec) {
-//     // 0. init
-//     init(ec);
-//     CHECK_EC_RETURN(ec);
-//     // 1. calculate common tgas
-//     calculate(0, ec);
-//     // 2. store
-//     if (tx_type() == data::xtransaction_type_transfer) {
-//         store_in_one_stage();
-//     } else {
-//         store_in_send_stage();
-//     }
-// }
-
-// void xtop_gasfee::preprocess_recv_stage(std::error_code & ec) {
-//     store_in_recv_stage();
-// }
-
-// void xtop_gasfee::preprocess_confirm_stage(std::error_code & ec) {
-//     // ignore transfer
-//     if (tx_type() == data::xtransaction_type_transfer) {
-//         return;
-//     }
-//     // 0. init
-//     init(ec);
-//     CHECK_EC_RETURN(ec);
-//     store_in_confirm_stage();
-// }
 
 void xtop_gasfee::postprocess_one_stage(const evm_common::u256 supplement_gas, std::error_code & ec) {
     do {
@@ -273,17 +204,7 @@ void xtop_gasfee::postprocess_one_stage(const evm_common::u256 supplement_gas, s
     store_in_one_stage();
 }
 
-// void xtop_gasfee::postprocess_send_stage(const evm_common::u256 supplement_gas, std::error_code & ec) {
-//     return;
-// }
 
-// void xtop_gasfee::postprocess_recv_stage(const evm_common::u256 supplement_gas, std::error_code & ec) {
-//     return;
-// }
-
-// void xtop_gasfee::postprocess_confirm_stage(const evm_common::u256 supplement_gas, std::error_code & ec) {
-//     return;
-// }
 
 void xtop_gasfee::preprocess(std::error_code & ec) {
     // ignore gas calculation of system contracts
