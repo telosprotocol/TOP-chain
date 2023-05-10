@@ -28,25 +28,20 @@ void EthMethod::web3_sha3(const Json::Value & js_req, Json::Value & js_rsp) {
     xdbg("web3_sha3: %s", js_rsp["result"].asString().c_str());
 }
 
-void EthMethod::eth_gasPrice(const Json::Value & js_req, Json::Value & js_rsp) {
+void EthMethod::eth_gasPrice(const Json::Value& js_req, Json::Value& js_rsp)
+{
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
         return;
-    //Json::Value value = "0x3b9aca00";
-    // Json::Value value = "0x989680";
-    auto base_price = top::gasfee::xgas_estimate::base_price();
 
-    std::string baseprice_str = top::to_hex((top::evm_common::h256)base_price);
-    uint32_t i = 0;
-    for (; i < baseprice_str.size() - 1; i++) {
-        if (baseprice_str[i] != '0') {
-            break;
-        }
-    }
-/*    std::stringstream outstr;
-    uint32_t gas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
-    outstr << "0x" << std::hex << gas;
-    //Json::Value value = outstr.str();
-    Json::Value value = "0x1";*/
-    js_rsp["result"] = "0x" + baseprice_str.substr(i);
+    auto base_price = top::gasfee::xgas_estimate::base_price();
+    js_rsp["result"] = top::to_hex_prefixed_shrink_0((top::evm_common::h256)base_price);
+    xdbg("EthMethod::eth_gasPrice: %s", js_rsp["result"].asString().c_str());
+}
+
+void EthMethod::eth_maxPriorityFeePerGas(const Json::Value & js_req, Json::Value & js_rsp) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
+        return;
+
+    js_rsp["result"] = "0x0"; 
 }
 }

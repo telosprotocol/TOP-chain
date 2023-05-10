@@ -442,7 +442,11 @@ int32_t xbstate_ctx_t::token_withdraw(const std::string & key, base::vtoken_t su
     auto propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_withdraw", key);
     auto balance = propobj->get_balance();
-    if (sub_token <= 0 || sub_token > balance) {
+    if (0 == sub_token) {
+        return xsuccess;
+    }
+
+    if (sub_token > balance) {
         xwarn("xbstate_ctx_t::token_withdraw fail-can't do withdraw. propname=%s,balance=%ld,sub_token=%ld", key.c_str(), balance, sub_token);
         return xaccount_property_operate_fail;
     }
@@ -456,9 +460,8 @@ int32_t xbstate_ctx_t::token_deposit(const std::string & key, base::vtoken_t add
     xdbg("xbstate_ctx_t::token_deposit,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", account_address().to_string().c_str(), height(), key.c_str(), add_token);
     auto propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_withdraw", key);
-    if (add_token <= 0) {
-        xwarn("xbstate_ctx_t::token_withdraw fail-can't do deposit. add_token=%ld", add_token);
-        return xaccount_property_operate_fail;
+    if (0 == add_token) {
+        return xsuccess;
     }
     auto balance = propobj->get_balance();
     auto left_token = propobj->deposit(add_token, m_canvas.get());
@@ -680,7 +683,11 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & token_name, evm_co
         balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
     }
 
-    if (sub_token <= 0 || sub_token > balance) {
+    if (0 == sub_token) {
+        return xsuccess;
+    }
+
+    if (sub_token > balance) {
         xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,sub_token=%s",
               top::to_hex(token_name).c_str(),
               balance.str().c_str(),
@@ -731,12 +738,8 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string & token_name, evm_com
         balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
     }
 
-    if (add_token <= 0) {
-        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,add_token=%s",
-              top::to_hex(token_name).c_str(),
-              balance.str().c_str(),
-              add_token.str().c_str());
-        return xaccount_property_operate_fail;
+    if (0 == add_token) {
+        return xsuccess;
     }
 
     evm_common::u256 new_balance = balance + add_token;

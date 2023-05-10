@@ -8,8 +8,6 @@
 #include "xgasfee/xgas_tx_operator.h"
 #include "xtxexecutor/xvm_face.h"
 
-#include <iostream>
-
 namespace top {
 namespace gasfee {
 

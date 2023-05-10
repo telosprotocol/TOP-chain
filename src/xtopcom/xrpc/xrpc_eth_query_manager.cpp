@@ -36,6 +36,8 @@
 #include "xvledger/xvblock.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
+#include "xgasfee/xgas_tx_operator.h"
+#include "xgasfee/xgas_estimate.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -82,6 +84,7 @@ xrpc_eth_query_manager::xrpc_eth_query_manager(observer_ptr<base::xvblockstore_t
     REGISTER_ETH_QUERY_METHOD(eth_estimateGas);
     REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
     REGISTER_ETH_QUERY_METHOD(eth_getLogs);
+    REGISTER_ETH_QUERY_METHOD(eth_feeHistory);
 
     REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByNumber);
     REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByHash);
@@ -187,12 +190,15 @@ void xrpc_eth_query_manager::eth_getBalance(Json::Value & js_req, Json::Value & 
         auto default_token_type = XGET_CONFIG(evm_token_type);
         evm_common::u256 balance = 0;
         xdbg("xrpc_eth_query_manager::eth_getBalance token type is %s.", default_token_type.c_str());
+
         if (default_token_type == "TOP") {
-            uint64_t top_balance = account_ptr->balance();
-            balance = top_balance;
-        } else {
-            balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
+            balance = account_ptr->balance();
+        } else if(default_token_type == "ETH") {
+            evm_common::u256 top_balance = account_ptr->balance();
+            evm_common::u256 eth_balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
+            balance = top::gasfee::xgas_estimate::get_nominal_balance(top_balance, eth_balance);
         }
+
         js_rsp["result"] = xrpc_eth_parser_t::u256_to_hex_prefixed(balance);
         xdbg("xrpc_eth_query_manager::eth_getBalance address=%s,balance=%s,%s", account.c_str(), balance.str().c_str(), xrpc_eth_parser_t::u256_to_hex_prefixed(balance).c_str());
     }
@@ -718,7 +724,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     switch (output.m_tx_result.status) {
     case evm_common::Success: {
         std::stringstream outstr;
-        outstr << "0x" << std::hex << output.m_tx_result.used_gas + output.m_tx_result.used_gas / 2;
+        outstr << "0x" << std::hex << output.m_tx_result.used_gas;
         js_rsp["result"] = outstr.str();
         break;
     }
@@ -947,6 +953,75 @@ void xrpc_eth_query_manager::eth_getLogs(Json::Value & js_req, Json::Value & js_
 
     get_log(js_rsp, begin, end, vTopics, sAddress);
     return;
+}
+
+void xrpc_eth_query_manager::eth_feeHistory(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 3))
+        return;
+
+    // block count:hex string
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_unknown))
+        return;
+
+    // Highest block of the requested range: hex string / earliest /  pending /latest
+    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_block))
+        return;
+
+    // A monotonically increasing list of percentile values.
+    uint32_t reward_size = 0;
+    if (js_req[2].isArray()) {
+        auto & reward_list = js_req[2];
+        reward_size = reward_list.size();
+    } else {
+        std::string msg = "cannot unmarshal string into Go value of type []float64";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+        return;
+    }
+
+    uint64_t oldest_block_height = 0;
+    uint64_t end_block_height = get_block_height(js_req[1].asString());
+    uint64_t block_count = std::strtoul(js_req[0].asString().c_str(), NULL, 16);
+    if (end_block_height > block_count) {
+        oldest_block_height = end_block_height - block_count;
+    } else {
+        block_count = end_block_height + 1;
+    }
+    std::stringstream outstr;
+    outstr << "0x" << std::hex << oldest_block_height;
+    Json::Value js_result;
+    js_result["oldestBlock"] = std::string(outstr.str());
+
+    if (reward_size > 0) {
+        xJson::Value reward_array_json;
+        reward_array_json.resize(0);
+        for (uint64_t i = 0; i < block_count; i++) {
+            xJson::Value block_reward_json;
+            block_reward_json.resize(0);
+            for (uint32_t j = 0; j < reward_size; j++) {
+                block_reward_json.append("0x0");
+            }
+            reward_array_json.append(block_reward_json);
+        }
+        js_result["reward"] = reward_array_json;
+    }
+
+    auto base_price = top::gasfee::xgas_estimate::base_price();
+    std::string baseprice_hex = top::to_hex_prefixed_shrink_0((top::evm_common::h256)base_price);
+    xJson::Value baseFee_array_json;
+    baseFee_array_json.resize(0);
+    for (uint64_t i = 0; i < (block_count + 1); i++) {
+        baseFee_array_json.append(baseprice_hex);
+    }
+    js_result["baseFeePerGas"] = baseFee_array_json;
+
+    xJson::Value gasUsedRatio_array_json;
+    gasUsedRatio_array_json.resize(0);
+    for (uint64_t i = 0; i < block_count; i++) {
+        gasUsedRatio_array_json.append("0.0");
+    }
+    js_result["gasUsedRatio"] = gasUsedRatio_array_json;
+
+    js_rsp["result"] = js_result;
 }
 
 bool xrpc_eth_query_manager::check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const {

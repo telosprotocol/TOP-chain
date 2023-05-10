@@ -22,20 +22,29 @@ enum_execute_result_type xtvm_v2_t::execute(const xvm_input_t & input, xvm_outpu
     xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
     xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
+    if (base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account &&
+        base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+        output.m_tx_result.used_gas = default_eth_tx_gas;
+    }
+
     data::xunitstate_ptr_t unitstate = statectx->load_unit_state(common::xaccount_address_t(tx->get_account_addr()));
     if (nullptr == unitstate) {
         xwarn("[xtvm_v2_t::execute] fail-load unit state. tx=%s", tx->dump().c_str());
+        output.m_tx_result.status = evm_common::xevm_transaction_status_t::OtherExecuteError;
         return enum_exec_error_load_state;
     }
     if (unitstate->is_state_readonly()) {
         xerror("[xtvm_v2_t::execute] readonly unit state. tx=%s", tx->dump().c_str());
+        output.m_tx_result.status = evm_common::xevm_transaction_status_t::OtherExecuteError;
         return enum_exec_error_load_state;
     }
     auto ret = execute_impl(input, output);
     if (!ret) {
+        output.m_tx_result.status = evm_common::xevm_transaction_status_t::OtherExecuteError;
         xwarn("[xtvm_v2_t::execute] fail-vm execute, error code: %d, error msg: %s. tx=%s", output.m_ec.value(), output.m_ec.message().c_str(), tx->dump().c_str());
         return enum_exec_error_vm_execute;
     }
+    output.m_tx_result.status = evm_common::xevm_transaction_status_t::Success;
     xdbg("[xtvm_v2_t::execute] succ vm execute. tx=%s", tx->dump().c_str());
 
     return enum_exec_success;
@@ -45,10 +54,7 @@ bool xtvm_v2_t::execute_impl(const xvm_input_t & input, xvm_output_t & output) {
     const statectx::xstatectx_face_ptr_t & statectx = input.get_statectx();
     const xcons_transaction_ptr_t & tx = input.get_tx();
 
-    if (base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account &&
-        base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        output.m_tx_result.used_gas = default_eth_tx_gas;
-    }
+
     auto result = execute_tx(statectx, tx);
     if (result.status.ec) {
         output.m_ec = result.status.ec;

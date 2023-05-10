@@ -64,7 +64,8 @@ class xeth_transaction_t {
                                                       evm_common::u256 const& gas, evm_common::u256 const& value, xbytes_t const& data);                                                  
  public:
     xeth_transaction_t() = default;
-    xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, evm_common::u256 const& _value, evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice);
+    xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, evm_common::u256 const& _value, 
+                       evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice, evm_common::u256 const& _maxPriorityFee = 0);
 
  public:
     xbytes_t    encodeBytes() const {return encodeBytes(true);}

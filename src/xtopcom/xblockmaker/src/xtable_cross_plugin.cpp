@@ -10,6 +10,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
+#include "xchain_fork/xutility.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -131,6 +132,8 @@ std::vector<data::xcons_transaction_ptr_t> xtable_cross_plugin_t::make_contract_
 
     uint64_t gas_used = 0;
     data::xeth_receipts_t eth_receipts;
+    bool evm_v3_fee_fork = chain_fork::xutility_t::is_forked(fork_points::v11300_evm_v3_fee_update_point, statectx_ptr->get_ctx_para().m_clock);
+
     for (auto& txout : pack_outputs) {
         if (txout.m_tx->get_tx_version() != data::xtransaction_version_3) {
             continue;
@@ -167,6 +170,12 @@ std::vector<data::xcons_transaction_ptr_t> xtable_cross_plugin_t::make_contract_
 
         if (speed_type == 1 && ethtx.get_max_priority_fee_per_gas() >= gasprice) {
             speed_type = 1;
+            if (evm_v3_fee_fork) {
+                auto & gas_fee_detail = txout.m_vm_output.m_gasfee_detail;
+                if (gas_fee_detail.m_tx_priority_fee_price < gasprice) {
+                    speed_type = 0;
+                }
+            }
         } else {
             speed_type = 0;
         }

@@ -38,13 +38,14 @@ class xstatectx_t : public xstatectx_face_t {
     base::xtable_shortid_t              get_tableid() const {return m_table_ctx->get_tableid();}
     std::map<std::string, xunitstate_ctx_ptr_t> const& get_modified_unit_ctx() const override;
     statestore::xtablestate_ext_ptr_t const&   get_prev_tablestate_ext() const {return m_prev_tablestate_ext;}
-
+    const xstatectx_para_t & get_ctx_para() const {return m_statectx_para;}
+    
  private:
     xunitstate_ctx_ptr_t    load_unit_ctx(common::xaccount_address_t const& address);
     xunitstate_ctx_ptr_t    find_unit_ctx(const std::string & addr, bool is_same_table);
     void                    add_unit_ctx(const std::string & addr, bool is_same_table, const xunitstate_ctx_ptr_t & unit_ctx);
     bool                    is_same_table(common::xaccount_address_t const& address) const;
-    const xstatectx_para_t & get_ctx_para() const {return m_statectx_para;}
+
  private:
     bool                                m_finish_execution{false};
     common::xtable_address_t            m_table_address;
