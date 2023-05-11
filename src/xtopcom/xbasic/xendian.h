@@ -6,13 +6,17 @@
 
 #include "xbase/xns_macro.h"
 
-NS_BEG1(top)
-
 #if defined(XCXX20)
+
+#include <bit>
+
+NS_BEG1(top)
 using xendian_t = std::endian;
+NS_END1
+
 #else
 
-NS_BEG1(details)
+NS_BEG2(top, details)
 
 enum class xtop_endian {
     little = 0,
@@ -20,10 +24,12 @@ enum class xtop_endian {
     native = little,
 };
 
-NS_END1
+NS_END2
+
+NS_BEG1(top)
 
 using xendian_t = details::xtop_endian;
 
-#endif
-
 NS_END1
+
+#endif

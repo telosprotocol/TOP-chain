@@ -55,36 +55,36 @@ TEST_F(xeth2_contract_fixture_t, property_finalized_execution_blocks) {
     }
 }
 
-TEST_F(xeth2_contract_fixture_t, property_unfinalized_headers) {
-    // get empty
-    for (auto i = 0; i < 10; i++) {
-        EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)).empty());
-    }
-    // set
-    for (auto i = 0; i < 5; i++) {
-        EXPECT_TRUE(m_contract.set_unfinalized_headers(m_contract_state, h256(i + 1), xexecution_header_info_t(h256(i), i, common::xeth_address_t::random())));
-    }
-    // get value
-    for (auto i = 0; i < 10; i++) {
-        if (i < 5) {
-            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i, common::xeth_address_t::random()));
-        } else {
-            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
-        }
-    }
-    // del
-    for (auto i = 0; i < 3; i++) {
-        EXPECT_TRUE(m_contract.del_unfinalized_headers(m_contract_state, h256(i + 1)));
-    }
-    // get value
-    for (auto i = 0; i < 10; i++) {
-        if (i >= 3 && i < 5) {
-            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i, common::xeth_address_t::random()));
-        } else {
-            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
-        }
-    }
-}
+//TEST_F(xeth2_contract_fixture_t, property_unfinalized_headers) {
+//    // get empty
+//    for (auto i = 0; i < 10; i++) {
+//        EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)).empty());
+//    }
+//    // set
+//    for (auto i = 0; i < 5; i++) {
+//        EXPECT_TRUE(m_contract.set_unfinalized_headers(m_contract_state, h256(i + 1), xexecution_header_info_t(h256(i), i, common::xeth_address_t::random())));
+//    }
+//    // get value
+//    for (auto i = 0; i < 10; i++) {
+//        if (i < 5) {
+//            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i, common::xeth_address_t::random()));
+//        } else {
+//            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
+//        }
+//    }
+//    // del
+//    for (auto i = 0; i < 3; i++) {
+//        EXPECT_TRUE(m_contract.del_unfinalized_headers(m_contract_state, h256(i + 1)));
+//    }
+//    // get value
+//    for (auto i = 0; i < 10; i++) {
+//        if (i >= 3 && i < 5) {
+//            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t(h256(i), i, common::xeth_address_t::random()));
+//        } else {
+//            EXPECT_TRUE(m_contract.get_unfinalized_headers(m_contract_state, h256(i + 1)) == xexecution_header_info_t());
+//        }
+//    }
+//}
 
 TEST_F(xeth2_contract_fixture_t, property_finalized_beacon_header) {
     // get empty
@@ -301,7 +301,7 @@ TEST_F(xeth2_contract_fixture_t, test_release_finalized_execution_blocks) {
         EXPECT_TRUE(m_contract.set_finalized_execution_blocks(m_contract_state, i, h256(i)));
     }
     EXPECT_FALSE(m_contract.del_finalized_execution_blocks(m_contract_state, 100));
-    m_contract.release_finalized_execution_blocks(m_contract_state, 80 - 1);
+    m_contract.gc_finalized_execution_blocks(m_contract_state, 80 - 1);
     for (auto i = 50; i < 80; ++i) {
         auto b = m_contract.get_finalized_execution_blocks(m_contract_state, i);
         EXPECT_TRUE(b == h256());
@@ -415,13 +415,13 @@ TEST_F(xeth2_contract_fixture_t, test_submit_update_two_periods) {
     headers.erase(headers.begin());
     for (auto const & header : headers) {
         m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random());
-        EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
+        EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.number));
         EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
     }
 
     EXPECT_TRUE(m_contract.submit_beacon_chain_light_client_update(m_contract_state, update_101));
     // EXPECT_EQ(m_contract.last_block_number(m_contract_state), headers.back().number);
-    EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
+    // EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
 }
 
 TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
@@ -498,7 +498,7 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
         header.decode_rlp(from_hex(it->get<std::string>()), ec);
         EXPECT_TRUE(!ec);
         EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random()));
-        EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
+        EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.number));
         EXPECT_EQ(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)), h256());
         if (header.number == 2260221) {
             EXPECT_FALSE(m_contract.submit_beacon_chain_light_client_update(m_contract_state, update_param));
@@ -525,15 +525,17 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
 
     EXPECT_TRUE(m_contract.submit_beacon_chain_light_client_update(m_contract_state, update_param));
     EXPECT_EQ(m_contract.last_block_number(m_contract_state), 2260222);
-    EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
+    // EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
     // 2260223
-    EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, h256(from_hex("7eb26ba7a27b0ef431287046c0d30d0958c94f7519bad3361a77b9723b34ac4a"))));
+    // EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, h256(from_hex("7eb26ba7a27b0ef431287046c0d30d0958c94f7519bad3361a77b9723b34ac4a"))));
+    EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, 2260223));
     // 2260230
-    EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, h256(from_hex("27d771cacab35d0fc448dabaf7fbd1d1722dbd0a1165e7076cacdc3d8f251758"))));
+    // EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, h256(from_hex("27d771cacab35d0fc448dabaf7fbd1d1722dbd0a1165e7076cacdc3d8f251758"))));
+    EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, 2260230));
 
-    int32_t size{0};
-    m_contract_state->map_size(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, size);
-    EXPECT_EQ(size, 8);
+    // int32_t size{0};
+    // m_contract_state->map_size(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, size);
+    // EXPECT_EQ(size, 8);
 
     auto update_param_full_rlp = from_hex(update_param_full_rlp_hex);
     xlight_client_update_t update_param_full;
@@ -545,12 +547,12 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
         header.decode_rlp(from_hex(it->get<std::string>()), ec);
         EXPECT_TRUE(!ec);
         EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random()));
-        EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
+        EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.number));
         EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
     }
     EXPECT_TRUE(m_contract.submit_beacon_chain_light_client_update(m_contract_state, update_param_full));
     EXPECT_EQ(m_contract.last_block_number(m_contract_state), 2264207);
-    EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
+    // EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
     {
         auto cur_committee = m_contract.get_current_sync_committee(m_contract_state);
         EXPECT_EQ(cur_committee.pubkeys().size(), 512);
@@ -649,7 +651,7 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
             header.decode_rlp(from_hex(it->get<std::string>()), ec);
             EXPECT_TRUE(!ec);
             EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header, common::xeth_address_t::random()));
-            EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.calc_hash()));
+            EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.number));
             EXPECT_TRUE(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)) == h256());
         }
     }
@@ -662,7 +664,7 @@ TEST_F(xeth2_contract_fixture_t, test_execute) {
         contract_runtime::evm::sys_contract_precompile_error err;
         EXPECT_TRUE(m_contract.execute(pack_update_param_rlp, 0, m_context, false, m_statectx_observer, output, err));
         EXPECT_EQ(m_contract.last_block_number(m_contract_state), 2264207);
-        EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
+        // EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
         {
             auto cur_committee = m_contract.get_current_sync_committee(m_contract_state);
             EXPECT_EQ(cur_committee.pubkeys().size(), 512);
