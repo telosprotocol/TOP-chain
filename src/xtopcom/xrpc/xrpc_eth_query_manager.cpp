@@ -992,10 +992,10 @@ void xrpc_eth_query_manager::eth_feeHistory(Json::Value & js_req, Json::Value & 
     js_result["oldestBlock"] = std::string(outstr.str());
 
     if (reward_size > 0) {
-        xJson::Value reward_array_json;
+        Json::Value reward_array_json;
         reward_array_json.resize(0);
         for (uint64_t i = 0; i < block_count; i++) {
-            xJson::Value block_reward_json;
+            Json::Value block_reward_json;
             block_reward_json.resize(0);
             for (uint32_t j = 0; j < reward_size; j++) {
                 block_reward_json.append("0x0");
@@ -1007,14 +1007,14 @@ void xrpc_eth_query_manager::eth_feeHistory(Json::Value & js_req, Json::Value & 
 
     auto base_price = top::gasfee::xgas_estimate::base_price();
     std::string baseprice_hex = top::to_hex_prefixed_shrink_0((top::evm_common::h256)base_price);
-    xJson::Value baseFee_array_json;
+    Json::Value baseFee_array_json;
     baseFee_array_json.resize(0);
     for (uint64_t i = 0; i < (block_count + 1); i++) {
         baseFee_array_json.append(baseprice_hex);
     }
     js_result["baseFeePerGas"] = baseFee_array_json;
 
-    xJson::Value gasUsedRatio_array_json;
+    Json::Value gasUsedRatio_array_json;
     gasUsedRatio_array_json.resize(0);
     for (uint64_t i = 0; i < block_count; i++) {
         gasUsedRatio_array_json.append("0.0");
