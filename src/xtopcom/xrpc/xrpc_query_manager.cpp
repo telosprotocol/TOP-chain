@@ -2257,13 +2257,13 @@ void xrpc_query_manager::getClientVersion(Json::Value & js_req, Json::Value & js
 }
 
 #if defined(XBUILD_CONSORTIUM)
-void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_query_manager::getConsortiumReward(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string version = js_req["version"].asString();
     if (version.empty()) {
         version = RPC_VERSION_V1;
     }
     auto get_zec_workload_map =
-        [&](common::xaccount_address_t const & contract_address, std::string const & property_name, uint64_t height, xJson::Value & json) {
+        [&](common::xaccount_address_t const & contract_address, std::string const & property_name, uint64_t height, Json::Value & json) {
             std::map<std::string, std::string> workloads;
             if (statestore::xstatestore_hub_t::instance()->get_map_property(contract_address, height - 1, property_name, workloads) != 0) {
                 xwarn("[grpc::getConsortiumReward] get_zec_workload_map contract_address: %s, height: %llu, property_name: %s",
@@ -2279,21 +2279,21 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
                  property_name.c_str(),
                  workloads.size());
             // if (store->map_copy_get(contract_address.value(), property_name, workloads) != 0) return;
-            xJson::Value jm;
+            Json::Value jm;
             for (auto m : workloads) {
                 auto detail = m.second;
                 base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
                 data::system_contract::xgroup_cons_reward_t workload;
                 workload.serialize_from(stream);
-                xJson::Value jn;
+                Json::Value jn;
                 auto const & key_str = m.first;
                 common::xgroup_address_t group_address;
                 base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
                 key_stream >> group_address;
                 if (version == RPC_VERSION_V3) {
-                    xJson::Value array;
+                    Json::Value array;
                     for (auto node : workload.m_leader_reward) {
-                        xJson::Value n;
+                        Json::Value n;
                         n["account_addr"] = node.first;
                         n["rewards"] = (xJson::UInt64)node.second;
                         array.append(n);
@@ -2321,7 +2321,7 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
         return;
     }
 
-    xJson::Value j;
+    Json::Value j;
 
     std::string xissue_detail_str;
     if (statestore::xstatestore_hub_t::instance()->get_string_property(zec_reward_contract_address, height, data::system_contract::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
@@ -2343,27 +2343,27 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
         issue_detail.onchain_timer_round,
         issue_detail.m_zec_workload_contract_height,
         issue_detail.m_zec_reward_contract_height);
-    xJson::Value jv;
+    Json::Value jv;
     jv["onchain_timer_round"] = (xJson::UInt64)issue_detail.onchain_timer_round;
     jv["zec_workload_contract_height"] = (xJson::UInt64)issue_detail.m_zec_workload_contract_height;
     jv["zec_reward_contract_height"] = (xJson::UInt64)issue_detail.m_zec_reward_contract_height;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
 
-    xJson::Value jw1;
+    Json::Value jw1;
     common::xaccount_address_t contract_addr{sys_contract_zec_reward_addr};
     std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
     get_zec_workload_map(contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw1);
     if (jw1[prop_name].empty()) {
-        jv["leader_workloads"] = xJson::Value::null;
+        jv["leader_workloads"] = Json::Value::null;
     } else {
         jv["leader_workloads"] = jw1[prop_name];
     }
 
-    xJson::Value jr;
+    Json::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         if (version == RPC_VERSION_V3) {
-            xJson::Value node_reward_json;
+            Json::Value node_reward_json;
             node_reward_json["account_addr"] = node_reward.first;
             {
                 std::stringstream ss;
@@ -2380,7 +2380,7 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
         }
     }
     if (jr.empty()) {
-        jv["node_rewards"] = xJson::Value::null;
+        jv["node_rewards"] = Json::Value::null;
     } else {
         jv["node_rewards"] = jr;
     }
@@ -2396,8 +2396,8 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
     }
 }
 
-// void xrpc_query_manager::queryConsortiumNodeReward(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
-//     xJson::Value jv;
+// void xrpc_query_manager::queryConsortiumNodeReward(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+//     Json::Value jv;
 //     std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
 //     std::string target = js_req["node_account_addr"].asString();
 //     std::string version = js_req["version"].asString();

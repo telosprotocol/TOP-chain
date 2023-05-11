@@ -11,9 +11,9 @@ using namespace top::data;
 using namespace top::mock;
 
 // 1shard(5node)
-static xJson::Value build_validators() {
+static Json::Value build_validators() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = xJson::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
 
@@ -37,7 +37,7 @@ TEST(xsync_peerset, test_shard) {
     std::vector<vnetwork::xvnode_address_t> addr_list;
 
     {
-        xJson::Value validators = build_validators();
+        Json::Value validators = build_validators();
 
         xmock_network_config_t cfg_network(validators);
         xmock_network_t network(cfg_network);
@@ -198,9 +198,9 @@ TEST(xsync_peerset, test_frozen) {
     }
 }
 
-static xJson::Value build_archives() {
+static Json::Value build_archives() {
 
-    xJson::Value v = xJson::objectValue;
+    Json::Value v = xJson::objectValue;
 
     v["group"]["zone0"]["type"] = "zone";
     v["group"]["arc0"]["type"] = "archive";
@@ -221,7 +221,7 @@ TEST(xsync_peerset, test_archive_role) {
     std::vector<vnetwork::xvnode_address_t> addr_list;
 
     {
-        xJson::Value validators = build_archives();
+        Json::Value validators = build_archives();
 
         xmock_network_config_t cfg_network(validators);
         xmock_network_t network(cfg_network);
