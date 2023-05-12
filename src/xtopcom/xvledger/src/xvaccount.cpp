@@ -52,7 +52,6 @@ namespace top
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaccount, 1);
             m_account_addr  = account_address;
             m_account_xid   = get_xid_from_account(account_address);
-            m_account_xid_str = xstring_utl::uint642hex(m_account_xid);
             //storage key
             m_account_store_key = xvaccount_t::get_storage_key(*this);
         }
@@ -62,7 +61,6 @@ namespace top
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaccount, 1);
             m_account_addr = obj.m_account_addr;
             m_account_xid  = obj.m_account_xid;
-            m_account_xid_str = obj.m_account_xid_str;
             m_account_store_key  = obj.m_account_store_key;
         }
     
@@ -70,7 +68,6 @@ namespace top
         {
             m_account_addr = obj.m_account_addr;
             m_account_xid  = obj.m_account_xid;
-            m_account_xid_str = obj.m_account_xid_str;
             m_account_store_key  = obj.m_account_store_key;
             return *this;
         }
@@ -79,7 +76,6 @@ namespace top
         {
             m_account_addr  = new_account_addr;
             m_account_xid   = get_xid_from_account(new_account_addr);
-            m_account_xid_str = xstring_utl::uint642hex(m_account_xid);
             
             m_account_store_key = xvaccount_t::get_storage_key(*this);
             return *this;
@@ -88,6 +84,11 @@ namespace top
         xvaccount_t::~xvaccount_t()
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaccount, -1);
+        }
+
+        std::string xvaccount_t::get_xvid_str()const {
+            // XTODO xvid str is used for old db key, should be removed later
+            return xstring_utl::uint642hex(m_account_xid);
         }
 
         std::string xvaccount_t::compact_address_to(const std::string & account_addr)
@@ -483,7 +484,6 @@ namespace top
         xsyncmeta_t::xsyncmeta_t()
         {
             _highest_genesis_connect_height = 0;
-            _highest_sync_height            = 0;
         }
     
         xsyncmeta_t::xsyncmeta_t(const xsyncmeta_t & obj)
@@ -499,16 +499,12 @@ namespace top
         xsyncmeta_t & xsyncmeta_t::operator = (const xsyncmeta_t & obj)
         {
             _highest_genesis_connect_height = obj._highest_genesis_connect_height;
-            _highest_genesis_connect_hash   = obj._highest_genesis_connect_hash;
-            _highest_sync_height            = obj._highest_sync_height;
             return *this;
         }
     
         bool    xsyncmeta_t::operator == (const xsyncmeta_t & obj) const
         {
-            if(  (_highest_sync_height            != obj._highest_sync_height)
-               ||(_highest_genesis_connect_height != obj._highest_genesis_connect_height)
-               ||(_highest_genesis_connect_hash   != obj._highest_genesis_connect_hash) )
+            if( (_highest_genesis_connect_height != obj._highest_genesis_connect_height) )
             {
                 return false;
             }
@@ -548,15 +544,13 @@ namespace top
         {
             _lowest_execute_block_height  = obj._lowest_execute_block_height;
             _highest_execute_block_height = obj._highest_execute_block_height;
-            _highest_execute_block_hash   = obj._highest_execute_block_hash;
             return *this;
         }
     
         bool    xstatemeta_t::operator == (const xstatemeta_t & obj) const
         {
             if(  (_lowest_execute_block_height  != obj._lowest_execute_block_height)
-               ||(_highest_execute_block_height != obj._highest_execute_block_height)
-               ||(_highest_execute_block_hash   != obj._highest_execute_block_hash) )
+               ||(_highest_execute_block_height != obj._highest_execute_block_height) )
             {
                 return false;
             }
@@ -568,62 +562,6 @@ namespace top
         }
     
         const std::string xstatemeta_t::ddump() const
-        {
-            return std::string();
-        }
-    
-        xindxmeta_t::xindxmeta_t()
-        {
-            m_latest_unit_height = 0;
-            m_latest_unit_viewid = 0;
-            m_latest_tx_nonce    = 0;
-            m_account_flag       = 0;
-        }
-        
-        xindxmeta_t::xindxmeta_t(xindxmeta_t && move_obj)
-        {
-            m_latest_unit_height = 0;
-            m_latest_unit_viewid = 0;
-            m_latest_tx_nonce    = 0;
-            m_account_flag       = 0;
-            *this = move_obj;
-        }
-        
-        xindxmeta_t::xindxmeta_t(const xindxmeta_t & obj)
-        {
-            m_latest_unit_height = 0;
-            m_latest_unit_viewid = 0;
-            m_latest_tx_nonce    = 0;
-            m_account_flag       = 0;
-            *this = obj;
-        }
-        
-        xindxmeta_t & xindxmeta_t::operator = (const xindxmeta_t & obj)
-        {
-            m_latest_unit_height = obj.m_latest_unit_height;
-            m_latest_unit_viewid = obj.m_latest_unit_viewid;
-            m_latest_tx_nonce = obj.m_latest_tx_nonce;
-            m_account_flag    = obj.m_account_flag;
-            return *this;
-        }
-    
-        bool    xindxmeta_t::operator == (const xindxmeta_t & obj) const
-        {
-            if(  (m_latest_unit_height != obj.m_latest_unit_height)
-               ||(m_latest_unit_viewid != obj.m_latest_unit_viewid)
-               ||(m_latest_tx_nonce    != obj.m_latest_tx_nonce)
-               ||(m_account_flag       != obj.m_account_flag) )
-            {
-                return false;
-            }
-            return true;
-        }
-        
-        xindxmeta_t::~xindxmeta_t()
-        {
-        }
-        
-        const std::string xindxmeta_t::ddump() const
         {
             return std::string();
         }
@@ -650,12 +588,6 @@ namespace top
             init_version_control();
             _meta_process_id = base::xvchain_t::instance().get_current_process_id();
             _highest_saved_block_height = 0;
-            // #ifdef DEBUG
-            m_account_address = _account.get_address();
-            // #else
-            // m_account_address = _account.get_xvid_str();
-            // #endif
-
             //XTODO,remove below assert when related xbase checked in main-branch
             xassert(__XBASE_MAIN_VERSION_CODE__ >= 1);
             xassert(__XBASE_FEATURE_VERSION_CODE__ >= 3);
@@ -687,12 +619,11 @@ namespace top
         std::string  xvactmeta_t::dump() const
         {
             std::stringstream ss;
-            ss << m_account_address;
             ss << ",cert=" << xblockmeta_t::_highest_cert_block_height;
             ss << ",lock=" << xblockmeta_t::_highest_lock_block_height;
             ss << ",commit=" << xblockmeta_t::_highest_commit_block_height;
             ss << ",connect=" << xblockmeta_t::_highest_connect_block_height;
-            ss << ",cp_connect=" << xblockmeta_t::_highest_cp_connect_block_height;
+            ss << ",cp=" << xblockmeta_t::_highest_cp_connect_block_height;
             ss << ",full=" << xblockmeta_t::_highest_full_block_height;
             ss << ",delete=" << xblockmeta_t::_highest_deleted_block_height;
             ss << ",vkey2=" << xblockmeta_t::_lowest_vkey2_block_height;
@@ -707,13 +638,11 @@ namespace top
         {
             _meta_process_id = obj._meta_process_id;      //reserved for future
             _meta_spec_version = obj._meta_spec_version; //add version control for compatible case
-            m_account_address = obj.m_account_address;
             _highest_saved_block_height = obj._highest_saved_block_height;
             
             xblockmeta_t::operator=(obj);
             xstatemeta_t::operator=(obj);
             xsyncmeta_t::operator=(obj);
-            xindxmeta_t::operator=(obj);
             
             return *this;
         }
@@ -772,29 +701,9 @@ namespace top
             return true;
         }
     
-        bool   xvactmeta_t::set_index_meta(const xindxmeta_t & new_meta)
-        {
-            if(  (new_meta.m_latest_unit_height  < m_latest_unit_height)
-               ||(new_meta.m_latest_unit_viewid  < m_latest_unit_viewid)
-               ||(new_meta.m_latest_tx_nonce     < m_latest_tx_nonce) )
-            {
-                xerror("xvactmeta_t::set_index_meta,try overwrited newer_meta(%s) with old_meta( %s)",xindxmeta_t::ddump().c_str(),new_meta.ddump().c_str());
-                return false;
-            }
-            else if(xindxmeta_t::operator==(new_meta))
-            {
-                return false;
-            }
-            
-            xindxmeta_t::operator=(new_meta);
-            add_modified_count();
-            return true;
-        }
-    
         bool   xvactmeta_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
-            if(  (new_meta._highest_genesis_connect_height < _highest_genesis_connect_height)
-               ||(new_meta._highest_sync_height            < _highest_sync_height) )
+            if(  (new_meta._highest_genesis_connect_height < _highest_genesis_connect_height) )
             {
                 xerror("xvactmeta_t::set_sync_meta,try overwrited newer_meta(%s) with old_meta( %s)",xsyncmeta_t::ddump().c_str(),new_meta.ddump().c_str());
                 return false;
@@ -809,7 +718,7 @@ namespace top
             return true;
         }
     
-        bool xvactmeta_t::set_latest_executed_block(const uint64_t height, const std::string & blockhash)
+        bool xvactmeta_t::set_latest_executed_block(const uint64_t height)
         {
             if(height < _highest_execute_block_height)
             {
@@ -818,10 +727,10 @@ namespace top
                 return false;
             }
             
-            if( (height != _highest_execute_block_height) || (blockhash != _highest_execute_block_hash) )
+            if(height != _highest_execute_block_height)
             {
                 _highest_execute_block_height = height;
-                _highest_execute_block_hash   = blockhash;
+                // _highest_execute_block_hash   = blockhash; // XTODO no need set execute block hash
 
                 // _lowest_execute_block_height rewirted by set_lowest_executed_block only. after we use unit state prune.
                 // const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
@@ -879,15 +788,6 @@ namespace top
             return *this;
         }
         xstatemeta_t& xvactmeta_t::get_state_meta()
-        {
-            return *this;
-        }
-
-        const xindxmeta_t    xvactmeta_t::clone_index_meta() const
-        {
-            return *this;
-        }
-        xindxmeta_t&  xvactmeta_t::get_index_meta()
         {
             return *this;
         }
@@ -980,22 +880,22 @@ namespace top
                 stream.write_compact_var(_highest_full_block_height);
                 stream.write_compact_var(_highest_deleted_block_height);
                 stream.write_compact_var(_lowest_vkey2_block_height);
-                stream.write_compact_var(_highest_sync_height);
+                stream.write_compact_var(uint64_t(0));//XTODO no use members _highest_sync_height
                 
                 stream.write_compact_var(_lowest_execute_block_height);
                 stream.write_compact_var(_highest_execute_block_height);
-                stream.write_compact_var(_highest_execute_block_hash);
+                stream.write_compact_var(std::string());//XTODO no use members,_highest_execute_block_hash
 
                 stream.write_compact_var(_highest_connect_block_height);
                 stream.write_compact_var(_highest_connect_block_hash);
 
                 stream.write_compact_var(_highest_genesis_connect_height);
-                stream.write_compact_var(_highest_genesis_connect_hash);
+                stream.write_compact_var(std::string());//XTODO no use members,_highest_genesis_connect_hash
                 
-                stream.write_compact_var(m_latest_unit_height);
-                stream.write_compact_var(m_latest_unit_viewid);
-                stream.write_compact_var(m_latest_tx_nonce);
-                stream.write_compact_var(m_account_flag);
+                stream.write_compact_var(uint64_t(0));//XTODO no use members m_latest_unit_height
+                stream.write_compact_var(uint64_t(0));//XTODO no use members m_latest_unit_viewid
+                stream.write_compact_var(uint64_t(0));//XTODO no use members m_latest_tx_nonce
+                stream.write_compact_var(uint16_t(0));//XTODO no use members m_account_flag
 
                 stream.write_compact_var(_highest_cp_connect_block_height);
                 stream.write_compact_var(_highest_cp_connect_block_hash);
@@ -1018,20 +918,22 @@ namespace top
                 }
                 else if (_highest_cp_connect_block_hash != cp_connect_hash)
                 {
-                    xerror("update_cp_connect hash mismatch height:%llu,db:%s,cp:%s,account:%s",
-                            cp_connect_height, base::xstring_utl::to_hex(cp_connect_hash).c_str(), base::xstring_utl::to_hex(_highest_cp_connect_block_hash).c_str(), m_account_address.c_str());
+                    xerror("update_cp_connect hash mismatch height:%llu,db:%s,cp:%s",
+                            cp_connect_height, base::xstring_utl::to_hex(cp_connect_hash).c_str(), base::xstring_utl::to_hex(_highest_cp_connect_block_hash).c_str());
                 }
             }
             else
             {
-                xinfo("update_cp_connect checkpoint:%llu fresher than meta:%llu,account:%s", _highest_cp_connect_block_height, cp_connect_height, m_account_address.c_str());
+                xinfo("update_cp_connect checkpoint:%llu fresher than meta:%llu", _highest_cp_connect_block_height, cp_connect_height);
             }
         }
 
         int32_t   xvactmeta_t::do_read(xstream_t & stream)//serialize from binary and regeneate content
         {
             const int32_t begin_size = stream.size();
-            
+            uint64_t temp64;
+            uint16_t temp16;
+            std::string tempstr;
             //borrow enum_xdata_flag_fragment to tell wheher using compact mode to serialization
             if(check_unit_flag(enum_xdata_flag_fragment) == false)//old format
             {
@@ -1042,10 +944,10 @@ namespace top
                 stream >> _highest_full_block_height;
                 stream >> _highest_connect_block_height;
                 stream.read_tiny_string(_highest_connect_block_hash);
-                stream.read_tiny_string(_highest_execute_block_hash);
+                stream.read_tiny_string(tempstr);//XTODO no use members _highest_execute_block_hash
                 stream >> _highest_genesis_connect_height;
-                stream.read_tiny_string(_highest_genesis_connect_hash);
-                stream >> _highest_sync_height;
+                stream.read_tiny_string(tempstr);//XTODO no use members _highest_genesis_connect_hash
+                stream >> temp64;//XTODO no use members _highest_sync_height
                 
                 stream >> _meta_spec_version;
                 stream >> _block_level;
@@ -1056,10 +958,10 @@ namespace top
                 
                 if(_meta_spec_version >= 2)//since version#2
                 {
-                    stream.read_compact_var(m_latest_unit_height);
-                    stream.read_compact_var(m_latest_unit_viewid);
-                    stream.read_compact_var(m_latest_tx_nonce);
-                    stream.read_compact_var(m_account_flag);
+                    stream.read_compact_var(temp64);//m_latest_unit_height
+                    stream.read_compact_var(temp64);//m_latest_unit_viewid
+                    stream.read_compact_var(temp64);//m_latest_tx_nonce
+                    stream.read_compact_var(temp16);//m_account_flag
                     
                     stream.read_compact_var(_lowest_execute_block_height);
                     stream.read_compact_var(_lowest_vkey2_block_height);
@@ -1086,22 +988,22 @@ namespace top
                 stream.read_compact_var(_highest_full_block_height);
                 stream.read_compact_var(_highest_deleted_block_height);
                 stream.read_compact_var(_lowest_vkey2_block_height);
-                stream.read_compact_var(_highest_sync_height);
+                stream.read_compact_var(temp64);//XTODO no use members _highest_sync_height
                 
                 stream.read_compact_var(_lowest_execute_block_height);
-                stream.read_compact_var(_highest_execute_block_height);
-                stream.read_compact_var(_highest_execute_block_hash);
+                stream.read_compact_var(_highest_execute_block_height);                
+                stream.read_compact_var(tempstr);//XTODO no use members _highest_execute_block_hash
                 
                 stream.read_compact_var(_highest_connect_block_height);
                 stream.read_compact_var(_highest_connect_block_hash);
 
                 stream.read_compact_var(_highest_genesis_connect_height);
-                stream.read_compact_var(_highest_genesis_connect_hash);
+                stream.read_compact_var(tempstr);//XTODO no use members _highest_genesis_connect_hash
                 
-                stream.read_compact_var(m_latest_unit_height);
-                stream.read_compact_var(m_latest_unit_viewid);
-                stream.read_compact_var(m_latest_tx_nonce);
-                stream.read_compact_var(m_account_flag);
+                stream.read_compact_var(temp64);//m_latest_unit_height
+                stream.read_compact_var(temp64);//m_latest_unit_viewid
+                stream.read_compact_var(temp64);//m_latest_tx_nonce
+                stream.read_compact_var(temp16);//m_account_flag
 
                 if(_meta_spec_version >= 3)
                 {

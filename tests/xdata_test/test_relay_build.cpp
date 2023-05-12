@@ -62,8 +62,6 @@ TEST_F(test_relay_build, basic_1) {
 TEST_F(test_relay_build, same_table_test) {
     base::xvaccount_t _relaytable(sys_contract_relay_table_block_addr);
     base::xvaccount_t _relaychain(sys_contract_relay_block_addr);
-    std::cout << "_relaytable xvid:" << top::to_hex_prefixed(_relaytable.get_xvid_str()) << std::endl;
-    std::cout << "_relaychain xvid:" << top::to_hex_prefixed(_relaychain.get_xvid_str()) << std::endl;
 
     ASSERT_EQ(get_vledger_bucket_index(_relaytable.get_xvid()), get_vledger_bucket_index(_relaychain.get_xvid()));        
     ASSERT_EQ(get_vledger_chain_id(_relaytable.get_xvid()), get_vledger_chain_id(_relaychain.get_xvid()));

@@ -41,7 +41,7 @@ namespace top
         //xvnode_t not to allow modify after construct,and auth account not allow change public/private key neither.
         //note:once a node lost it's pub/pri keys,the node dont have chance to update keys. the only way is to create new account with new keys and follow process of node joining.
         //each node has unqie xip2 address, but one node may have multiple roles who at different groups
-        class xvnode_t : public xvaccount_t
+        class xvnode_t : public xrefcount_t
         {
         public:
             //sign_pub_key must = 33 bytes of the compressed public key of ECC(secp256k1 or ed25519 curve)
@@ -56,7 +56,10 @@ namespace top
         public:
             inline const xvip2_t &      get_xip2_addr()     const {return m_node_address;}
             inline const std::string&   get_sign_pubkey()   const {return m_sign_pubkey;}//public  key for signing by node 'account
+            inline const std::string&   get_address()       const {return m_account;}
+            inline const std::string&   get_account()       const {return m_account;}
         private:
+            std::string         m_account;      //account address of node
             xvip2_t             m_node_address;
             std::string         m_sign_pubkey;  //33 bytes of the compressed public key of ECC(secp256k1 or ed25519 curve)
         };

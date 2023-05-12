@@ -43,7 +43,6 @@ namespace top
         public:
             enum_xvaccount_plugin_type get_plugin_type()   const {return m_plugin_type;}
             const xvid_t            get_xvid()    const;
-            const std::string&      get_xvid_str()const;
             const std::string &     get_account_address()  const;
             inline const std::string&   get_address() const {return get_account_address();}
             inline const std::string&   get_account() const {return get_account_address();}
@@ -61,7 +60,6 @@ namespace top
             virtual const xblockmeta_t*     get_block_meta() const {return NULL;}
             virtual const xstatemeta_t*     get_state_meta() const {return NULL;}
             virtual const xsyncmeta_t*      get_sync_meta()  const {return NULL;}
-            virtual const xindxmeta_t*      get_index_meta() const {return NULL;}
             
             virtual bool                    init_meta(const xvactmeta_t & meta) {return false;} //give chance to init plugin
             virtual bool                    save_meta() {return false;} //peristen meta

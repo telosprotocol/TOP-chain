@@ -618,8 +618,8 @@ namespace top
 
         size_t xvbindex_t::get_object_size_real() const {
             size_t total_size = sizeof(*this) + get_size(m_block_hash) + get_size(m_last_block_hash) + get_size(m_last_fullblock_hash) + get_size(m_extend_cert) +
-                                 get_size(m_extend_data) + get_size(m_reserved) + get_size(get_xvid_str()) + get_size(get_address()) + get_size(get_storage_key());
-            xdbg("-----cache size----- xvbindex_t total_size:%zu this:%d,%d:%d:%d:%d:%d:%d:%d:%d:%d",
+                                 get_size(m_extend_data) + get_size(m_reserved) + get_size(get_address()) + get_size(get_storage_key());
+            xdbg("-----cache size----- xvbindex_t total_size:%zu this:%d,%d:%d:%d:%d:%d:%d:%d:%d",
                  total_size,
                  sizeof(*this),
                  get_size(m_block_hash),
@@ -628,7 +628,6 @@ namespace top
                  get_size(m_extend_cert),
                  get_size(m_extend_data),
                  get_size(m_reserved),
-                 get_size(get_xvid_str()),
                  get_size(get_address()),
                  get_size(get_storage_key()));
             return total_size;

@@ -143,7 +143,7 @@ protected:
     mutable std::mutex                         m_lock;
     //uint64_t                           m_vnetwork_id; //network id,refer definition of xip2 at xbase.h
     //uint64_t                           m_vnet_version;//version is same concept as round of election
-    mutable basic::xlru_cache<uint64_t, base::xvnodegroup_t*, basic::xref_deleter_t<base::xvnodegroup_t>> m_vgroups{512};     //mapping <version/round --> group>
+    mutable basic::xlru_cache<uint64_t, base::xvnodegroup_t*, basic::xref_deleter_t<base::xvnodegroup_t>> m_vgroups{256};     // XTODO mapping <version/round --> group>  limit cache size
 };
 
 NS_END2
