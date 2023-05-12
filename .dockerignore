@@ -12,8 +12,8 @@ compile_commands.json
 lib/
 nbproject/
 mbuild
-out/
 build
+out/
 Folder.DotSettings.user
 tags
 topio-*.tar.gz
@@ -30,4 +30,9 @@ xevm_b
 go.mod
 go.sum
 cover.out
-scripts/docker_build/topio
+.github/
+tests/
+db_*/
+log/
+ut_report/
+*.log
