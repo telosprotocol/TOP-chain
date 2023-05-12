@@ -33,24 +33,13 @@
 #include <cstring>
 
 NS_BEG2(top, evm_common)
+
 bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
-    return (this->parent_hash == rhs.parent_hash)
-    && (this->uncle_hash == rhs.uncle_hash)
-    && (this->miner == rhs.miner)
-    && (this->state_root == rhs.state_root)
-    && (this->transactions_root == rhs.transactions_root)
-    && (this->receipts_root == rhs.receipts_root)
-    && (this->bloom == rhs.bloom)
-    && (this->difficulty == rhs.difficulty)
-    && (this->number == rhs.number)
-    && (this->gas_limit == rhs.gas_limit)
-    && (this->gas_used == rhs.gas_used)
-    && (this->time == rhs.time)
-    && (this->extra == rhs.extra)
-    && (this->mix_digest == rhs.mix_digest)
-    && (this->nonce == rhs.nonce)
-    && (this->base_fee_per_gas == rhs.base_fee_per_gas)
-    && (this->withdrawals_root == rhs.withdrawals_root);
+    return (this->parent_hash == rhs.parent_hash) && (this->uncle_hash == rhs.uncle_hash) && (this->miner == rhs.miner) && (this->state_root == rhs.state_root) &&
+           (this->transactions_root == rhs.transactions_root) && (this->receipts_root == rhs.receipts_root) && (this->bloom == rhs.bloom) && (this->difficulty == rhs.difficulty) &&
+           (this->number == rhs.number) && (this->gas_limit == rhs.gas_limit) && (this->gas_used == rhs.gas_used) && (this->time == rhs.time) && (this->extra == rhs.extra) &&
+           (this->mix_digest == rhs.mix_digest) && (this->nonce == rhs.nonce) && (this->base_fee_per_gas == rhs.base_fee_per_gas) &&
+           (this->withdrawals_root == rhs.withdrawals_root);
 }
 
 xh256_t xeth_header_t::calc_hash(bool const partial) const {
@@ -148,7 +137,12 @@ xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
 void xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
     assert(!ec);
 
-    auto l = RLP::decodeList(bytes);
+    auto const & l = RLP::decode_list(bytes, ec);
+    if (ec) {
+        xwarn("xeth_header_t::decode_rlp failed, rlp list decode failed: %s", ec.message().c_str());
+        return;
+    }
+
     if (l.decoded.size() < 15) {
         xwarn("xeth_header_t::decode_rlp failed, rlp list size not match");
         ec = error::xerrc_t::rlp_list_size_not_match;
@@ -238,17 +232,25 @@ void xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
         withdrawals_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[16]}};
     }
 
-    calc_hash(hash);
-    auto const & bytes_hash = utl::xkeccak256_t::digest(bytes.data(), bytes.size());
-    assert(hash.size() == static_cast<size_t>(bytes_hash.size()));
-    if (std::memcmp(hash.data(), bytes_hash.data(), hash.size()) != 0) {
-        xwarn("xeth_header_t::decode_rlp failed, rlp hash invalid");
-        hash.clear();
-        ec = error::xerrc_t::rlp_bytes_invalid;
-        return;
-    }
+    {
+        xbytes_t rlp_bytes = bytes;
+        auto const & encoded_bytes = encode_rlp();
+        if (encoded_bytes.size() != rlp_bytes.size()) {
+            rlp_bytes = RLP::encodeList(rlp_bytes);
+        }
+        calc_hash(hash);
+        auto const & bytes_hash = utl::xkeccak256_t::digest(rlp_bytes.data(), rlp_bytes.size());
+        assert(hash.size() == static_cast<size_t>(bytes_hash.size()));
+        if (std::memcmp(hash.data(), bytes_hash.data(), hash.size()) != 0) {
+            xwarn("xeth_header_t::decode_rlp failed, rlp hash invalid");
+            hash.clear();
+            ec = error::xerrc_t::rlp_bytes_invalid;
+            assert(false);
+            return;
+        }
 
-    calc_hash(partial_hash, true);
+        calc_hash(partial_hash, true);
+    }
 }
 
 void xeth_header_t::decode_rlp(xbytes_t const & bytes) {

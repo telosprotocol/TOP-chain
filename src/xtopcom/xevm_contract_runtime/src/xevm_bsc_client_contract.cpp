@@ -42,12 +42,12 @@ auto static empty_unclehash = static_cast<h256>(from_hex("1dcc4de8dec75d7aab85b5
 
 bool xtop_evm_bsc_client_contract::init(xbytes_t const & rlp_bytes, state_ptr state) {
     // step 1: check init
-    if (get_last_hash(state) != h256()) {
+    if (!get_last_hash(state).empty()) {
         xwarn("[xtop_evm_bsc_client_contract::init] init already");
         return false;
     }
     // step 2: decode
-    auto left_bytes = std::move(rlp_bytes);
+    auto left_bytes = rlp_bytes;
     std::vector<xeth_header_t> headers;
     std::error_code ec;
     while (!left_bytes.empty()) {

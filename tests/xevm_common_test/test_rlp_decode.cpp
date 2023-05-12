@@ -18,7 +18,7 @@ TEST(xinit_input_t, fuzzy) {
 
     {
         eth2::xinit_input_t input;
-        ASSERT_THROW(input.decode_rlp(xbytes_t{}), std::invalid_argument);
+        ASSERT_FALSE(input.decode_rlp(xbytes_t{}));
     }
 
     for (auto i = 1u; i < 10000u; ++i) {
@@ -49,7 +49,7 @@ TEST(xlight_client_update_t, fuzzy) {
 
     {
         eth2::xlight_client_update_t update;
-        ASSERT_THROW(update.decode_rlp(xbytes_t{}), std::invalid_argument);
+        ASSERT_FALSE(update.decode_rlp(xbytes_t{}));
     }
 
     for (auto i = 1u; i < 10000u; ++i) {
@@ -81,7 +81,7 @@ TEST(xeth_header_t, fuzzy) {
 
     {
         xeth_header_t header;
-        ASSERT_THROW(header.decode_rlp(xbytes_t{}), std::invalid_argument);
+        ASSERT_THROW(header.decode_rlp(xbytes_t{}), top::error::xtop_error_t);
     }
 
     for (auto i = 1u; i < 100000u; ++i) {

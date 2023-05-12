@@ -443,7 +443,7 @@ RLP::DecodedItem RLP::decode(xbytes_t const & input) {
 }
 
 RLP::DecodedItem RLP::decode_once(xbytes_t const & input) {
-    if (input.size() == 0) {
+    if (input.empty()) {
         throw std::invalid_argument("can't decode empty rlp data");
     }
     RLP::DecodedItem item;

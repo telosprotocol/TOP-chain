@@ -504,13 +504,15 @@ struct xheader_update_t {
 
         for (auto i = 2u; i < items.decoded.size(); ++i) {
             auto const & b = items.decoded.at(i);
-            if (b.size() != xh256_t::size()) {
-                xwarn("xheader_update_t::decode_rlp, items.decoded[%zu].size() != 32, actual size %zu", i, b.size());
-                ec = error::xerrc_t::rlp_bytes_invalid;
-                return;
+            if (!b.empty()) {
+                if (b.size() != xh256_t::size()) {
+                    xwarn("xheader_update_t::decode_rlp, items.decoded[%zu].size() != 32, actual size %zu", i, b.size());
+                    ec = error::xerrc_t::rlp_bytes_invalid;
+                    return;
+                }
+                execution_hash_branch.emplace_back();
+                std::copy(std::begin(b), std::end(b), execution_hash_branch.back().begin());
             }
-            execution_hash_branch.emplace_back();
-            std::copy(std::begin(b), std::end(b), execution_hash_branch.back().begin());
         }
     }
 };
@@ -561,14 +563,16 @@ struct xfinalized_header_update_t {
 
         for (size_t i = 1; i < items.decoded.size(); ++i) {
             auto const & b = items.decoded.at(i);
-            if (b.size() != xh256_t::size()) {
-                xwarn("xfinalized_header_update_t::decode_rlp, items.decoded[%zu].size() != xh256_t::size(), actual size %zu", i, b.size());
-                ec = error::xerrc_t::rlp_bytes_invalid;
-                return;
-            }
+            if (!b.empty()) {
+                if (b.size() != xh256_t::size()) {
+                    xwarn("xfinalized_header_update_t::decode_rlp, items.decoded[%zu].size() != xh256_t::size(), actual size %zu", i, b.size());
+                    ec = error::xerrc_t::rlp_bytes_invalid;
+                    return;
+                }
 
-            finality_branch.emplace_back();
-            std::copy(std::begin(b), std::end(b), finality_branch.back().begin());
+                finality_branch.emplace_back();
+                std::copy(std::begin(b), std::end(b), finality_branch.back().begin());
+            }
         }
     }
 };
