@@ -35,9 +35,12 @@ void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared
     mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{block->get_account()}.table_address(), state_root, base::xvchain_t::instance().get_xdbstore(), ec);
 }
 
-void xstatestore_base_t::set_latest_executed_info(common::xtable_address_t const& table_addr, uint64_t height) const {
+void xstatestore_base_t::set_latest_executed_info(common::xtable_address_t const& table_addr, uint64_t height, bool force_write_db) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
     account_obj->set_latest_executed_block(height);
+    if (force_write_db) { // when execute height jump, should force wirte to db, otherwise may fail to recover 
+        account_obj->save_meta();
+    }
 }
 uint64_t xstatestore_base_t::get_latest_executed_block_height(common::xtable_address_t const& table_addr) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
@@ -66,10 +69,6 @@ base::xvdbstore_t* xstatestore_base_t::get_dbstore() const {
     return base::xvchain_t::instance().get_xdbstore();
 }
 
-// void xstatestore_base_t::set_latest_executed_info(common::xaccount_address_t const & account_address, uint64_t height) const {
-//     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(account_address.vaccount()));
-//     account_obj->set_latest_executed_block(height);
-// }
 uint64_t xstatestore_base_t::get_latest_executed_block_height(common::xaccount_address_t const & account_address) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(account_address.vaccount()));
     return account_obj->get_latest_executed_block_height();

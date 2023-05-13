@@ -741,8 +741,9 @@ void xstatestore_executor_t::set_latest_executed_info(bool is_commit_block, uint
     }
 
     if (m_executed_height < new_commit_height) {
+        bool is_jump = m_executed_height + 1 < new_commit_height;
         m_executed_height = new_commit_height;
-        m_statestore_base.set_latest_executed_info(m_table_addr, m_executed_height);  // XTODO not set blockhash
+        m_statestore_base.set_latest_executed_info(m_table_addr, m_executed_height, is_jump);
 
         if (m_need_all_state_sync_height != 0 && m_executed_height > m_need_all_state_sync_height) {
             m_need_all_state_sync_height = 0;
