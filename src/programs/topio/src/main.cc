@@ -58,6 +58,8 @@ static const uint32_t MAX_PASSWORD_SIZE = 1024;
 static std::atomic<bool> child_reap{false};
 static std::atomic<uint32_t> child_exit_code{0};
 static pid_t child_pid = -1;
+static uint64_t last_restart_timestamp_s{0};
+static uint64_t restart_count{0};
 static std::string pid_file;
 static std::string safebox_pid_file;
 static std::vector<std::string> support_cmd_vec = {"help", "version", "node", "mining", "staking", "chain", "transfer", "govern", "resource", "wallet", "db", "debug"};
@@ -469,14 +471,32 @@ void CheckReStartXtopchain(config_t & config) {
         return;
     }
     while (true) {
-        if (child_reap) {
+        if (child_reap) {            
             child_reap = false;
-            // load child process auto
-            int wait_max = 8;
-            for (int i = 0; i < wait_max; ++i) {
-                std::cout << "worker stopped, wait to restart... " << wait_max - i << std::endl;
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            uint64_t now_s = base::xtime_utl::gettimeofday_ms() / 1000;
+            // If more than one day, reset to zero 
+            if (last_restart_timestamp_s != 0 && (last_restart_timestamp_s + 24*60*60 < now_s) ) {
+                last_restart_timestamp_s = 0;
+                restart_count = 0;
+            }            
+
+            uint64_t max_count = 5;
+            if (restart_count < max_count) {
+                restart_count++;
             }
+
+            // 30s, 60s, 300s, 3600s, 3*3600s
+            uint64_t wait_time_s_array[] = {30, 60, 300, 60*60, 3*60*60};
+            int wait_time_s = wait_time_s_array[restart_count - 1];
+
+            std::cout << "worker stopped, wait to restart... wait_time_s:" << wait_time_s << ",restart_count:" << restart_count << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(wait_time_s));
+            // reset last restart time
+            last_restart_timestamp_s = base::xtime_utl::gettimeofday_ms() / 1000;
+
+            // load child process auto
+            std::cout << "child restart" << std::endl;
             spawn_child(config);
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
