@@ -175,7 +175,7 @@ namespace top
             virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_lowest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
             virtual uint64_t get_latest_deleted_block_height(const xvaccount_t & account,const int atag = 0) = 0;
-            virtual bool                  set_latest_executed_info(const xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
+            virtual bool                  set_latest_executed_info(const xvaccount_t & account,uint64_t height) = 0;
 
             //mostly used for query cert-only block,note:return any block at target height if viewid is 0
             virtual xblock_vector         query_block(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;//might mutiple certs at same height

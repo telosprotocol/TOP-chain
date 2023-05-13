@@ -1345,13 +1345,12 @@ namespace top
             size_t total_size = sizeof(*this);
             auto ex_size = get_ex_alloc_size();
             total_size +=
-                get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + get_size(get_xvid_str()) + get_size(get_address()) + get_size(get_storage_key()) + ex_size;
-            xdbg("------cache size------ xvbstate_t total_size:%zu this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,xvid_str:%d,address:%d,storage_key:%d,ex_size:%d",
+                get_size(m_last_block_hash) + get_size(m_last_full_block_hash) + get_size(get_address()) + get_size(get_storage_key()) + ex_size;
+            xdbg("------cache size------ xvbstate_t total_size:%zu this:%d,m_last_block_hash:%d,m_last_full_block_hash:%d,address:%d,storage_key:%d,ex_size:%d",
                  total_size,
                  sizeof(*this),
                  get_size(m_last_block_hash),
                  get_size(m_last_full_block_hash),
-                 get_size(get_xvid_str()),
                  get_size(get_address()),
                  get_size(get_storage_key()),
                  ex_size);

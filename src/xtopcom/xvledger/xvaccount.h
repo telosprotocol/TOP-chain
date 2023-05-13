@@ -485,7 +485,7 @@ namespace top
             xtable_index_t              get_tableid() const {return xtable_index_t(m_account_xid);}
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
             inline const xvid_t         get_account_id()    const {return m_account_xid;}
-            inline const std::string&   get_xvid_str()const {return m_account_xid_str;}
+            std::string                 get_xvid_str()const;
             inline const std::string&   get_address() const {return m_account_addr;}
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
@@ -501,7 +501,6 @@ namespace top
             bool                        has_valid_table_addr() const;
         private:
             xvid_t                      m_account_xid;
-            std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
             std::string                 m_account_addr;
             std::string                 m_account_store_key;//address as key of DB
         };
@@ -555,8 +554,8 @@ namespace top
             
         public: //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
             uint64_t    _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
-            std::string _highest_genesis_connect_hash;
-            uint64_t    _highest_sync_height;           // higest continous block started from highest full table block
+            // std::string _highest_genesis_connect_hash;
+            // uint64_t    _highest_sync_height;           // higest continous block started from highest full table block
         };
     
         class xstatemeta_t
@@ -577,34 +576,10 @@ namespace top
         public:
             uint64_t     _lowest_execute_block_height; //store delete/pruned height for state
             uint64_t     _highest_execute_block_height; //latest executed block that has executed and change state of account
-            std::string  _highest_execute_block_hash;
+            // std::string  _highest_execute_block_hash; // XTODO remove this field
         };
     
-        //for xaccount_index use
-        class xindxmeta_t
-        {
-        public:
-            xindxmeta_t();
-            xindxmeta_t(const xindxmeta_t & obj);
-            ~xindxmeta_t();
-            
-        protected:
-            xindxmeta_t & operator = (const xindxmeta_t & obj);
-        private:
-            xindxmeta_t(xindxmeta_t && move_obj);
-            
-        public:
-            bool    operator == (const xindxmeta_t & obj) const;
-            const std::string  ddump() const;//debug purpose
-        
-        public:
-            uint64_t        m_latest_unit_height;
-            uint64_t        m_latest_unit_viewid;
-            uint64_t        m_latest_tx_nonce;
-            uint16_t        m_account_flag;  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
-        };
-    
-        class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xindxmeta_t,protected xsyncmeta_t
+        class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xsyncmeta_t
         {
             friend class xvaccountobj_t;
             enum {enum_obj_type = xdataunit_t::enum_xdata_type_vaccountmeta};
@@ -624,7 +599,6 @@ namespace top
 
             const xblockmeta_t   clone_block_meta() const;
             const xstatemeta_t   clone_state_meta() const;
-            const xindxmeta_t    clone_index_meta() const;
             const xsyncmeta_t    clone_sync_meta()  const;
             
             const uint16_t  get_meta_process_id() const {return _meta_process_id;}
@@ -634,14 +608,12 @@ namespace top
         protected: //APIs only open for  xvaccountobj_t object
             bool    set_block_meta(const xblockmeta_t & new_meta);
             bool    set_state_meta(const xstatemeta_t & new_meta);
-            bool    set_index_meta(const xindxmeta_t & new_meta);
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
-            bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
+            bool    set_latest_executed_block(const uint64_t height);
             bool    set_lowest_executed_block(const uint64_t height);
                   
             xblockmeta_t &  get_block_meta();
             xstatemeta_t &  get_state_meta();
-            xindxmeta_t  &  get_index_meta();
             xsyncmeta_t  &  get_sync_meta();
             
             void    update_highest_saved_block_height(const uint64_t new_height);
@@ -671,24 +643,15 @@ namespace top
             
         private: //from sync meta
             using xsyncmeta_t::_highest_genesis_connect_height;//indicated the last block who is connected to genesis block
-            using xsyncmeta_t::_highest_genesis_connect_hash;
-            using xsyncmeta_t::_highest_sync_height;           // higest continous block started from highest full table block
+            // using xsyncmeta_t::_highest_genesis_connect_hash;
+            // using xsyncmeta_t::_highest_sync_height;           // higest continous block started from highest full table block
  
         private: //from statemeta
             using xstatemeta_t::_lowest_execute_block_height;
             using xstatemeta_t::_highest_execute_block_height; //latest executed block that has executed and change state of account
-            using xstatemeta_t::_highest_execute_block_hash;
- 
-        private://from xindxmeta_t
-            using xindxmeta_t::m_latest_unit_height;
-            using xindxmeta_t::m_latest_unit_viewid;
-            using xindxmeta_t::m_latest_tx_nonce;
-            using xindxmeta_t::m_account_flag;
-            
+            // using xstatemeta_t::_highest_execute_block_hash;
+             
         private:
-            //#ifdef DEBUG
-            std::string m_account_address;
-            //#endif //debug purpose
             uint64_t  _highest_saved_block_height; //just tracking purpose
             uint16_t  _meta_process_id;   //which process produce and save this meta
             uint8_t   _meta_spec_version; //add version control for compatible case

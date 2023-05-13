@@ -559,16 +559,16 @@ void xdb_export_tools_t::query_meta(std::string const & account, json & result) 
     auto state_meta = meta_data.clone_state_meta();
     result["state_meta"]["lowest_execute_block_height"] = state_meta._lowest_execute_block_height;
     result["state_meta"]["highest_execute_block_height"] = state_meta._highest_execute_block_height;
-    result["state_meta"]["highest_execute_block_hash"] = base::xstring_utl::to_hex(state_meta._highest_execute_block_hash);
-    auto index_meta = meta_data.clone_index_meta();
-    result["index_meta"]["latest_unit_height"] = index_meta.m_latest_unit_height;
-    result["index_meta"]["latest_unit_viewid"] = index_meta.m_latest_unit_viewid;
-    result["index_meta"]["latest_tx_nonce"] = index_meta.m_latest_tx_nonce;
-    result["index_meta"]["account_flag"] = index_meta.m_account_flag;
+    // result["state_meta"]["highest_execute_block_hash"] = base::xstring_utl::to_hex(state_meta._highest_execute_block_hash);
+    // auto index_meta = meta_data.clone_index_meta();
+    // result["index_meta"]["latest_unit_height"] = index_meta.m_latest_unit_height;
+    // result["index_meta"]["latest_unit_viewid"] = index_meta.m_latest_unit_viewid;
+    // result["index_meta"]["latest_tx_nonce"] = index_meta.m_latest_tx_nonce;
+    // result["index_meta"]["account_flag"] = index_meta.m_account_flag;
     auto sync_meta = meta_data.clone_sync_meta();
     result["sync_meta"]["highest_genesis_connect_height"] = sync_meta._highest_genesis_connect_height;
-    result["sync_meta"]["highest_genesis_connect_hash"] = base::xstring_utl::to_hex(sync_meta._highest_genesis_connect_hash);
-    result["sync_meta"]["highest_sync_height"] = sync_meta._highest_sync_height;
+    // result["sync_meta"]["highest_genesis_connect_hash"] = base::xstring_utl::to_hex(sync_meta._highest_genesis_connect_hash);
+    // result["sync_meta"]["highest_sync_height"] = sync_meta._highest_sync_height;
 }
 
 void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & account_vec) {
