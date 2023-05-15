@@ -82,6 +82,24 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::invalid_table_address:
         return "invalid table address";
 
+    case xerrc_t::not_enough_data:
+        return "not enough data";
+
+    case xerrc_t::invalid_eth_address:
+        return "invalid eth address";
+
+    case xerrc_t::rlp_input_empty:
+        return "rlp input empty";
+
+    case xerrc_t::rlp_invalid_encoded_data:
+        return "rlp invalid encoded data";
+
+    case xerrc_t::rlp_invalid_size_of_length_field:
+        return "rlp invalid size of length field";
+
+    case xerrc_t::rlp_not_enough_data:
+        return "rlp not enough data";
+
     default:
         assert(false);
         return "unknown common category error";
@@ -96,23 +114,18 @@ std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition{ static_cast<int>(errc), common_category() };
 }
 
-class xtop_common_category final : public std::error_category {
-public:
-    const char * name() const noexcept override {
-        return "common";
-    }
-
-    std::string message(int errc) const override {
-        auto const ec = static_cast<xerrc_t>(errc);
-        return errc_to_string(ec);
-    }
-
-    ~xtop_common_category() override = default;
-};
-using xcommon_category_t = xtop_common_category;
-
 std::error_category const & common_category() noexcept {
-    static xcommon_category_t c;
+    static class : public std::error_category {
+    public:
+        char const * name() const noexcept override {
+            return "common";
+        }
+
+        std::string message(int errc) const override {
+            auto const ec = static_cast<xerrc_t>(errc);
+            return errc_to_string(ec);
+        }
+    } c;
     return c;
 }
 

@@ -188,8 +188,8 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] init headers error");
             return false;
         }
-        evm_common::xh256s_t topics;
-        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+        xh256s_t topics;
+        topics.push_back(xh256_t(context.caller.to_h256()));
         evm_common::xevm_log_t log(context.address, topics, top::to_bytes(evm_common::u256(0)));
         output.cost = 0;
         output.exit_status = Returned;
@@ -228,8 +228,8 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
             xwarn("[xtop_evm_crosschain_syscontract_face::execute] sync headers error");
             return false;
         }
-        evm_common::xh256s_t topics;
-        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+        xh256s_t topics;
+        topics.push_back(xh256_t(context.caller.to_h256()));
         evm_common::xevm_log_t log(context.address, topics, top::to_bytes(evm_common::u256(0)));
         output.cost = 0;
         output.exit_status = Returned;

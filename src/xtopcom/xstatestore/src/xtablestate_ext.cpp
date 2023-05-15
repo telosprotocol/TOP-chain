@@ -31,7 +31,7 @@ void xtablestate_ext_t::get_accountindex(std::string const & unit_addr, base::xa
 
 xtablestate_store_t::xtablestate_store_t(const data::xtablestate_ptr_t & table_state, 
                             std::shared_ptr<state_mpt::xstate_mpt_t> const& state_mpt, 
-                            evm_common::xh256_t const & state_root,
+                            xh256_t const & state_root,
                             std::vector<data::xunitstate_store_para_t> && unitstates)
 : m_table_state(table_state), m_state_mpt(state_mpt), m_state_root(state_root), m_unitstates(unitstates) {
 }

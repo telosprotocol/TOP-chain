@@ -2,8 +2,8 @@
 #include "trezor-crypto/sha3.h"
 #include "xbase/xcontext.h"
 #include "xbase/xmem.h"
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/common.h"
-#include "xcommon/fixed_hash.h"
 #include "xcommon/rlp.h"
 #include "xevm_common/address.h"
 

@@ -56,7 +56,7 @@ TEST_F(test_xrpc_eth_parser, log_to_json) {
     xrpc::xrpc_eth_parser_t::log_to_json(loglocation, log, js_log);
     EXPECT_EQ(js_log.empty(), false);
 
-    log.topics.emplace_back(evm_common::xh256_t{});
+    log.topics.emplace_back(xh256_t{});
     xrpc::xrpc_eth_parser_t::log_to_json(loglocation, log, js_log);
     EXPECT_EQ(js_log.empty(), false);
 }

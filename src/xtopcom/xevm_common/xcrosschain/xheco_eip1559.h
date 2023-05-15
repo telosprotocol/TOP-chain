@@ -7,6 +7,6 @@
 
 NS_BEG3(top, evm_common, heco)
 
-bool verify_eip1559_header(const xeth_header_t & parent, const xeth_header_t & header);
+bool verify_eip1559_header(const xeth_header_t & parent_header, const xeth_header_t & header);
 
 NS_END3

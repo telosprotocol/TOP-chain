@@ -13,24 +13,50 @@ NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 using namespace evm_common::eth2;
 
-enum {
-    epochs_per_sync_committee_period = 256U,
-    slots_per_epoch = 32U,
-    min_sync_committee_participants = 1U,
-    finality_tree_depth = 6U,
-    finality_tree_index = 41U,
-    sync_committee_tree_depth = 5U,
-    sync_committee_tree_index = 23U
-};
+// enum {
+    // epochs_per_sync_committee_period = 256U,
+    // slots_per_epoch = 32U,
+    // min_sync_committee_participants = 1U,
+    // finality_tree_depth = 6U,   // = floorlog2(105)
+    // finality_tree_index = 41U,  // = 105 % (1 << (floorlog2(105)))
+    // sync_committee_tree_depth = 5U,
+    // sync_committee_tree_index = 23U
+// };
+
+constexpr static uint32_t floorlog2(uint32_t x) {
+    return x == 0 ? 0 : 31 - __builtin_clz(x);
+}
+
+constexpr static uint32_t get_subtree_index(uint32_t generalized_index) {
+    return generalized_index % (1 << floorlog2(generalized_index));
+}
+
+constexpr static uint64_t EPOCHS_PER_SYNC_COMMITTEE_PERIOD{256};
+constexpr static uint64_t MIN_SYNC_COMMITTEE_PARTICIPANTS{1};
+constexpr static uint64_t SLOTS_PER_EPOCH{32};
+
+constexpr static uint32_t FINALIZED_ROOT_INDEX{105};
+constexpr static uint32_t NEXT_SYNC_COMMITTEE_INDEX{55};
+constexpr static uint32_t FINALITY_TREE_DEPTH{floorlog2(FINALIZED_ROOT_INDEX)};
+constexpr static uint32_t FINALITY_TREE_INDEX{get_subtree_index(FINALIZED_ROOT_INDEX)};
+constexpr static uint32_t SYNC_COMMITTEE_TREE_DEPTH{floorlog2(NEXT_SYNC_COMMITTEE_INDEX)};
+constexpr static uint32_t SYNC_COMMITTEE_TREE_INDEX{get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX)};
+
+constexpr static size_t BEACON_BLOCK_BODY_TREE_DEPTH{4};
+constexpr static size_t L1_BEACON_BLOCK_BODY_TREE_EXECUTION_PAYLOAD_INDEX{9};
+constexpr static size_t L2_EXECUTION_PAYLOAD_TREE_EXECUTION_BLOCK_INDEX{12};
+constexpr static size_t L1_BEACON_BLOCK_BODY_PROOF_SIZE{4};
+constexpr static size_t L2_EXECUTION_PAYLOAD_PROOF_SIZE{4};
+constexpr static size_t EXECUTION_PROOF_SIZE{L1_BEACON_BLOCK_BODY_PROOF_SIZE + L2_EXECUTION_PAYLOAD_PROOF_SIZE};
 
 constexpr uint64_t hashes_gc_threshold = 51000;
 
-static uint64_t compute_epoch_at_slot(uint64_t const slot) {
-    return slot / slots_per_epoch;
+constexpr static uint64_t compute_epoch_at_slot(uint64_t const slot) {
+    return slot / SLOTS_PER_EPOCH;
 }
 
-static uint64_t compute_sync_committee_period(uint64_t const slot) {
-    return compute_epoch_at_slot(slot) / epochs_per_sync_committee_period;
+constexpr static uint64_t compute_sync_committee_period(uint64_t const slot) {
+    return compute_epoch_at_slot(slot) / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
 }
 
 static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
@@ -46,11 +72,12 @@ static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
     return bin_str_lsb;
 }
 
-static std::vector<xbytes_t> get_participant_pubkeys(std::vector<xbytes_t> const & public_keys, std::string const & sync_committee_bits) {
-    std::vector<xbytes_t> ret;
+static std::vector<xbytes48_t> get_participant_pubkeys(std::vector<xbytes48_t> const & public_keys,
+                                                       xbitset_t<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits) {
+    std::vector<xbytes48_t> ret;
     for (size_t i = 0; i < sync_committee_bits.size(); ++i) {
-        if (sync_committee_bits[i] == '1') {
-            ret.emplace_back(public_keys[i]);
+        if (sync_committee_bits[i]) {
+            ret.push_back(public_keys[i]);
         }
     }
     return ret;
@@ -105,13 +132,14 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     // "0x074b1681": "finalized_beacon_block_slot()",
     // "0x3ae8d743": "get_light_client_state()",
     // "0xd398572f": "is_confirmed(uint256,bytes32)",
-    // "0x43b1378b": "is_known_execution_header(bytes32)",
+    // "0x7120345a": "is_known_execution_header(uint64)",
     // "0xb15ad2e8": "get_height()"
     // "0x1eeaebb2": "last_block_number()",
     // "0x2e139f0c": "submit_beacon_chain_light_client_update(bytes)",
     // "0x3c1a38b6": "submit_execution_header(bytes)",
     // "0xd826f88f": "reset()",
     // "0xb5a61069": "disable_reset()",
+    // "0x48714e24": "client_mode()",
     //--------------------------------------------------------------
 
     constexpr uint32_t method_id_init{0x4ddf47d4};
@@ -122,13 +150,14 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_finalized_beacon_block_slot{0x074b1681};
     constexpr uint32_t method_id_get_light_client_state{0x3ae8d743};
     constexpr uint32_t method_id_is_confirmed{0xd398572f};
-    constexpr uint32_t method_id_is_known_execution_header{0x43b1378b};
+    constexpr uint32_t method_id_is_known_execution_header{0x7120345a};
     constexpr uint32_t method_id_get_height{0xb15ad2e8};
     constexpr uint32_t method_id_last_block_number{0x1eeaebb2};
     constexpr uint32_t method_id_submit_beacon_chain_light_client_update{0x2e139f0c};
     constexpr uint32_t method_id_submit_execution_header{0x3c1a38b6};
     constexpr uint32_t method_id_reset{0xd826f88f};
     constexpr uint32_t method_id_disable_reset{0xb5a61069};
+    constexpr uint32_t method_id_client_mode{0x48714e24};
 
     // check param
     assert(state_ctx);
@@ -196,14 +225,16 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth2_client_contract::execute] init_put decode error");
             return false;
         }
-        if (!init(state, init_put)) {
+        if (!init(state, init_put, context.caller)) {
             err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth2_client_contract::execute] init headers error");
             return false;
         }
-        evm_common::xh256s_t topics;
-        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+        xh256s_t topics;
+        topics.emplace_back();
+        context.caller.to_h256(topics.back());
+        // topics.push_back(xh256_t(context.caller.to_h256()));
         evm_common::xevm_log_t log(context.address, topics, top::to_bytes(evm_common::u256(0)));
         output.cost = 0;
         output.exit_status = Returned;
@@ -263,7 +294,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         return true;
     }
     case method_id_is_confirmed: {
-        u256 height = abi_decoder.extract<evm_common::u256>(ec);
+        auto const height = abi_decoder.extract<uint64_t>(ec);
         if (ec) {
             err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
@@ -287,7 +318,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         return true;
     }
     case method_id_is_known_execution_header: {
-        auto hash_bytes = abi_decoder.decode_bytes(32, ec);
+        auto const block_height = abi_decoder.extract<uint64_t>(ec);
         if (ec) {
             err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
@@ -295,7 +326,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             return false;
         }
         uint32_t is_known{0};
-        if (is_known_execution_header(state, static_cast<h256>(hash_bytes))) {
+        if (is_known_execution_header(state, block_height)) {
             is_known = 1;
         }
         output.exit_status = Returned;
@@ -304,6 +335,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         return true;
     }
     case method_id_get_height:
+        XFALLTHROUGH;
     case method_id_last_block_number: {
         auto number = last_block_number(state);
         output.exit_status = Returned;
@@ -336,10 +368,11 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             return false;
         }
         xlight_client_update_t update;
-        if (false == update.decode_rlp(update_bytes)) {
+        update.decode_rlp(update_bytes, ec);
+        if (ec) {
             err.fail_status = precompile_error::revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            xwarn("[xtop_evm_eth2_client_contract::execute] update decode error");
+            xwarn("xtop_evm_eth2_client_contract::execute, submit_beacon_chain_light_client_update failed, msg %s", ec.message().c_str());
             return false;
         }
         if (!submit_beacon_chain_light_client_update(state, update)) {
@@ -348,8 +381,8 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth2_client_contract::execute] submit_beacon_chain_light_client_update error");
             return false;
         }
-        evm_common::xh256s_t topics;
-        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+        xh256s_t topics;
+        topics.push_back(xh256_t(context.caller.to_h256()));
         evm_common::xevm_log_t log(context.address, topics, top::to_bytes(evm_common::u256(0)));
         output.cost = 0;
         output.exit_status = Returned;
@@ -373,6 +406,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth2_client_contract::execute] method_id_submit_execution_header is not allowed in static context");
             return false;
         }
+
         auto bytes = abi_decoder.extract<xbytes_t>(ec);
         if (ec) {
             err.fail_status = precompile_error::revert;
@@ -384,32 +418,50 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         auto left_bytes = std::move(bytes);
         while (!left_bytes.empty()) {
             evm_common::RLP::DecodedItem item = evm_common::RLP::decode(left_bytes);
+
+            if (item.decoded.size() != 1) {
+                xwarn("[xtop_evm_eth2_client_contract::execute] decode error");
+                err.fail_status = precompile_error::revert;
+                err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+                return false;
+            }
             left_bytes = std::move(item.remainder);
+
             xeth_header_t header;
             {
                 auto item_header = evm_common::RLP::decode_once(item.decoded[0]);
+                if (item_header.decoded.size() != 1) {
+                    xwarn("[xtop_evm_eth2_client_contract::execute] decode_once error");
+                    err.fail_status = precompile_error::revert;
+                    err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+                    return false;
+                }
+
                 auto header_bytes = item_header.decoded[0];
-                if (header.decode_rlp(header_bytes) == false) {
-                    xwarn("[xtop_evm_eth2_client_contract::execute] decode header error");
+                header.decode_rlp(header_bytes, ec);
+                if (ec) {
+                    err.fail_status = precompile_error::revert;
+                    err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+                    xwarn("xtop_evm_eth2_client_contract::execute, xeth_header_t::decode_rlp failed, msg %s", ec.message().c_str());
                     return false;
                 }
             }
-            if (!submit_execution_header(state, header)) {
+            if (!submit_execution_header(state, header, context.caller)) {
                 err.fail_status = precompile_error::revert;
                 err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
                 xwarn("[xtop_evm_eth2_client_contract::execute] submit_execution_header error");
                 return false;
             }
         }
-        evm_common::xh256s_t topics;
-        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+        xh256s_t topics;
+        topics.push_back(xh256_t(context.caller.to_h256()));
         evm_common::xevm_log_t log(context.address, topics, top::to_bytes(evm_common::u256(0)));
         output.cost = 0;
         output.exit_status = Returned;
         output.logs.push_back(log);
         return true;
     }
-    case method_id_reset: {
+            case method_id_reset: {
 #if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
         if (!m_whitelist.count(context.caller.to_hex_string())) {
 #else
@@ -448,6 +500,15 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(0));
         return true;
     }
+    case method_id_client_mode: {
+        auto const mode = client_mode(state);
+
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = evm_common::toBigEndian(static_cast<u256>(static_cast<int>(mode)));
+
+        return true;
+    }
     default: {
         xwarn("[xtop_evm_eth2_client_contract::execute] not found method id: 0x%x", function_selector.method_id);
         err.fail_status = precompile_error::fatal;
@@ -459,18 +520,22 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     return true;
 }
 
-bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t const & init_input) {
+bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t const & init_input, common::xeth_address_t const & sender) {
+    assert(!sender.is_zero());
+
     if (initialized(state)) {
         xwarn("xtop_evm_eth2_client_contract::init already");
         return false;
     }
-    auto const & hash = init_input.finalized_execution_header.hash();
+    xh256_t hash;
+    init_input.finalized_execution_header.calc_hash(hash);
     if (hash != init_input.finalized_beacon_header.execution_block_hash) {
         xwarn("xtop_evm_eth2_client_contract::init hash mismatch %s, %s", hash.hex().c_str(), init_input.finalized_beacon_header.execution_block_hash.hex().c_str());
         return false;
     }
+
     auto const & finalized_execution_header_info =
-        xexecution_header_info_t{init_input.finalized_execution_header.parent_hash, static_cast<uint64_t>(init_input.finalized_execution_header.number)};
+        xexecution_header_info_t{init_input.finalized_execution_header.parent_hash, init_input.finalized_execution_header.number, sender};
     if (false == set_finalized_beacon_header(state, init_input.finalized_beacon_header)) {
         xwarn("xtop_evm_eth2_client_contract::init set_finalized_beacon_header error");
         return false;
@@ -485,6 +550,10 @@ bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t 
     }
     if (false == set_next_sync_committee(state, init_input.next_sync_committee)) {
         xwarn("xtop_evm_eth2_client_contract::init set_next_sync_committee error");
+        return false;
+    }
+    if (false == client_mode(state, xclient_mode_t::submit_light_client_update)) {
+        xwarn("xtop_evm_eth2_client_contract::init set client mode error");
         return false;
     }
     xinfo("xtop_evm_eth2_client_contract::init success");
@@ -502,7 +571,8 @@ bool xtop_evm_eth2_client_contract::reset(state_ptr state) {
         return false;
     }
     state->map_clear(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS);
-    state->map_clear(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS);
+    state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, std::string{});
+    state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, std::string{});
     xextended_beacon_block_header_t beacon_block;
     auto beacon_header_bytes = beacon_block.encode_rlp();
     state->string_set(data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER, {beacon_header_bytes.begin(), beacon_header_bytes.end()});
@@ -522,21 +592,24 @@ uint64_t xtop_evm_eth2_client_contract::last_block_number(state_ptr const & stat
     return get_finalized_execution_header(state).block_number;
 }
 
-h256 xtop_evm_eth2_client_contract::block_hash_safe(state_ptr const & state, u256 const block_number) const {
-    return get_finalized_execution_blocks(state, static_cast<uint64_t>(block_number));
-}
-
-bool xtop_evm_eth2_client_contract::is_known_execution_header(state_ptr const & state, h256 const & hash) const {
-    auto const & header = get_unfinalized_headers(state, hash);
-    if (header.empty()) {
-        return false;
+xh256_t xtop_evm_eth2_client_contract::block_hash_safe(state_ptr const & state, uint64_t const block_number) const {
+    auto const finalized_execution_header_block_number = last_block_number(state);
+    if (block_number > finalized_execution_header_block_number) {
+        xwarn("[xtop_evm_eth2_client_contract::block_hash_safe] block_number %" PRIu64 " > finalized_execution_header_block_number %" PRIu64, block_number, finalized_execution_header_block_number);
+        return xh256_t{};
     }
-    return true;
+
+    return get_finalized_execution_blocks(state, block_number);
 }
 
-bool xtop_evm_eth2_client_contract::is_confirmed(state_ptr state, u256 const height, h256 const & hash_bytes) const {
-    h256 hash = static_cast<h256>(hash_bytes);
-    h256 origin_hash = get_finalized_execution_blocks(state, static_cast<uint64_t>(height));
+bool xtop_evm_eth2_client_contract::is_known_execution_header(state_ptr const & state, uint64_t const height) const {
+    auto const & header = get_finalized_execution_blocks(state, height);
+    return !header.empty();
+}
+
+bool xtop_evm_eth2_client_contract::is_confirmed(state_ptr state, uint64_t const number, h256 const & hash_bytes) const {
+    auto const & hash = hash_bytes;
+    auto const & origin_hash = get_finalized_execution_blocks(state, number);
     if (hash != origin_hash) {
         xwarn("[xtop_evm_eth2_client_contract::is_confirmed] hash mismatch: %s, %s", hash.hex().c_str(), origin_hash.hex().c_str());
         return false;
@@ -592,37 +665,102 @@ xlight_client_state_t xtop_evm_eth2_client_contract::get_light_client_state(stat
 }
 
 bool xtop_evm_eth2_client_contract::submit_beacon_chain_light_client_update(state_ptr const & state, xlight_client_update_t const & update) {
+    if (!is_light_client_update_allowed(state)) {
+        return false;
+    }
+
     if (false == validate_light_client_update(state, update)) {
         xwarn("xtop_evm_eth2_client_contract::submit_beacon_chain_light_client_update validate_light_client_update error");
         return false;
     }
+
     if (false == commit_light_client_update(state, update)) {
         xwarn("xtop_evm_eth2_client_contract::submit_beacon_chain_light_client_update commit_light_client_update error");
         return false;
     }
+
     xinfo("xtop_evm_eth2_client_contract::submit_beacon_chain_light_client_update success");
     return true;
 }
 
-bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header) {
-    auto const & finalized_beacon_header = get_finalized_beacon_header(state);
-    if (finalized_beacon_header.empty()) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch get_finalized_beacon_header empty");
+bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header, common::xeth_address_t const & sender) {
+    assert(!sender.is_zero());
+    if (client_mode(state) != xclient_mode_t::submit_header) {
+        xwarn("xtop_evm_eth2_client_contract::submit_execution_header client_mode error");
         return false;
     }
-    if (finalized_beacon_header.execution_block_hash != block_header.parent_hash) {
-        auto const unfinalized_header = get_unfinalized_headers(state, block_header.parent_hash);
-        if (unfinalized_header.empty()) {
-            xwarn("xtop_evm_eth2_client_contract::submit_execution_header parent %s not submitted", block_header.parent_hash.hex().c_str());
-            return false;
+
+    auto const & block_hash = block_header.calc_hash();
+    auto const & unfinalized_tail_execution_header_info = get_unfinalized_tail_execution_header_info(state);
+    auto const & finalized_beacon_header = get_finalized_beacon_header(state);
+    if (unfinalized_tail_execution_header_info.empty() && finalized_beacon_header.empty()) {
+        xwarn("xtop_evm_eth2_client_contract::submit_execution_header get_finalized_beacon_header empty");
+        return false;
+    }
+    auto const & excepted_block_hash =
+        !unfinalized_tail_execution_header_info.empty() ? unfinalized_tail_execution_header_info.parent_hash : finalized_beacon_header.execution_block_hash;
+    if (block_hash != excepted_block_hash) {
+        xwarn("xtop_evm_eth2_client_contract::submit_execution_header block_hash %s != excepted_block_hash %s", block_hash.hex().c_str(), excepted_block_hash.hex().c_str());
+        return false;
+    }
+
+    if (!add_finalized_execution_blocks(state, block_header.number, block_hash)) {
+        xwarn("xtop_evm_eth2_client_contract::submit_execution_header set_finalized_execution_blocks error: %s", block_hash.hex().c_str());
+        return false;
+    }
+
+    auto const & finalized_execution_header = get_finalized_execution_header(state);
+    if (finalized_execution_header.empty()) {
+        xwarn("xtop_evm_eth2_client_contract::submit_execution_header get_finalized_execution_header empty");
+        return false;
+    }
+
+    // Apply GC
+    auto const diff_between_unfinalized_head_and_tail = get_diff_between_unfinalized_head_and_tail(state);
+    if (diff_between_unfinalized_head_and_tail != 0) {
+        auto const some_block_height = finalized_execution_header.block_number + diff_between_unfinalized_head_and_tail;
+        if (some_block_height > hashes_gc_threshold) {
+            auto const header_number_to_remove = some_block_height - hashes_gc_threshold;
+            if (header_number_to_remove >= finalized_execution_header.block_number) {
+                xwarn("xtop_evm_eth2_client_contract::submit_execution_header header_number_to_remove %" PRIu64 " >= finalized_execution_header.block_number %" PRIu64,
+                      header_number_to_remove,
+                      finalized_execution_header.block_number);
+                return false;
+            }
+
+            if (header_number_to_remove > 0) {
+                gc_finalized_execution_blocks(state, header_number_to_remove);
+            }
         }
     }
-    auto const & block_hash = block_header.hash();
-    auto const & block_info = xexecution_header_info_t{block_header.parent_hash, static_cast<uint64_t>(block_header.number)};
-    if (false == set_unfinalized_headers(state, block_hash, block_info)) {
-        xwarn("xtop_evm_eth2_client_contract::submit_execution_header set_unfinalized_headers error: %s", block_hash.hex().c_str());
-        return false;
+
+    if (block_header.number == finalized_execution_header.block_number + 1) {
+        auto const & finalized_execution_header_hash = get_finalized_execution_blocks(state, finalized_execution_header.block_number);
+        if (block_header.parent_hash != finalized_execution_header_hash) {
+             xwarn("xtop_evm_eth2_client_contract::submit_execution_header block_header.parent_hash %s != finalized_execution_header_hash %s",
+                   block_header.parent_hash.hex().c_str(),
+                   finalized_execution_header_hash.hex().c_str());
+             return false;
+        }
+
+        set_finalized_execution_header_bytes(state, state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER));
+        reset_unfinalized_tail_execution_header(state);
+        reset_unfinalized_head_execution_header(state);
+
+        client_mode(state, xclient_mode_t::submit_light_client_update);
+    } else {
+        xexecution_header_info_t block_info;
+        block_info.parent_hash = block_header.parent_hash;
+        block_info.block_number = block_header.number;
+        block_info.submitter = sender;
+
+        auto const & unfinalized_head_execution_header_info = get_unfinalized_head_execution_header_info(state);
+        if (unfinalized_head_execution_header_info.empty()) {
+             set_unfinalized_head_execution_header_info(state, block_info);
+        }
+        set_unfinalized_tail_execution_header_info(state, block_info);
     }
+
     xinfo("xtop_evm_eth2_client_contract::submit_execution_header header %s set succss", block_hash.hex().c_str());
     return true;
 }
@@ -633,29 +771,30 @@ bool xtop_evm_eth2_client_contract::validate_light_client_update(state_ptr const
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch get_finalized_beacon_header empty");
         return false;
     }
+
     auto const finalized_period = compute_sync_committee_period(finalized_beacon_header.header.slot);
     if (false == verify_finality_branch(state, update, finalized_period)) {
         xwarn("xtop_evm_eth2_client_contract::validate_light_client_update verify_finality_branch error");
         return false;
     }
-    auto const & sync_committee_bits = update.sync_aggregate.sync_committee_bits;
-    auto const & bits_str = covert_committee_bits_to_bin_str({sync_committee_bits.begin(), sync_committee_bits.end()});
 
-    uint64_t sync_committee_bits_sum{0};
-    for (auto const & b : bits_str) {
-        sync_committee_bits_sum += (b == '1' ? 1 : 0);
-    }
-    if (sync_committee_bits_sum < min_sync_committee_participants) {
-        xwarn("xtop_evm_eth2_client_contract::validate_light_client_update error sync_committee_bits_sum: %lu", sync_committee_bits_sum);
+    // Verify sync committee has sufficient participants
+    auto const & sync_committee_bits = update.sync_aggregate.sync_committee_bits;
+    assert(sync_committee_bits.size() == SYNC_COMMITTEE_BITS_SIZE);
+
+    size_t const sync_committee_bits_sum{ sync_committee_bits.count()};
+    if (sync_committee_bits_sum < MIN_SYNC_COMMITTEE_PARTICIPANTS) {
+        xwarn("xtop_evm_eth2_client_contract::validate_light_client_update error sync_committee_bits_sum: %zu", sync_committee_bits_sum);
         return false;
     }
     if (sync_committee_bits_sum * 3 < (sync_committee_bits.size() * 2)) {
-        xwarn("xtop_evm_eth2_client_contract::validate_light_client_update committee bits sum is less than 2/3 threshold, %lu, %zu",
+        xwarn("xtop_evm_eth2_client_contract::validate_light_client_update committee bits sum is less than 2/3 threshold, %zu, %zu",
               sync_committee_bits_sum,
               sync_committee_bits.size());
         return false;
     }
-    if (false == verify_bls_signatures(state, update, bits_str, finalized_period)) {
+
+    if (false == verify_bls_signatures(state, update, sync_committee_bits, finalized_period)) {
         xwarn("xtop_evm_eth2_client_contract::validate_light_client_update verify_bls_signatures error");
         return false;
     }
@@ -671,58 +810,72 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
         return false;
     }
     if (active_header.slot <= finalized_beacon_header.header.slot) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch slot mismatch, %lu, %lu", active_header.slot, finalized_beacon_header.header.slot);
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch slot mismatch, %" PRIu64 ", %" PRIu64, active_header.slot, finalized_beacon_header.header.slot);
         return false;
     }
     if (update.attested_beacon_header.slot < update.finality_update.header_update.beacon_header.slot) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch slot mismatch, %lu, %lu", active_header.slot, finalized_beacon_header.header.slot);
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch slot mismatch, %" PRIu64 ", %" PRIu64, active_header.slot, finalized_beacon_header.header.slot);
         return false;
     }
     if (update.signature_slot <= update.attested_beacon_header.slot) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch slot mismatch, %lu, %lu", update.signature_slot, update.attested_beacon_header.slot);
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch slot mismatch, %" PRIu64 ", %" PRIu64, update.signature_slot, update.attested_beacon_header.slot);
         return false;
     }
     auto const update_period = compute_sync_committee_period(active_header.slot);
     if (update_period != finalized_period && update_period != finalized_period + 1) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch period mismatch, %lu, %lu", update_period, finalized_period);
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch period mismatch, acceptable periods are '%" PRIu64 "' and '%" PRIu64 "' but got %" PRIu64,
+              finalized_period,
+              finalized_period + 1,
+              update_period);
         return false;
     }
+
+    // Verify that the `finality_branch`, confirms `finalized_header`
+    // to match the finalized checkpoint root saved in the state of `attested_header`.
     xbytes_t branch_data;
     for (auto const & b : update.finality_update.finality_branch) {
         branch_data.insert(branch_data.end(), b.begin(), b.end());
     }
-    xbytes_t merkle_root(32);
+    xh256_t merkle_root;
     if (false == unsafe_merkle_proof(update.finality_update.header_update.beacon_header.tree_hash_root().data(),
                                      branch_data.data(),
                                      branch_data.size(),
-                                     finality_tree_depth,
-                                     finality_tree_index,
+                                     FINALITY_TREE_DEPTH,
+                                     FINALITY_TREE_INDEX,
                                      merkle_root.data())) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch header unsafe_merkle_proof error");
         return false;
     }
-    if (merkle_root != update.attested_beacon_header.state_root.asBytes()) {
+    if (merkle_root != update.attested_beacon_header.state_root) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch header root error: %s, %s",
               to_hex(merkle_root).c_str(),
               to_hex(update.attested_beacon_header.state_root).c_str());
         return false;
     }
+
+    if (false == validate_beacon_block_header_update(update.finality_update.header_update)) {
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch validate_beacon_block_header_update error");
+        return false;
+    }
+
+    // Verify that the `next_sync_committee`, if present, actually is the next sync committee saved in the
+    // state of the `active_header`
     if (update_period != finalized_period) {
-        xbytes_t branch_data;
+        branch_data.clear();
         for (auto const & b : update.sync_committee_update.next_sync_committee_branch) {
             branch_data.insert(branch_data.end(), b.begin(), b.end());
         }
-        xbytes_t merkle_root(32);
+        merkle_root.clear();
         if (false == unsafe_merkle_proof(update.sync_committee_update.next_sync_committee.tree_hash_root().data(),
                                          branch_data.data(),
                                          branch_data.size(),
-                                         sync_committee_tree_depth,
-                                         sync_committee_tree_index,
+                                         SYNC_COMMITTEE_TREE_DEPTH,
+                                         SYNC_COMMITTEE_TREE_INDEX,
                                          merkle_root.data())) {
             xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
             return false;
         }
-        if ((merkle_root != active_header.state_root.asBytes()) && (merkle_root != update.attested_beacon_header.state_root.asBytes())) {
+        if (merkle_root != update.attested_beacon_header.state_root) {
             xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee root error: %s, %s, %s",
                   to_hex(merkle_root).c_str(),
                   to_hex(update.attested_beacon_header.state_root).c_str(),
@@ -735,7 +888,7 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
 
 bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & state,
                                                           xlight_client_update_t const & update,
-                                                          std::string const & sync_committee_bits,
+                                                          xbitset_t<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits,
                                                           uint64_t const finalized_period) {
     auto const signature_period = compute_sync_committee_period(update.signature_slot);
     if (signature_period != finalized_period && signature_period != finalized_period + 1) {
@@ -756,7 +909,7 @@ bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & stat
             return false;
         }
     }
-    auto const & participant_pubkeys = get_participant_pubkeys(sync_committee.pubkeys, sync_committee_bits);
+    auto const & participant_pubkeys = get_participant_pubkeys(sync_committee.pubkeys(), sync_committee_bits);
     xbytes_t signing_root(32);
     unsafe_compute_committee_signing_root(update.attested_beacon_header.tree_hash_root().data(), uint8_t(m_network), update.signature_slot, signing_root.data());
     xbytes_t pubkeys_data;
@@ -764,54 +917,6 @@ bool xtop_evm_eth2_client_contract::verify_bls_signatures(state_ptr const & stat
         pubkeys_data.insert(pubkeys_data.begin(), pubkey.begin(), pubkey.end());
     }
     return unsafe_verify_bls_signatures(update.sync_aggregate.sync_committee_signature.data(), pubkeys_data.data(), pubkeys_data.size(), signing_root.data());
-}
-
-bool xtop_evm_eth2_client_contract::update_finalized_header(state_ptr const & state, xextended_beacon_block_header_t const & finalized_header) {
-    //  finalized_execution_header_info
-    auto const & finalized_execution_header_info = get_unfinalized_headers(state, finalized_header.execution_block_hash);
-    if (finalized_execution_header_info.empty()) {
-        xwarn("xtop_evm_eth2_client_contract::update_finalized_header get_unfinalized_headers %s empty", finalized_header.execution_block_hash.hex().c_str());
-        return false;
-    }
-    auto cursor_header = finalized_execution_header_info;
-    auto cursor_header_hash = finalized_header.execution_block_hash;
-
-    for (;;) {
-        del_unfinalized_headers(state, cursor_header_hash);
-        if (false == set_finalized_execution_blocks(state, cursor_header.block_number, cursor_header_hash)) {
-            xwarn("xtop_evm_eth2_client_contract::update_finalized_header set_finalized_execution_blocks error, %lu, %s",
-                  cursor_header.block_number,
-                  cursor_header_hash.hex().c_str());
-            return false;
-        }
-        auto const & finalized_beacon_header = get_finalized_beacon_header(state);
-        if (finalized_beacon_header.empty()) {
-            xwarn("xtop_evm_eth2_client_contract::update_finalized_header get_finalized_beacon_header empty");
-            return false;
-        }
-        if (cursor_header.parent_hash == finalized_beacon_header.execution_block_hash) {
-            break;
-        }
-        cursor_header_hash = cursor_header.parent_hash;
-        cursor_header = get_unfinalized_headers(state, cursor_header_hash);
-        if (cursor_header.empty()) {
-            xwarn("xtop_evm_eth2_client_contract::update_finalized_header get_unfinalized_headers %s empty", cursor_header_hash.hex().c_str());
-            return false;
-        }
-    }
-    if (false == set_finalized_beacon_header(state, finalized_header)) {
-        xwarn("xtop_evm_eth2_client_contract::update_finalized_header set_finalized_beacon_header %s error", finalized_header.beacon_block_root.hex().c_str());
-        return false;
-    }
-    if (false == set_finalized_execution_header(state, finalized_execution_header_info)) {
-        xwarn("xtop_evm_eth2_client_contract::update_finalized_header set_finalized_execution_header %lu error", finalized_execution_header_info.block_number);
-        return false;
-    }
-    if (finalized_execution_header_info.block_number > hashes_gc_threshold) {
-        release_finalized_execution_blocks(state, finalized_execution_header_info.block_number - hashes_gc_threshold);
-    }
-    xinfo("xtop_evm_eth2_client_contract::update_finalized_header %s success", finalized_header.beacon_block_root.hex().c_str());
-    return true;
 }
 
 bool xtop_evm_eth2_client_contract::commit_light_client_update(state_ptr const & state, xlight_client_update_t const & update) {
@@ -842,21 +947,25 @@ bool xtop_evm_eth2_client_contract::commit_light_client_update(state_ptr const &
     header.header = finalized_header_update.beacon_header;
     header.beacon_block_root = finalized_header_update.beacon_header.tree_hash_root();
     header.execution_block_hash = finalized_header_update.execution_block_hash;
-    if (false == update_finalized_header(state, header)) {
-        xwarn("xtop_evm_eth2_client_contract::commit_light_client_update update_finalized_header error");
+    if (false == set_finalized_beacon_header(state, header)) {
+        xwarn("xtop_evm_eth2_client_contract::commit_light_client_update set_finalized_beacon_header error");
+        return false;
+    }
+    if (false == client_mode(state, xclient_mode_t::submit_header)) {
+        xwarn("xtop_evm_eth2_client_contract::commit_light_client_update client_mode error");
         return false;
     }
     return true;
 }
 
-void xtop_evm_eth2_client_contract::release_finalized_execution_blocks(state_ptr const & state, uint64_t number) {
+void xtop_evm_eth2_client_contract::gc_finalized_execution_blocks(state_ptr const & state, uint64_t number) {
     for (;;) {
         if (del_finalized_execution_blocks(state, number)) {
             if (number == 0) {
                 break;
-            } else {
-                number -= 1;
             }
+
+            number -= 1;
         } else {
             break;
         }
@@ -872,56 +981,20 @@ h256 xtop_evm_eth2_client_contract::get_finalized_execution_blocks(state_ptr con
     return static_cast<h256>(xbytes_t{std::begin(str), std::end(str)});
 }
 
-bool xtop_evm_eth2_client_contract::set_finalized_execution_blocks(state_ptr const & state, uint64_t const height, h256 const & hash) {
+bool xtop_evm_eth2_client_contract::add_finalized_execution_blocks(state_ptr const & state, uint64_t const height, h256 const & hash) {
     auto v = hash.asBytes();
     if (0 != state->map_set(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS, std::to_string(height), {v.begin(), v.end()})) {
-        xwarn("xtop_evm_eth2_client_contract::set_finalized_execution_blocks map_set error, height: %lu", height);
+        xwarn("xtop_evm_eth2_client_contract::set_finalized_execution_blocks map_set error, height: %" PRIu64, height);
         return false;
     }
     return true;
 }
 
 bool xtop_evm_eth2_client_contract::del_finalized_execution_blocks(state_ptr const & state, uint64_t const height) {
-    if (0 != state->map_remove(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS, std::to_string(height))) {
-        return false;
-    }
-    return true;
+    return !state->map_remove(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS, std::to_string(height));
 }
 
-xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_headers(state_ptr const & state, h256 const & hash) const {
-    auto k = hash.asBytes();
-    auto str = state->map_get(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, {k.begin(), k.end()});
-    if (str.empty()) {
-        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_headers map_get empty, hash: %s", hash.hex().c_str());
-        return {};
-    }
-    xexecution_header_info_t info;
-    if (info.decode_rlp({std::begin(str), std::end(str)}) == false) {
-        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_headers decode error, hash: %s", hash.hex().c_str());
-        return {};
-    }
-    return info;
-}
-
-bool xtop_evm_eth2_client_contract::set_unfinalized_headers(state_ptr const & state, h256 const & hash, xexecution_header_info_t const & info) {
-    auto k = hash.asBytes();
-    auto v = info.encode_rlp();
-    if (0 != state->map_set(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, {k.begin(), k.end()}, {v.begin(), v.end()})) {
-        xwarn("xtop_evm_eth2_client_contract::set_unfinalized_headers map_set error, hash: %s", hash.hex().c_str());
-        return false;
-    }
-    return true;
-}
-
-bool xtop_evm_eth2_client_contract::del_unfinalized_headers(state_ptr const & state, h256 const & hash) {
-    auto k = hash.to_bytes();
-    if (0 != state->map_remove(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, {k.begin(), k.end()})) {
-        return false;
-    }
-    return true;
-}
-
-xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_beacon_header(state_ptr const & state) const {
+xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_beacon_header(state_ptr const & state) {
     auto const & v = state->string_get(data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_finalized_beacon_header empty");
@@ -930,7 +1003,9 @@ xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_bea
     xextended_beacon_block_header_t beacon;
     if (beacon.decode_rlp({v.begin(), v.end()}) == false) {
         xwarn("xtop_evm_eth2_client_contract::get_finalized_beacon_header decode error");
+        return {};
     }
+
     return beacon;
 }
 
@@ -952,6 +1027,7 @@ xexecution_header_info_t xtop_evm_eth2_client_contract::get_finalized_execution_
     xexecution_header_info_t info;
     if (info.decode_rlp({v.begin(), v.end()}) == false) {
         xwarn("xtop_evm_eth2_client_contract::get_finalized_execution_header decode error");
+        return {};
     }
     return info;
 }
@@ -960,6 +1036,15 @@ bool xtop_evm_eth2_client_contract::set_finalized_execution_header(state_ptr con
     auto const & v = info.encode_rlp();
     if (state->string_set(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER, {v.begin(), v.end()}) != 0) {
         xwarn("xtop_evm_eth2_client_contract::set_finalized_execution_header string_set error");
+        return false;
+    }
+    return true;
+}
+
+bool xtop_evm_eth2_client_contract::set_finalized_execution_header_bytes(state_ptr const & state, std::string const & bytes) {
+    assert(!bytes.empty());
+    if (state->string_set(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER, bytes) != 0) {
+        xwarn("xtop_evm_eth2_client_contract::set_current_execution_header string_set error");
         return false;
     }
     return true;
@@ -1021,6 +1106,179 @@ bool xtop_evm_eth2_client_contract::set_flag(state_ptr state) {
     if (0 != state->string_set(data::system_contract::XPROPERTY_RESET_FLAG, top::to_string(1))) {
         return false;
     }
+    return true;
+}
+
+xclient_mode_t xtop_evm_eth2_client_contract::client_mode(state_ptr state) const {
+    auto const mode = state->int64_get(data::system_contract::XPROPERTY_CLIENT_MODE);
+    return static_cast<evm_common::eth2::xclient_mode_t>(mode);
+}
+
+bool xtop_evm_eth2_client_contract::client_mode(state_ptr state, evm_common::eth2::xclient_mode_t const mode) {
+    assert(state != nullptr);
+    auto const ec = state->int64_set(data::system_contract::XPROPERTY_CLIENT_MODE, static_cast<int64_t>(mode));
+    if (ec) {
+        xwarn("xtop_evm_eth2_client_contract::client_mode set mode failed");
+        return false;
+    }
+
+    return true;
+}
+
+uint64_t xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number(state_ptr state) const {
+    auto const & v = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER);
+    if (v.empty()) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number empty");
+        return 0;
+    }
+
+    xexecution_header_info_t info;
+    if (false == info.decode_rlp({v.begin(), v.end()})) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number decode error");
+        return 0;
+    }
+
+    return info.block_number;
+}
+
+xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_tail_execution_header_info(state_ptr const & state) const {
+    auto const & v = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER);
+    if (v.empty()) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_execution_header_info empty");
+        return {};
+    }
+    xexecution_header_info_t info;
+    if (info.decode_rlp({v.begin(), v.end()}) == false) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_execution_header_info decode error");
+        return {};
+    }
+    return info;
+}
+
+evm_common::eth2::xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_head_execution_header_info(state_ptr const & state) const {
+    auto const & v = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER);
+    if (v.empty()) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_head_execution_header_info empty");
+        return {};
+    }
+    xexecution_header_info_t info;
+    if (info.decode_rlp({v.begin(), v.end()}) == false) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_head_execution_header_info decode error");
+        return {};
+    }
+    return info;
+}
+
+uint64_t xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail(state_ptr state) const {
+    assert(state != nullptr);
+    auto const & header_data = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER);
+    if (header_data.empty()) {
+        xwarn("xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail empty");
+        return 0;
+    }
+    auto const & tail_data = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER);
+    if (tail_data.empty()) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_execution_header_number empty");
+        return 0;
+    }
+
+    xexecution_header_info_t header;
+    if (header.decode_rlp({header_data.begin(), header_data.end()}) == false) {
+        xwarn("xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail decode header error");
+        return 0;
+    }
+
+    xexecution_header_info_t tail;
+    if (tail.decode_rlp({tail_data.begin(), tail_data.end()}) == false) {
+        xwarn("xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail decode tail error");
+        return 0;
+    }
+    assert(header.block_number >= tail.block_number);
+
+    return header.block_number - tail.block_number;
+}
+
+bool xtop_evm_eth2_client_contract::reset_unfinalized_head_execution_header(state_ptr const & state) {
+    if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, {}) != 0) {
+        xwarn("xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info string_set error");
+        return false;
+    }
+
+    return true;
+}
+
+bool xtop_evm_eth2_client_contract::reset_unfinalized_tail_execution_header(state_ptr const & state) {
+    if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, {}) != 0) {
+        xwarn("xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info string_set error");
+        return false;
+    }
+    return true;
+}
+
+bool xtop_evm_eth2_client_contract::set_unfinalized_head_execution_header_info(state_ptr const & state, xexecution_header_info_t const & info) {
+    auto bytes = info.encode_rlp();
+    if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, {bytes.begin(), bytes.end()}) != 0) {
+        xwarn("xtop_evm_eth2_client_contract::set_unfinalized_head_execution_header_info string_set error");
+        return false;
+    }
+    return true;
+}
+
+bool xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info(state_ptr const & state, xexecution_header_info_t const & info) {
+    auto bytes = info.encode_rlp();
+    if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, {bytes.begin(), bytes.end()}) != 0) {
+        xwarn("xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info string_set error");
+        return false;
+    }
+    return true;
+}
+
+bool xtop_evm_eth2_client_contract::is_light_client_update_allowed(state_ptr state) const {
+    if (client_mode(state) != xclient_mode_t::submit_light_client_update) {
+        xwarn("xtop_evm_eth2_client_contract::is_light_client_update_allowed client_mode error");
+        return false;
+    }
+
+    return true;
+}
+
+bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(xheader_update_t const & header_update) const {
+    std::vector<xh256_t> const & branch = header_update.execution_hash_branch;
+    if (branch.size() != EXECUTION_PROOF_SIZE) {
+        xwarn("xtop_evm_eth2_client_contract::validate_beacon_block_header_update execution_hash_branch size error");
+        return false;
+    }
+
+    xspan_t<xh256_t const> l2_proof{&branch[0], &branch[L2_EXECUTION_PAYLOAD_PROOF_SIZE]};
+    xspan_t<xh256_t const> l1_proof{&branch[L2_EXECUTION_PAYLOAD_PROOF_SIZE], &branch[EXECUTION_PROOF_SIZE]};
+
+    xh256_t execution_payload_hash;
+    if (false == unsafe_merkle_proof(header_update.execution_block_hash.data(),
+                                     l2_proof.data()->data(),
+                                     l2_proof.size() * xh256_t::size(),
+                                     L2_EXECUTION_PAYLOAD_PROOF_SIZE,
+                                     L2_EXECUTION_PAYLOAD_TREE_EXECUTION_BLOCK_INDEX,
+                                     execution_payload_hash.data())) {
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
+        return false;
+    }
+
+    xh256_t body_root;
+    if (false == unsafe_merkle_proof(execution_payload_hash.data(),
+                                     l1_proof.data()->data(),
+                                     l1_proof.size() * xh256_t::size(),
+                                     BEACON_BLOCK_BODY_TREE_DEPTH,
+                                     L1_BEACON_BLOCK_BODY_TREE_EXECUTION_PAYLOAD_INDEX,
+                                     body_root.data())) {
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
+        return false;
+    }
+
+    if (body_root != header_update.beacon_header.body_root) {
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee body_root error");
+        return false;
+    }
+
     return true;
 }
 

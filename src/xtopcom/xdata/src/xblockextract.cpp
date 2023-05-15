@@ -206,29 +206,29 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
     }
 }
 
-evm_common::xh256_t xblockextract_t::get_state_root(base::xvblock_t * block, std::error_code & ec) {
+xh256_t xblockextract_t::get_state_root(base::xvblock_t * block, std::error_code & ec) {
     assert(!ec);
 
     if (block->get_height() == 0 || !base::xvblock_fork_t::is_block_match_version(block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
         xdbg("xblockextract_t::get_state_root block is old version or height = 0 block:%s", block->dump().c_str());
-        return evm_common::xh256_t{};
+        return xh256_t{};
     }
 
     data::xeth_header_t ethheader;
     unpack_ethheader(block, ethheader, ec);
     if (ec) {
-        return evm_common::xh256_t{};
+        return xh256_t{};
     }
 
     return ethheader.get_state_root();
 }
 
-evm_common::xh256_t xblockextract_t::get_state_root_from_block(base::xvblock_t * block) {
+xh256_t xblockextract_t::get_state_root_from_block(base::xvblock_t * block) {
     std::error_code ec;
     auto const & state_root = get_state_root(block, ec);
     if (ec) {  // should not happen
         xerror("xblockextract_t::get_state_root_from_block get state root fail. block:%s", block->dump().c_str());
-        return evm_common::xh256_t{};
+        return xh256_t{};
     }
 
     return state_root;

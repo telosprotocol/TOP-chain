@@ -37,8 +37,8 @@ class xblockextract_t {
     static xobject_ptr_t<base::xvblock_t>           unpack_wrap_relayblock_from_relay_table(base::xvblock_t* _block, std::error_code & ec);
 
     static void     unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec);
-    static evm_common::xh256_t get_state_root(base::xvblock_t * block, std::error_code & ec);
-    static evm_common::xh256_t get_state_root_from_block(base::xvblock_t * block);
+    static xh256_t get_state_root(base::xvblock_t * block, std::error_code & ec);
+    static xh256_t get_state_root_from_block(base::xvblock_t * block);
     static void     unpack_subblocks(base::xvblock_t* _block, std::vector<xobject_ptr_t<base::xvblock_t>> & sublocks, std::error_code & ec);
     static void     get_tableheader_extra_from_block(base::xvblock_t* _block, base::xtableheader_extra_t &header_extra, std::error_code & ec);
  private:

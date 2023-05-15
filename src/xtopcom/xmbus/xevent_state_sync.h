@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "xbasic/xfixed_hash.h"
 #include "xcommon/xaccount_address.h"
-#include "xcommon/xfixed_hash.h"
 #include "xmbus/xevent.h"
 #include "xstatistic/xbasic_size.hpp"
 #include "xstatistic/xstatistic.h"
@@ -24,9 +24,9 @@ public:
     xevent_state_sync_t(
             const common::xaccount_address_t & _table_addr,
             const uint64_t h,
-            const evm_common::xh256_t & _table_block_hash,
-            const evm_common::xh256_t & _table_state_hash,
-            const evm_common::xh256_t & _root_hash,
+            const xh256_t & _table_block_hash,
+            const xh256_t & _table_state_hash,
+            const xh256_t & _root_hash,
             std::error_code _ec,
             direction_type dir = to_listener,
             bool _sync = true) :
@@ -47,9 +47,9 @@ public:
 
     common::xaccount_address_t table_addr;
     uint64_t height{0};
-    evm_common::xh256_t table_block_hash;
-    evm_common::xh256_t table_state_hash;
-    evm_common::xh256_t root_hash;
+    xh256_t table_block_hash;
+    xh256_t table_state_hash;
+    xh256_t root_hash;
     std::error_code ec;
 
     virtual int32_t get_class_type() const override {return xstatistic::enum_statistic_event_state_sync;}

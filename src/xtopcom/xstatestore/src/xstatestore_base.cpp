@@ -12,12 +12,12 @@
 
 NS_BEG2(top, statestore)
 
-evm_common::xh256_t xstatestore_base_t::get_state_root_from_block(base::xvblock_t * block) const {
+xh256_t xstatestore_base_t::get_state_root_from_block(base::xvblock_t * block) const {
     std::error_code ec;
     auto state_root = data::xblockextract_t::get_state_root(block, ec);
     if (ec) {  // should not happen
         xerror("xstatestore_base_t::get_mpt_from_block get state root fail. block:%s", block->dump().c_str());
-        return evm_common::xh256_t{};
+        return xh256_t{};
     }
 
     return state_root;

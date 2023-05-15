@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 aux_source_directory(./ tests_src)
 aux_source_directory(./xtest_trie/ trie_test_src)
 

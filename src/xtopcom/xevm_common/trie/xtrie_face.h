@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "xbasic/xfixed_hash.h"
 #include "xevm_common/trie/xtrie_db.h"
-#include "xcommon/xfixed_hash.h"
 
 NS_BEG3(top, evm_common, trie)
 

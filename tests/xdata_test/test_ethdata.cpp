@@ -57,7 +57,7 @@ TEST_F(test_ethdata, basic_type_rlp) {
         std::cout << "empty h256:" << outstr.size() << std::endl;
     }        
     {
-        evm_common::xh256_t value;
+        xh256_t value;
         evm_common::RLPStream s;
         s << value;
         std::string outstr = top::to_string(s.out());
@@ -100,7 +100,7 @@ TEST_F(test_ethdata, ethheader_rlp) {
         std::string root_str = "0x9c09bae2c4a8f1487e11260efd4a19b7cb719ad4dc40fdd4ac461e04fae01aba";
         std::error_code ec;
         xbytes_t root_bs = top::from_hex(root_str, ec);
-        evm_common::xh256_t _root(root_bs);
+        xh256_t _root(root_bs);
         _header.set_transactions_root(_root);
         _header.set_receipts_root(_root);
         _header.set_state_root(_root);

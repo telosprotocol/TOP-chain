@@ -4,13 +4,13 @@
 
 #include "xevm_contract_runtime/sys_contract/xdelegate_eth_contract.h"
 
+#include "xbasic/xfixed_hash.h"
+#include "xcommon/common_data.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xchain_uuid.h"
 #include "xcommon/xeth_address.h"
 #include "xdata/xnative_contract_address.h"
-#include "xcommon/common_data.h"
 #include "xevm_common/xabi_decoder.h"
-#include "xcommon/xfixed_hash.h"
 #include "xevm_contract_runtime/sys_contract/xdelegate_erc20_contract.h"
 #include "xevm_contract_runtime/xerror/xerror.h"
 #include "xevm_runner/evm_engine_interface.h"
@@ -158,10 +158,10 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
             auto const & contract_address = context.address;
             auto const & recipient_address = recver;
 
-            evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t(event_hex_string_transfer));
-            topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
-            topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
+            xh256s_t topics;
+            topics.push_back(xh256_t(event_hex_string_transfer));
+            topics.push_back(xh256_t(common::xeth_address_t::zero().to_h256()));
+            topics.push_back(xh256_t(recipient_address.to_h256()));
             evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
             result[31] = 1;
 
@@ -256,10 +256,10 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         if (!ec) {
             auto const & contract_address = context.address;
 
-            evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t(event_hex_string_transfer));
-            topics.push_back(evm_common::xh256_t(burn_from.to_h256()));
-            topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
+            xh256s_t topics;
+            topics.push_back(xh256_t(event_hex_string_transfer));
+            topics.push_back(xh256_t(burn_from.to_h256()));
+            topics.push_back(xh256_t(common::xeth_address_t::zero().to_h256()));
             evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
             result[31] = 1;
 
@@ -343,10 +343,10 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         if (!ec) {
             auto const & contract_address = context.address;
 
-            evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t(event_hex_string_ownership_transferred));
-            topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
-            topics.push_back(evm_common::xh256_t(new_owner.to_h256()));
+            xh256s_t topics;
+            topics.push_back(xh256_t(event_hex_string_ownership_transferred));
+            topics.push_back(xh256_t(context.caller.to_h256()));
+            topics.push_back(xh256_t(new_owner.to_h256()));
             evm_common::xevm_log_t log{contract_address, topics};
             result[31] = 1;
 
@@ -433,10 +433,10 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         if (!ec) {
             auto const & contract_address = context.address;
 
-            evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t(event_hex_string_controller_set));
-            topics.push_back(evm_common::xh256_t(old_controller.to_h256()));
-            topics.push_back(evm_common::xh256_t(new_controller.to_h256()));
+            xh256s_t topics;
+            topics.push_back(xh256_t(event_hex_string_controller_set));
+            topics.push_back(xh256_t(old_controller.to_h256()));
+            topics.push_back(xh256_t(new_controller.to_h256()));
             evm_common::xevm_log_t log{contract_address, topics};
             result[31] = 1;
 

@@ -289,12 +289,12 @@ static data::xeth_transaction_t create_test_eth() {
     auto to = common::xeth_address_t::build_from("0xc8e6615f4c0ca0f44c0ac05daadb2aaad9720c98");
     auto value = 0x1bc16d674ec80000;
     auto data = top::from_hex("0x", ec);
-    auto signV = 0x1;
-    auto signR = evm_common::xh256_t(top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec));
-    auto signS = evm_common::xh256_t(top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec));
+    xbyte_t signV = 0x1;
+    auto signR = xh256_t(top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec));
+    auto signS = xh256_t(top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec));
 
     data::xeth_transaction_t tx = data::xeth_transaction_t::build_eip1559_tx(chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas, to, value, data);
-    tx.set_sign(signV, signR, signS);
+    tx.set_sign(signR, signS, signV);
     return tx;
 }
 

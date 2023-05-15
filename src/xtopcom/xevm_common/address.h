@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xcommon/fixed_hash.h"
+#include "xbasic/xfixed_hash.h"
 
 namespace top {
 namespace evm_common {

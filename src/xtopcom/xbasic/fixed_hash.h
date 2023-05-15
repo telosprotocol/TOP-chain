@@ -35,7 +35,13 @@ extern std::random_device s_fixedHashEngine;
 /// assume the data contained in the hash is big-endian.
 template <unsigned N>
 class FixedHash {
+private:
+    using container_t = std::array<xbyte_t, N>;
+    container_t m_data;  ///< The binary data.
+
 public:
+    using value_type = typename container_t::value_type;
+
     /// The corresponding arithmetic type.
     using Arith =
         boost::multiprecision::number<boost::multiprecision::cpp_int_backend<N * 8, N * 8, boost::multiprecision::unsigned_magnitude, boost::multiprecision::unchecked, void>>;
@@ -119,7 +125,7 @@ public:
     }
 
     /// Convert to arithmetic type.
-    operator Arith() const {
+    explicit operator Arith() const {
         return fromBigEndian<Arith>(m_data);
     }
 
@@ -250,8 +256,16 @@ public:
         return m_data.begin();
     }
 
+    auto begin() -> typename std::array<xbyte_t, N>::iterator {
+        return m_data.begin();
+    }
+
     /// @returns end iterator.
     auto end() const -> typename std::array<xbyte_t, N>::const_iterator {
+        return m_data.end();
+    }
+
+    auto end() -> typename std::array<xbyte_t, N>::iterator {
         return m_data.end();
     }
 
@@ -347,9 +361,6 @@ public:
     bool empty() const noexcept {
         return std::all_of(std::begin(m_data), std::end(m_data), [](xbyte_t const byte) { return byte == 0; });
     }
-
-private:
-    std::array<xbyte_t, N> m_data;  ///< The binary data.
 };
 
 /// Fast equality operator for h256.
