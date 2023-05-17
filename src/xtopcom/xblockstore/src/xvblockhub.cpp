@@ -238,7 +238,7 @@ namespace top
         {
             //note: place code first but  please enable it later
             if(base::enum_xvblock_level_table == m_meta->_block_level)
-                return (enum_max_cached_blocks << 1);//cache to max 128 block
+                return (enum_max_cached_blocks);// TODO(jimmy) cache to max 32 block
 
             if(base::enum_xvblock_level_unit == m_meta->_block_level)
                 return (enum_max_cached_blocks >> 2);//cache to max 8 block for unit

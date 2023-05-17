@@ -89,6 +89,7 @@ private:
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[xtxpool_zone_type_max];
     xtxpool_statistic_t m_statistic;
+    xtxpool_cache_limit_t m_cache_limit;
     std::set<base::xtable_shortid_t> m_all_table_sids;
     std::map<base::xtable_shortid_t, uint64_t> m_peer_table_height_cache;
     mutable std::mutex m_peer_table_height_cache_mutex;

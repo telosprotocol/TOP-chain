@@ -14,6 +14,11 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include "xbase/xlog.h"
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#else
+#include <sys/sysinfo.h>
+#endif
 
 NS_BEG1(top)
 
@@ -103,6 +108,23 @@ int xsys_utl_t::check_and_remove_old_log_files(std::string const & log_path, int
     xinfo("xsys_utl_t::check_and_remove_old_log_files finish.log_path(%s),removed_log_file_count(%d),removed_metric_file_count(%d)", 
         log_path.c_str(), removed_log_file_count, removed_metric_file_count);
     return 0;
+}
+
+uint64_t xsys_utl_t::get_total_memory() {
+    uint64_t total_ram = 0;
+#ifdef __APPLE__
+    size_t len = sizeof(total_ram);
+    int ret = sysctlbyname("hw.memsize", &total_ram, &len, NULL, 0);
+    if (ret != 0)
+    {
+        xwarn("xdb_impl macos sysctlbyname of hw.memsize failed!");
+    }
+#else
+    struct sysinfo si;
+    sysinfo(&si);
+    total_ram = si.totalram;
+#endif
+    return total_ram;
 }
 
 NS_END1

@@ -15,6 +15,8 @@ class xsys_utl_t {
     static int    get_log_directory_available_space_GB(std::string const & log_path);
     static int    check_and_remove_old_log_file(std::string const & full_log_file_path, int threshold_timestamp_s);
     static int    check_and_remove_old_log_files(std::string const & log_path, int log_keep_seconds, int metric_keep_seconds);
+
+    static uint64_t get_total_memory();
 };
 
 
