@@ -23,9 +23,16 @@ namespace xtxpool_v2 {
 
 #define table_send_tx_queue_size_max_large (10000)
 
-#define role_send_tx_queue_size_max_for_each_table (800)
-#define role_recv_tx_queue_size_max_for_each_table (800)
-#define role_confirm_tx_queue_size_max_for_each_table (800)
+#define total_send_tx_queue_size_max_validator (5000)
+#define total_recv_tx_queue_size_max_validator (8000)
+#define total_confirm_tx_queue_size_max_validator (1000)
+#define total_send_tx_queue_size_max_auditor (total_send_tx_queue_size_max_validator*3)  // three group
+#define total_recv_tx_queue_size_max_auditor (total_recv_tx_queue_size_max_validator*3)
+#define total_confirm_tx_queue_size_max_auditor (total_confirm_tx_queue_size_max_validator*3)
+
+// #define role_send_tx_queue_size_max_for_each_table (800)
+// #define role_recv_tx_queue_size_max_for_each_table (800)
+// #define role_confirm_tx_queue_size_max_for_each_table (800)
 
 class xtx_counter_t {
 public:
@@ -66,6 +73,12 @@ private:
     std::atomic<int32_t> m_recv_tx_count{0};
     std::atomic<int32_t> m_conf_tx_count{0};
     std::atomic<int32_t> m_unconfirm_tx_count{0};
+};
+
+struct xtxpool_cache_limit_t {
+    uint32_t    m_total_send_tx_max_num{0};
+    uint32_t    m_total_recv_tx_max_num{0};
+    uint32_t    m_total_confirm_tx_max_num{0};
 };
 
 class xtxpool_statistic_t {
@@ -270,6 +283,10 @@ public:
     //     return std::string(local_param_buf);
     // }
 
+public:
+    std::atomic<uint32_t> m_push_tx_send_cur_num{0};
+    std::atomic<uint32_t> m_push_tx_recv_cur_num{0};
+    std::atomic<uint32_t> m_push_tx_confirm_cur_num{0};
 private:
     std::atomic<uint32_t> m_table_num{0};
     std::atomic<int32_t> m_unconfirm_tx_num{0};
@@ -287,9 +304,6 @@ private:
     // std::atomic<uint32_t> m_receipt_recv_num_7to12_clock{0};
     // std::atomic<uint32_t> m_receipt_recv_num_13to30_clock{0};
     // std::atomic<uint32_t> m_receipt_recv_num_exceed_30_clock{0};
-    std::atomic<uint32_t> m_push_tx_send_cur_num{0};
-    std::atomic<uint32_t> m_push_tx_recv_cur_num{0};
-    std::atomic<uint32_t> m_push_tx_confirm_cur_num{0};
     std::atomic<uint32_t> m_push_tx_send_fail_num{0};
     std::atomic<uint32_t> m_push_tx_receipt_fail_num{0};
     std::atomic<uint32_t> m_receipt_duplicate_num{0};

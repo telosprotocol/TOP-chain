@@ -11,6 +11,8 @@
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xtxpool_para.h"
 #include "xvledger/xvledger.h"
+#include "xbase/xutl.h"
+#include "xbasic/xsys_utl.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -26,6 +28,18 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
         }
         m_tables_mgr.add_tables(table_index.first, table_index.second);
     }
+
+    uint64_t system_memory = xsys_utl_t::get_total_memory();
+    if (system_memory < 2.5*1024*1024*1024L) {// less than 2.5G is a validator node
+        m_cache_limit.m_total_send_tx_max_num = total_send_tx_queue_size_max_validator;
+        m_cache_limit.m_total_recv_tx_max_num = total_recv_tx_queue_size_max_validator;
+        m_cache_limit.m_total_confirm_tx_max_num = total_confirm_tx_queue_size_max_validator;
+    } else {
+        m_cache_limit.m_total_send_tx_max_num = total_send_tx_queue_size_max_auditor;
+        m_cache_limit.m_total_recv_tx_max_num = total_recv_tx_queue_size_max_auditor;
+        m_cache_limit.m_total_confirm_tx_max_num = total_confirm_tx_queue_size_max_auditor;
+    }
+    xinfo("xtxpool_t::xtxpool_t momory=%ld",system_memory);
 }
 
 bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
@@ -41,6 +55,13 @@ bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
 }
 
 int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
+    // TODO(jimmy) not limit evm table tx now
+    if (m_statistic.m_push_tx_send_cur_num >= m_cache_limit.m_total_send_tx_max_num
+        && tx->get_tx()->get_self_table_index().get_zone_index() != base::enum_chain_zone_evm_index) {
+        xwarn("xtxpool_t::push_send_tx fail-reach send limit.tx=%s,cur=%d",tx->get_tx()->dump().c_str(),m_statistic.m_push_tx_send_cur_num.load());
+        return xtxpool_error_pending_reached_upper_limit;
+    }
+
     auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
@@ -62,6 +83,15 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 }
 
 int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) {
+    if (tx->get_tx()->is_recv_tx() && m_statistic.m_push_tx_recv_cur_num >= m_cache_limit.m_total_recv_tx_max_num) {
+        xwarn("xtxpool_t::push_receipt fail-reach recv limit.tx=%s,cur=%d",tx->get_tx()->dump().c_str(),m_statistic.m_push_tx_recv_cur_num.load());
+        return xtxpool_error_pending_reached_upper_limit;
+    }
+    if (tx->get_tx()->is_confirm_tx() && m_statistic.m_push_tx_confirm_cur_num >= m_cache_limit.m_total_confirm_tx_max_num) {
+        xwarn("xtxpool_t::push_receipt fail-reach confirm limit.tx=%s,cur=%d",tx->get_tx()->dump().c_str(),m_statistic.m_push_tx_confirm_cur_num.load());
+        return xtxpool_error_pending_reached_upper_limit;
+    }
+
     auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
