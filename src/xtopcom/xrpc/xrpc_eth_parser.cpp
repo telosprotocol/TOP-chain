@@ -225,8 +225,10 @@ void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data:
     js_v["from"] =  ethtx.get_from().to_hex_string();
     if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
         js_v["to"] = ethtx.get_to().to_hex_string();
-        if (!ethtx.get_data().empty()) {
+        if (!ethtx.get_data().empty()) {  // call contract
             js_v["contractAddress"] = ethtx.get_to().to_hex_string();
+        } else { // transfer
+            js_v["contractAddress"] = Json::Value::null;
         }
     } else {
         js_v["to"] = Json::Value::null;
