@@ -680,8 +680,7 @@ void xdb::xdb_impl::handle_error(const rocksdb::Status& status) const {
 
     if (status.ToString().find("Bad table magic number") != std::string::npos || 
         status.ToString().find("Corrupt or unsupported format_version") != std::string::npos) {
-        //throw xdb_error(errmsg);
-        exit(1);
+        throw xdb_error(errmsg); // XTODO throw xdb_error exception
     }
 }
 
