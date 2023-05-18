@@ -133,13 +133,13 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     // "0x3ae8d743": "get_light_client_state()",
     // "0xd398572f": "is_confirmed(uint256,bytes32)",
     // "0x7120345a": "is_known_execution_header(uint64)",
-    // "0xb15ad2e8": "get_height()"
     // "0x1eeaebb2": "last_block_number()",
     // "0x2e139f0c": "submit_beacon_chain_light_client_update(bytes)",
-    // "0x3c1a38b6": "submit_execution_header(bytes)",
+    // "0xe9211822": "submit_execution_headers(bytes)",
     // "0xd826f88f": "reset()",
     // "0xb5a61069": "disable_reset()",
-    // "0x48714e24": "client_mode()",
+    // "0x0968a773": "get_client_mode()",
+    // "0xf6d1f443": "get_unfinalized_tail_block_number()"
     //--------------------------------------------------------------
 
     constexpr uint32_t method_id_init{0x4ddf47d4};
@@ -151,13 +151,13 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_get_light_client_state{0x3ae8d743};
     constexpr uint32_t method_id_is_confirmed{0xd398572f};
     constexpr uint32_t method_id_is_known_execution_header{0x7120345a};
-    constexpr uint32_t method_id_get_height{0xb15ad2e8};
     constexpr uint32_t method_id_last_block_number{0x1eeaebb2};
     constexpr uint32_t method_id_submit_beacon_chain_light_client_update{0x2e139f0c};
-    constexpr uint32_t method_id_submit_execution_header{0x3c1a38b6};
+    constexpr uint32_t method_id_submit_execution_headers{0xe9211822};
     constexpr uint32_t method_id_reset{0xd826f88f};
     constexpr uint32_t method_id_disable_reset{0xb5a61069};
-    constexpr uint32_t method_id_client_mode{0x48714e24};
+    constexpr uint32_t method_id_get_client_mode{0x0968a773};
+    constexpr uint32_t method_id_get_unfinalized_tail_block_number{0xf6d1f443};
 
     // check param
     assert(state_ctx);
@@ -334,8 +334,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(is_known));
         return true;
     }
-    case method_id_get_height:
-        XFALLTHROUGH;
     case method_id_last_block_number: {
         auto number = last_block_number(state);
         output.exit_status = Returned;
@@ -389,7 +387,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         output.logs.push_back(log);
         return true;
     }
-    case method_id_submit_execution_header: {
+    case method_id_submit_execution_headers: {
 #if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
         if (!m_whitelist.count(context.caller.to_hex_string())) {
 #else
@@ -416,22 +414,24 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         }
         // evm_common::xeth_header_t header;
         auto left_bytes = std::move(bytes);
+        size_t count = 0;
         while (!left_bytes.empty()) {
             evm_common::RLP::DecodedItem item = evm_common::RLP::decode(left_bytes);
 
-            if (item.decoded.size() != 1) {
-                xwarn("[xtop_evm_eth2_client_contract::execute] decode error");
+            if (item.decoded.size() != 5) {
+                xwarn("xtop_evm_eth2_client_contract::execute, decode error, decoding xeth_header_t at %zu, decoded item count %zu", count, item.decoded.size());
                 err.fail_status = precompile_error::revert;
                 err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
                 return false;
             }
+            ++count;
             left_bytes = std::move(item.remainder);
 
             xeth_header_t header;
             {
-                auto item_header = evm_common::RLP::decode_once(item.decoded[0]);
+                auto const & item_header = evm_common::RLP::decode_once(item.decoded[0]);
                 if (item_header.decoded.size() != 1) {
-                    xwarn("[xtop_evm_eth2_client_contract::execute] decode_once error");
+                    xwarn("xtop_evm_eth2_client_contract::execute, decode_once error, size %zu", item_header.decoded.size());
                     err.fail_status = precompile_error::revert;
                     err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
                     return false;
@@ -500,15 +500,26 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(0));
         return true;
     }
-    case method_id_client_mode: {
-        auto const mode = client_mode(state);
+    case method_id_get_client_mode: {
+        auto const mode = get_client_mode(state);
 
         output.exit_status = Returned;
         output.cost = 0;
-        output.output = evm_common::toBigEndian(static_cast<u256>(static_cast<int>(mode)));
+        output.output = evm_common::toBigEndian(static_cast<u256>(static_cast<uint8_t>(mode)));
 
         return true;
     }
+
+    case method_id_get_unfinalized_tail_block_number: {
+        auto const header = get_unfinalized_tail_block_number(state);
+
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = evm_common::toBigEndian(static_cast<u256>(header));
+
+        return true;
+    }
+
     default: {
         xwarn("[xtop_evm_eth2_client_contract::execute] not found method id: 0x%x", function_selector.method_id);
         err.fail_status = precompile_error::fatal;
@@ -556,6 +567,12 @@ bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t 
         xwarn("xtop_evm_eth2_client_contract::init set client mode error");
         return false;
     }
+
+    if (false == add_finalized_execution_blocks(state, init_input.finalized_execution_header.number, hash)) {
+        xwarn("xtop_evm_eth2_client_contract::init set finalized execution header number => hash failed");
+        return false;
+    }
+
     xinfo("xtop_evm_eth2_client_contract::init success");
     return true;
 }
@@ -685,7 +702,7 @@ bool xtop_evm_eth2_client_contract::submit_beacon_chain_light_client_update(stat
 
 bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header, common::xeth_address_t const & sender) {
     assert(!sender.is_zero());
-    if (client_mode(state) != xclient_mode_t::submit_header) {
+    if (get_client_mode(state) != xclient_mode_t::submit_header) {
         xwarn("xtop_evm_eth2_client_contract::submit_execution_header client_mode error");
         return false;
     }
@@ -875,6 +892,12 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
             xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
             return false;
         }
+
+        xdbg("next_sync_committee.state_root %s, beacon_header.state_root %s, attested_beacon_header.state_root %s",
+             to_hex(merkle_root).c_str(),
+             to_hex(active_header.state_root).c_str(),
+             to_hex(update.attested_beacon_header.state_root).c_str());
+
         if (merkle_root != update.attested_beacon_header.state_root) {
             xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee root error: %s, %s, %s",
                   to_hex(merkle_root).c_str(),
@@ -1109,9 +1132,13 @@ bool xtop_evm_eth2_client_contract::set_flag(state_ptr state) {
     return true;
 }
 
-xclient_mode_t xtop_evm_eth2_client_contract::client_mode(state_ptr state) const {
-    auto const mode = state->int64_get(data::system_contract::XPROPERTY_CLIENT_MODE);
-    return static_cast<evm_common::eth2::xclient_mode_t>(mode);
+xclient_mode_t xtop_evm_eth2_client_contract::get_client_mode(state_ptr state) const {
+    auto const mode = static_cast<evm_common::eth2::xclient_mode_t>(state->int64_get(data::system_contract::XPROPERTY_CLIENT_MODE));
+    if (mode == xclient_mode_t::invalid) {
+        xwarn("xtop_evm_eth2_client_contract::get_client_mode failed");
+    }
+
+    return mode;
 }
 
 bool xtop_evm_eth2_client_contract::client_mode(state_ptr state, evm_common::eth2::xclient_mode_t const mode) {
@@ -1234,7 +1261,7 @@ bool xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info(s
 }
 
 bool xtop_evm_eth2_client_contract::is_light_client_update_allowed(state_ptr state) const {
-    if (client_mode(state) != xclient_mode_t::submit_light_client_update) {
+    if (get_client_mode(state) != xclient_mode_t::submit_light_client_update) {
         xwarn("xtop_evm_eth2_client_contract::is_light_client_update_allowed client_mode error");
         return false;
     }

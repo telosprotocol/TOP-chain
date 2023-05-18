@@ -48,7 +48,7 @@ public:
     bool submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header, common::xeth_address_t const & sender);
     bool reset(state_ptr state);
     bool disable_reset(state_ptr state);
-    evm_common::eth2::xclient_mode_t client_mode(state_ptr state) const;
+    evm_common::eth2::xclient_mode_t get_client_mode(state_ptr state) const;
     uint64_t get_unfinalized_tail_block_number(state_ptr state) const;
 
 private:

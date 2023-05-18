@@ -24,7 +24,7 @@ XINLINE_CONSTEXPR size_t SYNC_COMMITTEE_BITS_SIZE{512};
 using xbytes48_t = xfixed_bytes_t<PUBLIC_KEY_BYTES_LEN>;
 using xbytes96_t = xfixed_bytes_t<SIGNATURE_BYTES_LEN>;
 
-using xclient_mode_t = enum {
+using xclient_mode_t = enum : uint8_t {
     invalid = 0,
     submit_light_client_update,
     submit_header,

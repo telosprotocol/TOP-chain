@@ -9,7 +9,7 @@
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xhex.h"
 #include "xbasic/xspan.h"
-#include "xstring_view.h"
+#include "xbasic/xstring_view.h"
 
 #include <algorithm>
 #include <array>
@@ -30,8 +30,8 @@ enum class xtop_enum_string_format {
 // The bitset is stored in little endian order.
 // The first bit is the least significant bit. The last bit is the most significant bit.
 // The bitset can be built from:
-//  1) a string with specified format. The format can be binary or hex, thus the input string is the presentation of a binary or hex number. Hence the presentaion is in big endian order.
-//      a. The string must contain only '0' and '1' with or without "0b" or "0B" prefix if the format is binary.
+//  1) a string with specified format. The format can be binary or hex, thus the input string is the from of a binary or hex number.
+//      a. The string must contain only '0' and '1' with or without "0b" or "0B" prefix if the input string is in the form of binary.
 //      b. The string must contain only '0'-'9', 'a'-'f' and 'A'-'F' with or without "0x" or "0X" prefix if the format is hex.
 //  2) a byte array with specified endian. The endian can be little or big. The size of the byte array can be in any size.
 //  3) an unsigned integer.
@@ -59,56 +59,55 @@ public:
     using format = xtop_enum_string_format;
 
     /// @brief Build bitset from string with specified format.
-    /// @param str_view The input string.
-    /// @param fmt The format of the input string. If the format is binary, the string must contain only '0' and '1' with or without "0b" or "0B" prefix. If the format is hex, the string must contain only '0'-'9', 'a'-'f' and 'A'-'F' with or without "0x" or "0X" prefix.
+    /// @param str_view The input string in hex style. It must be started with "0x", "0X" or no hex prefix followed with characters in [0-9a-fA-F].
+    /// @param endian The endian of the input hex string.
     /// @param ec Holds the error code if the function fails.
     /// @return The bitset built from the input string.
-    static xtop_bitset build_from(xstring_view_t str_view, format const fmt, std::error_code & ec) {
+    static xtop_bitset build_from_hex(xstring_view_t str_view, xendian_t const endian, std::error_code & ec) {
         assert(!ec);
-        switch (fmt) {
-        case format::hex: {
-            if (!is_hex_string(str_view)) {
-                ec = error::xbasic_errc_t::invalid_hex_string;
-                return {};
-            }
-
-            if (has_hex_prefix(str_view)) {
-                str_view.remove_prefix(2);
-            }
-
-            xbytes_t bytes{};
-            if (str_view.length() & 1) {
-                bytes.push_back(const_from_hex_char(str_view.front()));
-                str_view.remove_prefix(1);
-            }
-
-            for (size_t i = 0; i < str_view.size(); i+=2) {
-                bytes.push_back(static_cast<xbyte_t>(const_from_hex_char(str_view[i]) << 4 | const_from_hex_char(str_view[i + 1])));
-            }
-
-            return build_from(bytes, xendian_t::big);
+        if (has_hex_prefix(str_view)) {
+            str_view.remove_prefix(2);
         }
 
-        case format::binary: {
-            if (has_binary_prefix(str_view)) {
-                str_view = str_view.substr(2);
-            }
-
-            if (!is_binary_string_without_prefix(str_view)) {
-                ec = error::xbasic_errc_t::invalid_binary_string;
-                return {};
-            }
-            str_view = str_view.substr(str_view.size() - std::min(N, str_view.size()));
-            return {std::bitset<N>{str_view.data()}};
+        if (!is_hex_string_without_prefix(str_view)) {
+                            ec = error::xbasic_errc_t::invalid_hex_string;
+            return {};
         }
 
-        default:  // NOLINT(clang-diagnostic-covered-switch-default)
-            assert(false);
-            break;
+        xbytes_t bytes{};
+        if (str_view.length() & 1) {
+            bytes.push_back(const_from_hex_char(str_view.front()));
+            str_view.remove_prefix(1);
         }
 
-        ec = error::xbasic_errc_t::invalid_format;
-        return {};
+        for (size_t i = 0; i < str_view.size(); i += 2) {
+            bytes.push_back(static_cast<xbyte_t>(const_from_hex_char(str_view[i]) << 4 | const_from_hex_char(str_view[i + 1])));
+        }
+
+        return build_from(bytes, endian);
+    }
+
+    static xtop_bitset build_from_bin(xstring_view_t str_view, xsignificant_bit_t const sb, std::error_code & ec) {
+        assert(!ec);
+
+        if (has_binary_prefix(str_view)) {
+            str_view = str_view.substr(2);
+        }
+
+        if (!is_binary_string_without_prefix(str_view)) {
+            ec = error::xbasic_errc_t::invalid_binary_string;
+            return {};
+        }
+
+        std::string tmp;
+        if (sb == xsignificant_bit_t::lsb0) {
+            tmp = std::string{std::begin(str_view), std::end(str_view)};
+            std::reverse(std::begin(tmp), std::end(tmp));
+            str_view = xstring_view_t{tmp};
+        }
+
+        str_view = str_view.substr(str_view.size() - std::min(N, str_view.size()));
+        return {std::bitset<N>{str_view.data(), str_view.size()}};
     }
 
     /// @brief Build bitset object from bytes with specified endian.
