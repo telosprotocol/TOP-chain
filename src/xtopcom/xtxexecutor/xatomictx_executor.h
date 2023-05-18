@@ -41,7 +41,7 @@ class xatomictx_executor_t {
                                     const xcons_transaction_ptr_t & tx,
                                     enum_execute_result_type vm_result,
                                     xatomictx_output_t & output,
-                                    uint64_t gas_used);
+                                    uint64_t gas_used, bool forked = false);
     bool    check_account_order(const xcons_transaction_ptr_t & tx);
     bool    check_receiptid_order(const xcons_transaction_ptr_t & tx);
     bool    update_nonce_and_hash(const data::xaccountstate_ptr_t & accountstate, const xcons_transaction_ptr_t & tx);

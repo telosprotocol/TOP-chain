@@ -60,7 +60,7 @@ struct xvm_gasfee_detail_t {
     uint64_t m_state_last_time{0};
     uint64_t m_tx_used_tgas{0};
     uint64_t m_tx_used_deposit{0};
-    uint64_t m_tx_priority_fee_price{0};
+    evm_common::u256 m_tx_priority_fee_price{0};
 
     std::string str() {
         std::stringstream ss;
@@ -75,7 +75,7 @@ struct xvm_gasfee_detail_t {
         ss << ", m_tx_used_deposit: ";
         ss << m_tx_used_deposit;
         ss << ", m_tx_priority_fee_price: ";
-        ss << m_tx_priority_fee_price;
+        ss << m_tx_priority_fee_price.str();
         return ss.str();
     }
 };

@@ -199,7 +199,7 @@ bool xatomictx_executor_t::check_receiptid_order(const xcons_transaction_ptr_t &
     return true;
 }
 
-static void set_evm_receipt_info(const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput, uint64_t gas_used) {
+static void set_evm_receipt_info(const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput, uint64_t gas_used, bool forked) {
     if (tx->get_tx_version() != data::xtransaction_version_3) {
         return;
     }
@@ -212,7 +212,12 @@ static void set_evm_receipt_info(const xcons_transaction_ptr_t & tx, const xvm_o
     evm_tx_receipt.set_tx_status(status);
     evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
     evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
-    evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
+    if (forked) {
+        evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::base_price() + vmoutput.m_gasfee_detail.m_tx_priority_fee_price);
+    } else {
+        evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
+    }
+
     if (vmoutput.m_tx_result.status == evm_common::xevm_transaction_status_t::Success) {
         if (!vmoutput.m_tx_result.logs.empty()) {
             evm_tx_receipt.set_logs(vmoutput.m_tx_result.logs);
@@ -406,7 +411,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xaccountstate_pt
                                                     const xcons_transaction_ptr_t & tx,
                                                     enum_execute_result_type vm_result,
                                                     xatomictx_output_t & output,
-                                                    uint64_t gas_used) {
+                                                    uint64_t gas_used,bool forked) {
     // do state rollback and check state dirty
     bool is_state_dirty = false;
     if (enum_exec_success != vm_result) {
@@ -447,7 +452,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xaccountstate_pt
     }
 
     if (is_pack_tx) {  // tx packed should update tx related state
-        set_evm_receipt_info(tx, output.m_vm_output, gas_used);
+        set_evm_receipt_info(tx, output.m_vm_output, gas_used, forked);
         set_tvm_receipt_info(tx, output.m_vm_output, gas_used);
         bool tx_related_update = update_tx_related_state(tx_accountstate, tx, output.m_vm_output);
         if (false == tx_related_update) {
@@ -492,7 +497,7 @@ enum_execute_result_type xatomictx_executor_t::execute(const xcons_transaction_p
     } else{
         result = vm_execute(tx, output);
     }
-    vm_execute_after_process(tx_accountstate, tx, result, output, gas_used);
+    vm_execute_after_process(tx_accountstate, tx, result, output, gas_used, forked);
     return result;
 }
 
