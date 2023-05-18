@@ -156,7 +156,7 @@ void xtop_gasfee_evm::store_in_one_stage() {
     //m_max_converted_utop is gas_limit or gas_used*eth_gas_price,and gas_limit >= gas_used*eth_gas_price
     m_detail.m_state_burn_balance = static_cast<uint64_t>(m_max_converted_utop);
     m_detail.m_tx_used_deposit = static_cast<uint64_t>(m_max_converted_utop);
-    m_detail.m_tx_priority_fee_price = static_cast<uint64_t>(m_priority_fee_price);
+    m_detail.m_tx_priority_fee_price = m_priority_fee_price;
     xdbg("[xtop_gasfee_evm::store_in_one_stage] gasfee_detail: %s", m_detail.str().c_str());
 }
 
