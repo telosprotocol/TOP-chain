@@ -50,5 +50,6 @@ public:
     static bool check_eth_address(const std::string& account, Json::Value & js_rsp);
     static bool check_hash(const std::string& hash, Json::Value & js_rsp);
     static bool check_req(const Json::Value & js_req, Json::Value & js_rsp, const uint32_t number);
+    static bool check_number(const std::string & value, Json::Value & js_rsp, uint32_t index);
 };
 }

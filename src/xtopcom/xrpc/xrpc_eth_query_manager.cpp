@@ -960,7 +960,7 @@ void xrpc_eth_query_manager::eth_feeHistory(Json::Value & js_req, Json::Value & 
         return;
 
     // block count:hex string
-    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_unknown))
+    if (!eth::EthErrorCode::check_number(js_req[0].asString(), js_rsp, 0))
         return;
 
     // Highest block of the requested range: hex string / earliest /  pending /latest
@@ -980,7 +980,7 @@ void xrpc_eth_query_manager::eth_feeHistory(Json::Value & js_req, Json::Value & 
 
     uint64_t oldest_block_height = 0;
     uint64_t end_block_height = get_block_height(js_req[1].asString());
-    uint64_t block_count = std::strtoul(js_req[0].asString().c_str(), NULL, 16);
+    uint64_t block_count = std::strtoul(js_req[0].asString().c_str(), NULL, 0);
     if (end_block_height > block_count) {
         oldest_block_height = end_block_height - block_count;
     } else {

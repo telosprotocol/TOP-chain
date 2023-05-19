@@ -1,5 +1,6 @@
 #include "xrpc/eth_rpc/eth_error_code.h"
 #include "xbase/xbase.h"
+#include <regex>
 
 namespace eth {
 void EthErrorCode::deal_error(Json::Value & js_rsp, eth::enum_eth_rpc_code error_id, const std::string& msg) {
@@ -90,6 +91,19 @@ bool EthErrorCode::check_hash(const std::string& hash, Json::Value & js_rsp) {
         deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
         return false;
     }
+    return true;
+}
+
+bool EthErrorCode::check_number(const std::string & value, Json::Value & js_rsp, uint32_t index) {
+    std::regex reg("(0x[0-9a-fA-F]+)|([1-9]\\d*)|(0)");
+
+    bool is_number = std::regex_match(value, reg);
+    if (!is_number) {
+        std::string msg = std::string("invalid argument ") + std::to_string(index) + " invalid hex or decimal integer \"" + value + "\"";
+        deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+        return false;
+    }
+
     return true;
 }
 }
