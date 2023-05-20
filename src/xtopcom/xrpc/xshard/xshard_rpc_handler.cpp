@@ -103,9 +103,10 @@ void xshard_rpc_handler::process_msg(const xrpc_msg_request_t & edge_msg) {
             XMETRICS_GAUGE(metrics::rpc_txdelay_client_timestamp_unmatch, 1);
         }
 
-        if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
+        auto const ret = m_txpool_service->request_transaction_consensus(tx_ptr, false);
+        if (xsuccess != ret) {
             // throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx hash or sign error"};
-            xdbg("[global_trace][shard_rpc][push unit_service] fail %s,%s", tx_hash.c_str(), tx_ptr->source_address().to_string().c_str());
+            xdbg("[global_trace][shard_rpc][push unit_service] fail %s,%s ec %d", tx_hash.c_str(), tx_ptr->source_address().to_string().c_str(), ret);
         } else {
             xdbg("[global_trace][shard_rpc][push unit_service] succ %s,%s", tx_hash.c_str(), tx_ptr->source_address().to_string().c_str());
         }
