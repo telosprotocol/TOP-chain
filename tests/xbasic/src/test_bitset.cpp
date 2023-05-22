@@ -174,7 +174,7 @@ TEST(xbitset_t, build_from_uint) {
 
 TEST(xbitset_t, build_from_binary_string) {
     std::error_code ec;
-    auto bs1 = xbitset_t<8>::build_from("00000000", xstring_format_t::binary, ec);
+    auto bs1 = xbitset_t<8>::build_from_bin("00000000", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
@@ -183,7 +183,7 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0}));
 
-    bs1 = xbitset_t<8>::build_from("0b00000000", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("00000000", LSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
@@ -192,7 +192,7 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0}));
 
-    bs1 = xbitset_t<8>::build_from("0B00000000", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0b00000000", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
@@ -201,7 +201,34 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0}));
 
-    bs1 = xbitset_t<8>::build_from("11111111", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0b00000000", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0B00000000", MSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0B00000000", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0}));
+
+    bs1 = xbitset_t<8>::build_from_bin("11111111", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0xffu);
     ASSERT_EQ(bs1.to<uint16_t>(), 0xffu);
@@ -210,7 +237,7 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0xff}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0xff}));
 
-    bs1 = xbitset_t<8>::build_from("0b11111111", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("11111111", LSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0xffu);
     ASSERT_EQ(bs1.to<uint16_t>(), 0xffu);
@@ -219,7 +246,7 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0xff}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0xff}));
 
-    bs1 = xbitset_t<8>::build_from("0B11111111", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0b11111111", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0xffu);
     ASSERT_EQ(bs1.to<uint16_t>(), 0xffu);
@@ -228,7 +255,34 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0xff}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0xff}));
 
-    bs1 = xbitset_t<8>::build_from("00010010", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0b11111111", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0xff}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0xff}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0B11111111", MSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0xff}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0xff}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0B11111111", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0xffu);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0xff}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0xff}));
+
+    bs1 = xbitset_t<8>::build_from_bin("00010010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x12u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x12u);
@@ -237,7 +291,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x12}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x12}));
 
-    bs1 = xbitset_t<8>::build_from("0b00010010", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("00010010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x48}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x48}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0b00010010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x12u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x12u);
@@ -246,7 +309,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x12}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x12}));
 
-    bs1 = xbitset_t<8>::build_from("0B00010010", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0b00010010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x48}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x48}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0B00010010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x12u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x12u);
@@ -255,7 +327,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x12}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x12}));
 
-    bs1 = xbitset_t<8>::build_from("0010", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0B00010010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x48u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x48}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x48}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x02u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x02u);
@@ -264,7 +345,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x02}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x02}));
 
-    bs1 = xbitset_t<8>::build_from("0b0010", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x04u}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x04u}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0b0010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x02u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x02u);
@@ -273,7 +363,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x02}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x02}));
 
-    bs1 = xbitset_t<8>::build_from("0B0010", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0b0010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x04u}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x04u}));
+
+    bs1 = xbitset_t<8>::build_from_bin("0B0010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x02u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x02u);
@@ -282,7 +381,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x02}));
     ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x02}));
 
-    auto bs2 = xbitset_t<16>::build_from("0010", xstring_format_t::binary, ec);
+    bs1 = xbitset_t<8>::build_from_bin("0B0010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x04u);
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::little), (xbytes_t{0x04u}));
+    ASSERT_EQ(bs1.to<xbytes_t>(xendian_t::big), (xbytes_t{0x04u}));
+
+    auto bs2 = xbitset_t<16>::build_from_bin("0010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x02u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x02u);
@@ -291,7 +399,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x02, 0x00}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x02}));
 
-    bs2 = xbitset_t<16>::build_from("0b0010", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x04u, 0x00}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x04u}));
+
+    bs2 = xbitset_t<16>::build_from_bin("0b0010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x02u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x02u);
@@ -300,7 +417,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x02, 0x00}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x02}));
 
-    bs2 = xbitset_t<16>::build_from("0B0010", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0b0010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x04u, 0x00}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x04u}));
+
+    bs2 = xbitset_t<16>::build_from_bin("0B0010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x02u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x02u);
@@ -309,7 +435,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x02, 0x00}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x02}));
 
-    bs2 = xbitset_t<16>::build_from("00010010", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0B0010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x04u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x04u, 0x00}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x04u}));
+
+    bs2 = xbitset_t<16>::build_from_bin("00010010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x12u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x12u);
@@ -318,7 +453,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x12, 0x00}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x12}));
 
-    bs2 = xbitset_t<16>::build_from("0b00010010", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("00010010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x48u, 0x00}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x48u}));
+
+    bs2 = xbitset_t<16>::build_from_bin("0b00010010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x12u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x12u);
@@ -327,7 +471,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x12, 0x00}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x12}));
 
-    bs2 = xbitset_t<16>::build_from("0B00010010", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0b00010010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x48u, 0x00}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x48u}));
+
+    bs2 = xbitset_t<16>::build_from_bin("0B00010010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x12u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x12u);
@@ -336,7 +489,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x12, 0x00}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x12}));
 
-    bs2 = xbitset_t<16>::build_from("0000000000010010", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0B00010010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x48u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x48u, 0x00}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x48u}));
+
+    bs2 = xbitset_t<16>::build_from_bin("0000000000010010", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x12u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x12u);
@@ -345,7 +507,16 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x12, 0x00}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x12}));
 
-    bs2 = xbitset_t<16>::build_from("0b1000000000000001", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0000000000010010", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x4800u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x4800u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x4800u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x00, 0x48}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x48, 0x00}));
+
+    bs2 = xbitset_t<16>::build_from_bin("0b1000000000000001", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x01u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x8001u);
@@ -354,7 +525,7 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x01, 0x80}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x80, 0x01}));
 
-    bs2 = xbitset_t<16>::build_from("0B10001000000000000001", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0b1000000000000001", LSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x01u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x8001u);
@@ -363,7 +534,25 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x01, 0x80}));
     ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x80, 0x01}));
 
-    auto bs3 = xbitset_t<32>::build_from("0B10001000000000000001", xstring_format_t::binary, ec);
+    bs2 = xbitset_t<16>::build_from_bin("0B10001000000000000001", MSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x01u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x8001u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x8001u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x8001u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x01, 0x80}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x80, 0x01}));
+
+    bs2 = xbitset_t<16>::build_from_bin("0B10001000000000000001", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x11u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x11u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x11u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x11u);
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::little), (xbytes_t{0x11, 0x00}));
+    ASSERT_EQ(bs2.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x11}));
+
+    auto bs3 = xbitset_t<32>::build_from_bin("0B10001000000000000001", MSB0, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs3.to<uint8_t>(), 0x01u);
     ASSERT_EQ(bs3.to<uint16_t>(), 0x8001u);
@@ -372,12 +561,33 @@ TEST(xbitset_t, build_from_binary_string) {
     ASSERT_EQ(bs3.to<xbytes_t>(xendian_t::little), (xbytes_t{0x01, 0x80, 0x08, 0x00}));
     ASSERT_EQ(bs3.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x08, 0x80, 0x01}));
 
-    auto bs4 = xbitset_t<128>::build_from(
-        "11111111111111111111111111111111"
-        "00000000000000000000000000000000"
-        "10101010101010101010101010101010"
-        "01010101010101010101010101010101",
-        xstring_format_t::binary,
+    bs3 = xbitset_t<32>::build_from_bin("0B10001000000000000001", LSB0, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs3.to<uint8_t>(), 0x11u);
+    ASSERT_EQ(bs3.to<uint16_t>(), 0x11u);
+    ASSERT_EQ(bs3.to<uint32_t>(), 0x80011u);
+    ASSERT_EQ(bs3.to<uint64_t>(), 0x80011u);
+    ASSERT_EQ(bs3.to<xbytes_t>(xendian_t::little), (xbytes_t{0x11, 0x00, 0x08, 0x00}));
+    ASSERT_EQ(bs3.to<xbytes_t>(xendian_t::big), (xbytes_t{0x00, 0x08, 0x00, 0x11}));
+
+    auto bs4 = xbitset_t<128>::build_from_bin(
+        "11111111"
+        "11111111"
+        "11111111"
+        "11111111"
+        "00000000"
+        "00000000"
+        "00000000"
+        "00000000"
+        "10101010"
+        "10101010"
+        "10101010"
+        "10101010"
+        "01010101"
+        "01010101"
+        "01010101"
+        "01010101",
+        MSB0,
         ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs4.to<uint8_t>(), 0x55u);
@@ -422,7 +632,77 @@ TEST(xbitset_t, build_from_binary_string) {
         }
     }
 
-    auto bs1_failed = xbitset_t<8>::build_from("0B20001000000000000001", xstring_format_t::binary, ec);
+    bs4 = xbitset_t<128>::build_from_bin(
+        "11111111"
+        "11111111"
+        "11111111"
+        "11111111"
+        "00000000"
+        "00000000"
+        "00000000"
+        "00000000"
+        "10101010"
+        "10101010"
+        "10101010"
+        "10101010"
+        "01010101"
+        "01010101"
+        "01010101"
+        "01010101",
+        LSB0,
+        ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs4.to<uint8_t>(), 0xFFu);
+    ASSERT_EQ(bs4.to<uint16_t>(), 0xFFFFu);
+    ASSERT_EQ(bs4.to<uint32_t>(), 0xFFFFFFFFu);
+    ASSERT_EQ(bs4.to<uint64_t>(), 0xFFFFFFFFu);
+    for (size_t i = 64; i < 64 + 32; ++i) {
+        ASSERT_EQ(!static_cast<bool>(i % 2), bs4.test(i));
+    }
+    for (size_t i = 64 + 32; i < 128; ++i) {
+        ASSERT_EQ(static_cast<bool>(i % 2), bs4.test(i));
+    }
+    {
+        auto bytes = bs4.to<xbytes_t>(xendian_t::little);
+        ASSERT_EQ(bytes.size(), 16);
+        for (size_t i = 0; i < 4; ++i) {
+            ASSERT_EQ(bytes[i], 0xFF);
+        }
+        for (size_t i = 4; i < 8; ++i) {
+            ASSERT_EQ(bytes[i], 0x00);
+        }
+        for (size_t i = 8; i < 12; ++i) {
+            ASSERT_EQ(bytes[i], 0x55);
+        }
+        for (size_t i = 12; i < 16; ++i) {
+            ASSERT_EQ(bytes[i], 0xAA);
+        }
+
+        bytes = bs4.to<xbytes_t>(xendian_t::big);
+        ASSERT_EQ(bytes.size(), 16);
+        for (size_t i = 0; i < 4; ++i) {
+            ASSERT_EQ(bytes[i], 0xAA);
+        }
+        for (size_t i = 4; i < 8; ++i) {
+            ASSERT_EQ(bytes[i], 0x55);
+        }
+        for (size_t i = 8; i < 12; ++i) {
+            ASSERT_EQ(bytes[i], 0x00);
+        }
+        for (size_t i = 12; i < 16; ++i) {
+            ASSERT_EQ(bytes[i], 0xFF);
+        }
+    }
+
+    auto bs1_failed = xbitset_t<8>::build_from_bin("0B20001000000000000001", MSB0, ec);
+    ASSERT_FALSE(!ec);
+    ASSERT_EQ(bs1_failed.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1_failed.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1_failed.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1_failed.to<uint64_t>(), 0x00u);
+
+    ec.clear();
+    bs1_failed = xbitset_t<8>::build_from_bin("0B20001000000000000001", LSB0, ec);
     ASSERT_FALSE(!ec);
     ASSERT_EQ(bs1_failed.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1_failed.to<uint16_t>(), 0x00u);
@@ -433,225 +713,450 @@ TEST(xbitset_t, build_from_binary_string) {
 TEST(xbitset_t, build_from_hex_string) {
     std::error_code ec;
 
-    auto bs1 = xbitset_t<8>::build_from("", xstring_format_t::hex, ec);
+    auto bs1 = xbitset_t<8>::build_from_hex("", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
 
-    bs1 = xbitset_t<8>::build_from("0", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("", xendian_t::little, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
 
-    bs1 = xbitset_t<8>::build_from("0x0", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
 
-    bs1 = xbitset_t<8>::build_from("0X00", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0", xendian_t::little, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
 
-    bs1 = xbitset_t<8>::build_from("01", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x0", xendian_t::big, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0x0", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0X00", xendian_t::big, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0X00", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("01", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x01u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x01u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x01u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x01u);
 
-    bs1 = xbitset_t<8>::build_from("0x10", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("01", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x01u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x01u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x01u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x01u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0x10", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x10u);
 
-    bs1 = xbitset_t<8>::build_from("0X20", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x10", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x10u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x10u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x10u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x10u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0X20", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x20u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x20u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x20u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x20u);
 
-    bs1 = xbitset_t<8>::build_from("00000000", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0X20", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x20u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x20u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x20u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x20u);
+
+    bs1 = xbitset_t<8>::build_from_hex("00000000", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
 
-    bs1 = xbitset_t<8>::build_from("0x00000000", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("00000000", xendian_t::little, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
 
-    bs1 = xbitset_t<8>::build_from("0X00000000", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x00000000", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
 
-    bs1 = xbitset_t<8>::build_from("11111111", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x00000000", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0X00000000", xendian_t::big, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0X00000000", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("11111111", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x11u);
 
-    bs1 = xbitset_t<8>::build_from("0x11111111", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("11111111", xendian_t::little, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x11u);
 
-    bs1 = xbitset_t<8>::build_from("0x11111111", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x11111111", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x11u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x11u);
 
-    bs1 = xbitset_t<8>::build_from("01020304", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x11111111", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x11u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0x11111111", xendian_t::big, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x11u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0x11111111", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x11u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x11u);
+
+    bs1 = xbitset_t<8>::build_from_hex("01020304", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x04u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x04u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x04u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x04u);
 
-    bs1 = xbitset_t<8>::build_from("0x00010010", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("01020304", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x01u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x01u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x01u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x01u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0x00010010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x10u);
 
-    bs1 = xbitset_t<8>::build_from("0X00010010", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x00010010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0X00010010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x10u);
 
-    bs1 = xbitset_t<8>::build_from("0010", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0X00010010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x10u);
 
-    bs1 = xbitset_t<8>::build_from("0x0010", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0x0010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x10u);
 
-    bs1 = xbitset_t<8>::build_from("0X0010", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0x0010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    bs1 = xbitset_t<8>::build_from_hex("0X0010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs1.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs1.to<uint64_t>(), 0x10u);
 
-    auto bs2 = xbitset_t<16>::build_from("0010", xstring_format_t::hex, ec);
+    bs1 = xbitset_t<8>::build_from_hex("0X0010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs1.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs1.to<uint64_t>(), 0x00u);
+
+    auto bs2 = xbitset_t<16>::build_from_hex("0010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x10u);
 
-    bs2 = xbitset_t<16>::build_from("0x0010", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x1000u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x1000u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x1000u);
+
+    bs2 = xbitset_t<16>::build_from_hex("0x0010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x10u);
 
-    bs2 = xbitset_t<16>::build_from("0X0010", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0x0010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x1000u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x1000u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x1000u);
+
+    bs2 = xbitset_t<16>::build_from_hex("0X0010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x10u);
 
-    bs2 = xbitset_t<16>::build_from("00010010", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0X0010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x1000u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x1000u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x1000u);
+
+    bs2 = xbitset_t<16>::build_from_hex("00010010", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x10u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x10u);
 
-    bs2 = xbitset_t<16>::build_from("0x102030405", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("00010010", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x0100u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x0100u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x0100u);
+
+    bs2 = xbitset_t<16>::build_from_hex("0x102030405", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x05u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x0405u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x0405u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x0405u);
 
-    bs2 = xbitset_t<16>::build_from("0X01020304", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0x102030405", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x01u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x0201u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x0201u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x0201u);
+
+    bs2 = xbitset_t<16>::build_from_hex("0X01020304", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x04u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x0304u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x0304u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x0304u);
 
-    bs2 = xbitset_t<16>::build_from("0102030405060708", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0X01020304", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x01u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x0201u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x0201u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x0201u);
+
+    bs2 = xbitset_t<16>::build_from_hex("0102030405060708", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x08u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x0708u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x0708u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x0708u);
 
-    bs2 = xbitset_t<16>::build_from("0xf0e0d0c0b0a09081", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0102030405060708", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x01u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x0201u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x0201u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x0201u);
+
+    bs2 = xbitset_t<16>::build_from_hex("0xf0e0d0c0b0a09081", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x81u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x9081u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x9081u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x9081u);
 
-    bs2 = xbitset_t<16>::build_from("0X0f0e0d0c0b0a09080701", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0xf0e0d0c0b0a09081", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0xf0u);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0xe0f0u);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0xe0f0u);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0xe0f0u);
+
+    bs2 = xbitset_t<16>::build_from_hex("0X0f0e0d0c0b0a09080701", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs2.to<uint8_t>(), 0x01u);
     ASSERT_EQ(bs2.to<uint16_t>(), 0x0701u);
     ASSERT_EQ(bs2.to<uint32_t>(), 0x0701u);
     ASSERT_EQ(bs2.to<uint64_t>(), 0x0701u);
 
-    auto bs3 = xbitset_t<32>::build_from("0X1020304050607080900A", xstring_format_t::hex, ec);
+    bs2 = xbitset_t<16>::build_from_hex("0X0f0e0d0c0b0a09080701", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs2.to<uint8_t>(), 0x0fu);
+    ASSERT_EQ(bs2.to<uint16_t>(), 0x0e0fu);
+    ASSERT_EQ(bs2.to<uint32_t>(), 0x0e0fu);
+    ASSERT_EQ(bs2.to<uint64_t>(), 0x0e0fu);
+
+    auto bs3 = xbitset_t<32>::build_from_hex("0X1020304050607080900A", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs3.to<uint8_t>(), 0x0au);
     ASSERT_EQ(bs3.to<uint16_t>(), 0x900au);
     ASSERT_EQ(bs3.to<uint32_t>(), 0x7080900Au);
     ASSERT_EQ(bs3.to<uint64_t>(), 0x7080900Au);
 
-    auto bs4 = xbitset_t<64>::build_from("0X102030405060708090a0b0c0d0e0f0", xstring_format_t::hex, ec);
+    bs3 = xbitset_t<32>::build_from_hex("0X1020304050607080900A", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs3.to<uint8_t>(), 0x10u);
+    ASSERT_EQ(bs3.to<uint16_t>(), 0x2010u);
+    ASSERT_EQ(bs3.to<uint32_t>(), 0x40302010u);
+    ASSERT_EQ(bs3.to<uint64_t>(), 0x40302010u);
+
+    auto bs4 = xbitset_t<64>::build_from_hex("0X102030405060708090a0b0c0d0e0f0", xendian_t::big, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs4.to<uint8_t>(), 0xf0u);
     ASSERT_EQ(bs4.to<uint16_t>(), 0xe0f0u);
     ASSERT_EQ(bs4.to<uint32_t>(), 0xc0d0e0f0u);
     ASSERT_EQ(bs4.to<uint64_t>(), 0x8090a0b0c0d0e0f0u);
 
-    auto bs5 = xbitset_t<8>::build_from("0B20001000000000000001", xstring_format_t::hex, ec); // note: 0B or 0b are valid hex data.
+    bs4 = xbitset_t<64>::build_from_hex("0X102030405060708090a0b0c0d0e0f0", xendian_t::little, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs4.to<uint8_t>(), 0x10u);
+    ASSERT_EQ(bs4.to<uint16_t>(), 0x2010u);
+    ASSERT_EQ(bs4.to<uint32_t>(), 0x40302010u);
+    ASSERT_EQ(bs4.to<uint64_t>(), 0x8070605040302010u);
+
+    auto bs5 = xbitset_t<8>::build_from_hex("0B20001000000000000001", xendian_t::big, ec); // note: 0B or 0b are valid hex data.
     ASSERT_TRUE(!ec);
     ASSERT_EQ(bs5.to<uint8_t>(), 0x01u);
     ASSERT_EQ(bs5.to<uint16_t>(), 0x01u);
     ASSERT_EQ(bs5.to<uint32_t>(), 0x01u);
     ASSERT_EQ(bs5.to<uint64_t>(), 0x01u);
 
+    bs5 = xbitset_t<8>::build_from_hex("0B20001000000000000001", xendian_t::little, ec);  // note: 0B or 0b are valid hex data.
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(bs5.to<uint8_t>(), 0x0bu);
+    ASSERT_EQ(bs5.to<uint16_t>(), 0x0bu);
+    ASSERT_EQ(bs5.to<uint32_t>(), 0x0bu);
+    ASSERT_EQ(bs5.to<uint64_t>(), 0x0bu);
+
     ec.clear();
-    auto bs2_failed = xbitset_t<16>::build_from("0xabcdefgh", xstring_format_t::hex, ec);
+    auto bs2_failed = xbitset_t<16>::build_from_hex("0xabcdefgh", xendian_t::big, ec);
+    ASSERT_FALSE(!ec);
+    ASSERT_EQ(bs2_failed.to<uint8_t>(), 0x00u);
+    ASSERT_EQ(bs2_failed.to<uint16_t>(), 0x00u);
+    ASSERT_EQ(bs2_failed.to<uint32_t>(), 0x00u);
+    ASSERT_EQ(bs2_failed.to<uint64_t>(), 0x00u);
+
+    ec.clear();
+    bs2_failed = xbitset_t<16>::build_from_hex("0xabcdefgh", xendian_t::little, ec);
     ASSERT_FALSE(!ec);
     ASSERT_EQ(bs2_failed.to<uint8_t>(), 0x00u);
     ASSERT_EQ(bs2_failed.to<uint16_t>(), 0x00u);

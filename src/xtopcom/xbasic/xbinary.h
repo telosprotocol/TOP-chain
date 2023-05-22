@@ -27,3 +27,21 @@ bool is_binary_string_with_prefix(xstring_view_t str) noexcept;
 bool is_binary_string_without_prefix(xstring_view_t str) noexcept;
 
 NS_END1
+
+NS_BEG2(top, details)
+
+enum class xtop_enum_significant_bit : uint8_t {
+    lsb0 = 0x00,
+    msb0 = 0x01,
+};
+
+NS_END2
+
+NS_BEG1(top)
+
+using xsignificant_bit_t = details::xtop_enum_significant_bit;
+
+XINLINE_CONSTEXPR xsignificant_bit_t LSB0 = xsignificant_bit_t::lsb0;
+XINLINE_CONSTEXPR xsignificant_bit_t MSB0 = xsignificant_bit_t::msb0;
+
+NS_END1
