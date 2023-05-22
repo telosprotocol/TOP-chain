@@ -271,13 +271,15 @@ void xrpc_eth_parser_t::receipt_to_json_for_top_rpc(std::string const & blockhas
     if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
         if (!ethtx.get_data().empty()) {
             js_v["contractAddress"] = common::xaccount_address_t::build_from(ethtx.get_to(), base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
+        } else {
+            js_v["contractAddress"] = Json::Value::null;
         }
     } else {
         if (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) {
             js_v["contractAddress"] = common::xaccount_address_t::build_from(evm_tx_receipt.get_contract_address(),
                                                                             base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();            
         } else {
-            js_v["contractAddress"] = "";
+            js_v["contractAddress"] = Json::Value::null;
         }
     }
 

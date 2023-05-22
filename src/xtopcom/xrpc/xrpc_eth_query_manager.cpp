@@ -724,7 +724,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     switch (output.m_tx_result.status) {
     case evm_common::Success: {
         std::stringstream outstr;
-        outstr << "0x" << std::hex << output.m_tx_result.used_gas;
+        outstr << "0x" << std::hex << (uint64_t)(output.m_tx_result.used_gas * 1.2); // TODO(jimmy) always mutiply 1.2 avoiding fail of some cases
         js_rsp["result"] = outstr.str();
         break;
     }
@@ -981,6 +981,16 @@ void xrpc_eth_query_manager::eth_feeHistory(Json::Value & js_req, Json::Value & 
     uint64_t oldest_block_height = 0;
     uint64_t end_block_height = get_block_height(js_req[1].asString());
     uint64_t block_count = std::strtoul(js_req[0].asString().c_str(), NULL, 16);
+    if (block_count < 1) {
+        std::string msg = "block_count should not be zero";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+        return;
+    }
+    if (block_count > 1024) {  // TODO(jimmy) copy from eth, modify to 1024
+        xwarn("Sanitizing fee history length requested=%ld, truncated=1024", block_count);
+        block_count = 1024;
+    }
+
     if (end_block_height > block_count) {
         oldest_block_height = end_block_height - block_count;
     } else {
@@ -1017,7 +1027,7 @@ void xrpc_eth_query_manager::eth_feeHistory(Json::Value & js_req, Json::Value & 
     Json::Value gasUsedRatio_array_json;
     gasUsedRatio_array_json.resize(0);
     for (uint64_t i = 0; i < block_count; i++) {
-        gasUsedRatio_array_json.append("0.0");
+        gasUsedRatio_array_json.append(0.0); // always write to float type data 0.0
     }
     js_result["gasUsedRatio"] = gasUsedRatio_array_json;
 
