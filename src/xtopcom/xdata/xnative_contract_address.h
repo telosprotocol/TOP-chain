@@ -108,7 +108,6 @@ extern common::xaccount_address_t const evm_top_contract_address;
 extern common::xaccount_address_t const evm_eth_contract_address;
 extern common::xaccount_address_t const evm_usdt_contract_address;
 extern common::xaccount_address_t const evm_usdc_contract_address;
-extern common::xaccount_address_t const evm_eth2_client_contract_address_deprecated;
 extern common::xaccount_address_t const evm_eth2_client_contract_address;
 
 extern common::xaccount_address_t const relay_make_block_contract_address;

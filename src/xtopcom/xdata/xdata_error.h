@@ -45,6 +45,7 @@ enum enum_xdata_error_type {
     xaccount_property_map_field_not_create,
     xaccount_property_create_fail,
     xaccount_property_operate_fail,
+    xaccount_property_already_exist,
     xdata_error_max,
 };
 
@@ -85,6 +86,7 @@ inline std::string xdata_error_to_string(int32_t code) {
         XDATA_TO_STR(xaccount_property_map_field_not_create),
         XDATA_TO_STR(xaccount_property_create_fail),
         XDATA_TO_STR(xaccount_property_operate_fail),
+        XDATA_TO_STR(xaccount_property_already_exist),
     };
     return names[code - xdata_error_base - 1];
 }

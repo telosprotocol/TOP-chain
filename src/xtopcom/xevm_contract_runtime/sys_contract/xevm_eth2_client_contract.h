@@ -91,6 +91,10 @@ private:
 
     bool validate_beacon_block_header_update(evm_common::eth2::xheader_update_t const & header_update) const;
 
+    int32_t create_client_mode_property_if_necessary(state_ptr state);
+    int32_t create_unfinalized_head_execution_header_property_if_necessary(state_ptr state);
+    int32_t create_unfinalized_tail_execution_header_property_if_necessary(state_ptr state);
+
     xeth2_client_net_t m_network;
     std::set<std::string> m_whitelist;
 };

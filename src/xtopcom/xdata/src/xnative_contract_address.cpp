@@ -54,8 +54,7 @@ common::xaccount_address_t const evm_top_contract_address{"T60004ff0000000000000
 common::xaccount_address_t const evm_eth_contract_address{"T60004ff00000000000000000000000000000000000006"};
 common::xaccount_address_t const evm_usdt_contract_address{"T60004ff00000000000000000000000000000000000007"};
 common::xaccount_address_t const evm_usdc_contract_address{"T60004ff00000000000000000000000000000000000008"};
-common::xaccount_address_t const evm_eth2_client_contract_address_deprecated{"T60004ff00000000000000000000000000000000000009"};
-common::xaccount_address_t const evm_eth2_client_contract_address{"T60004ff0000000000000000000000000000000000000a"};
+common::xaccount_address_t const evm_eth2_client_contract_address{"T60004ff00000000000000000000000000000000000009"};
 
 common::xaccount_address_t const relay_make_block_contract_address{sys_contract_relay_make_block_addr};
 
