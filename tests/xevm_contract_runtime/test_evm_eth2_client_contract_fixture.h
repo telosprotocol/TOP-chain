@@ -29,7 +29,7 @@ public:
         bstate->new_string_var(data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_RESET_FLAG, canvas.get());
-        bstate->new_int64_var(data::system_contract::XPROPERTY_CLIENT_MODE, canvas.get());
+        bstate->new_uint64_var(data::system_contract::XPROPERTY_CLIENT_MODE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, canvas.get());
         m_contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), bstate.get());
