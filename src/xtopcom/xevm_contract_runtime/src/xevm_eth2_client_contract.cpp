@@ -1133,7 +1133,7 @@ bool xtop_evm_eth2_client_contract::set_flag(state_ptr state) {
 }
 
 xclient_mode_t xtop_evm_eth2_client_contract::get_client_mode(state_ptr state) const {
-    auto const mode = static_cast<evm_common::eth2::xclient_mode_t>(state->int64_get(data::system_contract::XPROPERTY_CLIENT_MODE));
+    auto const mode = static_cast<evm_common::eth2::xclient_mode_t>(state->uint64_property_get(data::system_contract::XPROPERTY_CLIENT_MODE));
     if (mode == xclient_mode_t::invalid) {
         xwarn("xtop_evm_eth2_client_contract::get_client_mode failed");
     }
@@ -1143,7 +1143,7 @@ xclient_mode_t xtop_evm_eth2_client_contract::get_client_mode(state_ptr state) c
 
 bool xtop_evm_eth2_client_contract::client_mode(state_ptr state, evm_common::eth2::xclient_mode_t const mode) {
     assert(state != nullptr);
-    auto const ec = state->int64_set(data::system_contract::XPROPERTY_CLIENT_MODE, static_cast<int64_t>(mode));
+    auto const ec = state->uint64_set(data::system_contract::XPROPERTY_CLIENT_MODE, static_cast<uint64_t>(mode));
     if (ec) {
         xwarn("xtop_evm_eth2_client_contract::client_mode set mode failed");
         return false;
