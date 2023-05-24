@@ -16,13 +16,13 @@
 NS_BEG2(top, statestore)
 
 enum enum_state_prune_para_t {
-#if defined(XBUILD_CI) || defined(XBUILD_DEV)    
-    prune_para_elect_contract_unit_keep_num = 100, // in test mode, elect contract units should also be pruned
-    prune_para_other_contract_unit_keep_num = 10,
-#else
-    prune_para_elect_contract_unit_keep_num = 10000000,  // XTODO not prune elect contract units in mainnet
-    prune_para_other_contract_unit_keep_num = 300,
-#endif
+// #if defined(XBUILD_CI) || defined(XBUILD_DEV)    
+//     prune_para_elect_contract_unit_keep_num = 100, // in test mode, elect contract units should also be pruned
+//     prune_para_other_contract_unit_keep_num = 10,
+// #else
+    prune_para_elect_contract_unit_keep_num = 10000000,  // XTODO need prune more untis future
+    prune_para_other_contract_unit_keep_num = 1000,  // XTODO need prune more untis future
+// #endif
 };
 
 class xaccounts_prune_info_t {
