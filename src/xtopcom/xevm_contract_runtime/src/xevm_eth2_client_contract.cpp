@@ -6,6 +6,7 @@
 
 #include "xcommon/common_data.h"
 #include "xcommon/xeth_address.h"
+#include "xdata/xdata_error.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xevm_common/xabi_decoder.h"
 
@@ -587,15 +588,32 @@ bool xtop_evm_eth2_client_contract::reset(state_ptr state) {
         xwarn("[xtop_evm_eth_bridge_contract::reset] reset already disabled");
         return false;
     }
+
     state->map_clear(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS);
+
+    if (create_unfinalized_head_execution_header_property_if_necessary(state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::reset] create_unfinalized_head_execution_header_property_if_necessary failed");
+        return false;
+    }
     state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, std::string{});
+
+    if (create_unfinalized_tail_execution_header_property_if_necessary(state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::reset] create_unfinalized_tail_execution_header_property_if_necessary failed");
+        return false;
+    }
     state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, std::string{});
+
     xextended_beacon_block_header_t beacon_block;
     auto beacon_header_bytes = beacon_block.encode_rlp();
     state->string_set(data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER, {beacon_header_bytes.begin(), beacon_header_bytes.end()});
     xexecution_header_info_t execution_header;
     auto execution_header_bytes = execution_header.encode_rlp();
     state->string_set(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER, {execution_header_bytes.begin(), execution_header_bytes.end()});
+    if (create_client_mode_property_if_necessary(state)) {
+        xwarn("[xtop_evm_eth_bridge_contract::reset] create_client_mode_property_if_necessary failed");
+        return false;
+    }
+    state->uint64_set(data::system_contract::XPROPERTY_CLIENT_MODE, static_cast<uint64_t>(xclient_mode_t::invalid));
     xinfo("[xtop_evm_eth2_client_contract::reset] reset success");
     return true;
 }
@@ -760,6 +778,10 @@ bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & st
              return false;
         }
 
+        if (create_unfinalized_head_execution_header_property_if_necessary(state)) {
+            xwarn("xtop_evm_eth2_client_contract::submit_execution_header create_unfinalized_head_execution_header_property_if_necessary error");
+            return false;
+        }
         set_finalized_execution_header_bytes(state, state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER));
         reset_unfinalized_tail_execution_header(state);
         reset_unfinalized_head_execution_header(state);
@@ -1133,6 +1155,11 @@ bool xtop_evm_eth2_client_contract::set_flag(state_ptr state) {
 }
 
 xclient_mode_t xtop_evm_eth2_client_contract::get_client_mode(state_ptr state) const {
+    if (!state->property_exist(data::system_contract::XPROPERTY_CLIENT_MODE)) {
+        xwarn("xtop_evm_eth2_client_contract::get_client_mode, data::system_contract::XPROPERTY_CLIENT_MODE property not exist");
+        return xclient_mode_t::invalid;
+    }
+
     auto const mode = static_cast<evm_common::eth2::xclient_mode_t>(state->uint64_property_get(data::system_contract::XPROPERTY_CLIENT_MODE));
     if (mode == xclient_mode_t::invalid) {
         xwarn("xtop_evm_eth2_client_contract::get_client_mode failed");
@@ -1143,6 +1170,11 @@ xclient_mode_t xtop_evm_eth2_client_contract::get_client_mode(state_ptr state) c
 
 bool xtop_evm_eth2_client_contract::client_mode(state_ptr state, evm_common::eth2::xclient_mode_t const mode) {
     assert(state != nullptr);
+    if (create_client_mode_property_if_necessary(state)) {
+        xwarn("xtop_evm_eth2_client_contract::client_mode create_client_mode_property_if_necessary failed");
+        return false;
+    }
+
     auto const ec = state->uint64_set(data::system_contract::XPROPERTY_CLIENT_MODE, static_cast<uint64_t>(mode));
     if (ec) {
         xwarn("xtop_evm_eth2_client_contract::client_mode set mode failed");
@@ -1153,6 +1185,11 @@ bool xtop_evm_eth2_client_contract::client_mode(state_ptr state, evm_common::eth
 }
 
 uint64_t xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number(state_ptr state) const {
+    if (!state->property_exist(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER)) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number, data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER property not exist");
+        return 0;
+    }
+
     auto const & v = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number empty");
@@ -1169,6 +1206,11 @@ uint64_t xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number(state_
 }
 
 xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_tail_execution_header_info(state_ptr const & state) const {
+    if (!state->property_exist(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER)) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_block_number, data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER property not exist");
+        return {};
+    }
+
     auto const & v = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_unfinalized_tail_execution_header_info empty");
@@ -1183,6 +1225,11 @@ xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_tail_exe
 }
 
 evm_common::eth2::xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_head_execution_header_info(state_ptr const & state) const {
+    if (!state->property_exist(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER)) {
+        xwarn("xtop_evm_eth2_client_contract::get_unfinalized_head_execution_header_info, data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER property not exist");
+        return {};
+    }
+
     auto const & v = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_unfinalized_head_execution_header_info empty");
@@ -1198,6 +1245,16 @@ evm_common::eth2::xexecution_header_info_t xtop_evm_eth2_client_contract::get_un
 
 uint64_t xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail(state_ptr state) const {
     assert(state != nullptr);
+    if (!state->property_exist(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER)) {
+        xwarn("xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail, data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER property not exist");
+        return 0;
+    }
+
+    if (!state->property_exist(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER)) {
+        xwarn("xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail, data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER property not exist");
+        return 0;
+    }
+
     auto const & header_data = state->string_get(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER);
     if (header_data.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_tail empty");
@@ -1226,6 +1283,11 @@ uint64_t xtop_evm_eth2_client_contract::get_diff_between_unfinalized_head_and_ta
 }
 
 bool xtop_evm_eth2_client_contract::reset_unfinalized_head_execution_header(state_ptr const & state) {
+    if (create_unfinalized_head_execution_header_property_if_necessary(state)) {
+        xwarn("xtop_evm_eth2_client_contract::reset_unfinalized_head_execution_header create_unfinalized_head_execution_header_property_if_necessary error");
+        return false;
+    }
+
     if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, {}) != 0) {
         xwarn("xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info string_set error");
         return false;
@@ -1235,6 +1297,11 @@ bool xtop_evm_eth2_client_contract::reset_unfinalized_head_execution_header(stat
 }
 
 bool xtop_evm_eth2_client_contract::reset_unfinalized_tail_execution_header(state_ptr const & state) {
+    if (create_unfinalized_tail_execution_header_property_if_necessary(state)) {
+        xwarn("xtop_evm_eth2_client_contract::reset_unfinalized_tail_execution_header create_unfinalized_tail_execution_header_property_if_necessary error");
+        return false;
+    }
+
     if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, {}) != 0) {
         xwarn("xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info string_set error");
         return false;
@@ -1243,6 +1310,11 @@ bool xtop_evm_eth2_client_contract::reset_unfinalized_tail_execution_header(stat
 }
 
 bool xtop_evm_eth2_client_contract::set_unfinalized_head_execution_header_info(state_ptr const & state, xexecution_header_info_t const & info) {
+    if (create_unfinalized_head_execution_header_property_if_necessary(state)) {
+        xwarn("xtop_evm_eth2_client_contract::set_unfinalized_head_execution_header_info create_unfinalized_head_execution_header_property_if_necessary error");
+        return false;
+    }
+
     auto bytes = info.encode_rlp();
     if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER, {bytes.begin(), bytes.end()}) != 0) {
         xwarn("xtop_evm_eth2_client_contract::set_unfinalized_head_execution_header_info string_set error");
@@ -1252,6 +1324,11 @@ bool xtop_evm_eth2_client_contract::set_unfinalized_head_execution_header_info(s
 }
 
 bool xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info(state_ptr const & state, xexecution_header_info_t const & info) {
+    if (create_unfinalized_tail_execution_header_property_if_necessary(state)) {
+        xwarn("xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info create_unfinalized_tail_execution_header_property_if_necessary error");
+        return false;
+    }
+
     auto bytes = info.encode_rlp();
     if (state->string_set(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER, {bytes.begin(), bytes.end()}) != 0) {
         xwarn("xtop_evm_eth2_client_contract::set_unfinalized_tail_execution_header_info string_set error");
@@ -1308,5 +1385,48 @@ bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(xheader_
 
     return true;
 }
+
+int32_t xtop_evm_eth2_client_contract::create_client_mode_property_if_necessary(state_ptr state) {
+    assert(state != nullptr);
+    auto const bstate = state->get_bstate();
+    assert(bstate != nullptr);
+
+    auto const ret = state->uint64_create(data::system_contract::XPROPERTY_CLIENT_MODE);
+    if (ret && ret != data::xaccount_property_already_exist) {
+        xwarn("xtop_evm_eth2_client_contract::create_client_mode_property_if_necessary uint64_create error");
+        return ret;
+    }
+
+    return 0;
+}
+
+int32_t xtop_evm_eth2_client_contract::create_unfinalized_head_execution_header_property_if_necessary(state_ptr state) {
+    assert(state != nullptr);
+    auto const bstate = state->get_bstate();
+    assert(bstate != nullptr);
+
+    auto const ret = state->string_create(data::system_contract::XPROPERTY_UNFINALIZED_HEAD_EXECUTION_HEADER);
+    if (ret && ret != data::xaccount_property_already_exist) {
+        xwarn("xtop_evm_eth2_client_contract::create_unfinalized_head_execution_header_property_if_necessary uint64_create error");
+        return ret;
+    }
+
+    return 0;
+}
+
+int32_t xtop_evm_eth2_client_contract::create_unfinalized_tail_execution_header_property_if_necessary(state_ptr state) {
+    assert(state != nullptr);
+    auto const bstate = state->get_bstate();
+    assert(bstate != nullptr);
+
+    auto const ret = state->string_create(data::system_contract::XPROPERTY_UNFINALIZED_TAIL_EXECUTION_HEADER);
+    if (ret && ret != data::xaccount_property_already_exist) {
+        xwarn("xtop_evm_eth2_client_contract::create_unfinalized_tail_execution_header_property_if_necessary uint64_create error");
+        return ret;
+    }
+
+    return 0;
+}
+
 
 NS_END4

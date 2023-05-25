@@ -105,6 +105,10 @@ public:// APIs for property operation with property value return
     int64_t int64_get(std::string const & prop) const;
     int32_t int64_set(std::string const & prop, int64_t value);
 
+    bool property_exist(std::string const & key) const;
+    int32_t uint64_create(std::string const & key);
+    uint64_t uint64_get(std::string const & key) const;
+
 private:
     evm_common::u256 tep_token_balance(const std::string & token_name) const;
     top::xbytes_t tep_token_balance_bytes(const std::string & token_name) const;

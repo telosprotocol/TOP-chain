@@ -139,8 +139,8 @@ int32_t xbstate_ctx_t::check_create_property(const std::string & key) {
         return xaccount_property_create_fail;
     }
     if (get_bstate()->find_property(key)) {
-        xerror("xbstate_ctx_t::check_create_property fail-already exist.propname=%s", key.c_str());
-        return xaccount_property_create_fail;
+        xwarn("xbstate_ctx_t::check_create_property fail-already exist.propname=%s", key.c_str());
+        return xaccount_property_already_exist;
     }
     return xsuccess;
 }
@@ -584,6 +584,28 @@ int32_t xbstate_ctx_t::int64_set(std::string const & prop, int64_t value) {
     auto propobj = load_int64_for_write(prop);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::int64_set", prop);
     return propobj->set(value, m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
+}
+
+bool xbstate_ctx_t::property_exist(std::string const & key) const {
+    auto const bstate = get_bstate();
+    assert(bstate != nullptr);
+    return bstate->find_property(key);
+}
+
+int32_t xbstate_ctx_t::uint64_create(std::string const & key) {
+    xdbg("xbstate_ctx_t::uint64_create,property_modify_enter.address=%s,height=%ld,propname=%s", account_address().to_string().c_str(), height(), key.c_str());
+    auto ret = check_create_property(key);
+    if (ret) {
+        return ret;
+    }
+    auto & bstate = get_bstate();
+    auto propobj = bstate->new_uint64_var(key, m_canvas.get());
+    CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::uint64_create", key);
+    return xsuccess;
+}
+
+uint64_t xbstate_ctx_t::uint64_get(std::string const & key) const {
+    return uint64_property_get(key);
 }
 
 std::string xbstate_ctx_t::map_get(const std::string & prop, const std::string & field) const {
