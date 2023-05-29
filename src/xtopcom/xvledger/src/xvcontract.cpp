@@ -258,12 +258,13 @@ namespace top
  
         const xvalue_t  xvcontract_TEP0::do_deposit(const xvaction_t & op,xvexecontxt_t & context,const uint64_t minimal_tgas)
         {
+            assert(false); // XTODO no use now
             //counting tags cost start here,note: base-class has verified it must be a xvaction_t object
-            if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
-            {
-                xwarn("xvcontract_TEP0::do_deposit,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
-                return xvalue_t(enum_xerror_code_no_resource);
-            }
+            // if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
+            // {
+            //     xwarn("xvcontract_TEP0::do_deposit,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
+            //     return xvalue_t(enum_xerror_code_no_resource);
+            // }
             
             if(op.get_method_name() != get_deposit_function_name())
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -311,12 +312,13 @@ namespace top
     
         const xvalue_t  xvcontract_TEP0::do_withdraw(const xvaction_t & op,xvexecontxt_t & context,const uint64_t minimal_tgas)
         {
+            assert(false); // XTODO no use now
             //counting tags cost start here,note: base-class has verified it must be a xvaction_t object
-            if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
-            {
-                xwarn("xvcontract_TEP0::do_deposit,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
-                return xvalue_t(enum_xerror_code_no_resource);
-            }
+            // if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
+            // {
+            //     xwarn("xvcontract_TEP0::do_deposit,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
+            //     return xvalue_t(enum_xerror_code_no_resource);
+            // }
             
             if(op.get_method_name() != get_withdraw_function_name())
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -408,12 +410,13 @@ namespace top
     
         const xvalue_t  xvcontract_TEP1::do_deposit(const xvaction_t & op,xvexecontxt_t & context,const uint64_t minimal_tgas)
         {
+            assert(false); // XTODO no use now
             //counting tags cost start here,note: base-class has verified it must be a xvaction_t object
-            if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
-            {
-                xwarn("xvcontract_TEP1::do_deposit,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
-                return xvalue_t(enum_xerror_code_no_resource);
-            }
+            // if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
+            // {
+            //     xwarn("xvcontract_TEP1::do_deposit,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
+            //     return xvalue_t(enum_xerror_code_no_resource);
+            // }
             
             if(op.get_method_name() != get_deposit_function_name())
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -466,12 +469,13 @@ namespace top
     
         const xvalue_t  xvcontract_TEP1::do_withdraw(const xvaction_t & op,xvexecontxt_t & context,const uint64_t minimal_tgas)
         {
+            assert(false); // XTODO no use now
             //counting tags cost start here,note: base-class has verified it must be a xvaction_t object
-            if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
-            {
-                xwarn("xvcontract_TEP1::do_withdraw,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
-                return xvalue_t(enum_xerror_code_no_resource);
-            }
+            // if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
+            // {
+            //     xwarn("xvcontract_TEP1::do_withdraw,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
+            //     return xvalue_t(enum_xerror_code_no_resource);
+            // }
             
             if(op.get_method_name() != get_withdraw_function_name())
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -536,12 +540,13 @@ namespace top
         //transfer(address _to, int64_t _value)
         const xvalue_t  xvcontract_TEP2::do_transfer(const xvaction_t & op,xvexecontxt_t & context,const uint64_t minimal_tgas)
         {
+            assert(false); // XTODO no use now
             //counting tags cost start here,note: base-class has verified it must be a xvaction_t object
-            if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
-            {
-                xwarn("xvcontract_TEP2::do_transfer,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
-                return xvalue_t(enum_xerror_code_no_resource);
-            }
+            // if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
+            // {
+            //     xwarn("xvcontract_TEP2::do_transfer,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
+            //     return xvalue_t(enum_xerror_code_no_resource);
+            // }
             
             if(op.get_method_name() != get_transfer_function_name())
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -623,12 +628,13 @@ namespace top
     
         const xvalue_t  xvcontract_TEP2::do_burn(const xvaction_t & op,xvexecontxt_t & context,const uint64_t minimal_tgas)
         {
+            assert(false); // XTODO no use now
             //counting tags cost start here,note: base-class has verified it must be a xvaction_t object
-            if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
-            {
-                xwarn("xvcontract_TEP2::do_burn,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
-                return xvalue_t(enum_xerror_code_no_resource);
-            }
+            // if( (false == ((xvaction_t &)op).withdraw_tgas(minimal_tgas)) || (false == context.withdraw_tgas(minimal_tgas)) )
+            // {
+            //     xwarn("xvcontract_TEP2::do_burn,failed to withdraw tgas of amount(%" PRIu64 ") at contract(%s)",minimal_tgas,get_contract_addr().c_str());
+            //     return xvalue_t(enum_xerror_code_no_resource);
+            // }
             
             if(op.get_method_name() != get_burn_function_name())
                 return xvalue_t(enum_xerror_code_bad_method);

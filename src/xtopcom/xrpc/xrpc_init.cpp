@@ -6,7 +6,7 @@
 #include "xcommon/xnode_type.h"
 #include "xrpc/xhttp/xevm_server.h"
 #include "xrpc/xhttp/xhttp_server.h"
-#include "xrpc/xws/xws_server.h"
+// #include "xrpc/xws/xws_server.h"
 
 NS_BEG2(top, xrpc)
 
@@ -53,8 +53,9 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         xdbg("edge http");
         shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, false, block_store, txstore, elect_main, election_cache_data_accessor);
         http_server_ptr->start(http_port);
-        shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, false, block_store, txstore, elect_main, election_cache_data_accessor);
-        ws_server_ptr->start(ws_port);
+        // websocket is no use now.
+        // shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, false, block_store, txstore, elect_main, election_cache_data_accessor);
+        // ws_server_ptr->start(ws_port);
 
         xdbg("edge evm");
         shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, false, block_store, txstore, elect_main, election_cache_data_accessor);
@@ -76,8 +77,9 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         auto ip = vhost->address().xip2();
         shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, true, block_store, txstore, elect_main, election_cache_data_accessor);
         http_server_ptr->start(http_port);
-        shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, block_store, txstore, elect_main, election_cache_data_accessor);
-        ws_server_ptr->start(ws_port);
+        // websocket is no use now.
+        // shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, block_store, txstore, elect_main, election_cache_data_accessor);
+        // ws_server_ptr->start(ws_port);
         xdbg("start exchange rpc service.");
 
         // XTODO evm rpc server not enabled in exchange node

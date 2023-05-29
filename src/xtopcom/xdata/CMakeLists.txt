@@ -10,15 +10,15 @@ if (MAINNET_ACTIVATED)
     add_definitions(-DMAINNET_ACTIVATED)
 endif()
 
-if (NOT ${XSYS_VER} EQUAL 0)
-    find_library(jsoncpp_LIBRARIES jsoncpp HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
+if (${XOS_ID} MATCHES "ubuntu")
+    find_library(jsoncpp_LIBRARIES libjsoncpp.a HINTS ${LIBRARY_OUTPUT_DIRECTORY} REQUIRED)
 endif()
 
 aux_source_directory(./src src_dir)
 add_library(xdata STATIC ${src_dir})
 
 add_dependencies(xdata xconfig xutility xcommon xevm_common xcrypto xchain_fork xvledger xbasic xxbase)
-if (${XSYS_VER} EQUAL 0)
+if (${XOS_ID} MATCHES "centos")
     target_link_libraries(xdata PRIVATE xstatistic xconfig xutility xcommon xevm_common xcrypto xchain_fork xbasic xvledger jsoncpp xxbase pthread)
 else()
     target_link_libraries(xdata PRIVATE xstatistic xconfig xutility xcommon xevm_common xcrypto xchain_fork xbasic xvledger xxbase ${jsoncpp_LIBRARIES} pthread)

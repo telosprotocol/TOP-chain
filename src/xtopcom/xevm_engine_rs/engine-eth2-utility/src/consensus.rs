@@ -31,7 +31,6 @@ pub const EXECUTION_PROOF_SIZE: usize =
 pub enum Network {
     Mainnet,
     Kiln,
-    Ropsten,
     Goerli,
     Sepolia,
 }
@@ -42,7 +41,6 @@ impl FromStr for Network {
         match input {
             "mainnet" => Ok(Network::Mainnet),
             "kiln" => Ok(Network::Kiln),
-            "ropsten" => Ok(Network::Ropsten),
             "goerli" => Ok(Network::Goerli),
             "sepolia" => Ok(Network::Sepolia),
             _ => Err(format!("Unknown network {}", input)),
@@ -54,6 +52,8 @@ pub struct NetworkConfig {
     pub genesis_validators_root: [u8; 32],
     pub bellatrix_fork_version: ForkVersion,
     pub bellatrix_fork_epoch: u64,
+    pub capella_fork_version: ForkVersion,
+    pub capella_fork_epoch: u64,
 }
 
 impl NetworkConfig {
@@ -67,6 +67,8 @@ impl NetworkConfig {
                 ],
                 bellatrix_fork_version: [0x02, 0x00, 0x00, 0x00],
                 bellatrix_fork_epoch: 144896,
+                capella_fork_version: [0x03, 0x00, 0x00, 0x00],
+                capella_fork_epoch: 194048,
             },
             Network::Goerli => Self {
                 genesis_validators_root: [
@@ -76,6 +78,8 @@ impl NetworkConfig {
                 ],
                 bellatrix_fork_version: [0x02, 0x00, 0x10, 0x20],
                 bellatrix_fork_epoch: 112260,
+                capella_fork_version: [0x03, 0x00, 0x10, 0x20],
+                capella_fork_epoch: 162304,
             },
             Network::Kiln => Self {
                 genesis_validators_root: [
@@ -85,15 +89,8 @@ impl NetworkConfig {
                 ],
                 bellatrix_fork_version: [0x70, 0x00, 0x00, 0x71],
                 bellatrix_fork_epoch: 150,
-            },
-            Network::Ropsten => Self {
-                genesis_validators_root: [
-                    0x44, 0xf1, 0xe5, 0x62, 0x83, 0xca, 0x88, 0xb3, 0x5c, 0x78, 0x9f, 0x7f, 0x44,
-                    0x9e, 0x52, 0x33, 0x9b, 0xc1, 0xfe, 0xfe, 0x3a, 0x45, 0x91, 0x3a, 0x43, 0xa6,
-                    0xd1, 0x6e, 0xdc, 0xd3, 0x3c, 0xf1,
-                ],
-                bellatrix_fork_version: [0x80, 0x00, 0x00, 0x71],
-                bellatrix_fork_epoch: 750,
+                capella_fork_version: [0x70, 0x00, 0x00, 0x71],
+                capella_fork_epoch: 150,
             },
             Network::Sepolia => Self {
                 genesis_validators_root: [
@@ -101,15 +98,19 @@ impl NetworkConfig {
                 ],
                 bellatrix_fork_version: [0x90, 0x00, 0x00, 0x71],
                 bellatrix_fork_epoch: 100,
+                capella_fork_version: [0x90, 0x00, 0x00, 0x72],
+                capella_fork_epoch: 56832,
             },
         }
     }
 
     pub fn compute_fork_version(&self, epoch: Epoch) -> Option<ForkVersion> {
+        if epoch>= self.capella_fork_epoch {
+            return Some(self.capella_fork_version);
+        }
         if epoch >= self.bellatrix_fork_epoch {
             return Some(self.bellatrix_fork_version);
         }
-
         None
     }
 

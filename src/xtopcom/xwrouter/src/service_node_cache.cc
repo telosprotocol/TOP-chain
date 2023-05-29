@@ -10,6 +10,7 @@
 #include "xwrouter/multi_routing/small_net_cache.h"
 
 #include <cassert>
+#include <cinttypes>
 
 namespace top {
 
@@ -46,7 +47,7 @@ ServiceNodes::~ServiceNodes() {
 bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadmlia::NodeInfoPtr> & node_vec) {
     if (FindNode(service_type, node_vec)) {
 #if defined(DEBUG)
-        for (const auto & item : node_vec) {
+        for (auto const & item : node_vec) {
             TOP_DEBUG("getrootnodes %s %s:%u %llu", item->node_id.c_str(), (item->public_ip).c_str(), item->public_port, item->hash64);
         }
         TOP_DEBUG("getrootnodes of service_type: %llu ok, size: %d", service_type.value(), node_vec.size());
@@ -54,7 +55,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         return true;
     }
 
-    WrouterTableNodes Fnode;
+    WrouterTableNode Fnode;
     if (small_net_nodes_->FindRandomNode(Fnode, service_type)) {
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id
         assert(kad_key);
@@ -63,7 +64,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
         root_routing_table->CacheElectNodesAsync(kad_key->Get(), service_type, cb);
     }
-    TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
+    TOP_WARN("getrootnodes of service_type: %" PRIx64 " failed", service_type.value());
     return false;
 }
 
@@ -73,7 +74,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
         return true;
     }
 
-    WrouterTableNodes Fnode;
+    WrouterTableNode Fnode;
     if (small_net_nodes_->FindRandomNode(Fnode, service_type)) {
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id
         assert(kad_key);
@@ -82,7 +83,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
         auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
         root_routing_table->CacheElectNodesAsync(kad_key->Get(), service_type, cb);
     }
-    TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
+    TOP_WARN("getrootnodes of service_type: %" PRIx64 " failed, dst node id %s", service_type.value(), des_node_id.c_str());
     return false;
 }
 
@@ -93,13 +94,18 @@ void ServiceNodes::OnCacheElectNodesAsync(base::ServiceType service_type, const 
             AddNode(service_type, n);
         }
     } else {
-        xdbg("recv from other version nodes info");
-        base::ServiceType o_service_type = MultiRouting::Instance()->transform_service_type(service_type);
-        std::vector<kadmlia::NodeInfoPtr> o_node_ver = MultiRouting::Instance()->transform_node_vec(service_type, node_vec);
-
-        for (auto & n : o_node_ver) {
-            AddNode(o_service_type, n);
+        xwarn("OnCacheElectNodesAsync: recv from other version nodes info: service type %" PRIx64, service_type.value());
+        for (auto const & node_info_ptr : node_vec) {
+            if (node_info_ptr) {
+                xwarn("OnCacheElectNodesAsync: invalid node %s:%" PRIu16, node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
+            }
         }
+        // base::ServiceType o_service_type = MultiRouting::Instance()->transform_service_type(service_type);
+        // std::vector<kadmlia::NodeInfoPtr> o_node_ver = MultiRouting::Instance()->transform_node_vec(service_type, node_vec);
+
+        // for (auto & n : o_node_ver) {
+        //     AddNode(o_service_type, n);
+        // }
     }
 
     return;
@@ -279,6 +285,7 @@ void ServiceNodes::RemoveExpired(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(service_nodes_cache_map_mutex_);
     auto ifind = service_nodes_cache_map_.find(service_type);
     if (ifind != service_nodes_cache_map_.end()) {
+        xkinfo("ServiceNodes::RemoveExpired service_type: %" PRIx64 ", size: %d", service_type.value(), ifind->second.size());
         service_nodes_cache_map_.erase(ifind);
     }
 }
@@ -290,7 +297,7 @@ void ServiceNodes::do_update() {
     for (auto & item : service_type_vec) {
         base::ServiceType service_type = item;
         TOP_DEBUG("begin do_update service_type: %llu", service_type.value());
-        std::vector<WrouterTableNodes> node_vec;
+        std::vector<WrouterTableNode> node_vec;
         if (!small_net_nodes_->FindAllNode(node_vec, service_type) || node_vec.empty()) {
             TOP_WARN("can't find nodes of service_type: %llu", service_type.value());
             continue;

@@ -48,11 +48,6 @@ namespace top
         {
             return m_account_obj->get_xvid();
         }
-    
-        const std::string&   xvactplugin_t::get_xvid_str()const
-        {
-            return m_account_obj->get_xvid_str();
-        }
         
         const std::string &  xvactplugin_t::get_account_address()  const
         {

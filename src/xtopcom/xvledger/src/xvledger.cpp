@@ -33,8 +33,9 @@ namespace top
             m_idle_start_time_ms  = get_time_now();
             m_idle_timeout_ms     = enum_account_idle_timeout_ms;
             
-            if(is_user_address() == false) //keep contract/table account forever at memory
-                m_is_keep_forever  = 1;
+            // not keek contract/table account forever for reducing memory overhead.
+            // if(is_user_address() == false) //keep contract/table account forever at memory
+            //     m_is_keep_forever  = 1;
             
             xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu),m_is_keep_forever(%d),m_is_idle(%d)",get_address().c_str(),get_xvid(),m_is_keep_forever,m_is_idle);
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaccountobj, 1);
@@ -277,24 +278,6 @@ namespace top
             return result;
         }
         
-        bool  xvaccountobj_t::set_index_meta(const xindxmeta_t & new_meta)
-        {
-            if(is_close())//not allow write anymore at closed status
-                return false;
-            
-            xauto_lock<xspinlock_t> locker(get_spin_lock());
-            xvactmeta_t * meta_ptr = get_meta();
-            const bool result = meta_ptr->set_index_meta(new_meta);
-            if(result)
-            {
-                //note:dont enable log too much since it sensitive for spinlock
-                #ifdef DEBUG_XVLEDGER
-                xdbg_info("xvaccountobj_t::set_index_meta,meta=%s",new_meta.ddump().c_str());
-                #endif
-            }
-            return result;
-        }
-    
         bool   xvaccountobj_t::set_sync_meta(const xsyncmeta_t & new_meta)
         {
             if(is_close())//not allow write anymore at closed status
@@ -324,13 +307,7 @@ namespace top
             xauto_lock<xspinlock_t> locker(get_spin_lock());
             return get_meta()->get_state_meta();
         }
-        
-        const xindxmeta_t   xvaccountobj_t::get_index_meta()
-        {
-            xauto_lock<xspinlock_t> locker(get_spin_lock());
-            return get_meta()->get_index_meta();
-        }
-        
+
         const xsyncmeta_t   xvaccountobj_t::get_sync_meta()
         {
             xauto_lock<xspinlock_t> locker(get_spin_lock());
@@ -343,25 +320,16 @@ namespace top
             return *get_meta();
         }
     
-        bool   xvaccountobj_t::set_latest_executed_block(const uint64_t height, const std::string & blockhash)
+        bool   xvaccountobj_t::set_latest_executed_block(const uint64_t height)
         {
             if(is_close())//not allow write anymore at closed status
                 return false;
             
             xauto_lock<xspinlock_t> locker(get_spin_lock());
             xvactmeta_t * meta_ptr = get_meta();
-            const bool result = meta_ptr->set_latest_executed_block(height,blockhash);
+            const bool result = meta_ptr->set_latest_executed_block(height);
 
             return result;
-        }
-    
-        bool   xvaccountobj_t::get_latest_executed_block(uint64_t & block_height,std::string & block_hash)
-        {
-            xauto_lock<xspinlock_t> locker(get_spin_lock());
-            xvactmeta_t * meta_ptr = get_meta();
-            block_height = meta_ptr->get_state_meta()._highest_execute_block_height;
-            block_hash   = meta_ptr->get_state_meta()._highest_execute_block_hash;
-            return true;
         }
         
         const uint64_t   xvaccountobj_t::get_latest_executed_block_height()
@@ -442,7 +410,7 @@ namespace top
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
                     // #ifdef DEBUG_XVLEDGER
-                    xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
+                    xinfo("xvaccountobj_t::meta->save_meta,%s,meta(%s)",get_address().c_str(), m_meta_ptr->dump().c_str());
                     // #endif
                     return true;
                 }

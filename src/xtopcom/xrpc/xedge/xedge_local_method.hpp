@@ -5,6 +5,7 @@
 #include "xedge_local_method.h"
 #include "xrpc/xuint_format.h"
 #include "xrpc/xrpc_method.h"
+#include "xversion/version.h"
 
 NS_BEG2(top, xrpc)
 #define MAX_EDGE_POOL_SIZE 10
@@ -25,6 +26,7 @@ m_xip2(xip2) {
     // EDGE_REGISTER_V1_LOCAL_METHOD(T, import_private_key);
     // EDGE_REGISTER_V1_LOCAL_METHOD(T, get_private_keys);
     EDGE_REGISTER_V1_LOCAL_METHOD(T, get_edge_neighbors);
+    EDGE_REGISTER_V1_LOCAL_METHOD(T, getClientVersion);    
 }
 
 template<class T>
@@ -160,6 +162,19 @@ void xedge_local_method<T>::get_edge_neighbors_method(xjson_proc_t &json_proc) {
     }
     xdbg("edge_neighbors size: %d, pool size: %d ", ips.size(), pool_size);
     json_proc.m_response_json["data"] = dataJson;
+}
+
+template<class T>
+void xedge_local_method<T>::getClientVersion_method(xjson_proc_t &json_proc) {
+    Json::Value dataJson;
+    dataJson["topio_version"] = get_program_version();
+    dataJson["git_commit"] = get_git_log_latest();
+    dataJson["git_submodule"] = get_git_submodule();
+    dataJson["build_date"] = get_build_date_time();
+    dataJson["build_options"] = get_build_options();
+    dataJson["md5"] = get_md5();
+    json_proc.m_response_json["data"] = dataJson;
+    xinfo_rpc("getClientVersion_method: topio_version=%s", get_program_version().c_str());
 }
 
 NS_END2

@@ -37,6 +37,11 @@ enum class xenum_errc {
     invalid_table_base_address,
     invalid_table_address,
     not_enough_data,
+    invalid_eth_address,
+    rlp_input_empty,
+    rlp_invalid_encoded_data,
+    rlp_invalid_size_of_length_field,
+    rlp_not_enough_data,
 };
 using xerrc_t = xenum_errc;
 

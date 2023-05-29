@@ -13,7 +13,7 @@ namespace xrpc {
 
 class xtxindex_detail_t {
 public:
-    xtxindex_detail_t(const base::xvtxindex_ptr & txindex, std::string const & blockhash, const base::xvaction_t & txaction, uint64_t transaction_index);
+    xtxindex_detail_t(const base::xvtxindex_ptr & txindex, std::string const & blockhash, const base::xvaction_t & txaction, uint64_t transaction_index, uint64_t blocktimestamp);
     ~xtxindex_detail_t() {}
 
     void            set_raw_tx(base::xdataunit_t* tx);
@@ -22,6 +22,7 @@ public:
     const data::xlightunit_action_t &   get_txaction() const {return m_txaction;}
     const data::xtransaction_ptr_t &    get_raw_tx() const {return m_raw_tx;}
     uint64_t                            get_transaction_index() const {return m_transaction_index;}
+    uint64_t                            get_blocktimestamp() const {return m_blocktimestamp;}
 
 private:
     base::xvtxindex_ptr         m_txindex{nullptr};
@@ -29,6 +30,7 @@ private:
     data::xlightunit_action_t   m_txaction;
     data::xtransaction_ptr_t    m_raw_tx{nullptr};
     uint64_t                    m_transaction_index{0};
+    uint64_t                    m_blocktimestamp{0};
 };
 using xtxindex_detail_ptr_t = std::shared_ptr<xtxindex_detail_t>;
 

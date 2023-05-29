@@ -31,7 +31,6 @@ private:
     observer_ptr<router::xrouter_face_t> m_router;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     observer_ptr<sync::xsync_object_t> m_sync_obj;
-    observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
     observer_ptr<base::xvnodesrv_t> m_nodesvr;
@@ -51,7 +50,6 @@ public:
                        observer_ptr<router::xrouter_face_t> router,
                        observer_ptr<vnetwork::xvhost_face_t> vhost,
                        observer_ptr<sync::xsync_object_t> sync,
-                       observer_ptr<grpcmgr::xgrpc_mgr_t> grpc,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor,
                        observer_ptr<base::xvnodesrv_t> const & nodesvr);

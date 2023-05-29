@@ -47,7 +47,7 @@ void xfullunit_block_t::parse_to_json(Json::Value & root, const std::string & rp
 
     // auto tx_vec = get_txkeys();
     // for (auto & tx : tx_vec) {
-    //     xJson::Value jv;
+    //     Json::Value jv;
     //     jv["tx_consensus_phase"] = tx.get_tx_subtype_str();
     //     jv["tx_hash"] = "0x" + tx.get_tx_hex_hash();
     //     root["fullunit"]["txs"].append(jv);

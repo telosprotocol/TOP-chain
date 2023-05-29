@@ -168,7 +168,7 @@ TEST_F(test_xca_auth, ca_read_right_json_test)
 {
 
     xJson::Reader reader;
-    xJson::Value json_root;
+    Json::Value json_root;
 
     bool ret = reader.parse(g_ci_genesis_config, json_root);
     const auto members = json_root.getMemberNames();

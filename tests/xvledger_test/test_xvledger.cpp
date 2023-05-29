@@ -50,7 +50,6 @@ TEST_F(test_xvledger, table_address_check_1) {
 
         // ASSERT_EQ(_vaddr.get_xvid());
         std::cout << "xvid=" << _vaddr.get_xvid() << std::endl;
-        std::cout << "xvid_str=" << _vaddr.get_xvid_str() << std::endl;
         std::cout << "tableid=" << _vaddr.get_short_table_id() << std::endl;
     }
     {
@@ -67,7 +66,6 @@ TEST_F(test_xvledger, table_address_check_1) {
 
         // ASSERT_EQ(_vaddr.get_xvid());
         std::cout << "xvid=" << _vaddr.get_xvid() << std::endl;
-        std::cout << "xvid_str=" << _vaddr.get_xvid_str() << std::endl;
         std::cout << "tableid=" << _vaddr.get_short_table_id() << std::endl;
     }
     {
@@ -84,7 +82,6 @@ TEST_F(test_xvledger, table_address_check_1) {
 
         // ASSERT_EQ(_vaddr.get_xvid());
         std::cout << "xvid=" << _vaddr.get_xvid() << std::endl;
-        std::cout << "xvid_str=" << _vaddr.get_xvid_str() << std::endl;
         std::cout << "tableid=" << _vaddr.get_short_table_id() << std::endl;
     }    
 }

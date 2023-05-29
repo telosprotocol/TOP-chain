@@ -44,10 +44,6 @@ namespace top
             inline const std::string&  get_org_tx_hash()        const {return m_org_tx_hash;}
             inline const uint8_t       get_org_tx_action_id()   const {return m_org_tx_action_id;}
 
-            bool                       withdraw_tgas(const uint64_t tgas); //return false if not have enough tags left
-            inline const uint64_t      get_used_tgas() const {return m_used_tgas;}
-            inline const uint64_t      get_max_tgas()  const {return m_max_tgas;}
-            void                       set_max_tgas(const uint64_t max_tgas){ m_max_tgas = max_tgas;}
             void                       set_org_tx_action_id(uint8_t actionid) {m_org_tx_action_id = actionid;}
             int32_t                    get_ex_alloc_size() const;
 
@@ -60,8 +56,6 @@ namespace top
         private:
             void            parse_uri();
             void            close();
-            uint64_t        m_max_tgas;          //max tgas allow used for this action
-            uint64_t        m_used_tgas;         //how many tgas(virtual cost) used
             std::string     m_org_tx_hash;       //which transaction generated this action
             uint8_t         m_org_tx_action_id{0};   //the transaction includes one or multi actions
         };

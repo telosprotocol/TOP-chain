@@ -36,7 +36,7 @@ static xstate_mpt_caching_db_t & get_caching_db(base::xvdbstore_t * db) {
 }
 
 std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(common::xtable_address_t const & table,
-                                                       evm_common::xh256_t const & root,
+                                                       xh256_t const & root,
                                                        base::xvdbstore_t * db,
                                                        std::error_code & ec) {
     assert(!ec);
@@ -50,7 +50,7 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(common::xtable_address_t 
     return mpt;
 }
 
-void xtop_state_mpt::init(common::xtable_address_t const & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
+void xtop_state_mpt::init(common::xtable_address_t const & table, const xh256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
     assert(!ec);
 
     m_table_address = table;
@@ -107,7 +107,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
     // get from db
     xbytes_t index_bytes;
     {
-        XMETRICS_TIME_RECORD("state_mpt_load_db_index");
+        // XMETRICS_TIME_RECORD("state_mpt_load_db_index");
         std::lock_guard<std::mutex> lock(m_trie_lock);
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
@@ -171,7 +171,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     xbytes_t index_bytes;
     {
         std::lock_guard<std::mutex> lock(m_trie_lock);
-        XMETRICS_TIME_RECORD("state_mpt_load_db_index");
+        // XMETRICS_TIME_RECORD("state_mpt_load_db_index");
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
     if (ec) {
@@ -193,7 +193,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     return;
 }
 
-evm_common::xh256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
+xh256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_trie_lock);
     for (auto & acc : m_state_objects_pending) {
         auto obj = query_state_object(acc);
@@ -213,11 +213,11 @@ evm_common::xh256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     return m_trie->hash();
 }
 
-evm_common::xh256_t const & xtop_state_mpt::original_root_hash() const noexcept {
+xh256_t const & xtop_state_mpt::original_root_hash() const noexcept {
     return m_trie->original_root_hash();
 }
 
-evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
+xh256_t xstate_mpt_t::commit(std::error_code & ec) {
     assert(!ec);
 
     get_root_hash(ec);
@@ -232,9 +232,9 @@ evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
     }
 
     std::lock_guard<std::mutex> lock(m_trie_lock);
-    std::pair<evm_common::xh256_t, int32_t> res;
+    std::pair<xh256_t, int32_t> res;
     {
-        XMETRICS_TIME_RECORD("state_mpt_trie_commit");
+        // XMETRICS_TIME_RECORD("state_mpt_trie_commit");
         res = m_trie->commit(ec);
     }
     if (ec) {
@@ -251,7 +251,7 @@ evm_common::xh256_t xstate_mpt_t::commit(std::error_code & ec) {
     return res.first;
 }
 
-void xtop_state_mpt::prune(evm_common::xh256_t const & old_trie_root_hash, std::unordered_set<evm_common::xh256_t> & pruned_hashes, std::error_code & ec) const {
+void xtop_state_mpt::prune(xh256_t const & old_trie_root_hash, std::unordered_set<xh256_t> & pruned_hashes, std::error_code & ec) const {
     assert(!ec);
 
     std::lock_guard<std::mutex> lock(m_trie_lock);
@@ -259,7 +259,7 @@ void xtop_state_mpt::prune(evm_common::xh256_t const & old_trie_root_hash, std::
     m_trie->prune(old_trie_root_hash, pruned_hashes, ec);
 }
 
-void xtop_state_mpt::commit_pruned(std::unordered_set<evm_common::xh256_t> const & pruned_hashes, std::error_code & ec) const {
+void xtop_state_mpt::commit_pruned(std::unordered_set<xh256_t> const & pruned_hashes, std::error_code & ec) const {
     assert(!ec);
 
     std::lock_guard<std::mutex> lock{m_trie_lock};
@@ -276,14 +276,14 @@ void xtop_state_mpt::prune(std::error_code & ec) {
     }
 }
 
-void xtop_state_mpt::commit_pruned(std::vector<evm_common::xh256_t> pruned_keys, std::error_code & ec) const {
+void xtop_state_mpt::commit_pruned(std::vector<xh256_t> pruned_keys, std::error_code & ec) const {
     assert(!ec);
     std::lock_guard<std::mutex> lock{m_trie_lock};
     assert(m_trie != nullptr);
     m_trie->commit_pruned(std::move(pruned_keys), ec);
 }
 
-void xtop_state_mpt::clear_pruned(evm_common::xh256_t const & pruned_key, std::error_code & ec) const {
+void xtop_state_mpt::clear_pruned(xh256_t const & pruned_key, std::error_code & ec) const {
     assert(!ec);
     std::lock_guard<std::mutex> lock{m_trie_lock};
     assert(m_trie != nullptr);

@@ -200,8 +200,6 @@ data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num, xunit_service::xpreproposal_send_cb cb) {
-    // XMETRICS_TIMER(metrics::cons_make_proposal_tick);
-    XMETRICS_TIME_RECORD("cons_make_proposal_cost");
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
     data::xtablestate_ptr_t tablestate = proposal_para.get_cert_table_state();
@@ -218,7 +216,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
               proposal_para.dump().c_str());
         return nullptr;
     }
-    XMETRICS_GAUGE(metrics::cons_table_leader_get_txpool_tx_count, table_para.get_origin_txs().size());
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xproposal_maker_t::make_proposal fail-leader_set_consensus_para.%s",
@@ -270,10 +267,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
 
-    // add metrics of tx counts / table counts ratio
-    XMETRICS_GAUGE(metrics::cons_table_leader_make_unit_count, table_result.m_succ_unit_num);
-    XMETRICS_GAUGE(metrics::cons_table_leader_make_tx_count, proposal_input->get_input_txs().size());    
-
     std::string block_object_bin;
     proposal_block->serialize_to_string(block_object_bin);
     xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
@@ -285,8 +278,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 }
 
 data::xblock_ptr_t xproposal_maker_t::make_proposal_backup(base::xvblock_t * proposal_block, data::xblock_consensus_para_t & cs_para) {
-    // XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
-    XMETRICS_TIME_RECORD("cons_verify_proposal_cost");
     xdbg("xproposal_maker_t::make_proposal_backup enter. proposal=%s", proposal_block->dump().c_str());
     
     int ret = backup_verify_and_set_consensus_para_basic(cs_para, proposal_block->get_last_block_hash(), proposal_block->get_justify_cert_hash());
@@ -301,6 +292,7 @@ data::xblock_ptr_t xproposal_maker_t::make_proposal_backup(base::xvblock_t * pro
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::make_proposal_backup fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
         XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return nullptr;
     }
@@ -551,7 +543,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     auto & all_table_sids = get_txpool()->get_all_table_sids();
     std::vector<base::xtable_shortid_t> all_table_sids_vec;
     all_table_sids_vec.assign(all_table_sids.begin(), all_table_sids.end());
-    peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
+    peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height(), proposal_para.get_latest_cert_block()->is_emptyblock(), proposal_para.get_latest_locked_block()->is_emptyblock());
 
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(
         proposal_para.get_table_account(), tablestate_highqc, proposal_para.get_latest_cert_block().get(), all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
@@ -569,32 +561,27 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     return true;
 }
 
-std::set<base::xtable_shortid_t> xproposal_maker_t::select_peer_sids_for_confirm_id(const std::vector<base::xtable_shortid_t> & all_sid_vec, uint64_t height) {
-    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    // uint32_t batch_num = 16;
-    // uint64_t height_interval = 8;
-    // uint32_t part_num = (all_sid_vec.size() + batch_num - 1) / batch_num;
-    // if (height % height_interval == 0) {
-    //     if (part_num > 0) {
-    //         uint32_t pos = (height / height_interval) % part_num;
-    //         uint32_t upper_idx = std::min((pos + 1) * batch_num, (uint32_t)all_sid_vec.size());
-    //         peer_sids_for_confirm_id.insert(all_sid_vec.begin() + pos * batch_num, all_sid_vec.begin() + upper_idx);
-    //     }
-    // }
-
-    uint32_t batch_num = 4;
-    uint64_t height_interval = 4;
-    uint32_t part_num = (all_sid_vec.size() + batch_num - 1) / batch_num;
-    if (height % height_interval == 0) {
-        if (part_num > 0) {
-            uint32_t pos = (height / height_interval) % part_num;
-            uint32_t upper_idx = std::min((pos + 1) * batch_num, (uint32_t)all_sid_vec.size());
-            peer_sids_for_confirm_id.insert(all_sid_vec.begin() + pos * batch_num, all_sid_vec.begin() + upper_idx);
-        }
+std::set<base::xtable_shortid_t> xproposal_maker_t::select_peer_sids_for_confirm_id(const std::vector<base::xtable_shortid_t> & all_sid_vec, uint64_t height, bool cert_empty, bool lock_empty) {
+    // only non_empty block can raise recv id in receipt id state.
+    // this algorithm is based on XBFT. 
+    // select some tables once for every 3 height, because there must have one non_empty block in every three continuous blocks.
+    // for height_remainder == 0, try raize recv id for the first time.
+    // for height_remainder == 1, if cert block is empty ,try again.
+    // for height_remainder == 2, if both cert and lock block are empty blocks, try the third time.
+    uint64_t height_interval = 3;
+    uint32_t height_remainder = (height % height_interval);
+    if ((height_remainder == 1 && !cert_empty) || (height_remainder == 2 && (!cert_empty || !lock_empty))) {
+        return {};
     }
 
-    // peer_sids_for_confirm_id.insert(all_sid_vec[height%all_sid_vec.size()]);
-
+    std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
+    uint32_t batch_num = 4;
+    uint32_t part_num = (all_sid_vec.size() + batch_num - 1) / batch_num;
+    if (part_num > 0) {
+        uint32_t pos = (height / height_interval) % part_num;
+        uint32_t upper_idx = std::min((pos + 1) * batch_num, (uint32_t)all_sid_vec.size());
+        peer_sids_for_confirm_id.insert(all_sid_vec.begin() + pos * batch_num, all_sid_vec.begin() + upper_idx);
+    }
     return peer_sids_for_confirm_id;
 }
 

@@ -39,7 +39,6 @@ xrpc_handler::xrpc_handler(std::shared_ptr<xvnetwork_driver_face_t>           ar
 }
 
 void xrpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessage_t & message) {
-    XMETRICS_TIME_RECORD("rpc_net_iothread_dispatch_cluster_rpc_handler");
 #if defined(DEBUG)
     auto msg_id = message.id();
     xdbg_rpc("xarc_rpc_handler on_message,id(%x,%s)", msg_id, edge_sender.to_string().c_str());  // address to_string
@@ -201,7 +200,7 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
             xinfo_rpc("req:%s >>>rsp part%u:%s", edge_msg.m_message_body.c_str(), i, response_msg_ptr->m_message_body.substr(i*800,800).c_str());
         }
         xinfo_rpc("req:%s >>>rsp part%u:%s", edge_msg.m_message_body.c_str(), i, response_msg_ptr->m_message_body.substr(i*800).c_str());
-        std::cout << "req" << edge_msg.m_message_body << " >>>rsp:" << response_msg_ptr->m_message_body << std::endl;
+        // std::cout << "req" << edge_msg.m_message_body << " >>>rsp:" << response_msg_ptr->m_message_body << std::endl;
     }
     std::error_code ec;
     m_arc_vhost->send_to(edge_sender, msg, ec);

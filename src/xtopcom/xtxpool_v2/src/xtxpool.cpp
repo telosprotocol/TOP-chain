@@ -11,6 +11,8 @@
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xtxpool_para.h"
 #include "xvledger/xvledger.h"
+#include "xbase/xutl.h"
+#include "xbasic/xsys_utl.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -26,6 +28,18 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
         }
         m_tables_mgr.add_tables(table_index.first, table_index.second);
     }
+
+    uint64_t system_memory = xsys_utl_t::get_total_memory();
+    if (system_memory < 2.5*1024*1024*1024L) {// less than 2.5G is a validator node
+        m_cache_limit.m_total_send_tx_max_num = total_send_tx_queue_size_max_validator;
+        m_cache_limit.m_total_recv_tx_max_num = total_recv_tx_queue_size_max_validator;
+        m_cache_limit.m_total_confirm_tx_max_num = total_confirm_tx_queue_size_max_validator;
+    } else {
+        m_cache_limit.m_total_send_tx_max_num = total_send_tx_queue_size_max_auditor;
+        m_cache_limit.m_total_recv_tx_max_num = total_recv_tx_queue_size_max_auditor;
+        m_cache_limit.m_total_confirm_tx_max_num = total_confirm_tx_queue_size_max_auditor;
+    }
+    xinfo("xtxpool_t::xtxpool_t momory=%ld",system_memory);
 }
 
 bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
@@ -41,6 +55,13 @@ bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
 }
 
 int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
+    // TODO(jimmy) not limit evm table tx now
+    if (m_statistic.m_push_tx_send_cur_num >= m_cache_limit.m_total_send_tx_max_num
+        && tx->get_tx()->get_self_table_index().get_zone_index() != base::enum_chain_zone_evm_index) {
+        xwarn("xtxpool_t::push_send_tx fail-reach send limit.tx=%s,cur=%d",tx->get_tx()->dump().c_str(),m_statistic.m_push_tx_send_cur_num.load());
+        return xtxpool_error_pending_reached_upper_limit;
+    }
+
     auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
@@ -51,7 +72,7 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
             assert(tx != nullptr && table != nullptr);
             return table->push_send_tx(tx) == xsuccess;
         };
-        data::xmessage_t msg{common::xaccount_address_t{tx->get_tx()->get_account_addr()}, tx->get_tx(), f};
+        data::xmessage_t msg{common::xaccount_address_t{tx->get_tx()->get_source_addr()}, tx->get_tx(), f};
         if (data::xpreprocess::instance().send(msg)) {
             return xsuccess;
         }
@@ -62,7 +83,15 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 }
 
 int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) {
-    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt");
+    if (tx->get_tx()->is_recv_tx() && m_statistic.m_push_tx_recv_cur_num >= m_cache_limit.m_total_recv_tx_max_num) {
+        xwarn("xtxpool_t::push_receipt fail-reach recv limit.tx=%s,cur=%d",tx->get_tx()->dump().c_str(),m_statistic.m_push_tx_recv_cur_num.load());
+        return xtxpool_error_pending_reached_upper_limit;
+    }
+    if (tx->get_tx()->is_confirm_tx() && m_statistic.m_push_tx_confirm_cur_num >= m_cache_limit.m_total_confirm_tx_max_num) {
+        xwarn("xtxpool_t::push_receipt fail-reach confirm limit.tx=%s,cur=%d",tx->get_tx()->dump().c_str(),m_statistic.m_push_tx_confirm_cur_num.load());
+        return xtxpool_error_pending_reached_upper_limit;
+    }
+
     auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
@@ -122,7 +151,6 @@ const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
 }
 
 xpack_resource xtxpool_t::get_pack_resource(const xtxs_pack_para_t & pack_para) {
-    XMETRICS_TIME_RECORD("txpool_get_pack_resource_cost");
     auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
     if (table == nullptr) {
         return {};
@@ -263,13 +291,16 @@ int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xco
 
     for (auto const & tx : txs) {
         if (nullptr == table->query_tx(tx->get_tx_hash())) {
+            if (!tx->is_send_or_self_tx()) {
+                continue;
+            }
             xtxpool_v2::xtx_para_t para;
             std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
             auto f = [tx_ent, table]() {
                 assert(tx_ent != nullptr && table != nullptr);
                 return table->push_send_tx(tx_ent) == xsuccess;
             };
-            data::xmessage_t msg{common::xaccount_address_t{tx_ent->get_tx()->get_account_addr()}, tx_ent->get_tx(), f};
+            data::xmessage_t msg{common::xaccount_address_t{tx_ent->get_tx()->get_source_addr()}, tx_ent->get_tx(), f};
             if (data::xpreprocess::instance().send(msg)) {
                 return xtxpool_error_account_tx_not_ready_yet;
             }
@@ -295,7 +326,6 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 
 void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
     xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->account_address().to_string().c_str(), table_state->height());
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_state->account_address().to_string());
     if (table == nullptr) {
         return;
@@ -310,6 +340,14 @@ void xtxpool_t::update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock
         return;
     }
     table->update_uncommit_txs(_lock_block, _cert_block);
+}
+
+void xtxpool_t::add_tx_action_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) {
+    auto table = get_txpool_table_by_addr(block->get_account());
+    if (table == nullptr) {
+        return;
+    }
+    table->add_tx_action_cache(block, txactions_cache);
 }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const {

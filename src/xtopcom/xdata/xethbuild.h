@@ -19,10 +19,10 @@ struct xethheader_para_t {
 
 class xeth_build_t {
  public:
-    static evm_common::h256         build_transactions_root(const xeth_transactions_t & ethtxs);
-    static evm_common::h256         build_receipts_root(const xeth_receipts_t & receipts);
-    static void                     build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_store_receipts_t & receipts, evm_common::xh256_t const & state_root, xeth_header_t & ethheader);
-    static void                     build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_receipts_t & receipts, evm_common::xh256_t const & state_root, xeth_header_t & ethheader);
+    static xh256_t         build_transactions_root(const xeth_transactions_t & ethtxs);
+    static xh256_t         build_receipts_root(const xeth_receipts_t & receipts);
+    static void                     build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_store_receipts_t & receipts, xh256_t const & state_root, xeth_header_t & ethheader);
+    static void                     build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_receipts_t & receipts, xh256_t const & state_root, xeth_header_t & ethheader);
 };
 
 NS_END2

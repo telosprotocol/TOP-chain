@@ -38,7 +38,6 @@ xsync_gossip_t::~xsync_gossip_t() {
 
 void xsync_gossip_t::on_timer() {
 
-    XMETRICS_TIME_RECORD("sync_cost_gossip_timer_event");
     if (m_time_rejecter.reject()){
         return;
     }
@@ -64,7 +63,6 @@ void xsync_gossip_t::on_timer() {
 
 void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
 
-    XMETRICS_TIME_RECORD("sync_cost_gossip_chain_timer_event");
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e);
     base::xvblock_t* time_block = bme->time_block;
 
@@ -90,10 +88,6 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
 }
 
 void xsync_gossip_t::add_role(const common::xnode_address_t& addr) {
-
-
-    XMETRICS_TIME_RECORD("sync_cost_gossip_add_role_event");
-
     common::xnode_type_t type = common::real_part_type(addr.type());
 
     xsync_roles_t roles = m_role_chains_mgr->get_roles();
@@ -251,8 +245,7 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
             info_rsp->owner = info->owner;
             info_rsp->max_height = local_height;
             info_list_rsp.push_back(info_rsp);
-        } else {
-        }
+        } 
     }
 
     if (!info_list_rsp.empty()) {
@@ -272,7 +265,7 @@ void xsync_gossip_t::send_gossip(const common::xnode_address_t &self_addr, std::
 
         m_sync_sender->send_gossip(info_list, bloom_data, self_addr, 1, target_type);
 
-        XMETRICS_COUNTER_INCREMENT("sync_gossip_send", 1);
+        XMETRICS_GAUGE(metrics::xsync_gossip_send, 1);
     }
 }
 
@@ -282,7 +275,7 @@ void xsync_gossip_t::send_gossip_to_target(const common::xnode_address_t &self_a
 
     m_sync_sender->send_gossip_to_target(info_list, bloom_data, self_addr, target_addr);
 
-    XMETRICS_COUNTER_INCREMENT("sync_gossip_send", 1);
+    XMETRICS_GAUGE(metrics::xsync_gossip_send, 1);
 }
 
 void xsync_gossip_t::send_frozen_gossip(const common::xnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers) {
@@ -291,7 +284,7 @@ void xsync_gossip_t::send_frozen_gossip(const common::xnode_address_t &self_addr
 
     for (uint32_t i=0; i<max_peers; i++) {
         m_sync_sender->send_frozen_gossip(info_list, bloom_data, self_addr);
-        XMETRICS_COUNTER_INCREMENT("sync_gossip_send", 1);
+        XMETRICS_GAUGE(metrics::xsync_gossip_send, 1);
     }
 }
 
@@ -301,7 +294,7 @@ void xsync_gossip_t::send_frozen_gossip_to_target(const common::xnode_address_t 
 
     m_sync_sender->send_frozen_gossip_to_target(info_list, bloom_data, self_addr, target_addr);
 
-    XMETRICS_COUNTER_INCREMENT("sync_gossip_send", 1);
+    XMETRICS_GAUGE(metrics::xsync_gossip_send, 1);
 }
 
 void xsync_gossip_t::update_behind(const std::string &address, uint64_t local_height, uint64_t peer_height) {

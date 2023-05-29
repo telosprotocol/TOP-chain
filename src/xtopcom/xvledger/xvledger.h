@@ -55,9 +55,9 @@ namespace top
             enum_state_plugin_idle_timeout_ms   = 10*60*1000,  //idle duration for plugin
 #else
             enum_timer_check_interval           = 10000,  //check every 10 seconds    
-            enum_account_idle_timeout_ms        = 60*60*1000, //account change to idle status if not access within 60 minutes
-            enum_block_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes
-            enum_state_plugin_idle_timeout_ms   = 60*60*1000,  //idle duration for plugin  60minutes
+            enum_account_idle_timeout_ms        = 20*60*1000, //account change to idle status if not access within 20 minutes
+            enum_block_plugin_idle_timeout_ms   = 20*60*1000,  //idle duration for plugin  15minutes
+            enum_state_plugin_idle_timeout_ms   = 20*60*1000,  //idle duration for plugin  15minutes
 #endif
             enum_account_save_meta_interval = 64, //force save meta every 64 modification
             enum_account_save_meta_offset   = 8,  //force save meta when height offset skip
@@ -94,11 +94,10 @@ namespace top
             const xblockmeta_t      get_block_meta();
             const xstatemeta_t      get_state_meta();
             const xsyncmeta_t       get_sync_meta();
-            const xindxmeta_t       get_index_meta();
             const xvactmeta_t       get_full_meta();
             
-            bool                    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
-            bool                    get_latest_executed_block(uint64_t & block_height,std::string & block_hash);
+            bool                    set_latest_executed_block(const uint64_t height);
+            // bool                    get_latest_executed_block(uint64_t & block_height);
             const uint64_t          get_latest_executed_block_height();
             uint64_t                get_lowest_executed_block_height();
             bool                    set_lowest_executed_block_height(const uint64_t height);
@@ -114,7 +113,6 @@ namespace top
             bool                    set_block_meta(const xblockmeta_t & new_meta);
             bool                    set_state_meta(const xstatemeta_t & new_meta);
             bool                    set_sync_meta(const xsyncmeta_t & new_meta);
-            bool                    set_index_meta(const xindxmeta_t & new_meta);
             
         private: //only open for table object
             virtual bool            is_live(const uint64_t timenow_ms) override;//test whether has been idel status

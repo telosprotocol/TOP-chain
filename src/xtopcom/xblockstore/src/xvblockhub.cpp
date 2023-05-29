@@ -238,7 +238,7 @@ namespace top
         {
             //note: place code first but  please enable it later
             if(base::enum_xvblock_level_table == m_meta->_block_level)
-                return (enum_max_cached_blocks << 1);//cache to max 128 block
+                return (enum_max_cached_blocks);// TODO(jimmy) cache to max 32 block
 
             if(base::enum_xvblock_level_unit == m_meta->_block_level)
                 return (enum_max_cached_blocks >> 2);//cache to max 8 block for unit
@@ -929,8 +929,6 @@ namespace top
 
                         (*it)->release_ref();   //release ptr that reference added by read_index_from_db
                     }
-                   
-                    XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
                     
                     return (int)_indexes.size();
                 }
@@ -973,8 +971,6 @@ namespace top
 
                         (*it)->release_ref();   //release ptr that reference added by read_index_from_db
                     }
-                    
-                    XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
                     
                     return (int)_indexes.size();
                 }
@@ -1159,7 +1155,7 @@ namespace top
             }
 
             if(   (false == new_raw_block->is_body_and_offdata_ready(false))
-               || (false == new_raw_block->is_deliver(true)) )// XTODO must have full valid data and has mark as enum_xvblock_flag_authenticated
+               || (false == new_raw_block->is_deliver(false)) )// XTODO must have full valid data and has mark as enum_xvblock_flag_authenticated
             {
                 xerror("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
                 return false;
@@ -1193,9 +1189,6 @@ namespace top
             }
 
             xdbg("xblockacct_t::store_block,prepare for block=%s,cache_size:%zu,dump=%s",new_raw_block->dump().c_str(), m_all_blocks.size(), dump().c_str());
-          
-            XMETRICS_TIME_RECORD_KEY("blockstore_store_block_time", new_raw_block->get_account() + ":" + std::to_string(new_raw_block->get_height()));
-           
 
             //#1:cache_block() ->link neighbor -> mark_connect_flag() -> update metric
             //#2:connect_block() ->process_block()

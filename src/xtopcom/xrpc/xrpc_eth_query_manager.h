@@ -53,6 +53,7 @@ public:
     void eth_estimateGas(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getStorageAt(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getLogs(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_feeHistory(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 
     void topRelay_getBlockByNumber(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void topRelay_getBlockByHash(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode);

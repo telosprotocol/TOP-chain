@@ -29,8 +29,8 @@ public:
     void OnElectQuit(const common::xip2_t & xip2);
 
 private:
-    void OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data, common::xip2_t const & group_xip, std::pair<uint64_t, uint64_t> const & routing_table_info);
-    void UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> const & elect_data, wrouter::WrouterTableNodes const & self_wrouter_nodes);
+    void OnElectUpdated(std::vector<wrouter::WrouterTableNode> const & elect_data, common::xip2_t const & group_xip, uint64_t routing_table_blk_height);
+    void UpdateRoutingTable(std::vector<wrouter::WrouterTableNode> const & elect_data, wrouter::WrouterTableNode const & self_wrouter_nodes);
 
 private:
     transport::TransportPtr transport_{nullptr};

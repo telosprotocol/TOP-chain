@@ -29,9 +29,10 @@ class xatomictx_executor_t {
 
  public:
     enum_execute_result_type execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output, uint64_t gas_used);
-
+   
  private:
     enum_execute_result_type vm_execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output); 
+    enum_execute_result_type vm_execute_forked(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output); //evm v3 tx forked
     enum_execute_result_type vm_execute_before_process(const xcons_transaction_ptr_t & tx);
     bool    set_tx_account_state(const data::xaccountstate_ptr_t & accountstate, const xcons_transaction_ptr_t & tx);
     bool    set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx);
@@ -40,11 +41,12 @@ class xatomictx_executor_t {
                                     const xcons_transaction_ptr_t & tx,
                                     enum_execute_result_type vm_result,
                                     xatomictx_output_t & output,
-                                    uint64_t gas_used);
+                                    uint64_t gas_used, bool forked = false);
     bool    check_account_order(const xcons_transaction_ptr_t & tx);
     bool    check_receiptid_order(const xcons_transaction_ptr_t & tx);
     bool    update_nonce_and_hash(const data::xaccountstate_ptr_t & accountstate, const xcons_transaction_ptr_t & tx);
     bool    update_gasfee(const xvm_gasfee_detail_t detail, const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx, uint64_t &total_burn_out);
+    enum_execute_result_type vm_execute_result_transform(xvm_output_t & vmoutput, uint64_t gas_limit,std::error_code & ec);
  private:
     statectx::xstatectx_face_ptr_t  m_statectx{nullptr};
     xvm_para_t                      m_para;

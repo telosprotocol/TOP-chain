@@ -43,9 +43,9 @@ public:
     // sync actions
     void sync_state(const common::xaccount_address_t & table,
                     const uint64_t height,
-                    const evm_common::xh256_t & block_hash,
-                    const evm_common::xh256_t & state_hash,
-                    const evm_common::xh256_t & root_hash,
+                    const xh256_t & block_hash,
+                    const xh256_t & state_hash,
+                    const xh256_t & root_hash,
                     bool sync_unit,
                     std::error_code & ec);
     void sync_unit_state(const common::xaccount_address_t & account, const base::xaccount_index_t & index, std::error_code & ec);

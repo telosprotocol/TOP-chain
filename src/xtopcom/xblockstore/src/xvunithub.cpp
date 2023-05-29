@@ -206,10 +206,11 @@ namespace top
             }
             
             uint64_t timeout_for_block_plugin = base::enum_block_plugin_idle_timeout_ms;
-            if(auto_account_ptr->is_table_address())
-            {
-                timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
-            }
+            // table object not keep plugin forever, for reducing memory overhead.
+            // if(auto_account_ptr->is_table_address())
+            // {
+            //     timeout_for_block_plugin = (uint32_t)-1; //table object keep plugin forever
+            // }
             
             #ifdef __new_plugin_by_lambda__
             #else
@@ -484,7 +485,7 @@ namespace top
             return account_obj->get_latest_deleted_block_height();
         }
 
-        bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag)
+        bool xvblockstore_impl::set_latest_executed_info(const base::xvaccount_t & account,uint64_t height)
         {
             xassert(false == account.is_unit_address());
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
@@ -493,8 +494,7 @@ namespace top
                 return false;
             }
             base::xauto_ptr<base::xvaccountobj_t> account_obj = target_table->get_account(account);
-            METRICS_TAG(atag, 1);
-            return account_obj->set_latest_executed_block(height, blockhash);
+            return account_obj->set_latest_executed_block(height);
         }
 
         //one api to get latest_commit/latest_lock/latest_cert for better performance

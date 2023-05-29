@@ -137,8 +137,6 @@ void xtop_rec_elect_fullnode_contract::on_timer(const uint64_t current_time) {
     }
 #endif
 
-    XMETRICS_TIME_RECORD(XFULLNODE_ELECT "on_timer_all_time");
-    XMETRICS_CPU_TIME_RECORD(XFULLNODE_ELECT "on_timer_cpu_time");
     XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xrec_elect_fullnode_contract_t instance is triggled by others");
     XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_rec_elect_fullnode_addr,
                      "xrec_elect_fullnode_contract_t instance is not triggled by sys_contract_rec_elect_fullnode_addr");

@@ -102,6 +102,12 @@ public:// APIs for property operation with property value return
     int32_t tep_token_withdraw(common::xtoken_id_t const token_id, evm_common::u256 sub_token);
     int32_t set_tep_balance(common::xtoken_id_t const token_id, evm_common::u256 new_balance);
     int32_t set_tep_balance_bytes(common::xtoken_id_t const token_id, const top::xbytes_t & new_balance);
+    int64_t int64_get(std::string const & prop) const;
+    int32_t int64_set(std::string const & prop, int64_t value);
+
+    bool property_exist(std::string const & key) const;
+    int32_t uint64_create(std::string const & key);
+    uint64_t uint64_get(std::string const & key) const;
 
 private:
     evm_common::u256 tep_token_balance(const std::string & token_name) const;
@@ -117,6 +123,7 @@ private:
     base::xauto_ptr<base::xmapvar_t<std::string>>   load_map_for_write(const std::string & key);
     base::xauto_ptr<base::xvintvar_t<uint64_t>>     load_uin64_for_write(const std::string & key);
     base::xauto_ptr<base::xtokenvar_t>              load_token_for_write(const std::string & key);
+    base::xauto_ptr<base::xvintvar_t<int64_t>>      load_int64_for_write(std::string const & key) const;
 
 protected:
     xobject_ptr_t<base::xvbstate_t>     m_bstate{nullptr};

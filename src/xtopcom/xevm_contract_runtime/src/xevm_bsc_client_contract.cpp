@@ -40,23 +40,25 @@ constexpr uint64_t bsc_chainid = 56;
 
 auto static empty_unclehash = static_cast<h256>(from_hex("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
 
-bool xtop_evm_bsc_client_contract::init(const xbytes_t & rlp_bytes, state_ptr state) {
+bool xtop_evm_bsc_client_contract::init(xbytes_t const & rlp_bytes, state_ptr state) {
     // step 1: check init
-    if (get_last_hash(state) != h256()) {
+    if (!get_last_hash(state).empty()) {
         xwarn("[xtop_evm_bsc_client_contract::init] init already");
         return false;
     }
     // step 2: decode
-    auto left_bytes = std::move(rlp_bytes);
+    auto left_bytes = rlp_bytes;
     std::vector<xeth_header_t> headers;
+    std::error_code ec;
     while (!left_bytes.empty()) {
         auto item = RLP::decode_once(left_bytes);
         left_bytes = item.remainder;
         xeth_header_t header;
-        if (header.decode_rlp(item.decoded[0]) == false) {
-            xwarn("[xtop_evm_bsc_client_contract::init] header decode error");
+        header.decode_rlp(item.decoded[0], ec);
+        if (ec) {
+            xwarn("[xtop_evm_bsc_client_contract::init] header decode error. msg %s", ec.message().c_str());
             return false;
-        };
+        }
         headers.emplace_back(header);
     }
     // min 12 + 1 to construnct state
@@ -65,7 +67,6 @@ bool xtop_evm_bsc_client_contract::init(const xbytes_t & rlp_bytes, state_ptr st
         return false;
     }
 
-    std::error_code ec;
     xvalidators_snapshot_t snap;
     if (!snap.init_with_double_epoch(headers[0], headers[1])) {
         xwarn("[xtop_evm_bsc_client_contract::init] new_epoch_snapshot error");
@@ -84,7 +85,7 @@ bool xtop_evm_bsc_client_contract::init(const xbytes_t & rlp_bytes, state_ptr st
             }
         }
         auto snap_hash = snap.digest();
-        auto header_hash = h.hash();
+        auto header_hash = h.calc_hash();
         // step 3: store with no check
         xinfo("[xtop_evm_bsc_client_contract::init] header dump: %s, snap_hash: %s", h.dump().c_str(), snap_hash.hex().c_str());
         if (!set_last_hash(header_hash, state)) {
@@ -92,20 +93,20 @@ bool xtop_evm_bsc_client_contract::init(const xbytes_t & rlp_bytes, state_ptr st
             return false;
         }
         if (!set_effective_hash(h.number, header_hash, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_effective_hash failed, height: %s, hash: %s", h.number.str().c_str(), header_hash.hex().c_str());
+            xwarn("[xtop_evm_bsc_client_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
             return false;
         }
         if (!set_hashes(h.number, {header_hash}, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_hash failed, height: %s, hash: %s", h.number.str().c_str(), header_hash.hex().c_str());
+            xwarn("[xtop_evm_bsc_client_contract::init] set_hash failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
             return false;
         }
         if (!set_header(header_hash, h, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_header failed, height: %s, hash: %s", h.number.str().c_str(), header_hash.hex().c_str());
+            xwarn("[xtop_evm_bsc_client_contract::init] set_header failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
             return false;
         }
         xvalidators_snap_info_t snap_info{snap_hash, h.parent_hash, h.number};
         if (!set_snap_info(header_hash, snap_info, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_snap_info failed, height: %s, hash: %s", h.number.str().c_str(), header_hash.hex().c_str());
+            xwarn("[xtop_evm_bsc_client_contract::init] set_snap_info failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
             return false;
         }
     }
@@ -114,18 +115,19 @@ bool xtop_evm_bsc_client_contract::init(const xbytes_t & rlp_bytes, state_ptr st
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::sync(const xbytes_t & rlp_bytes, state_ptr state) {
+bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr state) {
     // step 1: check init
     if (get_last_hash(state) == h256()) {
         xwarn("[xtop_evm_bsc_client_contract::sync] not init yet");
         return false;
     }
 
-    auto left_bytes = std::move(rlp_bytes);
-    while (left_bytes.size() != 0) {
+    auto left_bytes = rlp_bytes;
+    std::error_code ec;
+    while (!left_bytes.empty()) {
         // step 2: decode
         auto item = RLP::decode(left_bytes);
-        auto decoded_size = item.decoded.size();
+        auto const decoded_size = item.decoded.size();
         if (decoded_size < 2) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
@@ -135,49 +137,50 @@ bool xtop_evm_bsc_client_contract::sync(const xbytes_t & rlp_bytes, state_ptr st
         {
             auto item_header = RLP::decode_once(item.decoded[0]);
             auto header_bytes = item_header.decoded[0];
-            if (header.decode_rlp(header_bytes) == false) {
-                xwarn("[xtop_evm_bsc_client_contract::sync] decode header error");
+            header.decode_rlp(header_bytes, ec);
+            if (ec) {
+                xwarn("xtop_evm_bsc_client_contract::sync, decode header error, msg %s", ec.message().c_str());
                 return false;
             }
         }
         xinfo("[xtop_evm_bsc_client_contract::sync] header dump: %s", header.dump().c_str());
 
         xvalidators_snapshot_t snap;
-        const uint32_t validator_num_index = 1;
-        snap.number = static_cast<uint64_t>(header.number) - 1;
+        uint32_t const validator_num_index = 1;
+        snap.number = header.number - 1;
         snap.hash = header.parent_hash;
-        auto validator_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[validator_num_index]));
+        auto validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[validator_num_index]);
         // check decoded_size with recent_num
         if (decoded_size < validator_num + validator_num_index + 1 + 1) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
         }
-        const uint32_t validators_index = validator_num_index + 1;
+        uint32_t const validators_index = validator_num_index + 1;
         for (uint64_t i = 0; i < validator_num; ++i) {
-            snap.validators.insert(item.decoded[i + validators_index]);
+            snap.validators.insert(common::xeth_address_t::build_from(item.decoded[i + validators_index]));
         }
 
-        const uint32_t last_validator_num_index = validator_num + validator_num_index + 1;
-        auto last_validator_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[last_validator_num_index]));
+        uint32_t const last_validator_num_index = validator_num + validator_num_index + 1;
+        auto last_validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[last_validator_num_index]);
         if (decoded_size < last_validator_num_index + 1 + last_validator_num) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
         }
-        const uint32_t last_validators_index = last_validator_num_index + 1;
+        uint32_t const last_validators_index = last_validator_num_index + 1;
         for (uint64_t i = 0; i < last_validator_num; ++i) {
-            snap.last_validators.insert(item.decoded[i + last_validators_index]);
+            snap.last_validators.insert(common::xeth_address_t::build_from(item.decoded[i + last_validators_index]));
         }
 
-        const uint32_t recent_num_index = last_validator_num + last_validator_num_index + 1;
-        auto recent_num = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[recent_num_index]));
+        uint32_t const recent_num_index = last_validator_num + last_validator_num_index + 1;
+        auto recent_num = evm_common::fromBigEndian<uint64_t>(item.decoded[recent_num_index]);
         if (decoded_size < recent_num_index + 1 + recent_num) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
         }
-        const uint32_t recents_index = recent_num_index + 1;
+        uint32_t const recents_index = recent_num_index + 1;
         for (uint64_t i = 0; i < recent_num; ++i) {
-            auto k = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[recents_index + i * 2]));
-            snap.recents[k] = item.decoded[recents_index + i * 2 + 1];
+            auto k = evm_common::fromBigEndian<uint64_t>(item.decoded[recents_index + i * 2]);
+            snap.recents[k] = common::xeth_address_t::build_from(item.decoded[recents_index + i * 2 + 1]);
         }
 
         xeth_header_t parent_header;
@@ -228,7 +231,7 @@ bigint xtop_evm_bsc_client_contract::get_height(state_ptr state) const {
     return info.number;
 }
 
-xheader_status_t xtop_evm_bsc_client_contract::query_height(const u256 height, state_ptr state) const {
+xheader_status_t xtop_evm_bsc_client_contract::query_height(u256 const height, state_ptr state) const {
     auto now_height = get_height(state);
     if (now_height == 0) {
         return xheader_status_t::header_not_confirmed;
@@ -242,7 +245,7 @@ xheader_status_t xtop_evm_bsc_client_contract::query_height(const u256 height, s
     return xheader_status_t::header_confirmed;
 }
 
-bool xtop_evm_bsc_client_contract::is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const {
+bool xtop_evm_bsc_client_contract::is_known(u256 const height, xbytes_t const & hash_bytes, state_ptr state) const {
     h256 hash = static_cast<h256>(hash_bytes);
     auto hashes = get_hashes(height, state);
     if (!hashes.count(hash)) {
@@ -253,7 +256,7 @@ bool xtop_evm_bsc_client_contract::is_known(const u256 height, const xbytes_t & 
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::is_confirmed(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const {
+bool xtop_evm_bsc_client_contract::is_confirmed(u256 const height, xbytes_t const & hash_bytes, state_ptr state) const {
     h256 hash = static_cast<h256>(hash_bytes);
     h256 origin_hash = get_effective_hash(height, state);
     if (hash != origin_hash) {
@@ -274,7 +277,7 @@ bool xtop_evm_bsc_client_contract::is_confirmed(const u256 height, const xbytes_
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, xvalidators_snapshot_t & snap, state_ptr state) const {
+bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xeth_header_t const & new_header, xvalidators_snapshot_t & snap, state_ptr state) const {
     if (new_header.extra.size() < extra_vanity) {
         xwarn("[xtop_evm_bsc_client_contract::verify] header extra size error: %lu, should < %lu", new_header.extra.size(), extra_vanity);
         return false;
@@ -302,24 +305,27 @@ bool xtop_evm_bsc_client_contract::verify(const xeth_header_t & prev_header, con
         return false;
     }
     if (new_header.gas_limit > max_gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] gaslimit too big: %lu > %lu", new_header.gas_limit, max_gas_limit);
+        xwarn("[xtop_evm_bsc_client_contract::verify] gaslimit too big: %s > %lu", new_header.gas_limit.str().c_str(), max_gas_limit);
         return false;
     }
     if (new_header.gas_used > new_header.gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] gasUsed: %lu > gasLimit: %lu", new_header.gas_used, new_header.gas_limit);
+        xwarn("[xtop_evm_bsc_client_contract::verify] gasUsed: %s > gasLimit: %s", new_header.gas_used.str().c_str(), new_header.gas_limit.str().c_str());
         return false;
     }
-    bigint diff = bigint(prev_header.gas_limit) - bigint(new_header.gas_limit);
+    auto diff = prev_header.gas_limit - new_header.gas_limit;
     if (diff < 0) {
         diff *= -1;
     }
-    bigint limit = prev_header.gas_limit / gas_limit_bound_divisor;
-    if (uint64_t(diff) >= limit || new_header.gas_limit < min_gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] invalid gas limit: have %lu, want %lu + %lu", new_header.gas_limit, prev_header.gas_limit, diff.str().c_str());
+    auto const limit = prev_header.gas_limit / gas_limit_bound_divisor;
+    if (diff >= limit || new_header.gas_limit < min_gas_limit) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] invalid gas limit: have %s, want %s + %s",
+              new_header.gas_limit.str().c_str(),
+              prev_header.gas_limit.str().c_str(),
+              diff.str().c_str());
         return false;
     }
     if (new_header.number != prev_header.number + 1) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] height mismatch, new: %s, old: %s", new_header.number.str().c_str(), prev_header.number.str().c_str());
+        xwarn("[xtop_evm_bsc_client_contract::verify] height mismatch, new: %" PRIu64 ", old: %" PRIu64, new_header.number, prev_header.number);
         return false;
     }
 
@@ -341,8 +347,8 @@ bool xtop_evm_bsc_client_contract::verify(const xeth_header_t & prev_header, con
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::record(const xeth_header_t & header, const xvalidators_snapshot_t & snap, state_ptr state) {
-    h256 header_hash = header.hash();
+bool xtop_evm_bsc_client_contract::record(xeth_header_t const & header, xvalidators_snapshot_t const & snap, state_ptr state) {
+    h256 header_hash = header.calc_hash();
     h256 last_hash = get_last_hash(state);
     xvalidators_snap_info_t last_info;
     if (!get_snap_info(last_hash, last_info, state)) {
@@ -350,8 +356,8 @@ bool xtop_evm_bsc_client_contract::record(const xeth_header_t & header, const xv
         return false;
     }
     if (header.number + block_reserve_num < last_info.number) {
-        xwarn("[xtop_evm_bsc_client_contract::record] header is too old height: %s, hash: %s, now height: %s",
-              header.number.str().c_str(),
+        xwarn("[xtop_evm_bsc_client_contract::record] header is too old height: %" PRIu64 ", hash: %s, now height: %s",
+              header.number,
               header_hash.hex().c_str(),
               last_info.number.str().c_str());
         return false;
@@ -368,7 +374,7 @@ bool xtop_evm_bsc_client_contract::record(const xeth_header_t & header, const xv
     }
     all_hashes.insert(header_hash);
     if (!set_hashes(header.number, all_hashes, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] set hashes failed, height: %s", header.number.str().c_str());
+        xwarn("[xtop_evm_bsc_client_contract::record] set hashes failed, height: %" PRIu64, header.number);
         return false;
     }
     if (!set_header(header_hash, header, state)) {
@@ -376,8 +382,8 @@ bool xtop_evm_bsc_client_contract::record(const xeth_header_t & header, const xv
         return false;
     }
     xvalidators_snap_info_t info{snap.digest(), header.parent_hash, header.number};
-    if (!set_snap_info(header.hash(), info, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] set_header_info failed, height: %s, hash: %s", header.number.str().c_str(), header.hash().hex().c_str());
+    if (!set_snap_info(header.calc_hash(), info, state)) {
+        xwarn("[xtop_evm_bsc_client_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
         return false;
     }
     if (!rebuild(header, last_info, info, state)) {
@@ -388,19 +394,19 @@ bool xtop_evm_bsc_client_contract::record(const xeth_header_t & header, const xv
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::rebuild(const xeth_header_t & header, const xvalidators_snap_info_t & last_info, const xvalidators_snap_info_t & cur_info, state_ptr state) {
+bool xtop_evm_bsc_client_contract::rebuild(xeth_header_t const & header, xvalidators_snap_info_t const & last_info, xvalidators_snap_info_t const & cur_info, state_ptr state) {
     if (last_info.number > cur_info.number) {
         for (bigint i = cur_info.number + 1; i <= last_info.number; ++i) {
             remove_effective_hash(i, state);
         }
     }
-    auto header_hash = header.hash();
+    auto const header_hash = header.calc_hash();
     if (!set_last_hash(header_hash, state)) {
         xwarn("[xtop_evm_bsc_client_contract::record] set_last_hash failed, hash: %s", header_hash.hex().c_str());
         return false;
     }
     if (!set_effective_hash(header.number, header_hash, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::init] set_effective_hash failed, height: %s, hash: %s", header.number.str().c_str(), header_hash.hex().c_str());
+        xwarn("[xtop_evm_bsc_client_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", header.number, header_hash.hex().c_str());
         return false;
     }
     bigint height = header.number - 1;
@@ -427,7 +433,7 @@ bool xtop_evm_bsc_client_contract::rebuild(const xeth_header_t & header, const x
     return true;
 }
 
-void xtop_evm_bsc_client_contract::release(const bigint number, state_ptr state) {
+void xtop_evm_bsc_client_contract::release(bigint const number, state_ptr state) {
     xeth_header_t header;
     bigint difficulty;
     h256 hash;
@@ -464,21 +470,23 @@ void xtop_evm_bsc_client_contract::release(const bigint number, state_ptr state)
     }
 }
 
-bool xtop_evm_bsc_client_contract::get_header(const h256 hash, xeth_header_t & header, state_ptr state) const {
+bool xtop_evm_bsc_client_contract::get_header(h256 const hash, xeth_header_t & header, state_ptr state) const {
     auto k = hash.asBytes();
     auto header_str = state->map_get(data::system_contract::XPROPERTY_HEADERS, {k.begin(), k.end()});
     if (header_str.empty()) {
         xwarn("[xtop_evm_bsc_client_contract::get_header] get_header not exist, hash: %s", hash.hex().c_str());
         return false;
     }
-    if (header.decode_rlp({std::begin(header_str), std::end(header_str)}) == false) {
-        xwarn("[xtop_evm_bsc_client_contract::get_header] decode_header failed, hash: %s", hash.hex().c_str());
+    std::error_code ec;
+    header.decode_rlp({std::begin(header_str), std::end(header_str)}, ec);
+    if (ec) {
+        xwarn("xtop_evm_bsc_client_contract::get_header, decode_header failed, hash: %s, msg %s", hash.hex().c_str(), ec.message().c_str());
         return false;
     }
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::set_header(const h256 hash, const xeth_header_t & header, state_ptr state) {
+bool xtop_evm_bsc_client_contract::set_header(h256 const hash, xeth_header_t const & header, state_ptr state) {
     auto k = hash.asBytes();
     auto v = header.encode_rlp();
     if (0 != state->map_set(data::system_contract::XPROPERTY_HEADERS, {k.begin(), k.end()}, {v.begin(), v.end()})) {
@@ -487,7 +495,7 @@ bool xtop_evm_bsc_client_contract::set_header(const h256 hash, const xeth_header
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::remove_header(const h256 hash, state_ptr state) {
+bool xtop_evm_bsc_client_contract::remove_header(h256 const hash, state_ptr state) {
     auto k = hash.asBytes();
     if (0 != state->map_remove(data::system_contract::XPROPERTY_HEADERS, {k.begin(), k.end()})) {
         return false;
@@ -495,7 +503,7 @@ bool xtop_evm_bsc_client_contract::remove_header(const h256 hash, state_ptr stat
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::get_snap_info(const h256 hash, xvalidators_snap_info_t & header_info, state_ptr state) const {
+bool xtop_evm_bsc_client_contract::get_snap_info(h256 const hash, xvalidators_snap_info_t & header_info, state_ptr state) const {
     auto k = hash.asBytes();
     auto info_str = state->map_get(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()});
     if (info_str.empty()) {
@@ -509,7 +517,7 @@ bool xtop_evm_bsc_client_contract::get_snap_info(const h256 hash, xvalidators_sn
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::set_snap_info(const h256 hash, const xvalidators_snap_info_t & snap_info, state_ptr state) {
+bool xtop_evm_bsc_client_contract::set_snap_info(h256 const hash, xvalidators_snap_info_t const & snap_info, state_ptr state) {
     auto k = hash.asBytes();
     auto v = snap_info.encode_rlp();
     if (0 != state->map_set(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()}, {v.begin(), v.end()})) {
@@ -518,7 +526,7 @@ bool xtop_evm_bsc_client_contract::set_snap_info(const h256 hash, const xvalidat
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::remove_snap_info(const h256 hash, state_ptr state) {
+bool xtop_evm_bsc_client_contract::remove_snap_info(h256 const hash, state_ptr state) {
     auto k = hash.asBytes();
     if (0 != state->map_remove(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()})) {
         return false;
@@ -526,7 +534,7 @@ bool xtop_evm_bsc_client_contract::remove_snap_info(const h256 hash, state_ptr s
     return true;
 }
 
-h256 xtop_evm_bsc_client_contract::get_effective_hash(const bigint height, state_ptr state) const {
+h256 xtop_evm_bsc_client_contract::get_effective_hash(bigint const height, state_ptr state) const {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto hash_str = state->map_get(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, {k.begin(), k.end()});
     if (hash_str.empty()) {
@@ -535,7 +543,7 @@ h256 xtop_evm_bsc_client_contract::get_effective_hash(const bigint height, state
     return static_cast<h256>(xbytes_t{std::begin(hash_str), std::end(hash_str)});
 }
 
-bool xtop_evm_bsc_client_contract::set_effective_hash(const bigint height, const h256 hash, state_ptr state) {
+bool xtop_evm_bsc_client_contract::set_effective_hash(bigint const height, h256 const hash, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto v = hash.asBytes();
     if (0 != state->map_set(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, {k.begin(), k.end()}, {v.begin(), v.end()})) {
@@ -544,7 +552,7 @@ bool xtop_evm_bsc_client_contract::set_effective_hash(const bigint height, const
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::remove_effective_hash(const bigint height, state_ptr state) {
+bool xtop_evm_bsc_client_contract::remove_effective_hash(bigint const height, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     if (0 != state->map_remove(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, {k.begin(), k.end()})) {
         return false;
@@ -552,7 +560,7 @@ bool xtop_evm_bsc_client_contract::remove_effective_hash(const bigint height, st
     return true;
 }
 
-std::set<h256> xtop_evm_bsc_client_contract::get_hashes(const bigint height, state_ptr state) const {
+std::set<h256> xtop_evm_bsc_client_contract::get_hashes(bigint const height, state_ptr state) const {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto str = state->map_get(data::system_contract::XPROPERTY_ALL_HASHES, {k.begin(), k.end()});
     if (str.empty()) {
@@ -566,7 +574,7 @@ std::set<h256> xtop_evm_bsc_client_contract::get_hashes(const bigint height, sta
     return hashes;
 }
 
-bool xtop_evm_bsc_client_contract::set_hashes(const bigint height, const std::set<h256> & hashes, state_ptr state) {
+bool xtop_evm_bsc_client_contract::set_hashes(bigint const height, std::set<h256> const & hashes, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     xbytes_t v;
     for (auto h : hashes) {
@@ -579,7 +587,7 @@ bool xtop_evm_bsc_client_contract::set_hashes(const bigint height, const std::se
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::remove_hashes(const bigint height, state_ptr state) {
+bool xtop_evm_bsc_client_contract::remove_hashes(bigint const height, state_ptr state) {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     if (0 != state->map_remove(data::system_contract::XPROPERTY_ALL_HASHES, {k.begin(), k.end()})) {
         return false;
@@ -595,7 +603,7 @@ h256 xtop_evm_bsc_client_contract::get_last_hash(state_ptr state) const {
     return static_cast<h256>(xbytes_t{std::begin(hash_str), std::end(hash_str)});
 }
 
-bool xtop_evm_bsc_client_contract::set_last_hash(const h256 hash, state_ptr state) {
+bool xtop_evm_bsc_client_contract::set_last_hash(h256 const hash, state_ptr state) {
     auto bytes = hash.asBytes();
     if (0 != state->string_set(data::system_contract::XPROPERTY_LAST_HASH, {bytes.begin(), bytes.end()})) {
         return false;

@@ -14,7 +14,7 @@
 #include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
 #include "xchaininit/xchain_command_http_server.h"
-#include "xchaininit/version.h"
+#include "xversion/version.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_utils.h"
@@ -30,7 +30,6 @@
 #include "xdata/xverifier/xverifier_utl.h"
 #include "xtopcl/include/api_method.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xmigrate/xvmigrate.h"
 #include "xdata/xcheckpoint.h"
 #include "xsync/xsync_object.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
@@ -98,9 +97,11 @@ bool set_auto_prune_switch(const std::string& prune)
 
 bool db_migrate(const std::string & src_db_path)
 {    
-    base::xvblockstore_t* _blockstore = base::xvchain_t::instance().get_xblockstore();
-    xassert(_blockstore != nullptr);
-    return base::db_delta_migrate_v2_to_v3(src_db_path, _blockstore);
+    // base::xvblockstore_t* _blockstore = base::xvchain_t::instance().get_xblockstore();
+    // xassert(_blockstore != nullptr);
+    // return base::db_delta_migrate_v2_to_v3(src_db_path, _blockstore);
+    // XTODO no old version db need migrate
+    return true;
 }
 
 void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
@@ -322,10 +323,10 @@ int topchain_start(const std::string& datadir, const std::string& config_file) {
     }
 
     application::xapplication_t app{user_params.account, xpublic_key_t{global_node_pubkey}, std::move(node_signkey)};
-    std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
-    if (false == db_migrate(v2_db_path)) {
-        return 1;
-    }
+    // std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
+    // if (false == db_migrate(v2_db_path)) {
+    //     return 1;
+    // }
     try {
         app.start();
     } catch (top::error::xtop_error_t const & eh) {

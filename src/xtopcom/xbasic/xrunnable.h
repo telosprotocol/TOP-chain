@@ -31,7 +31,7 @@ public:
 
     virtual bool running() const noexcept = 0;
 
-    virtual void running(bool const value) noexcept = 0;
+    virtual void running(bool value) noexcept = 0;
 };
 
 template <typename T>
@@ -51,7 +51,7 @@ public:
     xtop_basic_runnable & operator=(xtop_basic_runnable const &) = default;
     xtop_basic_runnable(xtop_basic_runnable &&) = default;
     xtop_basic_runnable & operator=(xtop_basic_runnable &&) = default;
-    ~xtop_basic_runnable() = default;
+    ~xtop_basic_runnable() override = default;
 
 #if !defined(XCXX14)
     xtop_basic_runnable() noexcept {
@@ -79,7 +79,7 @@ public:
     xtop_trival_runnable & operator=(xtop_trival_runnable const &) = default;
     xtop_trival_runnable(xtop_trival_runnable &&) = default;
     xtop_trival_runnable & operator=(xtop_trival_runnable &&) = default;
-    ~xtop_trival_runnable() = default;
+    ~xtop_trival_runnable() override = default;
 
 #if !defined(XCXX14)
     xtop_trival_runnable() noexcept {

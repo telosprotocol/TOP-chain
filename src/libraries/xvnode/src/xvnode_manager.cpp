@@ -28,7 +28,6 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                        xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                        observer_ptr<sync::xsync_object_t> const & sync_object,
-                                       observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
@@ -44,7 +43,6 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                                           router,
                                                           vhost,
                                                           sync_object,
-                                                          grpc_mgr,
                                                           txpool_service_mgr,
                                                           election_cache_data_accessor,
                                                           nodesvr),
@@ -90,8 +88,8 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
 
     assert(!election_data.empty());
 
-    auto const & host_node_id = m_vhost->host_node_id();
-    xdbg("[vnode mgr] host %s sees election data size %zu", host_node_id.to_string().c_str(), election_data.size());
+    auto const & account_address = m_vhost->account_address();
+    xdbg("[vnode mgr] host %s sees election data size %zu", account_address.to_string().c_str(), election_data.size());
 
     std::vector<common::xip2_t> purely_outdated_xips;
     std::vector<common::xip2_t> logical_outdated_xips;
@@ -107,8 +105,8 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
         assert(added_group != nullptr);
 
         bool vnode_outdated{false};
-        if (outdated_group != nullptr && outdated_group->contains(host_node_id)) {
-            auto const & address = outdated_group->node_element(host_node_id)->address();
+        if (outdated_group != nullptr && outdated_group->contains(account_address)) {
+            auto const & address = outdated_group->node_element(account_address)->address();
             assert(!broadcast(address.slot_id()));
 
             auto const it = m_all_nodes.find(address);
@@ -128,12 +126,12 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
                 cluster_address.cluster_id(),
                 cluster_address.group_id(),
                 outdated_group->group_size(),
-                base::now_service_type_ver == base::service_type_height_use_version ? outdated_group->election_round().value() : outdated_group->associated_blk_height()};
+                outdated_group->associated_blk_height()};
             purely_outdated_xips.push_back(std::move(xip));
         }
 
-        if (faded_group != nullptr && faded_group->contains(host_node_id)) {
-            auto const & address = faded_group->node_element(host_node_id)->address();
+        if (faded_group != nullptr && faded_group->contains(account_address)) {
+            auto const & address = faded_group->node_element(account_address)->address();
             assert(!broadcast(address.slot_id()));
 
             auto const & it = m_all_nodes.find(address);
@@ -147,10 +145,10 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
             }
         }
 
-        if (added_group->contains(host_node_id)) {
+        if (added_group->contains(account_address)) {
             vnode_outdated = false;
 
-            auto const & address = added_group->node_element(host_node_id)->address();
+            auto const & address = added_group->node_element(account_address)->address();
             assert(!broadcast(address.slot_id()));
 
             auto const it = m_all_nodes.find(address);

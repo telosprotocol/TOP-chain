@@ -157,7 +157,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
             (account.to_string().find(sys_contract_zec_elect_relay_addr) != std::string::npos) ||
             (account.to_string().find(sys_contract_relay_make_block_addr) != std::string::npos) ||
             (account.to_string().find(sys_contract_sharding_fork_info_addr) != std::string::npos) ||
-            (account.to_string().find(sys_contract_eth_fork_info_addr) != std::string::npos) || 
+            (account.to_string().find(sys_contract_eth_fork_info_addr) != std::string::npos) ||
             (account.to_string().find(sys_contract_rec_node_manage_addr) != std::string::npos)) {
             // just delete it here and store new root block after
             xwarn("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
@@ -215,7 +215,9 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         }
         xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
         return genesis_block;
-    } else if (account.get_account() == evm_eth2_client_contract_address.to_string()) {
+    }
+
+    if (account.get_account() == evm_eth2_client_contract_address.to_string()) {
         xobject_ptr_t<base::xvbstate_t> bstate =
             make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
         xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
@@ -226,6 +228,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         bstate->new_string_var(data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE, canvas.get());
         bstate->new_string_var(data::system_contract::XPROPERTY_RESET_FLAG, canvas.get());
+
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);
@@ -246,6 +249,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
         return genesis_block;
     }
+
     return nullptr;
 }
 
@@ -327,7 +331,7 @@ void xtop_genesis_manager::store_block(base::xvaccount_t const & account, base::
             xerror("[xtop_genesis_manager::store_block] account: %s, store genesis block failed", account.get_account().c_str());
             xassert(false);
             SET_EC_RETURN(ec, error::xenum_errc::genesis_block_store_failed);
-        }        
+        }
     }
 }
 

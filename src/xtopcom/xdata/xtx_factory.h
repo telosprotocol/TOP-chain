@@ -40,7 +40,8 @@ public:
                                                    const std::string & data,
                                                    const top::evm_common::u256 & value,
                                                    const top::evm_common::u256 & gas,
-                                                   evm_common::u256 const& _maxGasPrice);
+                                                   evm_common::u256 const& _maxGasPrice,
+                                                   evm_common::u256 const& _maxPriorityFee = 0);
     static xtransaction_ptr_t create_v3_tx(xeth_transaction_t const& tx);
     static xtransaction_ptr_t create_v2_run_contract_tx(common::xaccount_address_t const & address, // self call
                                                         const uint64_t & latest_sendtx_nonce,

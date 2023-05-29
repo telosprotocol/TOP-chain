@@ -17,26 +17,26 @@ NS_BEG2(top, data)
 //     return block_bloom;
 // }
 
-evm_common::h256 xeth_build_t::build_transactions_root(const xeth_transactions_t & ethtxs) {
+xh256_t xeth_build_t::build_transactions_root(const xeth_transactions_t & ethtxs) {
     std::vector<xbytes_t> _leafs;
     for (auto & tx: ethtxs) {
         xbytes_t _rb = tx.encodeBytes();
         _leafs.push_back(_rb);
     }
-    evm_common::h256 txsRoot = evm_common::orderedTrieRoot(_leafs);
+    xh256_t txsRoot = evm_common::orderedTrieRoot(_leafs);
     return txsRoot;
 }
-evm_common::h256 xeth_build_t::build_receipts_root(const xeth_receipts_t & receipts) {
+xh256_t xeth_build_t::build_receipts_root(const xeth_receipts_t & receipts) {
     std::vector<xbytes_t> receipt_leafs;
     for (auto & receipt: receipts) {
         xbytes_t _rb = receipt.encodeBytes();
         receipt_leafs.push_back(_rb);
     }
-    evm_common::h256 receiptsRoot = evm_common::orderedTrieRoot(receipt_leafs);
+    xh256_t receiptsRoot = evm_common::orderedTrieRoot(receipt_leafs);
     return receiptsRoot;
 }
 
-void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_store_receipts_t & storage_receipts, evm_common::xh256_t const & state_root, xeth_header_t & ethheader) {
+void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_store_receipts_t & storage_receipts, xh256_t const & state_root, xeth_header_t & ethheader) {
     xeth_receipts_t receipts;
     uint32_t count = (uint32_t)ethtxs.size();
     xassert(ethtxs.size() == storage_receipts.size());
@@ -56,7 +56,7 @@ void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_tra
     build_ethheader(para, ethtxs, receipts, state_root, ethheader);
 }
 
-void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_receipts_t & receipts, evm_common::xh256_t const & state_root, xeth_header_t & ethheader) {
+void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_receipts_t & receipts, xh256_t const & state_root, xeth_header_t & ethheader) {
     uint64_t block_gas_used = 0;
     evm_common::xbloom9_t block_logs_bloom;
     for (auto & v : receipts) {

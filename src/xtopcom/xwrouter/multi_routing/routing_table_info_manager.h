@@ -15,9 +15,9 @@ namespace wrouter {
 class RoutingTableInfoMgr {
 private:
     using height_value = uint64_t;
-    using version_value = uint64_t;
+    // using version_value = uint64_t;
 
-    std::unordered_map<common::xip2_t, std::vector<std::pair<version_value, height_value>>> routing_table_infos;
+    std::unordered_map<common::xip2_t, std::vector<height_value>> routing_table_infos;
     mutable std::mutex routing_table_infos_mutex;
 
 public:
@@ -29,13 +29,13 @@ public:
     ~RoutingTableInfoMgr() = default;
 
 public:
-    void add_routing_table_info(common::xip2_t group_xip, uint64_t version, uint64_t height);
+    void add_routing_table_info(common::xip2_t group_xip, uint64_t height);
 
-    void delete_routing_table_info(common::xip2_t group_xip, uint64_t version_or_blk_height);
+    void delete_routing_table_info(common::xip2_t group_xip, uint64_t blk_height);
 
-    std::pair<uint64_t, uint64_t> get_routing_table_info(common::xip2_t group_xip, base::service_type_ver ver, uint64_t version_or_blk_height) const;
+    uint64_t get_routing_table_info(common::xip2_t group_xip, uint64_t blk_height) const;
 
-    bool exist_routing_table_info(common::xip2_t group_xip, base::service_type_ver ver, uint64_t version_or_blk_height) const;
+    bool exist_routing_table_info(common::xip2_t group_xip, uint64_t blk_height) const;
 
 private:
 };

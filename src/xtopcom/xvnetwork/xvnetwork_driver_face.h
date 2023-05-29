@@ -94,7 +94,7 @@ public:
      * 
      * @return common::xnode_id_t const& 
      */
-    virtual common::xnode_id_t const & host_node_id() const noexcept = 0;
+    virtual common::xaccount_address_t const & account_address() const noexcept = 0;
 
     /**
      * @brief Get the parent group's address

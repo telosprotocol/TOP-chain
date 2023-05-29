@@ -108,6 +108,14 @@ void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::strin
         err["error"]["message"] = "invalid json request";
         Json::FastWriter writer;
         m_edge_method_mgr_ptr->write_response(conn, writer.write(err));
+        xwarn_rpc("xevm_rpc_service xrpc_error exception:%s", e.what());
+    } catch (...) {
+        Json::Value err;
+        err["error"]["code"] = eth::enum_eth_rpc_invalid_request;
+        err["error"]["message"] = "invalid json request";
+        Json::FastWriter writer;
+        m_edge_method_mgr_ptr->write_response(conn, writer.write(err));        
+        xwarn_rpc("xevm_rpc_service exception");
     }
 }
 

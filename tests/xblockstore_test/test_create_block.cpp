@@ -62,8 +62,6 @@ TEST_F(test_create_block, create_time_clock) {
 
     auto _block = mockunits[0].get_history_units()[1];
     auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
-    // base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
-    // xassert(bstate != nullptr);
 
     if (false == unitstate->get_bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {
         uint64_t clock_height = 100;
@@ -90,8 +88,6 @@ TEST_F(test_create_block, create_time_gmt) {
 
     auto _block = mockunits[0].get_history_units()[1];
     auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(_block.get());
-    // base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
-    // xassert(bstate != nullptr);
 
     if (false == unitstate->get_bstate()->find_property(XPROPERTY_ACCOUNT_CREATE_TIME)) {
         uint64_t gmt = TOP_BEGIN_GMTIME + 1000;

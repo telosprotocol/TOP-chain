@@ -84,14 +84,13 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
     uint64_t latest_start_block_height = m_sync_store->get_latest_start_block_height(address, sync_policy);
     uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, sync_policy);
 
-    uint64_t peer_start_height = 0;
-    uint64_t peer_end_height = 0;
-
     vnetwork::xvnode_address_t peer_addr;
 
-    if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr, true)) {
-       // xsync_dbg("xsync_behind_checker_t::check_one, sync_policy %d, %s,%llu,%llu,%llu,%llu,%s", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, peer_addr.to_string().c_str());
-        if ((m_counter % 120) == 0) {
+    std::multimap<uint64_t, mbus::chain_behind_event_address> chain_behind_address_map{};
+
+    if (m_peerset->get_peer_height_info_map(self_addr, address, latest_start_block_height, latest_end_block_height, chain_behind_address_map)) {
+        
+       if ((m_counter % 120) == 0) {
             std::string sync_mode;
             std::string gap_metric_tag_name;
             if (sync_policy == enum_chain_sync_policy_fast) {
@@ -105,13 +104,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
                 gap_metric_tag_name = "xsync_cp_mode_gap_" + address;
             }
 #ifdef ENABLE_METRICS
-            uint64_t gap_between_interval = 0;
-            if (peer_end_height >= latest_end_block_height) {
-                gap_between_interval = peer_end_height - latest_end_block_height;
-            } else {
-                gap_between_interval = 0;
-            }
-
+            uint64_t gap_between_interval = chain_behind_address_map.crbegin()->first - latest_end_block_height;
             XMETRICS_COUNTER_SET(gap_metric_tag_name, gap_between_interval);
 #endif
             XMETRICS_PACKET_INFO("xsync_interval",
@@ -124,32 +117,21 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
                                  "self_max",
                                  latest_end_block_height,
                                  "peer_min",
-                                 peer_start_height,
+                                 chain_behind_address_map.crbegin()->second.start_height,
                                  "peer_max",
-                                 peer_end_height);
-        }
-
-        if (peer_end_height == 0)
-            return;
-
-        if (latest_end_block_height >= peer_end_height) {
-            return;
+                                 chain_behind_address_map.crbegin()->first);
         }
         
-        uint64_t fix_start_block_height = latest_start_block_height;
-        if ((sync_policy == enum_chain_sync_policy_fast) && (latest_start_block_height < peer_start_height)) {
-            fix_start_block_height = peer_start_height;
-        }
-
-        xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) request start_height(%lu) request_end_height(%lu) sync_policy(%d) reason=%s, %s", 
-            address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, fix_start_block_height, peer_end_height, (int32_t)sync_policy, reason.c_str(), peer_addr.to_string().c_str());
-
-        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, fix_start_block_height, peer_end_height, sync_policy, self_addr, peer_addr, reason);
+        xsync_info("behind_checker notify %s, local(start_height=%lu,end_height=%lu) peer(start_height=%lu, " \
+                  "end_height=%lu) sync_policy(%d) node_map_size %u reason=%s ", 
+                  address.c_str(), latest_start_block_height, latest_end_block_height, chain_behind_address_map.crbegin()->second.start_height, 
+                  chain_behind_address_map.crbegin()->first, chain_behind_address_map.size(), (int32_t)sync_policy, reason.c_str());
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, sync_policy, chain_behind_address_map, reason);
         m_downloader->push_event(ev);
+        return;
     }
-
-    xsync_dbg("xsync_behind_checker_t::check_one end, %d, %s,%llu,%llu,%llu,%llu,%s", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, peer_addr.to_string().c_str());
-     
+    xsync_dbg("xsync_behind_checker_t::check_one end, %d, %s,%llu,%llu,%s", sync_policy, address.c_str(), 
+              latest_start_block_height, latest_end_block_height,peer_addr.to_string().c_str());
 }
 
 NS_END2

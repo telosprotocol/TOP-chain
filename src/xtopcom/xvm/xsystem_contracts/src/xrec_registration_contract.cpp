@@ -244,9 +244,6 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
                                                common::xaccount_address_t const & registration_account
 #endif  // #if defined(XENABLE_MOCK_ZEC_STAKE)
 ) {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "registerNode_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "registerNode_ExecutionTime");
-
     auto const miner_type = legal_archive_address_check(common::to_miner_type(miner_type_name), common::xaccount_address_t{SOURCE_ADDRESS()});
     XCONTRACT_ENSURE(miner_type != common::xminer_type_t::invalid, "xrec_registration_contract::registerNode2: invalid node_type!");
 
@@ -325,8 +322,6 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
 }
 
 void xrec_registration_contract::unregisterNode() {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "unregisterNode_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "unregisterNode_ExecutionTime");
     uint64_t cur_time = TIME();
     std::string const& account = SOURCE_ADDRESS();
     xdbg("[xrec_registration_contract::unregisterNode] call xregistration_contract unregisterNode(), balance: %lld, account: %s", GET_BALANCE(), account.c_str());
@@ -356,9 +351,6 @@ void xrec_registration_contract::unregisterNode() {
 }
 
 void xrec_registration_contract::updateNodeInfo(const std::string & nickname, const int updateDepositType, const uint64_t deposit, const uint32_t dividend_rate, const std::string & node_types, const std::string & node_sign_key) {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "updateNodeInfo_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "updateNodeInfo_ExecutionTime");
-
     std::string const & account = SOURCE_ADDRESS();
 
     xdbg("[xrec_registration_contract::updateNodeInfo] call xregistration_contract updateNodeInfo() pid:%d, balance: %lld, account: %s, nickname: %s, updateDepositType: %u, deposit: %llu, dividend_rate: %u, node_types: %s, node_sign_key: %s",
@@ -425,8 +417,6 @@ void xrec_registration_contract::updateNodeInfo(const std::string & nickname, co
 }
 
 void xrec_registration_contract::redeemNodeDeposit() {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "redeemNodeDeposit_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "redeemNodeDeposit_ExecutionTime");
     uint64_t cur_time = TIME();
     std::string const & account = SOURCE_ADDRESS();
     xdbg("[xrec_registration_contract::redeemNodeDeposit] pid:%d, balance: %lld, account: %s", getpid(), GET_BALANCE(), account.c_str());
@@ -446,8 +436,7 @@ void xrec_registration_contract::redeemNodeDeposit() {
 }
 
 void xrec_registration_contract::setDividendRatio(uint32_t dividend_rate) {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "setDividendRatio_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "setDividendRatio_ExecutionTime");
+
     std::string const & account = SOURCE_ADDRESS();
     uint64_t cur_time = TIME();
 
@@ -481,8 +470,6 @@ void xrec_registration_contract::setDividendRatio(uint32_t dividend_rate) {
 }
 
 void xrec_registration_contract::setNodeName(const std::string & nickname) {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "setNodeName_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "setNodeName_ExecutionTime");
     std::string const & account = SOURCE_ADDRESS();
 
     XCONTRACT_ENSURE(is_valid_name(nickname) == true, "xrec_registration_contract::setNodeName: invalid nickname");
@@ -500,8 +487,6 @@ void xrec_registration_contract::setNodeName(const std::string & nickname) {
 }
 
 void xrec_registration_contract::updateNodeSignKey(const std::string & node_sign_key) {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "updateNodeSignKey_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "updateNodeSignKey_ExecutionTime");
     std::string const & account = SOURCE_ADDRESS();
 
     data::system_contract::xreg_node_info node_info;
@@ -522,19 +507,16 @@ void xrec_registration_contract::update_node_info(data::system_contract::xreg_no
 
     std::string stream_str = std::string((char *)stream.data(), stream.size());
 
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_SetExecutionTime");
     MAP_SET(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_info.m_account.to_string(), stream_str);
 }
 
 void xrec_registration_contract::delete_node_info(std::string const & account) {
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_RemoveExecutionTime");
     REMOVE(enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, account);
 }
 
 int32_t xrec_registration_contract::get_node_info(const std::string & account, data::system_contract::xreg_node_info & node_info) {
     std::string value_str;
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_GetExecutionTime");
         MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, account, value_str);
     }
 
@@ -554,7 +536,6 @@ bool xrec_registration_contract::check_if_signing_key_exist(const std::string & 
     std::map<std::string, std::string> map_nodes;
 
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_CopyGetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, map_nodes);
     }
 
@@ -581,7 +562,6 @@ int32_t xrec_registration_contract::ins_refund(const std::string & account, uint
     std::string stream_str = std::string((char *)stream.data(), stream.size());
 
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REFUND_KEY_SetExecutionTime");
         MAP_SET(data::system_contract::XPORPERTY_CONTRACT_REFUND_KEY, account, stream_str);
     }
 
@@ -590,7 +570,6 @@ int32_t xrec_registration_contract::ins_refund(const std::string & account, uint
 
 int32_t xrec_registration_contract::del_refund(const std::string & account) {
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REFUND_KEY_RemoveExecutionTime");
         REMOVE(enum_type_t::map, data::system_contract::XPORPERTY_CONTRACT_REFUND_KEY, account);
     }
 
@@ -600,7 +579,6 @@ int32_t xrec_registration_contract::del_refund(const std::string & account) {
 int32_t xrec_registration_contract::get_refund(const std::string & account, data::system_contract::xrefund_info & refund) {
     std::string value_str;
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REFUND_KEY_GetExecutionTime");
         MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_REFUND_KEY, account, value_str);
     }
 
@@ -617,7 +595,6 @@ int32_t xrec_registration_contract::get_refund(const std::string & account, data
 }
 
 void xrec_registration_contract::update_batch_stake(std::map<std::string, std::string> const & contract_adv_votes) {
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "update_batch_stake_ExecutionTime");
     auto const & source_address = SOURCE_ADDRESS();
     xdbg("[xrec_registration_contract::update_batch_stake] src_addr: %s, pid:%d, size: %d\n", source_address.c_str(), getpid(), contract_adv_votes.size());
 
@@ -632,13 +609,11 @@ void xrec_registration_contract::update_batch_stake(std::map<std::string, std::s
     stream << contract_adv_votes;
     std::string contract_adv_votes_str = std::string((const char *)stream.data(), stream.size());
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_TICKETS_KEY_SetExecutionTime");
         MAP_SET(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, source_address, contract_adv_votes_str);
     }
 
     std::map<std::string, std::string> votes_table;
     try {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_TICKETS_KEY_CopyGetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, votes_table);
     } catch (std::runtime_error & e) {
         xdbg("[xrec_registration_contract::update_batch_stake] MAP COPY GET error:%s", e.what());
@@ -646,7 +621,6 @@ void xrec_registration_contract::update_batch_stake(std::map<std::string, std::s
 
     std::map<std::string, std::string> map_nodes;
     try {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_CopyGetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, map_nodes);
     } catch (std::runtime_error & e) {
         xdbg("[xrec_registration_contract::update_batch_stake] MAP COPY GET error:%s", e.what());
@@ -710,7 +684,6 @@ bool xrec_registration_contract::handle_receive_shard_votes(uint64_t report_time
 }
 
 void xrec_registration_contract::update_batch_stake_v2(uint64_t report_time, std::map<std::string, std::string> const & contract_adv_votes) {
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "update_batch_stake_ExecutionTime");
     auto const & source_address = SOURCE_ADDRESS();
     xdbg("[xrec_registration_contract::update_batch_stake_v2] src_addr: %s, report_time: %llu, pid:%d, contract_adv_votes size: %d\n",
         source_address.c_str(), report_time, getpid(), contract_adv_votes.size());
@@ -751,13 +724,11 @@ void xrec_registration_contract::update_batch_stake_v2(uint64_t report_time, std
         xstream_t stream(xcontext_t::instance());
         stream << auditor_votes;
         std::string contract_adv_votes_str = std::string((const char *)stream.data(), stream.size());
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_TICKETS_KEY_SetExecutionTime");
         MAP_SET(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, source_address, contract_adv_votes_str);
     }
 
     std::map<std::string, std::string> votes_table;
     try {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_TICKETS_KEY_CopyGetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, votes_table);
     } catch (std::runtime_error & e) {
         xdbg("[xrec_registration_contract::update_batch_stake_v2] MAP COPY GET error:%s", e.what());
@@ -765,7 +736,6 @@ void xrec_registration_contract::update_batch_stake_v2(uint64_t report_time, std
 
     std::map<std::string, std::string> map_nodes;
     try {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_CopyGetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, map_nodes);
     } catch (std::runtime_error & e) {
         xdbg("[xrec_registration_contract::update_batch_stake_v2] MAP COPY GET error:%s", e.what());
@@ -812,7 +782,6 @@ void xrec_registration_contract::check_and_set_genesis_stage() {
     data::system_contract::xactivation_record record;
 
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_GENESIS_STAGE_KEY_GetExecutionTime");
         value_str = STRING_GET(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY);
     }
 
@@ -827,7 +796,6 @@ void xrec_registration_contract::check_and_set_genesis_stage() {
 
     std::map<std::string, std::string> map_nodes;
     try {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_CopyGetExecutionTime");
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, map_nodes);
     } catch (std::runtime_error & e) {
         xdbg("[xrec_registration_contract::check_and_set_genesis_stage] MAP COPY GET error:%s", e.what());
@@ -843,14 +811,11 @@ void xrec_registration_contract::check_and_set_genesis_stage() {
     record.serialize_to(stream);
     value_str = std::string((char *)stream.data(), stream.size());
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_GENESIS_STAGE_KEY_SetExecutionTime");
         STRING_SET(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, value_str);
     }
 }
 
 void xrec_registration_contract::updateNodeType(const std::string & node_types) {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "updateNodeType_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "updateNodeType_ExecutionTime");
     std::string const& account = SOURCE_ADDRESS();
 
     xdbg("[xrec_registration_contract::updateNodeType] pid: %d, balance: %lld, account: %s, node_types: %s", getpid(), GET_BALANCE(), account.c_str(), node_types.c_str());
@@ -890,8 +855,6 @@ void xrec_registration_contract::updateNodeType(const std::string & node_types) 
 }
 
 void xrec_registration_contract::stakeDeposit() {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "stakeDeposit_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "stakeDeposit_ExecutionTime");
     std::string const& account = SOURCE_ADDRESS();
     data::system_contract::xreg_node_info node_info;
     auto ret = get_node_info(account, node_info);
@@ -914,8 +877,6 @@ void xrec_registration_contract::stakeDeposit() {
 }
 
 void xrec_registration_contract::unstakeDeposit(uint64_t unstake_deposit) {
-    XMETRICS_COUNTER_INCREMENT(XREG_CONTRACT "unstakeDeposit_Called", 1);
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "unstakeDeposit_ExecutionTime");
     std::string const& account = SOURCE_ADDRESS();
     data::system_contract::xreg_node_info node_info;
     auto ret = get_node_info(account, node_info);
@@ -937,7 +898,6 @@ void xrec_registration_contract::unstakeDeposit(uint64_t unstake_deposit) {
 int32_t xrec_registration_contract::get_slash_info(std::string const & account, data::system_contract::xslash_info & node_slash_info) {
     std::string value_str;
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPROPERTY_CONTRACT_SLASH_INFO_KEY_GetExecutionTime");
         MAP_GET2(data::system_contract::XPROPERTY_CONTRACT_SLASH_INFO_KEY, account, value_str);
     }
     if (value_str.empty()) {
@@ -976,13 +936,11 @@ void xrec_registration_contract::slash_staking_time(std::string const & node_add
     xstream_t stream(xcontext_t::instance());
     s_info.serialize_to(stream);
     {
-        XMETRICS_TIME_RECORD(XREG_CONTRACT "XPROPERTY_CONTRACT_SLASH_INFO_KEY_SetExecutionTime");
         MAP_SET(data::system_contract::XPROPERTY_CONTRACT_SLASH_INFO_KEY, node_addr, std::string((char *)stream.data(), stream.size()));
     }
 }
 
 void xrec_registration_contract::slash_unqualified_node(std::string const & punish_node_str) {
-    XMETRICS_TIME_RECORD(XREG_CONTRACT "slash_unqualified_node_ExecutionTime");
 #if defined(DEBUG)
     auto const & account = SELF_ADDRESS();
 #endif

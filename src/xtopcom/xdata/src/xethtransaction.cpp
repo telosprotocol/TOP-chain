@@ -39,7 +39,7 @@ void xeth_accesstuple_t::decodeRLP(evm_common::RLP const& _r, std::error_code & 
         xerror("xxeth_accesstuple_t::decodeRLP fail keyslist");
         return;
     }
-    m_storage_keys = _r[1].toVector<evm_common::xh256_t>();
+    m_storage_keys = _r[1].toVector<xh256_t>();
 }
 
 void xeth_accesslist_t::streamRLP(evm_common::RLPStream& _s) const {
@@ -92,13 +92,47 @@ data::xeth_transaction_t  xeth_transaction_t::build_from(xbytes_t const& rawtx_b
     return _tx;
 }
 
-xeth_transaction_t::xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, evm_common::u256 const& _value, evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice) {
+xeth_transaction_t xeth_transaction_t::build_eip1559_tx(evm_common::u256 const& chainid, evm_common::u256 const& nonce, evm_common::u256 const& max_priority_fee_per_gas, evm_common::u256 const& max_fee_per_gas, 
+                                                      evm_common::u256 const& gas, common::xeth_address_t const& to, evm_common::u256 const& value, xbytes_t const& data) {
+    xeth_transaction_t _tx;
+    _tx.set_ethtx_type(enum_ethtx_type::enum_ethtx_type_message_call);
+    _tx.set_tx_version(enum_ethtx_version::EIP_1559);
+    _tx.set_chainid(chainid);
+    _tx.set_nonce(nonce);
+    _tx.set_max_priority_fee_per_gas(max_priority_fee_per_gas);
+    _tx.set_max_fee_per_gas(max_fee_per_gas);
+    _tx.set_gas(gas);
+    _tx.set_to(to);
+    _tx.set_value(value);
+    _tx.set_data(data);
+    return _tx;
+}
+
+xeth_transaction_t xeth_transaction_t::build_eip1559_tx(evm_common::u256 const& chainid, evm_common::u256 const& nonce, evm_common::u256 const& max_priority_fee_per_gas, evm_common::u256 const& max_fee_per_gas, 
+                                                      evm_common::u256 const& gas, evm_common::u256 const& value, xbytes_t const& data) {
+    xeth_transaction_t _tx;
+    _tx.set_ethtx_type(enum_ethtx_type::enum_ethtx_type_contract_creation);
+    _tx.set_tx_version(enum_ethtx_version::EIP_1559);
+    _tx.set_chainid(chainid);
+    _tx.set_nonce(nonce);
+    _tx.set_max_priority_fee_per_gas(max_priority_fee_per_gas);
+    _tx.set_max_fee_per_gas(max_fee_per_gas);
+    _tx.set_gas(gas);
+    _tx.set_value(value);
+    _tx.set_data(data);
+    return _tx;
+}
+
+xeth_transaction_t::xeth_transaction_t(common::xeth_address_t const& _from, common::xeth_address_t const& _to, xbytes_t const& _data, 
+                                       evm_common::u256 const& _value, evm_common::u256 const& _gas, evm_common::u256 const& _maxGasPrice,evm_common::u256 const& _maxPriorityFee) {
+    m_tx_type = enum_ethtx_type_message_call;
     m_from = _from;
     m_to = _to;
     m_data = _data;
     m_value = _value;
     m_gas = _gas;
     m_max_fee_per_gas = _maxGasPrice;
+    m_max_priority_fee_per_gas = _maxPriorityFee;
 }
 
 xbytes_t xeth_transaction_t::encodeBytes(bool includesig) const {
@@ -162,7 +196,8 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
     _s << m_max_priority_fee_per_gas;
     _s << m_max_fee_per_gas;
     _s << m_gas;
-    if (!m_to.is_zero()) {
+    assert(m_tx_type != enum_ethtx_type_null_transaction);
+    if (m_tx_type == enum_ethtx_type_message_call) {
         _s << m_to.to_bytes();
     } else {
         _s << "";
@@ -171,19 +206,21 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
     _s << m_data;
     m_accesslist.streamRLP(_s);
     if (includesig) {
-        _s << m_signV;
-        _s << m_signR;
-        _s << m_signS;
+        _s << static_cast<evm_common::u256>(m_signV);
+        _s << static_cast<evm_common::u256>(m_signR);
+        _s << static_cast<evm_common::u256>(m_signS);
     }
 }
 
 void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP const& _r, eth_error & ec) {
-    size_t itemcount = includesig ? 12 : 9;
+    size_t const itemcount = includesig ? 12 : 9;
 
     if (_r.itemCount() > itemcount) {
         ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input list has too many elements for types.DynamicFeeTx");
         return;
-    } else if (_r.itemCount() < itemcount) {
+    }
+
+    if (_r.itemCount() < itemcount) {
         ec = eth_error(error::xenum_errc::eth_server_error, "rlp: too few elements for types.DynamicFeeTx");
         return;
     }
@@ -233,8 +270,10 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string invalid for common.Address, decoding into (types.DynamicFeeTx).To");
                 return;
             }
-        } else {
+            m_tx_type = enum_ethtx_type_message_call;
+        } else {            
             m_to = common::xeth_address_t::zero();
+            m_tx_type = enum_ethtx_type_contract_creation;
         }
         if (_r[6].size() > 32) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.value, decoding into (types.DynamicFeeTx).value");
@@ -253,7 +292,7 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.signV, decoding into (types.DynamicFeeTx).signV");
                 return;
             }
-            m_signV = _r[field = 9].toInt<evm_common::u256>();
+            m_signV = _r[field = 9].toInt<evm_common::u256>().convert_to<xbyte_t>();
             if (_r[10].size() > 32) {
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.signR, decoding into (types.DynamicFeeTx).signR");
                 return;
@@ -266,7 +305,7 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             m_signS = _r[field = 11].toInt<evm_common::u256>();
         }
 
-        if (m_data.empty() && m_to.is_zero()) {
+        if (m_tx_type == enum_ethtx_type_contract_creation && m_data.empty()) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input data and to all empty, not valid tx");
             return;
         }
@@ -318,7 +357,7 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
         std::string _str = top::to_string(_bytes);
         // std::cout << "unsign_bytes=" << top::to_hex(_bytes) << std::endl;
         uint256_t m_unsign_hash = utl::xkeccak256_t::digest(_str);
-        XMETRICS_GAUGE(metrics::ethtx_get_from, 1);
+        XMETRICS_GAUGE(metrics::cpu_ethtx_get_from, 1);
         // std::cout << "unsign_hash=" << to_hex_str(m_unsign_hash) << std::endl;
 
         char szSign[65] = {0};

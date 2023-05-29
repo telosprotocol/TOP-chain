@@ -75,6 +75,7 @@ public:
         REGISTER_QUERY_METHOD(getProperty);
         REGISTER_QUERY_METHOD(getAccount);
         REGISTER_QUERY_METHOD(getTransaction);
+        REGISTER_QUERY_METHOD(getTransactionV2);
         REGISTER_QUERY_METHOD(getGeneralInfos);
         REGISTER_QUERY_METHOD(getRootblockInfo);
         REGISTER_QUERY_METHOD(getTimerInfo);
@@ -109,6 +110,7 @@ public:
         REGISTER_QUERY_METHOD(queryVoterDividend);
         REGISTER_QUERY_METHOD(queryProposal);
         REGISTER_QUERY_METHOD(getLatestTables);
+        REGISTER_QUERY_METHOD(getClientVersion);
         REGISTER_QUERY_METHOD(getChainId);
         REGISTER_QUERY_METHOD(getCrossReceiptIds);
 #if defined(XBUILD_CONSORTIUM)
@@ -172,6 +174,7 @@ private:
     void getRootblockInfo(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
     void getTransaction(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getTransactionV2(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
     void get_node_infos();
 
@@ -211,6 +214,7 @@ private:
     void queryVoterDividend(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void queryProposal(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getLatestTables(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getClientVersion(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
 
 

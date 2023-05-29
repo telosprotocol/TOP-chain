@@ -29,9 +29,9 @@ bool xtop_state_downloader::is_syncing(const common::xtable_address_t & table) c
 
 void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
                                        const uint64_t height,
-                                       const evm_common::xh256_t & block_hash,
-                                       const evm_common::xh256_t & state_hash,
-                                       const evm_common::xh256_t & root_hash,
+                                       const xh256_t & block_hash,
+                                       const xh256_t & state_hash,
+                                       const xh256_t & root_hash,
                                        bool sync_unit,
                                        std::error_code & ec) {
     // verify hash
@@ -233,7 +233,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
     auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db, 10000);
     for (auto const & hash : nodes_hashes) {
         std::error_code ec;
-        auto v = trie_db->Node(evm_common::xh256_t(hash), ec);
+        auto v = trie_db->Node(xh256_t(hash), ec);
         if (ec || v.empty()) {
             xwarn("xtop_state_downloader::process_trie_request node request error: %s %s, table: %s, id: %u, hash %s, data: %s",
                   ec.category().name(),
@@ -252,7 +252,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
         info.decode({hash.begin(), hash.end()});
 
         std::string unit_state_str;
-        // auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, evm_common::xh256_t(hash));
+        // auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, xh256_t(hash));
         auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(info.account, info.index);
         if (unitstate == nullptr) {
             units_values.emplace_back(xbytes_t{unit_state_str.begin(), unit_state_str.end()}); // push empty result for compare

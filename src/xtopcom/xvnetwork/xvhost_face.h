@@ -81,7 +81,7 @@ public:
      * @brief Get the node id associated with this virtual host object.
      * @return The node id.
      */
-    virtual common::xnode_id_t const & host_node_id() const noexcept = 0;
+    virtual common::xnode_id_t const & account_address() const noexcept = 0;
 
     /**
      * @brief Get the node infos of specified group

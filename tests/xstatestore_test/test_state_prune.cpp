@@ -565,9 +565,9 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     auto table_addr = xblocktool_t::make_address_shard_table_account(tableid);
 
     std::vector<std::string> user_addrs;
-    std::vector<evm_common::xh256_t> mpt_root_vec;
+    std::vector<xh256_t> mpt_root_vec;
 
-    evm_common::xh256_t null_root;
+    xh256_t null_root;
     std::error_code ec;
     auto base_mpt = state_mpt::xstate_mpt_t::create(common::xtable_address_t::build_from(table_addr), null_root, xdbstore, ec);
     if (ec) {
@@ -652,7 +652,7 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     std::cout << "before prune.time:" << t1 << std::endl;
 #endif
 
-    //std::unordered_set<evm_common::xh256_t> pruned_hashes;
+    //std::unordered_set<xh256_t> pruned_hashes;
     //for (uint32_t l = 0; l < mpt_prune_num; l++) {
         // xinfo("mpt_prune_BENCH before prune mpt idx:%u,db_read:%u", l, db_read_now - db_read_last);
         last_keep_mpt->commit_pruned(mpt_root_vec, ec);

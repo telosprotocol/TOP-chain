@@ -12,7 +12,7 @@ NS_BEG2(top, state_mpt)
 xtop_state_mpt_store::xtop_state_mpt_store(common::xtable_address_t const table_address) : table_account_address_ {table_address} {
 }
 
-void xtop_state_mpt_store::load_state(evm_common::xh256_t const & root_hash, base::xvdbstore_t * db, std::error_code & ec) const {
+void xtop_state_mpt_store::load_state(xh256_t const & root_hash, base::xvdbstore_t * db, std::error_code & ec) const {
     auto state = xstate_mpt_t::create(table_account_address_, root_hash, db, ec);
 }
 

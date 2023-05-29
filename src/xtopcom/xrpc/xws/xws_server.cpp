@@ -45,13 +45,13 @@ void xws_server::start(uint16_t nPort, uint32_t nThreadNum) {
     service.on_message = std::bind(&xws_server::start_service, this, _1, _2);
 
     service.on_open = [](shared_ptr<WsServer::Connection> connection) {
-        XMETRICS_COUNTER_INCREMENT("rpc_ws_connect", 1);
+        XMETRICS_GAUGE(metrics::rpc_ws_connect, 1);
         xinfo_rpc("Server: Opened connection %p", connection.get());
     };
 
     // See RFC 6455 7.4.1. for status codes
     service.on_close = [](shared_ptr<WsServer::Connection> connection, int status, const string & /*reason*/) {
-        XMETRICS_COUNTER_INCREMENT("rpc_ws_close", 1);
+        XMETRICS_GAUGE(metrics::rpc_ws_close, 1);
         xinfo_rpc("Server: Closed connection %p with status code %d", connection.get(), status);
     };
 
@@ -108,7 +108,7 @@ void xws_server::start(uint16_t nPort, uint32_t nThreadNum) {
 
 void xws_server::start_service(shared_ptr<WsServer::Connection> connection, shared_ptr<WsServer::InMessage> in_message) {
     auto content = in_message->string();
-    XMETRICS_COUNTER_INCREMENT("rpc_ws_request", 1);
+    XMETRICS_GAUGE(metrics::rpc_ws_request, 1);
     asio::ip::address addr = connection->remote_endpoint.address();
     if (m_enable_ratelimit) {
         // get ip

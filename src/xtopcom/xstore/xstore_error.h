@@ -86,6 +86,7 @@ enum enum_xstore_error_type {
     xtransaction_contract_not_enough_tgas,
     xtransaction_pledge_redeem_vote_err,
     xtransaction_param_invalid,
+    xaccount_property_already_exist,
     xstore_error_max,
 };
 
@@ -165,6 +166,7 @@ inline std::string xstore_error_to_string(int32_t code) {
         XSTORE_TO_STR(xtransaction_contract_not_enough_tgas),
         XSTORE_TO_STR(xtransaction_pledge_redeem_vote_err),
         XSTORE_TO_STR(xtransaction_param_invalid),
+        XSTORE_TO_STR(xaccount_property_already_exist),
     };
     return names[code - xstore_error_base - 1];
 }

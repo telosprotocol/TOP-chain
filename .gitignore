@@ -30,3 +30,4 @@ xevm_b
 go.mod
 go.sum
 cover.out
+scripts/docker_build/topio

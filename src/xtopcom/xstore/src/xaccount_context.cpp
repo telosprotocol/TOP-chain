@@ -870,7 +870,7 @@ int32_t xaccount_context_t::check_create_property(const std::string& key) {
     }
     if (get_bstate()->find_property(key)) {
         xerror("xaccount_context_t::check_create_property fail-already exist.propname=%s", key.c_str());
-        return xaccount_property_create_fail;
+        return xaccount_property_already_exist;
     }
     return xstore_success;
 }

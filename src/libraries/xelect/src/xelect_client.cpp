@@ -83,8 +83,27 @@ void xelect_client_imp::bootstrap_node_join() {
                 }
                 std::string token = token_response_json["data"][xrpc::RPC_TOKEN].asString();
 
+                // get standbys to check if node is aready in standby list
+                std::string getstandbys_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=getStandbys&sequence_id=2&identity_token=" + token +
+                                                "&body=" + client.percent_encode("{\"params\": {\"node_account_addr\": \"" + user_params.account.to_string() + "\"}}");
+                xdbg("getstandbys_request:%s", getstandbys_request.c_str());
+                auto getstandbys_response = client.Request(getstandbys_request);
+                xinfo("bootstrap_node_join getstandbys_response:%s", getstandbys_response.c_str());
+
+                Json::Value getstandbys_response_json;
+                if (!reader.parse(getstandbys_response, getstandbys_response_json) || getstandbys_response_json[xrpc::RPC_ERRNO].asInt() != xrpc::RPC_OK_CODE) {
+                    xwarn("bootstrap_node_join getstandbys_response error");
+                } else {
+                    std::string target_node_id = getstandbys_response_json["data"]["node_id"].asString();
+                    if (user_params.account.to_string() == target_node_id) {
+                        xinfo("bootstrap_node_join node is in standby list, no need to join. node_id:%s", target_node_id.c_str());
+                        return;
+                    }
+                    xinfo("bootstrap_node_join node is not in standby list, need to join. node_id:%s", target_node_id.c_str());
+                }
+
                 // get last hash and nonce
-                std::string account_info_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=getAccount&sequence_id=2&identity_token=" + token +
+                std::string account_info_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=getAccount&sequence_id=3&identity_token=" + token +
                                                    "&body=" + client.percent_encode("{\"params\": {\"account_addr\": \"" + user_params.account.to_string() + "\"}}");
                 xdbg("account_info_request:%s", account_info_request.c_str());
                 auto account_info_response_str = client.Request(account_info_request);

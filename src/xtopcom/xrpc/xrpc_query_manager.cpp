@@ -4,6 +4,7 @@
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
+#include "xversion/version.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xcommon/xtop_log.h"
@@ -30,6 +31,7 @@
 #include "xdata/xtransaction_cache.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
+#include "xrpc/xrpc_eth_parser.h"
 #include "xrpc/xrpc_loader.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
@@ -69,7 +71,7 @@ bool xrpc_query_manager::handle(std::string & strReq, Json::Value & js_req, Json
     std::string action = js_req["action"].asString();
     auto iter = m_query_method_map.find(action);
     if (iter != m_query_method_map.end()) {
-        if (action == "getAccount" || action == "getTransaction" || action == "getCGP" || action == "getTimerInfo" || action == "getIssuanceDetail" || action == "getTransaction" ||
+        if (action == "getAccount" || action == "getTransaction" || action == "getCGP" || action == "getTimerInfo" || action == "getIssuanceDetail" || action == "getTransactionV2" ||
             action == "getStandbys" || action == "queryNodeReward" || action == "queryNodeInfo" || action == "getGeneralInfos" || action == "getConsortiumReward") {
             iter->second(js_req, js_rsp["value"], strResult, nErrorCode);
         } else {
@@ -840,14 +842,14 @@ void xrpc_query_manager::getTransaction(Json::Value & js_req, Json::Value & js_r
         ADDRESS_CHECK_VALID(account)
     }
 
+    Json::Value result_json;
+
     std::shared_ptr<xtransaction_cache_data_t> cache_data_ptr = std::make_shared<xtransaction_cache_data_t>();
     if (m_txstore != nullptr && m_txstore->tx_cache_get(tx_hash_str, cache_data_ptr)) {
         const xrpc::xtx_exec_json_key jk(version);
         std::map<int, Json::Value> map_jv = cache_data_ptr->jv;
         if (map_jv.find(base::enum_transaction_subtype_send) == map_jv.end()) {
             xdbg("not find tx:%s", tx_hash_str.c_str());
-
-            Json::Value result_json;
             Json::Value jv;
 
             data::xtransaction_ptr_t tx_ptr = cache_data_ptr->tran;
@@ -866,14 +868,66 @@ void xrpc_query_manager::getTransaction(Json::Value & js_req, Json::Value & js_r
 
             auto ori_tx_info = parse_tx(tx_ptr.get(), version);
             result_json["original_tx_info"] = ori_tx_info;
-            js_rsp = result_json;
-            return;
         }
     }
 
+    if (result_json.empty()) {
+        get_transaction_on_demand(account, version, hash, result_json, strResult, nErrorCode);
+    }
+
+    js_rsp = result_json;
+}
+
+void xrpc_query_manager::getTransactionV2(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     Json::Value result_json;
-    if (get_transaction_on_demand(account, version, hash, result_json, strResult, nErrorCode) == 0)
+    getTransaction(js_req, result_json, strResult, nErrorCode);
+
+    if (result_json.empty()) {
+        return;
+    }
+
+    if (!result_json.empty()) {
+        // for eth transaction
+        if (result_json["original_tx_info"]["tx_structure_version"] == xtransaction_version_3) {
+            uint256_t hash = top::data::hex_to_uint256(js_req["tx_hash"].asString());
+            std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+            std::string tx_hash = js_req["tx_hash"].asString();
+            // todo: might read tx idx twice. improve performance later.
+            xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_ethtx_indx_detail(tx_hash_str);
+            if (sendindex != nullptr) {
+                Json::Value js_result;
+                std::error_code ec;
+                xrpc_eth_parser_t::receipt_to_json_for_top_rpc(tx_hash, sendindex, js_result, ec);
+                if (!ec) {
+                    data::xeth_transaction_t ethtx = sendindex->get_raw_tx()->to_eth_tx(ec);
+                    if (ec) {
+                        xerror("xrpc_query_manager::getTransactionV2 fail-to eth tx");
+                        return;
+                    }
+
+                    if (ethtx.get_ethtx_type() == data::enum_ethtx_type::enum_ethtx_type_message_call) {
+                        result_json["original_tx_info"]["receiver_account"] = common::xaccount_address_t::build_from(ethtx.get_to(),
+                                                                                        base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
+                    } else {
+                        result_json["original_tx_info"]["receiver_account"] = "";
+                    }
+
+                    result_json["original_tx_info"]["amount"] = js_result["value"];
+                    result_json["original_tx_info"]["send_timestamp"] = std::to_string(sendindex->get_blocktimestamp());
+                    result_json["evm"] = js_result;
+                    js_rsp = result_json;
+                    return;
+                }
+            }
+            // if receipt not ok, query fail.
+            const string & account = js_req["account_addr"].asString();
+            xerror("xarc_query_manager::getTransactionV2 get evm receipt fail account: %s, tx hash: %s", account.c_str(), tx_hash.c_str());
+            nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
+            return;
+        }
+        result_json["evm"] = "";
         js_rsp = result_json;
+    }
 }
 
 int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
@@ -882,6 +936,7 @@ int xrpc_query_manager::get_transaction_on_demand(const std::string & account,
                                                   Json::Value & result_json,
                                                   std::string & strResult,
                                                   uint32_t & nErrorCode) {
+    xdbg("xrpc_query_manager::get_transaction_on_demand");
     std::string strHash((char *)tx_hash.data(), tx_hash.size());
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(strHash, base::enum_transaction_subtype_send);
     xcons_transaction_ptr_t cons_tx_ptr = nullptr;
@@ -2189,14 +2244,26 @@ void xrpc_query_manager::getLatestTables(Json::Value & js_req, Json::Value & js_
     js_rsp = jv;
 }
 
+void xrpc_query_manager::getClientVersion(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+    Json::Value jv;
+    jv["topio_version"] = get_program_version();
+    jv["git_commit"] = get_git_log_latest();
+    jv["git_submodule"] = get_git_submodule();
+    jv["build_date"] = get_build_date_time();
+    jv["build_options"] = get_build_options();
+    jv["md5"] = get_md5();
+    xinfo_rpc("xrpc_query_manager::getClientVersion: topio_version=%s", get_program_version().c_str());
+    js_rsp = jv;
+}
+
 #if defined(XBUILD_CONSORTIUM)
-void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+void xrpc_query_manager::getConsortiumReward(Json::Value & js_req, Json::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string version = js_req["version"].asString();
     if (version.empty()) {
         version = RPC_VERSION_V1;
     }
     auto get_zec_workload_map =
-        [&](common::xaccount_address_t const & contract_address, std::string const & property_name, uint64_t height, xJson::Value & json) {
+        [&](common::xaccount_address_t const & contract_address, std::string const & property_name, uint64_t height, Json::Value & json) {
             std::map<std::string, std::string> workloads;
             if (statestore::xstatestore_hub_t::instance()->get_map_property(contract_address, height - 1, property_name, workloads) != 0) {
                 xwarn("[grpc::getConsortiumReward] get_zec_workload_map contract_address: %s, height: %llu, property_name: %s",
@@ -2212,21 +2279,21 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
                  property_name.c_str(),
                  workloads.size());
             // if (store->map_copy_get(contract_address.value(), property_name, workloads) != 0) return;
-            xJson::Value jm;
+            Json::Value jm;
             for (auto m : workloads) {
                 auto detail = m.second;
                 base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
                 data::system_contract::xgroup_cons_reward_t workload;
                 workload.serialize_from(stream);
-                xJson::Value jn;
+                Json::Value jn;
                 auto const & key_str = m.first;
                 common::xgroup_address_t group_address;
                 base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
                 key_stream >> group_address;
                 if (version == RPC_VERSION_V3) {
-                    xJson::Value array;
+                    Json::Value array;
                     for (auto node : workload.m_leader_reward) {
-                        xJson::Value n;
+                        Json::Value n;
                         n["account_addr"] = node.first;
                         n["rewards"] = (xJson::UInt64)node.second;
                         array.append(n);
@@ -2254,7 +2321,7 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
         return;
     }
 
-    xJson::Value j;
+    Json::Value j;
 
     std::string xissue_detail_str;
     if (statestore::xstatestore_hub_t::instance()->get_string_property(zec_reward_contract_address, height, data::system_contract::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
@@ -2276,27 +2343,27 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
         issue_detail.onchain_timer_round,
         issue_detail.m_zec_workload_contract_height,
         issue_detail.m_zec_reward_contract_height);
-    xJson::Value jv;
+    Json::Value jv;
     jv["onchain_timer_round"] = (xJson::UInt64)issue_detail.onchain_timer_round;
     jv["zec_workload_contract_height"] = (xJson::UInt64)issue_detail.m_zec_workload_contract_height;
     jv["zec_reward_contract_height"] = (xJson::UInt64)issue_detail.m_zec_reward_contract_height;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
 
-    xJson::Value jw1;
+    Json::Value jw1;
     common::xaccount_address_t contract_addr{sys_contract_zec_reward_addr};
     std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
     get_zec_workload_map(contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw1);
     if (jw1[prop_name].empty()) {
-        jv["leader_workloads"] = xJson::Value::null;
+        jv["leader_workloads"] = Json::Value::null;
     } else {
         jv["leader_workloads"] = jw1[prop_name];
     }
 
-    xJson::Value jr;
+    Json::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         if (version == RPC_VERSION_V3) {
-            xJson::Value node_reward_json;
+            Json::Value node_reward_json;
             node_reward_json["account_addr"] = node_reward.first;
             {
                 std::stringstream ss;
@@ -2313,7 +2380,7 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
         }
     }
     if (jr.empty()) {
-        jv["node_rewards"] = xJson::Value::null;
+        jv["node_rewards"] = Json::Value::null;
     } else {
         jv["node_rewards"] = jr;
     }
@@ -2329,8 +2396,8 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
     }
 }
 
-// void xrpc_query_manager::queryConsortiumNodeReward(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
-//     xJson::Value jv;
+// void xrpc_query_manager::queryConsortiumNodeReward(Json::Value & js_req, Json::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+//     Json::Value jv;
 //     std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_NODE_REWARD_KEY;
 //     std::string target = js_req["node_account_addr"].asString();
 //     std::string version = js_req["version"].asString();

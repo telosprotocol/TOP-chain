@@ -88,7 +88,7 @@ void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t & block, const vnetw
         return;
     }
 
-    if (!check_auth(m_certauth, block)) {
+    if (enum_result_code::success != check_auth(m_certauth, block)) {
         xsync_warn("xsync_handler_t::on_newblock fail-auth failed %s", block->dump().c_str());
         XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
@@ -167,8 +167,7 @@ void xchain_block_fetcher_t::on_newblockhash(uint64_t height, const std::string 
 }
 
 void xchain_block_fetcher_t::on_response_blocks(xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address) {
-
-    XMETRICS_COUNTER_INCREMENT("sync_blockfetcher_response", 1);
+    XMETRICS_GAUGE(metrics::xsync_blockfetcher_response, 1);
 
     const std::string &hash = block->get_block_hash();
     {
@@ -181,8 +180,8 @@ void xchain_block_fetcher_t::on_response_blocks(xblock_ptr_t &block, const vnetw
         xsync_block_announce_ptr_t ptr = it->second;
         forget_hash(hash);
 
-        if (!check_auth(m_certauth, block)) {
-            xsync_info("chain_fetcher on_response_event(auth failed) : %s %s", block->dump().c_str(), from_address.to_string().c_str());
+        if (enum_result_code::success != check_auth(m_certauth, block)) {
+            xsync_warn("chain_fetcher on_response_event(auth failed) : %s %s", block->dump().c_str(), from_address.to_string().c_str());
             return;
         }
 
@@ -224,7 +223,7 @@ void xchain_block_fetcher_t::request_sync_blocks(const xsync_block_announce_ptr_
     const vnetwork::xvnode_address_t &network_self = announce->network_self;
     const vnetwork::xvnode_address_t &target_address = announce->from_address;
 
-    XMETRICS_COUNTER_INCREMENT("sync_blockfetcher_request", 1);
+    XMETRICS_GAUGE(metrics::xsync_blockfetcher_request, 1);
 
     xsync_info("chain_fetcher send sync request(block_by_hash). %s,heigth=%lu,hash=%s, %s",
                 m_address.c_str(), height, to_hex_str(hash).c_str(), target_address.to_string().c_str());

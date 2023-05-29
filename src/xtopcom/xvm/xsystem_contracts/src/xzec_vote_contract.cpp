@@ -149,8 +149,6 @@ bool xzec_vote_contract::handle_receive_shard_votes(uint64_t report_time, uint64
 }
 
 void xzec_vote_contract::on_receive_shard_votes_v2(uint64_t report_time, std::map<std::string, std::string> const & contract_adv_votes) {
-    XMETRICS_COUNTER_INCREMENT(XVOTE_CONTRACT "on_receive_shard_votes_Called", 1);
-    XMETRICS_TIME_RECORD(XVOTE_CONTRACT "on_receive_shard_votes_ExecutionTime");
     auto const& source_address = SOURCE_ADDRESS();
     xdbg("[xzec_vote_contract::on_receive_shard_votes_v2] contract addr: %s, contract_adv_votes size: %d, report_time: %llu, pid:%d\n",
         source_address.c_str(), contract_adv_votes.size(), report_time, getpid());
@@ -179,7 +177,6 @@ void xzec_vote_contract::on_receive_shard_votes_v2(uint64_t report_time, std::ma
     MAP_SET(data::system_contract::XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY, source_address, base::xstring_utl::tostring(report_time));
 
     {
-        XMETRICS_TIME_RECORD(XVOTE_CONTRACT "XPORPERTY_CONTRACT_TICKETS_KEY_SetExecutionTime");
         std::map<std::string, std::string> auditor_votes;
         std::string auditor_votes_str;
         MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, source_address, auditor_votes_str);

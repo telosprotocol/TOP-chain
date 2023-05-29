@@ -33,11 +33,11 @@ using namespace kadmlia;
 
 namespace elect {
 
-EcVHost::EcVHost(const uint32_t & xnetwork_id, const EcNetcardPtr & ec_netcard, common::xnode_id_t const & node_id)
+EcVHost::EcVHost(uint32_t xnetwork_id, const EcNetcardPtr & ec_netcard, common::xaccount_address_t const & node_id)
   : elect::xnetwork_driver_face_t(), xnetwork_id_(xnetwork_id), ec_netcard_(ec_netcard), m_node_id_{node_id} {
 }
 
-common::xnode_id_t const & EcVHost::host_node_id() const noexcept {
+common::xaccount_address_t const & EcVHost::account_address() const noexcept {
     return m_node_id_;
 }
 

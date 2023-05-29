@@ -1,12 +1,11 @@
 #include "gtest/gtest.h"
 #include "xbase/xmem.h"
+#include "xbasic/xfixed_hash.h"
 #include "xbasic/xhex.h"
+#include "xblockmaker/xtable_cross_plugin.h"
+#include "xcommon/common.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xblockextract.h"
-#include "xcommon/common.h"
-#include "xcommon/common_data.h"
-#include "xcommon/fixed_hash.h"
-#include "xblockmaker/xtable_cross_plugin.h"
 
 using namespace top;
 using namespace top::base;
@@ -111,11 +110,11 @@ TEST_F(test_xtable_cross_plugin, cross_chain_config) {
     std::error_code ec;
     std::string cross_addr = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c";
     std::string cross_topic_str = "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735";
-    evm_common::xh256_t cross_topic = evm_common::xh256_t(top::from_hex(cross_topic_str, ec));
+    xh256_t cross_topic = xh256_t(top::from_hex(cross_topic_str, ec));
 
     std::string cross_addr2 = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e841";
     std::string cross_topic_str2 = "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a732";
-    evm_common::xh256_t cross_topic2 = evm_common::xh256_t(top::from_hex(cross_topic_str2, ec));
+    xh256_t cross_topic2 = xh256_t(top::from_hex(cross_topic_str2, ec));
 
     //170 is 0xAA
     std::string cross_config_addr = cross_addr + ":" + cross_topic_str + ":0:1," + cross_addr2 + ":" + cross_topic_str2 + ":1:170";

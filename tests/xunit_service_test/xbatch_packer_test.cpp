@@ -51,6 +51,7 @@ public:
     void on_block_confirmed(xblock_t * block) override {
     }
     bool on_block_confirmed(const std::string table_addr, base::enum_xvblock_class blk_class, uint64_t height) override {
+        return true;
     }
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) override {
         return 0;
@@ -96,6 +97,8 @@ public:
     }
 
     void update_uncommit_txs(base::xvblock_t * _lock_block, base::xvblock_t * _cert_block) override {}
+
+    void add_tx_action_cache(base::xvblock_t * block, const std::shared_ptr<base::xinput_actions_cache_base> & txactions_cache) override {}
 private:
     std::set<base::xtable_shortid_t> m_all_table_sids;
 };

@@ -53,20 +53,17 @@ void xtransaction_v3_t::construct_tx(enum_xtransaction_type tx_type,
 }
 
 void xtransaction_v3_t::update_cache() {
-    // TODO(jimmy)
-    if (!m_ethtx.get_data().empty()) {
-        if (m_ethtx.get_to().is_zero()) {
-            m_transaction_type = xtransaction_type_deploy_evm_contract;
-        } else {
+    if (m_ethtx.get_ethtx_type() == enum_ethtx_type::enum_ethtx_type_contract_creation) {
+        m_transaction_type = xtransaction_type_deploy_evm_contract;
+    } else if (m_ethtx.get_ethtx_type() == enum_ethtx_type::enum_ethtx_type_message_call) {
+        if (!m_ethtx.get_data().empty()) {
             m_transaction_type = xtransaction_type_run_contract;
+        } else {
+            m_transaction_type = xtransaction_type_transfer;
         }
     } else {
-        if (!m_ethtx.get_to().is_zero()) {
-            m_transaction_type = xtransaction_type_transfer;
-        } else {
-            xassert(false);
-            m_transaction_type = xtransaction_type_invalid;
-        }
+        xassert(false);
+        m_transaction_type = xtransaction_type_invalid;
     }
 
     std::error_code ec;

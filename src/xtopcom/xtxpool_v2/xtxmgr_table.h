@@ -21,7 +21,7 @@ using data::xcons_transaction_ptr_t;
 class xtxmgr_table_t {
 public:
     xtxmgr_table_t(xtxpool_table_info_t * xtable_info, xtxpool_resources_face * para)
-      : m_xtable_info(xtable_info), m_send_tx_queue(xtable_info), m_new_receipt_queue(xtable_info, para) {
+      : m_xtable_info(xtable_info), m_send_tx_queue(xtable_info, para), m_new_receipt_queue(xtable_info, para) {
     }
 
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce);

@@ -724,7 +724,7 @@ bool xtable_build2_t::build_block_body(const xtable_block_para_t & para, const x
 
     // #1 set input entitys and resources
     base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_LIGHT_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), get_header()->get_height());
-    xdbg("xtable_build2_t::build_block_body. account=%s,height=%ld,version=%ld,tx size:%zu", account.get_account().c_str(), get_header()->get_height(), get_header()->get_block_version(), para.get_txs().size());
+    xdbg("xtable_build2_t::build_block_body. account=%s,height=%ld,version=%ld,tx size:%zu", account.get_account().c_str(), get_header()->get_height(), get_header()->get_block_version(), para.get_txs()->size());
     std::vector<base::xvaction_t> input_actions;
     input_actions.push_back(_action);
 
@@ -733,7 +733,7 @@ bool xtable_build2_t::build_block_body(const xtable_block_para_t & para, const x
 
     // rule:eth_receipt_txactions put to primary inentity extend
     base::xvactions_t eth_receipt_txactions;
-    for (auto & tx : para.get_txs()) {
+    for (auto & tx : *para.get_txs()) {
         // TODO(jimmy) only v3 tx put to 
         if ( (tx->get_raw_tx() != nullptr)
             && (tx->get_raw_tx()->get_tx_version() == xtransaction_version_3)) {
@@ -751,7 +751,7 @@ bool xtable_build2_t::build_block_body(const xtable_block_para_t & para, const x
     set_input_entity(input_actions, primary_inentity_extend_bin);
     // TODO(jimmy) txactions move to resource
 
-    for (auto & tx : para.get_txs()) {
+    for (auto & tx : *para.get_txs()) {
         // confirm tx no need take origintx
         if (tx->is_self_tx() || tx->is_send_tx()) {
             std::string origintx_bin;

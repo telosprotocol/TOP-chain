@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #define private public
+#define protected public
 
 #include "xbase/xutl.h"
 #include "xbasic/xhex.h"
@@ -278,21 +279,22 @@ TEST_F(xtop_test_relay_make_block_contract, on_make_block_invalid) {
     on_make_block("");
 }
 
-static data::xeth_transaction_t create_test_eth() {
-    data::xeth_transaction_t tx;
+static data::xeth_transaction_t create_test_eth() {    
     std::error_code ec;
-    tx.set_tx_version(data::EIP_1559);
-    tx.set_chainid(0x26b);
-    tx.set_nonce(0x2);
-    tx.set_max_priority_fee_per_gas(0x59682f00);
-    tx.set_max_fee_per_gas(0x59682f08);
-    tx.set_gas(0x5208);
-    tx.set_to(common::xeth_address_t::build_from("0xc8e6615f4c0ca0f44c0ac05daadb2aaad9720c98"));
-    tx.set_value(0x1bc16d674ec80000);
-    tx.set_data(top::from_hex("0x", ec));
-    tx.set_signV(0x1);
-    tx.set_signR(evm_common::xh256_t(top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec)));
-    tx.set_signS(evm_common::xh256_t(top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec)));
+    auto chain_id = 0x26b;
+    auto nonce = 0x2;
+    auto max_priority_fee_per_gas = 0x59682f00;
+    auto max_fee_per_gas = 0x59682f08;
+    auto gas = 0x5208;
+    auto to = common::xeth_address_t::build_from("0xc8e6615f4c0ca0f44c0ac05daadb2aaad9720c98");
+    auto value = 0x1bc16d674ec80000;
+    auto data = top::from_hex("0x", ec);
+    xbyte_t signV = 0x1;
+    auto signR = xh256_t(top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec));
+    auto signS = xh256_t(top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec));
+
+    data::xeth_transaction_t tx = data::xeth_transaction_t::build_eip1559_tx(chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas, to, value, data);
+    tx.set_sign(signR, signS, signV);
     return tx;
 }
 

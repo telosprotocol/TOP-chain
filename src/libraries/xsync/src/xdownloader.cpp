@@ -95,7 +95,6 @@ void xevent_monitor_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &di
 bool xevent_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
     // TODO filter
 #ifdef ENABLE_METRICS
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_event_count", 1);
     int64_t in, out;
     int32_t queue_size = m_observed_thread->count_calls(in, out);
     XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_downloader_cur, queue_size);
@@ -105,7 +104,6 @@ bool xevent_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
 }
 
 void xevent_monitor_t::process_event(const mbus::xevent_ptr_t& e) {
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_event_count", -1);
     m_downloader->process_event(m_idx, e);
 }
 
@@ -211,7 +209,6 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e) {
     switch(e->major_type) {
     case mbus::xevent_major_type_sync_executor:
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
-            XMETRICS_TIME_RECORD("sync_cost_response_blocks_event");
             chain_downloader = on_response_event(idx, e);
         } else if (e->minor_type == mbus::xevent_sync_executor_t::archive_blocks) {
             chain_downloader = on_archive_blocks(idx, e);
@@ -219,16 +216,13 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e) {
         break;
     case mbus::xevent_major_type_behind:
         if (e->minor_type == mbus::xevent_behind_t::type_download) {
-            XMETRICS_TIME_RECORD("sync_cost_behind_event");
             chain_downloader = on_behind_event(idx, e);
         }
         break;
     case mbus::xevent_major_type_account:
         if (e->minor_type == mbus::xevent_account_t::add_role) {
-            XMETRICS_TIME_RECORD("sync_cost_chain_add_role_event");
             chain_downloader = on_add_role(idx, e);
         } else if (e->minor_type == mbus::xevent_account_t::remove_role) {
-            XMETRICS_TIME_RECORD("sync_cost_chain_remove_role_event");
             chain_downloader = on_remove_role(idx, e);
         }
         break;
@@ -325,15 +319,8 @@ xchain_downloader_face_ptr_t xdownloader_t::on_behind_event(uint32_t idx, const 
 
     xchain_downloader_face_ptr_t chain_downloader = find_chain_downloader(idx, bme->address);
     if (chain_downloader != nullptr) {
-
-        uint64_t start_height = bme->start_height;
-        uint64_t end_height = bme->end_height;
-        enum_chain_sync_policy sync_policy = bme->sync_policy;
-        vnetwork::xvnode_address_t &self_addr = bme->self_addr;
-        vnetwork::xvnode_address_t &from_addr = bme->from_addr;
         const std::string &reason = bme->reason;
-
-        chain_downloader->on_behind(start_height, end_height, sync_policy, self_addr, from_addr, reason);
+        chain_downloader->on_behind(bme->sync_policy, bme->chain_behind_address_map, reason);
     }
 
     return chain_downloader;

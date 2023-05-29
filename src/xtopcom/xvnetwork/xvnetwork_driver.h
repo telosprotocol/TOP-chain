@@ -42,8 +42,8 @@ private:
 public:
     xtop_vnetwork_driver(xtop_vnetwork_driver const &) = delete;
     xtop_vnetwork_driver & operator=(xtop_vnetwork_driver const &) = delete;
-    xtop_vnetwork_driver(xtop_vnetwork_driver &&) = default;
-    xtop_vnetwork_driver & operator=(xtop_vnetwork_driver &&) = default;
+    xtop_vnetwork_driver(xtop_vnetwork_driver &&) = delete;
+    xtop_vnetwork_driver & operator=(xtop_vnetwork_driver &&) = delete;
     ~xtop_vnetwork_driver() override = default;
 
     xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost,
@@ -55,7 +55,7 @@ public:
 
     void stop() override;
 
-    common::xnetwork_id_t network_id() const noexcept final;
+    common::xnetwork_id_t network_id() const noexcept override;
 
     common::xnode_address_t address() const override;
 
@@ -64,7 +64,7 @@ public:
     void send_to(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override;
     void broadcast(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) override;
 
-    common::xnode_id_t const & host_node_id() const noexcept override;
+    common::xnode_id_t const & account_address() const noexcept override;
 
     common::xnode_address_t parent_group_address() const override;
 

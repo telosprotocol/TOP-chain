@@ -14,7 +14,7 @@
 #endif
 #include "db_tool/db_prune.h"
 #include "db_tool/db_tool.h"
-#include "xchaininit/version.h"
+#include "xversion/version.h"
 #include "xchaininit/xchain_command_http_client.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"

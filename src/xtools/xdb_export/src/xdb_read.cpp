@@ -143,11 +143,8 @@ void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t
                 continue;
             }
 
-            std::cout << index->dump() << ", block_hash=" << base::xstring_utl::to_hex(index->get_block_hash()) << \
-            ",last_block_hash=" << base::xstring_utl::to_hex(index->get_last_block_hash()) <<  
-            ",clock=" << index->get_this_block()->get_clock() <<
-            ",class=" <<  index->get_this_block()->get_block_class() << 
-            ",ver=" << index->get_this_block()->get_block_version() << std::endl;
+            std::cout << "index=" << index->dump() << std::endl;
+            std::cout << "block=" << block->dump() << std::endl;
 
             if (index->get_this_block()->get_block_class() != base::enum_xvblock_class_nil) {
                 if (false == m_xvblockdb_ptr->load_block_input(index)) {
@@ -180,6 +177,25 @@ void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t
                         std::cout << "load txindex " << base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()) << std::endl;
                     }
                 }
+
+                std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;  
+                if (false == index->get_this_block()->extract_sub_blocks(sub_blocks)) {
+                    std::cout << "fail extract sub blocks" << std::endl;
+                    continue;    
+                }                
+                std::cout << "sub blocks count " << sub_blocks.size() << std::endl;
+                for (auto & v : sub_blocks) {
+                    std::cout << "sub block " << v->dump() << std::endl;
+                }
+
+                // dump block bin for debug use
+                // base::xstream_t stream(base::xcontext_t::instance());
+                // int32_t ret = ((data::xblock_t*)block)->full_block_serialize_to(stream);
+                // if (ret < 0) {
+                //     std::cout << "fail serialize block:" << block->dump() << std::endl;
+                //     continue;
+                // }
+                // std::cout << "block bin hex:" << base::xstring_utl::to_hex(std::string((const char*)stream.data(), stream.size())) << std::endl;
             }
 
             (*it)->release_ref();   //release ptr that reference added by read_index_from_db

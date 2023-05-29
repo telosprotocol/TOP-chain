@@ -4,7 +4,7 @@ aux_source_directory(./src safebox_test_src)
 
 add_executable(xsafebox_test ${safebox_test_src})
 
-if (${XSYS_VER} EQUAL 0)
+if (${XOS_ID} MATCHES "centos")
 target_include_directories(xsafebox_test PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
 endif()
 

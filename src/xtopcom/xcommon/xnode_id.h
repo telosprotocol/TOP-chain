@@ -61,7 +61,9 @@ private:
     // std::string m_account_string;
     xaccount_id_t m_account_id{};
     xtable_id_t m_assigned_table_id;
+#ifdef ENABLE_METRICS_DATAOBJECT
     metrics_xtop_node_id m_nouse;
+#endif
 
 public:
     xtop_node_id()                                 = default;

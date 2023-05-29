@@ -19,7 +19,6 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
                                        observer_ptr<router::xrouter_face_t> router,
                                        observer_ptr<vnetwork::xvhost_face_t> vhost,
                                        observer_ptr<sync::xsync_object_t> sync,
-                                       observer_ptr<grpcmgr::xgrpc_mgr_t> grpc,
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
                                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor,
                                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
@@ -31,7 +30,6 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
   , m_router{router}
   , m_vhost{vhost}
   , m_sync_obj{sync}
-  , m_grpc_mgr{grpc}
   , m_txpool_service_mgr{txpool_service_mgr}
   , m_election_cache_data_accessor{cache_data_accessor}
   , m_nodesvr{nodesvr} {
@@ -47,7 +45,6 @@ std::shared_ptr<xvnode_face_t> xtop_vnode_factory::create_vnode_at(std::shared_p
                                       m_bus,
                                       m_logic_timer,
                                       m_sync_obj,
-                                      m_grpc_mgr,
                                       m_txpool_service_mgr,
                                       m_election_cache_data_accessor,
                                       m_nodesvr);

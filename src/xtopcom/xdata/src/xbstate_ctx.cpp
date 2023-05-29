@@ -6,14 +6,14 @@
 
 #include "xbase/xobject.h"
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xfixed_hash.h"
 #include "xbasic/xhex.h"
+#include "xcommon/rlp.h"
 #include "xdata/xdata_error.h"
 #include "xdata/xproperty.h"
-#include "xcommon/fixed_hash.h"
-#include "xcommon/rlp.h"
+#include "xmetrics/xmetrics.h"
 #include "xvledger/xvproperty.h"
 #include "xvledger/xvpropertyrules.h"
-#include "xmetrics/xmetrics.h"
 
 #include <cinttypes>
 #include <string>
@@ -139,8 +139,8 @@ int32_t xbstate_ctx_t::check_create_property(const std::string & key) {
         return xaccount_property_create_fail;
     }
     if (get_bstate()->find_property(key)) {
-        xerror("xbstate_ctx_t::check_create_property fail-already exist.propname=%s", key.c_str());
-        return xaccount_property_create_fail;
+        xwarn("xbstate_ctx_t::check_create_property fail-already exist.propname=%s", key.c_str());
+        return xaccount_property_already_exist;
     }
     return xsuccess;
 }
@@ -205,6 +205,20 @@ base::xauto_ptr<base::xvintvar_t<uint64_t>> xbstate_ctx_t::load_uin64_for_write(
         }
     }
     auto propobj = get_bstate()->load_uint64_var(key);
+    if (nullptr != propobj) {
+        return propobj;
+    }
+    xassert(false);
+    return nullptr;
+}
+
+base::xauto_ptr<base::xvintvar_t<int64_t>> xbstate_ctx_t::load_int64_for_write(std::string const & key) const {
+    if (false == get_bstate()->find_property(key)) {
+        if (base::xvpropertyrules_t::is_valid_native_property(key)) {
+            return get_bstate()->new_int64_var(key, m_canvas.get());
+        }
+    }
+    auto propobj = get_bstate()->load_int64_var(key);
     if (nullptr != propobj) {
         return propobj;
     }
@@ -442,7 +456,11 @@ int32_t xbstate_ctx_t::token_withdraw(const std::string & key, base::vtoken_t su
     auto propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_withdraw", key);
     auto balance = propobj->get_balance();
-    if (sub_token <= 0 || sub_token > balance) {
+    if (0 == sub_token) {
+        return xsuccess;
+    }
+
+    if (sub_token > balance) {
         xwarn("xbstate_ctx_t::token_withdraw fail-can't do withdraw. propname=%s,balance=%ld,sub_token=%ld", key.c_str(), balance, sub_token);
         return xaccount_property_operate_fail;
     }
@@ -456,9 +474,8 @@ int32_t xbstate_ctx_t::token_deposit(const std::string & key, base::vtoken_t add
     xdbg("xbstate_ctx_t::token_deposit,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", account_address().to_string().c_str(), height(), key.c_str(), add_token);
     auto propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_withdraw", key);
-    if (add_token <= 0) {
-        xwarn("xbstate_ctx_t::token_withdraw fail-can't do deposit. add_token=%ld", add_token);
-        return xaccount_property_operate_fail;
+    if (0 == add_token) {
+        return xsuccess;
     }
     auto balance = propobj->get_balance();
     auto left_token = propobj->deposit(add_token, m_canvas.get());
@@ -546,6 +563,49 @@ uint64_t xbstate_ctx_t::uint64_property_get(const std::string & prop) const {
     auto propobj = get_bstate()->load_uint64_var(prop);
     uint64_t value = propobj->get();
     return value;
+}
+
+int64_t xbstate_ctx_t::int64_get(std::string const & prop) const {
+    auto const bstate = get_bstate();
+    assert(bstate != nullptr);
+
+    if (false == bstate->find_property(prop)) {
+        xwarn("xbstate_ctx_t::int64_get, xvbstate_t::find_property returns false, property %s", prop.c_str());
+        return 0;
+    }
+
+    auto const var = bstate->load_int64_var(prop);
+    assert(var != nullptr);
+    return var->get();
+}
+
+int32_t xbstate_ctx_t::int64_set(std::string const & prop, int64_t value) {
+    xdbg("xbstate_ctx_t::int64_set,property_modify_enter.address=%s,height=%ld,propname=%s", account_address().to_string().c_str(), height(), prop.c_str());
+    auto propobj = load_int64_for_write(prop);
+    CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::int64_set", prop);
+    return propobj->set(value, m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
+}
+
+bool xbstate_ctx_t::property_exist(std::string const & key) const {
+    auto const bstate = get_bstate();
+    assert(bstate != nullptr);
+    return bstate->find_property(key);
+}
+
+int32_t xbstate_ctx_t::uint64_create(std::string const & key) {
+    xdbg("xbstate_ctx_t::uint64_create,property_modify_enter.address=%s,height=%ld,propname=%s", account_address().to_string().c_str(), height(), key.c_str());
+    auto ret = check_create_property(key);
+    if (ret) {
+        return ret;
+    }
+    auto & bstate = get_bstate();
+    auto propobj = bstate->new_uint64_var(key, m_canvas.get());
+    CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::uint64_create", key);
+    return xsuccess;
+}
+
+uint64_t xbstate_ctx_t::uint64_get(std::string const & key) const {
+    return uint64_property_get(key);
 }
 
 std::string xbstate_ctx_t::map_get(const std::string & prop, const std::string & field) const {
@@ -680,7 +740,11 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & token_name, evm_co
         balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
     }
 
-    if (sub_token <= 0 || sub_token > balance) {
+    if (0 == sub_token) {
+        return xsuccess;
+    }
+
+    if (sub_token > balance) {
         xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,sub_token=%s",
               top::to_hex(token_name).c_str(),
               balance.str().c_str(),
@@ -731,12 +795,8 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string & token_name, evm_com
         balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
     }
 
-    if (add_token <= 0) {
-        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,add_token=%s",
-              top::to_hex(token_name).c_str(),
-              balance.str().c_str(),
-              add_token.str().c_str());
-        return xaccount_property_operate_fail;
+    if (0 == add_token) {
+        return xsuccess;
     }
 
     evm_common::u256 new_balance = balance + add_token;

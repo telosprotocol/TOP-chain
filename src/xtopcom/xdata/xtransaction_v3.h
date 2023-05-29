@@ -136,9 +136,9 @@ public:
     virtual const top::evm_common::u256 get_gaslimit() const override {return m_ethtx.get_gas(); }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const override { return m_ethtx.get_max_fee_per_gas(); }
     virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const override { return m_ethtx.get_max_priority_fee_per_gas(); }
-    virtual const top::evm_common::u256 get_signR() const override { return m_ethtx.get_signR(); }
-    virtual const top::evm_common::u256 get_signV() const override { return m_ethtx.get_signV(); }
-    virtual const top::evm_common::u256 get_signS() const override { return m_ethtx.get_signS(); }
+    virtual xh256_t get_signR() const override { return m_ethtx.get_signR(); }
+    virtual xh256_t get_signS() const override { return m_ethtx.get_signS(); }
+    virtual xbyte_t get_signV() const override { return m_ethtx.get_signV(); }
 
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const override {return m_ethtx;}
 

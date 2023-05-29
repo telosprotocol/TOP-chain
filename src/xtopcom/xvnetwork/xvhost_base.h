@@ -26,8 +26,8 @@ public:
     xtop_vhost_base()                                    = default;
     xtop_vhost_base(xtop_vhost_base const &)             = delete;
     xtop_vhost_base & operator=(xtop_vhost_base const &) = delete;
-    xtop_vhost_base(xtop_vhost_base &&)                  = default;
-    xtop_vhost_base & operator=(xtop_vhost_base &&)      = default;
+    xtop_vhost_base(xtop_vhost_base &&)                  = delete;
+    xtop_vhost_base & operator=(xtop_vhost_base &&)      = delete;
     ~xtop_vhost_base() override                          = default;
 
     void

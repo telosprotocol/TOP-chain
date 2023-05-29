@@ -3,7 +3,7 @@ add_compile_options(-Wno-narrowing)
 
 add_definitions(-DXENABLE_TESTS)
 
-if (NOT ${XSYS_VER} EQUAL 0)
+if (${XOS_ID} MATCHES "ubuntu")
     find_package(GTest REQUIRED)
 endif()
 

@@ -9,6 +9,7 @@
 #include <vector>
 #include <mutex>
 #include "xstate_mpt/xstate_mpt.h"
+#include "xdata/xblockaction.h"
 #include "xdata/xethheader.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
@@ -51,7 +52,6 @@ class xtable_maker_t : public xblock_maker_t {
 
     bool                    load_table_blocks_from_last_full(const xblock_ptr_t & prev_block, std::vector<xblock_ptr_t> & blocks);
     xblock_ptr_t            make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
-    void                    set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const;
     bool                    can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const;
 
 private:
@@ -83,16 +83,36 @@ private:
 
 class xeth_header_builder {
 public:
-    static std::string build(const xblock_consensus_para_t & cs_para, evm_common::xh256_t const & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
+    static std::string build(const xblock_consensus_para_t & cs_para, xh256_t const & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
     static bool string_to_eth_header(const std::string & eth_header_str, data::xeth_header_t & eth_header);
 };
 
 using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;
 
+class xtable_input_actions_cache : public base::xinput_actions_cache_base {
+public:
+    xtable_input_actions_cache(std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> actions) : m_actions(actions) {
+    }
+    void loop_actions(std::function<void(const base::xvaction_t & _action)> _func) const {
+        for (auto & action : *m_actions) {
+            if (action->get_org_tx_hash().empty()) {
+                continue;
+            }
+            _func(*action);
+        }
+    }
+private:
+    std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> m_actions;
+};
+
 // TODO(jimmy) the whold table state do commit
 class xtable_mpt_container : public base::xvblock_excontainer_base {
 public:
-    xtable_mpt_container(statectx::xstatectx_face_ptr_t const& _ctx) : m_statectx(_ctx) {}
+    xtable_mpt_container(statectx::xstatectx_face_ptr_t const & _ctx,
+                         std::shared_ptr<std::vector<data::xlightunit_tx_info_ptr_t>> actions)
+      : m_statectx(_ctx) {
+        m_input_actions_cache = std::make_shared<xtable_input_actions_cache>(actions);
+    }
     virtual void commit(base::xvblock_t* current_block) override {
         m_statectx->do_commit(current_block);
     }
@@ -103,8 +123,13 @@ public:
         }
     }
 
+    virtual std::shared_ptr<base::xinput_actions_cache_base> get_input_actions_cache() const override {
+        return m_input_actions_cache;
+    }
+
 private:
     statectx::xstatectx_face_ptr_t m_statectx;
+    std::shared_ptr<base::xinput_actions_cache_base> m_input_actions_cache;
 };
 
 NS_END2

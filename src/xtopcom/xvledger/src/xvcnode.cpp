@@ -17,8 +17,8 @@ namespace top
     namespace base
     {
         xvnode_t::xvnode_t(const std::string & account,const xvip2_t & xip2_addr,const std::string & sign_pub_key)
-            :xvaccount_t(account)
         {
+            m_account = account;
             m_sign_pubkey             = sign_pub_key;
             m_node_address.high_addr  = xip2_addr.high_addr;
             m_node_address.low_addr   = xip2_addr.low_addr;
@@ -32,7 +32,6 @@ namespace top
         }
         
         xvnode_t::xvnode_t(const xvnode_t & obj)
-            :xvaccount_t(obj)
         {
             m_sign_pubkey = obj.m_sign_pubkey;
             

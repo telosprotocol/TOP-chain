@@ -79,10 +79,6 @@ void xmessage_bus_t::remove_listener(int major_type, uint32_t id) {
 }
 
 void xmessage_bus_t::push_event(const xevent_ptr_t& e) {
-
-    XMETRICS_COUNTER_INCREMENT("mbus_push_event_counter", 1);
-
-    XMETRICS_TIME_RECORD("mbus_push_event_timer");
     assert((e->major_type > 0 && e->major_type < (int) m_queues.size()));
     m_queues[e->major_type]->dispatch_event(e);
 

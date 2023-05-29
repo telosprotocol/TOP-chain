@@ -111,7 +111,7 @@ public:
     Sync & operator=(Sync const &) = delete;
     Sync(Sync &&) = default;
     Sync & operator=(Sync &&) = default;
-    ~Sync();
+    ~Sync() = default;
 
 public:
     // Init

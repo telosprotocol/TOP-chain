@@ -102,7 +102,7 @@ public:
         return 0;
     }
 
-    bool set_latest_executed_info(const base::xvaccount_t & account,uint64_t height,const std::string & blockhash,const int atag = 0) override {
+    bool set_latest_executed_info(const base::xvaccount_t & account,uint64_t height) override {
         return false;
     }
 

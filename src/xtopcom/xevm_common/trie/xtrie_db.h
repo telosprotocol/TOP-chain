@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "xbasic/xfixed_hash.h"
 #include "xbasic/xlru_cache_specialize.h"
 #include "xbasic/xthreading/xdummy_mutex.h"
-#include "xcommon/xfixed_hash.h"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"

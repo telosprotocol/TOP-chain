@@ -290,7 +290,6 @@ bool xblocktool_t::verify_latest_blocks(const base::xblock_mptrs & latest_blocks
 
 bool xblocktool_t::verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block) {
     // check committed anc connectted flag first
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_verify_latest_blocks");
     // cert height, lock height, commit height is 0
     if (latest_cert_block->get_height() == 0) {
         if (latest_cert_block->check_block_flag(base::enum_xvblock_flag_committed)

@@ -19,11 +19,11 @@ class xvnode_wrap_t : public base::xvnode_t {
 public:
     xvnode_wrap_t(const std::string & account, const xvip2_t & xip2_addr,const std::string & sign_pub_key):
     base::xvnode_t(account, xip2_addr, sign_pub_key) {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_count", 1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_count, 1);
     }
 
     virtual ~xvnode_wrap_t() {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_count", -1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_count, -1);
     }
 };
 
@@ -31,11 +31,11 @@ class xvnode_group_wrap_t : public base::xvnodegroup_t {
 public:
     xvnode_group_wrap_t(const xvip2_t & group_address, const uint64_t effect_clock_height, std::vector<base::xvnode_t*> & nodes):
     base::xvnodegroup_t(group_address, effect_clock_height, nodes) {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_group_count", 1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_group_count, 1);
     }
 
     virtual ~xvnode_group_wrap_t() {
-        XMETRICS_COUNTER_INCREMENT("election_house_vnode_group_count", -1);
+        XMETRICS_GAUGE(metrics::vnode_election_house_vnode_group_count, 1);
     }
 };
 
@@ -143,7 +143,7 @@ protected:
     mutable std::mutex                         m_lock;
     //uint64_t                           m_vnetwork_id; //network id,refer definition of xip2 at xbase.h
     //uint64_t                           m_vnet_version;//version is same concept as round of election
-    mutable basic::xlru_cache<uint64_t, base::xvnodegroup_t*, basic::xref_deleter_t<base::xvnodegroup_t>> m_vgroups{512};     //mapping <version/round --> group>
+    mutable basic::xlru_cache<uint64_t, base::xvnodegroup_t*, basic::xref_deleter_t<base::xvnodegroup_t>> m_vgroups{256};     // XTODO mapping <version/round --> group>  limit cache size
 };
 
 NS_END2

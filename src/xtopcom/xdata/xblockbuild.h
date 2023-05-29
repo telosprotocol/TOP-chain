@@ -57,7 +57,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     ~xtable_block_para_t() = default;
     void    set_unit(xvblock_ptr_t const& unit) {m_units.push_back(unit);}
     void    set_accountindex(std::string const& address, base::xaccount_index_t const& index) {m_account_indexs.add_account_index(address, index);}
-    void    set_txs(const std::vector<xlightunit_tx_info_ptr_t> & txs_info) {m_txs = txs_info;}
+    void    set_txs(const std::shared_ptr<std::vector<xlightunit_tx_info_ptr_t>> & txs_info) {m_txs = txs_info;}
     void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
@@ -65,7 +65,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
 
     const std::vector<xvblock_ptr_t> &  get_units() const {return m_units;}
     const base::xaccount_indexs_t &     get_accountindexs() const {return m_account_indexs;}
-    const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
+    const std::shared_ptr<std::vector<xlightunit_tx_info_ptr_t>> & get_txs() const {return m_txs;}
     const std::string &             get_property_binlog() const {return m_property_binlog;}
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
     int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
@@ -78,7 +78,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     std::string                      m_fullstate_bin;
     int64_t                          m_tgas_balance_change{0};
     std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
-    std::vector<xlightunit_tx_info_ptr_t> m_txs;
+    std::shared_ptr<std::vector<xlightunit_tx_info_ptr_t>> m_txs;
 };
 
 class xblockaction_build_t {

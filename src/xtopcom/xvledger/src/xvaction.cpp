@@ -19,8 +19,6 @@ namespace top
             :xvmethod_t(target_uri,enum_xvinstruct_class_contract_function,method_name)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaction, 1);
-            m_used_tgas   = 0;
-            m_max_tgas    = 0;
             m_org_tx_hash = tx_hash;
             set_caller_uri(caller_addr);
             parse_uri();
@@ -30,8 +28,6 @@ namespace top
             :xvmethod_t(target_uri,enum_xvinstruct_class_contract_function,method_name,param)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaction, 1);
-            m_used_tgas   = 0;
-            m_max_tgas    = 0;
             m_org_tx_hash = tx_hash;
             set_caller_uri(caller_addr);
             parse_uri();
@@ -41,8 +37,6 @@ namespace top
             :xvmethod_t(target_uri,enum_xvinstruct_class_contract_function,method_name,param1,param2)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaction, 1);
-            m_used_tgas   = 0;
-            m_max_tgas    = 0;
             m_org_tx_hash = tx_hash;
             set_caller_uri(caller_addr);
             parse_uri();
@@ -52,8 +46,6 @@ namespace top
             :xvmethod_t(target_uri,enum_xvinstruct_class_contract_function,method_name,param1,param2,param3)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaction, 1);
-            m_used_tgas   = 0;
-            m_max_tgas    = 0;
             m_org_tx_hash = tx_hash;
             set_caller_uri(caller_addr);
             parse_uri();
@@ -63,8 +55,6 @@ namespace top
             :xvmethod_t()
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaction, 1);
-            m_used_tgas   = 0;
-            m_max_tgas    = 0;
         }
     
         xvaction_t::~xvaction_t()
@@ -81,8 +71,6 @@ namespace top
             :xvmethod_t(obj)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaction, 1);
-            m_used_tgas   = obj.m_used_tgas;
-            m_max_tgas    = obj.m_max_tgas;
             m_org_tx_hash = obj.m_org_tx_hash;
             m_org_tx_action_id = obj.m_org_tx_action_id;
             parse_uri();
@@ -92,8 +80,6 @@ namespace top
             :xvmethod_t(moved)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvaction, 1);
-            m_used_tgas   = moved.m_used_tgas;
-            m_max_tgas    = moved.m_max_tgas;
             m_org_tx_hash = moved.m_org_tx_hash;
             m_org_tx_action_id = moved.m_org_tx_action_id;
             parse_uri();
@@ -104,8 +90,6 @@ namespace top
             close(); //close first
             
             xvmethod_t::operator=(obj);
-            m_used_tgas   = obj.m_used_tgas;
-            m_max_tgas    = obj.m_max_tgas;
             m_org_tx_hash = obj.m_org_tx_hash;
             parse_uri();
             return *this;
@@ -161,16 +145,6 @@ namespace top
             
             parse_uri();
             return (begin_size - stream.size());
-        }
-        
-        bool   xvaction_t::withdraw_tgas(const uint64_t tgas) //return false if not have enough tags left
-        {
-            if( (m_used_tgas + tgas) <= m_max_tgas)
-            {
-                xatomic_t::xadd(m_used_tgas,tgas);
-                return true;
-            }
-            return false;
         }
 
         int32_t xvaction_t::get_ex_alloc_size() const {

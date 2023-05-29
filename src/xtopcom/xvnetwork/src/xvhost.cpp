@@ -79,9 +79,9 @@ xtop_vhost::xtop_vhost(observer_ptr<elect::xnetwork_driver_face_t> const & netwo
     }
 }
 
-common::xnode_id_t const & xtop_vhost::host_node_id() const noexcept {
+common::xnode_id_t const & xtop_vhost::account_address() const noexcept {
     assert(m_network_driver);
-    return m_network_driver->host_node_id();
+    return m_network_driver->account_address();
 }
 
 void xtop_vhost::start() {
@@ -143,7 +143,7 @@ void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_addr
     assert(src.zone_id() != common::xfrozen_zone_id);
     assert(dst.zone_id() != common::xfrozen_zone_id);
     if (!running()) {
-        ec = xvnetwork_errc2_t::vhost_not_run;  
+        ec = xvnetwork_errc2_t::vhost_not_run;
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return;
     }
@@ -158,7 +158,11 @@ void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_addr
     xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
     auto const bytes = codec::msgpack_encode(vmsg);
 
-    on_network_data_ready(host_node_id(), bytes);
+    if (account_address() == dst.account_address()) {
+        on_network_data_ready(account_address(), bytes);
+    } else {
+        assert(!dst.account_address().empty());
+    }
 
     m_network_driver->send_to(src.xip2(), dst.xip2(), bytes, ec);
 
@@ -235,7 +239,7 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_ad
         xvnetwork_message_t const vnetwork_message{src, dst, message, m_chain_timer->logic_time()};
         auto const bytes_message = top::codec::msgpack_encode(vnetwork_message);
 
-        on_network_data_ready(host_node_id(), bytes_message);  // broadcast to local vnet  // TODO remove codec part
+        on_network_data_ready(account_address(), bytes_message);  // broadcast to local vnet  // TODO remove codec part
 
         xdbg("%s broadcast msg %x from:%s to:%s hash %" PRIx64, vnetwork_category2().name(), message.id(), src.to_string().c_str(), dst.to_string().c_str(), message.hash());
 
@@ -332,7 +336,7 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_ad
         auto const hash_val = base::xhash64_t::digest(std::string((char *)bytes_message.data(), bytes_message.size()));
         xinfo("%s %s forward_broadcast_message [type: %" PRIx32 "] [msg hash: %" PRIx64 "][bytes hash:%" PRIx64 "][msgid:%" PRIx32 "][%s][%s]",
               vnetwork_category2().name(),
-              host_node_id().to_string().c_str(),
+              account_address().to_string().c_str(),
               static_cast<std::uint32_t>(message.type()),
               message.hash(),
               hash_val,
@@ -350,7 +354,7 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_ad
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
 #endif
-        on_network_data_ready(host_node_id(), bytes_message);
+        on_network_data_ready(account_address(), bytes_message);
 
         // m_network_driver->spread_rumor(bytes_message);
         m_network_driver->spread_rumor(src.xip2(), n_dst.xip2(), bytes_message, ec);
@@ -396,9 +400,7 @@ void xtop_vhost::do_handle_network_data() {
         try {
             auto all_byte_messages = m_message_queue.wait_and_pop_all();
 
-            XMETRICS_FLOW_COUNT("vhost_handle_data_ready_called", all_byte_messages.size());
-
-            XMETRICS_TIME_RECORD("vhost_handle_data_ready_called_time");
+            // XMETRICS_FLOW_COUNT("vhost_handle_data_ready_called", all_byte_messages.size());
 
 #if defined(XENABLE_VHOST_BENCHMARK)
             auto xxbegin = std::chrono::high_resolution_clock::now();
@@ -568,7 +570,7 @@ void xtop_vhost::do_handle_network_data() {
                                      message.hash(),
                                      &callback,
                                      top::get<common::xnode_address_t const>(callback_info).to_string().c_str());
-#ifdef ENABLE_METRICS
+#ifdef VHOST_METRICS
                                 char msg_info[30] = {0};
                                 snprintf(msg_info, 29, "%x|%" PRIx64, static_cast<uint32_t>(vnetwork_message.message().id()), message.hash());
                                 XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_callback", msg_info, uint32_t(100000));
