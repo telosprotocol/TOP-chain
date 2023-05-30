@@ -6,6 +6,7 @@
 #include "xdata/xblocktool.h"
 #include "xbasic/xhex.h"
 #include "xbase/xutl.h"
+#include "xblockstore/src/xunitstore.h"
 
 
 NS_BEG2(top, db_export)
@@ -36,6 +37,7 @@ bool xdb_write_tools_t::is_match_function_name(std::string const & func_name) {
     static std::vector<std::string> names = {
         "correct_all_txindex",
         "correct_one_txindex",
+        "correct_table_block_units",
     };
 
     for (auto & v : names) {
@@ -54,6 +56,9 @@ bool xdb_write_tools_t::process_function(std::string const & func_name, int argc
     } else if (func_name == "correct_one_txindex") {
         if (argc != 4) return false;
         correct_one_txindex(argv[3]);
+    } else if (func_name == "correct_table_block_units") {
+        if (argc != 5) return false;
+        correct_table_block_units(argv[3], std::stoi(argv[4]));        
     } else {
         xassert(false);
         std::cout << "ERROR not find function name" << std::endl;
@@ -182,6 +187,50 @@ void xdb_write_tools_t::correct_one_txindex(std::string const & hex_txhash) {
     correct_one_phase_txindex(hex_txhash, base::enum_txindex_type_send);
     correct_one_phase_txindex(hex_txhash, base::enum_txindex_type_receive);
     correct_one_phase_txindex(hex_txhash, base::enum_txindex_type_confirm);
+}
+
+xobject_ptr_t<base::xvblock_t> xdb_write_tools_t::load_commit_table_block(std::string const& table_addr, uint64_t height) {
+    base::xvaccount_t _vaddr(table_addr);
+    xobject_ptr_t<base::xvbindex_t> bindex = m_xvblockdb_ptr->load_committed_index_from_db(_vaddr, height);
+    if (nullptr == bindex) {
+        std::cout << "xdb_write_tools_t::load_commit_table_block FAIL load index. addr=" << table_addr << " height=" << height << std::endl;
+        return nullptr;
+    }
+    if (false == m_xvblockdb_ptr->load_block_object(bindex.get())) {
+        std::cout << "xdb_write_tools_t::load_commit_table_block FAIL load object. table=" << table_addr << " height=" << height << std::endl;
+        return nullptr;
+    }
+    if (false == m_xvblockdb_ptr->load_block_input(bindex.get())) {
+        std::cout << "xdb_write_tools_t::load_commit_table_block FAIL load input. table=" << table_addr << " height=" << height << std::endl;
+        return nullptr;
+    }
+    if (false == m_xvblockdb_ptr->load_block_output(bindex.get())) {
+        std::cout << "xdb_write_tools_t::load_commit_table_block FAIL load output. table=" << table_addr << " height=" << height << std::endl;
+        return nullptr;
+    }
+    if (false == m_xvblockdb_ptr->load_block_output_offdata(bindex.get(), bindex->get_this_block())) {
+        std::cout << "xdb_write_tools_t::load_commit_table_block FAIL load offdata. table=" << table_addr << " height=" << height << std::endl;
+        return nullptr;
+    }
+    xobject_ptr_t<base::xvblock_t> block;
+    bindex->get_this_block()->add_ref();
+    block.attach(bindex->get_this_block());
+    return block;
+}
+
+void xdb_write_tools_t::correct_table_block_units(std::string const& table_addr, uint64_t height) {
+    xobject_ptr_t<base::xvblock_t> tableblock = load_commit_table_block(table_addr, height);
+    if (tableblock == nullptr) {
+        std::cout << "xdb_write_tools_t::correct_table_block_units FAIL load block. table=" << table_addr << " height=" << height << std::endl;
+        return;
+    }
+    store::xunitstore_t unitstore(m_xvblockdb_ptr);
+    bool ret = unitstore.store_units(tableblock.get());
+    if (!ret) {
+        std::cout << "xdb_write_tools_t::correct_table_block_units FAIL store units. table=" << table_addr << " height=" << height << std::endl;
+        return;
+    }
+    std::cout << "xdb_write_tools_t::correct_table_block_units SUCC. table=" << table_addr << " height=" << height << std::endl;
 }
 
 

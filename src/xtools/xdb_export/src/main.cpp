@@ -70,6 +70,7 @@ void usage() {
     std::cout << "        - db_read_txindex [db_path] <hex_txhash> " << std::endl;  // ./xdb_export ./db_v3/ db_read_txindex txhash send/recv/confirm
     std::cout << "        - correct_all_txindex [db_path] " << std::endl;// ./xdb_export ./db_v3/ correct_all_txindex
     std::cout << "        - correct_one_txindex [db_path] <hex_txhash> " << std::endl; // ./xdb_export ./db_v3/ correct_one_txindex   txhash
+    std::cout << "        - correct_table_block db_path table_addr height " << std::endl; 
     std::cout << "        - db_prune [db_path] " << std::endl;
     std::cout << "        - export <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
     std::cout << "        - export_bstate <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;

@@ -24,6 +24,9 @@ protected:
     void correct_one_phase_txindex(std::string const & hex_txhash, base::enum_txindex_type txindex_type);
     void correct_all_txindex();
     void correct_one_table_txindex(std::string const& table_addr, uint64_t & finish_height);
+    void correct_table_block_units(std::string const& table_addr, uint64_t height);
+
+    xobject_ptr_t<base::xvblock_t> load_commit_table_block(std::string const& table_addr, uint64_t height);
 private:
     xobject_ptr_t<store::xstore_face_t> m_store { nullptr };
     base::xvdbstore_t*  m_xvdb_ptr { nullptr };

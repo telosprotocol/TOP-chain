@@ -41,7 +41,7 @@ optional<xfork_point_t> v11100_event = xfork_point_t{xfork_point_type_t::logic_t
 optional<xfork_point_t> v11200_block_fork_point    = xfork_point_t{xfork_point_type_t::logic_time, 10997640, "v1.12 block optimize"};//2023-05-04 10:00:00
 optional<xfork_point_t> v11200_sync_big_packet = xfork_point_t{xfork_point_type_t::logic_time, 10997640, "v1.12 sync big packet optimize"};//2023-05-04 10:00:00
 optional<xfork_point_t> v11200_fullnode_elect = xfork_point_t{xfork_point_type_t::logic_time, 10997640, "v1.12 fullnode elect"};//2023-05-04 10:00:00
-optional<xfork_point_t> v11300_evm_v3_fee_update_point = xfork_point_t{xfork_point_type_t::logic_time, 11239560, "v1.13 evm fee contract update"};//"2023-06-01 10:00:00"
+optional<xfork_point_t> v11300_evm_v3_fee_update_point = xfork_point_t{xfork_point_type_t::logic_time, 11248200, "v1.13 evm fee contract update"};//"2023-06-02 10:00:00"
 #endif
 
 std::string dump_fork_points() {

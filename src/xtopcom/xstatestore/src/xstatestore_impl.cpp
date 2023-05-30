@@ -275,16 +275,25 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_sta
         return nullptr;
     }
 
-    // v2 version account index must be changed-state, try to load unitstate directly, the unit block may not been stored
-    if (account_index.get_latest_unit_height() > 0 && false == account_index.get_latest_unit_hash().empty()) {
-        return get_unit_state_by_accountindex(account_address, account_index);
-    }
+    xinfo("xstatestore_impl_t::get_unit_latest_connectted_change_state addr=%s,index=%s",account_address.to_string().c_str(),account_index.dump().c_str());
+    // // v2 version account index must be changed-state, try to load unitstate directly, the unit block may not been stored
+    // if (account_index.get_latest_unit_height() > 0 && false == account_index.get_latest_unit_hash().empty()) {
+    //     return get_unit_state_by_accountindex(account_address, account_index);
+    // }
 
-    // otherwise v1 version account index, try to load unitstate from unit block, it may be empty or full unit block
-    auto _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount(), account_index);
+    // // otherwise v1 version account index, try to load unitstate from unit block, it may be empty or full unit block
+    
+    
+    // some old verison nil unit but with v2 version accountindex, so should always read state from unit
+    xobject_ptr_t<base::xvblock_t> _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount(), account_index);
     if (nullptr == _block) {
-        xerror("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get block");
-        return nullptr;
+        // TODO(jimmy) some time unit not stored but accountindex stored, try again     
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        _block = get_latest_connectted_state_changed_block(get_blockstore(), account_address.vaccount(), account_index);
+        if (nullptr == _block) {
+            xerror("xstatestore_impl_t::get_unit_latest_connectted_change_state fail-get block");
+            return nullptr;
+        }
     }
 
     return get_unit_state_from_block(account_address, _block.get());
