@@ -281,7 +281,7 @@ namespace top
                             xerror("xvblockstore_impl::load_block_from_index fail load block output.%s at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
                             return nullptr;                            
                         }
-                        if (false == load_block_output_offdata(*target_account->get_account_obj(), target_index->get_this_block())) {
+                        if (false == load_block_output_offdata_no_lock(*target_account->get_account_obj(), target_index, target_index->get_this_block())) {
                             xerror("xvblockstore_impl::load_block_from_index fail load block output offdata.%s at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
                             return nullptr;                                                        
                         }
@@ -692,14 +692,18 @@ namespace top
                 xerror("xvblockstore_impl::load_block_output_offdata,fail-index null %s",block->dump().c_str());
                 return false;
             }
-            if (get_blockdb_ptr()->load_block_output_offdata(existing_index.get(),block)) {
-                xassert(!block->get_output_offdata().empty());
+            return load_block_output_offdata_no_lock(account, existing_index.get(), block);
+        }
+
+        bool xvblockstore_impl::load_block_output_offdata_no_lock(const base::xvaccount_t & account,base::xvbindex_t* target_index,base::xvblock_t* block)
+        {
+            if (get_blockdb_ptr()->load_block_output_offdata(target_index,block)) {
                 xdbg("xvblockstore_impl::load_block_output_offdata,succ-load offdata.%s",block->dump().c_str());
                 return true;
             }
 
             // TODO(jimmy) load units to make output offdata
-            if (false == get_blockdb_ptr()->load_block_output(existing_index.get(),block)) {
+            if (false == get_blockdb_ptr()->load_block_output(target_index,block)) {
                 xerror("xvblockstore_impl::load_block_output_offdata,fail-load block output.%s",block->dump().c_str());
                 return false;
             }
