@@ -168,6 +168,7 @@ namespace top
             virtual bool                on_object_close() override;
             int                         load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height);
             bool                        should_store_units(int zone_index) const;
+            bool                        load_block_output_offdata_no_lock(const base::xvaccount_t & account,base::xvbindex_t* target_index,base::xvblock_t* block);
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             xunitstore_ptr_t                   m_unitstore;
