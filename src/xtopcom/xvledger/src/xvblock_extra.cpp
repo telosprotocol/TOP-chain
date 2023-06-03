@@ -115,6 +115,23 @@ namespace top
                 return base::xstring_utl::touint64(value);
             }
         }            
+        std::string   xtableheader_extra_t::dump() const //just for debug purpose
+        {
+            char local_param_buf[256];
+
+            xprintf(local_param_buf,sizeof(local_param_buf),"{%zu,%ld,%ld,%zu,%ld,%ld,%s,%ld}",
+                m_paras.size(),
+                get_tgas_total_lock_amount_property_height(),
+                get_second_level_gmtime(),
+                get_ethheader().size(),
+                base::xhash64_t::digest(get_ethheader()),
+                base::xhash64_t::digest(get_output_offdata_hash()),
+                get_pledge_balance_change_tgas().c_str(),
+                get_total_burn_gas());
+           
+            return std::string(local_param_buf);
+        }
+
 
         //-------------------xunit_header_extra_t-------------------------//
         int32_t xunit_header_extra_t::do_write(base::xstream_t & stream) const {

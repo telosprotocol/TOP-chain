@@ -29,6 +29,7 @@ namespace top
         public:
             int32_t deserialize_from_string(const std::string & extra_data);
             int32_t serialize_to_string(std::string & extra_data);
+            std::string dump() const;
 
         public:
             uint64_t get_tgas_total_lock_amount_property_height() const;

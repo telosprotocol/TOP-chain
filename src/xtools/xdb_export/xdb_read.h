@@ -43,7 +43,7 @@ public:
 
 protected:
     void db_read_unit(std::string const & address, const uint64_t height);
-    void db_read_block(std::string const & address, const uint64_t height);
+    void db_read_block(std::string const & address, const uint64_t height, bool dump = false);
     base::xauto_ptr<base::xvactmeta_t> db_read_meta(std::string const & address);    
     void db_data_parse();
     void db_read_txindex(std::string const & hex_txhash);

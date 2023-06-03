@@ -597,13 +597,12 @@ std::string xproposal_maker_t::calc_random_seed(base::xvblock_t* latest_cert_blo
     return base::xstring_utl::tostring(seed);
 }
 
-bool xproposal_maker_t::leader_xip_to_leader_address(xvip2_t _xip, common::xaccount_address_t & _addr) const {
-    std::string leader_address = m_resources->get_certauth()->get_signer(_xip);
+bool xproposal_maker_t::leader_xip_to_leader_address(xvip2_t _xip, common::xaccount_address_t & origin_addr, common::xaccount_address_t & _coinbase) const {
+    std::string leader_address = m_resources->get_certauth()->get_signer(_xip);    
     if (leader_address.empty()) {
         return false;
     }
     // XTODO only support T0 or T8 miner address, only T8 address can change to leader address for eth compatibility
-    common::xaccount_address_t _coinbase;
     base::enum_vaccount_addr_type addr_type = base::xvaccount_t::get_addrtype_from_account(leader_address);
     if (addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
         assert(addr_type == base::enum_vaccount_addr_type_secp256k1_user_account);
@@ -611,7 +610,7 @@ bool xproposal_maker_t::leader_xip_to_leader_address(xvip2_t _xip, common::xacco
     } else {
         _coinbase = common::xaccount_address_t(leader_address);
     }
-    _addr = _coinbase;
+    origin_addr = common::xaccount_address_t(leader_address);
     return true;
 }
 
@@ -634,8 +633,9 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
                                             total_lock_tgas_token,
                                             property_height);
 
+    common::xaccount_address_t origin_addr;
     common::xaccount_address_t leader_addr;
-    if (false == leader_xip_to_leader_address(cs_para.get_leader_xip(), leader_addr)) {
+    if (false == leader_xip_to_leader_address(cs_para.get_leader_xip(), origin_addr, leader_addr)) {
         xwarn("xtable_maker_t::leader_set_consensus_para fail-get leader address. %s", cs_para.dump().c_str());
         return false;
     }
@@ -643,8 +643,8 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
     cs_para.set_block_gaslimit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
     cs_para.set_block_base_price(gasfee::xgas_estimate::base_price());
 
-    xdbg_info("xtable_blockmaker_t::set_consensus_para %s random_seed=%s,tgas_token=%" PRIu64 ",tgas_height=%" PRIu64 " leader",
-        cs_para.dump().c_str(), random_seed.c_str(), total_lock_tgas_token, property_height);
+    xdbg_info("xtable_blockmaker_t::leader_set_consensus_para %s random_seed=%s,tgas_token=%" PRIu64 ",tgas_height=%" PRIu64 " leader=%s",
+        cs_para.dump().c_str(), random_seed.c_str(), total_lock_tgas_token, property_height,origin_addr.to_string().c_str());
     return true;
 }
 
@@ -670,14 +670,16 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
             random_seed.c_str(), total_lock_tgas_token);
     }
 
+    common::xaccount_address_t origin_addr;
     common::xaccount_address_t leader_addr;
-    if (false == leader_xip_to_leader_address(cs_para.get_leader_xip(), leader_addr)) {
+    if (false == leader_xip_to_leader_address(cs_para.get_leader_xip(), origin_addr, leader_addr)) {
         xwarn("xproposal_maker_t::backup_set_consensus_para fail-get leader address. %s", cs_para.dump().c_str());
         return false;
     }
     cs_para.set_coinbase(leader_addr);
     cs_para.set_block_gaslimit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
     cs_para.set_block_base_price(gasfee::xgas_estimate::base_price());
+    xinfo("xtable_blockmaker_t::backup_set_consensus_para %s,leader=%s", cs_para.dump().c_str(),origin_addr.to_string().c_str());
     return true;
 }
 

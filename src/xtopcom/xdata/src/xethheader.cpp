@@ -187,6 +187,24 @@ void xeth_header_t::serialize_from_string(const std::string & bin_data, std::err
     decodeBytes(_bs, ec);
 }
 
+std::string xeth_header_t::dump() const {
+    char local_param_buf[256];
+
+    xprintf(local_param_buf,sizeof(local_param_buf),"{%d,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%s,%s,%zu}",
+        m_version,
+        m_gaslimit,
+        m_gasused,
+        base::xhash64_t::digest(top::to_string(m_transactions_root.asBytes())),
+        base::xhash64_t::digest(top::to_string(m_receipts_root.asBytes())),   
+        base::xhash64_t::digest(top::to_string(m_state_root.asBytes())),   
+        base::xhash64_t::digest(top::to_string(m_extra_data)),   
+        base::xhash64_t::digest(m_logBloom.to_hex_string()),   
+        m_coinbase.to_hex_string().c_str(),
+        top::to_hex_shrink_0((top::evm_common::h256)m_baseprice).c_str(),
+        encodeBytes().size());
+    return std::string(local_param_buf);
+}
+
 //============= xeth_block_t ===============
 // xeth_block_t::xeth_block_t(const xeth_receipts_t & receipts)
 // : m_receipts(receipts) {
