@@ -752,6 +752,7 @@ namespace top
             const   std::string         get_input_path()  const; //path pointed to vbody at DB/disk  under get_block_path()
             const   std::string         get_output_path() const; //path pointed to vbody at DB/disk  under get_block_path()
             const   std::string         build_block_hash() const;
+            const   std::string         build_header_hash() const;
 
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
             virtual bool                extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none

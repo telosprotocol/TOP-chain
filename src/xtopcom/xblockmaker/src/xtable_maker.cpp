@@ -667,7 +667,33 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             return false;
         }
 
-        xwarn("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
+#if 0 // XTODO if happend, may need print more detailed info for debug
+        {
+            std::error_code ec;
+            base::xtableheader_extra_t header_extra;
+            data::xblockextract_t::get_tableheader_extra_from_block(proposal_block, header_extra, ec);
+            xwarn("xtable_maker_t::verify_proposal_with_local %s,ec=%s,proposal:%s", proposal_block->dump().c_str(), ec.message().c_str(),header_extra.dump().c_str());
+        }
+        {
+            std::error_code ec;
+            base::xtableheader_extra_t header_extra;
+            data::xblockextract_t::get_tableheader_extra_from_block(local_block, header_extra, ec);
+            xwarn("xtable_maker_t::verify_proposal_with_local %s,ec=%s,local:%s", local_block->dump().c_str(), ec.message().c_str(),header_extra.dump().c_str());
+        }
+        {
+            std::error_code ec;
+            data::xeth_header_t ethheader;
+            data::xblockextract_t::unpack_ethheader(proposal_block,ethheader,ec);
+            xwarn("proposal:%s", ethheader.dump().c_str());
+        }
+        {
+            std::error_code ec;
+            data::xeth_header_t ethheader;
+            data::xblockextract_t::unpack_ethheader(local_block,ethheader,ec);
+            xwarn("local:%s", ethheader.dump().c_str());
+        }
+#endif                
+        xerror("xtable_maker_t::verify_proposal_with_local fail-header unmatch.%s proposal:%s,local:%s",
             proposal_block->dump().c_str(),
             proposal_block->get_header()->dump().c_str(),
             local_block->get_header()->dump().c_str());
@@ -790,7 +816,7 @@ std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, 
     data::xeth_build_t::build_ethheader(header_para, eth_txs, eth_receipts, state_root, eth_header);
 
     std::string _ethheader_str = eth_header.serialize_to_string();
-    xdbg("xeth_header_builder::build ethheader txcount=%zu,headersize=%zu", eth_receipts.size(), _ethheader_str.size());
+    xdbg("xeth_header_builder::build ethheader %s txcount=%zu,headersize=%zu,header=%ld", cs_para.dump().c_str(), eth_receipts.size(), _ethheader_str.size(), base::xhash64_t::digest(_ethheader_str));
     return _ethheader_str;
 }
 

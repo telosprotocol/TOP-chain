@@ -260,9 +260,9 @@ namespace top
         {
             char local_param_buf[256];
 
-            xprintf(local_param_buf,sizeof(local_param_buf),"{xvheader:t=%d,v=%u,c=%u,h=%" PRIu64 ",w=%" PRIu64 ",l=%" PRIu64 ",a=%s,c=%s,,i=%" PRIu64 ",o=%" PRIu64 ",l=%" PRIu64 ",f=%" PRIu64 "}",
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvheader:t=%d,v=%u,c=%u,h=%" PRIu64 ",w=%" PRIu64 ",l=%" PRIu64 ",a=%s,c=%s,,i=%" PRIu64 ",o=%" PRIu64 ",l=%" PRIu64 ",f=%" PRIu64 ",%" PRIu64 "}",
             m_types,m_versions,m_chainid,m_height,m_weight,m_last_full_block_height,m_account.c_str(),m_comments.c_str(),
-            base::xhash64_t::digest(m_input_hash),base::xhash64_t::digest(m_output_hash),base::xhash64_t::digest(m_last_block_hash),base::xhash64_t::digest(m_last_full_block_hash));
+            base::xhash64_t::digest(m_input_hash),base::xhash64_t::digest(m_output_hash),base::xhash64_t::digest(m_last_block_hash),base::xhash64_t::digest(m_last_full_block_hash),base::xhash64_t::digest(m_extra_data));
            
             return std::string(local_param_buf);
         }
@@ -387,7 +387,7 @@ namespace top
                 xprintf(local_param_buf,sizeof(local_param_buf),"{xvqcert:viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",consensus_flags=%x}",get_viewid(),get_viewtoken(),get_clock(),get_validator().high_addr,get_validator().low_addr,get_auditor().high_addr,get_auditor().low_addr,get_consensus_flags());
             
             #endif
-            
+           
             return std::string(local_param_buf);
         }
         
@@ -2568,6 +2568,34 @@ namespace top
             xwarn("xvblock_t::is_body_and_offdata_ready fail.%s,%d,%d,%d", dump().c_str(),has_input_data(),has_output_data(),has_output_offdata());
             return false;
         }
+
+        const std::string xvblock_t::build_header_hash() const {
+            bool is_character_cert_header_only = get_header()->is_character_cert_header_only();
+            // calc and check header hash
+            std::string vheader_bin;
+            get_header()->serialize_to_string(vheader_bin);
+            std::string calc_header_hash;
+            if (is_character_cert_header_only) {
+                calc_header_hash = get_cert()->hash(vheader_bin);
+            } else {
+                std::string input_object_bin;                    
+                std::string output_object_bin;                    
+                if (get_block_class() != base::enum_xvblock_class_nil) {
+                    std::error_code ec;
+                    auto _input_object = load_input(ec);
+                    auto _output_object = load_output(ec);
+                    if (_input_object == nullptr || _output_object == nullptr) {
+                        xerror("xvblock_t::is_valid,input or output object load fail %s",dump().c_str());
+                        return std::string();                            
+                    }
+                    _input_object->serialize_to_string(false, input_object_bin);
+                    _output_object->serialize_to_string(false, output_object_bin);                       
+                }
+                const std::string vheader_input_output = vheader_bin + input_object_bin + output_object_bin;
+                calc_header_hash = get_cert()->hash(vheader_input_output);
+            }
+            return calc_header_hash;
+        }
         
         bool  xvblock_t::is_valid(bool deep_test) const  //just check height/view/hash/account and last_hash/last_qc_hash
         {
@@ -2602,19 +2630,7 @@ namespace top
                     return false;
                 }
 
-                bool is_character_cert_header_only = get_header()->get_block_characters() & enum_xvblock_character_certify_header_only;
-                // calc and check header hash
-                std::string vheader_bin;
-                get_header()->serialize_to_string(vheader_bin);
-                std::string calc_header_hash;
-                if (is_character_cert_header_only) {
-                    calc_header_hash = get_cert()->hash(vheader_bin);
-                } else {
-                    std::string vinput_bin = get_input_data();
-                    std::string voutput_bin = get_output_data();
-                    const std::string vheader_input_output = vheader_bin + vinput_bin + voutput_bin;
-                    calc_header_hash = get_cert()->hash(vheader_input_output);
-                }
+                std::string calc_header_hash = build_header_hash();                
                 if (calc_header_hash != get_cert()->get_header_hash()) {
                     xwarn("xvblock_t::is_valid,fail-header hash unmatch,%s", dump().c_str());
                     return false;

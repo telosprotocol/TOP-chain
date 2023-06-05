@@ -27,6 +27,7 @@ class xeth_header_t {
     void        decodeBytes(xbytes_t const& _d, std::error_code & ec);
     void        streamRLP(evm_common::RLPStream& _s) const;
     void        decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+    std::string dump() const;
  public:  // get APIS
     uint64_t    get_gaslimit() const {return m_gaslimit;}
     uint64_t    get_gasused() const {return m_gasused;}

@@ -64,8 +64,13 @@ bool xdb_read_tools_t::process_function(std::string const & func_name, int argc,
         if (argc != 5) return false;
         db_read_unit(argv[3], std::stoi(argv[4]));
     } else if (func_name == "db_read_block") {
-        if (argc != 5) return false;
-        db_read_block(argv[3], std::stoi(argv[4]));
+        if (argc == 5) {
+            db_read_block(argv[3], std::stoi(argv[4]));
+        } else if (argc == 6) {
+            db_read_block(argv[3], std::stoi(argv[4]), (bool)std::stoi(argv[5]));
+        } else {
+            return false;
+        }                
     } else if (func_name == "db_read_txindex") {
         if (argc != 4) return false;
         db_read_txindex(argv[3]);
@@ -131,7 +136,7 @@ void xdb_read_tools_t::db_read_unit(std::string const & address, const uint64_t 
     }
 }
 
-void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t height) {
+void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t height, bool dump) {
     std::cout << "db_read_block start: " << std::endl;
     if (m_xvblockdb_ptr != nullptr) {
         std::vector<base::xvbindex_t*> vector_index = m_xvblockdb_ptr->load_index_from_db(address, height);
@@ -163,9 +168,9 @@ void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t
                 std::vector<xobject_ptr_t<base::xvtxindex_t>> sub_txs;
                 if (false == index->get_this_block()->extract_sub_txs(sub_txs)) {
                     std::cout << "fail extract sub txs" << std::endl;
-                    continue;
+                    // continue;
                 }
-                std::cout << "sub txs count " << sub_txs.size() << std::endl;
+                    std::cout << "sub txs count " << sub_txs.size() << std::endl;
                 for (auto & v : sub_txs) {
                     base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
                     const std::string tx_key = base::xvdbkey_t::create_tx_index_key(v->get_tx_hash(), txindex_type);
@@ -180,22 +185,24 @@ void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t
 
                 std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;  
                 if (false == index->get_this_block()->extract_sub_blocks(sub_blocks)) {
-                    std::cout << "fail extract sub blocks" << std::endl;
-                    continue;    
-                }                
+                    std::cout << "fail extract sub blocks" << std::endl; 
+                    // continue;    
+                }
                 std::cout << "sub blocks count " << sub_blocks.size() << std::endl;
                 for (auto & v : sub_blocks) {
                     std::cout << "sub block " << v->dump() << std::endl;
                 }
-
+             
                 // dump block bin for debug use
-                // base::xstream_t stream(base::xcontext_t::instance());
-                // int32_t ret = ((data::xblock_t*)block)->full_block_serialize_to(stream);
-                // if (ret < 0) {
-                //     std::cout << "fail serialize block:" << block->dump() << std::endl;
-                //     continue;
-                // }
-                // std::cout << "block bin hex:" << base::xstring_utl::to_hex(std::string((const char*)stream.data(), stream.size())) << std::endl;
+                if (dump) {
+                    base::xstream_t stream(base::xcontext_t::instance());
+                    int32_t ret = ((data::xblock_t*)block)->full_block_serialize_to(stream);
+                    if (ret < 0) {
+                        std::cout << "fail serialize block:" << block->dump() << std::endl;
+                    } else {
+                        std::cout << "block bin hex:" << base::xstring_utl::to_hex(std::string((const char*)stream.data(), stream.size())) << std::endl;
+                    }                    
+                }   
             }
 
             (*it)->release_ref();   //release ptr that reference added by read_index_from_db
