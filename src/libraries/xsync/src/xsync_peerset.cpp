@@ -218,12 +218,23 @@ bool xsync_peerset_t::get_peer_height_info_map(const vnetwork::xvnode_address_t&
 
     xsync_role_peers_t& peers = it->second;
 
+    bool is_frozenType = common::has<common::xnode_type_t::frozen>(self_address.type());
+    std::map<std::string, uint64_t> genesis_accounts = data::xrootblock_t::get_all_genesis_accounts();
+
     for (auto& it2 : peers) {
         xsync_peer_chains_t& chains = it2.second;
 
         auto it3 = chains.find(address);
         if (it3 == chains.end())
             continue;
+
+        if(is_frozenType) {
+            auto from_addr = it2.first; 
+            auto it = genesis_accounts.find(from_addr.account_address().to_string());
+            if (it == genesis_accounts.end()) {
+                continue;
+            }
+        }
 
         xsync_chain_info_t& info = it3->second;
 
