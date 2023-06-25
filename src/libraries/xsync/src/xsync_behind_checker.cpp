@@ -130,7 +130,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
         m_downloader->push_event(ev);
         return;
     }
-    xsync_dbg("xsync_behind_checker_t::check_one end, %d, %s,%llu,%llu,%s", sync_policy, address.c_str(), 
+    xsync_dbg("xsync_behind_checker_t::check_one end, %d, table_address %s sele_address %s ,%llu,%llu,%s", sync_policy, address.c_str(), self_addr.to_string().c_str(),
               latest_start_block_height, latest_end_block_height,peer_addr.to_string().c_str());
 }
 
