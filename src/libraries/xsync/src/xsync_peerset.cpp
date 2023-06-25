@@ -228,6 +228,9 @@ bool xsync_peerset_t::get_peer_height_info_map(const vnetwork::xvnode_address_t&
         if (it3 == chains.end())
             continue;
 
+        xsync_dbg("get_peer_height_info_map index  self_address %s address %s is_frozenType %d  peers sie %d",
+            self_address.to_string().c_str(), address.c_str(), is_frozenType, peers.size());
+
         if(is_frozenType) {
             auto from_addr = it2.first; 
             auto it = genesis_accounts.find(from_addr.account_address().to_string());
