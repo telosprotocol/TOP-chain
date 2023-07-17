@@ -151,8 +151,21 @@ TEST(xsync_peerset_test, test_random_same_height)
     }
 }
 
+std::vector<vnetwork::xvnode_address_t> create_addr_consensus_list(const uint32_t count = CREATE_ADDR_COUNT) {
+    std::vector<vnetwork::xvnode_address_t> addr_list;
+
+    for (uint32_t i = 0; i < count; i++) {
+        common::xnetwork_id_t nid{i};
+        common::xgroup_id_t gid{1};
+        common::xnode_address_t addr(common::build_consensus_sharding_address(gid, nid));
+        addr_list.push_back(addr);
+    }
+
+    return addr_list;
+}
+
 TEST(xsync_peerset_test, test_behind_info_different_height_map) {
-    std::vector<vnetwork::xvnode_address_t> addr_list = create_addr_list();
+    std::vector<vnetwork::xvnode_address_t> addr_list = create_addr_consensus_list();
 
     xsync_peerset_t peerset("");
     uint32_t limit = peerset.get_frozen_limit();
@@ -179,6 +192,8 @@ TEST(xsync_peerset_test, test_behind_info_different_height_map) {
 
         std::vector<xchain_state_info_t> info_list;
         info_list.push_back(info);
+        peerset.add_group(peer_address);
+        peerset.add_peer(self_address,peer_address);
         peerset.update(self_address, peer_address, info_list);
         ret = peerset.get_group_size(self_address, count);
     }
