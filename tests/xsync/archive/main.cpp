@@ -1,8 +1,10 @@
-#include <gtest/gtest.h>
 #include "xbase/xhash.h"
-#include "xutility/xhash.h"
 #include "xbase/xlog.h"
 #include "xdata/xrootblock.h"
+#include "xutility/xhash.h"
+#include "xloader/xconfig_genesis_loader.h"
+
+#include <gtest/gtest.h>
 
 class xhashtest_t : public top::base::xhashplugin_t
 {
@@ -23,8 +25,7 @@ public:
     }
 };
 
-int
-main(int argc, char * argv[]) {
+int main(int argc, char * argv[]) {
     new xhashtest_t();
     testing::InitGoogleTest(&argc, argv);
 
@@ -33,9 +34,10 @@ main(int argc, char * argv[]) {
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
 
-    top::data::xrootblock_para_t para;
-    top::data::xrootblock_t::init(para);
+    auto genesis_loader = std::make_shared<top::loader::xconfig_genesis_loader_t>(std::string{});
+    top::data::xrootblock_para_t rootblock_para;
+    genesis_loader->extract_genesis_para(rootblock_para);
+    top::data::xrootblock_t::init(rootblock_para);
 
     return RUN_ALL_TESTS();
 }
-
