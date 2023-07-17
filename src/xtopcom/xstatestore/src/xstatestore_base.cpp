@@ -38,9 +38,8 @@ void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared
 void xstatestore_base_t::set_latest_executed_info(common::xtable_address_t const& table_addr, uint64_t height, bool force_write_db) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
     account_obj->set_latest_executed_block(height);
-    if (force_write_db) { // when execute height jump, should force wirte to db, otherwise may fail to recover 
-        account_obj->save_meta();
-    }
+    // TODO(jimmy) always save immediately
+    account_obj->save_meta();
 }
 uint64_t xstatestore_base_t::get_latest_executed_block_height(common::xtable_address_t const& table_addr) const {
     base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr.vaccount()));
