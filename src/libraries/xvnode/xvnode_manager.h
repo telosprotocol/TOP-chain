@@ -128,7 +128,7 @@ private:
 
                     xwarn("[vnode mgr] vnode (%p) at address %s starts at logic time %" PRIu64 " current logic time %" PRIu64 " %s",
                           vnode.get(),
-                          vnode->address().to_string().c_str(),                          
+                          vnode->address().to_string().c_str(),
                           vnode->start_time(),
                           time,
                           vnode->address().xip2().to_string().c_str());

@@ -3,9 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+
 #include "xbase/xns_macro.h"
 
 #include <string>
+#include <cstddef>
+
 NS_BEG1(top)
 
 // block special heights
@@ -17,5 +20,7 @@ static const xblock_number_t PendingBlock = (xblock_number_t)-1;
 constexpr const char* BlockHeightLatest = "latest";
 constexpr const char* BlockHeightEarliest = "earliest";
 constexpr const char* BlockHeightPending = "pending";
+
+XINLINE_CONSTEXPR std::size_t ETH_ADDRESS_LENGTH{20};
 
 NS_END1

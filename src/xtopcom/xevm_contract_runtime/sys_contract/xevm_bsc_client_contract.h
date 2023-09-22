@@ -34,8 +34,8 @@ private:
     bool rebuild(const xeth_header_t & header, const xvalidators_snap_info_t & last_info, const xvalidators_snap_info_t & cur_info, state_ptr state);
     void release(const bigint number, state_ptr state);
     // last hash @160
-    h256 get_last_hash(state_ptr state) const;
-    bool set_last_hash(const h256 hash, state_ptr state);
+    h256 get_last_hash(state_ptr const & state) const;
+    bool set_last_hash(h256 const & hash, state_ptr const & state);
     // effective hashes @161
     h256 get_effective_hash(const bigint height, state_ptr state) const;
     bool set_effective_hash(const bigint height, const h256 hash, state_ptr state);

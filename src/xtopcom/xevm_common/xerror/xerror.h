@@ -37,11 +37,14 @@ enum class xenum_errc {
     rlp_bytes_invalid,
     rlp_list_size_not_match,
     invalid_public_key_size,
+    invalid_bsc_epoch_data,
+    invalid_bsc_extra_data,
+    bsc_header_before_luban,
+    bsc_not_epoch_header
 };
 using xerrc_t = xenum_errc;
 
 std::error_code make_error_code(xerrc_t errc) noexcept;
-std::error_condition make_error_condition(xerrc_t errc) noexcept;
 
 std::error_category const & evm_common_category();
 
@@ -51,8 +54,5 @@ NS_BEG1(std)
 
 template <>
 struct is_error_code_enum<top::evm_common::error::xerrc_t> : std::true_type {};
-
-template <>
-struct is_error_condition_enum<top::evm_common::error::xerrc_t> : std::true_type {};
 
 NS_END1

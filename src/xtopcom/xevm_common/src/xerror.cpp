@@ -91,6 +91,18 @@ static char const * errc_to_string(int code) {
     case xenum_errc::invalid_public_key_size:
         return "invalid public key size";
 
+    case xenum_errc::invalid_bsc_epoch_data:
+        return "invalid bsc epoch data";
+
+    case xenum_errc::invalid_bsc_extra_data:
+        return "invalid bsc extra data";
+
+    case xenum_errc::bsc_header_before_luban:
+        return "bsc header before luban";
+
+    case xenum_errc::bsc_not_epoch_header:
+        return "bsc not epoch header";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         assert(false);
         return "unknown evm common error";
@@ -99,10 +111,6 @@ static char const * errc_to_string(int code) {
 
 std::error_code make_error_code(xerrc_t const errc) noexcept {
     return std::error_code{static_cast<int>(errc), evm_common_category()};
-}
-
-std::error_condition make_error_condition(xerrc_t const errc) noexcept {
-    return std::error_condition{static_cast<int>(errc), evm_common_category()};
 }
 
 std::error_category const & evm_common_category() {

@@ -595,20 +595,17 @@ bool xtop_evm_bsc_client_contract::remove_hashes(bigint const height, state_ptr 
     return true;
 }
 
-h256 xtop_evm_bsc_client_contract::get_last_hash(state_ptr state) const {
+h256 xtop_evm_bsc_client_contract::get_last_hash(state_ptr const & state) const {
     auto hash_str = state->string_get(data::system_contract::XPROPERTY_LAST_HASH);
     if (hash_str.empty()) {
-        return h256();
+        return h256{};
     }
-    return static_cast<h256>(xbytes_t{std::begin(hash_str), std::end(hash_str)});
+    return h256{xbytes_t{std::begin(hash_str), std::end(hash_str)}};
 }
 
-bool xtop_evm_bsc_client_contract::set_last_hash(h256 const hash, state_ptr state) {
+bool xtop_evm_bsc_client_contract::set_last_hash(h256 const & hash, state_ptr const & state) {
     auto bytes = hash.asBytes();
-    if (0 != state->string_set(data::system_contract::XPROPERTY_LAST_HASH, {bytes.begin(), bytes.end()})) {
-        return false;
-    }
-    return true;
+    return 0 == state->string_set(data::system_contract::XPROPERTY_LAST_HASH, {bytes.begin(), bytes.end()});
 }
 
 int xtop_evm_bsc_client_contract::get_flag(state_ptr state) const {
