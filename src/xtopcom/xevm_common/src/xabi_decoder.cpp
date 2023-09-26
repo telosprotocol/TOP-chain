@@ -268,4 +268,14 @@ xbytes_t xtop_abi_decoder::extract<xbytes_t>(std::error_code & ec) const {
     return decode_bytes(ec);
 }
 
+template <>
+xeth_header_t xtop_abi_decoder::extract<xeth_header_t>(std::error_code & ec) const {
+    assert(!ec);
+
+    xeth_header_t ret;
+    ret.decode_rlp()
+    return decode_eth_header(ec);
+}
+
+
 NS_END2

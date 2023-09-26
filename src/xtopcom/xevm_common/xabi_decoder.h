@@ -10,7 +10,9 @@
 #include "xcommon/xeth_address.h"
 #include "xcommon/common.h"
 #include "xcommon/common_data.h"
+#include "xcrosschain/xeth_header.h"
 #include "xevm_common/xerror/xerror.h"
+
 
 #include <cassert>
 #include <string>
@@ -299,5 +301,8 @@ std::string xtop_abi_decoder::extract<std::string>() const;
 
 template <>
 xbytes_t xtop_abi_decoder::extract<xbytes_t>(std::error_code & ec) const;
+
+template <>
+xeth_header_t xtop_abi_decoder::extract<xeth_header_t>(std::error_code & ec) const;
 
 NS_END2

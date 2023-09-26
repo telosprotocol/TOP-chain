@@ -43,11 +43,11 @@ class xtop_bitset {
 
 public:
     constexpr xtop_bitset() = default;
-    xtop_bitset(xtop_bitset const &) = default;
-    xtop_bitset(xtop_bitset&&) = default;
-    xtop_bitset& operator=(xtop_bitset const &) = default;
-    xtop_bitset& operator=(xtop_bitset&&) = default;
-    ~xtop_bitset() = default;
+    //xtop_bitset(xtop_bitset const &) = default;
+    //xtop_bitset(xtop_bitset&&) = default;
+    //xtop_bitset& operator=(xtop_bitset const &) = default;
+    //xtop_bitset& operator=(xtop_bitset&&) = default;
+    //~xtop_bitset() = default;
 
     using reference = typename std::bitset<N>::reference;
 
@@ -70,7 +70,7 @@ public:
         }
 
         if (!is_hex_string_without_prefix(str_view)) {
-                            ec = error::xbasic_errc_t::invalid_hex_string;
+            ec = error::xbasic_errc_t::invalid_hex_string;
             return {};
         }
 
@@ -99,11 +99,13 @@ public:
             return {};
         }
 
-        std::string tmp;
         if (sb == xsignificant_bit_t::lsb0) {
-            tmp = std::string{std::begin(str_view), std::end(str_view)};
+            auto tmp = std::string{std::begin(str_view), std::end(str_view)};
             std::reverse(std::begin(tmp), std::end(tmp));
             str_view = xstring_view_t{tmp};
+
+            str_view = str_view.substr(str_view.size() - std::min(N, str_view.size()));
+            return {std::bitset<N>{str_view.data(), str_view.size()}};
         }
 
         str_view = str_view.substr(str_view.size() - std::min(N, str_view.size()));

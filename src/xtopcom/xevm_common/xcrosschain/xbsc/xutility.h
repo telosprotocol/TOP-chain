@@ -7,6 +7,7 @@
 #include "xbasic/xbytes.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xcrosschain/xbsc/xconfig.h"
+#include "xevm_common/xcrosschain/xbsc/xvote.h"
 
 #include <system_error>
 
@@ -16,5 +17,12 @@ auto get_validator_bytes_from_header(evm_common::xeth_header_t const & header,
                                      xchain_config_t const & chain_config,
                                      xparlia_config_t const & parlia_config,
                                      std::error_code & ec) -> xbytes_t;
+
+auto get_vote_attestation_from_header(evm_common::xeth_header_t const & header,
+                                      xchain_config_t const & chain_config,
+                                      xparlia_config_t const & parlia_config,
+                                      std::error_code & ec) -> xvote_attestation_t;
+
+//auto verify_vote_attestation()
 
 NS_END4

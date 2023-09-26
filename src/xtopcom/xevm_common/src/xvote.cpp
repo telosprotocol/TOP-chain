@@ -46,11 +46,14 @@ auto xtop_vote_data::encode_rlp() const -> xbytes_t {
     return out;
 }
 
-
 auto xtop_vote_data::hash() const -> xh256_t {
     xbytes_t const & value = encode_rlp();
     auto const hash_value = utl::xkeccak256_t::digest(value.data(), value.size());
     return xh256_t{hash_value.data(), xh256_t::ConstructFromPointer};
+}
+
+auto xtop_vote_attestation::decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> xtop_vote_attestation {
+    assert(!ec);
 }
 
 

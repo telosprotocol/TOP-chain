@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xbitset.h"
 #include "xbasic/xbytes.h"
 #include "xbasic/xfixed_hash.h"
 #include "xevm_common/xcommon.h"
@@ -33,5 +34,15 @@ public:
     auto hash() const -> xh256_t;
 };
 using xvote_data_t = xtop_vote_data;
+
+struct xtop_vote_attestation {
+    uint64_t vote_address_set;
+    evm::common::xbls_signature_t aggregate_signature;
+    xvote_data_t data;
+    xbytes_t extra;
+
+    static auto decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> xtop_vote_attestation;
+};
+using xvote_attestation_t = xtop_vote_attestation;
 
 NS_END4

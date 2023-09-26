@@ -13,7 +13,7 @@
 NS_BEG4(top, evm, crosschain, bsc)
 
 struct xtop_validator_info {
-    int32_t index;
+    int32_t index{0};
     common::xbls_publick_key_t vote_address;
 };
 using xvalidator_info_t = xtop_validator_info;
