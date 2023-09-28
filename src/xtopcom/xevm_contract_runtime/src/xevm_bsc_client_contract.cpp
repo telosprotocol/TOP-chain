@@ -5,12 +5,13 @@
 #include "xevm_contract_runtime/sys_contract/xevm_bsc_client_contract.h"
 
 #include "xbasic/endianness.h"
+#include "xcommon/common_data.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xcommon/common_data.h"
 #include "xevm_common/xabi_decoder.h"
+#include "xevm_common/xcrosschain/xbsc/xutility.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 
 #if defined(XCXX20)
@@ -25,13 +26,11 @@ using namespace top::evm_common;
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 constexpr uint64_t confirm_num = 15;
-constexpr uint64_t validator_num = 21;
+constexpr uint64_t VALIDATOR_NUM = 21;
 constexpr uint64_t hash_reserve_num = 40000;
 constexpr uint64_t block_reserve_num = 500;
 
 constexpr uint64_t epoch = 200;
-constexpr uint64_t extra_vanity = 32;
-constexpr uint64_t extra_seal = 64 + 1;
 constexpr uint64_t address_length = 20;
 constexpr uint64_t max_gas_limit = 0x7fffffffffffffff;
 constexpr uint64_t min_gas_limit = 5000;
@@ -62,7 +61,7 @@ bool xtop_evm_bsc_client_contract::init(xbytes_t const & rlp_bytes, state_ptr st
         headers.emplace_back(header);
     }
     // min 12 + 1 to construnct state
-    if (headers.size() < (validator_num / 2 + 1) + 1 + 1) {
+    if (headers.size() < (VALIDATOR_NUM / 2 + 1) + 1 + 1) {
         xwarn("[xtop_evm_bsc_client_contract::init] not enough headers");
         return false;
     }
@@ -146,33 +145,33 @@ bool xtop_evm_bsc_client_contract::sync(xbytes_t const & rlp_bytes, state_ptr st
         xinfo("[xtop_evm_bsc_client_contract::sync] header dump: %s", header.dump().c_str());
 
         xvalidators_snapshot_t snap;
-        uint32_t const validator_num_index = 1;
+        constexpr uint32_t validator_num_index = 1;
         snap.number = header.number - 1;
         snap.hash = header.parent_hash;
-        auto validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[validator_num_index]);
+        auto const validators_num = evm_common::fromBigEndian<uint64_t>(item.decoded[validator_num_index]);
         // check decoded_size with recent_num
-        if (decoded_size < validator_num + validator_num_index + 1 + 1) {
+        if (decoded_size < validators_num + validator_num_index + 1 + 1) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
         }
-        uint32_t const validators_index = validator_num_index + 1;
-        for (uint64_t i = 0; i < validator_num; ++i) {
+        constexpr uint32_t validators_index = validator_num_index + 1;
+        for (uint64_t i = 0; i < validators_num; ++i) {
             snap.validators.insert(common::xeth_address_t::build_from(item.decoded[i + validators_index]));
         }
 
-        uint32_t const last_validator_num_index = validator_num + validator_num_index + 1;
-        auto last_validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[last_validator_num_index]);
+        uint64_t const last_validator_num_index = validators_num + validator_num_index + 1;
+        auto const last_validator_num = evm_common::fromBigEndian<uint64_t>(item.decoded[last_validator_num_index]);
         if (decoded_size < last_validator_num_index + 1 + last_validator_num) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
         }
-        uint32_t const last_validators_index = last_validator_num_index + 1;
+        uint64_t const last_validators_index = last_validator_num_index + 1;
         for (uint64_t i = 0; i < last_validator_num; ++i) {
             snap.last_validators.insert(common::xeth_address_t::build_from(item.decoded[i + last_validators_index]));
         }
 
-        uint32_t const recent_num_index = last_validator_num + last_validator_num_index + 1;
-        auto recent_num = evm_common::fromBigEndian<uint64_t>(item.decoded[recent_num_index]);
+        uint64_t const recent_num_index = last_validator_num + last_validator_num_index + 1;
+        auto const recent_num = evm_common::fromBigEndian<uint64_t>(item.decoded[recent_num_index]);
         if (decoded_size < recent_num_index + 1 + recent_num) {
             xwarn("[xtop_evm_bsc_client_contract::sync] sync param error");
             return false;
@@ -278,32 +277,69 @@ bool xtop_evm_bsc_client_contract::is_confirmed(u256 const height, xbytes_t cons
 }
 
 bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xeth_header_t const & new_header, xvalidators_snapshot_t & snap, state_ptr state) const {
-    if (new_header.extra.size() < extra_vanity) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] header extra size error: %lu, should < %lu", new_header.extra.size(), extra_vanity);
+    if (new_header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] header extra size error: %lu, should < %lu", new_header.extra.size(), top::evm::crosschain::bsc::EXTRA_VANITY);
         return false;
     }
-    if (new_header.extra.size() < extra_vanity + extra_seal) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] header extra miss signature: %lu, should < %lu", new_header.extra.size(), extra_vanity + extra_seal);
+    if (new_header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY + top::evm::crosschain::bsc::EXTRA_SEAL) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] header extra miss signature: %lu, should < %lu", new_header.extra.size(), top::evm::crosschain::bsc::EXTRA_VANITY + top::evm::crosschain::bsc::EXTRA_SEAL);
         return false;
     }
-    bool is_epoch = (new_header.number % epoch == 0);
-    uint64_t validators_bytes = new_header.extra.size() - extra_vanity - extra_seal;
-    if (!is_epoch && validators_bytes != 0) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] not epoch but has validators_bytes");
+
+    std::error_code ec;
+
+    bool const is_epoch = (new_header.number % epoch == 0);
+    auto const signers_bytes = top::evm::crosschain::bsc::get_validator_bytes_from_header(new_header,
+                                                                                    top::evm::crosschain::bsc::bsc_chain_config,
+                                                                                    top::evm::crosschain::bsc::bsc_chain_config.parlia_config,
+                                                                                    ec);
+    if (ec) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] get_validator_bytes_from_header failed, msg: %s", ec.message().c_str());
         return false;
     }
-    if (is_epoch && validators_bytes % address_length != 0) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] validators_bytes length error: %lu", validators_bytes);
+
+    if (!is_epoch && !signers_bytes.empty()) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] not epoch but has signers_bytes");
         return false;
     }
+
+    if (is_epoch && signers_bytes.empty()) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] epoch but no signers_bytes");
+        return false;
+    }
+
     if (new_header.mix_digest != h256(0)) {
         xwarn("[xtop_evm_bsc_client_contract::verify] mix_digest not 0: %lu", new_header.mix_digest.hex().c_str());
         return false;
     }
+
     if (new_header.uncle_hash != empty_unclehash) {
         xwarn("[xtop_evm_bsc_client_contract::verify] uncle_hash mismatch: %s, should be: %s", new_header.uncle_hash.hex().c_str(), empty_unclehash.hex().c_str());
         return false;
     }
+
+    if (new_header.number > 0) {
+        if (new_header.difficulty != 0) {
+            xwarn("[xtop_evm_bsc_client_contract::verify] invalid difficulty. block number %" PRIu64, new_header.number);
+            return false;
+        }
+    }
+
+    if (!verify_fork_hashes(top::evm::crosschain::bsc::bsc_chain_config, new_header, false)) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] verify_fork_hashes failed");
+        return false;
+    }
+
+    if (!is_london(top::evm::crosschain::bsc::bsc_chain_config, new_header.number)) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] not london fork");
+        return false;
+    }
+
+    if (!verify_eip1559_header(top::evm::crosschain::bsc::bsc_chain_config, prev_header, new_header)) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] verify_eip1559_header failed");
+        return false;
+    }
+
     if (new_header.gas_limit > max_gas_limit) {
         xwarn("[xtop_evm_bsc_client_contract::verify] gaslimit too big: %s > %lu", new_header.gas_limit.str().c_str(), max_gas_limit);
         return false;
@@ -329,13 +365,13 @@ bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xet
         return false;
     }
 
-    h256 last_hash = get_last_hash(state);
+    h256 const last_hash = get_last_hash(state);
     xvalidators_snap_info_t last_info;
     if (!get_snap_info(last_hash, last_info, state)) {
         xwarn("[xtop_evm_bsc_client_contract::verify] get_header_info failed, hash: %s", last_hash.hex().c_str());
         return false;
     }
-    auto snap_hash = snap.digest();
+    auto const snap_hash = snap.digest();
     if (last_info.snap_hash != snap_hash) {
         xwarn("[xtop_evm_bsc_client_contract::verify] snap hash mismatch: %s", last_info.snap_hash.hex().c_str(), snap_hash.hex().c_str());
         return false;
@@ -621,6 +657,41 @@ bool xtop_evm_bsc_client_contract::set_flag(state_ptr state) {
         return false;
     }
     return true;
+}
+
+bool xtop_evm_bsc_client_contract::verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool const uncle) {
+    if (uncle) {
+        return true;
+    }
+
+    if (chain_config.eip150_block > 0 && header.number == chain_config.eip150_block) {
+        if (chain_config.eip150_hash != xh256_t{0} && chain_config.eip150_hash != header.hash) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool xtop_evm_bsc_client_contract::verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                                         xeth_header_t const & parent,
+                                                         xeth_header_t const & header) {
+    if (!header.base_fee_per_gas.has_value()) {
+        return false;
+    }
+
+    uint64_t const expected_base_fee = calc_base_fee(chain_config, parent);
+
+    if (header.base_fee_per_gas.value() != expected_base_fee) {
+        xwarn("[xtop_evm_bsc_client_contract::verify_eip1559_header] base fee mismatch: %" PRIu64 ", %" PRIu64, header.base_fee_per_gas.value(), expected_base_fee);
+        return false;
+    }
+
+    return true;
+}
+
+uint64_t xtop_evm_bsc_client_contract::calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header) {
+    return 0;
 }
 
 NS_END4

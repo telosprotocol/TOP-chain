@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xdata/xnative_contract_address.h"
+#include "xevm_common/xcrosschain/xbsc/xconfig.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 #include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"
@@ -55,6 +56,10 @@ private:
     // flag @165
     int get_flag(state_ptr state) const;
     bool set_flag(state_ptr state);
+
+    static bool verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool uncle);
+    static bool verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
+    static uint64_t calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent);
 };
 using xevm_bsc_client_contract_t = xtop_evm_bsc_client_contract;
 

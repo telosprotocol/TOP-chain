@@ -79,4 +79,8 @@ constexpr auto is_luban(xchain_config_t const & chain_config, uint64_t const num
     return is_forked(chain_config.luban_block, number);
 }
 
+constexpr auto is_london(xchain_config_t const & chain_config, uint64_t const number) noexcept -> bool {
+       return is_forked(chain_config.london_block, number);
+}
+
 NS_END4
