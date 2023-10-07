@@ -57,6 +57,8 @@ bool xcons_service_t::unreg(const xvip2_t & xip) {
 bool xcons_service_t::destroy(const xvip2_t & xip) {
     xunit_info("xcons_service_t::destroy %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_dispatcher->destroy(xip);
+    auto network_proxy = m_para->get_resources()->get_network();
+    network_proxy->unlisten(xip, get_msg_category());
     running_ = false;
     return true;
 }
