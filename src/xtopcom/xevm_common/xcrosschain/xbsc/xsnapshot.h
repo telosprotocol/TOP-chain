@@ -13,20 +13,20 @@
 NS_BEG4(top, evm, crosschain, bsc)
 
 struct xtop_validator_info {
-    int32_t index{0};
+    int32_t index{0};                           // the index should offset by 1.
     common::xbls_publick_key_t vote_address;
 };
 using xvalidator_info_t = xtop_validator_info;
 
 class xtop_snapshot {
 private:
-    uint64_t number_{0};
-    xh256_t hash_{};
-    std::map<top::common::xeth_address_t, xvalidator_info_t> validators_{};
+    uint64_t number_{0};                                                    // block number where the snapshot was created.
+    xh256_t hash_{};                                                        // block hash where the snapshot was created.
+    std::map<top::common::xeth_address_t, xvalidator_info_t> validators_{}; // set of authorized validators at this moment.
     std::set<top::common::xeth_address_t> last_validators_{};
-    std::map<uint64_t, top::common::xeth_address_t> recents_{};
-    std::map<uint64_t, std::string> recent_fork_hashes_{};
-    xvote_data_t attestation_{};
+    std::map<uint64_t, top::common::xeth_address_t> recents_{};             // set of recent validators for spam protection.
+    std::map<uint64_t, std::string> recent_fork_hashes_{};                  // set of recent fork hashes.
+    xvote_data_t attestation_{};                                            // attestation for fast finality, but `Source` used as `Finalized`.
 
 public:
     static auto new_snapshot(uint64_t number,

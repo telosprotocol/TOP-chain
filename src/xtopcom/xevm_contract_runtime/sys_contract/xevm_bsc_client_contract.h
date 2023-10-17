@@ -59,7 +59,8 @@ private:
 
     static bool verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool uncle);
     static bool verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
-    static uint64_t calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent);
+    static uint64_t calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const &, xeth_header_t const &);
+    static bool verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
 };
 using xevm_bsc_client_contract_t = xtop_evm_bsc_client_contract;
 

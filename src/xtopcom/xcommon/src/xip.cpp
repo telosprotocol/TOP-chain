@@ -916,4 +916,12 @@ xslot_id_t const xtop_broadcast_id::slot{xbroadcast_slot_id_value};
 
 #endif
 
+bool in_the_same_group(xip_t const lhs, xip_t const rhs) noexcept {
+    return lhs.network_id() == rhs.network_id() && lhs.zone_id() == rhs.zone_id() && lhs.cluster_id() == rhs.cluster_id() && lhs.group_id() == rhs.group_id();
+}
+
+bool in_the_same_group(xip2_t const lhs, xip2_t const rhs) noexcept {
+    return in_the_same_group(lhs.xip(), rhs.xip());
+}
+
 NS_END2

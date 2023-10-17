@@ -278,74 +278,81 @@ bool xtop_evm_bsc_client_contract::is_confirmed(u256 const height, xbytes_t cons
 
 bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xeth_header_t const & new_header, xvalidators_snapshot_t & snap, state_ptr state) const {
     if (new_header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] header extra size error: %lu, should < %lu", new_header.extra.size(), top::evm::crosschain::bsc::EXTRA_VANITY);
+        xwarn("xtop_evm_bsc_client_contract::verify: header extra missing EXTRA_VANITY. extra size %" PRIu64, new_header.extra.size());
         return false;
     }
+
     if (new_header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY + top::evm::crosschain::bsc::EXTRA_SEAL) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] header extra miss signature: %lu, should < %lu", new_header.extra.size(), top::evm::crosschain::bsc::EXTRA_VANITY + top::evm::crosschain::bsc::EXTRA_SEAL);
+        xwarn("xtop_evm_bsc_client_contract::verify: header extra missing signature. extra size %" PRIu64, new_header.extra.size());
         return false;
     }
 
     std::error_code ec;
 
-    bool const is_epoch = (new_header.number % epoch == 0);
-    auto const signers_bytes = top::evm::crosschain::bsc::get_validator_bytes_from_header(new_header,
-                                                                                    top::evm::crosschain::bsc::bsc_chain_config,
-                                                                                    top::evm::crosschain::bsc::bsc_chain_config.parlia_config,
-                                                                                    ec);
+    bool const is_epoch = new_header.number % epoch == 0;
+    auto const signers_bytes =
+        get_validator_bytes_from_header(new_header, top::evm::crosschain::bsc::bsc_chain_config, top::evm::crosschain::bsc::bsc_chain_config.parlia_config, ec);
     if (ec) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] get_validator_bytes_from_header failed, msg: %s", ec.message().c_str());
+        xwarn("xtop_evm_bsc_client_contract::verify: get_validator_bytes_from_header failed, msg: %s", ec.message().c_str());
         return false;
     }
 
+    // Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
     if (!is_epoch && !signers_bytes.empty()) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] not epoch but has signers_bytes");
+        xwarn("xtop_evm_bsc_client_contract::verify: extra validators");
         return false;
     }
 
     if (is_epoch && signers_bytes.empty()) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] epoch but no signers_bytes");
+        xwarn("xtop_evm_bsc_client_contract::verify: invalid span validators");
         return false;
     }
 
+    // Ensure that the mix digest is zero as we don't have fork protection currently
     if (new_header.mix_digest != h256(0)) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] mix_digest not 0: %lu", new_header.mix_digest.hex().c_str());
+        xwarn("xtop_evm_bsc_client_contract::verify: invalid mix digest. %s", new_header.mix_digest.hex().c_str());
         return false;
     }
 
+    // Ensure that the block doesn't contain any uncles which are meaningless in PoA
     if (new_header.uncle_hash != empty_unclehash) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] uncle_hash mismatch: %s, should be: %s", new_header.uncle_hash.hex().c_str(), empty_unclehash.hex().c_str());
+        xwarn("xtop_evm_bsc_client_contract::verify: invalid uncle hash. %s, should be: %s", new_header.uncle_hash.hex().c_str(), empty_unclehash.hex().c_str());
         return false;
     }
 
     if (new_header.number > 0) {
-        if (new_header.difficulty != 0) {
-            xwarn("[xtop_evm_bsc_client_contract::verify] invalid difficulty. block number %" PRIu64, new_header.number);
+        if (new_header.difficulty == 0) {
+            xwarn("xtop_evm_bsc_client_contract::verify: invalid difficulty. block number %" PRIu64, new_header.number);
             return false;
         }
     }
 
     if (!verify_fork_hashes(top::evm::crosschain::bsc::bsc_chain_config, new_header, false)) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] verify_fork_hashes failed");
+        xwarn("xtop_evm_bsc_client_contract::verify: verify_fork_hashes failed");
         return false;
     }
 
-    if (!is_london(top::evm::crosschain::bsc::bsc_chain_config, new_header.number)) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] not london fork");
+    if (prev_header.number + 1 != new_header.number || prev_header.hash != new_header.parent_hash) {
+        xwarn("xtop_evm_bsc_client_contract::verify: unknown ancestor. parent hash and number from current header: %s:%" PRIu64 ", specified parent hash and number: %s:" PRIu64, new_header.parent_hash.hex().c_str(), new_header.number - 1, prev_header.hash.hex().c_str(), prev_header.number);
+        return false;
+    }
+
+    if (!top::evm::crosschain::bsc::bsc_chain_config.is_london(new_header.number)) {
+        xwarn("xtop_evm_bsc_client_contract::verify: not london fork");
         return false;
     }
 
     if (!verify_eip1559_header(top::evm::crosschain::bsc::bsc_chain_config, prev_header, new_header)) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] verify_eip1559_header failed");
+        xwarn("xtop_evm_bsc_client_contract::verify: verify_eip1559_header failed");
         return false;
     }
 
     if (new_header.gas_limit > max_gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] gaslimit too big: %s > %lu", new_header.gas_limit.str().c_str(), max_gas_limit);
+        xwarn("xtop_evm_bsc_client_contract::verify: gaslimit too big: %s > %lu", new_header.gas_limit.str().c_str(), max_gas_limit);
         return false;
     }
     if (new_header.gas_used > new_header.gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] gasUsed: %s > gasLimit: %s", new_header.gas_used.str().c_str(), new_header.gas_limit.str().c_str());
+        xwarn("xtop_evm_bsc_client_contract::verify: gasUsed: %s > gasLimit: %s", new_header.gas_used.str().c_str(), new_header.gas_limit.str().c_str());
         return false;
     }
     auto diff = prev_header.gas_limit - new_header.gas_limit;
@@ -354,30 +361,30 @@ bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xet
     }
     auto const limit = prev_header.gas_limit / gas_limit_bound_divisor;
     if (diff >= limit || new_header.gas_limit < min_gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] invalid gas limit: have %s, want %s + %s",
+        xwarn("xtop_evm_bsc_client_contract::verify: invalid gas limit: have %s, want %s + %s",
               new_header.gas_limit.str().c_str(),
               prev_header.gas_limit.str().c_str(),
               diff.str().c_str());
         return false;
     }
     if (new_header.number != prev_header.number + 1) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] height mismatch, new: %" PRIu64 ", old: %" PRIu64, new_header.number, prev_header.number);
+        xwarn("xtop_evm_bsc_client_contract::verify: height mismatch, new: %" PRIu64 ", old: %" PRIu64, new_header.number, prev_header.number);
         return false;
     }
 
     h256 const last_hash = get_last_hash(state);
     xvalidators_snap_info_t last_info;
     if (!get_snap_info(last_hash, last_info, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] get_header_info failed, hash: %s", last_hash.hex().c_str());
+        xwarn("xtop_evm_bsc_client_contract::verify: get_header_info failed, hash: %s", last_hash.hex().c_str());
         return false;
     }
     auto const snap_hash = snap.digest();
     if (last_info.snap_hash != snap_hash) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] snap hash mismatch: %s", last_info.snap_hash.hex().c_str(), snap_hash.hex().c_str());
+        xwarn("xtop_evm_bsc_client_contract::verify: snap hash mismatch: %s", last_info.snap_hash.hex().c_str(), snap_hash.hex().c_str());
         return false;
     }
     if (!snap.apply_with_chainid(new_header, bsc_chainid, true)) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] snap apply_with_chainid failed");
+        xwarn("xtop_evm_bsc_client_contract::verify: snap apply_with_chainid failed");
         return false;
     }
     return true;
@@ -677,21 +684,71 @@ bool xtop_evm_bsc_client_contract::verify_eip1559_header(top::evm::crosschain::b
                                                          xeth_header_t const & parent,
                                                          xeth_header_t const & header) {
     if (!header.base_fee_per_gas.has_value()) {
+        xwarn("xtop_evm_bsc_client_contract::verify_eip1559_header: header is missing baseFee");
         return false;
     }
 
     uint64_t const expected_base_fee = calc_base_fee(chain_config, parent);
 
     if (header.base_fee_per_gas.value() != expected_base_fee) {
-        xwarn("[xtop_evm_bsc_client_contract::verify_eip1559_header] base fee mismatch: %" PRIu64 ", %" PRIu64, header.base_fee_per_gas.value(), expected_base_fee);
+        xwarn("xtop_evm_bsc_client_contract::verify_eip1559_header: base fee mismatch: %" PRIu64 ", %" PRIu64, header.base_fee_per_gas.value(), expected_base_fee);
         return false;
     }
 
     return true;
 }
 
-uint64_t xtop_evm_bsc_client_contract::calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header) {
+uint64_t xtop_evm_bsc_client_contract::calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const &, xeth_header_t const &) {
     return 0;
+}
+
+bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                                           xeth_header_t const & parent,
+                                                           xeth_header_t const & header) {
+    if (header.number == 0) {
+        return true;
+    }
+
+
+
+    if (header.number == 1) {
+        if (header.gas_used != 0) {
+            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas used: %" PRIu64, header.gas_used);
+            return false;
+        }
+        if (header.gas_limit != chain_config.genesis_gas_limit) {
+            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64, header.gas_limit);
+            return false;
+        }
+        if (header.base_fee_per_gas.has_value()) {
+            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid base fee: %" PRIu64, header.base_fee_per_gas.value());
+            return false;
+        }
+        return true;
+    }
+
+    if (header.gas_limit < parent.gas_limit) {
+        xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit, parent.gas_limit);
+        return false;
+    }
+
+    if (header.gas_limit > parent.gas_limit) {
+        auto const limit = parent.gas_limit / gas_limit_bound_divisor;
+        if (header.gas_limit > parent.gas_limit + limit) {
+            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit, parent.gas_limit);
+            return false;
+        }
+    }
+
+    if (header.base_fee_per_gas.has_value()) {
+        if (header.base_fee_per_gas.value() < parent.base_fee_per_gas.value()) {
+            xwarn(
+                "xtop_evm_bsc_client_contract::verify_cascading_fields: invalid base fee: %" PRIu64 ", %" PRIu64, header.base_fee_per_gas.value(), parent.base_fee_per_gas.value());
+            return false;
+        }
+    }
+
+    return true;
 }
 
 NS_END4

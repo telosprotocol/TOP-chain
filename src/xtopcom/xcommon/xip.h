@@ -723,6 +723,9 @@ xgroup_id_t const & broadcast<xgroup_id_t>() noexcept;
 template <>
 xslot_id_t const & broadcast<xslot_id_t>() noexcept;
 
+bool in_the_same_group(xip_t lhs, xip_t rhs) noexcept;
+bool in_the_same_group(xip2_t lhs, xip2_t rhs) noexcept;
+
 NS_END2
 
 NS_BEG1(std)

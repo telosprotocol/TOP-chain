@@ -65,6 +65,14 @@ struct xtop_chain_config {
     uint64_t hertz_block;
 
     xparlia_config_t parlia_config;
+
+    constexpr auto is_london(uint64_t const number) const noexcept -> bool {
+        return is_forked(london_block, number);
+    }
+
+    constexpr auto is_luban(uint64_t const number) const noexcept -> bool {
+        return is_forked(luban_block, number);
+    }
 };
 using xchain_config_t = xtop_chain_config;
 
@@ -74,13 +82,5 @@ XINLINE_CONSTEXPR size_t EXTRA_VANITY{32};
 XINLINE_CONSTEXPR size_t EXTRA_SEAL{65};
 XINLINE_CONSTEXPR size_t VALIDATOR_BYTES_LENGTH{ETH_ADDRESS_LENGTH + evm::common::BLS_PUBLIC_KEY_LEN};
 XINLINE_CONSTEXPR size_t VALIDATOR_NUMBER_SIZE{1};
-
-constexpr auto is_luban(xchain_config_t const & chain_config, uint64_t const number) noexcept -> bool {
-    return is_forked(chain_config.luban_block, number);
-}
-
-constexpr auto is_london(xchain_config_t const & chain_config, uint64_t const number) noexcept -> bool {
-       return is_forked(chain_config.london_block, number);
-}
 
 NS_END4
