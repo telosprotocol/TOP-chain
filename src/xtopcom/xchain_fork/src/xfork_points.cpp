@@ -25,6 +25,7 @@ optional<xfork_point_t> v11200_block_fork_point    = xfork_point_t{xfork_point_t
 optional<xfork_point_t> v11200_sync_big_packet = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.12 sync big packet optimize"};
 optional<xfork_point_t> v11200_fullnode_elect = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.12 fullnode elect"};
 optional<xfork_point_t> v11300_evm_v3_fee_update_point = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.13 evm fee contract update"};
+optional<xfork_point_t> v11400_vote_reward_claiming = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.14 vote reward claiming"};
 #else
 
 optional<xfork_point_t> v1_7_0_block_fork_point           = xfork_point_t{xfork_point_type_t::logic_time, 9459720, "v1.7 version control"};
@@ -42,6 +43,7 @@ optional<xfork_point_t> v11200_block_fork_point    = xfork_point_t{xfork_point_t
 optional<xfork_point_t> v11200_sync_big_packet = xfork_point_t{xfork_point_type_t::logic_time, 10997640, "v1.12 sync big packet optimize"};//2023-05-04 10:00:00
 optional<xfork_point_t> v11200_fullnode_elect = xfork_point_t{xfork_point_type_t::logic_time, 10997640, "v1.12 fullnode elect"};//2023-05-04 10:00:00
 optional<xfork_point_t> v11300_evm_v3_fee_update_point = xfork_point_t{xfork_point_type_t::logic_time, 11248200, "v1.13 evm fee contract update"};//"2023-06-02 10:00:00"
+optional<xfork_point_t> v11400_vote_reward_claiming = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.14 vote reward claiming"};
 #endif
 
 std::string dump_fork_points() {

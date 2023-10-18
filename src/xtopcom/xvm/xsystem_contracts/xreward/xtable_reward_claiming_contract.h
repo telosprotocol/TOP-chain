@@ -63,7 +63,6 @@ private:
      * @param rewards
      */
     void recv_voter_dividend_reward(uint64_t issuance_clock_height, std::map<std::string, ::uint128_t> const & rewards);
-
     /**
      * @brief update node reward record
      *
@@ -121,7 +120,14 @@ private:
                           std::map<std::string, ::uint128_t> const & rewards,
                           std::map<std::string, std::string> const & adv_votes,
                           data::system_contract::xreward_record & record);
-    
+    /**
+     * @brief Recalculate the votes of all users and the total votes of advanced nodes in this table.
+     *
+     * @param votes_table_map
+     * @param adv_votes
+     * @param table_id
+     */
+    void calc_votes_table_and_adv_vote(std::map<std::string, std::map<std::string, uint64_t>> & votes_table_map, std::map<std::string, std::string> & adv_votes, uint32_t table_id);
     /**
      * @brief sub voter reward
      *
