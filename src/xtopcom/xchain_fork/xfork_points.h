@@ -48,4 +48,6 @@ extern top::optional<xfork_point_t> v11200_block_fork_point;
 extern top::optional<xfork_point_t> v11200_sync_big_packet;
 extern top::optional<xfork_point_t> v11200_fullnode_elect;
 extern top::optional<xfork_point_t> v11300_evm_v3_fee_update_point;
+extern top::optional<xfork_point_t> v11400_vote_reward_claiming;
+
 NS_END2
