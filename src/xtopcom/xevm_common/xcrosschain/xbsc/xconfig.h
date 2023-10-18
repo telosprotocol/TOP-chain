@@ -66,12 +66,12 @@ struct xtop_chain_config {
 
     xparlia_config_t parlia_config;
 
-    constexpr auto is_london(uint64_t const number) const noexcept -> bool {
-        return is_forked(london_block, number);
+    auto is_london(uint64_t const number) const noexcept -> bool {
+        return /*is_forked(london_block, number);*/ true;
     }
 
-    constexpr auto is_luban(uint64_t const number) const noexcept -> bool {
-        return is_forked(luban_block, number);
+    auto is_luban(uint64_t const number) const noexcept -> bool {
+        return /*is_forked(luban_block, number);*/ true;
     }
 };
 using xchain_config_t = xtop_chain_config;

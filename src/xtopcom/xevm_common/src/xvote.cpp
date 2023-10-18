@@ -54,6 +54,7 @@ auto xtop_vote_data::hash() const -> xh256_t {
 
 auto xtop_vote_attestation::decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> xtop_vote_attestation {
     assert(!ec);
+    return xtop_vote_attestation{};
 }
 
 

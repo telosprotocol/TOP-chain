@@ -20,7 +20,7 @@ auto get_validator_bytes_from_header(evm_common::xeth_header_t const & header,
         return {};
     }
 
-    if (!is_luban(chain_config, header.number)) {
+    if (!chain_config.is_luban(header.number)) {
         ec = evm_common::error::xerrc_t::bsc_header_before_luban;
         return {};
     }
@@ -52,7 +52,7 @@ auto get_vote_attestation_from_header(evm_common::xeth_header_t const & header,
         return {};
     }
 
-    if (!is_luban(chain_config, header.number)) {
+    if (!chain_config.is_luban(header.number)) {
         ec = evm_common::error::xerrc_t::bsc_header_before_luban;
         return {};
     }
@@ -74,7 +74,7 @@ auto get_vote_attestation_from_header(evm_common::xeth_header_t const & header,
         attesttion_bytes = xbytes_t{b, e};
     }
 
-    auto const & decoded_item = evm_common::RLP::decode_list(attesttion_bytes, ec);
+    // auto const & decoded_item = evm_common::RLP::decode_list(attesttion_bytes, ec);
     xvote_attestation_t attestation;
     assert(false);
     return attestation;

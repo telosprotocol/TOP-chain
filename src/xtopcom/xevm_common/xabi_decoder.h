@@ -302,7 +302,4 @@ std::string xtop_abi_decoder::extract<std::string>() const;
 template <>
 xbytes_t xtop_abi_decoder::extract<xbytes_t>(std::error_code & ec) const;
 
-template <>
-xeth_header_t xtop_abi_decoder::extract<xeth_header_t>(std::error_code & ec) const;
-
 NS_END2

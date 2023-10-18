@@ -713,13 +713,13 @@ bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain:
 
     if (header.number == 1) {
         if (header.gas_used != 0) {
-            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas used: %" PRIu64, header.gas_used);
+            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas used: %" PRIu64, header.gas_used.convert_to<uint64_t>());
             return false;
         }
-        if (header.gas_limit != chain_config.genesis_gas_limit) {
-            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64, header.gas_limit);
-            return false;
-        }
+        //if (header.gas_limit != chain_config.) {
+        //    xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64, header.gas_limit.convert_to<uint64_t>());
+        //    return false;
+        //}
         if (header.base_fee_per_gas.has_value()) {
             xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid base fee: %" PRIu64, header.base_fee_per_gas.value());
             return false;
@@ -728,14 +728,14 @@ bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain:
     }
 
     if (header.gas_limit < parent.gas_limit) {
-        xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit, parent.gas_limit);
+        xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit.convert_to<uint64_t>(), parent.gas_limit.convert_to<uint64_t>());
         return false;
     }
 
     if (header.gas_limit > parent.gas_limit) {
         auto const limit = parent.gas_limit / gas_limit_bound_divisor;
         if (header.gas_limit > parent.gas_limit + limit) {
-            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit, parent.gas_limit);
+            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit.convert_to<uint64_t>(), parent.gas_limit.convert_to<uint64_t>());
             return false;
         }
     }
