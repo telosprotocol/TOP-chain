@@ -80,15 +80,6 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     case method_id_total_supply: {
         xdbg("precompiled top contract: totalSupply");
 
-        uint64_t constexpr total_supply_gas_cost = 2538;
-        if (target_gas < total_supply_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled top contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
-
-            return false;
-        }
 
         if (!abi_decoder.empty()) {
             err.fail_status = precompile_error::fatal;
@@ -109,15 +100,6 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     case method_id_balance_of: {
         xdbg("precompiled top contract: balanceOf");
 
-        uint64_t constexpr balance_of_gas_cost = 3268;
-        if (target_gas < balance_of_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled top contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 1) {
             err.fail_status = precompile_error::fatal;
@@ -166,14 +148,6 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < transfer_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled top contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 2) {
             err.fail_status = precompile_error::fatal;
@@ -257,14 +231,6 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < transfer_from_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled top contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 3) {
             err.fail_status = precompile_error::fatal;
@@ -366,14 +332,6 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < approve_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled top contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 2) {
             err.fail_status = precompile_error::fatal;
@@ -438,15 +396,6 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     case method_id_allowance: {
         xdbg("precompiled top contract: allowance");
 
-        uint64_t constexpr allowance_gas_cost = 3987;
-        if (target_gas < allowance_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled top contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
-
-            return false;
-        }
 
         xbytes_t result(32, 0);
         if (abi_decoder.size() != 2) {

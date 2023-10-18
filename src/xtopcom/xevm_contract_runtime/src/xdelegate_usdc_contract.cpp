@@ -82,15 +82,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     case method_id_total_supply: {
         xdbg("precompiled usdc contract: totalSupply");
 
-        uint64_t constexpr total_supply_gas_cost = 2538;
-        if (target_gas < total_supply_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
-
-            return false;
-        }
 
         if (!abi_decoder.empty()) {
             err.fail_status = precompile_error::fatal;
@@ -112,15 +103,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     case method_id_balance_of: {
         xdbg("precompiled usdc contract: balanceOf");
 
-        uint64_t constexpr balance_of_gas_cost = 3268;
-        if (target_gas < balance_of_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 1) {
             err.fail_status = precompile_error::fatal;
@@ -169,14 +151,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < transfer_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 2) {
             err.fail_status = precompile_error::fatal;
@@ -260,14 +234,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < transfer_from_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 3) {
             err.fail_status = precompile_error::fatal;
@@ -369,14 +335,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < approve_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 2) {
             err.fail_status = precompile_error::fatal;
@@ -441,15 +399,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     case method_id_allowance: {
         xdbg("precompiled usdc contract: allowance");
 
-        uint64_t constexpr allowance_gas_cost = 3987;
-        if (target_gas < allowance_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
-
-            return false;
-        }
 
         xbytes_t result(32, 0);
         if (abi_decoder.size() != 2) {
@@ -525,14 +474,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < mint_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 2) {
             err.fail_status = precompile_error::fatal;
@@ -623,14 +564,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (target_gas < burn_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: burnFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, burn_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 2) {
             err.fail_status = precompile_error::fatal;
@@ -723,14 +656,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         }
         ec.clear();
 
-        if (target_gas < transfer_ownership_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: transferOwnership out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_ownership_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 1) {
             err.fail_status = precompile_error::fatal;
@@ -811,14 +736,6 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         }
         ec.clear();
 
-        if (target_gas < set_controller_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled usdc contract: setController out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, set_controller_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 1) {
             err.fail_status = precompile_error::fatal;
