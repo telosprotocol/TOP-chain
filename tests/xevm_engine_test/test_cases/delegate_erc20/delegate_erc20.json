@@ -502,12 +502,12 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "target_address": "erc20_top",
             "data": "0x095ea7b30000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000499602d2",
-            "gas_limit": 30000,
+            "gas_limit": 25000,
             "value": "0",
             "expected": {
                 "status": 2,
                 "extra_message": "",
-                "gas_used": 30000,
+                "gas_used": 25000,
                 "logs": []
             }
         },
@@ -676,12 +676,12 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "target_address": "erc20_top",
             "data": "0xa9059cbb0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea700000000000000000000000000000000000000000000000000000000000003e8",
-            "gas_limit": 34000,
+            "gas_limit": 25000,
             "value": "0",
             "expected": {
                 "status": 2,
                 "extra_message": "",
-                "gas_used": 34000,
+                "gas_used": 25000,
                 "logs": []
             }
         },
@@ -738,12 +738,12 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "target_address": "erc20_top",
             "data": "0x23b872dd0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea30000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea70000000000000000000000000000000000000000000000000000000000000064",
-            "gas_limit": 34000,
+            "gas_limit": 25000,
             "value": "0",
             "expected": {
                 "status": 2,
                 "extra_message": "",
-                "gas_used": 34000,
+                "gas_used": 25000,
                 "logs": []
             }
         },

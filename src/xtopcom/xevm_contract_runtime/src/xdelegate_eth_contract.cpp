@@ -20,7 +20,7 @@
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 bool xtop_delegate_eth_contract::execute(xbytes_t input,
-                                         uint64_t target_gas,
+                                         uint64_t /*target_gas*/,
                                          sys_contract_context const & context,
                                          bool is_static,
                                          observer_ptr<statectx::xstatectx_face_t> state_ctx,
@@ -108,15 +108,6 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
              xwarn("precompiled eth contract: mint called by non-admin account %s", context.caller.c_str());
 
              return false;
-        }
-
-        if (target_gas < mint_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled eth contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
-
-            return false;
         }
 
         if (abi_decoder.size() != 2) {
@@ -208,15 +199,6 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
              xwarn("precompiled eth contract: burnFrom called by non-admin account %s", context.caller.c_str());
 
              return false;
-        }
-
-        if (target_gas < burn_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled eth contract: burnFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, burn_gas_cost);
-
-            return false;
         }
 
         if (abi_decoder.size() != 2) {
@@ -311,15 +293,6 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
         }
         ec.clear();
 
-        if (target_gas < transfer_ownership_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled eth contract: transferOwnership out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_ownership_gas_cost);
-
-            return false;
-        }
-
         if (abi_decoder.size() != 1) {
             err.fail_status = precompile_error::fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
@@ -398,15 +371,6 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
             return false;
         }
         ec.clear();
-
-        if (target_gas < set_controller_gas_cost) {
-            err.fail_status = precompile_error::error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("precompiled eth contract: setController out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, set_controller_gas_cost);
-
-            return false;
-        }
 
         if (abi_decoder.size() != 1) {
             err.fail_status = precompile_error::fatal;
