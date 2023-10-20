@@ -13,6 +13,7 @@
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xcrosschain/xbsc/xutility.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
+#include "xevm_contract_runtime/xerror/xerror.h"
 
 #if defined(XCXX20)
 #include <fifo_map.hpp>
@@ -702,14 +703,28 @@ uint64_t xtop_evm_bsc_client_contract::calc_base_fee(top::evm::crosschain::bsc::
     return 0;
 }
 
+// verifyCascadingFields verifies all the header fields that are not standalone,
+// rather depend on a batch of previous headers. The caller may optionally pass
+// in a batch of parents (ascending order) to avoid looking those up from the
+// database. This is useful for concurrently verifying a batch of new headers.
 bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
-                                                           xeth_header_t const & parent,
-                                                           xeth_header_t const & header) {
+                                                           xeth_header_t const & header,
+                                                           xspan_t<xeth_header_t> parents,
+                                                           state_ptr state,
+                                                           std::error_code & ec) const {
+    assert(!ec);
+
     if (header.number == 0) {
         return true;
     }
 
+    auto const & parent = get_parent(header, parents, state, ec);
+    if (ec) {
+        xerror("%s: get_parent failed, msg: %s", __func__, ec.message().c_str());
+        return false;
+    }
 
+    // auto snap = snapshot(number - 1, hash, parents);
 
     if (header.number == 1) {
         if (header.gas_used != 0) {
@@ -750,5 +765,117 @@ bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain:
 
     return true;
 }
+
+bool xtop_evm_bsc_client_contract::verify_headers(std::vector<xeth_header_t> const & headers, state_ptr state) const {
+    return true;
+}
+
+bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, xspan_t<xeth_header_t> const parents, state_ptr state) const {
+    if (header.number == 0) {
+        xerror("%s: block number invalid.", __func__);
+        return false;
+    }
+
+    if (header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY) {
+        xerror("%s: header extra missing EXTRA_VANITY.", __func__);
+        return false;
+    }
+
+    if (header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY + top::evm::crosschain::bsc::EXTRA_SEAL) {
+        xerror("%s: header extra missing signature.", __func__);
+        return false;
+    }
+
+    // check extra data
+    uint64_t const number = header.number;
+    bool const is_epoch = number % epoch == 0;
+    std::error_code ec;
+
+    // Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
+    auto const & signersBytes = get_validator_bytes_from_header(header, top::evm::crosschain::bsc::bsc_chain_config, top::evm::crosschain::bsc::bsc_chain_config.parlia_config, ec);
+    if (ec) {
+        xerror("%s: get_validator_bytes_from_header failed, msg: %s", __func__, ec.message().c_str());
+        return false;
+    }
+
+    if (!is_epoch && !signersBytes.empty()) {
+        xerror("%s: extra validators.", __func__);
+        return false;
+    }
+
+    if (is_epoch && signersBytes.empty()) {
+        xerror("%s: invalid span validators.", __func__);
+        return false;
+    }
+
+    // Ensure that the mix digest is zero as we don't have fork protection currently
+    if (header.mix_digest != h256(0)) {
+        xerror("%s: invalid mix digest.", __func__);
+        return false;
+    }
+
+    // Ensure that the block doesn't contain any uncles which are meaningless in PoA
+    if (header.uncle_hash != empty_unclehash) {
+        xerror("%s: invalid uncle hash.", __func__);
+        return false;
+    }
+
+    if (header.number > 0) {
+        if (header.difficulty == 0) {
+            xerror("%s: invalid difficulty.", __func__);
+            return false;
+        }
+    }
+
+    if (!verify_fork_hashes(top::evm::crosschain::bsc::bsc_chain_config, header, false)) {
+        xerror("%s: verify_fork_hashes failed.", __func__);
+        return false;
+    }
+
+    auto parent = get_parent(header, parents, state, ec);
+    if (ec) {
+        xerror("%s: get_parent failed, msg: %s", __func__, ec.message().c_str());
+        return false;
+    }
+
+    if (!verify_eip1559_header(top::evm::crosschain::bsc::bsc_chain_config, parent, header)) {
+        xerror("%s: verify_eip1559_header failed.", __func__);
+        return false;
+    }
+
+    return verify_cascading_fields(top::evm::crosschain::bsc::bsc_chain_config, header, parents, state, ec);
+}
+
+xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & header, xspan_t<xeth_header_t> parents, state_ptr state, std::error_code & ec) const {
+    xeth_header_t parent;
+    assert(!ec);
+
+    if (!parents.empty()) {
+        parent = parents.back();
+    } else {
+        if (!get_header(header.parent_hash, parent, state)) {
+            ec = evm_runtime::error::xerrc_t::unknown_ancestor;
+        }
+    }
+
+    return parent;
+}
+
+top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::snapshot(uint64_t number,
+                                                                              xh256_t const & hash,
+                                                                              xspan_t<xeth_header_t> parents,
+                                                                              state_ptr state,
+                                                                              std::error_code & ec) const {
+    std::vector<xeth_header_t> headers;
+    top::evm::crosschain::bsc::xsnapshot_t snap;
+
+    while (snap.empty()) {
+        
+    }
+
+    return snap;
+}
+
+
 
 NS_END4

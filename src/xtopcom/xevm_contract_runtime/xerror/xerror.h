@@ -16,6 +16,8 @@ enum class xenum_errc {
 
     precompiled_contract_erc20_mint,
     precompiled_contract_erc20_burn,
+
+    unknown_ancestor,
 };
 using xerrc_t = xenum_errc;
 

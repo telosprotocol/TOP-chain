@@ -6,6 +6,7 @@
 
 #include "xdata/xnative_contract_address.h"
 #include "xevm_common/xcrosschain/xbsc/xconfig.h"
+#include "xevm_common/xcrosschain/xbsc/xsnapshot.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 #include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"
@@ -60,7 +61,15 @@ private:
     static bool verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool uncle);
     static bool verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
     static uint64_t calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const &, xeth_header_t const &);
-    static bool verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
+    bool verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                 xeth_header_t const & header,
+                                 xspan_t<xeth_header_t> parents,
+                                 state_ptr state,
+                                 std::error_code & ec) const;
+    bool verify_headers(std::vector<xeth_header_t> const & headers, state_ptr state) const;
+    bool verify_header(xeth_header_t const & header, xspan_t<xeth_header_t> parents, state_ptr state) const;
+    xeth_header_t get_parent(xeth_header_t const & header, xspan_t<xeth_header_t> parents, state_ptr state, std::error_code & ec) const;
+    top::evm::crosschain::bsc::xsnapshot_t snapshot(uint64_t number, xh256_t const & hash, xspan_t<xeth_header_t> parents, state_ptr state, std::error_code & ec) const;
 };
 using xevm_bsc_client_contract_t = xtop_evm_bsc_client_contract;
 

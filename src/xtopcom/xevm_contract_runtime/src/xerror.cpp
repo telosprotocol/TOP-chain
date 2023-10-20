@@ -19,6 +19,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::precompiled_contract_erc20_burn:
         return "precompiled contract erc20 burn failed";
 
+    case xenum_errc::unknown_ancestor:
+        return "unknown ancestor";
+
     default:
         return "unknown contract vm error";
     }

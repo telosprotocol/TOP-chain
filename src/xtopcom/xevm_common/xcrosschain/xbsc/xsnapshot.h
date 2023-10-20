@@ -39,13 +39,12 @@ public:
     auto hash() const noexcept -> xh256_t const &;
     auto validators() const noexcept -> std::map<top::common::xeth_address_t, xvalidator_info_t> const &;
     auto validators() noexcept -> std::map<top::common::xeth_address_t, xvalidator_info_t> &;
-    // auto last_validators() const -> std::set<top::common::xeth_address_t> const &;
-    // auto last_validators() -> std::set<top::common::xeth_address_t> &;
     auto recents() const noexcept -> std::map<uint64_t, top::common::xeth_address_t> const &;
     auto recents() noexcept -> std::map<uint64_t, top::common::xeth_address_t> &;
     auto recent_fork_hashes() const noexcept -> std::map<uint64_t, std::string> const &;
     auto recent_fork_hashes() noexcept -> std::map<uint64_t, std::string> &;
     auto attestation() const noexcept -> xvote_data_t const &;
+    auto empty() const noexcept -> bool;
 
     bool init_with_epoch(evm_common::xeth_header_t const & header);
     bool init_with_double_epoch(evm_common::xeth_header_t const & header1, evm_common::xeth_header_t const & header2);

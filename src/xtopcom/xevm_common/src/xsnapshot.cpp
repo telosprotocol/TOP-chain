@@ -76,5 +76,9 @@ auto xtop_snapshot::attestation() const noexcept -> xvote_data_t const & {
     return attestation_;
 }
 
+auto xtop_snapshot::empty() const noexcept -> bool {
+    return hash_.empty();
+}
+
 NS_END4
 
