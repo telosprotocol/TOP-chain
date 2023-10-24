@@ -80,5 +80,12 @@ auto xtop_snapshot::empty() const noexcept -> bool {
     return hash_.empty();
 }
 
+auto xtop_snapshot::encode(std::error_code & ec) const -> xbytes_t {
+    return {};
+}
+
+auto xtop_snapshot::decode(xbytes_t const & bytes, std::error_code & ec) -> void {
+}
+
 NS_END4
 

@@ -709,7 +709,7 @@ uint64_t xtop_evm_bsc_client_contract::calc_base_fee(top::evm::crosschain::bsc::
 // database. This is useful for concurrently verifying a batch of new headers.
 bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
                                                            xeth_header_t const & header,
-                                                           xspan_t<xeth_header_t> parents,
+                                                           xspan_t<xeth_header_t const> parents,
                                                            state_ptr state,
                                                            std::error_code & ec) const {
     assert(!ec);
@@ -767,10 +767,16 @@ bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain:
 }
 
 bool xtop_evm_bsc_client_contract::verify_headers(std::vector<xeth_header_t> const & headers, state_ptr state) const {
+    for (size_t i = 0; i < headers.size(); ++i) {
+        if (!verify_header(headers[i], xspan_t<xeth_header_t const>{headers.data(), i}, state)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, xspan_t<xeth_header_t> const parents, state_ptr state) const {
+bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, xspan_t<xeth_header_t const> const parents, state_ptr state) const {
     if (header.number == 0) {
         xerror("%s: block number invalid.", __func__);
         return false;
@@ -827,10 +833,10 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
         }
     }
 
-    if (!verify_fork_hashes(top::evm::crosschain::bsc::bsc_chain_config, header, false)) {
-        xerror("%s: verify_fork_hashes failed.", __func__);
-        return false;
-    }
+    //if (!verify_fork_hashes(top::evm::crosschain::bsc::bsc_chain_config, header, false)) {
+    //    xerror("%s: verify_fork_hashes failed.", __func__);
+    //    return false;
+    //}
 
     auto parent = get_parent(header, parents, state, ec);
     if (ec) {
@@ -843,10 +849,27 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
         return false;
     }
 
+    if (header.withdrawals_root.has_value()) {
+        xerror("%s: invalid withdrawals root: have %s, expected null", __func__, header.withdrawals_root.value().hex().c_str());
+        return false;
+    }
+
+    // Ethereum cancun fork
+    // https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/cancun.md
+    // https://forum.bnbchain.org/t/bnb-chain-upgrades-mainnet/936#future-4
+    //  Future
+    //      StateExpiry
+    //      Parallel EVM
+    //      Dynamic GasFee
+    //      Segmented Archive State Maintenance
+    //      Safe Hard Fork With Transition Period ?
+    //      Part of Cancun Upgrade:
+    // https://forum.bnbchain.org/t/bnb-chain-upgrades-mainnet/936#kepler-ideas-collecting-5
+
     return verify_cascading_fields(top::evm::crosschain::bsc::bsc_chain_config, header, parents, state, ec);
 }
 
-xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & header, xspan_t<xeth_header_t> parents, state_ptr state, std::error_code & ec) const {
+xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const {
     xeth_header_t parent;
     assert(!ec);
 
@@ -861,12 +884,28 @@ xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & hea
     return parent;
 }
 
+/// <summary>
+/// snapshot retrieves the authorization snapshot at a given point in time.
+/// !!! be careful
+/// the block with `number` and `hash` is just the last element of `parents`,
+/// unlike other interfaces such as verifyCascadingFields, `parents` are real parents
+///
+/// extra notes:
+///  1. `number  is the last element of `parents`' number
+///  2. `hash` is the last element of `parents`' hash
+/// </summary>
+/// <param name="number">snapshot at the number</param>
+/// <param name="hash">snapshot at the hash</param>
+/// <param name="parents">the parent headers when calling this API</param>
+/// <param name="state">world state object</param>
+/// <param name="ec">error code</param>
+/// <returns>true for success, false for the other</returns>
 top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::snapshot(uint64_t number,
                                                                               xh256_t const & hash,
-                                                                              xspan_t<xeth_header_t> parents,
+                                                                              xspan_t<xeth_header_t const> parents,
                                                                               state_ptr state,
                                                                               std::error_code & ec) const {
-    std::vector<xeth_header_t> headers;
+    std::vector<xeth_header_t const> headers;
     top::evm::crosschain::bsc::xsnapshot_t snap;
 
     while (snap.empty()) {
@@ -874,6 +913,24 @@ top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::snapshot(ui
     }
 
     return snap;
+}
+
+top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::last_snapshot(state_ptr & state, std::error_code & ec) const {
+    top::evm::crosschain::bsc::xsnapshot_t snapshot;
+    return snapshot;
+}
+
+void xtop_evm_bsc_client_contract::last_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
+    
+}
+
+top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::pre_last_snapshot(state_ptr & state, std::error_code & ec) const {
+    top::evm::crosschain::bsc::xsnapshot_t snapshot;
+    return snapshot;
+}
+
+void xtop_evm_bsc_client_contract::pre_last_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
+    
 }
 
 

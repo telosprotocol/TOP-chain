@@ -46,15 +46,8 @@ public:
     auto attestation() const noexcept -> xvote_data_t const &;
     auto empty() const noexcept -> bool;
 
-    bool init_with_epoch(evm_common::xeth_header_t const & header);
-    bool init_with_double_epoch(evm_common::xeth_header_t const & header1, evm_common::xeth_header_t const & header2);
-    xh256_t digest() const;
-    bool apply(evm_common::xeth_header_t const & header, bool check);
-    bool apply_with_chainid(evm_common::xeth_header_t const & header, evm_common::bigint const & chainid, bool check_inturn);
-    bool inturn(uint64_t num, top::common::xeth_address_t const & validator, bool use_old) const;
-    void print() const;
-
-    
+    auto encode(std::error_code & ec) const -> xbytes_t;
+    void decode(xbytes_t const & bytes, std::error_code & ec);
 };
 using xsnapshot_t = xtop_snapshot;
 
