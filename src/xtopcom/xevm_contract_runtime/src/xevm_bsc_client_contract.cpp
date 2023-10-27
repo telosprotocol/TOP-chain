@@ -915,24 +915,34 @@ top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::snapshot(ui
     return snap;
 }
 
-top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::last_snapshot(state_ptr & state, std::error_code & ec) const {
+top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::last_validator_set(state_ptr & state, std::error_code & ec) const {
     top::evm::crosschain::bsc::xsnapshot_t snapshot;
     return snapshot;
 }
 
-void xtop_evm_bsc_client_contract::last_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
+void xtop_evm_bsc_client_contract::last_validator_set(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
     
 }
 
-top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::pre_last_snapshot(state_ptr & state, std::error_code & ec) const {
+top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::pre_last_validator_set(state_ptr & state, std::error_code & ec) const {
     top::evm::crosschain::bsc::xsnapshot_t snapshot;
     return snapshot;
 }
 
-void xtop_evm_bsc_client_contract::pre_last_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
-    
+void xtop_evm_bsc_client_contract::pre_last_validator_set(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
+    assert(!ec);
+
+    auto const & hash = snapshot.hash();
+    std::string const key{std::begin(hash), std::end(hash)};
+
+    auto const & bytes = snapshot.encode(ec);
+    if (ec) {
+        xerror("%s: encode snapshot failed, msg: %s", __func__, ec.message().c_str());
+        return;
+    }
+    std::string const value{std::begin(bytes), std::end(bytes)};
+
+    state->map_set(data::system_contract::XPROPERTY_PRE_LAST_VALIDATOR_SET, key, value);
 }
-
-
 
 NS_END4

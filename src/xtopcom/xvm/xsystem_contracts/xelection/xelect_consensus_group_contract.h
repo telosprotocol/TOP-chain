@@ -35,15 +35,15 @@ public:
     ~xtop_election_awared_data() = default;
 
     xtop_election_awared_data(common::xnode_id_t const & account,
-                              uint64_t const stake,
-                              uint64_t const comprehensive_stake,
+                              uint64_t stake,
+                              uint64_t comprehensive_stake,
                               xpublic_key_t const & public_key,
                               common::xminer_type_t miner_type,
                               bool genesis,
                               uint64_t raw_credit_score);
 
     xtop_election_awared_data(common::xnode_id_t const & account,
-                              uint64_t const stake,
+                              uint64_t stake,
                               xpublic_key_t const & public_key,
                               common::xminer_type_t miner_type,
                               bool genesis,
@@ -123,9 +123,9 @@ protected:
     bool elect_group(common::xzone_id_t const & zid,
                      common::xcluster_id_t const & cid,
                      common::xgroup_id_t const & gid,
-                     common::xlogic_time_t const election_timestamp,
-                     common::xlogic_time_t const start_time,
-                     std::uint64_t const random_seed,
+                     common::xlogic_time_t election_timestamp,
+                     common::xlogic_time_t start_time,
+                     std::uint64_t random_seed,
                      xrange_t<config::xgroup_size_t> const & group_size_range,
                      data::election::xstandby_network_result_t const & standby_network_result,
                      data::election::xelection_network_result_t & election_network_result) override;
@@ -137,7 +137,7 @@ protected:
                                  common::xzone_id_t const & zid,
                                  common::xcluster_id_t const & cid,
                                  common::xgroup_id_t const & gid,
-                                 common::xnode_type_t const node_type,
+                                 common::xnode_type_t node_type,
                                  data::election::xelection_group_result_t & election_group_result) const;
 
     /**
@@ -148,7 +148,7 @@ protected:
                                 common::xzone_id_t const & zid,
                                 common::xcluster_id_t const & cid,
                                 common::xgroup_id_t const & gid,
-                                common::xnode_type_t const node_type,
+                                common::xnode_type_t node_type,
                                 data::election::xelection_group_result_t & election_group_result) const;
 
     /**
@@ -167,9 +167,9 @@ protected:
     bool do_normal_election(common::xzone_id_t const & zid,
                             common::xcluster_id_t const & cid,
                             common::xgroup_id_t const & gid,
-                            common::xnode_type_t const node_type,
-                            common::xminer_type_t const role_type,
-                            std::uint64_t const random_seed,
+                            common::xnode_type_t node_type,
+                            common::xminer_type_t role_type,
+                            std::uint64_t random_seed,
                             xrange_t<config::xgroup_size_t> const & group_size_range,
                             data::election::xstandby_result_t const & standby_result,
                             data::election::xelection_group_result_t & current_group_nodes);
@@ -180,7 +180,7 @@ protected:
      * @param zid Zone id
      * @param cid Cluster id
      * @param gid Group id
-     * @param node_type
+     * @param node_type Node type
      * @param random_seed Random seed for FTS algorithm internally used by election process
      * @param shrink_size current_group_size minus max_group_size
      * @param standby_result Standby pool
@@ -191,8 +191,8 @@ protected:
     bool do_shrink_election(common::xzone_id_t const & zid,
                             common::xcluster_id_t const & cid,
                             common::xgroup_id_t const & gid,
-                            common::xnode_type_t const node_type,
-                            std::uint64_t const random_seed,
+                            common::xnode_type_t node_type,
+                            std::uint64_t random_seed,
                             std::size_t shrink_size,
                             data::election::xstandby_result_t const & standby_result,
                             data::election::xelection_group_result_t & current_group_nodes) const;

@@ -59,12 +59,16 @@ private:
     bool set_flag(state_ptr state);
 
     // get/set pre last snapshot @166
-    top::evm::crosschain::bsc::xsnapshot_t pre_last_snapshot(state_ptr & state, std::error_code & ec) const;
-    void pre_last_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
+    top::evm::crosschain::bsc::xsnapshot_t pre_last_validator_set(state_ptr & state, std::error_code & ec) const;
+    void pre_last_validator_set(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
 
     // get/set last snapshot @167
-    top::evm::crosschain::bsc::xsnapshot_t last_snapshot(state_ptr & state, std::error_code & ec) const;
-    void last_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
+    top::evm::crosschain::bsc::xsnapshot_t last_validator_set(state_ptr & state, std::error_code & ec) const;
+    void last_validator_set(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
+
+    // get/set recent snapshot @168
+    top::evm::crosschain::bsc::xsnapshot_t recent_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) const;
+    void recent_snapshot(xh256_t const & snapshot_hash, top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
 
     static bool verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool uncle);
     static bool verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
