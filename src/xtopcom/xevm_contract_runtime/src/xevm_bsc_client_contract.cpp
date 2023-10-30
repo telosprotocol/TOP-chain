@@ -24,6 +24,8 @@
 
 using namespace top::evm_common;
 
+using top::evm::crosschain::bsc::xsnapshot_t;
+
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 constexpr uint64_t confirm_num = 15;
@@ -915,8 +917,42 @@ top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::snapshot(ui
     return snap;
 }
 
-top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::last_validator_set(state_ptr & state, std::error_code & ec) const {
-    top::evm::crosschain::bsc::xsnapshot_t snapshot;
+xsnapshot_t xtop_evm_bsc_client_contract::get_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) const {
+    assert(!ec);
+    std::string snapshot_byts = state->map_get(data::system_contract::XPROPERTY_RECENT_SNAPSHOTS, {std::begin(snapshot_hash), std::end(snapshot_hash)});
+    xsnapshot_t snapshot;
+    snapshot.decode({std::begin(snapshot_byts), std::end(snapshot_byts)}, ec);
+    if (ec) {
+        xerror("%s: decode snapshot failed, msg: %s", __func__, ec.message().c_str());
+        return snapshot;
+    }
+    return snapshot;
+}
+
+void xtop_evm_bsc_client_contract::add_snapshot(xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
+    assert(!ec);
+    auto const & hash = snapshot.hash();
+    std::string const key{std::begin(hash), std::end(hash)};
+
+    auto const & bytes = snapshot.encode(ec);
+    if (ec) {
+        xerror("%s: encode snapshot failed, msg: %s", __func__, ec.message().c_str());
+        return;
+    }
+    std::string const value{std::begin(bytes), std::end(bytes)};
+
+    state->map_set(data::system_contract::XPROPERTY_RECENT_SNAPSHOTS, key, value);
+}
+
+void xtop_evm_bsc_client_contract::del_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) {
+    assert(!ec);
+    std::string const key{std::begin(snapshot_hash), std::end(snapshot_hash)};
+    state->map_remove(data::system_contract::XPROPERTY_RECENT_SNAPSHOTS, key);
+}
+
+
+xsnapshot_t xtop_evm_bsc_client_contract::last_validator_set(state_ptr & state, std::error_code & ec) const {
+    xsnapshot_t snapshot;
     return snapshot;
 }
 
