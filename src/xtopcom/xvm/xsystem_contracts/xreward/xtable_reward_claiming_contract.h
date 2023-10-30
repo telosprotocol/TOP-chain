@@ -120,14 +120,7 @@ private:
                           std::map<std::string, ::uint128_t> const & rewards,
                           std::map<std::string, std::string> const & adv_votes,
                           data::system_contract::xreward_record & record);
-    /**
-     * @brief Recalculate the votes of all users and the total votes of advanced nodes in this table.
-     *
-     * @param votes_table_map
-     * @param adv_votes
-     * @param table_id
-     */
-    void calc_votes_table_and_adv_vote(std::map<std::string, std::map<std::string, uint64_t>> & votes_table_map, std::map<std::string, std::string> & adv_votes, uint32_t table_id);
+
     /**
      * @brief sub voter reward
      *
@@ -136,6 +129,26 @@ private:
      * @param reward
      */
     void sub_voter_record(uint64_t cur_time, data::system_contract::xreward_record & reward_record);
+    /**
+     * @brief Recalculate the votes of all users and the total votes of advanced nodes in this table.
+     *
+     * @param votes_table_map
+     * @param adv_votes
+     * @param table_id
+     */
+    void calc_votes_table_and_adv_vote(std::map<std::string, std::map<std::string, uint64_t>> & votes_table_map, std::map<std::string, std::string> & adv_votes, uint32_t table_id);
+    void calc_section_votes_table_and_adv_vote(std::map<std::string, std::string> & voters,
+                                               std::map<std::string, std::map<std::string, std::string>> & pledge_votes_map,
+                                               std::map<std::string, uint64_t> & stored_expire_token_map,
+                                               std::map<std::string, std::map<std::string, uint64_t>> & votes_table_map,
+                                               std::map<std::string, std::string> & adv_votes,
+                                               uint64_t table_id,
+                                               common::xlogic_time_t m_timer_height);
+    void get_section_voters_info(const std::string & key,
+                                 uint32_t table_id,
+                                 std::map<std::string, std::string> & voters,
+                                 std::map<std::string, std::map<std::string, std::string>> & pledge_votes_map,
+                                 std::map<std::string, uint64_t> & stored_expire_token_map);
 };
 using xtable_reward_claiming_contract_t = xtop_table_reward_claiming_contract;
 
