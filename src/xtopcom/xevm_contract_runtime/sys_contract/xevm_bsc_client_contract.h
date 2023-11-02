@@ -31,6 +31,8 @@ public:
     bool disable_reset(state_ptr state);
 
 private:
+    std::unordered_map<xh256_t, top::evm::crosschain::bsc::xsnapshot_t> recent_snapshots_;
+
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, xvalidators_snapshot_t & snap, state_ptr state) const;
     bool record(const xeth_header_t & header, const xvalidators_snapshot_t & snap, state_ptr state);
     bool rebuild(const xeth_header_t & header, const xvalidators_snap_info_t & last_info, const xvalidators_snap_info_t & cur_info, state_ptr state);
@@ -67,9 +69,9 @@ private:
     void last_validator_set(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
 
     // get/set recent snapshot @168
-    top::evm::crosschain::bsc::xsnapshot_t get_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) const;
-    void add_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
-    void del_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec);
+    top::evm::crosschain::bsc::xsnapshot_t get_recent_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) const;
+    void add_recent_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
+    void del_recent_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec);
 
     static bool verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool uncle);
     static bool verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);

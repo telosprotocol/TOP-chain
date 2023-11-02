@@ -36,10 +36,10 @@ auto get_validator_bytes_from_header(evm_common::xeth_header_t const & header,
         return {};
     }
 
-    constexpr size_t start = EXTRA_VANITY + VALIDATOR_NUMBER_SIZE;
-    size_t const end = start + num * VALIDATOR_BYTES_LENGTH;
+    auto const start = std::next(std::begin(header.extra), static_cast<int>(EXTRA_VANITY + VALIDATOR_NUMBER_SIZE));
+    auto const end = std::next(start, static_cast<int>(num * VALIDATOR_BYTES_LENGTH));
 
-    return xbytes_t{std::next(header.extra.begin(), static_cast<ptrdiff_t>(start)), std::next(header.extra.begin(), static_cast<ptrdiff_t>(end))};
+    return xbytes_t{start, end};
 }
 
 auto get_vote_attestation_from_header(evm_common::xeth_header_t const & header,

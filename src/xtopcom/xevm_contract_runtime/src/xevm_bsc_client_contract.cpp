@@ -24,7 +24,7 @@
 
 using namespace top::evm_common;
 
-using top::evm::crosschain::bsc::xsnapshot_t;
+using namespace top::evm::crosschain::bsc;
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
@@ -63,55 +63,59 @@ bool xtop_evm_bsc_client_contract::init(xbytes_t const & rlp_bytes, state_ptr st
         }
         headers.emplace_back(header);
     }
-    // min 12 + 1 to construnct state
-    if (headers.size() < (VALIDATOR_NUM / 2 + 1) + 1 + 1) {
+
+    // two epoch headers + VALIDATOR_NUM / 2  headers
+    if (headers.size() < (VALIDATOR_NUM / 2 + 1) + 1) {
         xwarn("[xtop_evm_bsc_client_contract::init] not enough headers");
         return false;
     }
 
-    xvalidators_snapshot_t snap;
-    if (!snap.init_with_double_epoch(headers[0], headers[1])) {
-        xwarn("[xtop_evm_bsc_client_contract::init] new_epoch_snapshot error");
-        return false;
-    }
 
-    for (size_t i = 0; i < headers.size(); ++i) {
-        if (i == 0) {
-            continue;
-        }
-        auto const & h = headers[i];
-        if (i != 1) {
-            if (!snap.apply_with_chainid(h, bsc_chainid, false)) {
-                xwarn("[xtop_evm_bsc_client_contract::init] apply_with_chainid failed");
-                return false;
-            }
-        }
-        auto snap_hash = snap.digest();
-        auto header_hash = h.calc_hash();
-        // step 3: store with no check
-        xinfo("[xtop_evm_bsc_client_contract::init] header dump: %s, snap_hash: %s", h.dump().c_str(), snap_hash.hex().c_str());
-        if (!set_last_hash(header_hash, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_last_hash failed, hash: %s", header_hash.hex().c_str());
-            return false;
-        }
-        if (!set_effective_hash(h.number, header_hash, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
-            return false;
-        }
-        if (!set_hashes(h.number, {header_hash}, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_hash failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
-            return false;
-        }
-        if (!set_header(header_hash, h, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_header failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
-            return false;
-        }
-        xvalidators_snap_info_t snap_info{snap_hash, h.parent_hash, h.number};
-        if (!set_snap_info(header_hash, snap_info, state)) {
-            xwarn("[xtop_evm_bsc_client_contract::init] set_snap_info failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
-            return false;
-        }
-    }
+    //xsnapshot_t last_snapshot = xsnapshot_t::new_snapshot(headers[0].number, headers[0].hash);
+
+    //xvalidators_snapshot_t snap;
+    //if (!snap.init_with_double_epoch(headers[0], headers[1])) {
+    //    xwarn("[xtop_evm_bsc_client_contract::init] new_epoch_snapshot error");
+    //    return false;
+    //}
+
+    //for (size_t i = 0; i < headers.size(); ++i) {
+    //    if (i == 0) {
+    //        continue;
+    //    }
+    //    auto const & h = headers[i];
+    //    if (i != 1) {
+    //        if (!snap.apply_with_chainid(h, bsc_chainid, false)) {
+    //            xwarn("[xtop_evm_bsc_client_contract::init] apply_with_chainid failed");
+    //            return false;
+    //        }
+    //    }
+    //    auto snap_hash = snap.digest();
+    //    auto header_hash = h.calc_hash();
+    //    // step 3: store with no check
+    //    xinfo("[xtop_evm_bsc_client_contract::init] header dump: %s, snap_hash: %s", h.dump().c_str(), snap_hash.hex().c_str());
+    //    if (!set_last_hash(header_hash, state)) {
+    //        xwarn("[xtop_evm_bsc_client_contract::init] set_last_hash failed, hash: %s", header_hash.hex().c_str());
+    //        return false;
+    //    }
+    //    if (!set_effective_hash(h.number, header_hash, state)) {
+    //        xwarn("[xtop_evm_bsc_client_contract::init] set_effective_hash failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
+    //        return false;
+    //    }
+    //    if (!set_hashes(h.number, {header_hash}, state)) {
+    //        xwarn("[xtop_evm_bsc_client_contract::init] set_hash failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
+    //        return false;
+    //    }
+    //    if (!set_header(header_hash, h, state)) {
+    //        xwarn("[xtop_evm_bsc_client_contract::init] set_header failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
+    //        return false;
+    //    }
+    //    xvalidators_snap_info_t snap_info{snap_hash, h.parent_hash, h.number};
+    //    if (!set_snap_info(header_hash, snap_info, state)) {
+    //        xwarn("[xtop_evm_bsc_client_contract::init] set_snap_info failed, height: %" PRIu64 ", hash: %s", h.number, header_hash.hex().c_str());
+    //        return false;
+    //    }
+    //}
 
     xinfo("[xtop_evm_bsc_client_contract::init] init success");
     return true;
@@ -669,7 +673,7 @@ bool xtop_evm_bsc_client_contract::set_flag(state_ptr state) {
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool const uncle) {
+bool xtop_evm_bsc_client_contract::verify_fork_hashes(xchain_config_t const & chain_config, xeth_header_t const & header, bool const uncle) {
     if (uncle) {
         return true;
     }
@@ -683,7 +687,7 @@ bool xtop_evm_bsc_client_contract::verify_fork_hashes(top::evm::crosschain::bsc:
     return true;
 }
 
-bool xtop_evm_bsc_client_contract::verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+bool xtop_evm_bsc_client_contract::verify_eip1559_header(xchain_config_t const & chain_config,
                                                          xeth_header_t const & parent,
                                                          xeth_header_t const & header) {
     if (!header.base_fee_per_gas.has_value()) {
@@ -701,7 +705,7 @@ bool xtop_evm_bsc_client_contract::verify_eip1559_header(top::evm::crosschain::b
     return true;
 }
 
-uint64_t xtop_evm_bsc_client_contract::calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const &, xeth_header_t const &) {
+uint64_t xtop_evm_bsc_client_contract::calc_base_fee(xchain_config_t const &, xeth_header_t const &) {
     return 0;
 }
 
@@ -709,7 +713,7 @@ uint64_t xtop_evm_bsc_client_contract::calc_base_fee(top::evm::crosschain::bsc::
 // rather depend on a batch of previous headers. The caller may optionally pass
 // in a batch of parents (ascending order) to avoid looking those up from the
 // database. This is useful for concurrently verifying a batch of new headers.
-bool xtop_evm_bsc_client_contract::verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+bool xtop_evm_bsc_client_contract::verify_cascading_fields(xchain_config_t const & chain_config,
                                                            xeth_header_t const & header,
                                                            xspan_t<xeth_header_t const> parents,
                                                            state_ptr state,
@@ -784,12 +788,12 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
         return false;
     }
 
-    if (header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY) {
+    if (header.extra.size() < EXTRA_VANITY) {
         xerror("%s: header extra missing EXTRA_VANITY.", __func__);
         return false;
     }
 
-    if (header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY + top::evm::crosschain::bsc::EXTRA_SEAL) {
+    if (header.extra.size() < EXTRA_VANITY + EXTRA_SEAL) {
         xerror("%s: header extra missing signature.", __func__);
         return false;
     }
@@ -800,18 +804,18 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
     std::error_code ec;
 
     // Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
-    auto const & signersBytes = get_validator_bytes_from_header(header, top::evm::crosschain::bsc::bsc_chain_config, top::evm::crosschain::bsc::bsc_chain_config.parlia_config, ec);
+    auto const & signers_bytes = get_validator_bytes_from_header(header, bsc_chain_config, bsc_chain_config.parlia_config, ec);
     if (ec) {
         xerror("%s: get_validator_bytes_from_header failed, msg: %s", __func__, ec.message().c_str());
         return false;
     }
 
-    if (!is_epoch && !signersBytes.empty()) {
+    if (!is_epoch && !signers_bytes.empty()) {
         xerror("%s: extra validators.", __func__);
         return false;
     }
 
-    if (is_epoch && signersBytes.empty()) {
+    if (is_epoch && signers_bytes.empty()) {
         xerror("%s: invalid span validators.", __func__);
         return false;
     }
@@ -840,13 +844,13 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
     //    return false;
     //}
 
-    auto parent = get_parent(header, parents, state, ec);
+    auto const parent = get_parent(header, parents, state, ec);
     if (ec) {
         xerror("%s: get_parent failed, msg: %s", __func__, ec.message().c_str());
         return false;
     }
 
-    if (!verify_eip1559_header(top::evm::crosschain::bsc::bsc_chain_config, parent, header)) {
+    if (!verify_eip1559_header(bsc_chain_config, parent, header)) {
         xerror("%s: verify_eip1559_header failed.", __func__);
         return false;
     }
@@ -868,7 +872,7 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
     //      Part of Cancun Upgrade:
     // https://forum.bnbchain.org/t/bnb-chain-upgrades-mainnet/936#kepler-ideas-collecting-5
 
-    return verify_cascading_fields(top::evm::crosschain::bsc::bsc_chain_config, header, parents, state, ec);
+    return verify_cascading_fields(bsc_chain_config, header, parents, state, ec);
 }
 
 xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const {
@@ -879,7 +883,7 @@ xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & hea
         parent = parents.back();
     } else {
         if (!get_header(header.parent_hash, parent, state)) {
-            ec = evm_runtime::error::xerrc_t::unknown_ancestor;
+            ec = evm_runtime::error::xerrc_t::bsc_unknown_ancestor;
         }
     }
 
@@ -902,36 +906,53 @@ xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & hea
 /// <param name="state">world state object</param>
 /// <param name="ec">error code</param>
 /// <returns>true for success, false for the other</returns>
-top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::snapshot(uint64_t number,
-                                                                              xh256_t const & hash,
-                                                                              xspan_t<xeth_header_t const> parents,
-                                                                              state_ptr state,
-                                                                              std::error_code & ec) const {
+xsnapshot_t xtop_evm_bsc_client_contract::snapshot(uint64_t number, xh256_t const & hash, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const {
     std::vector<xeth_header_t const> headers;
-    top::evm::crosschain::bsc::xsnapshot_t snap;
+    xsnapshot_t snap;
 
     while (snap.empty()) {
-        
+        snap = get_recent_snapshot(hash, state, ec);
+        if (!ec) {
+            break;
+        }
+
+
     }
 
     return snap;
 }
 
-xsnapshot_t xtop_evm_bsc_client_contract::get_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) const {
+xsnapshot_t xtop_evm_bsc_client_contract::get_recent_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) const {
     assert(!ec);
-    std::string snapshot_byts = state->map_get(data::system_contract::XPROPERTY_RECENT_SNAPSHOTS, {std::begin(snapshot_hash), std::end(snapshot_hash)});
+    {
+        auto const snapshot_it = recent_snapshots_.find(snapshot_hash);
+        if (snapshot_it != recent_snapshots_.end()) {
+            return top::get<xsnapshot_t>(*snapshot_it);
+        }
+    }
+
     xsnapshot_t snapshot;
-    snapshot.decode({std::begin(snapshot_byts), std::end(snapshot_byts)}, ec);
+    std::string snapshot_bytes = state->map_get(data::system_contract::XPROPERTY_RECENT_SNAPSHOTS, {std::begin(snapshot_hash), std::end(snapshot_hash)});
+    if (snapshot_bytes.empty()) {
+        ec = evm_runtime::error::xerrc_t::bsc_snapshot_not_found;
+        return snapshot;
+    }
+
+    snapshot.decode({std::begin(snapshot_bytes), std::end(snapshot_bytes)}, ec);
     if (ec) {
         xerror("%s: decode snapshot failed, msg: %s", __func__, ec.message().c_str());
         return snapshot;
     }
+
+    recent_snapshots_.insert({snapshot_hash, snapshot});
+
     return snapshot;
 }
 
-void xtop_evm_bsc_client_contract::add_snapshot(xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
+void xtop_evm_bsc_client_contract::add_recent_snapshot(xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec) {
     assert(!ec);
     auto const & hash = snapshot.hash();
+
     std::string const key{std::begin(hash), std::end(hash)};
 
     auto const & bytes = snapshot.encode(ec);
@@ -942,12 +963,21 @@ void xtop_evm_bsc_client_contract::add_snapshot(xsnapshot_t const & snapshot, st
     std::string const value{std::begin(bytes), std::end(bytes)};
 
     state->map_set(data::system_contract::XPROPERTY_RECENT_SNAPSHOTS, key, value);
+
+    recent_snapshots_.insert({hash, snapshot});
 }
 
-void xtop_evm_bsc_client_contract::del_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) {
+void xtop_evm_bsc_client_contract::del_recent_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) {
     assert(!ec);
     std::string const key{std::begin(snapshot_hash), std::end(snapshot_hash)};
     state->map_remove(data::system_contract::XPROPERTY_RECENT_SNAPSHOTS, key);
+
+    {
+        auto const snapshot_it = recent_snapshots_.find(snapshot_hash);
+        if (snapshot_it != recent_snapshots_.end()) {
+            recent_snapshots_.erase(snapshot_it);
+        }
+    }
 }
 
 
