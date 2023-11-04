@@ -7,11 +7,14 @@
 #include "xbasic/xbitset.h"
 #include "xbasic/xbytes.h"
 #include "xbasic/xfixed_hash.h"
+#include "xbasic/xoptional.hpp"
 #include "xevm_common/xcommon.h"
 
 #include <cstdint>
 
 NS_BEG4(top, evm, crosschain, bsc)
+
+constexpr size_t MAX_ATTESTATION_EXTRA_SIZE = 256;
 
 class xtop_vote_data {
 private:
@@ -36,9 +39,9 @@ public:
 using xvote_data_t = xtop_vote_data;
 
 struct xtop_vote_attestation {
-    uint64_t vote_address_set;
+    uint64_t vote_address_set{};
     evm::common::xbls_signature_t aggregate_signature;
-    xvote_data_t data;
+    optional<xvote_data_t> data;
     xbytes_t extra;
 
     static auto decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> xtop_vote_attestation;

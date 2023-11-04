@@ -730,46 +730,135 @@ bool xtop_evm_bsc_client_contract::verify_cascading_fields(xchain_config_t const
         return false;
     }
 
-    // auto snap = snapshot(number - 1, hash, parents);
-
-    if (header.number == 1) {
-        if (header.gas_used != 0) {
-            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas used: %" PRIu64, header.gas_used.convert_to<uint64_t>());
-            return false;
-        }
-        //if (header.gas_limit != chain_config.) {
-        //    xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64, header.gas_limit.convert_to<uint64_t>());
-        //    return false;
-        //}
-        if (header.base_fee_per_gas.has_value()) {
-            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid base fee: %" PRIu64, header.base_fee_per_gas.value());
-            return false;
-        }
-        return true;
-    }
-
-    if (header.gas_limit < parent.gas_limit) {
-        xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit.convert_to<uint64_t>(), parent.gas_limit.convert_to<uint64_t>());
+    constexpr uint64_t capacity = 0x7fffffffffffffffull;
+    if (header.gas_limit > capacity) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_gas_limit;
+        xerror("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: have %" PRIu64 ", max %" PRIu64, header.gas_limit.convert_to<uint64_t>(), capacity);
         return false;
     }
 
-    if (header.gas_limit > parent.gas_limit) {
-        auto const limit = parent.gas_limit / gas_limit_bound_divisor;
-        if (header.gas_limit > parent.gas_limit + limit) {
-            xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: %" PRIu64 ", %" PRIu64, header.gas_limit.convert_to<uint64_t>(), parent.gas_limit.convert_to<uint64_t>());
-            return false;
-        }
+    if (header.gas_used > header.gas_limit) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_gas_used;
+        xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas used: have %" PRIu64 ", gas limit %" PRIu64, header.gas_used.convert_to<uint64_t>(), header.gas_limit.convert_to<uint64_t>());
+        return false;
     }
 
-    if (header.base_fee_per_gas.has_value()) {
-        if (header.base_fee_per_gas.value() < parent.base_fee_per_gas.value()) {
-            xwarn(
-                "xtop_evm_bsc_client_contract::verify_cascading_fields: invalid base fee: %" PRIu64 ", %" PRIu64, header.base_fee_per_gas.value(), parent.base_fee_per_gas.value());
-            return false;
-        }
+    // Verify that the gas limit remains within allowed bounds
+    auto diff = parent.gas_limit - header.gas_limit;
+    if (diff < 0) {
+        diff *= -1;
     }
+    auto const limit = parent.gas_limit / gas_limit_bound_divisor;
+
+    if (diff.convert_to<uint64_t>() >= limit || header.gas_limit < min_gas_limit) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_gas_limit;
+        xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: have %" PRIu64 ", want %" PRIu64 " += %" PRIu64 "-1",
+              header.gas_limit.convert_to<uint64_t>(),
+              parent.gas_limit.convert_to<uint64_t>(),
+              limit.convert_to<uint64_t>());
+        return false;
+    }
+
+    
 
     return true;
+}
+
+void xtop_evm_bsc_client_contract::verify_vote_attestation(xchain_config_t const & chain_config,
+                                                           xeth_header_t const & header,
+                                                           xspan_t<xeth_header_t const> parents,
+                                                           state_ptr state,
+                                                           std::error_code & ec) const {
+    assert(!ec);
+    auto const attestation = get_vote_attestation_from_header(header, chain_config, ec);
+    if (ec) {
+        xerror("%s: get_vote_attestation_from_header failed, msg: %s", __func__, ec.message().c_str());
+        return;
+    }
+
+    /*
+     * if (attestation.empty()) {
+     *      return;
+     *  }
+     */
+
+    if (!attestation.data.has_value()) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_attestation;
+        xerror("%s: invalid attestation, vote data is null", __func__);
+        return;
+    }
+
+    if (attestation.extra.size() > MAX_ATTESTATION_EXTRA_SIZE) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_attestation;
+        xerror("%s: invalid attestation, too large extra length %" PRIu64, __func__, attestation.extra.size());
+        return;
+    }
+
+    xeth_header_t const & parent = get_parent(header, parents, state, ec);
+    if (ec) {
+        xerror("%s: get_parent failed, msg: %s", __func__, ec.message().c_str());
+        return;
+    }
+
+    auto const target_number = attestation.data.value().target_number();
+    auto const target_hash = attestation.data.value().target_hash();
+    if (target_number != parent.number || target_hash != parent.hash) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_attestation;
+        xerror("%s: invalid attestation, target mismatch, expected block: %" PRIu64 ", hash: %s; real block: %" PRIu64 ", hash: %s",
+               __func__,
+               parent.number,
+               parent.hash.hex().c_str(),
+               target_number,
+               target_hash);
+        return;
+    }
+
+    auto const source_number = attestation.data.value().source_number();
+    auto const source_hash = attestation.data.value().source_hash();
+
+}
+
+void xtop_evm_bsc_client_contract::get_justified_number_and_hash(xeth_header_t const & header, state_ptr const & state, uint64_t & justified_number, xh256_t & justified_hash, std::error_code & ec) const {
+    
+}
+
+
+xvote_attestation_t xtop_evm_bsc_client_contract::get_vote_attestation_from_header(xeth_header_t const & header,
+                                                                                   xchain_config_t const & chain_config,
+                                                                                   std::error_code & ec) const {
+    assert(!ec);
+
+    xvote_attestation_t attestation;
+    if (header.extra.size() <= EXTRA_VANITY + EXTRA_SEAL) {
+        return attestation;
+    }
+
+    xbytes_t attestation_bytes;
+    if (header.number % epoch == 0) {
+        auto const begin = std::next(std::begin(header.extra), static_cast<ptrdiff_t>(EXTRA_VANITY));
+        auto const end = std::next(std::end(header.extra), -static_cast<ptrdiff_t>(EXTRA_SEAL));
+
+        attestation_bytes = xbytes_t{begin, end};
+    } else {
+        int const num = static_cast<int>(header.extra[EXTRA_VANITY]);
+        if (header.extra.size() <= EXTRA_VANITY + EXTRA_SEAL + VALIDATOR_NUMBER_SIZE + num * VALIDATOR_BYTES_LENGTH) {
+            return attestation;
+        }
+
+        auto const begin = std::next(std::begin(header.extra), static_cast<ptrdiff_t>(EXTRA_VANITY + VALIDATOR_NUMBER_SIZE + num * VALIDATOR_BYTES_LENGTH));
+        auto const end = std::next(std::end(header.extra), -static_cast<ptrdiff_t>(EXTRA_SEAL));
+
+        attestation_bytes = xbytes_t{begin, end};
+
+        attestation = xvote_attestation_t::decode_rlp(attestation_bytes, ec);
+        if (ec) {
+            ec = top::evm_runtime::error::xerrc_t::bsc_invalid_extra_data;
+            xerror("%s: decode_rlp failed, msg: %s", __func__, ec.message().c_str());
+            return attestation;
+        }
+
+        return attestation;
+    }
 }
 
 bool xtop_evm_bsc_client_contract::verify_headers(std::vector<xeth_header_t> const & headers, state_ptr state) const {

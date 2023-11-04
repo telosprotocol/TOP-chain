@@ -19,6 +19,10 @@ enum class xenum_errc {
 
     bsc_unknown_ancestor,
     bsc_snapshot_not_found,
+    bsc_invalid_gas_limit,
+    bsc_invalid_gas_used,
+    bsc_invalid_extra_data,
+    bsc_invalid_attestation,
 };
 using xerrc_t = xenum_errc;
 

@@ -7,6 +7,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xevm_common/xcrosschain/xbsc/xconfig.h"
 #include "xevm_common/xcrosschain/xbsc/xsnapshot.h"
+#include "xevm_common/xcrosschain/xbsc/xvote.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 #include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"
@@ -85,6 +86,15 @@ private:
     bool verify_header(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, state_ptr state) const;
     xeth_header_t get_parent(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const;
     top::evm::crosschain::bsc::xsnapshot_t snapshot(uint64_t number, xh256_t const & hash, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const;
+    void verify_vote_attestation(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                 xeth_header_t const & header,
+                                 xspan_t<xeth_header_t const> parents,
+                                 state_ptr state,
+                                 std::error_code & ec) const;
+    top::evm::crosschain::bsc::xvote_attestation_t get_vote_attestation_from_header(xeth_header_t const & header,
+                                                                                    top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                                                                    std::error_code & ec) const;
+    void get_justified_number_and_hash(xeth_header_t const & header, state_ptr const & state, uint64_t & justified_number, xh256_t & justified_hash, std::error_code & ec) const;
 };
 using xevm_bsc_client_contract_t = xtop_evm_bsc_client_contract;
 

@@ -25,6 +25,18 @@ static char const * const errc_to_string(int code) {
     case xenum_errc::bsc_snapshot_not_found:
         return "bsc: snapshot not found";
 
+    case xenum_errc::bsc_invalid_gas_limit:
+        return "bsc: invalid gas limit";
+
+    case xenum_errc::bsc_invalid_gas_used:
+        return "bsc: invalid gas used";
+
+    case xenum_errc::bsc_invalid_extra_data:
+        return "bsc: invalid extra data";
+
+    case xenum_errc::bsc_invalid_attestation:
+        return "bsc: invalid attestation";
+
     default:
         return "unknown contract vm error";
     }
