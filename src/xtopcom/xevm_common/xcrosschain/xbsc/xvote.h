@@ -44,7 +44,7 @@ struct xtop_vote_attestation {
     optional<xvote_data_t> data;
     xbytes_t extra;
 
-    static auto decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> xtop_vote_attestation;
+    auto decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> void;
 };
 using xvote_attestation_t = xtop_vote_attestation;
 

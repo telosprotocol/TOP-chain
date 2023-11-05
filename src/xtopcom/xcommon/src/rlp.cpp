@@ -679,6 +679,134 @@ RLP::DecodedItem RLP::decode(xbytes_t const & input, std::error_code & ec) {
     return item;
 }
 
+RLP::DecodedItem RLP::decode_once(xbytes_t const & input, std::error_code & ec) {
+    assert(!ec);
+
+    RLP::DecodedItem item;
+    if (input.empty()) {
+        xwarn("RLP::decode failed, can't decode empty rlp data");
+        ec = common::error::xerrc_t::rlp_input_empty;
+        return {};
+    }
+
+    auto const input_len = input.size();
+    auto const prefix = input[0];
+    if (prefix <= 0x7f) {
+        // 00--7f: a single byte whose value is in the [0x00, 0x7f] range, that byte is its own RLP encoding.
+        item.decoded.push_back(xbytes_t{input[0]});
+        item.remainder = sub_data(input, 1);
+        return item;
+    }
+
+    if (prefix <= 0xb7) {
+        // 80--b7: short string
+        // string is 0-55 bytes long. A single byte with value 0x80 plus the length of the string followed by the string
+        // The range of the first byte is [0x80, 0xb7]
+
+        // empty string
+        if (prefix == 0x80) {
+            item.decoded.emplace_back(xbytes_t());
+            item.remainder = sub_data(input, 1);
+            return item;
+        }
+
+        const size_t str_len = prefix - 0x80;
+        if (str_len == 1 && input[1] <= 0x7f) {
+            ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+            xwarn("RLP::decode failed, single byte below 128 must be encoded as itself");
+            return {};
+        }
+
+        if (input_len < (1 + str_len)) {
+            ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+            xwarn("RLP::decode failed, invalid short string, length %" PRIu64, str_len);
+            return {};
+        }
+        item.decoded.push_back(sub_data(input, 1, str_len));
+        item.remainder = sub_data(input, 1 + str_len);
+
+        return item;
+    }
+    if (prefix <= 0xbf) {
+        // b8--bf: long string
+        const auto len_of_str_len = static_cast<size_t>(prefix - 0xb7);
+        const auto str_len = static_cast<size_t>(parseVarInt(len_of_str_len, input, 1));
+        if (input_len < len_of_str_len || input_len < (1 + len_of_str_len + str_len)) {
+            ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+            xwarn("Invalid rlp encoding length, length %zu", str_len);
+            return {};
+        }
+        auto data = sub_data(input, 1 + len_of_str_len, str_len);
+        item.decoded.push_back(std::move(data));
+        item.remainder = sub_data(input, 1 + len_of_str_len + str_len);
+        return item;
+    }
+    if (prefix <= 0xf7) {
+        // c0--f7: a list between  0-55 bytes long
+        const auto list_len = static_cast<size_t>(prefix - 0xc0);
+        if (input_len < (1 + list_len)) {
+            ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+            xwarn("Invalid rlp string length, length %zu", list_len);
+            return {};
+        }
+        // empty list
+        if (list_len == 0) {
+            item.remainder = sub_data(input, 1);
+            return item;
+        }
+        auto data = sub_data(input, 1, list_len);
+        item.decoded.push_back(std::move(data));
+        item.remainder = sub_data(input, 1 + list_len);
+        return item;
+    }
+
+    // f8--ff
+    const auto len_of_list_len = static_cast<size_t>(prefix - 0xf7);
+    const auto list_len = static_cast<size_t>(parseVarInt(len_of_list_len, input, 1));
+    if (list_len < 56) {
+        ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+        xwarn("RLP::decode failed, length below 56 must be encoded in one byte");
+        return {};
+    }
+    if (input_len < len_of_list_len || input_len < (1 + len_of_list_len + list_len)) {
+        ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+        xwarn("Invalid rlp list length, length %zu", list_len);
+        return {};
+    }
+
+    auto data = sub_data(input, 1 + len_of_list_len, list_len);
+    item.decoded.push_back(std::move(data));
+    item.remainder = sub_data(input, 1 + len_of_list_len + list_len);
+    return item;
+}
+
+RLP::DecodedItem RLP::decode_list_once(xbytes_t const & input, std::error_code & ec) {
+    RLP::DecodedItem item;
+    auto remainder = input;
+    while (true) {
+        auto list_item = RLP::decode_once(remainder, ec);
+        if (ec) {
+            xwarn("RLP::decode_list_once failed, error code: %s", ec.message().c_str());
+            break;
+        }
+
+        if (!list_item.decoded.empty()) {
+            for (auto & decoded : list_item.decoded) {
+                item.decoded.emplace_back(std::move(decoded));
+            }
+        } else {
+            item.decoded.emplace_back();
+        }
+
+        if (list_item.remainder.empty()) {
+            break;
+        }
+
+        remainder = std::move(list_item.remainder);
+    }
+    return item;
+}
+
 RLPStream& RLPStream::appendRaw(bytesConstRef _s, size_t _itemCount)
 {
     m_out.insert(m_out.end(), _s.begin(), _s.end());

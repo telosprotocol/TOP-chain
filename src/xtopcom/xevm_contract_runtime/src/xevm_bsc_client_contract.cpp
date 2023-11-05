@@ -759,8 +759,13 @@ bool xtop_evm_bsc_client_contract::verify_cascading_fields(xchain_config_t const
         return false;
     }
 
-    
+    verify_vote_attestation(chain_config, header, parents, state, ec);
+    if (ec) {
+        xerror("%s: Verify vote attestation failed. ec: %s", __func__, ec.message().c_str());
+        return false;
+    }
 
+    // return verify_seal();
     return true;
 }
 
@@ -809,17 +814,60 @@ void xtop_evm_bsc_client_contract::verify_vote_attestation(xchain_config_t const
                parent.number,
                parent.hash.hex().c_str(),
                target_number,
-               target_hash);
+               target_hash.hex().c_str());
         return;
     }
 
     auto const source_number = attestation.data.value().source_number();
     auto const source_hash = attestation.data.value().source_hash();
+    uint64_t justified_block_number = 0;
+    xh256_t justified_block_hash{};
+    get_justified_number_and_hash(parent, state, justified_block_number, justified_block_hash, ec);
+    if (ec) {
+        return;
+    }
+
+    if (source_number != justified_block_number || source_hash != justified_block_hash) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_attestation;
+        xerror("%s: invalid attestation, source mismatch, expected block: %" PRIu64 ", hash: %s; real block: %" PRIu64 ", hash: %s",
+               justified_block_number,
+               justified_block_hash.hex().c_str(),
+               source_number,
+               source_hash.hex().c_str());
+        return;
+    }
+
+    if (!parents.empty()) {
+        parents = parents.first(parents.size() - 1);
+    }
+
+    xsnapshot_t snapshot;   // = snapshot(number, hash, parents);
+    if (ec) {
+        return;
+    }
+
+    auto const validators = snapshot.validators();
+    std::bitset<VALIDATOR_NUM> const validators_bitset{attestation.vote_address_set};
+    if (validators_bitset.count() > validators.size()) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_attestation;
+        xerror("%s: invalid attestation, vote number larger than validators number", __func__);
+        return;
+    }
+
 
 }
 
-void xtop_evm_bsc_client_contract::get_justified_number_and_hash(xeth_header_t const & header, state_ptr const & state, uint64_t & justified_number, xh256_t & justified_hash, std::error_code & ec) const {
-    
+void xtop_evm_bsc_client_contract::get_justified_number_and_hash(xeth_header_t const & header,
+                                                                 state_ptr const & state,
+                                                                 uint64_t & justified_number,
+                                                                 xh256_t & justified_hash,
+                                                                 std::error_code & ec) const {
+    assert(!ec);
+    // auto snapshot = snapshot();
+    xsnapshot_t snapshot;
+
+    justified_number = snapshot.attestation().target_number();
+    justified_hash = snapshot.attestation().target_hash();
 }
 
 
@@ -1079,8 +1127,8 @@ void xtop_evm_bsc_client_contract::last_validator_set(top::evm::crosschain::bsc:
     
 }
 
-top::evm::crosschain::bsc::xsnapshot_t xtop_evm_bsc_client_contract::pre_last_validator_set(state_ptr & state, std::error_code & ec) const {
-    top::evm::crosschain::bsc::xsnapshot_t snapshot;
+xsnapshot_t xtop_evm_bsc_client_contract::pre_last_validator_set(state_ptr & state, std::error_code & ec) const {
+    xsnapshot_t snapshot;
     return snapshot;
 }
 
@@ -1099,5 +1147,13 @@ void xtop_evm_bsc_client_contract::pre_last_validator_set(top::evm::crosschain::
 
     state->map_set(data::system_contract::XPROPERTY_PRE_LAST_VALIDATOR_SET, key, value);
 }
+
+void xtop_evm_bsc_client_contract::verify_seal(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, std::error_code & ec) const {
+    assert(!ec);
+
+    auto const number = header.number;
+    xsnapshot_t snapshot;
+}
+
 
 NS_END4

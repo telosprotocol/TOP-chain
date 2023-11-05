@@ -4,6 +4,8 @@
 
 #include "xevm_common/xcrosschain/xbsc/xvote.h"
 #include "xcommon/rlp.h"
+#include "xevm_common/xerror/xerror.h"
+#include "xevm_common/xcommon.h"
 #include "xutility/xhash.h"
 
 NS_BEG4(top, evm, crosschain, bsc)
@@ -52,8 +54,30 @@ auto xtop_vote_data::hash() const -> xh256_t {
     return xh256_t{hash_value.data(), xh256_t::ConstructFromPointer};
 }
 
-auto xtop_vote_attestation::decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> xtop_vote_attestation {
+auto xtop_vote_attestation::decode_rlp(xbytes_t const & bytes, std::error_code & ec) -> void {
     assert(!ec);
+
+    auto const & l = evm_common::RLP::decode_list(bytes, ec);
+    if (ec) {
+        xwarn("%s, decode_rlp failed, ec: {}", __func__, ec.message().c_str());
+        return;
+    }
+
+    if (l.decoded.size() != 4) {
+        ec = evm_common::error::xerrc_t::rlp_list_size_not_match;
+        xwarn("%s, decode_rlp failed, expected 4 fields in xvote_attestation, got %zu", __func__, l.decoded.size());
+        return;
+    }
+
+    vote_address_set = evm_common::fromBigEndian<uint64_t>(l.decoded[0]);
+
+    if (l.decoded[1].size() != common::BLS_SIGNATURE_LEN) {
+        ec = evm_common::error::xerrc_t::rlp_bytes_invalid;
+        xwarn("%s, decode_rlp failed, invalid BLS signature length: %sz", __func__, l.decoded[1].size());
+        return;
+    }
+
+
     return xtop_vote_attestation{};
 }
 

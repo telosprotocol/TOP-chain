@@ -417,6 +417,8 @@ public:
     /// Decodes data, remainder from RLP encoded data
     static DecodedItem decode(xbytes_t const & input);
     static DecodedItem decode_once(xbytes_t const & input);
+    static DecodedItem decode_once(xbytes_t const & input, std::error_code & ec);
+    static DecodedItem decode_list_once(xbytes_t const & input, std::error_code & ec);
 
     static DecodedItem decode_list(xbytes_t const & input, std::error_code & ec);
     static DecodedItem decode(xbytes_t const & input, std::error_code & ec);

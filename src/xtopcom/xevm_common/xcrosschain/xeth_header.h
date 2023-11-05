@@ -77,4 +77,6 @@ struct xeth_header_info_t {
     bigint number;
 };
 
+common::xeth_address_t ecrecover(xeth_header_t const & header, std::error_code & ec);
+
 NS_END2
