@@ -32,7 +32,7 @@ public:
     bool disable_reset(state_ptr state);
 
 private:
-    std::unordered_map<xh256_t, top::evm::crosschain::bsc::xsnapshot_t> recent_snapshots_;
+    mutable std::unordered_map<xh256_t, top::evm::crosschain::bsc::xsnapshot_t> recent_snapshots_;
 
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, xvalidators_snapshot_t & snap, state_ptr state) const;
     bool record(const xeth_header_t & header, const xvalidators_snapshot_t & snap, state_ptr state);

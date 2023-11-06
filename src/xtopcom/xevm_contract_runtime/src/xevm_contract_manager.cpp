@@ -14,7 +14,7 @@
 #include "xevm_contract_runtime/sys_contract/xevm_bsc_client_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth2_client_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
-#include "xevm_contract_runtime/sys_contract/xevm_heco_client_contract.h"
+// #include "xevm_contract_runtime/sys_contract/xevm_heco_client_contract.h"
 #if defined(XCXX20)
 #include "xevm_runner/proto/ubuntu/proto_precompile.pb.h"
 #else
@@ -32,7 +32,7 @@ xtop_evm_contract_manager::xtop_evm_contract_manager() {
     add_sys_contract(evm_usdt_contract_address, top::make_unique<sys_contract::xdelegate_usdt_contract_t>());
     add_sys_contract(evm_eth_bridge_contract_address, top::make_unique<sys_contract::xtop_evm_eth_bridge_contract>());
     add_sys_contract(evm_bsc_client_contract_address, top::make_unique<sys_contract::xtop_evm_bsc_client_contract>());
-    add_sys_contract(evm_heco_client_contract_address, top::make_unique<sys_contract::xtop_evm_heco_client_contract>());
+    // add_sys_contract(evm_heco_client_contract_address, top::make_unique<sys_contract::xtop_evm_heco_client_contract>());
 #ifdef ETH2_SEPOLIA
     add_sys_contract(evm_eth2_client_contract_address, top::make_unique<sys_contract::xtop_evm_eth2_client_contract>(contract_runtime::evm::sys_contract::xeth2_client_net_t::eth2_net_sepolia));
 #else

@@ -76,9 +76,6 @@ auto xtop_vote_attestation::decode_rlp(xbytes_t const & bytes, std::error_code &
         xwarn("%s, decode_rlp failed, invalid BLS signature length: %sz", __func__, l.decoded[1].size());
         return;
     }
-
-
-    return xtop_vote_attestation{};
 }
 
 

@@ -385,62 +385,62 @@ bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xet
         xwarn("xtop_evm_bsc_client_contract::verify: get_header_info failed, hash: %s", last_hash.hex().c_str());
         return false;
     }
-    auto const snap_hash = snap.digest();
-    if (last_info.snap_hash != snap_hash) {
-        xwarn("xtop_evm_bsc_client_contract::verify: snap hash mismatch: %s", last_info.snap_hash.hex().c_str(), snap_hash.hex().c_str());
-        return false;
-    }
-    if (!snap.apply_with_chainid(new_header, bsc_chainid, true)) {
-        xwarn("xtop_evm_bsc_client_contract::verify: snap apply_with_chainid failed");
-        return false;
-    }
+    //auto const snap_hash = snap.digest();
+    //if (last_info.snap_hash != snap_hash) {
+    //    xwarn("xtop_evm_bsc_client_contract::verify: snap hash mismatch: %s", last_info.snap_hash.hex().c_str(), snap_hash.hex().c_str());
+    //    return false;
+    //}
+    //if (!snap.apply_with_chainid(new_header, bsc_chainid, true)) {
+    //    xwarn("xtop_evm_bsc_client_contract::verify: snap apply_with_chainid failed");
+    //    return false;
+    //}
     return true;
 }
 
 bool xtop_evm_bsc_client_contract::record(xeth_header_t const & header, xvalidators_snapshot_t const & snap, state_ptr state) {
-    h256 header_hash = header.calc_hash();
-    h256 last_hash = get_last_hash(state);
-    xvalidators_snap_info_t last_info;
-    if (!get_snap_info(last_hash, last_info, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] get_header_info failed, hash: %s", last_hash.hex().c_str());
-        return false;
-    }
-    if (header.number + block_reserve_num < last_info.number) {
-        xwarn("[xtop_evm_bsc_client_contract::record] header is too old height: %" PRIu64 ", hash: %s, now height: %s",
-              header.number,
-              header_hash.hex().c_str(),
-              last_info.number.str().c_str());
-        return false;
-    }
-    xvalidators_snap_info_t parent_info;
-    if (!get_snap_info(header.parent_hash, parent_info, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] get parent header_info failed, hash: %s", header.parent_hash.hex().c_str());
-        return false;
-    }
-    auto all_hashes = get_hashes(header.number, state);
-    if (all_hashes.count(header_hash)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] header existed, hash: %s", header_hash.hex().c_str());
-        return false;
-    }
-    all_hashes.insert(header_hash);
-    if (!set_hashes(header.number, all_hashes, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] set hashes failed, height: %" PRIu64, header.number);
-        return false;
-    }
-    if (!set_header(header_hash, header, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] set header failed, hash: %s", header_hash.hex().c_str());
-        return false;
-    }
-    xvalidators_snap_info_t info{snap.digest(), header.parent_hash, header.number};
-    if (!set_snap_info(header.calc_hash(), info, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
-        return false;
-    }
-    if (!rebuild(header, last_info, info, state)) {
-        xwarn("[xtop_evm_bsc_client_contract::record] rebuild failed");
-        return false;
-    }
-    release(header.number, state);
+    //h256 header_hash = header.calc_hash();
+    //h256 last_hash = get_last_hash(state);
+    //xvalidators_snap_info_t last_info;
+    //if (!get_snap_info(last_hash, last_info, state)) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] get_header_info failed, hash: %s", last_hash.hex().c_str());
+    //    return false;
+    //}
+    //if (header.number + block_reserve_num < last_info.number) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] header is too old height: %" PRIu64 ", hash: %s, now height: %s",
+    //          header.number,
+    //          header_hash.hex().c_str(),
+    //          last_info.number.str().c_str());
+    //    return false;
+    //}
+    //xvalidators_snap_info_t parent_info;
+    //if (!get_snap_info(header.parent_hash, parent_info, state)) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] get parent header_info failed, hash: %s", header.parent_hash.hex().c_str());
+    //    return false;
+    //}
+    //auto all_hashes = get_hashes(header.number, state);
+    //if (all_hashes.count(header_hash)) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] header existed, hash: %s", header_hash.hex().c_str());
+    //    return false;
+    //}
+    //all_hashes.insert(header_hash);
+    //if (!set_hashes(header.number, all_hashes, state)) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] set hashes failed, height: %" PRIu64, header.number);
+    //    return false;
+    //}
+    //if (!set_header(header_hash, header, state)) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] set header failed, hash: %s", header_hash.hex().c_str());
+    //    return false;
+    //}
+    //xvalidators_snap_info_t info{snap.digest(), header.parent_hash, header.number};
+    //if (!set_snap_info(header.calc_hash(), info, state)) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] set_header_info failed, height: %" PRIu64 ", hash: %s", header.number, header.calc_hash().hex().c_str());
+    //    return false;
+    //}
+    //if (!rebuild(header, last_info, info, state)) {
+    //    xwarn("[xtop_evm_bsc_client_contract::record] rebuild failed");
+    //    return false;
+    //}
+    //release(header.number, state);
     return true;
 }
 
@@ -554,25 +554,25 @@ bool xtop_evm_bsc_client_contract::remove_header(h256 const hash, state_ptr stat
 }
 
 bool xtop_evm_bsc_client_contract::get_snap_info(h256 const hash, xvalidators_snap_info_t & header_info, state_ptr state) const {
-    auto k = hash.asBytes();
-    auto info_str = state->map_get(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()});
-    if (info_str.empty()) {
-        xwarn("[xtop_evm_bsc_client_contract::get_snap_info] get_header not exist, hash: %s", hash.hex().c_str());
-        return false;
-    }
-    if (header_info.decode_rlp({std::begin(info_str), std::end(info_str)}) == false) {
-        xwarn("[xtop_evm_bsc_client_contract::get_snap_info] decode_header failed, hash: %s", hash.hex().c_str());
-        return false;
-    }
+    //auto k = hash.asBytes();
+    //auto info_str = state->map_get(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()});
+    //if (info_str.empty()) {
+    //    xwarn("[xtop_evm_bsc_client_contract::get_snap_info] get_header not exist, hash: %s", hash.hex().c_str());
+    //    return false;
+    //}
+    //if (header_info.decode_rlp({std::begin(info_str), std::end(info_str)}) == false) {
+    //    xwarn("[xtop_evm_bsc_client_contract::get_snap_info] decode_header failed, hash: %s", hash.hex().c_str());
+    //    return false;
+    //}
     return true;
 }
 
 bool xtop_evm_bsc_client_contract::set_snap_info(h256 const hash, xvalidators_snap_info_t const & snap_info, state_ptr state) {
-    auto k = hash.asBytes();
-    auto v = snap_info.encode_rlp();
-    if (0 != state->map_set(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()}, {v.begin(), v.end()})) {
-        return false;
-    }
+    //auto k = hash.asBytes();
+    //auto v = snap_info.encode_rlp();
+    //if (0 != state->map_set(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()}, {v.begin(), v.end()})) {
+    //    return false;
+    //}
     return true;
 }
 
@@ -871,9 +871,7 @@ void xtop_evm_bsc_client_contract::get_justified_number_and_hash(xeth_header_t c
 }
 
 
-xvote_attestation_t xtop_evm_bsc_client_contract::get_vote_attestation_from_header(xeth_header_t const & header,
-                                                                                   xchain_config_t const & chain_config,
-                                                                                   std::error_code & ec) const {
+xvote_attestation_t xtop_evm_bsc_client_contract::get_vote_attestation_from_header(xeth_header_t const & header, xchain_config_t const & chain_config, std::error_code & ec) const {
     assert(!ec);
 
     xvote_attestation_t attestation;
@@ -887,26 +885,27 @@ xvote_attestation_t xtop_evm_bsc_client_contract::get_vote_attestation_from_head
         auto const end = std::next(std::end(header.extra), -static_cast<ptrdiff_t>(EXTRA_SEAL));
 
         attestation_bytes = xbytes_t{begin, end};
-    } else {
-        int const num = static_cast<int>(header.extra[EXTRA_VANITY]);
-        if (header.extra.size() <= EXTRA_VANITY + EXTRA_SEAL + VALIDATOR_NUMBER_SIZE + num * VALIDATOR_BYTES_LENGTH) {
-            return attestation;
-        }
-
-        auto const begin = std::next(std::begin(header.extra), static_cast<ptrdiff_t>(EXTRA_VANITY + VALIDATOR_NUMBER_SIZE + num * VALIDATOR_BYTES_LENGTH));
-        auto const end = std::next(std::end(header.extra), -static_cast<ptrdiff_t>(EXTRA_SEAL));
-
-        attestation_bytes = xbytes_t{begin, end};
-
-        attestation = xvote_attestation_t::decode_rlp(attestation_bytes, ec);
-        if (ec) {
-            ec = top::evm_runtime::error::xerrc_t::bsc_invalid_extra_data;
-            xerror("%s: decode_rlp failed, msg: %s", __func__, ec.message().c_str());
-            return attestation;
-        }
-
         return attestation;
     }
+
+    int const num = static_cast<int>(header.extra[EXTRA_VANITY]);
+    if (header.extra.size() <= EXTRA_VANITY + EXTRA_SEAL + VALIDATOR_NUMBER_SIZE + num * VALIDATOR_BYTES_LENGTH) {
+        return attestation;
+    }
+
+    auto const begin = std::next(std::begin(header.extra), static_cast<ptrdiff_t>(EXTRA_VANITY + VALIDATOR_NUMBER_SIZE + num * VALIDATOR_BYTES_LENGTH));
+    auto const end = std::next(std::end(header.extra), -static_cast<ptrdiff_t>(EXTRA_SEAL));
+
+    attestation_bytes = xbytes_t{begin, end};
+
+    attestation.decode_rlp(attestation_bytes, ec);
+    if (ec) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_extra_data;
+        xerror("%s: decode_rlp failed, msg: %s", __func__, ec.message().c_str());
+        return attestation;
+    }
+
+    return attestation;
 }
 
 bool xtop_evm_bsc_client_contract::verify_headers(std::vector<xeth_header_t> const & headers, state_ptr state) const {
@@ -1044,7 +1043,7 @@ xeth_header_t xtop_evm_bsc_client_contract::get_parent(xeth_header_t const & hea
 /// <param name="ec">error code</param>
 /// <returns>true for success, false for the other</returns>
 xsnapshot_t xtop_evm_bsc_client_contract::snapshot(uint64_t number, xh256_t const & hash, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const {
-    std::vector<xeth_header_t const> headers;
+    std::vector<xeth_header_t> headers;
     xsnapshot_t snap;
 
     while (snap.empty()) {
@@ -1151,8 +1150,8 @@ void xtop_evm_bsc_client_contract::pre_last_validator_set(top::evm::crosschain::
 void xtop_evm_bsc_client_contract::verify_seal(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, std::error_code & ec) const {
     assert(!ec);
 
-    auto const number = header.number;
-    xsnapshot_t snapshot;
+    //auto const number = header.number;
+    //xsnapshot_t snapshot;
 }
 
 
