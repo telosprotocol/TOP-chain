@@ -43,7 +43,7 @@ bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
            (this->transactions_root == rhs.transactions_root) && (this->receipts_root == rhs.receipts_root) && (this->bloom == rhs.bloom) && (this->difficulty == rhs.difficulty) &&
            (this->number == rhs.number) && (this->gas_limit == rhs.gas_limit) && (this->gas_used == rhs.gas_used) && (this->time == rhs.time) && (this->extra == rhs.extra) &&
            (this->mix_digest == rhs.mix_digest) && (this->nonce == rhs.nonce) && (this->base_fee_per_gas == rhs.base_fee_per_gas) &&
-           (this->withdrawals_root == rhs.withdrawals_root);
+           (this->withdrawals_root == rhs.withdrawals_root) && (this->blob_gas_used == rhs.blob_gas_used) && (this->excess_blob_gas == rhs.excess_blob_gas);
 }
 
 xh256_t xeth_header_t::calc_hash(bool const partial) const {
@@ -132,6 +132,16 @@ xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
 
     if (withdrawals_root.has_value()) {
         auto tmp = RLP::encode(withdrawals_root.value().asArray());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    if (blob_gas_used.has_value()) {
+        auto tmp = RLP::encode(blob_gas_used.value());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    if (excess_blob_gas.has_value()) {
+        auto tmp = RLP::encode(excess_blob_gas.value());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
 

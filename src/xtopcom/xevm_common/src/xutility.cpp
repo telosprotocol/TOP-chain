@@ -9,30 +9,30 @@
 
 NS_BEG4(top, evm, crosschain, bsc)
 
+// getValidatorBytesFromHeader returns the validators bytes extracted from the header's extra field if exists.
+// The validators bytes would be contained only in the epoch block's header, and its each validator bytes length is fixed.
+// On luban fork, we introduce vote attestation into the header's extra field, so extra format is different from before.
+// Before luban fork: |---Extra Vanity---|---Validators Bytes (or Empty)---|---Extra Seal---|
+// After luban fork:  |---Extra Vanity---|---Validators Number and Validators Bytes (or Empty)---|---Vote Attestation (or Empty)---|---Extra Seal---|
 auto get_validator_bytes_from_header(evm_common::xeth_header_t const & header,
                                      xchain_config_t const & chain_config,
-                                     xparlia_config_t const & parlia_config,
-                                     std::error_code & ec) -> xbytes_t{
+                                     xparlia_config_t const & parlia_config) -> xbytes_t {
     assert(!ec);
 
     if (header.extra.size() <= EXTRA_VANITY + EXTRA_SEAL) {
-        ec = evm_common::error::xerrc_t::invalid_bsc_extra_data;
         return {};
     }
 
     if (!chain_config.is_luban(header.number)) {
-        ec = evm_common::error::xerrc_t::bsc_header_before_luban;
         return {};
     }
 
     if (header.number % parlia_config.epoch != 0) {
-        ec = evm_common::error::xerrc_t::bsc_not_epoch_header;
         return {};
     }
 
     auto const num = static_cast<int32_t>(header.extra[EXTRA_VANITY]);
     if (num == 0 || header.extra.size() <= EXTRA_VANITY + EXTRA_SEAL + num * VALIDATOR_BYTES_LENGTH) {
-        ec = evm_common::error::xerrc_t::invalid_bsc_extra_data;
         return {};
     }
 

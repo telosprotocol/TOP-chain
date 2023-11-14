@@ -705,6 +705,43 @@ bool xtop_evm_bsc_client_contract::verify_eip1559_header(xchain_config_t const &
     return true;
 }
 
+void xtop_evm_bsc_client_contract::verify_eip4844_header(xeth_header_t const & parent, xeth_header_t const & header, std::error_code & ec) {
+    assert(!ec);
+
+    if (!header.excess_blob_gas.has_value()) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_header_missing_excess_blob_gas;
+        return;
+    }
+
+    if (!header.blob_gas_used.has_value()) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_header_missing_blob_gas_used;
+        return;
+    }
+
+    if (header.blob_gas_used.value() > BLOB_TX_MAX_BLOB_GAS_PER_BLOCK) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_blob_gas_used_exceeds_maximum_allowance;
+        return;
+    }
+
+    if (header.blob_gas_used.value() % BLOB_TX_BLOB_GAS_PER_BLOB != 0) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_blob_gas_used_not_a_multiple_of_blob_gas_per_blob;
+        return;
+    }
+
+    uint64_t parent_excess_blob_gas = 0;
+    uint64_t parent_blob_gas_used = 0;
+    if (parent.excess_blob_gas.has_value()) {
+        parent_excess_blob_gas = parent.excess_blob_gas.value();
+        parent_blob_gas_used = parent.blob_gas_used.value();
+    }
+
+    auto const excess_blob_gas = parent_excess_blob_gas + parent_blob_gas_used;
+    auto const expected_excess_blob_gas = excess_blob_gas < BLOB_TX_TARGET_BLOB_GAS_PER_BLOCK ? 0u : excess_blob_gas - BLOB_TX_TARGET_BLOB_GAS_PER_BLOCK;
+    if (header.excess_blob_gas.value() != expected_excess_blob_gas) {
+        ec = top::evm_runtime::error::xerrc_t::bsc_invalid_excess_blob_gas;
+    }
+}
+
 uint64_t xtop_evm_bsc_client_contract::calc_base_fee(xchain_config_t const &, xeth_header_t const &) {
     return 0;
 }
@@ -940,11 +977,7 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
     std::error_code ec;
 
     // Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
-    auto const & signers_bytes = get_validator_bytes_from_header(header, bsc_chain_config, bsc_chain_config.parlia_config, ec);
-    if (ec) {
-        xerror("%s: get_validator_bytes_from_header failed, msg: %s", __func__, ec.message().c_str());
-        return false;
-    }
+    auto const & signers_bytes = get_validator_bytes_from_header(header, bsc_chain_config, bsc_chain_config.parlia_config);
 
     if (!is_epoch && !signers_bytes.empty()) {
         xerror("%s: extra validators.", __func__);
@@ -957,7 +990,7 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
     }
 
     // Ensure that the mix digest is zero as we don't have fork protection currently
-    if (header.mix_digest != h256(0)) {
+    if (header.mix_digest != xh256_t{}) {
         xerror("%s: invalid mix digest.", __func__);
         return false;
     }
@@ -974,11 +1007,6 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
             return false;
         }
     }
-
-    //if (!verify_fork_hashes(top::evm::crosschain::bsc::bsc_chain_config, header, false)) {
-    //    xerror("%s: verify_fork_hashes failed.", __func__);
-    //    return false;
-    //}
 
     auto const parent = get_parent(header, parents, state, ec);
     if (ec) {
@@ -1007,6 +1035,11 @@ bool xtop_evm_bsc_client_contract::verify_header(xeth_header_t const & header, x
     //      Safe Hard Fork With Transition Period ?
     //      Part of Cancun Upgrade:
     // https://forum.bnbchain.org/t/bnb-chain-upgrades-mainnet/936#kepler-ideas-collecting-5
+
+    verify_eip4844_header(parent, header, ec);
+    if (ec) {
+        return false;
+    }
 
     return verify_cascading_fields(bsc_chain_config, header, parents, state, ec);
 }

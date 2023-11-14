@@ -15,8 +15,7 @@ NS_BEG4(top, evm, crosschain, bsc)
 
 auto get_validator_bytes_from_header(evm_common::xeth_header_t const & header,
                                      xchain_config_t const & chain_config,
-                                     xparlia_config_t const & parlia_config,
-                                     std::error_code & ec) -> xbytes_t;
+                                     xparlia_config_t const & parlia_config) -> xbytes_t;
 
 auto get_vote_attestation_from_header(evm_common::xeth_header_t const & header,
                                       xchain_config_t const & chain_config,

@@ -37,6 +37,21 @@ static char const * const errc_to_string(int code) {
     case xenum_errc::bsc_invalid_attestation:
         return "bsc: invalid attestation";
 
+    case xenum_errc::bsc_header_missing_excess_blob_gas:
+        return "bsc: header is missing excessBlobGas";
+
+    case xenum_errc::bsc_header_missing_blob_gas_used:
+        return "bsc: header is missing blobGasUsed";
+
+    case xenum_errc::bsc_blob_gas_used_exceeds_maximum_allowance:
+        return "bsc: blob gas used exceeds maximum allowance";
+
+    case xenum_errc::bsc_blob_gas_used_not_a_multiple_of_blob_gas_per_blob:
+        return "bsc: blob gas used is not a multiple of blob gas per blob";
+
+    case xenum_errc::bsc_invalid_excess_blob_gas:
+        return "bsc: invalid excess blob gas";
+
     default:
         return "unknown contract vm error";
     }

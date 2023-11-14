@@ -13,6 +13,10 @@
 
 NS_BEG4(top, evm, crosschain, bsc)
 
+XINLINE_CONSTEXPR uint64_t BLOB_TX_MAX_BLOB_GAS_PER_BLOCK{1 << 19};
+XINLINE_CONSTEXPR uint64_t BLOB_TX_TARGET_BLOB_GAS_PER_BLOCK{1 << 18};
+XINLINE_CONSTEXPR uint64_t BLOB_TX_BLOB_GAS_PER_BLOB{1 << 17};
+
 constexpr auto is_forked(uint64_t const s, uint64_t const head) noexcept -> bool {
     return (std::numeric_limits<uint64_t>::max() != s) && (std::numeric_limits<uint64_t>::max() != head) && (s <= head);
 }

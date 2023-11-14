@@ -23,6 +23,11 @@ enum class xenum_errc {
     bsc_invalid_gas_used,
     bsc_invalid_extra_data,
     bsc_invalid_attestation,
+    bsc_header_missing_excess_blob_gas,
+    bsc_header_missing_blob_gas_used,
+    bsc_blob_gas_used_exceeds_maximum_allowance,
+    bsc_blob_gas_used_not_a_multiple_of_blob_gas_per_blob,
+    bsc_invalid_excess_blob_gas,
 };
 using xerrc_t = xenum_errc;
 

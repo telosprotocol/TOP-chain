@@ -76,6 +76,7 @@ private:
 
     static bool verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool uncle);
     static bool verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
+    static void verify_eip4844_header(xeth_header_t const & parent, xeth_header_t const & header, std::error_code & ec);
     static uint64_t calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const &, xeth_header_t const &);
     bool verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
                                  xeth_header_t const & header,
