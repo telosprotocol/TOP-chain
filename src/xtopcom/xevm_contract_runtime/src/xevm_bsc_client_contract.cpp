@@ -36,8 +36,8 @@ constexpr uint64_t block_reserve_num = 500;
 constexpr uint64_t epoch = 200;
 constexpr uint64_t address_length = 20;
 constexpr uint64_t max_gas_limit = 0x7fffffffffffffff;
-constexpr uint64_t min_gas_limit = 5000;
-constexpr uint64_t gas_limit_bound_divisor = 256;
+constexpr uint64_t MIN_GAS_LIMIT = 5000;
+constexpr uint64_t GAS_LIMIT_BOUND_DIVISOR = 256;
 constexpr uint64_t bsc_chainid = 56;
 
 auto static empty_unclehash = static_cast<h256>(from_hex("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
@@ -366,8 +366,8 @@ bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xet
     if (diff < 0) {
         diff *= -1;
     }
-    auto const limit = prev_header.gas_limit / gas_limit_bound_divisor;
-    if (diff >= limit || new_header.gas_limit < min_gas_limit) {
+    auto const limit = prev_header.gas_limit / GAS_LIMIT_BOUND_DIVISOR;
+    if (diff >= limit || new_header.gas_limit < MIN_GAS_LIMIT) {
         xwarn("xtop_evm_bsc_client_contract::verify: invalid gas limit: have %s, want %s + %s",
               new_header.gas_limit.str().c_str(),
               prev_header.gas_limit.str().c_str(),
@@ -785,9 +785,9 @@ bool xtop_evm_bsc_client_contract::verify_cascading_fields(xchain_config_t const
     if (diff < 0) {
         diff *= -1;
     }
-    auto const limit = parent.gas_limit / gas_limit_bound_divisor;
+    auto const limit = parent.gas_limit / GAS_LIMIT_BOUND_DIVISOR;
 
-    if (diff.convert_to<uint64_t>() >= limit || header.gas_limit < min_gas_limit) {
+    if (diff.convert_to<uint64_t>() >= limit || header.gas_limit < MIN_GAS_LIMIT) {
         ec = top::evm_runtime::error::xerrc_t::bsc_invalid_gas_limit;
         xwarn("xtop_evm_bsc_client_contract::verify_cascading_fields: invalid gas limit: have %" PRIu64 ", want %" PRIu64 " += %" PRIu64 "-1",
               header.gas_limit.convert_to<uint64_t>(),
@@ -855,14 +855,15 @@ void xtop_evm_bsc_client_contract::verify_vote_attestation(xchain_config_t const
         return;
     }
 
-    auto const source_number = attestation.data.value().source_number();
-    auto const source_hash = attestation.data.value().source_hash();
-    uint64_t justified_block_number = 0;
-    xh256_t justified_block_hash{};
-    get_justified_number_and_hash(parent, state, justified_block_number, justified_block_hash, ec);
+    auto const parent_attestation = get_vote_attestation_from_header(parent, chain_config, ec);
     if (ec) {
+        xerror("%s: get_vote_attestation_from_header failed on parent header, msg: %s", __func__, ec.message().c_str());
         return;
     }
+    auto const source_number = attestation.data.value().source_number();
+    auto const source_hash = attestation.data.value().source_hash();
+    uint64_t justified_block_number = parent_attestation.data.value().target_number();
+    xh256_t justified_block_hash = parent_attestation.data.value().target_hash();
 
     if (source_number != justified_block_number || source_hash != justified_block_hash) {
         ec = top::evm_runtime::error::xerrc_t::bsc_invalid_attestation;

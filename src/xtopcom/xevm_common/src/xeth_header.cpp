@@ -246,6 +246,14 @@ void xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
         withdrawals_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[16]}};
     }
 
+    if (l.decoded.size() >= 18) {
+        blob_gas_used = evm_common::fromBigEndian<uint64_t>(l.decoded[17]);
+    }
+
+    if (l.decoded.size() >= 19) {
+        excess_blob_gas = evm_common::fromBigEndian<uint64_t>(l.decoded[18]);
+    }
+
     {
         xbytes_t rlp_bytes = bytes;
         auto const & encoded_bytes = encode_rlp();
