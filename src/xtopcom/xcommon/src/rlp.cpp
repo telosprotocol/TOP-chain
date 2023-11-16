@@ -962,5 +962,92 @@ std::ostream& operator<<(std::ostream& _out, RLP const& _d)
 }
 
 
+auto xtop_rlp_object_parser::to_integer(xspan_t<xbyte_t const> const rlp_encoded_bytes, std::error_code & ec) -> std::uint64_t {
+    assert(!ec);
+
+    if (rlp_encoded_bytes.empty()) {
+        ec = common::error::xerrc_t::rlp_input_empty;
+        return 0;
+    }
+
+    if (rlp_encoded_bytes.size() == 1) {
+        return static_cast<std::uint64_t>(rlp_encoded_bytes[0]);
+    }
+
+    std::uint64_t ret = 0;
+    for (xbyte_t const num : rlp_encoded_bytes) {
+        ret <<= 8;
+        ret += static_cast<std::uint64_t>(num);
+    }
+
+    return ret;
+}
+
+auto xtop_rlp_object_parser::parse_length(xspan_t<xbyte_t const> const rlp_encoded_bytes, std::error_code & ec) -> xrlp_object_t {
+    assert(!ec);
+
+    auto const input = rlp_encoded_bytes;
+
+    if (input.empty()) {
+        ec = common::error::xerrc_t::rlp_input_empty;
+        return {};
+    }
+
+    auto const length = input.size();
+    auto const prefix = input[0];
+    if (prefix <= 0x7F) {
+        return xrlp_object_t{0, 1, xrlp_object_type_t::bytes};
+    }
+
+    if (prefix <= 0xB7 and length > prefix - 0x80) {
+        return xrlp_object_t{1, static_cast<std::size_t>(prefix - 0x80), xrlp_object_type_t::bytes};
+    }
+
+    if (prefix <= 0xBF and length > prefix - 0xB7 and length > prefix - 0xB7 + to_integer(input.subspan(1, prefix - 0xB7), ec) && !ec) {
+        std::size_t const length_of_bytes_length = prefix - 0xB7;
+        std::size_t const bytes_length = static_cast<std::size_t>(to_integer(input.subspan(1, length_of_bytes_length), ec));
+
+        if (ec) {
+            return {};
+        }
+
+        return xrlp_object_t{1 + length_of_bytes_length, bytes_length, xrlp_object_type_t::bytes};
+    }
+
+    if (prefix <= 0xF7 and length > prefix - 0xC0) {
+        return xrlp_object_t{1, static_cast<std::size_t>(prefix - 0xC0), xrlp_object_type_t::list};
+    }
+
+    if (length > prefix - 0xF7 and length > prefix - 0xF7 + to_integer(input.subspan(1, prefix - 0xF7), ec) && !ec) {
+        std::size_t const length_of_list_length = prefix - 0xF7;
+        std::size_t const list_length = static_cast<std::size_t>(to_integer(input.subspan(1, length_of_list_length), ec));
+
+        if (ec) {
+            return {};
+        }
+
+        return xrlp_object_t{1 + length_of_list_length, list_length, xrlp_object_type_t::list};
+    }
+
+    ec = common::error::xerrc_t::rlp_invalid_encoded_data;
+    return {};
+}
+
+void xtop_rlp_object_parser::parse(xspan_t<xbyte_t const> rlp_encoded_bytes, std::vector<xrlp_object_t> & result, std::error_code & ec) {
+    assert(!ec);
+    if (rlp_encoded_bytes.empty()) {
+        return;
+    }
+
+    auto const rlp_object = parse_length(rlp_encoded_bytes, ec);
+    if (ec) {
+        return;
+    }
+
+    result.push_back(rlp_object);
+    parse(rlp_encoded_bytes.subspan(rlp_object.offset + rlp_object.length), result, ec);
+}
+
+
 }
 }

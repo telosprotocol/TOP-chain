@@ -615,6 +615,29 @@ extern xbytes_t RLPEmptyList;
 /// Human readable version of RLP.
 std::ostream& operator<<(std::ostream& _out, RLP const& _d);
 
+enum class xenum_rlp_object_type {
+    invalid,
+    bytes,
+    list
+};
+using xrlp_object_type_t = xenum_rlp_object_type;
+
+struct xtop_rlp_object {
+    std::size_t offset{0};
+    std::size_t length{0};
+    xrlp_object_type_t type{xenum_rlp_object_type::invalid};
+};
+using xrlp_object_t = xtop_rlp_object;
+
+class xtop_rlp_object_parser {
+public:
+    static void parse(xspan_t<xbyte_t const> rlp_encoded_bytes, std::vector<xrlp_object_t> & result, std::error_code & ec);
+
+private:
+    static auto parse_length(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> xrlp_object_t;
+    static auto to_integer(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> std::uint64_t;
+};
+using xrlp_object_parser_t = xtop_rlp_object_parser;
 
 }
 }
