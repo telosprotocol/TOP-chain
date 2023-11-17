@@ -383,6 +383,12 @@ int main(int argc, char ** argv) {
         tools.query_table_unit_info(table_account_vec);
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
+    }  else if (function_name == "execute_table_blocks") {
+        auto const table_account_vec = tools.get_table_accounts();
+        auto t1 = base::xtime_utl::time_now_ms();
+        tools.execute_all_table_blocks(table_account_vec);
+        auto t2 = base::xtime_utl::time_now_ms();
+        std::cout << "total time: " << (t2 - t1) / 1000 << "s." << std::endl;
     } else if (function_name == "export") {
         // xdb_export <db_path> export exported.json table0:height0,table1:height1,... [account0,[account1,...]]
 

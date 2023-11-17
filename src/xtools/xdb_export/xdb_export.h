@@ -11,6 +11,7 @@
 #include "xdata/xlightunit_info.h"
 #include "xdata/xblock.h"
 #include "xcommon/xtoken_metadata.h"
+#include "xgenesis/xgenesis_manager.h"
 
 NS_BEG2(top, db_export)
 
@@ -90,6 +91,7 @@ public:
     std::string get_account_key_string(const std::string & key);
     void   prune_db();
     void   query_all_table_performance(std::vector<std::string> const & accounts_vec);
+    void execute_all_table_blocks(std::vector<std::string> const & table_vec);    
 
     std::unordered_map<common::xaccount_address_t, base::xaccount_index_t> get_unit_accounts(common::xtable_address_t const & table_address,
                                                                                              std::uint64_t table_height,
@@ -416,6 +418,7 @@ private:
     xobject_ptr_t<base::xvtxstore_t> m_txstore;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
+    std::unique_ptr<genesis::xgenesis_manager_t> m_genesis_manager;
 
     std::map<std::string, std::map<std::string, base::xaccount_index_t>> m_db_units_info;
     std::string m_outfile_folder;

@@ -56,6 +56,9 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     std::vector<db::xdb_path_t> db_data_paths {};
     base::xvchain_t::instance().get_db_config_custom(db_data_paths, dst_db_kind);
     std::cout << "--------db_path:" << db_path << std::endl;
+    for (auto & db_data_path : db_data_paths) {
+        std::cout << "--------db_data_path:" << db_data_path.path << std::endl;
+    }
     std::shared_ptr<db::xdb_face_t> db = top::db::xdb_factory_t::create(dst_db_kind, db_path, db_data_paths);
 
     m_store = top::store::xstore_factory::create_store_with_static_kvdb(db);
@@ -67,6 +70,8 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()),
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver.get())));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
+    m_genesis_manager = top::make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
+
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, m_blockstore, make_observer(m_bus.get()));
     m_getblock =
         std::make_shared<xrpc::xrpc_query_manager>(observer_ptr<base::xvblockstore_t>(m_blockstore.get()), nullptr, nullptr);
@@ -308,6 +313,46 @@ void xdb_export_tools_t::query_all_table_performance(std::vector<std::string> co
     for (auto const & account : accounts_vec) {
         query_table_performance(account);
         std::cout << account << " table performance query finish" << std::endl;
+    }
+}
+
+void xdb_export_tools_t::execute_all_table_blocks(std::vector<std::string> const & table_vec) {    
+    for (auto const & table_addr : table_vec) {
+        base::xvaccount_t table_vaccount(table_addr);
+        auto const end_h = m_blockstore->get_latest_committed_block_height(table_vaccount);
+        auto const begin_h = m_blockstore->get_latest_executed_block_height(table_vaccount);
+        std::cout << "table: " << table_addr << ", begin_h: " << begin_h << ", end_h: " << end_h << std::endl;
+
+        if (begin_h >= end_h) {
+            continue;
+        }
+
+        uint64_t count = 0;
+        for (uint64_t height = begin_h+1; height <= end_h; height++) {
+            base::xauto_ptr<base::xvblock_t> vblock = m_blockstore->load_block_object(table_vaccount, height, base::enum_xvblock_flag_committed, false);
+            if (vblock == nullptr) {
+                std::cout << "WARN table: " << table_addr << ", height: " << height << " block null" << std::endl;
+                break;
+            }
+            statestore::xstatestore_hub_t::instance()->on_table_block_committed(vblock.get());
+
+            auto const execute_h = m_blockstore->get_latest_executed_block_height(table_vaccount);
+            if (execute_h > height) {
+                height = execute_h; // skip the executed block
+            }
+            if (execute_h < height) {
+                std::cout << "WARN not execute succ. table: " << table_addr << ", height: " << height << " execute height: " << execute_h << std::endl;
+                return;
+            }
+
+            count++;
+            if (count % 100 == 0) {
+                std::cout << "...count:"<< count << " execute_h:" << execute_h << std::endl;
+            }
+        }
+
+        auto const new_execute_h = m_blockstore->get_latest_executed_block_height(table_vaccount);
+        std::cout << "table: " << table_addr << ", begin_h: " << begin_h << ", end_h: " << end_h << ", new_execute_h: " << new_execute_h << std::endl;
     }
 }
 

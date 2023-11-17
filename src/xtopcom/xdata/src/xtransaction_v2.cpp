@@ -169,7 +169,7 @@ int32_t xtransaction_v2_t::do_read_without_hash_signature(base::xstream_t & in) 
     set_tx_type(static_cast<enum_xtransaction_type>(tmp_transaction_type));
     in.read_compact_var(m_expire_duration);
     in.read_compact_var(m_fire_timestamp);
-    
+
     std::string compact_source_account;
     in >> compact_source_account;
     std::string const src_address_string = xvaccount_t::compact_address_from(compact_source_account);
@@ -179,7 +179,7 @@ int32_t xtransaction_v2_t::do_read_without_hash_signature(base::xstream_t & in) 
     std::string const unadjusted_target_address_string = xvaccount_t::compact_address_from(compact_target_account);
     target_address_ = xtarget_address_t::build_from(m_source_addr, common::xaccount_address_t::build_from(unadjusted_target_address_string));
     in.read_compact_var(m_edge_nodeid);
-    
+
     in.read_compact_var(m_amount);
     in.read_compact_var(m_token_name);
     in.read_compact_var(m_last_trans_nonce);
@@ -187,7 +187,7 @@ int32_t xtransaction_v2_t::do_read_without_hash_signature(base::xstream_t & in) 
     in.read_compact_var(m_premium_price);
     in.read_compact_var(m_memo);
     in.read_compact_var(m_ext);
-        
+
     if(m_transaction_type != xtransaction_type_transfer) {
         in.read_compact_var(m_source_action_name);
         in.read_compact_var(m_source_action_para);
@@ -383,27 +383,19 @@ void xtransaction_v2_t::set_fire_and_expire_time(uint16_t expire_duration) {
 }
 
 bool xtransaction_v2_t::sign_check() const {
-    //std::string addr_prefix;
-    //if (std::string::npos != get_source_addr().find_last_of('@')) {
-    //    uint16_t subaddr;
-    //    base::xvaccount_t::get_prefix_subaddr_from_account(get_source_addr(), addr_prefix, subaddr);
-    //} else {
-    //    addr_prefix = get_source_addr();
-    //}
     auto const & base_address = source_address().base_address();
-
     utl::xkeyaddress_t key_address(base_address.to_string());
-    // uint8_t     addr_type{255};
-    // uint16_t    network_id{65535};
-    // //get param from config
-    // uint16_t config_network_id = 0;//xchain_param.network_id
-    // if (!key_address.get_type_and_netid(addr_type, network_id) || config_network_id != network_id) {
-    //     xwarn("network_id error:%d,%d", config_network_id, network_id);
-    //     return false;
-    // }
+    uint256_t checkHash = m_transaction_hash;
 
+    if (get_ext() == "0x01") {
+        std::string messagePreNum = "\x19";  //"Ethereum Signed Message:\n";
+        std::string messagePreInfo = "Ethereum Signed Message:\n";
+        std::string txHash = "0x" + to_hex_str(m_transaction_hash);
+        std::string personMessage = messagePreNum + messagePreInfo + base::xstring_utl::tostring(txHash.length()) + txHash;
+        checkHash = utl::xkeccak256_t::digest((const char *)personMessage.data(), personMessage.size());
+    }
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.c_str());
-    return key_address.verify_signature(signature_obj, m_transaction_hash);
+    return key_address.verify_signature(signature_obj, checkHash);
 }
 
 bool xtransaction_v2_t::pub_key_sign_check(xpublic_key_t const & pub_key) const {
@@ -412,7 +404,16 @@ bool xtransaction_v2_t::pub_key_sign_check(xpublic_key_t const & pub_key) const 
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.data());
     uint8_t out_publickey_data[utl::UNCOMPRESSED_PUBLICKEY_SIZE];
     memcpy(out_publickey_data, pub_data.data(), (size_t)std::min(utl::UNCOMPRESSED_PUBLICKEY_SIZE, (int)pub_data.size()));
-    return utl::xsecp256k1_t::verify_signature(signature_obj, m_transaction_hash, out_publickey_data, false);
+
+    uint256_t checkHash = m_transaction_hash;
+    if (get_ext() == "0x01") {
+        std::string  messagePreNum = "\x19";//"Ethereum Signed Message:\n";
+        std::string  messagePreInfo = "Ethereum Signed Message:\n";
+        std::string  txHash = "0x" + to_hex_str(m_transaction_hash);
+        std::string personMessage = messagePreNum +  messagePreInfo + base::xstring_utl::tostring(txHash.length()) + txHash;
+        checkHash = utl::xkeccak256_t::digest((const char*)personMessage.data(), personMessage.size());
+    }
+    return utl::xsecp256k1_t::verify_signature(signature_obj, checkHash, out_publickey_data, false);
 }
 
 std::string xtransaction_v2_t::dump() const {
@@ -510,7 +511,7 @@ void xtransaction_v2_t::parse_to_json(Json::Value& result_json, const std::strin
 void xtransaction_v2_t::construct_from_json(Json::Value& request) {
     set_amount(request["amount"].asUInt64());
     m_token_name = request["token_name"].asString();
-    
+
     set_tx_type(static_cast<uint16_t>(request["tx_type"].asUInt()));
     set_expire_duration(static_cast<uint16_t>(request["tx_expire_duration"].asUInt()));
     set_deposit(request["tx_deposit"].asUInt());
@@ -519,9 +520,7 @@ void xtransaction_v2_t::construct_from_json(Json::Value& request) {
     set_last_nonce(request["last_tx_nonce"].asUInt64());
     set_fire_timestamp(request["send_timestamp"].asUInt64());
     set_memo(request["note"].asString());
-    auto ext_vec = hex_to_uint(request["ext"].asString());
-    std::string ext((char *)ext_vec.data(), ext_vec.size());
-    set_ext(ext);
+    set_ext(request["ext"].asString());
     m_edge_nodeid = request["edge_nodeid"].asString();
 
     auto source_param_vec = hex_to_uint(request["sender_action_param"].asString());
@@ -536,7 +535,7 @@ void xtransaction_v2_t::construct_from_json(Json::Value& request) {
     auto signature = hex_to_uint(request["authorization"].asString());
     std::string signature_str((char *)signature.data(), signature.size());  // hex_to_uint client send xstream_t data 0xaaaa => string
     set_authorization(std::move(signature_str));
-    
+
     set_len();
 }
 
@@ -636,7 +635,7 @@ size_t xtransaction_v2_t::get_object_size_real() const {
         get_size(m_transaction_hash_str),
         get_size(target_address_.adjusted().to_string()));
     // m_source_action_para and m_target_action_para might use same memory, here might be calculate twice!!!!
-    
+
     total_size += get_size(m_source_addr.to_string()) + get_size(target_address_.original().to_string()) + get_size(m_token_name) + get_size(m_memo) + get_size(m_ext) + get_size(m_authorization) +
                   get_size(m_edge_nodeid) + get_size(m_source_action_name) + get_size(m_source_action_para) + get_size(m_target_action_name) + get_size(m_target_action_para) +
                   get_size(m_transaction_hash_str) + get_size(target_address_.adjusted().to_string());

@@ -146,3 +146,74 @@ TEST_F(test_tx_v2, json) {
     tx2->set_digest();
     EXPECT_EQ(tx2->get_digest_hex_str(), tx->get_digest_hex_str());
 }
+
+
+TEST_F(test_tx_v2, person_sign) {
+    Json::Value tx_json;
+    tx_json["amount"] = 1000000;
+    tx_json["edge_nodeid"] = "";
+    tx_json["ext"] = "0x01";
+    tx_json["note"] = "";
+    tx_json["premium_price"] = 0;
+    tx_json["last_tx_nonce"] = 0;
+    tx_json["receiver_account"] = "T80000328db230b5bb8d5bbe06ae78f365789cce4917f1";
+    tx_json["receiver_action_name"] = "";
+    tx_json["receiver_action_param"] = "0x";
+    tx_json["send_timestamp"] = 1696990677;
+    tx_json["sender_account"] = "T80000a7c3afb0803a59b472036a5ddf0d8f0f9bfba290";
+    tx_json["sender_action_name"] = "";
+    tx_json["sender_action_param"] = "0x";
+    tx_json["token_name"] = "";
+    tx_json["tx_deposit"] = 100000;
+    tx_json["tx_expire_duration"] = 100;
+    tx_json["tx_hash"] = "0x998a3665c881b50f8265a2b2bb6502bedb47da212c5bf82b1753ae9dcf4baabb";
+    tx_json["tx_len"] = 0;
+    tx_json["tx_structure_version"] = 2;
+    tx_json["tx_type"] = 4;
+    tx_json["authorization"] = "0x0024c9799dc74c9caf6449cc6e9b01c9fb0c596d51e109fb5eab59b18f85d8c56e4c10beac259303a65c5d646b97d8b1c98134f69006f02800f98da1912507913e";
+
+    data::xtransaction_v2_ptr_t tx2 = make_object_ptr<xtransaction_v2_t>();
+    tx2->construct_from_json(tx_json);
+    auto signature = hex_to_uint(tx_json["authorization"].asString());
+    std::string signature_str((char *)signature.data(), signature.size());  // hex_to_uint client send xstream_t data 0xaaaa => string EXPECT_EQ(tx2->get_authorization(),
+    EXPECT_EQ(tx2->get_authorization(), signature_str);
+    tx2->set_digest(top::data::hex_to_uint256(tx_json["tx_hash"].asString()));
+    EXPECT_EQ(tx2->sign_check(), true);
+}
+
+TEST_F(test_tx_v2, v2_sign_test) {
+
+    Json::Value tx_json;
+    tx_json["amount"] = 100;
+    tx_json["edge_nodeid"] = "";
+    tx_json["ext"] = "";
+    tx_json["note"] = "";
+    tx_json["premium_price"] = 0;
+    tx_json["last_tx_nonce"] = 1;
+    tx_json["receiver_account"] = "T800005ccba4ce46ca0e59174e30259643536d49c72ee8";
+    tx_json["receiver_action_name"] =  "";
+    tx_json["receiver_action_param"] ="0x";
+    tx_json["send_timestamp"] = 1695797312;
+    tx_json["sender_account"] = "T800009f05d555fa6cba97549f192a79015a8b0f63918d";
+    tx_json["sender_action_name"] = "";
+    tx_json["sender_action_param"] = "0x";
+    tx_json["token_name"] =  "";
+    tx_json["tx_deposit"] = 100000;
+    tx_json["tx_expire_duration"] = 100;
+    tx_json["tx_hash"] = "0x7af3bdce098d40bc5ea7546aa4a60bdf68fbb314f0330337afe5eed14d29452c";
+    tx_json["tx_len"] = 0;
+    tx_json["tx_structure_version"] = 2;
+    tx_json["tx_type"] = 4;
+    tx_json["authorization"] = "0x016935f7410f8fc6a79bf56fb67ed5782d79ae5654c3018ac2a465b3113fceea1d5439ce012cfa73ba28e97036114c9f8f726234b556e67159121c0caaacc9b96b";
+
+    data::xtransaction_v2_ptr_t tx2 = make_object_ptr<xtransaction_v2_t>();
+    tx2->construct_from_json(tx_json);
+    tx2->set_digest();
+    auto signature = hex_to_uint(tx_json["authorization"].asString());
+    std::string signature_str((char *)signature.data(), signature.size());  // hex_to_uint client send xstream_t data 0xaaaa => string
+    EXPECT_EQ(tx2->get_authorization(), signature_str);
+    //EXPECT_EQ(tx2->get_authorization(), tx_json["authorization"].asString());
+    EXPECT_EQ("0x"+tx2->get_digest_hex_str(), tx_json["tx_hash"].asString());
+    EXPECT_EQ(tx2->sign_check(), true);
+
+}
