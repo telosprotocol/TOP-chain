@@ -75,6 +75,8 @@ void xunitbuilder_t::make_unitblock_and_unitstate(data::xaccountstate_ptr_t cons
     assert(unitstate->is_state_changed());
     assert(!unitstate->get_bstate()->get_last_block_hash().empty());
 
+    xdbg("xunitbuilder_t::make_unitblock_and_unitstate enter cs_para=%s,%s",
+        cs_para.dump().c_str(), unitstate->get_bstate()->get_account().c_str());
     // create unit header firstly for update unitstate information
     bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
     std::shared_ptr<data::xunit_build2_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
@@ -117,7 +119,8 @@ void xunitbuilder_t::make_unitblock_and_unitstate(data::xaccountstate_ptr_t cons
     result.unitstate = unitstate;
     result.accountindex = base::xaccount_index_t(_accountindex_version, proposal_block->get_height(), proposal_block->get_block_hash(), bodypara.get_fullstate_bin_hash(), accountstate->get_tx_nonce());
     accountstate->update_account_index(result.accountindex);
-    xdbg("xunitbuilder_t::make_unitblock_and_unitstate cs_para=%s,%s,unitstate=%s,unit=%s",cs_para.dump().c_str(), result.accountindex.dump().c_str(),result.unitstate->get_bstate()->dump().c_str(), result.unitblock->dump().c_str());
+    xdbg("xunitbuilder_t::make_unitblock_and_unitstate cs_para=%s,unit=%s,binlog=%zu,snapshot=%zu",
+        cs_para.dump().c_str(), result.unitblock->dump().c_str(),binlog.size(),snapshot.size());
 }
 
 void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs) {
