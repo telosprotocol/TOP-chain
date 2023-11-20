@@ -173,6 +173,7 @@ void xtop_vnode::stop() {
     }
     // m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
+    m_the_binding_driver->stop();
     driver_removed();
     update_contract_manager(true);
     xkinfo("[virtual node] vnode (%p) stop running at address %s", this, m_the_binding_driver->address().to_string().c_str());

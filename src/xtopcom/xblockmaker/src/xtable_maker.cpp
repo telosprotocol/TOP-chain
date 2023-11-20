@@ -237,7 +237,7 @@ void xtable_maker_t::make_account_unit_and_index(bool is_leader, const data::xbl
         // XTODO the confirm tx may not modify state.
         xinfo("xtable_maker_t::make_account_unit_and_index no unitstates changed.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
     }
-
+    xinfo("xtable_maker_t::make_account_unit_and_index enter.is_leader=%d,%s,unitctxs=%zu", is_leader, cs_para.dump().c_str(), unitctxs.size());
     for (auto & v : unitctxs) {
         auto & unitctx = v.second;
         xunit_build_result_t unit_result;

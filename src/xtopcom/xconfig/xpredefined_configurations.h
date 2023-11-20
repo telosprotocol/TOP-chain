@@ -586,7 +586,7 @@ XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_consortium);
 #if defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(p2p_endpoints,
                        char const *,
-                       "192.168.50.155:9921,192.168.50.156:9921,192.168.50.157:9921,192.168.50.158:9921,192.168.50.159:9921,192.168.50.160:9921,192.168.50.121:9921,192.168.50.119:9921");
+                       "172.16.150.11:9000,172.16.150.12:9000,172.16.150.13:9000,172.16.150.14:9000,172.16.150.15:9000");
 XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #elif defined(XBUILD_DEV)
 XDECLARE_CONFIGURATION(p2p_endpoints,

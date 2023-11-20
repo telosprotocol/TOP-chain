@@ -12,8 +12,8 @@
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 #   define SEED_URL "http://unreachable.org/"
-#   define SERVER_HOST_PORT_HTTP "127.0.0.1:19081"
-#   define SERVER_HOST_PORT_WS "127.0.0.1:19085"
+#   define SERVER_HOST_PORT_HTTP "172.16.150.11:19081"
+#   define SERVER_HOST_PORT_WS "172.16.150.11:19085"
 #elif defined(XBUILD_GALILEO)
 #   define SEED_URL "http://galileo.edge.topnetwork.org"
 #   define SERVER_HOST_PORT_HTTP "206.189.201.14:19081"
