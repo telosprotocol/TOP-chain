@@ -504,7 +504,11 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         }
         XMETRICS_GAUGE(metrics::vnode_recv_callback, 1);
         callback(src, msg, msg_time);
-        XLOCK_GUARD(m_message_cache_mutex) { m_message_cache.insert({msg.hash(), std::time(nullptr)}); }
+        if (message_cagegory != xmessage_category_state_sync) {
+            XLOCK_GUARD(m_message_cache_mutex) {
+                m_message_cache.insert({msg.hash(), std::time(nullptr)});
+            }
+        }
     } else {
         xwarn("[vnetwork driver] no callback found for message %" PRIx64 " with message id %" PRIx32 " timer height %" PRIu64,
               msg.hash(),
