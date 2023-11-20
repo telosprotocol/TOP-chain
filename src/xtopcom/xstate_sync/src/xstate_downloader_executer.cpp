@@ -13,7 +13,7 @@
 namespace top {
 namespace state_sync {
 
-#define TIMEOUT_MSEC 5000U
+XINLINE_CONSTEXPR std::chrono::seconds STATE_SYNC_TIMEOUT{300};
 
 xtop_download_executer::xtop_download_executer(observer_ptr<base::xiothread_t> thread, uint32_t overtime) : m_syncer_thread{thread}, m_overtime(overtime) {
 }
@@ -115,9 +115,9 @@ void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, st
         } else {
             if (!active.empty()) {
                 // timeout check
-                uint64_t time = base::xtime_utl::time_now_ms();
+                uint64_t const time = base::xtime_utl::time_now_ms();
                 for (auto it = active.begin(); it != active.end();) {
-                    if (it->second.start + TIMEOUT_MSEC > time) {
+                    if (it->second.start + std::chrono::duration_cast<std::chrono::milliseconds>(STATE_SYNC_TIMEOUT).count() > time) {
                         break;
                     }
                     xwarn("xtop_download_executer::loop req: %u timeout %lu, %lu", it->first, it->second.start, time);
