@@ -33,6 +33,7 @@ public:
     auto target_hash() const noexcept -> xh256_t const &;
 
     auto encode_rlp() const -> xbytes_t;
+    auto decode_rlp(xbytes_t const & input, std::error_code & ec) -> void;
 
     auto hash() const -> xh256_t;
 };

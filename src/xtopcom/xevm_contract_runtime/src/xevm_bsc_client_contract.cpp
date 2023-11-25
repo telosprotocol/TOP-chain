@@ -284,12 +284,12 @@ bool xtop_evm_bsc_client_contract::is_confirmed(u256 const height, xbytes_t cons
 }
 
 bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xeth_header_t const & new_header, xvalidators_snapshot_t & snap, state_ptr state) const {
-    if (new_header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY) {
+    if (new_header.extra.size() < EXTRA_VANITY) {
         xwarn("xtop_evm_bsc_client_contract::verify: header extra missing EXTRA_VANITY. extra size %" PRIu64, new_header.extra.size());
         return false;
     }
 
-    if (new_header.extra.size() < top::evm::crosschain::bsc::EXTRA_VANITY + top::evm::crosschain::bsc::EXTRA_SEAL) {
+    if (new_header.extra.size() < EXTRA_VANITY + EXTRA_SEAL) {
         xwarn("xtop_evm_bsc_client_contract::verify: header extra missing signature. extra size %" PRIu64, new_header.extra.size());
         return false;
     }
@@ -298,7 +298,7 @@ bool xtop_evm_bsc_client_contract::verify(xeth_header_t const & prev_header, xet
 
     bool const is_epoch = new_header.number % epoch == 0;
     auto const signers_bytes =
-        get_validator_bytes_from_header(new_header, top::evm::crosschain::bsc::bsc_chain_config, top::evm::crosschain::bsc::bsc_chain_config.parlia_config, ec);
+        get_validator_bytes_from_header(new_header, bsc_chain_config, bsc_chain_config.parlia_config);
     if (ec) {
         xwarn("xtop_evm_bsc_client_contract::verify: get_validator_bytes_from_header failed, msg: %s", ec.message().c_str());
         return false;

@@ -962,7 +962,7 @@ std::ostream& operator<<(std::ostream& _out, RLP const& _d)
 }
 
 
-auto xtop_rlp_object_parser::to_integer(xspan_t<xbyte_t const> const rlp_encoded_bytes, std::error_code & ec) -> std::uint64_t {
+auto xtop_rlp_decoder::to_integer(xspan_t<xbyte_t const> const rlp_encoded_bytes, std::error_code & ec) -> std::uint64_t {
     assert(!ec);
 
     if (rlp_encoded_bytes.empty()) {
@@ -983,7 +983,7 @@ auto xtop_rlp_object_parser::to_integer(xspan_t<xbyte_t const> const rlp_encoded
     return ret;
 }
 
-auto xtop_rlp_object_parser::parse_length(xspan_t<xbyte_t const> const rlp_encoded_bytes, std::error_code & ec) -> xrlp_object_t {
+auto xtop_rlp_decoder::parse_length(xspan_t<xbyte_t const> const rlp_encoded_bytes, std::error_code & ec) -> xrlp_object_t {
     assert(!ec);
 
     auto const input = rlp_encoded_bytes;
@@ -993,8 +993,8 @@ auto xtop_rlp_object_parser::parse_length(xspan_t<xbyte_t const> const rlp_encod
         return {};
     }
 
-    auto const length = input.size();
-    auto const prefix = input[0];
+    std::size_t const length = input.size();
+    std::size_t const prefix = input[0];
     if (prefix <= 0x7F) {
         return xrlp_object_t{0, 1, xrlp_object_type_t::bytes};
     }
@@ -1033,7 +1033,12 @@ auto xtop_rlp_object_parser::parse_length(xspan_t<xbyte_t const> const rlp_encod
     return {};
 }
 
-void xtop_rlp_object_parser::parse(xspan_t<xbyte_t const> rlp_encoded_bytes, std::vector<xrlp_object_t> & result, std::error_code & ec) {
+xtop_rlp_object::xtop_rlp_object(std::size_t const offset, std::size_t const length, xrlp_object_type_t const type) : offset(offset), length(length), type(type) {
+    assert(type == xrlp_object_type_t::bytes || type == xrlp_object_type_t::list);
+    assert(offset + length >= offset);
+}
+
+void xtop_rlp_decoder::decode(xspan_t<xbyte_t const> rlp_encoded_bytes, std::vector<xrlp_object_t> & result, std::error_code & ec) {
     assert(!ec);
     if (rlp_encoded_bytes.empty()) {
         return;
@@ -1045,7 +1050,63 @@ void xtop_rlp_object_parser::parse(xspan_t<xbyte_t const> rlp_encoded_bytes, std
     }
 
     result.push_back(rlp_object);
-    parse(rlp_encoded_bytes.subspan(rlp_object.offset + rlp_object.length), result, ec);
+    decode(rlp_encoded_bytes.subspan(rlp_object.offset + rlp_object.length), result, ec);
+}
+
+auto xtop_rlp_encoder::encode(xbyte_t const * data, std::size_t const length) -> xbytes_t {
+    if (length == 1 && data[0] < 0x80) {
+        return {data[0]};
+    }
+
+    xbytes_t encoded = encode_length(length, 0x80);
+
+    encoded.insert(encoded.end(), data, data + length);
+    return encoded;
+}
+
+auto xtop_rlp_encoder::encode(char const * data, std::size_t const length) -> xbytes_t {
+    return encode(reinterpret_cast<xbyte_t const *>(data), length);
+}
+
+auto xtop_rlp_encoder::encode(std::uint64_t const integer) -> xbytes_t {
+    auto const bytes = to_big_endian(integer);
+    return encode(bytes.data(), bytes.size());
+}
+
+auto xtop_rlp_encoder::encode(u256 const & number) -> xbytes_t {
+    auto const bytes = to_big_endian(number);
+    return encode(bytes.data(), bytes.size());
+}
+
+auto xtop_rlp_encoder::encode_length(std::size_t const length, std::uint8_t const offset) -> xbytes_t {
+    if (length < 56) {
+        return {static_cast<xbyte_t>(length + offset)};
+    }
+
+    auto length_bytes = to_big_endian(length);
+
+    auto const length_length = length_bytes.size();
+
+    xbytes_t result(length_length + 1);
+    result[0] = static_cast<xbyte_t>(length_length + offset + 55);
+
+    std::copy(length_bytes.begin(), length_bytes.end(), result.begin() + 1);
+
+    return result;
+}
+
+auto xtop_rlp_encoder::to_big_ending(uint64_t const integer) -> xbytes_t {
+    if (integer == 0) {
+        return {};
+    }
+    return toCompactBigEndian(integer);
+}
+
+auto xtop_rlp_encoder::to_big_endian(u256 const & number) -> xbytes_t {
+    if (number == 0) {
+        return {};
+    }
+    return toCompactBigEndian(number);
 }
 
 
