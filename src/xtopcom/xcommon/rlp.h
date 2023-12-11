@@ -622,23 +622,42 @@ enum class xenum_rlp_object_type {
 };
 using xrlp_object_type_t = xenum_rlp_object_type;
 
-struct xtop_rlp_object {
+struct xtop_rlp_object;
+using xrlp_object_t = xtop_rlp_object;
+
+struct xtop_rlp_bytes {
+    std::size_t size{0};
+    xbyte_t const * ptr;
+};
+
+struct xtop_rlp_list {
+    std::size_t size{0};
+    xrlp_object_t * ptr;
+
+};
+
+//struct xtop_rlp_decoded_raw {
+//    
+//};
+
+struct xtop_rlp_decoded_raw {
     std::size_t offset{0};
     std::size_t length{0};
     xrlp_object_type_t type{xenum_rlp_object_type::invalid};
 
-    xtop_rlp_object() = default;
-    xtop_rlp_object(std::size_t offset, std::size_t length, xrlp_object_type_t type);
+    xtop_rlp_decoded_raw() = default;
+    xtop_rlp_decoded_raw(std::size_t offset, std::size_t length, xrlp_object_type_t type);
 };
-using xrlp_object_t = xtop_rlp_object;
+using xrlp_decoded_raw_t = xtop_rlp_decoded_raw;
 
 class xtop_rlp_decoder {
 public:
-    static void decode(xspan_t<xbyte_t const> rlp_encoded_bytes, std::vector<xrlp_object_t> & result, std::error_code & ec);
+    static void decode(xspan_t<xbyte_t const> rlp_encoded_bytes, std::vector<xrlp_decoded_raw_t> & result, std::error_code & ec);
 
 private:
-    static auto parse_length(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> xrlp_object_t;
+    static auto parse_length(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> xrlp_decoded_raw_t;
     static auto to_integer(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> std::uint64_t;
+    static auto decode_list(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> std::vector<xrlp_decoded_raw_t>;
 };
 using xrlp_object_parser_t = xtop_rlp_decoder;
 
