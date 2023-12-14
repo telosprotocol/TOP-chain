@@ -166,7 +166,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
 template <class T>
 void xedge_handler_base<T>::on_message(const xvnode_address_t&, const xrpc_msg_response_t& msg)
 {
-    xdbg_rpc("xrpc_edge_vhost edge_process_response:%s" , msg.to_string().c_str());
+    xdbg_rpc("xrpc_edge_vhost edge_process_response: %x %s" , msg.m_uuid, msg.to_string().c_str());
     std::lock_guard<std::mutex> lock(m_mutex);
     auto iter = m_forward_session_map.find(msg.m_uuid);
     if (iter != m_forward_session_map.end()) {
@@ -176,6 +176,8 @@ void xedge_handler_base<T>::on_message(const xvnode_address_t&, const xrpc_msg_r
         if (iter->second->m_destination_address.empty()) {
             iter->second->write_response(msg.m_message_body);
             iter->second->cancel_timeout();
+            xdbg_rpc("write response msg: %x %s", msg.m_uuid, msg.to_string().c_str());
+            m_forward_session_map.erase(iter);
         }
     }
     else {
@@ -194,8 +196,11 @@ void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg
             {
                 std::lock_guard<std::mutex> lock(mutex);
                 auto iter = forward_session_map.find(session->m_edge_msg_ptr_list.front()->m_uuid);
-                if (iter != forward_session_map.end())
+                if (iter != forward_session_map.end()) {
+                    xdbg_rpc("erase session from map. uuid:%x", session->m_edge_msg_ptr_list.front()->m_uuid);
                     forward_session_map.erase(iter);
+                }
+                xdbg_rpc("session not found from map. uuid:%x", session->m_edge_msg_ptr_list.front()->m_uuid);
             }
             DELETE(session);
     });
