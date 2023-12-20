@@ -201,23 +201,56 @@ bool xnetwork_proxy::unlisten(const xvip2_t & addr, common::xmessage_category_t 
     xkinfo("[xunitservice] network unlisten %s msg:%x %p", xcons_utl::xip_to_hex(addr).c_str(), category, this);
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+
         auto iter = m_networks.find(addr);
         if (iter != m_networks.end()) {
-            auto network = iter->second;
+            auto const & network = iter->second;
             // unregister virtual network message callback
             network->unregister_message_ready_notify(category);
+        } else {
+            for (iter = m_networks.begin(); iter != m_networks.end(); ++iter) {
+                auto & network_xip = iter->first;
+                common::xip2_t const group_xip2 = common::xip2_t{network_xip}.group_xip2();
+                xvip2_t network_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
+                if (xcons_utl::xip_equals(addr, network_group_xip)) {
+                    auto const & network = iter->second;
+                    network->unregister_message_ready_notify(category);
+                    break;
+                }
+            }
         }
+
         // erase bridge callback
         auto listen_iter = m_reactors.find(addr);
         if (listen_iter != m_reactors.end()) {
             // add category to callback map
             auto & cb_map = listen_iter->second;
-            auto cb_iter = cb_map.find(category);
+            auto const cb_iter = cb_map.find(category);
             if (cb_iter != cb_map.end()) {
                 cb_map.erase(cb_iter);
             }
             if (cb_map.empty()) {
                 m_reactors.erase(listen_iter);
+            }
+        } else {
+            for (listen_iter = m_reactors.begin(); listen_iter != m_reactors.end();) {
+                auto & reactor_xip = listen_iter->first;
+                common::xip2_t const group_xip2 = common::xip2_t{reactor_xip}.group_xip2();
+                xvip2_t reactor_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
+                if (xcons_utl::xip_equals(addr, reactor_group_xip)) {
+                    auto & cb_map = listen_iter->second;
+                    auto const cb_iter = cb_map.find(category);
+                    if (cb_iter != cb_map.end()) {
+                        cb_map.erase(cb_iter);
+                    }
+                    if (cb_map.empty()) {
+                        listen_iter = m_reactors.erase(listen_iter);
+                    } else {
+                        ++listen_iter;
+                    }
+                } else {
+                    ++listen_iter;
+                }
             }
         }
     }

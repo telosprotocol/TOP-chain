@@ -79,7 +79,7 @@ macro(get_git_info)
     file(APPEND ${VersionInc} "const std::string TOP_GIT_BRANCH      = \"${TOP_GIT_BRANCH}\";\n")
     file(APPEND ${VersionInc} "const std::string TOP_GIT_HASH        = \"${TOP_GIT_HASH}\";\n")
     file(APPEND ${VersionInc} "const std::string TOP_GIT_DATE        = \"${TOP_GIT_DATE}\";\n")
-    file(APPEND ${VersionInc} "const std::string TOP_GIT_LOG_LATEST  = ${TOP_GIT_LOG_LATEST};\n")  # multiline
+    file(APPEND ${VersionInc} "const std::string TOP_GIT_LOG_LATEST  = \"${TOP_GIT_LOG_LATEST}\";\n")  # multiline
     file(APPEND ${VersionInc} "const std::string TOP_GIT_SUBMODULE   = \"${TOP_GIT_SUBMODULE}\";\n")
     file(APPEND ${VersionInc} "const std::string TOP_BUILD_DATE      = __DATE__;\n")
     file(APPEND ${VersionInc} "const std::string TOP_BUILD_TIME      = __TIME__;\n")

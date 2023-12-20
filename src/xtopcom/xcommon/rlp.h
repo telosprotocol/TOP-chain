@@ -417,6 +417,8 @@ public:
     /// Decodes data, remainder from RLP encoded data
     static DecodedItem decode(xbytes_t const & input);
     static DecodedItem decode_once(xbytes_t const & input);
+    static DecodedItem decode_once(xbytes_t const & input, std::error_code & ec);
+    static DecodedItem decode_list_once(xbytes_t const & input, std::error_code & ec);
 
     static DecodedItem decode_list(xbytes_t const & input, std::error_code & ec);
     static DecodedItem decode(xbytes_t const & input, std::error_code & ec);
@@ -613,6 +615,76 @@ extern xbytes_t RLPEmptyList;
 /// Human readable version of RLP.
 std::ostream& operator<<(std::ostream& _out, RLP const& _d);
 
+enum class xenum_rlp_object_type {
+    invalid,
+    bytes,
+    list
+};
+using xrlp_object_type_t = xenum_rlp_object_type;
+
+struct xtop_rlp_object;
+using xrlp_object_t = xtop_rlp_object;
+
+struct xtop_rlp_bytes {
+    std::size_t size{0};
+    xbyte_t const * ptr;
+};
+
+struct xtop_rlp_list {
+    std::size_t size{0};
+    xrlp_object_t * ptr;
+
+};
+
+//struct xtop_rlp_decoded_raw {
+//    
+//};
+
+struct xtop_rlp_decoded_raw {
+    std::size_t offset{0};
+    std::size_t length{0};
+    xrlp_object_type_t type{xenum_rlp_object_type::invalid};
+
+    xtop_rlp_decoded_raw() = default;
+    xtop_rlp_decoded_raw(std::size_t offset, std::size_t length, xrlp_object_type_t type);
+};
+using xrlp_decoded_raw_t = xtop_rlp_decoded_raw;
+
+class xtop_rlp_decoder {
+public:
+    static void decode(xspan_t<xbyte_t const> rlp_encoded_bytes, std::vector<xrlp_decoded_raw_t> & result, std::error_code & ec);
+
+private:
+    static auto parse_length(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> xrlp_decoded_raw_t;
+    static auto to_integer(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> std::uint64_t;
+    static auto decode_list(xspan_t<xbyte_t const> rlp_encoded_bytes, std::error_code & ec) -> std::vector<xrlp_decoded_raw_t>;
+};
+using xrlp_object_parser_t = xtop_rlp_decoder;
+
+class xtop_rlp_encoder {
+public:
+    static auto encode(xbyte_t const * data, std::size_t length) -> xbytes_t;
+    static auto encode(char const * data, std::size_t length) -> xbytes_t;
+
+    static auto encode(std::uint64_t integer) -> xbytes_t;
+    static auto encode(u256 const & number) -> xbytes_t;
+
+    template <typename T>
+    static auto encode(T const & object) -> xbytes_t {
+        xbytes_t bytes = object.encode();
+
+        auto result = encode_length(bytes.size(), 0xC0);
+        std::copy(std::begin(bytes), std::end(bytes), std::back_inserter(result));
+
+        return result;
+    }
+
+private:
+    static auto encode_length(std::size_t length, std::uint8_t offset) -> xbytes_t;
+    static auto to_big_ending(uint64_t integer) -> xbytes_t;
+    static auto to_big_endian(u256 const & number) -> xbytes_t;
+};
+using xrlp_encoder_t = xtop_rlp_encoder;
 
 }
 }

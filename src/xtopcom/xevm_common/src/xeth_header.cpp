@@ -26,11 +26,15 @@
 
 #include "xbasic/xhex.h"
 #include "xcommon/rlp.h"
+#include "xcrypto/xckey.h"
+#include "xevm_common/xcrosschain/xbsc/xconfig.h"
 #include "xevm_common/xerror/xerror.h"
 #include "xutility/xhash.h"
 
 #include <cinttypes>
 #include <cstring>
+
+using namespace top::evm::crosschain::bsc;
 
 NS_BEG2(top, evm_common)
 
@@ -39,7 +43,7 @@ bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
            (this->transactions_root == rhs.transactions_root) && (this->receipts_root == rhs.receipts_root) && (this->bloom == rhs.bloom) && (this->difficulty == rhs.difficulty) &&
            (this->number == rhs.number) && (this->gas_limit == rhs.gas_limit) && (this->gas_used == rhs.gas_used) && (this->time == rhs.time) && (this->extra == rhs.extra) &&
            (this->mix_digest == rhs.mix_digest) && (this->nonce == rhs.nonce) && (this->base_fee_per_gas == rhs.base_fee_per_gas) &&
-           (this->withdrawals_root == rhs.withdrawals_root);
+           (this->withdrawals_root == rhs.withdrawals_root) && (this->blob_gas_used == rhs.blob_gas_used) && (this->excess_blob_gas == rhs.excess_blob_gas);
 }
 
 xh256_t xeth_header_t::calc_hash(bool const partial) const {
@@ -128,6 +132,16 @@ xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
 
     if (withdrawals_root.has_value()) {
         auto tmp = RLP::encode(withdrawals_root.value().asArray());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    if (blob_gas_used.has_value()) {
+        auto tmp = RLP::encode(blob_gas_used.value());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    if (excess_blob_gas.has_value()) {
+        auto tmp = RLP::encode(excess_blob_gas.value());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
@@ -232,6 +246,14 @@ void xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
         withdrawals_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[16]}};
     }
 
+    if (l.decoded.size() >= 18) {
+        blob_gas_used = evm_common::fromBigEndian<uint64_t>(l.decoded[17]);
+    }
+
+    if (l.decoded.size() >= 19) {
+        excess_blob_gas = evm_common::fromBigEndian<uint64_t>(l.decoded[18]);
+    }
+
     {
         xbytes_t rlp_bytes = bytes;
         auto const & encoded_bytes = encode_rlp();
@@ -323,6 +345,98 @@ bool xeth_header_info_t::decode_rlp(xbytes_t const & input) {
     parent_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[1]}};
     number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[2]));
     return true;
+}
+
+static uint256_t seal_hash(xeth_header_t const & header, bigint const & chainid) {
+    xbytes_t out;
+    {
+        auto tmp = RLP::encode(static_cast<u256>(chainid));
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.parent_hash.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.uncle_hash.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.miner.to_bytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.state_root.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.transactions_root.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.receipts_root.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.bloom.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(static_cast<u256>(header.difficulty));
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.number);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.gas_limit);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.gas_used);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.time);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        xbytes_t extra{header.extra.begin(), header.extra.begin() + (header.extra.size() - EXTRA_SEAL)};
+        auto tmp = RLP::encode(extra);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.mix_digest.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.nonce);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    auto value = RLP::encodeList(out);
+    return utl::xkeccak256_t::digest(value.data(), value.size());
+}
+
+static common::xeth_address_t ecrecover(xeth_header_t const & header, bigint const & chainid, std::error_code & ec) {
+    if (header.extra.size() < EXTRA_SEAL) {
+        xwarn("[ecrecover] header.extra size %zu < extraSeal %lu", header.extra.size(), EXTRA_SEAL);
+        return {};
+    }
+
+    uint8_t sig_array[65] = {0};
+    sig_array[0] = header.extra.back();
+    std::memcpy(sig_array + 1, header.extra.data() + header.extra.size() - EXTRA_SEAL, 64);
+    utl::xecdsasig_t sig(sig_array);
+
+    uint8_t pubkey[65] = {0};
+    auto const hash = seal_hash(header, chainid);
+    if (false == utl::xsecp256k1_t::get_publickey_from_signature_directly(sig, hash, pubkey)) {
+        xwarn("[ecrecover] get_publickey_from_signature_directly failed, extra: %s, seal_hash: %s", to_hex(header.extra).c_str(), to_hex(to_bytes(hash)).c_str());
+        return {};
+    }
+    auto digest = to_bytes(utl::xkeccak256_t::digest(&pubkey[1], sizeof(pubkey) - 1));
+    return common::xeth_address_t::build_from(std::next(std::begin(digest), 12), std::end(digest), ec);
 }
 
 NS_END2

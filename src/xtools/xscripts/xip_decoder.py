@@ -84,9 +84,9 @@ def main(argv):
     if zone_id == 0:
         if cluster_id == 1:
             if 1 <= group_id < 64:
-                print("\taddress type: auditor")
+                print("\taddress type: consensus.auditor")
             elif 64 <= group_id < 127:
-                print("\taddress type: validator")
+                print("\taddress type: consensus.validator")
         else:
             print("\taddress type: unknown cluster id")
     elif zone_id == 1:
@@ -108,7 +108,13 @@ def main(argv):
     elif zone_id == 3:
         print("\taddress type: frozen")
     elif zone_id == 4:
-        print("\taddress type: evm")
+        if cluster_id == 1:
+            if 1 <= group_id < 64:
+                print("\taddress type: evm.auditor")
+            elif 64 <= group_id < 127:
+                print("\taddress type: evm.validator")
+        else:
+            print("\taddress type: unknown cluster id")
     elif zone_id == 5:
         print("\taddress type: relay")
     elif zone_id == 13:

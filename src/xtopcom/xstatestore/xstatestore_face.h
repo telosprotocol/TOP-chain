@@ -60,9 +60,9 @@ class xstatestore_face_t {
     virtual bool                    accountindex_cache_unbroken(base::xvblock_t * table_block) const = 0;
     virtual bool                    get_accountindex_by_recent_blocks_cache(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const = 0;
     virtual bool                    get_accountindex(const std::string& table_height, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
-    virtual bool                        get_accountindex(xblock_number_t number, common::xtable_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
-    virtual bool                        get_accountindex(xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
-    virtual data::xaccountstate_ptr_t   get_accountstate(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
+    virtual bool                        get_accountindex(top::xblock_number_t number, common::xtable_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
+    virtual bool                        get_accountindex(top::xblock_number_t number, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
+    virtual data::xaccountstate_ptr_t   get_accountstate(top::xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;
     virtual std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> get_all_accountindex(base::xvblock_t * table_block, std::error_code & ec) const = 0;
 
     virtual base::xvblock_ptr_t     get_unit_block(xblock_number_t number, common::xaccount_address_t const & account_address) const = 0;

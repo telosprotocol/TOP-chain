@@ -119,7 +119,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
                 xwarn("[vnode mgr] vnode (%p) at address %s will outdate at logic time %" PRIu64, vnode.get(), vnode->address().to_string().c_str(), vnode->outdate_time());
             }
 
-            xwarn("[vnode mgr] vnode at address %s is outdated", cluster_address.to_string().c_str());
+            // xwarn("[vnode mgr] vnode at address %s is outdated", cluster_address.to_string().c_str());
             common::xip2_t xip{
                 cluster_address.network_id(),
                 cluster_address.zone_id(),
@@ -127,7 +127,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
                 cluster_address.group_id(),
                 outdated_group->group_size(),
                 outdated_group->associated_blk_height()};
-            purely_outdated_xips.push_back(std::move(xip));
+            purely_outdated_xips.push_back(xip);
         }
 
         if (faded_group != nullptr && faded_group->contains(account_address)) {
@@ -187,7 +187,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
 
             common::xip2_t xip{cluster_address.network_id(), cluster_address.zone_id(), cluster_address.cluster_id(), cluster_address.group_id()};
 
-            logical_outdated_xips.push_back(std::move(xip));
+            logical_outdated_xips.push_back(xip);
         }
     }
 

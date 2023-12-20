@@ -34,8 +34,6 @@ NS_BEG2(top, xrpc)
 
 using filter_handler = std::function<void(xjson_proc_t &)>;
 
-#define ADDRESS_LENGTH 35
-
 class xfilter_manager {
 public:
     xfilter_manager();

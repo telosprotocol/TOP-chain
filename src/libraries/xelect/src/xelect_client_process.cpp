@@ -228,7 +228,6 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
         auto const update_exchange_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
 #endif
         process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr}, current_time, update_exchange_interval);
-        // }
     }
 
     {

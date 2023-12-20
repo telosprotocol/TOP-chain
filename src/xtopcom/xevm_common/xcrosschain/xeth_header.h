@@ -39,6 +39,8 @@ struct xeth_header_t {
     // base_fee was added by EIP-1559 and is ignored in legacy headers.
     optional<uint64_t> base_fee_per_gas;
     optional<xh256_t> withdrawals_root;
+    optional<uint64_t> blob_gas_used;
+    optional<uint64_t> excess_blob_gas;
 
     mutable xh256_t hash;
     mutable xh256_t partial_hash;
@@ -76,5 +78,7 @@ struct xeth_header_info_t {
     xh256_t parent_hash;
     bigint number;
 };
+
+common::xeth_address_t ecrecover(xeth_header_t const & header, std::error_code & ec);
 
 NS_END2

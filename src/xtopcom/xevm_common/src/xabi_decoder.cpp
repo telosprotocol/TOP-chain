@@ -268,4 +268,5 @@ xbytes_t xtop_abi_decoder::extract<xbytes_t>(std::error_code & ec) const {
     return decode_bytes(ec);
 }
 
+
 NS_END2

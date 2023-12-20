@@ -5,6 +5,9 @@
 #pragma once
 
 #include "xdata/xnative_contract_address.h"
+#include "xevm_common/xcrosschain/xbsc/xconfig.h"
+#include "xevm_common/xcrosschain/xbsc/xsnapshot.h"
+#include "xevm_common/xcrosschain/xbsc/xvote.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 #include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"
@@ -29,13 +32,15 @@ public:
     bool disable_reset(state_ptr state);
 
 private:
+    mutable std::unordered_map<xh256_t, top::evm::crosschain::bsc::xsnapshot_t> recent_snapshots_;
+
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, xvalidators_snapshot_t & snap, state_ptr state) const;
     bool record(const xeth_header_t & header, const xvalidators_snapshot_t & snap, state_ptr state);
     bool rebuild(const xeth_header_t & header, const xvalidators_snap_info_t & last_info, const xvalidators_snap_info_t & cur_info, state_ptr state);
     void release(const bigint number, state_ptr state);
     // last hash @160
-    h256 get_last_hash(state_ptr state) const;
-    bool set_last_hash(const h256 hash, state_ptr state);
+    h256 get_last_hash(state_ptr const & state) const;
+    bool set_last_hash(h256 const & hash, state_ptr const & state);
     // effective hashes @161
     h256 get_effective_hash(const bigint height, state_ptr state) const;
     bool set_effective_hash(const bigint height, const h256 hash, state_ptr state);
@@ -55,6 +60,43 @@ private:
     // flag @165
     int get_flag(state_ptr state) const;
     bool set_flag(state_ptr state);
+
+    // get/set pre last snapshot @166
+    top::evm::crosschain::bsc::xsnapshot_t pre_last_validator_set(state_ptr & state, std::error_code & ec) const;
+    void pre_last_validator_set(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
+
+    // get/set last snapshot @167
+    top::evm::crosschain::bsc::xsnapshot_t last_validator_set(state_ptr & state, std::error_code & ec) const;
+    void last_validator_set(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
+
+    // get/set recent snapshot @168
+    top::evm::crosschain::bsc::xsnapshot_t get_recent_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec) const;
+    void add_recent_snapshot(top::evm::crosschain::bsc::xsnapshot_t const & snapshot, state_ptr & state, std::error_code & ec);
+    void del_recent_snapshot(xh256_t const & snapshot_hash, state_ptr & state, std::error_code & ec);
+
+    static bool verify_fork_hashes(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & header, bool uncle);
+    static bool verify_eip1559_header(top::evm::crosschain::bsc::xchain_config_t const & chain_config, xeth_header_t const & parent, xeth_header_t const & header);
+    static void verify_eip4844_header(xeth_header_t const & parent, xeth_header_t const & header, std::error_code & ec);
+    static uint64_t calc_base_fee(top::evm::crosschain::bsc::xchain_config_t const &, xeth_header_t const &);
+    bool verify_cascading_fields(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                 xeth_header_t const & header,
+                                 xspan_t<xeth_header_t const> parents,
+                                 state_ptr state,
+                                 std::error_code & ec) const;
+    bool verify_headers(std::vector<xeth_header_t> const & headers, state_ptr state) const;
+    bool verify_header(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, state_ptr state) const;
+    xeth_header_t get_parent(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const;
+    top::evm::crosschain::bsc::xsnapshot_t snapshot(uint64_t number, xh256_t const & hash, xspan_t<xeth_header_t const> parents, state_ptr state, std::error_code & ec) const;
+    void verify_vote_attestation(top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                 xeth_header_t const & header,
+                                 xspan_t<xeth_header_t const> parents,
+                                 state_ptr state,
+                                 std::error_code & ec) const;
+    top::evm::crosschain::bsc::xvote_attestation_t get_vote_attestation_from_header(xeth_header_t const & header,
+                                                                                    top::evm::crosschain::bsc::xchain_config_t const & chain_config,
+                                                                                    std::error_code & ec) const;
+    void get_justified_number_and_hash(xeth_header_t const & header, state_ptr const & state, uint64_t & justified_number, xh256_t & justified_hash, std::error_code & ec) const;
+    void verify_seal(xeth_header_t const & header, xspan_t<xeth_header_t const> parents, std::error_code & ec) const;
 };
 using xevm_bsc_client_contract_t = xtop_evm_bsc_client_contract;
 
