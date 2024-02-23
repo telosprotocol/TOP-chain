@@ -180,7 +180,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         if (m_archive_flag) {
             xdbg("local arc query method: %s", method.c_str());
             json_proc.m_request_json["params"]["version"] = version;
-            string strErrorMsg = RPC_OK_MSG;
+            std::string strErrorMsg = RPC_OK_MSG;
             uint32_t nErrorCode = 0;
             m_rpc_query_mgr->call_method(method, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
             json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
@@ -301,7 +301,7 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
         std::string account;
         if (json_proc.m_account_set.empty())
             account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
-        else 
+        else
             account = *json_proc.m_account_set.begin();
         std::error_code ec;
         auto account_address = common::xaccount_address_t::build_from(account, ec);
