@@ -7,13 +7,16 @@
 #include "xbasic/xbitset.h"
 #include "xbasic/xfixed_bytes.h"
 #include "xbasic/xfixed_hash.h"
+#include "xbasic/xoptional.hpp"
 #include "xcommon/common.h"
 #include "xcommon/rlp.h"
 #include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_common/xerror/xerror.h"
 #include "xevm_runner/evm_engine_interface.h"
 
-#include <bitset>
+#include <array>
+#include <cassert>
+#include <initializer_list>
 
 NS_BEG3(top, evm_common, eth2)
 
@@ -21,8 +24,62 @@ XINLINE_CONSTEXPR size_t PUBLIC_KEY_BYTES_LEN{48};
 XINLINE_CONSTEXPR size_t SIGNATURE_BYTES_LEN{96};
 XINLINE_CONSTEXPR size_t SYNC_COMMITTEE_BITS_SIZE{512};
 
+XINLINE_CONSTEXPR uint64_t SLOTS_PER_EPOCH{32};
+XINLINE_CONSTEXPR uint64_t EPOCHS_PER_SYNC_COMMITTEE_PERIOD{256};
+
+using xslot_t = uint64_t;
+using xepoch_t = uint64_t;
+using xperiod_t = uint64_t;
+
 using xbytes48_t = xfixed_bytes_t<PUBLIC_KEY_BYTES_LEN>;
 using xbytes96_t = xfixed_bytes_t<SIGNATURE_BYTES_LEN>;
+
+constexpr auto compute_epoch_at_slot(xslot_t const slot)->xepoch_t {
+    return slot / SLOTS_PER_EPOCH;
+}
+
+constexpr auto compute_sync_committee_period(xslot_t const slot) ->xperiod_t  {
+    return compute_epoch_at_slot(slot) / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
+}
+
+enum class xtop_network_id : uint8_t { mainnet, kiln, goerli, sepolia };
+using xnetwork_id_t = xtop_network_id;
+
+struct xtop_proof_size {
+    size_t beacon_block_body_tree_depth{};
+    size_t l1_beacon_block_body_tree_execution_payload_index{};
+    size_t l2_execution_payload_tree_execution_block_index{};
+    size_t l1_beacon_block_body_proof_size{};
+    size_t l2_execution_payload_proof_size{};
+    size_t execution_proof_size{};
+
+    xtop_proof_size() = default;
+    xtop_proof_size(size_t const beacon_block_body_tree_depth,
+                    size_t const l1_beacon_block_body_tree_execution_payload_index,
+                    size_t const l2_execution_payload_tree_execution_block_index,
+                    size_t const l1_beacon_block_body_proof_size,
+                    size_t const l2_execution_payload_proof_size,
+                    size_t const execution_proof_size)
+      : beacon_block_body_tree_depth{beacon_block_body_tree_depth}
+      , l1_beacon_block_body_tree_execution_payload_index{l1_beacon_block_body_tree_execution_payload_index}
+      , l2_execution_payload_tree_execution_block_index{l2_execution_payload_tree_execution_block_index}
+      , l1_beacon_block_body_proof_size{l1_beacon_block_body_proof_size}
+      , l2_execution_payload_proof_size{l2_execution_payload_proof_size}
+      , execution_proof_size{execution_proof_size} {
+    }
+};
+using xproof_size_t = xtop_proof_size;
+
+struct xtop_fork_version {
+    std::array<uint8_t, 4> fork_version{{0, 0, 0, 0}};
+
+    xtop_fork_version() = default;
+    xtop_fork_version(std::initializer_list<uint8_t> il) {
+        assert(il.size() == 4);
+        std::copy(il.begin(), il.end(), fork_version.begin());
+    }
+};
+using xfork_version_t  = xtop_fork_version;
 
 using xclient_mode_t = enum : uint8_t {
     invalid = 0,
@@ -798,5 +855,127 @@ struct xinit_input_t {
         }
     }
 };
+
+struct xtop_network_config {
+    xh256_t genesis_validators_root;
+
+    xfork_version_t bellatrix_fork_version{};
+    uint64_t bellatrix_fork_epoch{};
+
+    xfork_version_t capella_fork_version;
+    uint64_t capella_fork_epoch{};
+
+    xfork_version_t deneb_fork_version;
+    uint64_t deneb_fork_epoch{std::numeric_limits<uint64_t>::max()};
+
+    explicit xtop_network_config(xnetwork_id_t const network_id) {
+        switch (network_id) {
+        case xnetwork_id_t::mainnet: {
+            genesis_validators_root = xh256_t{std::vector<uint8_t>{
+                0x4b, 0x36, 0x3d, 0xb9, 0x4e, 0x28, 0x61, 0x20, 0xd7, 0x6e, 0xb9, 0x05, 0x34, 0x0f, 0xdd, 0x4e,
+                0x54, 0xbf, 0xe9, 0xf0, 0x6b, 0xf3, 0x3f, 0xf6, 0xcf, 0x5a, 0xd2, 0x7f, 0x51, 0x1b, 0xfe, 0x95,
+            }};
+
+            bellatrix_fork_version = xfork_version_t{0x02, 0x00, 0x00, 0x00};
+            bellatrix_fork_epoch = 144896;
+
+            capella_fork_version = xfork_version_t{0x03, 0x00, 0x00, 0x00};
+            capella_fork_epoch = 194048;
+
+            deneb_fork_version = xfork_version_t{0x04, 0x00, 0x00, 0x00};
+            deneb_fork_epoch = 269568;
+
+            break;
+        }
+
+        case xnetwork_id_t::goerli: {
+            genesis_validators_root = xh256_t{std::vector<uint8_t>{
+                0x04, 0x3d, 0xb0, 0xd9, 0xa8, 0x38, 0x13, 0x55, 0x1e, 0xe2, 0xf3, 0x34, 0x50, 0xd2, 0x37, 0x97,
+                0x75, 0x7d, 0x43, 0x09, 0x11, 0xa9, 0x32, 0x05, 0x30, 0xad, 0x8a, 0x0e, 0xab, 0xc4, 0x3e, 0xfb,
+            }};
+
+            bellatrix_fork_version = xfork_version_t{0x02, 0x00, 0x10, 0x20};
+            bellatrix_fork_epoch = 112260;
+
+            capella_fork_version = xfork_version_t{0x03, 0x00, 0x10, 0x20};
+            capella_fork_epoch = 162304;
+
+            deneb_fork_version = xfork_version_t{0x04, 0x00, 0x10, 0x20};
+            deneb_fork_epoch = 231680;
+
+            break;
+        }
+
+        case xnetwork_id_t::sepolia: {
+            genesis_validators_root = xh256_t{std::vector<uint8_t>{
+                0xd8, 0xea, 0x17, 0x1f, 0x3c, 0x94, 0xae, 0xa2, 0x1e, 0xbc, 0x42, 0xa1, 0xed, 0x61, 0x05, 0x2a,
+                0xcf, 0x3f, 0x92, 0x09, 0xc0, 0x0e, 0x4e, 0xfb, 0xaa, 0xdd, 0xac, 0x09, 0xed, 0x9b, 0x80, 0x78,
+            }};
+
+            bellatrix_fork_version = xfork_version_t{0x90, 0x00, 0x00, 0x71};
+            bellatrix_fork_epoch = 100;
+
+            capella_fork_version = xfork_version_t{0x90, 0x00, 0x00, 0x72};
+            capella_fork_epoch = 56832,
+
+            deneb_fork_version = xfork_version_t{0x90, 0x00, 0x00, 0x73};
+            deneb_fork_epoch = 132608;
+
+            break;
+        }
+        default: {
+            assert(false);
+            break;
+        }
+        }
+    }
+
+    auto compute_fork_version(xepoch_t epoch) const -> optional<xfork_version_t> {
+        if (epoch >= this->deneb_fork_epoch) {
+            return this->deneb_fork_version;
+        }
+
+        if (epoch >= this->capella_fork_epoch) {
+            return this->capella_fork_version;
+        }
+
+        if (epoch >= this->bellatrix_fork_epoch) {
+            return this->bellatrix_fork_version;
+        }
+
+        return top::nullopt;
+    }
+
+    auto compute_fork_version_by_slot(xslot_t slot) const -> optional<xfork_version_t> {
+        return this->compute_fork_version(compute_epoch_at_slot(slot));
+    }
+
+    auto compute_proof_size(xepoch_t const epoch) const -> xproof_size_t {
+        if (epoch >= this->deneb_fork_epoch) {
+            return xproof_size_t{
+                4,   // beacon_block_body_tree_depth
+                9,   // l1_beacon_block_body_tree_execution_payload_index
+                12,  // l2_execution_payload_tree_execution_block_index
+                4,   // l1_beacon_block_body_proof_size
+                5,   // l2_execution_payload_proof_size
+                9,   // execution_proof_size
+            };
+        }
+
+        return xproof_size_t{
+            4,   // beacon_block_body_tree_depth
+            9,   // l1_beacon_block_body_tree_execution_payload_index
+            12,  // l2_execution_payload_tree_execution_block_index
+            4,   // l1_beacon_block_body_proof_size
+            4,   // l2_execution_payload_proof_size
+            8,   // execution_proof_size
+        };
+    }
+
+    auto compute_proof_size_by_slot(xslot_t const slot) const -> xproof_size_t {
+        return this->compute_proof_size(compute_epoch_at_slot(slot));
+    }
+};
+using xnetwork_config_t = xtop_network_config;
 
 NS_END3
