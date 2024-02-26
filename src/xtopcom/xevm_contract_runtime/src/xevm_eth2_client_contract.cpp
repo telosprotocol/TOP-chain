@@ -13,15 +13,6 @@
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 using namespace evm_common::eth2;
 
-// enum {
-    // epochs_per_sync_committee_period = 256U,
-    // slots_per_epoch = 32U,
-    // min_sync_committee_participants = 1U,
-    // finality_tree_depth = 6U,   // = floorlog2(105)
-    // finality_tree_index = 41U,  // = 105 % (1 << (floorlog2(105)))
-    // sync_committee_tree_depth = 5U,
-    // sync_committee_tree_index = 23U
-// };
 
 constexpr static uint32_t floorlog2(uint32_t x) {
     return x == 0 ? 0 : 31 - __builtin_clz(x);
@@ -41,27 +32,20 @@ constexpr static uint32_t FINALITY_TREE_INDEX{get_subtree_index(FINALIZED_ROOT_I
 constexpr static uint32_t SYNC_COMMITTEE_TREE_DEPTH{floorlog2(NEXT_SYNC_COMMITTEE_INDEX)};
 constexpr static uint32_t SYNC_COMMITTEE_TREE_INDEX{get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX)};
 
-constexpr static size_t BEACON_BLOCK_BODY_TREE_DEPTH{4};
-constexpr static size_t L1_BEACON_BLOCK_BODY_TREE_EXECUTION_PAYLOAD_INDEX{9};
-constexpr static size_t L2_EXECUTION_PAYLOAD_TREE_EXECUTION_BLOCK_INDEX{12};
-constexpr static size_t L1_BEACON_BLOCK_BODY_PROOF_SIZE{4};
-constexpr static size_t L2_EXECUTION_PAYLOAD_PROOF_SIZE{4};
-constexpr static size_t EXECUTION_PROOF_SIZE{L1_BEACON_BLOCK_BODY_PROOF_SIZE + L2_EXECUTION_PAYLOAD_PROOF_SIZE};
-
 constexpr uint64_t hashes_gc_threshold = 51000;
 
-static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
-    assert(bits.size() % 2 == 0);
-    auto bin_str = data::hex_str_to_bin_str({bits.begin(), bits.end()});
-    assert(bin_str.size() % 8 == 0);
-    std::string bin_str_lsb;
-    for (auto it = bin_str.begin(); it != bin_str.end(); it += 8) {
-        for (auto i = 0; i < 8; i++) {
-            bin_str_lsb.push_back(*(it + 7 - i));
-        }
-    }
-    return bin_str_lsb;
-}
+//static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
+//    assert(bits.size() % 2 == 0);
+//    auto bin_str = data::hex_str_to_bin_str({bits.begin(), bits.end()});
+//    assert(bin_str.size() % 8 == 0);
+//    std::string bin_str_lsb;
+//    for (auto it = bin_str.begin(); it != bin_str.end(); it += 8) {
+//        for (auto i = 0; i < 8; i++) {
+//            bin_str_lsb.push_back(*(it + 7 - i));
+//        }
+//    }
+//    return bin_str_lsb;
+//}
 
 static std::vector<xbytes48_t> get_participant_pubkeys(std::vector<xbytes48_t> const & public_keys,
                                                        xbitset_t<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits) {
@@ -1340,8 +1324,16 @@ bool xtop_evm_eth2_client_contract::is_light_client_update_allowed(state_ptr sta
 bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(evm_common::eth2::xnetwork_config_t const & config, xheader_update_t const & header_update) const {
     std::vector<xh256_t> const & branch = header_update.execution_hash_branch;
     auto const & proof_size = config.compute_proof_size_by_slot(header_update.beacon_header.slot);
-    if (branch.size() != proof_size.execution_proof_size) {
-        xwarn("xtop_evm_eth2_client_contract::validate_beacon_block_header_update execution_hash_branch size error");
+
+    xinfo("xtop_evm_eth2_client_contract::validate_beacon_block_header_update. execution hash branch size:%uz execution proof size:%uz header update slot:%" PRIu64
+          " header update epoch:%" PRIu64,
+          branch.size(),
+          proof_size.execution_proof_size,
+          header_update.beacon_header.slot,
+          compute_epoch_at_slot(header_update.beacon_header.slot));
+
+    if (branch.size() != proof_size.execution_proof_size && branch.size() != 8 && branch.size() != 9) {
+        xwarn("xtop_evm_eth2_client_contract::validate_beacon_block_header_update execution_hash_branch size error. branch size: %uz, proof size:%uz", branch.size(), proof_size.execution_proof_size);
         return false;
     }
 
@@ -1352,8 +1344,8 @@ bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(evm_comm
     if (false == unsafe_merkle_proof(header_update.execution_block_hash.data(),
                                      l2_proof.data()->data(),
                                      l2_proof.size() * xh256_t::size(),
-                                     L2_EXECUTION_PAYLOAD_PROOF_SIZE,
-                                     L2_EXECUTION_PAYLOAD_TREE_EXECUTION_BLOCK_INDEX,
+                                     proof_size.l2_execution_payload_proof_size,
+                                     proof_size.l2_execution_payload_tree_execution_block_index,
                                      execution_payload_hash.data())) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
         return false;
@@ -1363,8 +1355,8 @@ bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(evm_comm
     if (false == unsafe_merkle_proof(execution_payload_hash.data(),
                                      l1_proof.data()->data(),
                                      l1_proof.size() * xh256_t::size(),
-                                     BEACON_BLOCK_BODY_TREE_DEPTH,
-                                     L1_BEACON_BLOCK_BODY_TREE_EXECUTION_PAYLOAD_INDEX,
+                                     proof_size.beacon_block_body_tree_depth,
+                                     proof_size.l1_beacon_block_body_tree_execution_payload_index,
                                      body_root.data())) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
         return false;
