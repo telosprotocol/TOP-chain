@@ -916,7 +916,7 @@ struct xtop_network_config {
             bellatrix_fork_epoch = 100;
 
             capella_fork_version = xfork_version_t{0x90, 0x00, 0x00, 0x72};
-            capella_fork_epoch = 56832,
+            capella_fork_epoch = 56832;
 
             deneb_fork_version = xfork_version_t{0x90, 0x00, 0x00, 0x73};
             deneb_fork_epoch = 132608;
@@ -930,7 +930,7 @@ struct xtop_network_config {
         }
     }
 
-    auto compute_fork_version(xepoch_t epoch) const -> optional<xfork_version_t> {
+    auto compute_fork_version(xepoch_t const epoch) const -> optional<xfork_version_t> {
         if (epoch >= this->deneb_fork_epoch) {
             return this->deneb_fork_version;
         }
@@ -946,7 +946,7 @@ struct xtop_network_config {
         return top::nullopt;
     }
 
-    auto compute_fork_version_by_slot(xslot_t slot) const -> optional<xfork_version_t> {
+    auto compute_fork_version_by_slot(xslot_t const slot) const -> optional<xfork_version_t> {
         return this->compute_fork_version(compute_epoch_at_slot(slot));
     }
 
