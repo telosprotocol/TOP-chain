@@ -1325,12 +1325,12 @@ bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(evm_comm
     std::vector<xh256_t> const & branch = header_update.execution_hash_branch;
     auto const & proof_size = config.compute_proof_size_by_slot(header_update.beacon_header.slot);
 
-    xinfo("xtop_evm_eth2_client_contract::validate_beacon_block_header_update. execution hash branch size:%zu execution proof size:%zu header update slot:%" PRIu64
-          " header update epoch:%" PRIu64,
-          branch.size(),
-          proof_size.execution_proof_size,
-          header_update.beacon_header.slot,
-          compute_epoch_at_slot(header_update.beacon_header.slot));
+    //xinfo("xtop_evm_eth2_client_contract::validate_beacon_block_header_update. execution hash branch size:%zu execution proof size:%zu header update slot:%" PRIu64
+    //      " header update epoch:%" PRIu64,
+    //      branch.size(),
+    //      proof_size.execution_proof_size,
+    //      header_update.beacon_header.slot,
+    //      compute_epoch_at_slot(header_update.beacon_header.slot));
 
     if (branch.size() != proof_size.execution_proof_size) {
         xwarn("xtop_evm_eth2_client_contract::validate_beacon_block_header_update execution_hash_branch size error. branch size: %zu, proof size:%zu", branch.size(), proof_size.execution_proof_size);
