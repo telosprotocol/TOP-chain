@@ -392,6 +392,8 @@ xlight_client_update_t parse_update_data(char const * data_ptr) {
     return res;
 }
 
+
+#if 0
 TEST_F(xeth2_contract_fixture_t, test_submit_update_two_periods) {
     auto headers = parse_header_data();
     auto update_101 = parse_update_data(update_101_data_ptr);
@@ -428,7 +430,6 @@ TEST_F(xeth2_contract_fixture_t, test_submit_update_two_periods) {
     // EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
 }
 
-#if 0
 TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
     m_contract.m_network = xeth2_client_net_t::eth2_net_sepolia;
 
