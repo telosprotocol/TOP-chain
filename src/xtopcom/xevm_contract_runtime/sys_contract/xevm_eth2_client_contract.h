@@ -13,17 +13,10 @@
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
-enum class xeth2_client_net_t : uint8_t {
-    eth2_net_mainnet = 0,
-    eth2_net_kiln,
-    eth2_net_goerli,
-    eth2_net_sepolia,
-};
-
 class xtop_evm_eth2_client_contract : public xtop_evm_syscontract_face {
 public:
     xtop_evm_eth2_client_contract();
-    xtop_evm_eth2_client_contract(xeth2_client_net_t version);
+    xtop_evm_eth2_client_contract(evm_common::eth2::xnetwork_id_t version);
     ~xtop_evm_eth2_client_contract() override = default;
 
     bool execute(xbytes_t input,
@@ -89,13 +82,13 @@ private:
     bool set_unfinalized_tail_execution_header_info(state_ptr const & state, evm_common::eth2::xexecution_header_info_t const & info);
     bool set_unfinalized_head_execution_header_info(state_ptr const & state, evm_common::eth2::xexecution_header_info_t const & info);
 
-    bool validate_beacon_block_header_update(evm_common::eth2::xheader_update_t const & header_update) const;
+    bool validate_beacon_block_header_update(evm_common::eth2::xnetwork_config_t const & config, evm_common::eth2::xheader_update_t const & header_update) const;
 
     int32_t create_client_mode_property_if_necessary(state_ptr state);
     int32_t create_unfinalized_head_execution_header_property_if_necessary(state_ptr state);
     int32_t create_unfinalized_tail_execution_header_property_if_necessary(state_ptr state);
 
-    xeth2_client_net_t m_network;
+    evm_common::eth2::xnetwork_id_t m_network;
     std::set<std::string> m_whitelist;
 };
 using xevm_eth2_client_contract_t = xtop_evm_eth2_client_contract;

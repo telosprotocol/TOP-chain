@@ -488,7 +488,10 @@ void xrpc_eth_query_manager::eth_call(Json::Value & js_req, Json::Value & js_rsp
     ETH_ADDRESS_CHECK_VALID(from)
 
     std::string data;
-    std::string jdata = safe_get_json_value(js_req[0], "data");
+    std::string jdata = safe_get_json_value(js_req[0], "input");
+    if (jdata.empty()) {
+        jdata = safe_get_json_value(js_req[0], "data");
+    }
     if (jdata.empty()) {
         js_rsp["result"] = "0x";
         return;
@@ -637,7 +640,10 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     ETH_ADDRESS_CHECK_VALID(from)
 
     std::string data;
-    std::string jdata = safe_get_json_value(js_req[0], "data");
+    std::string jdata = safe_get_json_value(js_req[0], "input");
+    if (jdata.empty()) {
+        jdata = safe_get_json_value(js_req[0], "data");
+    }
     if (jdata.empty()) {
         js_rsp["result"] = "0x5208";
         return;
