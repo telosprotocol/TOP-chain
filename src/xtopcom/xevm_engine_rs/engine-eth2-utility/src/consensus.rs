@@ -54,6 +54,8 @@ pub struct NetworkConfig {
     pub bellatrix_fork_epoch: u64,
     pub capella_fork_version: ForkVersion,
     pub capella_fork_epoch: u64,
+    pub deneb_fork_version: ForkVersion,
+    pub deneb_fork_epoch: u64,
 }
 
 impl NetworkConfig {
@@ -69,6 +71,8 @@ impl NetworkConfig {
                 bellatrix_fork_epoch: 144896,
                 capella_fork_version: [0x03, 0x00, 0x00, 0x00],
                 capella_fork_epoch: 194048,
+                deneb_fork_version: [0x04, 0x00, 0x00, 0x00],
+                deneb_fork_epoch: 269568,
             },
             Network::Goerli => Self {
                 genesis_validators_root: [
@@ -80,6 +84,8 @@ impl NetworkConfig {
                 bellatrix_fork_epoch: 112260,
                 capella_fork_version: [0x03, 0x00, 0x10, 0x20],
                 capella_fork_epoch: 162304,
+                deneb_fork_version: [0x04, 0x00, 0x10, 0x20],
+                deneb_fork_epoch: 231680,
             },
             Network::Kiln => Self {
                 genesis_validators_root: [
@@ -91,6 +97,8 @@ impl NetworkConfig {
                 bellatrix_fork_epoch: 150,
                 capella_fork_version: [0x70, 0x00, 0x00, 0x71],
                 capella_fork_epoch: 150,
+                deneb_fork_version: [0x90, 0x00, 0x00, 0x73],
+                deneb_fork_epoch: 132608,
             },
             Network::Sepolia => Self {
                 genesis_validators_root: [
@@ -100,11 +108,17 @@ impl NetworkConfig {
                 bellatrix_fork_epoch: 100,
                 capella_fork_version: [0x90, 0x00, 0x00, 0x72],
                 capella_fork_epoch: 56832,
+                deneb_fork_version: [0x90, 0x00, 0x00, 0x73],
+                deneb_fork_epoch: 132608,
             },
         }
     }
 
     pub fn compute_fork_version(&self, epoch: Epoch) -> Option<ForkVersion> {
+        if epoch >= self.deneb_fork_epoch {
+            return Some(self.deneb_fork_version);
+        }
+
         if epoch>= self.capella_fork_epoch {
             return Some(self.capella_fork_version);
         }

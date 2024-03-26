@@ -34,7 +34,7 @@ xtop_evm_contract_manager::xtop_evm_contract_manager() {
     add_sys_contract(evm_bsc_client_contract_address, top::make_unique<sys_contract::xtop_evm_bsc_client_contract>());
     add_sys_contract(evm_heco_client_contract_address, top::make_unique<sys_contract::xtop_evm_heco_client_contract>());
 #ifdef ETH2_SEPOLIA
-    add_sys_contract(evm_eth2_client_contract_address, top::make_unique<sys_contract::xtop_evm_eth2_client_contract>(contract_runtime::evm::sys_contract::xeth2_client_net_t::eth2_net_sepolia));
+    add_sys_contract(evm_eth2_client_contract_address, top::make_unique<sys_contract::xtop_evm_eth2_client_contract>(evm_common::eth2::xnetwork_id_t::sepolia));
 #else
     add_sys_contract(evm_eth2_client_contract_address, top::make_unique<sys_contract::xtop_evm_eth2_client_contract>());
 #endif

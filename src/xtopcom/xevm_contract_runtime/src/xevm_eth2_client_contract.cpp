@@ -11,18 +11,8 @@
 #include "xevm_common/xabi_decoder.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
-
 using namespace evm_common::eth2;
 
-// enum {
-    // epochs_per_sync_committee_period = 256U,
-    // slots_per_epoch = 32U,
-    // min_sync_committee_participants = 1U,
-    // finality_tree_depth = 6U,   // = floorlog2(105)
-    // finality_tree_index = 41U,  // = 105 % (1 << (floorlog2(105)))
-    // sync_committee_tree_depth = 5U,
-    // sync_committee_tree_index = 23U
-// };
 
 constexpr static uint32_t floorlog2(uint32_t x) {
     return x == 0 ? 0 : 31 - __builtin_clz(x);
@@ -32,9 +22,8 @@ constexpr static uint32_t get_subtree_index(uint32_t generalized_index) {
     return generalized_index % (1 << floorlog2(generalized_index));
 }
 
-constexpr static uint64_t EPOCHS_PER_SYNC_COMMITTEE_PERIOD{256};
+
 constexpr static uint64_t MIN_SYNC_COMMITTEE_PARTICIPANTS{1};
-constexpr static uint64_t SLOTS_PER_EPOCH{32};
 
 constexpr static uint32_t FINALIZED_ROOT_INDEX{105};
 constexpr static uint32_t NEXT_SYNC_COMMITTEE_INDEX{55};
@@ -43,35 +32,20 @@ constexpr static uint32_t FINALITY_TREE_INDEX{get_subtree_index(FINALIZED_ROOT_I
 constexpr static uint32_t SYNC_COMMITTEE_TREE_DEPTH{floorlog2(NEXT_SYNC_COMMITTEE_INDEX)};
 constexpr static uint32_t SYNC_COMMITTEE_TREE_INDEX{get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX)};
 
-constexpr static size_t BEACON_BLOCK_BODY_TREE_DEPTH{4};
-constexpr static size_t L1_BEACON_BLOCK_BODY_TREE_EXECUTION_PAYLOAD_INDEX{9};
-constexpr static size_t L2_EXECUTION_PAYLOAD_TREE_EXECUTION_BLOCK_INDEX{12};
-constexpr static size_t L1_BEACON_BLOCK_BODY_PROOF_SIZE{4};
-constexpr static size_t L2_EXECUTION_PAYLOAD_PROOF_SIZE{4};
-constexpr static size_t EXECUTION_PROOF_SIZE{L1_BEACON_BLOCK_BODY_PROOF_SIZE + L2_EXECUTION_PAYLOAD_PROOF_SIZE};
-
 constexpr uint64_t hashes_gc_threshold = 51000;
 
-constexpr static uint64_t compute_epoch_at_slot(uint64_t const slot) {
-    return slot / SLOTS_PER_EPOCH;
-}
-
-constexpr static uint64_t compute_sync_committee_period(uint64_t const slot) {
-    return compute_epoch_at_slot(slot) / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
-}
-
-static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
-    assert(bits.size() % 2 == 0);
-    auto bin_str = data::hex_str_to_bin_str({bits.begin(), bits.end()});
-    assert(bin_str.size() % 8 == 0);
-    std::string bin_str_lsb;
-    for (auto it = bin_str.begin(); it != bin_str.end(); it += 8) {
-        for (auto i = 0; i < 8; i++) {
-            bin_str_lsb.push_back(*(it + 7 - i));
-        }
-    }
-    return bin_str_lsb;
-}
+//static std::string covert_committee_bits_to_bin_str(xbytes_t const & bits) {
+//    assert(bits.size() % 2 == 0);
+//    auto bin_str = data::hex_str_to_bin_str({bits.begin(), bits.end()});
+//    assert(bin_str.size() % 8 == 0);
+//    std::string bin_str_lsb;
+//    for (auto it = bin_str.begin(); it != bin_str.end(); it += 8) {
+//        for (auto i = 0; i < 8; i++) {
+//            bin_str_lsb.push_back(*(it + 7 - i));
+//        }
+//    }
+//    return bin_str_lsb;
+//}
 
 static std::vector<xbytes48_t> get_participant_pubkeys(std::vector<xbytes48_t> const & public_keys,
                                                        xbitset_t<evm_common::eth2::SYNC_COMMITTEE_BITS_SIZE> const & sync_committee_bits) {
@@ -84,7 +58,7 @@ static std::vector<xbytes48_t> get_participant_pubkeys(std::vector<xbytes48_t> c
     return ret;
 }
 
-xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract() : m_network(xeth2_client_net_t::eth2_net_mainnet) {
+xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract() : m_network{evm_common::eth2::xnetwork_id_t::mainnet} {
     m_whitelist = load_whitelist();
     if (m_whitelist.empty()) {
         xwarn("[xtop_evm_eth2_client_contract] whitelist empty!");
@@ -92,7 +66,7 @@ xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract() : m_network(xeth2
     xinfo("xtop_evm_eth2_client_contract network: %u", m_network);
 }
 
-xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract(xeth2_client_net_t const version) : m_network(version) {
+xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract(evm_common::eth2::xnetwork_id_t const version) : m_network(version) {
     m_whitelist = load_whitelist();
     if (m_whitelist.empty()) {
         xwarn("[xtop_evm_eth2_client_contract] whitelist empty!");
@@ -807,7 +781,7 @@ bool xtop_evm_eth2_client_contract::submit_execution_header(state_ptr const & st
 bool xtop_evm_eth2_client_contract::validate_light_client_update(state_ptr const & state, xlight_client_update_t const & update) {
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     if (finalized_beacon_header.empty()) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch get_finalized_beacon_header empty");
+        xwarn("xtop_evm_eth2_client_contract::validate_light_client_update get_finalized_beacon_header empty");
         return false;
     }
 
@@ -892,7 +866,8 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
         return false;
     }
 
-    if (false == validate_beacon_block_header_update(update.finality_update.header_update)) {
+    xnetwork_config_t const config{m_network};
+    if (false == validate_beacon_block_header_update(config, update.finality_update.header_update)) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch validate_beacon_block_header_update error");
         return false;
     }
@@ -1346,22 +1321,31 @@ bool xtop_evm_eth2_client_contract::is_light_client_update_allowed(state_ptr sta
     return true;
 }
 
-bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(xheader_update_t const & header_update) const {
+bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(evm_common::eth2::xnetwork_config_t const & config, xheader_update_t const & header_update) const {
     std::vector<xh256_t> const & branch = header_update.execution_hash_branch;
-    if (branch.size() != EXECUTION_PROOF_SIZE) {
-        xwarn("xtop_evm_eth2_client_contract::validate_beacon_block_header_update execution_hash_branch size error");
+    auto const & proof_size = config.compute_proof_size_by_slot(header_update.beacon_header.slot);
+
+    //xinfo("xtop_evm_eth2_client_contract::validate_beacon_block_header_update. execution hash branch size:%zu execution proof size:%zu header update slot:%" PRIu64
+    //      " header update epoch:%" PRIu64,
+    //      branch.size(),
+    //      proof_size.execution_proof_size,
+    //      header_update.beacon_header.slot,
+    //      compute_epoch_at_slot(header_update.beacon_header.slot));
+
+    if (branch.size() != proof_size.execution_proof_size) {
+        xwarn("xtop_evm_eth2_client_contract::validate_beacon_block_header_update execution_hash_branch size error. branch size: %zu, proof size:%zu", branch.size(), proof_size.execution_proof_size);
         return false;
     }
 
-    xspan_t<xh256_t const> l2_proof{&branch[0], &branch[L2_EXECUTION_PAYLOAD_PROOF_SIZE]};
-    xspan_t<xh256_t const> l1_proof{&branch[L2_EXECUTION_PAYLOAD_PROOF_SIZE], &branch[EXECUTION_PROOF_SIZE]};
+    xspan_t<xh256_t const> const l2_proof{&branch[0], &branch[proof_size.l2_execution_payload_proof_size]};
+    xspan_t<xh256_t const> const l1_proof{&branch[proof_size.l2_execution_payload_proof_size], &branch[proof_size.execution_proof_size]};
 
     xh256_t execution_payload_hash;
     if (false == unsafe_merkle_proof(header_update.execution_block_hash.data(),
                                      l2_proof.data()->data(),
                                      l2_proof.size() * xh256_t::size(),
-                                     L2_EXECUTION_PAYLOAD_PROOF_SIZE,
-                                     L2_EXECUTION_PAYLOAD_TREE_EXECUTION_BLOCK_INDEX,
+                                     proof_size.l2_execution_payload_proof_size,
+                                     proof_size.l2_execution_payload_tree_execution_block_index,
                                      execution_payload_hash.data())) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
         return false;
@@ -1371,15 +1355,17 @@ bool xtop_evm_eth2_client_contract::validate_beacon_block_header_update(xheader_
     if (false == unsafe_merkle_proof(execution_payload_hash.data(),
                                      l1_proof.data()->data(),
                                      l1_proof.size() * xh256_t::size(),
-                                     BEACON_BLOCK_BODY_TREE_DEPTH,
-                                     L1_BEACON_BLOCK_BODY_TREE_EXECUTION_PAYLOAD_INDEX,
+                                     proof_size.beacon_block_body_tree_depth,
+                                     proof_size.l1_beacon_block_body_tree_execution_payload_index,
                                      body_root.data())) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
         return false;
     }
 
     if (body_root != header_update.beacon_header.body_root) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee body_root error");
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee body_root error. calculated body root hash:%s, submitted body root hash:%s",
+              to_hex(body_root).c_str(),
+              to_hex(header_update.beacon_header.body_root).c_str());
         return false;
     }
 
