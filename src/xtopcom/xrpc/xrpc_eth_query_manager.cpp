@@ -730,7 +730,7 @@ void xrpc_eth_query_manager::eth_estimateGas(Json::Value & js_req, Json::Value &
     switch (output.m_tx_result.status) {
     case evm_common::Success: {
         std::stringstream outstr;
-        outstr << "0x" << std::hex << (uint64_t)(output.m_tx_result.used_gas * 1.2); // TODO(jimmy) always mutiply 1.2 avoiding fail of some cases
+        outstr << "0x" << std::hex << (uint64_t)(output.m_tx_result.used_gas * 1.5); // TODO(jimmy) always mutiply 1.2 avoiding fail of some cases
         js_rsp["result"] = outstr.str();
         break;
     }
