@@ -42,6 +42,14 @@ constexpr auto compute_sync_committee_period(xslot_t const slot) ->xperiod_t  {
     return compute_epoch_at_slot(slot) / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
 }
 
+constexpr static uint32_t floorlog2(uint32_t x) {
+    return x == 0 ? 0 : 31 - __builtin_clz(x);
+}
+
+constexpr static uint32_t get_subtree_index(uint32_t generalized_index) {
+    return generalized_index % (1 << floorlog2(generalized_index));
+}
+
 enum class xtop_network_id : uint8_t { mainnet, kiln, goerli, sepolia };
 using xnetwork_id_t = xtop_network_id;
 
@@ -69,6 +77,26 @@ struct xtop_proof_size {
     }
 };
 using xproof_size_t = xtop_proof_size;
+
+struct xtop_generalized_index {
+    uint32_t finality_tree_depth{};
+    uint32_t finality_tree_index{};
+    uint32_t sync_committee_tree_depth{};
+    uint32_t sync_committee_tree_index{};
+
+    xtop_generalized_index() = default;
+    xtop_generalized_index(uint32_t const finality_tree_depth,
+                    uint32_t const finality_tree_index,
+                    uint32_t const sync_committee_tree_depth,
+                    uint32_t const sync_committee_tree_index)
+      : finality_tree_depth{finality_tree_depth}
+      , finality_tree_index{finality_tree_index}
+      , sync_committee_tree_depth{sync_committee_tree_depth}
+      , sync_committee_tree_index{sync_committee_tree_index} {
+    }
+};
+
+using xgeneralized_index_t = xtop_generalized_index;
 
 struct xtop_fork_version {
     std::array<uint8_t, 4> fork_version{{0, 0, 0, 0}};
@@ -868,6 +896,9 @@ struct xtop_network_config {
     xfork_version_t deneb_fork_version;
     uint64_t deneb_fork_epoch{std::numeric_limits<uint64_t>::max()};
 
+    xfork_version_t electra_fork_version;
+    uint64_t electra_fork_epoch{std::numeric_limits<uint64_t>::max()};
+
     explicit xtop_network_config(xnetwork_id_t const network_id) {
         switch (network_id) {
         case xnetwork_id_t::mainnet: {
@@ -884,6 +915,9 @@ struct xtop_network_config {
 
             deneb_fork_version = xfork_version_t{0x04, 0x00, 0x00, 0x00};
             deneb_fork_epoch = 269568;
+
+            electra_fork_version = xfork_version_t{0x05, 0x00, 0x00, 0x00};
+            electra_fork_epoch = 364032;
 
             break;
         }
@@ -921,6 +955,9 @@ struct xtop_network_config {
             deneb_fork_version = xfork_version_t{0x90, 0x00, 0x00, 0x73};
             deneb_fork_epoch = 132608;
 
+            electra_fork_version = xfork_version_t{0x90, 0x00, 0x00, 0x74};
+            electra_fork_epoch = 222464;
+
             break;
         }
         default: {
@@ -931,6 +968,10 @@ struct xtop_network_config {
     }
 
     auto compute_fork_version(xepoch_t const epoch) const -> optional<xfork_version_t> {
+        if (epoch >= this->electra_fork_epoch) {
+            return this->electra_fork_version;
+        }
+
         if (epoch >= this->deneb_fork_epoch) {
             return this->deneb_fork_version;
         }
@@ -974,6 +1015,31 @@ struct xtop_network_config {
 
     auto compute_proof_size_by_slot(xslot_t const slot) const -> xproof_size_t {
         return this->compute_proof_size(compute_epoch_at_slot(slot));
+    }
+
+    auto get_generalized_index_constants(xslot_t const slot) const -> xgeneralized_index_t {
+        uint32_t FINALIZED_ROOT_INDEX(105);
+        uint32_t NEXT_SYNC_COMMITTEE_INDEX(55);
+        uint32_t FINALIZED_ROOT_INDEX_ELECTRA(169);
+        uint32_t NEXT_SYNC_COMMITTEE_INDEX_ELECTRA(87);
+
+        xepoch_t epoch = compute_epoch_at_slot(slot);
+
+        if (epoch >= this->electra_fork_epoch) {
+            return xgeneralized_index_t {
+                floorlog2(FINALIZED_ROOT_INDEX_ELECTRA), //finality_tree_depth
+                get_subtree_index(FINALIZED_ROOT_INDEX_ELECTRA), //finality_tree_index
+                floorlog2(NEXT_SYNC_COMMITTEE_INDEX_ELECTRA), //sync_committee_tree_depth
+                get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX_ELECTRA), //sync_committee_tree_index
+            };
+        } else {
+            return xgeneralized_index_t {
+                floorlog2(FINALIZED_ROOT_INDEX), //finality_tree_depth
+                get_subtree_index(FINALIZED_ROOT_INDEX), //finality_tree_index
+                floorlog2(NEXT_SYNC_COMMITTEE_INDEX), //sync_committee_tree_depth
+                get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX), //sync_committee_tree_index
+            };
+        }
     }
 };
 using xnetwork_config_t = xtop_network_config;

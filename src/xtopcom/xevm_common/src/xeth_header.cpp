@@ -39,7 +39,8 @@ bool xeth_header_t::operator==(xeth_header_t const & rhs) const {
            (this->transactions_root == rhs.transactions_root) && (this->receipts_root == rhs.receipts_root) && (this->bloom == rhs.bloom) && (this->difficulty == rhs.difficulty) &&
            (this->number == rhs.number) && (this->gas_limit == rhs.gas_limit) && (this->gas_used == rhs.gas_used) && (this->time == rhs.time) && (this->extra == rhs.extra) &&
            (this->mix_digest == rhs.mix_digest) && (this->nonce == rhs.nonce) && (this->base_fee_per_gas == rhs.base_fee_per_gas) &&
-           (this->withdrawals_root == rhs.withdrawals_root) && (this->blob_gas_used == rhs.blob_gas_used) && (this->excess_blob_gas == rhs.excess_blob_gas) && (this->parent_beacon_root == rhs.parent_beacon_root);
+           (this->withdrawals_root == rhs.withdrawals_root) && (this->blob_gas_used == rhs.blob_gas_used) && (this->excess_blob_gas == rhs.excess_blob_gas) && 
+           (this->parent_beacon_root == rhs.parent_beacon_root) && (this->requests_hash == rhs.requests_hash);
 }
 
 xh256_t xeth_header_t::calc_hash(bool const partial) const {
@@ -143,6 +144,11 @@ xbytes_t xeth_header_t::encode_rlp(bool const partial) const {
 
     if (parent_beacon_root.has_value()) {
         auto tmp = RLP::encode(parent_beacon_root.value().asArray());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    if (requests_hash.has_value()) {
+        auto tmp = RLP::encode(requests_hash.value().asArray());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
@@ -264,6 +270,15 @@ void xeth_header_t::decode_rlp(xbytes_t const & bytes, std::error_code & ec) {
         parent_beacon_root = xh256_t{xspan_t<xbyte_t const>{l.decoded[19]}};
     }
 
+    if (l.decoded.size() >= 21) {
+        if (l.decoded[20].size() != xh256_t::size()) {
+            xwarn("xeth_header_t::decode_rlp failed, rlp requests hash invalid");
+            ec = error::xerrc_t::rlp_bytes_invalid;
+            return;
+        }
+        requests_hash = xh256_t{xspan_t<xbyte_t const>{l.decoded[20]}};
+    }
+
     {
         xbytes_t rlp_bytes = bytes;
         auto const & encoded_bytes = encode_rlp();
@@ -328,6 +343,10 @@ void xeth_header_t::print() const {
     }
     if (parent_beacon_root.has_value()) {
         printf("parent_beacon_root: %s\n", parent_beacon_root.value().hex().c_str());
+    }
+
+    if (requests_hash.has_value()) {
+        printf("requests_hash: %s\n", requests_hash.value().hex().c_str());
     }
 }
 

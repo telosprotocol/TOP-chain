@@ -14,23 +14,7 @@ NS_BEG4(top, contract_runtime, evm, sys_contract)
 using namespace evm_common::eth2;
 
 
-constexpr static uint32_t floorlog2(uint32_t x) {
-    return x == 0 ? 0 : 31 - __builtin_clz(x);
-}
-
-constexpr static uint32_t get_subtree_index(uint32_t generalized_index) {
-    return generalized_index % (1 << floorlog2(generalized_index));
-}
-
-
 constexpr static uint64_t MIN_SYNC_COMMITTEE_PARTICIPANTS{1};
-
-constexpr static uint32_t FINALIZED_ROOT_INDEX{105};
-constexpr static uint32_t NEXT_SYNC_COMMITTEE_INDEX{55};
-constexpr static uint32_t FINALITY_TREE_DEPTH{floorlog2(FINALIZED_ROOT_INDEX)};
-constexpr static uint32_t FINALITY_TREE_INDEX{get_subtree_index(FINALIZED_ROOT_INDEX)};
-constexpr static uint32_t SYNC_COMMITTEE_TREE_DEPTH{floorlog2(NEXT_SYNC_COMMITTEE_INDEX)};
-constexpr static uint32_t SYNC_COMMITTEE_TREE_INDEX{get_subtree_index(NEXT_SYNC_COMMITTEE_INDEX)};
 
 constexpr uint64_t hashes_gc_threshold = 51000;
 
@@ -850,11 +834,13 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
         branch_data.insert(branch_data.end(), b.begin(), b.end());
     }
     xh256_t merkle_root;
+    xnetwork_config_t const config{m_network};
+    xgeneralized_index_t generalized_index = config.get_generalized_index_constants(update.finality_update.header_update.beacon_header.slot);
     if (false == unsafe_merkle_proof(update.finality_update.header_update.beacon_header.tree_hash_root().data(),
                                      branch_data.data(),
                                      branch_data.size(),
-                                     FINALITY_TREE_DEPTH,
-                                     FINALITY_TREE_INDEX,
+                                     generalized_index.finality_tree_depth,
+                                     generalized_index.finality_tree_index,
                                      merkle_root.data())) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch header unsafe_merkle_proof error");
         return false;
@@ -865,8 +851,7 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
               to_hex(update.attested_beacon_header.state_root).c_str());
         return false;
     }
-
-    xnetwork_config_t const config{m_network};
+    
     if (false == validate_beacon_block_header_update(config, update.finality_update.header_update)) {
         xwarn("xtop_evm_eth2_client_contract::verify_finality_branch validate_beacon_block_header_update error");
         return false;
@@ -883,8 +868,8 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
         if (false == unsafe_merkle_proof(update.sync_committee_update.next_sync_committee.tree_hash_root().data(),
                                          branch_data.data(),
                                          branch_data.size(),
-                                         SYNC_COMMITTEE_TREE_DEPTH,
-                                         SYNC_COMMITTEE_TREE_INDEX,
+                                         generalized_index.sync_committee_tree_depth,
+                                         generalized_index.sync_committee_tree_index,
                                          merkle_root.data())) {
             xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
             return false;
