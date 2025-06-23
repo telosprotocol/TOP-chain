@@ -56,6 +56,8 @@ pub struct NetworkConfig {
     pub capella_fork_epoch: u64,
     pub deneb_fork_version: ForkVersion,
     pub deneb_fork_epoch: u64,
+    pub electra_fork_version: ForkVersion,
+    pub electra_fork_epoch: u64,
 }
 
 impl NetworkConfig {
@@ -73,6 +75,8 @@ impl NetworkConfig {
                 capella_fork_epoch: 194048,
                 deneb_fork_version: [0x04, 0x00, 0x00, 0x00],
                 deneb_fork_epoch: 269568,
+                electra_fork_version: [0x05, 0x00, 0x00, 0x00],
+                electra_fork_epoch: 364032,
             },
             Network::Goerli => Self {
                 genesis_validators_root: [
@@ -86,6 +90,8 @@ impl NetworkConfig {
                 capella_fork_epoch: 162304,
                 deneb_fork_version: [0x04, 0x00, 0x10, 0x20],
                 deneb_fork_epoch: 231680,
+                electra_fork_version: [0x00, 0x00, 0x00, 0x00], // Not supported
+                electra_fork_epoch: u64::MAX,                   // Not supported
             },
             Network::Kiln => Self {
                 genesis_validators_root: [
@@ -99,6 +105,8 @@ impl NetworkConfig {
                 capella_fork_epoch: 150,
                 deneb_fork_version: [0x90, 0x00, 0x00, 0x73],
                 deneb_fork_epoch: 132608,
+                electra_fork_version: [0x00, 0x00, 0x00, 0x00], // Not supported
+                electra_fork_epoch: u64::MAX,                   // Not supported
             },
             Network::Sepolia => Self {
                 genesis_validators_root: [
@@ -110,11 +118,17 @@ impl NetworkConfig {
                 capella_fork_epoch: 56832,
                 deneb_fork_version: [0x90, 0x00, 0x00, 0x73],
                 deneb_fork_epoch: 132608,
+                electra_fork_version: [0x90, 0x00, 0x00, 0x74],
+                electra_fork_epoch: 222464,
             },
         }
     }
 
     pub fn compute_fork_version(&self, epoch: Epoch) -> Option<ForkVersion> {
+        if epoch >= self.electra_fork_epoch {
+            return Some(self.electra_fork_version);
+        }
+
         if epoch >= self.deneb_fork_epoch {
             return Some(self.deneb_fork_version);
         }

@@ -42,6 +42,7 @@ struct xeth_header_t {
     optional<uint64_t> blob_gas_used;
     optional<uint64_t> excess_blob_gas;
     optional<xh256_t> parent_beacon_root;
+    optional<xh256_t> requests_hash;
 
     mutable xh256_t hash;
     mutable xh256_t partial_hash;
